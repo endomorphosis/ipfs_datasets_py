@@ -25,7 +25,10 @@ except Exception as e:
 
 try:
     from ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers._utils.configs import (
-        Configs, Paths, paths, configs
+        Configs,
+        Paths,
+        paths,
+        configs,
     )
 except Exception as e:
     pytest.skip(f"Failed to import scraper configs: {e}", allow_module_level=True)
@@ -51,7 +54,6 @@ mock_configs.FILE_PATH_ENDING = "html"
 from ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers._utils.mysql_to_parquet import (
     make_mysql_to_parquet,
 )
-
 
 
 # locations table schema:
@@ -111,7 +113,7 @@ from ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers.
 # 	INDEX idx_gnis_plaintext (gnis, plaintext(100)),
 #     FULLTEXT INDEX idx_plaintext (plaintext),
 #     FULLTEXT INDEX idx_plaintext (html)
-# )	
+# )
 
 
 # municode_api_output table schema:
@@ -123,16 +125,16 @@ from ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers.
 #     content_json JSON NOT NULL,
 # 	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 # 	INDEX idx_gnis (gnis),
-# 	INDEX idx_cid (cid), 
+# 	INDEX idx_cid (cid),
 #     INDEX idx_updated_at (updated_at),
 #     UNIQUE INDEX (cid)
 # )
 
 
-
 # ============================================================================
 # MySQL Table Creation Helpers
 # ============================================================================
+
 
 @pytest.fixture
 def test_db_connection():
@@ -141,6 +143,7 @@ def test_db_connection():
     yield conn
     conn.close()
 
+
 @pytest.fixture
 def test_db_cursor(test_db_connection):
     """Create a cursor for the test DuckDB database."""
@@ -148,10 +151,11 @@ def test_db_cursor(test_db_connection):
     yield cursor
     cursor.close()
 
+
 @pytest.fixture
 def make_locations_table(test_db_cursor):
     """Create locations table matching the schema."""
-    query = '''
+    query = """
         CREATE TABLE IF NOT EXISTS locations (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             gnis MEDIUMINT UNSIGNED NOT NULL,
@@ -170,14 +174,15 @@ def make_locations_table(test_db_cursor):
             INDEX idx_fips (fips),
             INDEX idx_state_name (state_name)
         )
-    '''
+    """
     test_db_cursor.execute(query)
     return test_db_cursor
+
 
 @pytest.fixture
 def make_municode_html_stats_table(test_db_cursor):
     """Create municode_html_stats table matching the schema."""
-    query = '''
+    query = """
         CREATE TABLE IF NOT EXISTS municode_html_stats (
             gnis MEDIUMINT UNSIGNED PRIMARY KEY,
             we_have_all_the_laws BOOL NOT NULL DEFAULT TRUE,
@@ -185,7 +190,7 @@ def make_municode_html_stats_table(test_db_cursor):
             missing_sections INT UNSIGNED NOT NULL DEFAULT 0,
             last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
-    '''
+    """
     test_db_cursor.execute(query)
     return test_db_cursor
 
@@ -193,7 +198,7 @@ def make_municode_html_stats_table(test_db_cursor):
 @pytest.fixture
 def make_municode_sections_table(test_db_cursor):
     """Create municode_sections table matching the schema."""
-    query = '''
+    query = """
         CREATE TABLE IF NOT EXISTS municode_sections (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             cid VARCHAR(250) NOT NULL,
@@ -220,14 +225,15 @@ def make_municode_sections_table(test_db_cursor):
             FULLTEXT INDEX idx_plaintext (plaintext),
             FULLTEXT INDEX idx_html_fulltext (html)
         )
-    '''
+    """
     test_db_cursor.execute(query)
     return test_db_cursor
+
 
 @pytest.fixture
 def make_municode_api_output_table(test_db_cursor):
     """Create municode_api_output table matching the schema."""
-    query = '''
+    query = """
         CREATE TABLE IF NOT EXISTS municode_api_output (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             cid VARCHAR(250) NOT NULL,
@@ -240,16 +246,17 @@ def make_municode_api_output_table(test_db_cursor):
             INDEX idx_updated_at (updated_at),
             UNIQUE INDEX (cid)
         )
-    '''
+    """
     test_db_cursor.execute(query)
     return test_db_cursor
+
 
 @pytest.fixture
 def make_mysql_tables(
     make_locations_table,
     make_municode_html_stats_table,
     make_municode_sections_table,
-    make_municode_api_output_table
+    make_municode_api_output_table,
 ):
     """Create all MySQL tables matching the documented schemas."""
     return make_municode_api_output_table
@@ -258,11 +265,13 @@ def make_mysql_tables(
 @pytest.fixture
 def make_database(test_db_cursor, make_mysql_tables):
     """Factory function to create test database with all tables."""
+
     def _make_database():
         try:
             return test_db_cursor
         except Exception as e:
             raise FixtureError(f"make_database setup failed: {e}") from e
+
     return _make_database
 
 
@@ -275,19 +284,19 @@ def make_database(test_db_cursor, make_mysql_tables):
 def location_row():
     """Sample row for locations table."""
     return {
-        'id': 41,
-        'gnis': 2412936,
-        'fips': 645358,
-        'place_name': 'Town of Mammoth Lakes',
-        'state_name': 'California',
-        'class_code': 'C1',
-        'primary_lat_dec': 37.6272627,
-        'primary_long_dec': -99.9999999,
-        'primary_point': 'POINT (-118.9899436 37.6272627)\r',
-        'state_code': 'CA',
-        'domain_name': 'http://www.ci.mammoth-lakes.ca.us',
-        'domain': 'http://www.ci.mammoth-lakes.ca.us',
-        'population': None
+        "id": 41,
+        "gnis": 2412936,
+        "fips": 645358,
+        "place_name": "Town of Mammoth Lakes",
+        "state_name": "California",
+        "class_code": "C1",
+        "primary_lat_dec": 37.6272627,
+        "primary_long_dec": -99.9999999,
+        "primary_point": "POINT (-118.9899436 37.6272627)\r",
+        "state_code": "CA",
+        "domain_name": "http://www.ci.mammoth-lakes.ca.us",
+        "domain": "http://www.ci.mammoth-lakes.ca.us",
+        "population": None,
     }
 
 
@@ -295,11 +304,11 @@ def location_row():
 def html_stats_row():
     """Sample row for municode_html_stats table."""
     return {
-        'gnis': 2412936,
-        'we_have_all_the_laws': True,
-        'total_sections': 409,
-        'missing_sections': 0,
-        'last_updated': '2025-02-18 01:52:22'
+        "gnis": 2412936,
+        "we_have_all_the_laws": True,
+        "total_sections": 409,
+        "missing_sections": 0,
+        "last_updated": "2025-02-18 01:52:22",
     }
 
 
@@ -307,13 +316,13 @@ def html_stats_row():
 def municode_api_output_row():
     """Sample row for municode_api_output table."""
     return {
-        'id': 799303,
-        'cid': 'bafkreia6phv5uf5c6hschz57unpqunjdpsg66hcaryjkwo2ukwmfjttadm',
-        'gnis': 2412936,
-        'original_file_name': '2412936_COOR_TIT10VETR_CH10.12SPLI_10.12.030SPLICESTDE.json',
-        'has_html_content': True,
-        'content_json': '{"Id": "COOR_TIT10VETR_CH10.12SPLI_10.12.030SPLICESTDE", "Notes": [], "Title": "10.12.030. - Speed limits; certain streets designated.", "Drafts": [], "Content": "<div class=\\"chunk-content\\">\\n            <p class=\\"incr0\\">\\n               (a)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content1\\">\\n               There is determined and declared a prima facie speed limit of 25 miles per hour on\\n               Old Mammoth Road, between Main Street (State Route 203) and a point 700 feet south\\n               of the intersection of Old Mammoth Road and Chateau Road.\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr0\\">\\n               (b)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content1\\">\\n               There is determined and declared a prima facie speed limit of 35 miles per hour on\\n               the following named roads:\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (1)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Lake Mary Road, between Minaret Road/Main Street (State Route 203) and the Ski Tunnel;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (2)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Forest Trail, between Minaret Road (State Route 203) and the easterly end of Pinecrest\\n               Avenue;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (3)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Meridian Boulevard, from 150 feet east of the intersection of Meridian Boulevard and\\n               Sierra Park Road to Old Mammoth Road;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (4)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Minaret Road, between Meridian Boulevard and Old Mammoth Road;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (5)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Old Mammoth Road, between Ski Trail and Evergreen Street.\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr0\\">\\n               (c)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content1\\">\\n               There is determined and declared a prima facie speed limit of 40 miles per hour on\\n               the following named streets:\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (1)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Meridian Boulevard, between Old Mammoth Road and Majestic Pines Drive;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (2)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Minaret Road, between Lake Mary Road/Main Street (State Route 203) and Meridian Boulevard;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (3)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Old Mammoth Road, from 700 feet south of the intersection of Old Mammoth Road and\\n               Chateau Road to Ski Trail.\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr0\\">\\n               (d)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content1\\">\\n               There is determined and declared a prima facie speed limit of 45 miles per hour on\\n               Meridian Boulevard, from Main Street (State Route 203) to 150 feet east of Sierra\\n               Park Road.\\n               </p>\\n            \\t\\t\\n            <p class=\\"historynote0\\">\\n               (Prior Code, § 11.12.030; Code 1990, § 10.04.030; Ord. No. 89-15, § 1, 1989; Ord.\\n               No. 92-09, § 1, 1992; Ord. No. 02-04, § 1, 2002)\\n               </p></div>", "DocType": 1, "SortDate": null, "AmendedBy": [], "Footnotes": null, "IsAmended": false, "IsUpdated": false, "NodeDepth": 3, "TitleHtml": "<div class=\\"chunk-title\\">10.12.030. - Speed limits; certain streets designated.</div>", "DocOrderId": 817, "CompareStatus": 4, "ChunkGroupStartingNodeId": "COOR_TIT10VETR"}',
-        'updated_at': '2025-02-11 12:15:43'
+        "id": 799303,
+        "cid": "bafkreia6phv5uf5c6hschz57unpqunjdpsg66hcaryjkwo2ukwmfjttadm",
+        "gnis": 2412936,
+        "original_file_name": "2412936_COOR_TIT10VETR_CH10.12SPLI_10.12.030SPLICESTDE.json",
+        "has_html_content": True,
+        "content_json": '{"Id": "COOR_TIT10VETR_CH10.12SPLI_10.12.030SPLICESTDE", "Notes": [], "Title": "10.12.030. - Speed limits; certain streets designated.", "Drafts": [], "Content": "<div class=\\"chunk-content\\">\\n            <p class=\\"incr0\\">\\n               (a)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content1\\">\\n               There is determined and declared a prima facie speed limit of 25 miles per hour on\\n               Old Mammoth Road, between Main Street (State Route 203) and a point 700 feet south\\n               of the intersection of Old Mammoth Road and Chateau Road.\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr0\\">\\n               (b)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content1\\">\\n               There is determined and declared a prima facie speed limit of 35 miles per hour on\\n               the following named roads:\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (1)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Lake Mary Road, between Minaret Road/Main Street (State Route 203) and the Ski Tunnel;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (2)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Forest Trail, between Minaret Road (State Route 203) and the easterly end of Pinecrest\\n               Avenue;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (3)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Meridian Boulevard, from 150 feet east of the intersection of Meridian Boulevard and\\n               Sierra Park Road to Old Mammoth Road;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (4)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Minaret Road, between Meridian Boulevard and Old Mammoth Road;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (5)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Old Mammoth Road, between Ski Trail and Evergreen Street.\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr0\\">\\n               (c)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content1\\">\\n               There is determined and declared a prima facie speed limit of 40 miles per hour on\\n               the following named streets:\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (1)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Meridian Boulevard, between Old Mammoth Road and Majestic Pines Drive;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (2)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Minaret Road, between Lake Mary Road/Main Street (State Route 203) and Meridian Boulevard;\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr1\\">\\n               (3)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content2\\">\\n               Old Mammoth Road, from 700 feet south of the intersection of Old Mammoth Road and\\n               Chateau Road to Ski Trail.\\n               </p>\\n            \\t\\t\\n            <p class=\\"incr0\\">\\n               (d)\\n               </p>\\n            \\t\\t\\n            <p class=\\"content1\\">\\n               There is determined and declared a prima facie speed limit of 45 miles per hour on\\n               Meridian Boulevard, from Main Street (State Route 203) to 150 feet east of Sierra\\n               Park Road.\\n               </p>\\n            \\t\\t\\n            <p class=\\"historynote0\\">\\n               (Prior Code, § 11.12.030; Code 1990, § 10.04.030; Ord. No. 89-15, § 1, 1989; Ord.\\n               No. 92-09, § 1, 1992; Ord. No. 02-04, § 1, 2002)\\n               </p></div>", "DocType": 1, "SortDate": null, "AmendedBy": [], "Footnotes": null, "IsAmended": false, "IsUpdated": false, "NodeDepth": 3, "TitleHtml": "<div class=\\"chunk-title\\">10.12.030. - Speed limits; certain streets designated.</div>", "DocOrderId": 817, "CompareStatus": 4, "ChunkGroupStartingNodeId": "COOR_TIT10VETR"}',
+        "updated_at": "2025-02-11 12:15:43",
     }
 
 
@@ -321,37 +330,35 @@ def municode_api_output_row():
 def municode_sections_row():
     """Sample row for municode_sections table."""
     return {
-        'id': 799303,
-        'cid': 'bafkreia6phv5uf5c6hschz57unpqunjdpsg66hcaryjkwo2ukwmfjttadm',
-        'gnis': 2412936,
-        'node_id': 'COOR_TIT10VETR_CH10.12SPLI_10.12.030SPLICESTDE',
-        'node_depth': 3,
-        'doc_order_id': 817,
-        'doc_type': 1,
-        'html_title': '<div class="chunk-title">10.12.030. - Speed limits; certain streets designated.</div>',
-        'html': '<div class="chunk-content">\n            <p class="incr0">\n               (a)\n               </p>\n            		\n            <p class="content1">\n               There is determined and declared a prima facie speed limit of 25 miles per hour on\n               Old Mammoth Road, between Main Street (State Route 203) and a point 700 feet south\n               of the intersection of Old Mammoth Road and Chateau Road.\n               </p>\n            		\n            <p class="incr0">\n               (b)\n               </p>\n            		\n            <p class="content1">\n               There is determined and declared a prima facie speed limit of 35 miles per hour on\n               the following named roads:\n               </p>\n            		\n            <p class="incr1">\n               (1)\n               </p>\n            		\n            <p class="content2">\n               Lake Mary Road, between Minaret Road/Main Street (State Route 203) and the Ski Tunnel;\n               </p>\n            		\n            <p class="incr1">\n               (2)\n               </p>\n            		\n            <p class="content2">\n               Forest Trail, between Minaret Road (State Route 203) and the easterly end of Pinecrest\n               Avenue;\n               </p>\n            		\n            <p class="incr1">\n               (3)\n               </p>\n            		\n            <p class="content2">\n               Meridian Boulevard, from 150 feet east of the intersection of Meridian Boulevard and\n               Sierra Park Road to Old Mammoth Road;\n               </p>\n            		\n            <p class="incr1">\n               (4)\n               </p>\n            		\n            <p class="content2">\n               Minaret Road, between Meridian Boulevard and Old Mammoth Road;\n               </p>\n            		\n            <p class="incr1">\n               (5)\n               </p>\n            		\n            <p class="content2">\n               Old Mammoth Road, between Ski Trail and Evergreen Street.\n               </p>\n            		\n            <p class="incr0">\n               (c)\n               </p>\n            		\n            <p class="content1">\n               There is determined and declared a prima facie speed limit of 40 miles per hour on\n               the following named streets:\n               </p>\n            		\n            <p class="incr1">\n               (1)\n               </p>\n            		\n            <p class="content2">\n               Meridian Boulevard, between Old Mammoth Road and Majestic Pines Drive;\n               </p>\n            		\n            <p class="incr1">\n               (2)\n               </p>\n            		\n            <p class="content2">\n               Minaret Road, between Lake Mary Road/Main Street (State Route 203) and Meridian Boulevard;\n               </p>\n            		\n            <p class="incr1">\n               (3)\n               </p>\n            		\n            <p class="content2">\n               Old Mammoth Road, from 700 feet south of the intersection of Old Mammoth Road and\n               Chateau Road to Ski Trail.\n               </p>\n            		\n            <p class="incr0">\n               (d)\n               </p>\n            		\n            <p class="content1">\n               There is determined and declared a prima facie speed limit of 45 miles per hour on\n               Meridian Boulevard, from Main Street (State Route 203) to 150 feet east of Sierra\n               Park Road.\n               </p>\n            		\n            <p class="historynote0">\n               (Prior Code, § 11.12.030; Code 1990, § 10.04.030; Ord. No. 89-15, § 1, 1989; Ord.\n               No. 92-09, § 1, 1992; Ord. No. 02-04, § 1, 2002)\n               </p></div>',
-        'title': '10.12.030. - Speed limits; certain streets designated.',
-        'updated_at': '2025-02-11 12:15:43',
-        'plaintext': None,
-        'public_law_num': None,
-        'statute_num': None,
-        'bill_enacted': None,
-        'year': None
+        "id": 799303,
+        "cid": "bafkreia6phv5uf5c6hschz57unpqunjdpsg66hcaryjkwo2ukwmfjttadm",
+        "gnis": 2412936,
+        "node_id": "COOR_TIT10VETR_CH10.12SPLI_10.12.030SPLICESTDE",
+        "node_depth": 3,
+        "doc_order_id": 817,
+        "doc_type": 1,
+        "html_title": '<div class="chunk-title">10.12.030. - Speed limits; certain streets designated.</div>',
+        "html": '<div class="chunk-content">\n            <p class="incr0">\n               (a)\n               </p>\n            		\n            <p class="content1">\n               There is determined and declared a prima facie speed limit of 25 miles per hour on\n               Old Mammoth Road, between Main Street (State Route 203) and a point 700 feet south\n               of the intersection of Old Mammoth Road and Chateau Road.\n               </p>\n            		\n            <p class="incr0">\n               (b)\n               </p>\n            		\n            <p class="content1">\n               There is determined and declared a prima facie speed limit of 35 miles per hour on\n               the following named roads:\n               </p>\n            		\n            <p class="incr1">\n               (1)\n               </p>\n            		\n            <p class="content2">\n               Lake Mary Road, between Minaret Road/Main Street (State Route 203) and the Ski Tunnel;\n               </p>\n            		\n            <p class="incr1">\n               (2)\n               </p>\n            		\n            <p class="content2">\n               Forest Trail, between Minaret Road (State Route 203) and the easterly end of Pinecrest\n               Avenue;\n               </p>\n            		\n            <p class="incr1">\n               (3)\n               </p>\n            		\n            <p class="content2">\n               Meridian Boulevard, from 150 feet east of the intersection of Meridian Boulevard and\n               Sierra Park Road to Old Mammoth Road;\n               </p>\n            		\n            <p class="incr1">\n               (4)\n               </p>\n            		\n            <p class="content2">\n               Minaret Road, between Meridian Boulevard and Old Mammoth Road;\n               </p>\n            		\n            <p class="incr1">\n               (5)\n               </p>\n            		\n            <p class="content2">\n               Old Mammoth Road, between Ski Trail and Evergreen Street.\n               </p>\n            		\n            <p class="incr0">\n               (c)\n               </p>\n            		\n            <p class="content1">\n               There is determined and declared a prima facie speed limit of 40 miles per hour on\n               the following named streets:\n               </p>\n            		\n            <p class="incr1">\n               (1)\n               </p>\n            		\n            <p class="content2">\n               Meridian Boulevard, between Old Mammoth Road and Majestic Pines Drive;\n               </p>\n            		\n            <p class="incr1">\n               (2)\n               </p>\n            		\n            <p class="content2">\n               Minaret Road, between Lake Mary Road/Main Street (State Route 203) and Meridian Boulevard;\n               </p>\n            		\n            <p class="incr1">\n               (3)\n               </p>\n            		\n            <p class="content2">\n               Old Mammoth Road, from 700 feet south of the intersection of Old Mammoth Road and\n               Chateau Road to Ski Trail.\n               </p>\n            		\n            <p class="incr0">\n               (d)\n               </p>\n            		\n            <p class="content1">\n               There is determined and declared a prima facie speed limit of 45 miles per hour on\n               Meridian Boulevard, from Main Street (State Route 203) to 150 feet east of Sierra\n               Park Road.\n               </p>\n            		\n            <p class="historynote0">\n               (Prior Code, § 11.12.030; Code 1990, § 10.04.030; Ord. No. 89-15, § 1, 1989; Ord.\n               No. 92-09, § 1, 1992; Ord. No. 02-04, § 1, 2002)\n               </p></div>',
+        "title": "10.12.030. - Speed limits; certain streets designated.",
+        "updated_at": "2025-02-11 12:15:43",
+        "plaintext": None,
+        "public_law_num": None,
+        "statute_num": None,
+        "bill_enacted": None,
+        "year": None,
     }
-
-
 
 
 @pytest.fixture
 def insert_location_row(test_db_cursor, location_row):
     """Insert a location row into the locations table."""
-    query = '''
+    query = """
         INSERT INTO locations (
             id, gnis, fips, place_name, state_name, class_code,
             primary_lat_dec, primary_long_dec, primary_point,
             state_code, domain_name, domain, population
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    '''
+    """
     test_db_cursor.execute(query, tuple(location_row.values()))
     return test_db_cursor
 
@@ -359,12 +366,12 @@ def insert_location_row(test_db_cursor, location_row):
 @pytest.fixture
 def insert_html_stats_row(test_db_cursor, html_stats_row):
     """Insert an html_stats row into the municode_html_stats table."""
-    query = '''
+    query = """
         INSERT INTO municode_html_stats (
             gnis, we_have_all_the_laws, total_sections,
             missing_sections, last_updated
         ) VALUES (?, ?, ?, ?, ?)
-    '''
+    """
     test_db_cursor.execute(query, tuple(html_stats_row.values()))
     return test_db_cursor
 
@@ -372,36 +379,38 @@ def insert_html_stats_row(test_db_cursor, html_stats_row):
 @pytest.fixture
 def insert_municode_api_output_row(test_db_cursor, municode_api_output_row):
     """Insert a municode_api_output row into the municode_api_output table."""
-    query = '''
+    query = """
         INSERT INTO municode_api_output (
             id, cid, gnis, has_html_content,
             content_json, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?)
-    '''
-    test_db_cursor.execute(query, (
-        municode_api_output_row['id'],
-        municode_api_output_row['cid'],
-        municode_api_output_row['gnis'],
-        municode_api_output_row['has_html_content'],
-        municode_api_output_row['content_json'],
-        municode_api_output_row['updated_at']
-    ))
+    """
+    test_db_cursor.execute(
+        query,
+        (
+            municode_api_output_row["id"],
+            municode_api_output_row["cid"],
+            municode_api_output_row["gnis"],
+            municode_api_output_row["has_html_content"],
+            municode_api_output_row["content_json"],
+            municode_api_output_row["updated_at"],
+        ),
+    )
     return test_db_cursor
 
 
 @pytest.fixture
 def insert_municode_sections_row(test_db_cursor, municode_sections_row):
     """Insert a municode_sections row into the municode_sections table."""
-    query = '''
+    query = """
         INSERT INTO municode_sections (
             id, cid, gnis, node_id, node_depth, doc_order_id,
             doc_type, html_title, html, title, updated_at,
             plaintext, public_law_num, statute_num, bill_enacted, year
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    '''
+    """
     test_db_cursor.execute(query, tuple(municode_sections_row.values()))
     return test_db_cursor
-
 
 
 def generate_html_rows(gnis_values, rows_per_gnis=1, base_data=None):
@@ -421,22 +430,22 @@ def generate_html_rows(gnis_values, rows_per_gnis=1, base_data=None):
             if base_data:
                 rows.append(
                     (
-                        base_data.get('cid', f'cid_{gnis}_{i}'),
-                        base_data.get('doc_id', f'doc_{gnis}_{i}'),
-                        base_data.get('doc_order', i),
-                        base_data.get('html_title', f'title_{gnis}_{i}'),
-                        base_data.get('html', f'<html>{gnis}-{i}</html>'),
-                        base_data.get('gnis', gnis),
+                        base_data.get("cid", f"cid_{gnis}_{i}"),
+                        base_data.get("doc_id", f"doc_{gnis}_{i}"),
+                        base_data.get("doc_order", i),
+                        base_data.get("html_title", f"title_{gnis}_{i}"),
+                        base_data.get("html", f"<html>{gnis}-{i}</html>"),
+                        base_data.get("gnis", gnis),
                     )
                 )
             else:
                 rows.append(
                     (
-                        f'cid_{gnis}_{i}',
-                        f'doc_{gnis}_{i}',
+                        f"cid_{gnis}_{i}",
+                        f"doc_{gnis}_{i}",
                         i,
-                        f'title_{gnis}_{i}',
-                        f'<html>{gnis}-{i}</html>',
+                        f"title_{gnis}_{i}",
+                        f"<html>{gnis}-{i}</html>",
                         gnis,
                     )
                 )
@@ -460,66 +469,68 @@ def generate_citation_rows(gnis_values, rows_per_gnis=1, base_data=None):
             if base_data:
                 rows.append(
                     (
-                        base_data.get('bluebook_cid', f'bb_cid_{gnis}_{i}'),
-                        base_data.get('cid', f'cid_{gnis}_{i}'),
-                        base_data.get('title', f'title_{gnis}_{i}'),
-                        base_data.get('chapter', f'chapter_{gnis}_{i}'),
-                        base_data.get('bluebook_citation', f'Citation {gnis}-{i}'),
-                        base_data.get('gnis', gnis),
-                        base_data.get('state_code', 'AR'),
+                        base_data.get("bluebook_cid", f"bb_cid_{gnis}_{i}"),
+                        base_data.get("cid", f"cid_{gnis}_{i}"),
+                        base_data.get("title", f"title_{gnis}_{i}"),
+                        base_data.get("chapter", f"chapter_{gnis}_{i}"),
+                        base_data.get("bluebook_citation", f"Citation {gnis}-{i}"),
+                        base_data.get("gnis", gnis),
+                        base_data.get("state_code", "AR"),
                     )
                 )
             else:
                 rows.append(
                     (
-                        f'bb_cid_{gnis}_{i}',
-                        f'cid_{gnis}_{i}',
-                        f'title_{gnis}_{i}',
-                        f'chapter_{gnis}_{i}',
-                        f'Citation {gnis}-{i}',
+                        f"bb_cid_{gnis}_{i}",
+                        f"cid_{gnis}_{i}",
+                        f"title_{gnis}_{i}",
+                        f"chapter_{gnis}_{i}",
+                        f"Citation {gnis}-{i}",
                         gnis,
-                        'AR',
+                        "AR",
                     )
                 )
     return rows
 
 
-
 def generate_embedding_rows(gnis_values, rows_per_gnis=1, dimensions=768, base_data=None):
     """Generate embedding table test data.
-    
+
     Args:
         gnis_values: List of GNIS values to generate data for
         rows_per_gnis: Number of rows to generate per GNIS value
         dimensions: Number of dimensions for embedding vector
         base_data: Optional dict with specific values
-    
+
     Returns:
         List of tuples representing embedding table rows
     """
     rows = []
     for gnis in gnis_values:
         for i in range(rows_per_gnis):
-            if base_data and 'embedding' in base_data:
-                embedding_vector = base_data['embedding']
+            if base_data and "embedding" in base_data:
+                embedding_vector = base_data["embedding"]
             else:
                 embedding_vector = str([0.0] * dimensions)
-            
+
             if base_data:
-                rows.append((
-                    base_data.get('embedding_cid', f'emb_cid_{gnis}_{i}'),
-                    gnis,
-                    base_data.get('cid', f'cid_{gnis}_{i}'),
-                    base_data.get('text_chunk_order', i),
-                    embedding_vector
-                ))
+                rows.append(
+                    (
+                        base_data.get("embedding_cid", f"emb_cid_{gnis}_{i}"),
+                        gnis,
+                        base_data.get("cid", f"cid_{gnis}_{i}"),
+                        base_data.get("text_chunk_order", i),
+                        embedding_vector,
+                    )
+                )
             else:
-                rows.append((f'emb_cid_{gnis}_{i}', gnis, f'cid_{gnis}_{i}', i, '[]'))
+                rows.append((f"emb_cid_{gnis}_{i}", gnis, f"cid_{gnis}_{i}", i, "[]"))
     return rows
 
 
 class FixtureError(Exception):
     """Exception raised when a fixture encounters an error during setup or teardown."""
+
     pass
 
 
@@ -533,12 +544,13 @@ def output_directory(tmp_path: Path):
     except Exception as e:
         raise FixtureError(f"output_directory setup failed: {e}") from e
 
+
 @pytest.fixture
 def mock_duckdb():
     """Create a mock duckdb connection"""
     # Create a mock database connection
     mock_db_connection = MagicMock()
-    
+
     # Store query results
     mock_db_connection._query_results = {}
     mock_db_connection._gnis_list = []
@@ -546,10 +558,10 @@ def mock_duckdb():
     def sql_side_effect(query):
         """Mock sql() method that returns appropriate results based on query"""
         mock_result = MagicMock()
-        
+
         # Check if it's a complete groups query
         if "we_have_all_the_laws = 1" in query:
-            mock_df = pd.DataFrame({'gnis': mock_db_connection._gnis_list})
+            mock_df = pd.DataFrame({"gnis": mock_db_connection._gnis_list})
             mock_series = pd.Series(mock_db_connection._gnis_list)
             mock_df.__getitem__ = lambda x: mock_series
             mock_result.to_df.return_value = mock_df
@@ -557,36 +569,38 @@ def mock_duckdb():
 
         # Fallback complete groups query (used when no metadata table is available)
         if "SELECT DISTINCT" in query and "AS gnis" in query:
-            mock_df = pd.DataFrame({'gnis': mock_db_connection._gnis_list})
+            mock_df = pd.DataFrame({"gnis": mock_db_connection._gnis_list})
             mock_series = pd.Series(mock_db_connection._gnis_list)
             mock_df.__getitem__ = lambda x: mock_series
             mock_result.to_df.return_value = mock_df
             return mock_result
-        
+
         # Check if it's a metadata query
         if "place_metadata" in query and "html_metadata" in query:
             # Extract gnis from query
             gnis_match = re.search(r"gnis = '(\d+)'", query)
             if gnis_match:
                 gnis = int(gnis_match.group(1))
-                mock_df = pd.DataFrame({
-                    'place_name': ['Test Place'],
-                    'state_name': ['Test State'],
-                    'state_code': ['AR'],
-                    'class_code': ['h1'],
-                    'total_sections': [10],
-                    'last_updated': ['2024-01-01']
-                })
+                mock_df = pd.DataFrame(
+                    {
+                        "place_name": ["Test Place"],
+                        "state_name": ["Test State"],
+                        "state_code": ["AR"],
+                        "class_code": ["h1"],
+                        "total_sections": [10],
+                        "last_updated": ["2024-01-01"],
+                    }
+                )
                 mock_result.to_df.return_value = mock_df
                 return mock_result
-        
+
         # Check if it's an html data query
         if "SELECT gnis, cid, node_id AS doc_id" in query:
             gnis_match = re.search(r"gnis = '(\d+)'", query)
             if gnis_match:
                 gnis = int(gnis_match.group(1))
                 # Return html data for this gnis
-                html_data = mock_db_connection._query_results.get(f'html_{gnis}', [])
+                html_data = mock_db_connection._query_results.get(f"html_{gnis}", [])
                 if html_data:
                     df = pd.DataFrame(html_data)
                     mock_arrow = MagicMock()
@@ -599,7 +613,7 @@ def mock_duckdb():
             gnis_match = re.search(r"gnis = '(\d+)'", query)
             if gnis_match:
                 gnis = int(gnis_match.group(1))
-                citation_data = mock_db_connection._query_results.get(f'citation_{gnis}', [])
+                citation_data = mock_db_connection._query_results.get(f"citation_{gnis}", [])
                 df = pd.DataFrame(citation_data)
                 mock_arrow = MagicMock()
                 mock_arrow.to_pandas.return_value = df
@@ -611,13 +625,13 @@ def mock_duckdb():
             gnis_match = re.search(r"gnis = '(\d+)'", query)
             if gnis_match:
                 gnis = int(gnis_match.group(1))
-                embedding_data = mock_db_connection._query_results.get(f'embedding_{gnis}', [])
+                embedding_data = mock_db_connection._query_results.get(f"embedding_{gnis}", [])
                 df = pd.DataFrame(embedding_data)
                 mock_arrow = MagicMock()
                 mock_arrow.to_pandas.return_value = df
                 mock_result.arrow.return_value = mock_arrow
                 return mock_result
-        
+
         # Check if it's a raw API output query
         if "content_json" in query or query.startswith("SELECT * FROM"):
             gnis_match = re.search(r"gnis = '(\d+)'", query)
@@ -629,7 +643,7 @@ def mock_duckdb():
                 mock_arrow.to_pandas.return_value = df
                 mock_result.arrow.return_value = mock_arrow
                 return mock_result
-        
+
         # Default empty result
         mock_df = pd.DataFrame()
         mock_series = pd.Series([])
@@ -637,9 +651,10 @@ def mock_duckdb():
         mock_result.to_df.return_value = mock_df
         mock_result.arrow.return_value = MagicMock(to_pandas=lambda: mock_df)
         return mock_result
-    
+
     mock_db_connection.sql.side_effect = sql_side_effect
     return mock_db_connection
+
 
 @pytest.fixture
 def mock_resources(mock_duckdb):
@@ -647,12 +662,13 @@ def mock_resources(mock_duckdb):
     try:
         logger = MagicMock(spec_set=logging.Logger)
         resources = {
-            'logger': logger,
-            'duckdb': mock_duckdb,
+            "logger": logger,
+            "duckdb": mock_duckdb,
         }
         yield resources
     except Exception as e:
         raise FixtureError(f"mock_resources setup failed: {e}") from e
+
 
 @pytest.fixture
 def mock_sql_configs(output_directory):
@@ -668,12 +684,14 @@ def mock_sql_configs(output_directory):
         "OUTPUT_FOLDER": output_directory,
     }
 
+
 @pytest.fixture
 def mock_sql_tables():
     mock_tables = Mock()
     mock_tables.DATA_TABLE_NAMES = ["html", "citation", "embedding"]
     mock_tables.METADATA_TABLE_NAMES = ["html_metadata", "place_metadata"]
     return mock_tables
+
 
 @pytest.fixture
 def mock_configs_instance(output_directory, mock_sql_configs, mock_sql_tables):
@@ -698,14 +716,12 @@ def mysql_to_parquet_instance(output_directory, mock_resources, mock_configs_ins
     """a MySqlToParquet instance is initialized"""
     try:
         # Inject the mock database connection
-        instance = make_mysql_to_parquet(
-            configs=mock_configs_instance,
-            resources=mock_resources
-        )
+        instance = make_mysql_to_parquet(configs=mock_configs_instance, resources=mock_resources)
         yield instance
-        
+
     except Exception as e:
         raise FixtureError(f"mysql_to_parquet_instance setup failed: {e}") from e
+
 
 @pytest.fixture
 def make_mysql_to_parquet_instance(mock_configs_instance, mock_resources):
@@ -720,12 +736,12 @@ def make_mysql_to_parquet_instance(mock_configs_instance, mock_resources):
         try:
             # Inject the mock database connection
             instance = make_mysql_to_parquet(
-                configs=mock_configs_instance,
-                resources=mock_resources
+                configs=mock_configs_instance, resources=mock_resources
             )
             yield instance
         except Exception as e:
             raise FixtureError(f"mysql_to_parquet_instance setup failed: {e}") from e
+
     return _factory
 
 
@@ -739,19 +755,19 @@ def mysql_server_running():
     mock_connection.close.return_value = None
     mock_cursor.execute.return_value = None
     mock_cursor.close.return_value = None
-    
+
     yield mock_connection
 
 
 @pytest.fixture
 def mock_mysql_factory(mysql_server_running, mock_duckdb):
     """Factory to create MySQL database mocks with custom data.
-    
+
     Returns a callable that accepts:
         html_data: List of tuples for html table rows (or dict with gnis_values/rows_per_gnis)
         citation_data: List of tuples for citation table rows (or dict with gnis_values/rows_per_gnis)
         embedding_data: List of tuples for embedding table rows (or dict with gnis_values/rows_per_gnis)
-    
+
     Example:
         def test_something(mock_mysql_factory):
             db = mock_mysql_factory(
@@ -759,31 +775,32 @@ def mock_mysql_factory(mysql_server_running, mock_duckdb):
                 citation_data={'gnis_values': [66855], 'rows_per_gnis': 3}
             )
     """
+
     def _factory(html_data=None, citation_data=None, embedding_data=None):
         try:
             cursor = mysql_server_running.cursor.return_value
-            
+
             # Convert dict specs to actual data
             if isinstance(html_data, dict):
                 html_data = generate_html_rows(
-                    gnis_values=html_data.get('gnis_values', []),
-                    rows_per_gnis=html_data.get('rows_per_gnis', 1),
-                    base_data=html_data.get('base_data')
+                    gnis_values=html_data.get("gnis_values", []),
+                    rows_per_gnis=html_data.get("rows_per_gnis", 1),
+                    base_data=html_data.get("base_data"),
                 )
             if isinstance(citation_data, dict):
                 citation_data = generate_citation_rows(
-                    gnis_values=citation_data.get('gnis_values', []),
-                    rows_per_gnis=citation_data.get('rows_per_gnis', 1),
-                    base_data=citation_data.get('base_data')
+                    gnis_values=citation_data.get("gnis_values", []),
+                    rows_per_gnis=citation_data.get("rows_per_gnis", 1),
+                    base_data=citation_data.get("base_data"),
                 )
             if isinstance(embedding_data, dict):
                 embedding_data = generate_embedding_rows(
-                    gnis_values=embedding_data.get('gnis_values', []),
-                    rows_per_gnis=embedding_data.get('rows_per_gnis', 1),
-                    dimensions=embedding_data.get('dimensions', 768),
-                    base_data=embedding_data.get('base_data')
+                    gnis_values=embedding_data.get("gnis_values", []),
+                    rows_per_gnis=embedding_data.get("rows_per_gnis", 1),
+                    dimensions=embedding_data.get("dimensions", 768),
+                    base_data=embedding_data.get("base_data"),
                 )
-            
+
             # Default to empty lists
             html_data = html_data or []
             citation_data = citation_data or []
@@ -795,83 +812,97 @@ def mock_mysql_factory(mysql_server_running, mock_duckdb):
             citation_payload_by_gnis: dict[int, list[dict]] = {}
             embedding_payload_by_gnis: dict[int, list[dict]] = {}
 
-            for (cid, doc_id, doc_order, html_title, html, gnis) in html_data:
+            for cid, doc_id, doc_order, html_title, html, gnis in html_data:
                 gnis_int = int(gnis)
                 gnis_set.add(gnis_int)
                 html_payload_by_gnis.setdefault(gnis_int, []).append(
                     {
-                        'gnis': gnis_int,
-                        'cid': cid,
-                        'doc_id': doc_id,
-                        'doc_order': doc_order,
-                        'html_title': html_title,
-                        'html': html,
+                        "gnis": gnis_int,
+                        "cid": cid,
+                        "doc_id": doc_id,
+                        "doc_order": doc_order,
+                        "html_title": html_title,
+                        "html": html,
                     }
                 )
 
-            for (bluebook_cid, cid, title, chapter, bluebook_citation, gnis, state_code) in citation_data:
+            for (
+                bluebook_cid,
+                cid,
+                title,
+                chapter,
+                bluebook_citation,
+                gnis,
+                state_code,
+            ) in citation_data:
                 gnis_int = int(gnis)
                 gnis_set.add(gnis_int)
                 citation_payload_by_gnis.setdefault(gnis_int, []).append(
                     {
-                        'bluebook_cid': bluebook_cid,
-                        'cid': cid,
-                        'title': title,
-                        'chapter': chapter,
-                        'bluebook_citation': bluebook_citation,
-                        'gnis': gnis_int,
-                        'state_code': state_code,
+                        "bluebook_cid": bluebook_cid,
+                        "cid": cid,
+                        "title": title,
+                        "chapter": chapter,
+                        "bluebook_citation": bluebook_citation,
+                        "gnis": gnis_int,
+                        "state_code": state_code,
                     }
                 )
 
-            for (embedding_cid, gnis, cid, text_chunk_order, embedding) in embedding_data:
+            for embedding_cid, gnis, cid, text_chunk_order, embedding in embedding_data:
                 gnis_int = int(gnis)
                 gnis_set.add(gnis_int)
                 embedding_payload_by_gnis.setdefault(gnis_int, []).append(
                     {
-                        'embedding_cid': embedding_cid,
-                        'gnis': gnis_int,
-                        'cid': cid,
-                        'text_chunk_order': text_chunk_order,
-                        'embedding': embedding,
+                        "embedding_cid": embedding_cid,
+                        "gnis": gnis_int,
+                        "cid": cid,
+                        "text_chunk_order": text_chunk_order,
+                        "embedding": embedding,
                     }
                 )
 
             mock_duckdb._gnis_list = sorted(gnis_set)
             # Ensure query results storage exists
-            if not hasattr(mock_duckdb, '_query_results'):
+            if not hasattr(mock_duckdb, "_query_results"):
                 mock_duckdb._query_results = {}
             for gnis_int in mock_duckdb._gnis_list:
-                mock_duckdb._query_results[f'html_{gnis_int}'] = html_payload_by_gnis.get(gnis_int, [])
-                mock_duckdb._query_results[f'citation_{gnis_int}'] = citation_payload_by_gnis.get(gnis_int, [])
-                mock_duckdb._query_results[f'embedding_{gnis_int}'] = embedding_payload_by_gnis.get(gnis_int, [])
-            
+                mock_duckdb._query_results[f"html_{gnis_int}"] = html_payload_by_gnis.get(
+                    gnis_int, []
+                )
+                mock_duckdb._query_results[f"citation_{gnis_int}"] = citation_payload_by_gnis.get(
+                    gnis_int, []
+                )
+                mock_duckdb._query_results[f"embedding_{gnis_int}"] = embedding_payload_by_gnis.get(
+                    gnis_int, []
+                )
+
             cursor.last_query_type = None
-            
+
             def execute_side_effect(query, params=None):
-                if 'html' in query.lower():
-                    cursor.last_query_type = 'html'
-                elif 'citation' in query.lower():
-                    cursor.last_query_type = 'citation'
-                elif 'embedding' in query.lower():
-                    cursor.last_query_type = 'embedding'
-            
+                if "html" in query.lower():
+                    cursor.last_query_type = "html"
+                elif "citation" in query.lower():
+                    cursor.last_query_type = "citation"
+                elif "embedding" in query.lower():
+                    cursor.last_query_type = "embedding"
+
             def fetchall_side_effect():
-                if cursor.last_query_type == 'html':
+                if cursor.last_query_type == "html":
                     return html_data
-                elif cursor.last_query_type == 'citation':
+                elif cursor.last_query_type == "citation":
                     return citation_data
-                elif cursor.last_query_type == 'embedding':
+                elif cursor.last_query_type == "embedding":
                     return embedding_data
                 return []
-            
+
             cursor.execute.side_effect = execute_side_effect
             cursor.fetchall.side_effect = fetchall_side_effect
-            
+
             return mysql_server_running
         except Exception as e:
             raise FixtureError(f"mock_mysql_factory setup failed: {e}") from e
-    
+
     return _factory
 
 
@@ -879,18 +910,16 @@ def mock_mysql_factory(mysql_server_running, mock_duckdb):
 def mysql_database_with_10_html_10_citation_5_embedding(mock_mysql_factory):
     """MySQL database contains html table with 10 rows, citation table with 10 rows, and embedding table with 5 rows"""
     return mock_mysql_factory(
-        html_data={'gnis_values': [66855], 'rows_per_gnis': 10},
-        citation_data={'gnis_values': [66855], 'rows_per_gnis': 10},
-        embedding_data={'gnis_values': [66855], 'rows_per_gnis': 5}
+        html_data={"gnis_values": [66855], "rows_per_gnis": 10},
+        citation_data={"gnis_values": [66855], "rows_per_gnis": 10},
+        embedding_data={"gnis_values": [66855], "rows_per_gnis": 5},
     )
 
 
 @pytest.fixture
 def mysql_database_with_two_gnis_html(mock_mysql_factory):
     """MySQL html table has gnis values [66855, 67890]"""
-    db = mock_mysql_factory(
-        html_data={'gnis_values': [66855, 67890], 'rows_per_gnis': 1}
-    )
+    db = mock_mysql_factory(html_data={"gnis_values": [66855, 67890], "rows_per_gnis": 1})
     db.test_gnis_values = [66855, 67890]
     return db
 
@@ -898,24 +927,20 @@ def mysql_database_with_two_gnis_html(mock_mysql_factory):
 @pytest.fixture
 def mysql_database_with_two_gnis_citation(mock_mysql_factory):
     """MySQL citation table has gnis values [66855, 67890]"""
-    return mock_mysql_factory(
-        citation_data={'gnis_values': [66855, 67890], 'rows_per_gnis': 1}
-    )
+    return mock_mysql_factory(citation_data={"gnis_values": [66855, 67890], "rows_per_gnis": 1})
 
 
 @pytest.fixture
 def mysql_database_with_one_gnis_embedding(mock_mysql_factory):
     """MySQL embedding table has gnis value 66855"""
-    return mock_mysql_factory(
-        embedding_data={'gnis_values': [66855], 'rows_per_gnis': 1}
-    )
+    return mock_mysql_factory(embedding_data={"gnis_values": [66855], "rows_per_gnis": 1})
 
 
 @pytest.fixture
 def mysql_database_with_one_html_row(mock_mysql_factory):
     """MySQL html table has 1 row"""
     return mock_mysql_factory(
-        html_data=[('test_cid', 'test_doc_id', 1, 'test_title', 'test_html', 66855)]
+        html_data=[("test_cid", "test_doc_id", 1, "test_title", "test_html", 66855)]
     )
 
 
@@ -923,30 +948,32 @@ def mysql_database_with_one_html_row(mock_mysql_factory):
 def mysql_database_with_one_citation_row(mock_mysql_factory):
     """MySQL citation table has 1 row"""
     return mock_mysql_factory(
-        citation_data=[('test_bb_cid', 'test_cid', 'test_title', 'test_chapter', 'test_citation', 66855, 'AR')]
+        citation_data=[
+            ("test_bb_cid", "test_cid", "test_title", "test_chapter", "test_citation", 66855, "AR")
+        ]
     )
 
 
 @pytest.fixture
 def mysql_database_with_one_embedding_row(mock_mysql_factory):
     """MySQL embedding table has 1 row"""
-    return mock_mysql_factory(
-        embedding_data=[('test_emb_cid', 66855, 'test_cid', 1, '[]')]
-    )
+    return mock_mysql_factory(embedding_data=[("test_emb_cid", 66855, "test_cid", 1, "[]")])
 
 
 @pytest.fixture
 def mysql_database_with_specific_html_row(mock_mysql_factory):
     """MySQL html table has row with specific cid, doc_id, and gnis"""
     return mock_mysql_factory(
-        html_data=[(
-            'bafkreicae7q27uvkofpnpgoqqnmq45a5mtlpff4ktfvdeuqaoqtwwaegqa',
-            'CO_CH15BULI_ARTIISEORBU_S15-40IN',
-            1,
-            'test_title',
-            'test_html',
-            66855
-        )]
+        html_data=[
+            (
+                "bafkreicae7q27uvkofpnpgoqqnmq45a5mtlpff4ktfvdeuqaoqtwwaegqa",
+                "CO_CH15BULI_ARTIISEORBU_S15-40IN",
+                1,
+                "test_title",
+                "test_html",
+                66855,
+            )
+        ]
     )
 
 
@@ -954,15 +981,17 @@ def mysql_database_with_specific_html_row(mock_mysql_factory):
 def mysql_database_with_specific_citation_row(mock_mysql_factory):
     """MySQL citation table has row with specific bluebook_citation, gnis, and state_code"""
     return mock_mysql_factory(
-        citation_data=[(
-            'test_bb_cid',
-            'test_cid',
-            'test_title',
-            'test_chapter',
-            'Garland, Ark., County Code, §18-40 (1987)',
-            66855,
-            'AR'
-        )]
+        citation_data=[
+            (
+                "test_bb_cid",
+                "test_cid",
+                "test_title",
+                "test_chapter",
+                "Garland, Ark., County Code, §18-40 (1987)",
+                66855,
+                "AR",
+            )
+        ]
     )
 
 
@@ -970,13 +999,7 @@ def mysql_database_with_specific_citation_row(mock_mysql_factory):
 def mysql_database_with_specific_embedding_row(mock_mysql_factory):
     """MySQL embedding table has row with gnis 66855, text_chunk_order 1, and embedding vector with 768 dimensions"""
     return mock_mysql_factory(
-        embedding_data=[(
-            'test_emb_cid',
-            66855,
-            'test_cid',
-            1,
-            str([0.0] * 768)
-        )]
+        embedding_data=[("test_emb_cid", 66855, "test_cid", 1, str([0.0] * 768))]
     )
 
 
@@ -984,9 +1007,9 @@ def mysql_database_with_specific_embedding_row(mock_mysql_factory):
 def mysql_database_with_three_gnis_values(mock_mysql_factory):
     """MySQL tables contain gnis values [66855, 67890, 68000]"""
     return mock_mysql_factory(
-        html_data={'gnis_values': [66855, 67890, 68000], 'rows_per_gnis': 1},
-        citation_data={'gnis_values': [66855, 67890, 68000], 'rows_per_gnis': 1},
-        embedding_data={'gnis_values': [66855, 67890, 68000], 'rows_per_gnis': 1}
+        html_data={"gnis_values": [66855, 67890, 68000], "rows_per_gnis": 1},
+        citation_data={"gnis_values": [66855, 67890, 68000], "rows_per_gnis": 1},
+        embedding_data={"gnis_values": [66855, 67890, 68000], "rows_per_gnis": 1},
     )
 
 
@@ -994,9 +1017,9 @@ def mysql_database_with_three_gnis_values(mock_mysql_factory):
 def mysql_database_with_gnis_360420(mock_mysql_factory):
     """MySQL tables contain gnis value 360420"""
     return mock_mysql_factory(
-        html_data={'gnis_values': [360420], 'rows_per_gnis': 1},
-        citation_data={'gnis_values': [360420], 'rows_per_gnis': 1},
-        embedding_data={'gnis_values': [360420], 'rows_per_gnis': 1}
+        html_data={"gnis_values": [360420], "rows_per_gnis": 1},
+        citation_data={"gnis_values": [360420], "rows_per_gnis": 1},
+        embedding_data={"gnis_values": [360420], "rows_per_gnis": 1},
     )
 
 
@@ -1012,11 +1035,12 @@ def mysql_server_not_reachable(mock_duckdb):
     mock_duckdb.sql.side_effect = ConnectionError("Failed to connect to MySQL server")
     yield mock_duckdb
 
+
 @pytest.fixture
 def output_directory_cannot_be_created():
     """output directory does not exist and cannot be created"""
     invalid_path = "/invalid/path/that/cannot/be/created"
-    with patch('pathlib.Path.mkdir', side_effect=OSError("Failed to create output directory")):
+    with patch("pathlib.Path.mkdir", side_effect=OSError("Failed to create output directory")):
         yield invalid_path
 
 
@@ -1026,20 +1050,20 @@ def disk_with_zero_bytes_free(mock_duckdb):
     try:
         # Seed at least one GNIS and one row so the pipeline attempts to write.
         mock_duckdb._gnis_list = [66855]
-        mock_duckdb._query_results['html_66855'] = [
+        mock_duckdb._query_results["html_66855"] = [
             {
-                'gnis': 66855,
-                'cid': 'test_cid',
-                'doc_id': 'test_doc_id',
-                'doc_order': 1,
-                'html_title': 'test_title',
-                'html': 'test_html',
+                "gnis": 66855,
+                "cid": "test_cid",
+                "doc_id": "test_doc_id",
+                "doc_order": 1,
+                "html_title": "test_title",
+                "html": "test_html",
             }
         ]
-        mock_duckdb._query_results['citation_66855'] = []
-        mock_duckdb._query_results['embedding_66855'] = []
+        mock_duckdb._query_results["citation_66855"] = []
+        mock_duckdb._query_results["embedding_66855"] = []
 
-        with patch('pandas.DataFrame.to_parquet', side_effect=OSError("No space left on device")):
+        with patch("pandas.DataFrame.to_parquet", side_effect=OSError("No space left on device")):
             yield
     except Exception as e:
         raise FixtureError(f"disk_with_zero_bytes_free setup failed: {e}") from e

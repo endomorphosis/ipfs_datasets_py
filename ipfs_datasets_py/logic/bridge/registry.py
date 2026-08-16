@@ -212,11 +212,7 @@ DEFAULT_LEGAL_IR_BRIDGE_NAMES: tuple[str, ...] = tuple(
 def logic_bridge_specs(*, implemented_only: bool = False) -> tuple[LogicBridgeSpec, ...]:
     """Return bridge adapter specs in deterministic order."""
 
-    return tuple(
-        spec
-        for spec in _SPECS
-        if not implemented_only or spec.implemented
-    )
+    return tuple(spec for spec in _SPECS if not implemented_only or spec.implemented)
 
 
 def logic_bridge_spec(name: str) -> LogicBridgeSpec:
@@ -241,8 +237,7 @@ def logic_bridge_manifest() -> dict[str, Any]:
         "implemented_bridges": [spec.name for spec in _SPECS if spec.implemented],
         "manifest_version": 1,
         "target_components": {
-            component: sorted(names)
-            for component, names in sorted(by_component.items())
+            component: sorted(names) for component, names in sorted(by_component.items())
         },
         "roles": {role: sorted(names) for role, names in sorted(roles.items())},
     }

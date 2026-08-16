@@ -38,11 +38,7 @@ from typing import Any, Mapping, Sequence
 # fallback below instead.
 _source_root = Path(__file__).resolve().parents[3]
 _source_module = (
-    _source_root
-    / "ipfs_datasets_py"
-    / "knowledge_graphs"
-    / "query"
-    / "semantic_traversal.py"
+    _source_root / "ipfs_datasets_py" / "knowledge_graphs" / "query" / "semantic_traversal.py"
 )
 if _source_module.is_file():
     sys.path.insert(0, str(_source_root))
@@ -64,9 +60,7 @@ except ImportError:
 
 DEFAULT_REPO_ID = "Publicus/skillcenter-ir"
 DEFAULT_MANIFEST = "manifest.json"
-DEFAULT_CACHE_DIR = Path(
-    "~/.cache/ipfs_datasets_py/skillcenter-hf-query"
-).expanduser()
+DEFAULT_CACHE_DIR = Path("~/.cache/ipfs_datasets_py/skillcenter-hf-query").expanduser()
 TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 MAX_QUERY_TERMS = 64
 MAX_TOP_K = 1000
@@ -108,11 +102,7 @@ class ArtifactResolver:
         self.path_prefix = path_prefix.strip("/")
         self.token = token
         self.cache_dir = cache_dir
-        self.local_root = (
-            local_root.expanduser().resolve()
-            if local_root is not None
-            else None
-        )
+        self.local_root = local_root.expanduser().resolve() if local_root is not None else None
         self.fetched: dict[str, int] = {}
         self._parquet_cache: dict[
             tuple[str, tuple[str, ...] | None],
@@ -138,13 +128,9 @@ class ArtifactResolver:
             try:
                 from huggingface_hub import hf_hub_download
             except ImportError as exc:
-                raise RemoteQueryError(
-                    "huggingface_hub is required for remote queries"
-                ) from exc
+                raise RemoteQueryError("huggingface_hub is required for remote queries") from exc
             filename = (
-                f"{self.path_prefix}/{safe.as_posix()}"
-                if self.path_prefix
-                else safe.as_posix()
+                f"{self.path_prefix}/{safe.as_posix()}" if self.path_prefix else safe.as_posix()
             )
             path = Path(
                 hf_hub_download(
@@ -165,13 +151,9 @@ class ArtifactResolver:
         try:
             value = json.loads(self.path(relative_path).read_bytes())
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-            raise RemoteQueryError(
-                f"JSON artifact is malformed: {relative_path}"
-            ) from exc
+            raise RemoteQueryError(f"JSON artifact is malformed: {relative_path}") from exc
         if not isinstance(value, dict):
-            raise RemoteQueryError(
-                f"JSON artifact must be an object: {relative_path}"
-            )
+            raise RemoteQueryError(f"JSON artifact must be an object: {relative_path}")
         return value
 
     def parquet(
@@ -183,9 +165,7 @@ class ArtifactResolver:
         try:
             import pyarrow.parquet as pq
         except ImportError as exc:
-            raise RemoteQueryError(
-                "pyarrow is required for remote Parquet queries"
-            ) from exc
+            raise RemoteQueryError("pyarrow is required for remote Parquet queries") from exc
         relative = str(descriptor.get("relative_path") or "")
         key = (
             relative,
@@ -225,8 +205,7 @@ class SkillCenterRemoteIndex:
         self.resolver = resolver
         self.manifest = resolver.json(manifest_path)
         if (
-            self.manifest.get("schema_version")
-            not in SUPPORTED_RELEASE_SCHEMAS
+            self.manifest.get("schema_version") not in SUPPORTED_RELEASE_SCHEMAS
             or self.manifest.get("primary_key") != "entry_cid"
         ):
             raise RemoteQueryError("unsupported SkillCenter release manifest")
@@ -278,24 +257,16 @@ class SkillCenterRemoteIndex:
                 if term not in wanted:
                     continue
                 document_ids = [int(value) for value in row["document_indices"]]
-                title_frequencies = [
-                    int(value) for value in row["title_frequencies"]
-                ]
-                body_frequencies = [
-                    int(value) for value in row["body_frequencies"]
-                ]
-                document_lengths = [
-                    int(value) for value in row["document_lengths"]
-                ]
+                title_frequencies = [int(value) for value in row["title_frequencies"]]
+                body_frequencies = [int(value) for value in row["body_frequencies"]]
+                document_lengths = [int(value) for value in row["document_lengths"]]
                 if not (
                     len(document_ids)
                     == len(title_frequencies)
                     == len(body_frequencies)
                     == len(document_lengths)
                 ):
-                    raise RemoteQueryError(
-                        f"unaligned BM25 posting arrays for {term!r}"
-                    )
+                    raise RemoteQueryError(f"unaligned BM25 posting arrays for {term!r}")
                 for document_id, title_tf, body_tf, document_length in zip(
                     document_ids,
                     title_frequencies,
@@ -310,9 +281,7 @@ class SkillCenterRemoteIndex:
                         weighted_tf,
                         document_length,
                         idf=float(row["idf"]),
-                        average_document_length=float(
-                            config["average_document_length"]
-                        ),
+                        average_document_length=float(config["average_document_length"]),
                         k1=float(config["k1"]),
                         b=float(config["b"]),
                     )
@@ -332,9 +301,7 @@ class SkillCenterRemoteIndex:
         for document_id, score in ranked:
             row = hydrated.get(document_id)
             if row is None:
-                raise RemoteQueryError(
-                    f"corpus pointer is missing for document {document_id}"
-                )
+                raise RemoteQueryError(f"corpus pointer is missing for document {document_id}")
             results.append(
                 {
                     **row,
@@ -374,13 +341,8 @@ class SkillCenterRemoteIndex:
         vector_config = dict(self.manifest["vector"])
         dimension = int(vector_config["dimension"])
         query_array = np.asarray(query_vector, dtype=np.float32)
-        if (
-            query_array.shape != (dimension,)
-            or not np.isfinite(query_array).all()
-        ):
-            raise RemoteQueryError(
-                f"query vector must contain {dimension} finite values"
-            )
+        if query_array.shape != (dimension,) or not np.isfinite(query_array).all():
+            raise RemoteQueryError(f"query vector must contain {dimension} finite values")
         norm = float(np.linalg.norm(query_array))
         if not math.isfinite(norm) or norm == 0:
             raise RemoteQueryError("query vector must be non-zero")
@@ -389,13 +351,9 @@ class SkillCenterRemoteIndex:
         meta = self._meta_rows("vector_chunks")
         routing_groups = _vector_routing_groups(meta, vector_config)
         if candidate_chunks is not None and candidate_centroids is not None:
-            raise RemoteQueryError(
-                "choose candidate_chunks or candidate_centroids, not both"
-            )
+            raise RemoteQueryError("choose candidate_chunks or candidate_centroids, not both")
         requested_groups = (
-            candidate_centroids
-            if candidate_centroids is not None
-            else candidate_chunks
+            candidate_centroids if candidate_centroids is not None else candidate_chunks
         )
         if requested_groups is None:
             requested_groups = int(
@@ -425,14 +383,8 @@ class SkillCenterRemoteIndex:
         selected_indices = np.argsort(-centroid_scores, kind="stable")[
             : min(requested_groups, len(routing_groups))
         ]
-        selected_groups = [
-            routing_groups[int(index)] for index in selected_indices
-        ]
-        selected_shards = [
-            row
-            for group in selected_groups
-            for row in group["shards"]
-        ]
+        selected_groups = [routing_groups[int(index)] for index in selected_indices]
+        selected_shards = [row for group in selected_groups for row in group["shards"]]
 
         heap: list[tuple[float, int, dict[str, Any]]] = []
         candidate_rows = 0
@@ -453,9 +405,7 @@ class SkillCenterRemoteIndex:
                 elif item[:2] > heap[0][:2]:
                     heapq.heapreplace(heap, item)
         selected_hits = sorted(heap, key=lambda item: item[:2], reverse=True)
-        document_ids = [
-            int(row["document_index"]) for _, _, row in selected_hits
-        ]
+        document_ids = [int(row["document_index"]) for _, _, row in selected_hits]
         hydrated = self._hydrate(
             document_ids,
             include_content=include_content,
@@ -465,9 +415,7 @@ class SkillCenterRemoteIndex:
             document_id = int(pointer["document_index"])
             row = hydrated.get(document_id)
             if row is None:
-                raise RemoteQueryError(
-                    f"corpus pointer is missing for document {document_id}"
-                )
+                raise RemoteQueryError(f"corpus pointer is missing for document {document_id}")
             results.append(
                 {
                     **row,
@@ -482,13 +430,9 @@ class SkillCenterRemoteIndex:
             query,
             results,
             {
-                "candidate_centroid_ids": [
-                    int(group["cluster_id"]) for group in selected_groups
-                ],
+                "candidate_centroid_ids": [int(group["cluster_id"]) for group in selected_groups],
                 "candidate_centroids": len(selected_groups),
-                "candidate_chunk_ids": [
-                    int(row["shard_id"]) for row in selected_shards
-                ],
+                "candidate_chunk_ids": [int(row["shard_id"]) for row in selected_shards],
                 "candidate_chunks": len(selected_shards),
                 "candidate_rows": candidate_rows,
                 "dimension": dimension,
@@ -534,11 +478,7 @@ class SkillCenterRemoteIndex:
             max_shards=max_shards,
         )
         directions = _graph_directions(direction)
-        wanted = {
-            str(value).strip()
-            for value in edge_types
-            if str(value).strip()
-        }
+        wanted = {str(value).strip() for value in edge_types if str(value).strip()}
         used_paths: set[str] = set()
         candidates = []
         totals = {}
@@ -555,9 +495,7 @@ class SkillCenterRemoteIndex:
                 candidates.extend(edges)
                 totals[resolved_direction] = total
         except _GraphShardBudgetReached as exc:
-            raise RemoteQueryError(
-                "graph neighbor query exceeded max_shards"
-            ) from exc
+            raise RemoteQueryError("graph neighbor query exceeded max_shards") from exc
         candidates.sort(key=_graph_edge_order_key)
         selected = candidates[offset : offset + limit]
         nodes = {}
@@ -565,10 +503,7 @@ class SkillCenterRemoteIndex:
             nodes = self._graph_nodes(
                 [
                     node_cid,
-                    *[
-                        str(edge["neighbor_cid"])
-                        for edge in selected
-                    ],
+                    *[str(edge["neighbor_cid"]) for edge in selected],
                 ]
             )
         result = self._result(
@@ -585,9 +520,7 @@ class SkillCenterRemoteIndex:
             },
         )
         if hydrate:
-            result["nodes"] = [
-                nodes[cid] for cid in sorted(nodes)
-            ]
+            result["nodes"] = [nodes[cid] for cid in sorted(nodes)]
         return result
 
     def graph_walk(
@@ -607,28 +540,18 @@ class SkillCenterRemoteIndex:
 
         _validate_graph_key(start_node_cid, name="start_node_cid")
         if not 0 <= max_depth <= MAX_GRAPH_DEPTH:
-            raise RemoteQueryError(
-                f"max_depth must be between 0 and {MAX_GRAPH_DEPTH}"
-            )
+            raise RemoteQueryError(f"max_depth must be between 0 and {MAX_GRAPH_DEPTH}")
         if not 1 <= max_nodes <= MAX_GRAPH_NODES:
-            raise RemoteQueryError(
-                f"max_nodes must be between 1 and {MAX_GRAPH_NODES}"
-            )
+            raise RemoteQueryError(f"max_nodes must be between 1 and {MAX_GRAPH_NODES}")
         if not 1 <= max_edges <= MAX_GRAPH_EDGES:
-            raise RemoteQueryError(
-                f"max_edges must be between 1 and {MAX_GRAPH_EDGES}"
-            )
+            raise RemoteQueryError(f"max_edges must be between 1 and {MAX_GRAPH_EDGES}")
         _validate_graph_bounds(
             limit=per_node_limit,
             offset=0,
             max_shards=max_shards,
         )
         directions = _graph_directions(direction)
-        wanted = {
-            str(value).strip()
-            for value in edge_types
-            if str(value).strip()
-        }
+        wanted = {str(value).strip() for value in edge_types if str(value).strip()}
         start_nodes = self._graph_nodes([start_node_cid])
         if start_node_cid not in start_nodes:
             return {
@@ -643,20 +566,12 @@ class SkillCenterRemoteIndex:
             }
 
         visited = {start_node_cid: 0}
-        node_types = {
-            start_node_cid: str(
-                start_nodes[start_node_cid].get("node_type") or ""
-            )
-        }
+        node_types = {start_node_cid: str(start_nodes[start_node_cid].get("node_type") or "")}
         frontier = [start_node_cid]
         traversed_edges = []
         seen_edge_directions: set[tuple[str, str]] = set()
         used_paths: set[str] = set()
-        stop_reason = (
-            "max_depth"
-            if max_depth == 0
-            else "frontier_exhausted"
-        )
+        stop_reason = "max_depth" if max_depth == 0 else "frontier_exhausted"
         for depth in range(max_depth):
             next_frontier = []
             for node_cid in frontier:
@@ -686,10 +601,7 @@ class SkillCenterRemoteIndex:
                     if identity in seen_edge_directions:
                         continue
                     neighbor_cid = str(edge["neighbor_cid"])
-                    if (
-                        neighbor_cid not in visited
-                        and len(visited) >= max_nodes
-                    ):
+                    if neighbor_cid not in visited and len(visited) >= max_nodes:
                         stop_reason = "max_nodes"
                         break
                     seen_edge_directions.add(identity)
@@ -729,11 +641,7 @@ class SkillCenterRemoteIndex:
             if depth + 1 == max_depth:
                 stop_reason = "max_depth"
 
-        hydrated = (
-            self._graph_nodes(list(visited))
-            if hydrate
-            else {}
-        )
+        hydrated = self._graph_nodes(list(visited)) if hydrate else {}
         nodes = []
         for node_cid, depth in sorted(
             visited.items(),
@@ -792,26 +700,15 @@ class SkillCenterRemoteIndex:
 
         _validate_graph_key(start_node_cid, name="start_node_cid")
         if not 0 <= max_depth <= MAX_GRAPH_DEPTH:
-            raise RemoteQueryError(
-                f"max_depth must be between 0 and {MAX_GRAPH_DEPTH}"
-            )
+            raise RemoteQueryError(f"max_depth must be between 0 and {MAX_GRAPH_DEPTH}")
         if not 1 <= max_nodes <= MAX_GRAPH_NODES:
-            raise RemoteQueryError(
-                f"max_nodes must be between 1 and {MAX_GRAPH_NODES}"
-            )
+            raise RemoteQueryError(f"max_nodes must be between 1 and {MAX_GRAPH_NODES}")
         if not 1 <= max_edges <= MAX_GRAPH_EDGES:
-            raise RemoteQueryError(
-                f"max_edges must be between 1 and {MAX_GRAPH_EDGES}"
-            )
+            raise RemoteQueryError(f"max_edges must be between 1 and {MAX_GRAPH_EDGES}")
         if not 1 <= beam_width <= max_nodes:
-            raise RemoteQueryError(
-                "beam_width must be positive and no greater than max_nodes"
-            )
+            raise RemoteQueryError("beam_width must be positive and no greater than max_nodes")
         if not 1 <= max_vector_shards <= MAX_VECTOR_SHARDS:
-            raise RemoteQueryError(
-                "max_vector_shards must be between 1 and "
-                f"{MAX_VECTOR_SHARDS}"
-            )
+            raise RemoteQueryError(f"max_vector_shards must be between 1 and {MAX_VECTOR_SHARDS}")
         if candidate_centroids < 1:
             raise RemoteQueryError("candidate_centroids must be positive")
         _validate_graph_bounds(
@@ -821,14 +718,9 @@ class SkillCenterRemoteIndex:
         )
         if direction not in {"incoming", "outgoing", "both", "adaptive"}:
             raise RemoteQueryError(
-                "semantic direction must be incoming, outgoing, both, "
-                "or adaptive"
+                "semantic direction must be incoming, outgoing, both, or adaptive"
             )
-        wanted = {
-            str(value).strip()
-            for value in edge_types
-            if str(value).strip()
-        }
+        wanted = {str(value).strip() for value in edge_types if str(value).strip()}
         start_nodes = self._graph_nodes([start_node_cid])
         if start_node_cid not in start_nodes:
             return {
@@ -876,11 +768,7 @@ class SkillCenterRemoteIndex:
             embedding_provider.query_vector,
         )
 
-        hydrated = (
-            self._graph_nodes(list(traversal_result.candidates))
-            if hydrate
-            else {}
-        )
+        hydrated = self._graph_nodes(list(traversal_result.candidates)) if hydrate else {}
         nodes = []
         for node_cid, candidate in sorted(
             traversal_result.candidates.items(),
@@ -895,10 +783,7 @@ class SkillCenterRemoteIndex:
                 "has_embedding": candidate.has_embedding,
                 "node_cid": node_cid,
                 "node_type": (
-                    str(
-                        start_nodes[start_node_cid].get("node_type")
-                        or ""
-                    )
+                    str(start_nodes[start_node_cid].get("node_type") or "")
                     if node_cid == start_node_cid
                     else graph_provider.node_types.get(node_cid, "")
                 ),
@@ -957,13 +842,11 @@ class SkillCenterRemoteIndex:
                 **embedding_provider.diagnostics(),
                 "adjacency_shards_fetched": len(graph_provider.used_paths),
                 "approximate": (
-                    traversal_result.approximate
-                    or graph_provider.shard_budget_reached
+                    traversal_result.approximate or graph_provider.shard_budget_reached
                 ),
                 "beam_width": beam_width,
                 "candidate_centroids_requested": candidate_centroids,
-                "complete": semantic_diagnostics["stop_reason"]
-                == "frontier_exhausted",
+                "complete": semantic_diagnostics["stop_reason"] == "frontier_exhausted",
                 "direction": direction,
                 "edge_types": sorted(wanted),
                 "max_depth": max_depth,
@@ -978,9 +861,7 @@ class SkillCenterRemoteIndex:
             "fetch_trace": self.resolver.trace(),
             "mode": "graph_semantic_walk",
             "nodes": nodes,
-            "paths": [
-                path.to_dict() for path in traversal_result.paths
-            ],
+            "paths": [path.to_dict() for path in traversal_result.paths],
             "query": query,
             "start_node_cid": start_node_cid,
         }
@@ -998,32 +879,19 @@ class SkillCenterRemoteIndex:
         index_name = f"graph_{direction}_adjacency"
         meta = self._meta_rows(index_name)
         descriptors = sorted(
-            (
-                row
-                for row in meta
-                if str(row["first_key"])
-                <= node_cid
-                <= str(row["last_key"])
-            ),
+            (row for row in meta if str(row["first_key"]) <= node_cid <= str(row["last_key"])),
             key=lambda row: int(row["shard_id"]),
         )
         edges = []
         total_neighbors = 0
         for descriptor in descriptors:
             relative_path = str(descriptor["relative_path"])
-            if (
-                relative_path not in used_paths
-                and len(used_paths) >= max_shards
-            ):
+            if relative_path not in used_paths and len(used_paths) >= max_shards:
                 raise _GraphShardBudgetReached
             used_paths.add(relative_path)
             table = self.resolver.parquet(descriptor)
             rows = sorted(
-                (
-                    row
-                    for row in table.to_pylist()
-                    if str(row["node_cid"]) == node_cid
-                ),
+                (row for row in table.to_pylist() if str(row["node_cid"]) == node_cid),
                 key=lambda row: int(row["page_index"]),
             )
             for row in rows:
@@ -1043,9 +911,7 @@ class SkillCenterRemoteIndex:
                     any(len(values) != int(row["neighbor_count"]) for values in arrays)
                     or str(row["direction"]) != direction
                 ):
-                    raise RemoteQueryError(
-                        f"{direction} adjacency row is malformed"
-                    )
+                    raise RemoteQueryError(f"{direction} adjacency row is malformed")
                 for (
                     edge_cid,
                     edge_type,
@@ -1064,25 +930,11 @@ class SkillCenterRemoteIndex:
                             "edge_cid": str(edge_cid),
                             "edge_type": edge_type,
                             "neighbor_cid": neighbor_cid,
-                            "neighbor_node_type": str(
-                                neighbor_node_type
-                            ),
+                            "neighbor_node_type": str(neighbor_node_type),
                             "retrieval_method": str(retrieval_method),
-                            "score": (
-                                float(score)
-                                if score is not None
-                                else None
-                            ),
-                            "source_cid": (
-                                node_cid
-                                if direction == "outgoing"
-                                else neighbor_cid
-                            ),
-                            "target_cid": (
-                                neighbor_cid
-                                if direction == "outgoing"
-                                else node_cid
-                            ),
+                            "score": (float(score) if score is not None else None),
+                            "source_cid": (node_cid if direction == "outgoing" else neighbor_cid),
+                            "target_cid": (neighbor_cid if direction == "outgoing" else node_cid),
                         }
                     )
                     if len(edges) >= limit:
@@ -1101,16 +953,10 @@ class SkillCenterRemoteIndex:
         descriptors = {}
         for node_cid in wanted:
             matches = [
-                row
-                for row in meta
-                if str(row["first_key"])
-                <= node_cid
-                <= str(row["last_key"])
+                row for row in meta if str(row["first_key"]) <= node_cid <= str(row["last_key"])
             ]
             if len(matches) > 1:
-                raise RemoteQueryError(
-                    f"overlapping graph node ranges for {node_cid!r}"
-                )
+                raise RemoteQueryError(f"overlapping graph node ranges for {node_cid!r}")
             if matches:
                 path = str(matches[0]["relative_path"])
                 rows_by_path[path].add(node_cid)
@@ -1132,9 +978,7 @@ class SkillCenterRemoteIndex:
                     "node_cid": node_cid,
                     "node_type": str(row.get("node_type") or ""),
                     "properties": properties,
-                    "schema_version": str(
-                        row.get("schema_version") or ""
-                    ),
+                    "schema_version": str(row.get("schema_version") or ""),
                 }
         return result
 
@@ -1175,9 +1019,7 @@ class SkillCenterRemoteIndex:
                 None,
             )
             if pointer is None:
-                raise RemoteQueryError(
-                    f"no corpus shard contains document {document_id}"
-                )
+                raise RemoteQueryError(f"no corpus shard contains document {document_id}")
             path = str(pointer["relative_path"])
             by_path[path].append(document_id)
             descriptors[path] = pointer
@@ -1206,9 +1048,7 @@ class SkillCenterRemoteIndex:
             for row in table.to_pylist():
                 document_id = int(row["document_index"])
                 if document_id in wanted:
-                    hydrated[document_id] = {
-                        key: _json_value(value) for key, value in row.items()
-                    }
+                    hydrated[document_id] = {key: _json_value(value) for key, value in row.items()}
         return hydrated
 
     def _result(
@@ -1318,23 +1158,14 @@ class _RemoteCentroidEmbeddingProvider:
         try:
             import numpy as np
         except ImportError as exc:
-            raise RemoteQueryError(
-                "numpy is required for semantic graph traversal"
-            ) from exc
+            raise RemoteQueryError("numpy is required for semantic graph traversal") from exc
         vector_config = dict(index.manifest.get("vector") or {})
         if not vector_config:
-            raise RemoteQueryError(
-                "release has no vector configuration for semantic traversal"
-            )
+            raise RemoteQueryError("release has no vector configuration for semantic traversal")
         dimension = int(vector_config["dimension"])
         query_array = np.asarray(query_vector, dtype=np.float32)
-        if (
-            query_array.shape != (dimension,)
-            or not np.isfinite(query_array).all()
-        ):
-            raise RemoteQueryError(
-                f"query vector must contain {dimension} finite values"
-            )
+        if query_array.shape != (dimension,) or not np.isfinite(query_array).all():
+            raise RemoteQueryError(f"query vector must contain {dimension} finite values")
         norm = float(np.linalg.norm(query_array))
         if not math.isfinite(norm) or norm == 0.0:
             raise RemoteQueryError("query vector must be non-zero")
@@ -1387,9 +1218,7 @@ class _RemoteCentroidEmbeddingProvider:
         try:
             import numpy as np
         except ImportError as exc:
-            raise RemoteQueryError(
-                "numpy is required for semantic graph traversal"
-            ) from exc
+            raise RemoteQueryError("numpy is required for semantic graph traversal") from exc
         for descriptor in self.selected_shards:
             table = self.index.resolver.parquet(
                 descriptor,
@@ -1401,10 +1230,7 @@ class _RemoteCentroidEmbeddingProvider:
                 dtype=np.float32,
             ).reshape(table.num_rows, self.dimension)
             entry_cids = table["entry_cid"].to_pylist()
-            if (
-                len(entry_cids) != table.num_rows
-                or not np.isfinite(matrix).all()
-            ):
+            if len(entry_cids) != table.num_rows or not np.isfinite(matrix).all():
                 raise RemoteQueryError("vector shard is malformed")
             for row_index, entry_cid in enumerate(entry_cids):
                 self._vectors[str(entry_cid)] = matrix[row_index]
@@ -1416,30 +1242,18 @@ class _RemoteCentroidEmbeddingProvider:
         node_ids: Sequence[str],
     ) -> Mapping[str, Sequence[float]]:
         self._load()
-        return {
-            node_id: self._vectors[node_id]
-            for node_id in node_ids
-            if node_id in self._vectors
-        }
+        return {node_id: self._vectors[node_id] for node_id in node_ids if node_id in self._vectors}
 
     def diagnostics(self) -> dict[str, Any]:
         return {
-            "candidate_centroid_ids": [
-                int(group["cluster_id"]) for group in self.selected_groups
-            ],
+            "candidate_centroid_ids": [int(group["cluster_id"]) for group in self.selected_groups],
             "candidate_centroids": len(self.selected_groups),
             "candidate_vector_rows": self._rows_loaded,
-            "candidate_vector_shard_ids": [
-                int(row["shard_id"]) for row in self.selected_shards
-            ],
+            "candidate_vector_shard_ids": [int(row["shard_id"]) for row in self.selected_shards],
             "candidate_vector_shards": len(self.selected_shards),
-            "centroids_skipped_for_vector_shard_budget": (
-                self.skipped_for_budget
-            ),
+            "centroids_skipped_for_vector_shard_budget": (self.skipped_for_budget),
             "embedding_dimension": self.dimension,
-            "embedding_model_name": self.index.manifest["vector"][
-                "model_name"
-            ],
+            "embedding_model_name": self.index.manifest["vector"]["model_name"],
             "vector_routing_layout": self.index.manifest["vector"].get(
                 "layout",
                 "legacy_coarse_cluster_slices",
@@ -1475,20 +1289,11 @@ def _vector_routing_groups(
         centroid = [float(value) for value in shards[0]["centroid"]]
         if (
             not 1 <= len(shards) <= maximum
-            or [int(row["chunk_in_cluster"]) for row in shards]
-            != list(range(len(shards)))
-            or any(
-                int(row.get("centroid_shard_count", -1)) != len(shards)
-                for row in shards
-            )
-            or any(
-                list(row["centroid"]) != list(shards[0]["centroid"])
-                for row in shards[1:]
-            )
+            or [int(row["chunk_in_cluster"]) for row in shards] != list(range(len(shards)))
+            or any(int(row.get("centroid_shard_count", -1)) != len(shards) for row in shards)
+            or any(list(row["centroid"]) != list(shards[0]["centroid"]) for row in shards[1:])
         ):
-            raise RemoteQueryError(
-                f"vector centroid {cluster_id} has malformed shard pointers"
-            )
+            raise RemoteQueryError(f"vector centroid {cluster_id} has malformed shard pointers")
         output.append(
             {
                 "centroid": centroid,
@@ -1507,9 +1312,7 @@ def _graph_directions(value: str) -> tuple[str, ...]:
         return ("outgoing", "incoming")
     if direction in {"incoming", "outgoing"}:
         return (direction,)
-    raise RemoteQueryError(
-        "graph direction must be incoming, outgoing, both, or adaptive"
-    )
+    raise RemoteQueryError("graph direction must be incoming, outgoing, both, or adaptive")
 
 
 def _semantic_edge_weight(edge: Mapping[str, Any]) -> float:
@@ -1551,17 +1354,11 @@ def _validate_graph_bounds(
     max_shards: int,
 ) -> None:
     if not 1 <= int(limit) <= MAX_GRAPH_EDGES:
-        raise RemoteQueryError(
-            f"graph limit must be between 1 and {MAX_GRAPH_EDGES}"
-        )
+        raise RemoteQueryError(f"graph limit must be between 1 and {MAX_GRAPH_EDGES}")
     if not 0 <= int(offset) <= MAX_GRAPH_EDGES:
-        raise RemoteQueryError(
-            f"graph offset must be between 0 and {MAX_GRAPH_EDGES}"
-        )
+        raise RemoteQueryError(f"graph offset must be between 0 and {MAX_GRAPH_EDGES}")
     if not 1 <= int(max_shards) <= MAX_GRAPH_SHARDS:
-        raise RemoteQueryError(
-            f"max_shards must be between 1 and {MAX_GRAPH_SHARDS}"
-        )
+        raise RemoteQueryError(f"max_shards must be between 1 and {MAX_GRAPH_SHARDS}")
 
 
 def _validate_graph_key(value: str, *, name: str) -> None:
@@ -1592,14 +1389,10 @@ def _select_keyword_shards(
     selected = {}
     for term in terms:
         matches = [
-            row
-            for row in meta_rows
-            if str(row["first_key"]) <= term <= str(row["last_key"])
+            row for row in meta_rows if str(row["first_key"]) <= term <= str(row["last_key"])
         ]
         if len(matches) > 1:
-            raise RemoteQueryError(
-                f"overlapping BM25 keyword shard ranges for {term!r}"
-            )
+            raise RemoteQueryError(f"overlapping BM25 keyword shard ranges for {term!r}")
         if matches:
             selected[term] = matches[0]
     return selected
@@ -1628,9 +1421,7 @@ def _bm25_term_score(
     b: float,
 ) -> float:
     denominator = term_frequency + k1 * (
-        1.0
-        - b
-        + b * float(document_length) / max(average_document_length, 1.0)
+        1.0 - b + b * float(document_length) / max(average_document_length, 1.0)
     )
     return idf * ((k1 + 1.0) * term_frequency) / denominator
 
@@ -1932,9 +1723,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         result["diagnostics"]["query_embedding_device"] = embedding_device
         if embedding_fallback:
-            result["diagnostics"]["query_embedding_fallback"] = (
-                embedding_fallback
-            )
+            result["diagnostics"]["query_embedding_fallback"] = embedding_fallback
     elif args.graph_mode == "node":
         result = index.graph_node(args.node_cid)
     elif args.graph_mode == "neighbors":
@@ -1950,9 +1739,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         if args.strategy == "bfs":
             if args.direction == "adaptive":
-                raise RemoteQueryError(
-                    "adaptive direction requires --strategy semantic-beam"
-                )
+                raise RemoteQueryError("adaptive direction requires --strategy semantic-beam")
             result = index.graph_walk(
                 args.start_node_cid,
                 direction=args.direction,
@@ -1989,9 +1776,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             candidate_centroids = (
                 args.candidate_centroids
                 if args.candidate_centroids is not None
-                else int(
-                    vector_config.get("default_probe_centroids", 4)
-                )
+                else int(vector_config.get("default_probe_centroids", 4))
             )
             result = index.graph_semantic_walk(
                 args.start_node_cid,
@@ -2009,13 +1794,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 edge_types=args.edge_types,
                 hydrate=args.hydrate,
             )
-            result["diagnostics"]["query_embedding_device"] = (
-                embedding_device
-            )
+            result["diagnostics"]["query_embedding_device"] = embedding_device
             if embedding_fallback:
-                result["diagnostics"]["query_embedding_fallback"] = (
-                    embedding_fallback
-                )
+                result["diagnostics"]["query_embedding_fallback"] = embedding_fallback
     json.dump(result, sys.stdout, indent=2, sort_keys=True, ensure_ascii=False)
     sys.stdout.write("\n")
     return 0

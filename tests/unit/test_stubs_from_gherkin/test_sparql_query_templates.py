@@ -4,11 +4,13 @@ Test stubs for sparql_query_templates module.
 Feature: SPARQL Query Templates
   Template-based SPARQL query generation
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_sparql_query_template_file():
@@ -83,6 +85,7 @@ def query_results():
 
 
 # Test scenarios
+
 
 def test_load_query_template():
     """
@@ -173,6 +176,7 @@ def test_validate_query_results():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a SPARQL query template file")
@@ -343,4 +347,3 @@ def the_template_is_available_for_use():
     """Step: Then the template is available for use"""
     # TODO: Implement step
     pass
-

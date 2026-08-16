@@ -166,7 +166,9 @@ class FileDescriptor:
         parents = value.get("parent_ids") or value.get("parents") or ()
         return cls(
             relative_path=str(value.get("relative_path") or value.get("path") or ""),
-            size_bytes=int(value.get("size_bytes") if "size_bytes" in value else value.get("byte_length", -1)),
+            size_bytes=int(
+                value.get("size_bytes") if "size_bytes" in value else value.get("byte_length", -1)
+            ),
             sha256=str(value.get("sha256") or ""),
             content_cid=str(value.get("content_cid") or value.get("cid") or ""),
             media_type=str(value.get("media_type") or "application/octet-stream"),
@@ -239,9 +241,7 @@ def describe_file(
     try:
         relative = file_path.relative_to(root_path).as_posix()
     except ValueError as exc:
-        raise HuggingFaceReleaseError(
-            f"path escapes release root: {file_path}"
-        ) from exc
+        raise HuggingFaceReleaseError(f"path escapes release root: {file_path}") from exc
     size_bytes, digest = file_digest(file_path)
     return FileDescriptor(
         relative_path=relative,
@@ -285,18 +285,14 @@ def verify_file_descriptor(
             f"descriptor path escapes release root: {desc.relative_path}"
         ) from exc
     if path.is_symlink() or not path.is_file():
-        raise HuggingFaceReleaseError(
-            f"descriptor path is missing or unsafe: {desc.relative_path}"
-        )
+        raise HuggingFaceReleaseError(f"descriptor path is missing or unsafe: {desc.relative_path}")
     size_bytes, digest = file_digest(path)
     if size_bytes != desc.size_bytes or digest.hex() != desc.sha256:
         raise HuggingFaceReleaseError(
             f"descriptor failed size/sha256 verification: {desc.relative_path}"
         )
     if cid_v1_from_digest(digest) != desc.content_cid:
-        raise HuggingFaceReleaseError(
-            f"descriptor failed CID verification: {desc.relative_path}"
-        )
+        raise HuggingFaceReleaseError(f"descriptor failed CID verification: {desc.relative_path}")
     return path
 
 
@@ -312,8 +308,7 @@ def shard_sequence(
     if not values:
         return ((),)
     return tuple(
-        tuple(values[index : index + max_rows])
-        for index in range(0, len(values), max_rows)
+        tuple(values[index : index + max_rows]) for index in range(0, len(values), max_rows)
     )
 
 
@@ -332,14 +327,10 @@ def write_zstd_parquet(
     try:
         import pyarrow.parquet as pq
     except ImportError as exc:  # pragma: no cover - optional dependency
-        raise ImportError(
-            "write_zstd_parquet requires the optional 'pyarrow' package"
-        ) from exc
+        raise ImportError("write_zstd_parquet requires the optional 'pyarrow' package") from exc
 
     if getattr(table, "num_rows", 0) > max_rows:
-        raise HuggingFaceReleaseError(
-            f"Parquet shard exceeds {max_rows} rows: {path}"
-        )
+        raise HuggingFaceReleaseError(f"Parquet shard exceeds {max_rows} rows: {path}")
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_name(f".{target.name}.partial")
@@ -381,15 +372,11 @@ def validate_zstd_parquet(
     try:
         import pyarrow.parquet as pq
     except ImportError as exc:  # pragma: no cover
-        raise ImportError(
-            "validate_zstd_parquet requires the optional 'pyarrow' package"
-        ) from exc
+        raise ImportError("validate_zstd_parquet requires the optional 'pyarrow' package") from exc
     parquet = pq.ParquetFile(target)
     row_count = int(parquet.metadata.num_rows)
     if max_rows is not None and row_count > max_rows:
-        raise HuggingFaceReleaseError(
-            f"Parquet file exceeds row limit {max_rows}: {target}"
-        )
+        raise HuggingFaceReleaseError(f"Parquet file exceeds row limit {max_rows}: {target}")
     if expected_row_count is not None and row_count != expected_row_count:
         raise HuggingFaceReleaseError(
             f"Parquet row count mismatch for {target}: "
@@ -401,23 +388,18 @@ def validate_zstd_parquet(
         for column in range(parquet.metadata.row_group(group).num_columns)
     }
     if parquet.metadata.num_row_groups and compressions != {"ZSTD"}:
-        raise HuggingFaceReleaseError(
-            f"Parquet file is not uniformly ZSTD-compressed: {target}"
-        )
+        raise HuggingFaceReleaseError(f"Parquet file is not uniformly ZSTD-compressed: {target}")
     table = parquet.read()
     if expected_schema is not None:
         actual_names = list(table.schema.names)
         expected_names = list(expected_schema.names)
         if actual_names != expected_names:
             raise HuggingFaceReleaseError(
-                f"Parquet schema columns differ for {target}: "
-                f"{actual_names} != {expected_names}"
+                f"Parquet schema columns differ for {target}: {actual_names} != {expected_names}"
             )
         for name in expected_names:
             if table.schema.field(name).type != expected_schema.field(name).type:
-                raise HuggingFaceReleaseError(
-                    f"Parquet column type mismatch for {target}:{name}"
-                )
+                raise HuggingFaceReleaseError(f"Parquet column type mismatch for {target}:{name}")
     return row_count
 
 

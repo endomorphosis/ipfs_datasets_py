@@ -49,25 +49,15 @@ def _discover_fixture_root() -> Path:
     candidates: list[Path] = []
     here = Path(__file__).resolve()
     # worktree: test/api -> repo root -> tests/fixtures/...
-    candidates.append(
-        here.parents[2] / "tests" / "fixtures" / "intent_ir" / "admissibility"
-    )
+    candidates.append(here.parents[2] / "tests" / "fixtures" / "intent_ir" / "admissibility")
     # accelerate test/api -> may not have fixtures; also try PYTHONPATH datasets
     for entry in sys.path:
         if not entry:
             continue
         root = Path(entry)
+        candidates.append(root / "tests" / "fixtures" / "intent_ir" / "admissibility")
         candidates.append(
-            root / "tests" / "fixtures" / "intent_ir" / "admissibility"
-        )
-        candidates.append(
-            root
-            / "ipfs_datasets_py"
-            / ".."
-            / "tests"
-            / "fixtures"
-            / "intent_ir"
-            / "admissibility"
+            root / "ipfs_datasets_py" / ".." / "tests" / "fixtures" / "intent_ir" / "admissibility"
         )
     # Known daemon / checkout layouts
     candidates.append(
@@ -142,9 +132,7 @@ def _allow_envelopes() -> list[dict[str, Any]]:
         _constraint_from_intent(intent_raw, domain="security", role="grant")
     )
     store = ProofCorpusStore()
-    intent_env = store.put(
-        ArtifactEnvelope.from_intent_artifact(intent, profile="legal-strict")
-    )
+    intent_env = store.put(ArtifactEnvelope.from_intent_artifact(intent, profile="legal-strict"))
     legal_env = store.put(
         ArtifactEnvelope.build(
             legal,
@@ -178,9 +166,7 @@ def _legal_reject_envelopes() -> list[dict[str, Any]]:
         _constraint_from_intent(intent_raw, domain="security", role="grant")
     )
     store = ProofCorpusStore()
-    intent_env = store.put(
-        ArtifactEnvelope.from_intent_artifact(intent, profile="legal-strict")
-    )
+    intent_env = store.put(ArtifactEnvelope.from_intent_artifact(intent, profile="legal-strict"))
     legal_env = store.put(
         ArtifactEnvelope.build(
             legal,
@@ -205,13 +191,9 @@ def _abstain_envelopes() -> list[dict[str, Any]]:
     from ipfs_datasets_py.logic.proof_corpus.schemas import ArtifactEnvelope
     from ipfs_datasets_py.logic.proof_corpus.store import ProofCorpusStore
 
-    intent = FormalizationArtifact.from_dict(
-        _intent_raw("incomplete_unsupported_semantics")
-    )
+    intent = FormalizationArtifact.from_dict(_intent_raw("incomplete_unsupported_semantics"))
     store = ProofCorpusStore()
-    intent_env = store.put(
-        ArtifactEnvelope.from_intent_artifact(intent, profile="legal-strict")
-    )
+    intent_env = store.put(ArtifactEnvelope.from_intent_artifact(intent, profile="legal-strict"))
     return [intent_env.to_dict()]
 
 
@@ -231,9 +213,7 @@ def test_bridge_module_does_not_import_datasets_gate_at_load() -> None:
     """Lazy-import invariant: bridge load must not pull the datasets gate."""
 
     gate_mods = [
-        name
-        for name in sys.modules
-        if name.startswith("ipfs_datasets_py.logic.admissibility")
+        name for name in sys.modules if name.startswith("ipfs_datasets_py.logic.admissibility")
     ]
     # Reset and re-import bridge fresh in isolation is hard once tests ran the
     # gate; assert the module documents lazy targets and has no eager import.
@@ -277,10 +257,7 @@ def test_import_agent_supervisor_does_not_require_external_provers() -> None:
 
 
 def test_bridge_interface_constants_are_pinned() -> None:
-    assert (
-        SUPERVISOR_ADMISSIBILITY_BRIDGE_INTERFACE
-        == "SupervisorAdmissibilityBridge@1"
-    )
+    assert SUPERVISOR_ADMISSIBILITY_BRIDGE_INTERFACE == "SupervisorAdmissibilityBridge@1"
     assert DEFAULT_PROFILE_ID == "legal-strict"
     assert bridge.SUPERVISOR_ADMISSIBILITY_BRIDGE_VERSION == 1
 
@@ -389,9 +366,7 @@ def test_module_helpers_with_mocked_store() -> None:
     store = open_proof_corpus_store(envelopes=envelopes)
     intent_cid = envelopes[0]["content_cid"]
 
-    wire = check_intent_admissibility(
-        intent_cid, "legal-strict", store=store
-    )
+    wire = check_intent_admissibility(intent_cid, "legal-strict", store=store)
     assert wire["success"] is True
     assert wire["status"] == "allow"
 

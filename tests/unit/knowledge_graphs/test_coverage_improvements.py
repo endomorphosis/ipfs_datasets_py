@@ -24,6 +24,7 @@ import pytest
 # Helpers / shared fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_mock_backend():
     """Return a mock IPLD-compatible backend."""
     backend = MagicMock()
@@ -37,6 +38,7 @@ def _make_mock_backend():
 
 def _make_mock_graph_engine():
     from ipfs_datasets_py.knowledge_graphs.core.graph_engine import GraphEngine
+
     engine = MagicMock(spec=GraphEngine)
     engine._nodes = {}
     engine._relationships = {}
@@ -48,6 +50,7 @@ def _make_mock_graph_engine():
 
 def _make_mock_storage():
     from ipfs_datasets_py.knowledge_graphs.storage.ipld_backend import IPLDBackend
+
     storage = MagicMock(spec=IPLDBackend)
     storage.store.return_value = "bafybeicid"
     # WAL calls store_json, not store
@@ -59,6 +62,7 @@ def _make_mock_storage():
 # 1. extraction/validator.py
 # ===========================================================================
 
+
 class TestValidatorInit:
     """GIVEN KnowledgeGraphExtractorWithValidation constructor."""
 
@@ -67,6 +71,7 @@ class TestValidatorInit:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         # validator may or may not be available; attribute always present
         assert hasattr(extractor, "validate_during_extraction")
@@ -78,6 +83,7 @@ class TestValidatorInit:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(
             use_tracer=False, validate_during_extraction=True
         )
@@ -88,6 +94,7 @@ class TestValidatorInit:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(
             use_tracer=False, validate_during_extraction=False
         )
@@ -98,9 +105,8 @@ class TestValidatorInit:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
-        extractor = KnowledgeGraphExtractorWithValidation(
-            use_tracer=False, min_confidence=0.8
-        )
+
+        extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False, min_confidence=0.8)
         assert extractor.min_confidence == 0.8
 
     def test_auto_correct_false_by_default(self):
@@ -108,6 +114,7 @@ class TestValidatorInit:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         assert extractor.auto_correct_suggestions is False
 
@@ -116,6 +123,7 @@ class TestValidatorInit:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(
             use_tracer=False, auto_correct_suggestions=True
         )
@@ -130,6 +138,7 @@ class TestValidatorExtract:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         result = extractor.extract_knowledge_graph("Alice works at Acme Corp.")
         assert isinstance(result, dict)
@@ -140,6 +149,7 @@ class TestValidatorExtract:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         result = extractor.extract_knowledge_graph("Bob founded BobCo in 2010.")
         assert "entity_count" in result
@@ -152,6 +162,7 @@ class TestValidatorExtract:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(
             use_tracer=False, validate_during_extraction=False
         )
@@ -166,6 +177,7 @@ class TestValidatorExtract:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(
             use_tracer=False, validate_during_extraction=True
         )
@@ -179,6 +191,7 @@ class TestValidatorExtract:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(
             use_tracer=False, validate_during_extraction=True
         )
@@ -186,7 +199,11 @@ class TestValidatorExtract:
         # Inject a mock validator
         mock_vr = MagicMock()
         mock_vr.to_dict.return_value = {"entity_coverage": 0.9}
-        mock_vr.data = {"entity_coverage": 0.9, "relationship_coverage": 0.8, "overall_coverage": 0.85}
+        mock_vr.data = {
+            "entity_coverage": 0.9,
+            "relationship_coverage": 0.8,
+            "overall_coverage": 0.85,
+        }
 
         mock_validator = MagicMock()
         mock_validator.validate_knowledge_graph.return_value = mock_vr
@@ -203,6 +220,7 @@ class TestValidatorExtract:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(
             use_tracer=False,
             validate_during_extraction=True,
@@ -215,9 +233,7 @@ class TestValidatorExtract:
             "entity_coverage": 0.5,
             "relationship_coverage": 0.5,
             "overall_coverage": 0.5,
-            "entity_validations": {
-                "e1": {"valid": False, "name": "Eve"}
-            },
+            "entity_validations": {"e1": {"valid": False, "name": "Eve"}},
         }
 
         mock_validator = MagicMock()
@@ -235,12 +251,14 @@ class TestValidatorExtract:
 # 2. query/unified_engine.py
 # ===========================================================================
 
+
 class TestUnifiedQueryEngineInit:
     """GIVEN UnifiedQueryEngine constructor."""
 
     def test_basic_init(self):
         """GIVEN a mock backend WHEN creating engine THEN attributes set."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         backend = _make_mock_backend()
         engine = UnifiedQueryEngine(backend=backend)
         assert engine.backend is backend
@@ -251,12 +269,14 @@ class TestUnifiedQueryEngineInit:
     def test_init_with_custom_preset(self):
         """GIVEN default_budgets='strict' WHEN creating THEN preset stored."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend(), default_budgets="strict")
         assert engine.default_budgets_preset == "strict"
 
     def test_init_with_vector_store(self):
         """GIVEN vector_store kwarg WHEN creating THEN stored on instance."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         vs = MagicMock()
         engine = UnifiedQueryEngine(backend=_make_mock_backend(), vector_store=vs)
         assert engine.vector_store is vs
@@ -264,6 +284,7 @@ class TestUnifiedQueryEngineInit:
     def test_lazy_properties_none_initially(self):
         """GIVEN fresh engine WHEN inspecting private attrs THEN all None."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend())
         assert engine._cypher_compiler is None
         assert engine._cypher_parser is None
@@ -277,6 +298,7 @@ class TestUnifiedQueryEngineStats:
     def test_get_stats_returns_dict(self):
         """GIVEN engine WHEN calling get_stats THEN returns dict."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend())
         stats = engine.get_stats()
         assert isinstance(stats, dict)
@@ -286,12 +308,14 @@ class TestUnifiedQueryEngineStats:
     def test_get_stats_vector_store_flag(self):
         """GIVEN engine with no vector store WHEN get_stats THEN flag is False."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend())
         assert engine.get_stats()["vector_store_enabled"] is False
 
     def test_get_stats_with_vector_store(self):
         """GIVEN engine with vector store WHEN get_stats THEN flag is True."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend(), vector_store=MagicMock())
         assert engine.get_stats()["vector_store_enabled"] is True
 
@@ -302,24 +326,28 @@ class TestUnifiedQueryEngineDetectType:
     def test_match_detected_as_cypher(self):
         """GIVEN query with MATCH WHEN detecting THEN returns 'cypher'."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend())
         assert engine._detect_query_type("MATCH (n) RETURN n") == "cypher"
 
     def test_create_detected_as_cypher(self):
         """GIVEN query with CREATE WHEN detecting THEN returns 'cypher'."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend())
         assert engine._detect_query_type("CREATE (n:Person {name:'Alice'})") == "cypher"
 
     def test_natural_language_detected_as_hybrid(self):
         """GIVEN natural language WHEN detecting THEN returns 'hybrid'."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend())
         assert engine._detect_query_type("who is the founder of Apple?") == "hybrid"
 
     def test_merge_detected_as_cypher(self):
         """GIVEN MERGE clause WHEN detecting THEN returns 'cypher'."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend())
         assert engine._detect_query_type("MERGE (n:City {name:'Paris'})") == "cypher"
 
@@ -330,6 +358,7 @@ class TestUnifiedQueryEngineQueryResult:
     def test_to_dict(self):
         """GIVEN QueryResult WHEN calling to_dict THEN returns dict."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryResult
+
         r = QueryResult(items=[1, 2], stats={"time": 0.1}, query_type="cypher")
         d = r.to_dict()
         assert d["items"] == [1, 2]
@@ -339,6 +368,7 @@ class TestUnifiedQueryEngineQueryResult:
     def test_to_dict_with_error(self):
         """GIVEN failed QueryResult WHEN to_dict THEN error field present."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import QueryResult
+
         r = QueryResult(items=[], stats={}, success=False, error="timeout")
         d = r.to_dict()
         assert d["success"] is False
@@ -352,13 +382,18 @@ class TestUnifiedQueryEngineCypher:
         """GIVEN invalid Cypher WHEN executing THEN QueryParseError or QueryExecutionError raised."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
         from ipfs_datasets_py.knowledge_graphs.exceptions import QueryError
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend())
         with pytest.raises(QueryError):
             engine.execute_cypher("this is not valid cypher!!!")
 
     def test_execute_cypher_with_mock_components(self):
         """GIVEN mocked parser/compiler/ir_executor WHEN executing THEN returns QueryResult."""
-        from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine, QueryResult
+        from ipfs_datasets_py.knowledge_graphs.query.unified_engine import (
+            UnifiedQueryEngine,
+            QueryResult,
+        )
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend())
 
         # Mock the lazy properties
@@ -391,6 +426,7 @@ class TestUnifiedQueryEngineExecuteQuery:
     def test_auto_routes_cypher(self):
         """GIVEN MATCH query with auto type WHEN execute_query THEN routes to execute_cypher."""
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend())
 
         mock_result = MagicMock()
@@ -417,7 +453,11 @@ class TestUnifiedQueryEngineAsync:
 
     def test_execute_async_returns_same_result(self):
         """GIVEN async wrapper WHEN awaited THEN returns same result as sync."""
-        from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine, QueryResult
+        from ipfs_datasets_py.knowledge_graphs.query.unified_engine import (
+            UnifiedQueryEngine,
+            QueryResult,
+        )
+
         engine = UnifiedQueryEngine(backend=_make_mock_backend())
 
         mock_result = MagicMock()
@@ -443,12 +483,14 @@ class TestUnifiedQueryEngineAsync:
 # 3. transactions/manager.py
 # ===========================================================================
 
+
 class TestTransactionManagerInit:
     """GIVEN TransactionManager constructor."""
 
     def test_init_creates_empty_active(self):
         """GIVEN valid engine+storage WHEN init THEN active_transactions is empty."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(graph_engine=engine, storage_backend=storage)
@@ -457,6 +499,7 @@ class TestTransactionManagerInit:
     def test_init_stores_engine(self):
         """GIVEN engine WHEN init THEN graph_engine attribute is same object."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         engine = _make_mock_graph_engine()
         storage = _make_mock_storage()
         mgr = TransactionManager(graph_engine=engine, storage_backend=storage)
@@ -470,9 +513,9 @@ class TestTransactionManagerBegin:
         """GIVEN manager WHEN begin THEN returns Transaction."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import Transaction
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin()
         assert isinstance(txn, Transaction)
@@ -480,9 +523,9 @@ class TestTransactionManagerBegin:
     def test_begin_increments_active_count(self):
         """GIVEN manager WHEN begin THEN active count increases."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         mgr.begin()
         mgr.begin()
@@ -492,9 +535,9 @@ class TestTransactionManagerBegin:
         """GIVEN READ_UNCOMMITTED isolation WHEN begin THEN txn stores correct level."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import IsolationLevel
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin(IsolationLevel.READ_UNCOMMITTED)
         assert txn.isolation_level == IsolationLevel.READ_UNCOMMITTED
@@ -503,9 +546,9 @@ class TestTransactionManagerBegin:
         """GIVEN SERIALIZABLE isolation WHEN begin THEN txn stores correct level."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import IsolationLevel
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin(IsolationLevel.SERIALIZABLE)
         assert txn.isolation_level == IsolationLevel.SERIALIZABLE
@@ -518,15 +561,15 @@ class TestTransactionManagerAddOperation:
         """GIVEN active transaction WHEN adding WRITE_NODE op THEN op in transaction."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import Operation, OperationType
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin()
         op = Operation(
             type=OperationType.WRITE_NODE,
             data={"labels": ["Person"], "properties": {"name": "Alice"}},
-            node_id="n1"
+            node_id="n1",
         )
         mgr.add_operation(txn, op)
         assert len(txn.operations) == 1
@@ -536,11 +579,14 @@ class TestTransactionManagerAddOperation:
         """GIVEN committed transaction WHEN adding op THEN TransactionAbortedError raised."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType, TransactionAbortedError, TransactionState,
+            Operation,
+            OperationType,
+            TransactionAbortedError,
+            TransactionState,
         )
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin()
         # Manually mark as committed
@@ -556,9 +602,9 @@ class TestTransactionManagerRollback:
     def test_rollback_removes_from_active(self):
         """GIVEN active transaction WHEN rollback THEN active count decreases."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin()
         assert mgr.get_active_count() == 1
@@ -569,9 +615,9 @@ class TestTransactionManagerRollback:
         """GIVEN transaction with operations WHEN rollback THEN operations cleared."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import Operation, OperationType
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin()
         op = Operation(type=OperationType.WRITE_NODE, data={}, node_id="n1")
@@ -583,9 +629,9 @@ class TestTransactionManagerRollback:
         """GIVEN active transaction WHEN rollback THEN state becomes ABORTED."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import TransactionState
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin()
         mgr.rollback(txn)
@@ -598,9 +644,9 @@ class TestTransactionManagerAddRead:
     def test_add_read_tracks_cid(self):
         """GIVEN active transaction WHEN add_read THEN CID in read_set."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin()
         mgr.add_read(txn, "bafybeicid123")
@@ -610,9 +656,9 @@ class TestTransactionManagerAddRead:
         """GIVEN rolled-back transaction WHEN add_read THEN no crash (idempotent)."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import TransactionState
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin()
         mgr.rollback(txn)
@@ -626,9 +672,9 @@ class TestTransactionManagerCommit:
     def test_commit_empty_transaction_succeeds(self):
         """GIVEN transaction with no ops WHEN commit THEN returns True."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin()
         result = mgr.commit(txn)
@@ -638,9 +684,9 @@ class TestTransactionManagerCommit:
     def test_commit_removes_from_active(self):
         """GIVEN 2 active transactions WHEN commit one THEN active count is 1."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn1 = mgr.begin()
         mgr.begin()
@@ -651,11 +697,16 @@ class TestTransactionManagerCommit:
         """GIVEN transaction with WRITE_NODE WHEN commit THEN entity_id tracked in committed_writes."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import Operation, OperationType
+
         engine = _make_mock_graph_engine()
         engine.create_node.return_value = "n-new"
         mgr = TransactionManager(graph_engine=engine, storage_backend=_make_mock_storage())
         txn = mgr.begin()
-        op = Operation(type=OperationType.WRITE_NODE, data={"labels": [], "properties": {}}, node_id="entity-abc")
+        op = Operation(
+            type=OperationType.WRITE_NODE,
+            data={"labels": [], "properties": {}},
+            node_id="entity-abc",
+        )
         mgr.add_operation(txn, op)
         mgr.commit(txn)
         assert "entity-abc" in mgr._committed_writes
@@ -664,9 +715,9 @@ class TestTransactionManagerCommit:
         """GIVEN already-committed transaction WHEN commit again THEN raises TransactionAbortedError."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import TransactionAbortedError
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         txn = mgr.begin()
         mgr.commit(txn)
@@ -677,8 +728,11 @@ class TestTransactionManagerCommit:
         """GIVEN READ_COMMITTED isolation WHEN same entity written by two txns THEN no conflict."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            IsolationLevel, Operation, OperationType
+            IsolationLevel,
+            Operation,
+            OperationType,
         )
+
         engine = _make_mock_graph_engine()
         mgr = TransactionManager(graph_engine=engine, storage_backend=_make_mock_storage())
 
@@ -702,9 +756,9 @@ class TestTransactionManagerStats:
     def test_get_stats_returns_dict(self):
         """GIVEN manager WHEN get_stats THEN returns dict."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         stats = mgr.get_stats()
         assert isinstance(stats, dict)
@@ -717,9 +771,9 @@ class TestTransactionManagerRecover:
     def test_recover_no_ops_no_error(self):
         """GIVEN empty WAL WHEN recover THEN no crash."""
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         mgr = TransactionManager(
-            graph_engine=_make_mock_graph_engine(),
-            storage_backend=_make_mock_storage()
+            graph_engine=_make_mock_graph_engine(), storage_backend=_make_mock_storage()
         )
         mgr.wal.recover = MagicMock(return_value=[])
         mgr.recover()  # should not raise
@@ -729,24 +783,28 @@ class TestTransactionManagerRecover:
 # 4. query/knowledge_graph.py
 # ===========================================================================
 
+
 class TestKGQueryModule:
     """GIVEN query/knowledge_graph.py module functions."""
 
     def test_parse_ir_ops_empty_string_raises(self):
         """GIVEN empty string WHEN parse_ir_ops_from_query THEN ValueError raised."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import parse_ir_ops_from_query
+
         with pytest.raises(ValueError, match="non-empty"):
             parse_ir_ops_from_query("")
 
     def test_parse_ir_ops_non_json_raises(self):
         """GIVEN non-JSON string WHEN parse_ir_ops_from_query THEN ValueError raised."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import parse_ir_ops_from_query
+
         with pytest.raises(ValueError):
             parse_ir_ops_from_query("MATCH (n) RETURN n")
 
     def test_parse_ir_ops_valid_list(self):
         """GIVEN JSON list of ops WHEN parse_ir_ops_from_query THEN returns list."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import parse_ir_ops_from_query
+
         payload = json.dumps([{"op": "ScanType", "entity_type": "Person"}])
         ops = parse_ir_ops_from_query(payload)
         assert isinstance(ops, list)
@@ -755,6 +813,7 @@ class TestKGQueryModule:
     def test_parse_ir_ops_valid_dict_with_ops_key(self):
         """GIVEN JSON dict with ops key WHEN parsing THEN extracts list."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import parse_ir_ops_from_query
+
         payload = json.dumps({"ops": [{"op": "ScanType", "entity_type": "City"}]})
         ops = parse_ir_ops_from_query(payload)
         assert ops[0]["entity_type"] == "City"
@@ -762,18 +821,21 @@ class TestKGQueryModule:
     def test_parse_ir_ops_empty_list_raises(self):
         """GIVEN empty list JSON WHEN parsing THEN ValueError raised."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import parse_ir_ops_from_query
+
         with pytest.raises(ValueError, match="non-empty"):
             parse_ir_ops_from_query("[]")
 
     def test_parse_ir_ops_non_dict_item_raises(self):
         """GIVEN list with non-dict item WHEN parsing THEN ValueError raised."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import parse_ir_ops_from_query
+
         with pytest.raises(ValueError, match="object/dict"):
             parse_ir_ops_from_query('[42, "hello"]')
 
     def test_parse_ir_ops_not_string_raises(self):
         """GIVEN non-string input WHEN parsing THEN ValueError raised."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import parse_ir_ops_from_query
+
         with pytest.raises(ValueError):
             parse_ir_ops_from_query(None)  # type: ignore
 
@@ -782,18 +844,21 @@ class TestKGQueryModule:
 # 5. extraction/advanced.py — AdvancedKnowledgeExtractor
 # ===========================================================================
 
+
 class TestAdvancedExtractorInit:
     """GIVEN AdvancedKnowledgeExtractor constructor."""
 
     def test_import_and_create(self):
         """GIVEN module available WHEN creating AdvancedKnowledgeExtractor THEN no crash."""
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import AdvancedKnowledgeExtractor
+
         extractor = AdvancedKnowledgeExtractor()
         assert extractor is not None
 
     def test_default_attributes(self):
         """GIVEN default init WHEN checking attributes THEN extraction callable present."""
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import AdvancedKnowledgeExtractor
+
         extractor = AdvancedKnowledgeExtractor()
         # Must have the main extraction method
         assert callable(getattr(extractor, "extract_knowledge", None))
@@ -801,6 +866,7 @@ class TestAdvancedExtractorInit:
     def test_extract_knowledge_graph_returns_result(self):
         """GIVEN simple text WHEN extracting THEN result has knowledge_graph."""
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import AdvancedKnowledgeExtractor
+
         extractor = AdvancedKnowledgeExtractor()
         result = extractor.extract_knowledge("Alice is a scientist who works at CERN.")
         # Result might be dict or KnowledgeGraph
@@ -809,6 +875,7 @@ class TestAdvancedExtractorInit:
     def test_extract_returns_entities(self):
         """GIVEN entity-rich text WHEN extracting THEN entities present in result."""
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import AdvancedKnowledgeExtractor
+
         extractor = AdvancedKnowledgeExtractor()
         result = extractor.extract_knowledge("Bob works at TechCorp in San Francisco.")
         # Either a dict with knowledge_graph or a KnowledgeGraph object
@@ -829,14 +896,16 @@ class TestAdvancedExtractorChunking:
     def test_extract_large_text_no_crash(self):
         """GIVEN large text WHEN extracting THEN no crash."""
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import AdvancedKnowledgeExtractor
+
         extractor = AdvancedKnowledgeExtractor()
-        long_text = ("Alice is a scientist. " * 50)
+        long_text = "Alice is a scientist. " * 50
         result = extractor.extract_knowledge(long_text)
         assert result is not None
 
     def test_extract_empty_text_no_crash(self):
         """GIVEN empty text WHEN extracting THEN no crash (returns empty/None)."""
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import AdvancedKnowledgeExtractor
+
         extractor = AdvancedKnowledgeExtractor()
         try:
             result = extractor.extract_knowledge("")
@@ -849,6 +918,7 @@ class TestAdvancedExtractorChunking:
     def test_extract_with_temperature_params(self):
         """GIVEN extraction_temperature parameter WHEN extracting THEN no crash."""
         from ipfs_datasets_py.knowledge_graphs.extraction.advanced import AdvancedKnowledgeExtractor
+
         extractor = AdvancedKnowledgeExtractor()
         try:
             result = extractor.extract_knowledge(
@@ -867,6 +937,7 @@ class TestAdvancedExtractorChunking:
 #    apply_validation_corrections, validation_stubs when no validator
 # ===========================================================================
 
+
 class TestValidatorAgainstWikidata:
     """GIVEN KnowledgeGraphExtractorWithValidation.validate_against_wikidata."""
 
@@ -875,6 +946,7 @@ class TestValidatorAgainstWikidata:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         extractor.validator = None
         extractor.validator_available = False
@@ -888,6 +960,7 @@ class TestValidatorAgainstWikidata:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         extractor.validator = None
         result = extractor.validate_against_wikidata("Paris", "location")
@@ -898,6 +971,7 @@ class TestValidatorAgainstWikidata:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         mock_validator = MagicMock(spec=[])  # no _get_wikidata_entity attribute
         extractor.validator = mock_validator
@@ -911,6 +985,7 @@ class TestValidatorAgainstWikidata:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         mock_validator = MagicMock()
         mock_validator._get_wikidata_entity.return_value = {"id": "Q937", "label": "Marie Curie"}
@@ -929,6 +1004,7 @@ class TestValidatorExtractFromDocuments:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         docs = [{"text": "Bob founded TechCorp in 2001.", "title": "Doc1"}]
         result = extractor.extract_from_documents(docs)
@@ -939,6 +1015,7 @@ class TestValidatorExtractFromDocuments:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         docs = [
             {"text": "Alice works at Acme."},
@@ -952,6 +1029,7 @@ class TestValidatorExtractFromDocuments:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         result = extractor.extract_from_documents([])
         assert isinstance(result, dict)
@@ -961,6 +1039,7 @@ class TestValidatorExtractFromDocuments:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         docs = [{"content": "Carol leads the engineering team."}]
         result = extractor.extract_from_documents(docs, text_key="content")
@@ -976,6 +1055,7 @@ class TestValidatorApplyCorrections:
             KnowledgeGraphExtractorWithValidation,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         kg = KnowledgeGraph(name="test")
         kg.add_entity(entity_type="person", name="Alice", properties={})
@@ -989,18 +1069,15 @@ class TestValidatorApplyCorrections:
             KnowledgeGraphExtractorWithValidation,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         kg = KnowledgeGraph(name="test")
         entity = kg.add_entity(
-            entity_type="person", name="Alice", properties={"name": "Alice", "occupation": "Scientist"}
+            entity_type="person",
+            name="Alice",
+            properties={"name": "Alice", "occupation": "Scientist"},
         )
-        corrections = {
-            "entities": {
-                entity.entity_id: {
-                    "suggestions": {"occupation": "Physicist"}
-                }
-            }
-        }
+        corrections = {"entities": {entity.entity_id: {"suggestions": {"occupation": "Physicist"}}}}
         corrected = extractor.apply_validation_corrections(kg, corrections)
         assert corrected is not None
         corrected_entity = list(corrected.entities.values())[0]
@@ -1012,13 +1089,12 @@ class TestValidatorApplyCorrections:
             KnowledgeGraphExtractorWithValidation,
         )
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         extractor = KnowledgeGraphExtractorWithValidation(use_tracer=False)
         kg = KnowledgeGraph(name="test")
         e1 = kg.add_entity(entity_type="person", name="Alice", properties={})
         e2 = kg.add_entity(entity_type="organization", name="Acme", properties={})
-        kg.add_relationship(
-            "works_at", source=e1, target=e2, properties={}
-        )
+        kg.add_relationship("works_at", source=e1, target=e2, properties={})
         corrected = extractor.apply_validation_corrections(kg, {})
         assert len(corrected.relationships) == 1
 
@@ -1031,6 +1107,7 @@ class TestValidatorValidationStubs:
         from ipfs_datasets_py.knowledge_graphs.extraction.validator import (
             KnowledgeGraphExtractorWithValidation,
         )
+
         extractor = KnowledgeGraphExtractorWithValidation(
             use_tracer=False, validate_during_extraction=True
         )
@@ -1049,6 +1126,7 @@ class TestValidatorValidationStubs:
 # 7. More query/knowledge_graph.py coverage — compile_ir, query_knowledge_graph validation
 # ===========================================================================
 
+
 class TestCompileIR:
     """GIVEN query/knowledge_graph.py compile_ir function."""
 
@@ -1056,6 +1134,7 @@ class TestCompileIR:
         """GIVEN ScanType op WHEN compiling THEN returns QueryIR."""
         pytest.importorskip("ipfs_datasets_py.search.graph_query.ir")
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
+
         ops = [{"op": "ScanType", "entity_type": "Person", "scope": None}]
         ir = compile_ir(ops)
         assert ir is not None
@@ -1064,6 +1143,7 @@ class TestCompileIR:
         """GIVEN ScanType op without entity_type WHEN compiling THEN ValueError raised."""
         pytest.importorskip("ipfs_datasets_py.search.graph_query.ir")
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
+
         with pytest.raises(ValueError, match="entity_type"):
             compile_ir([{"op": "ScanType", "entity_type": "", "scope": None}])
 
@@ -1071,6 +1151,7 @@ class TestCompileIR:
         """GIVEN Expand op with direction WHEN compiling THEN returns QueryIR."""
         pytest.importorskip("ipfs_datasets_py.search.graph_query.ir")
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
+
         ops = [
             {"op": "ScanType", "entity_type": "Person"},
             {"op": "Expand", "relationship_types": ["works_at"], "direction": "outgoing"},
@@ -1082,6 +1163,7 @@ class TestCompileIR:
         """GIVEN Expand with bad direction WHEN compiling THEN ValueError."""
         pytest.importorskip("ipfs_datasets_py.search.graph_query.ir")
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
+
         with pytest.raises(ValueError, match="direction"):
             compile_ir([{"op": "Expand", "direction": "sideways"}])
 
@@ -1089,6 +1171,7 @@ class TestCompileIR:
         """GIVEN Limit op WHEN compiling THEN succeeds."""
         pytest.importorskip("ipfs_datasets_py.search.graph_query.ir")
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
+
         ops = [{"op": "ScanType", "entity_type": "City"}, {"op": "Limit", "n": 10}]
         ir = compile_ir(ops)
         assert ir is not None
@@ -1097,6 +1180,7 @@ class TestCompileIR:
         """GIVEN Limit op with n=-1 WHEN compiling THEN ValueError."""
         pytest.importorskip("ipfs_datasets_py.search.graph_query.ir")
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
+
         with pytest.raises(ValueError, match="n"):
             compile_ir([{"op": "Limit", "n": -1}])
 
@@ -1104,6 +1188,7 @@ class TestCompileIR:
         """GIVEN Project op WHEN compiling THEN succeeds."""
         pytest.importorskip("ipfs_datasets_py.search.graph_query.ir")
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
+
         ops = [
             {"op": "ScanType", "entity_type": "Person"},
             {"op": "Project", "fields": ["name", "type"]},
@@ -1115,6 +1200,7 @@ class TestCompileIR:
         """GIVEN Project with empty fields WHEN compiling THEN ValueError."""
         pytest.importorskip("ipfs_datasets_py.search.graph_query.ir")
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
+
         with pytest.raises(ValueError, match="fields"):
             compile_ir([{"op": "Project", "fields": []}])
 
@@ -1122,6 +1208,7 @@ class TestCompileIR:
         """GIVEN unsupported op name WHEN compiling THEN ValueError."""
         pytest.importorskip("ipfs_datasets_py.search.graph_query.ir")
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
+
         with pytest.raises(ValueError, match="Unsupported"):
             compile_ir([{"op": "FlyToMars"}])
 
@@ -1129,6 +1216,7 @@ class TestCompileIR:
         """GIVEN op dict without 'op'/'type'/'name' WHEN compiling THEN ValueError."""
         pytest.importorskip("ipfs_datasets_py.search.graph_query.ir")
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import compile_ir
+
         with pytest.raises(ValueError, match="missing"):
             compile_ir([{"foo": "bar"}])
 
@@ -1139,33 +1227,40 @@ class TestQueryKnowledgeGraphValidation:
     def test_invalid_max_results_raises(self):
         """GIVEN max_results=0 WHEN querying THEN ValueError."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import query_knowledge_graph
+
         with pytest.raises(ValueError, match="max_results"):
-            query_knowledge_graph(query="x", query_type="ir", max_results=0,
-                                  manifest_cid="baf123")
+            query_knowledge_graph(query="x", query_type="ir", max_results=0, manifest_cid="baf123")
 
     def test_empty_query_raises(self):
         """GIVEN empty query WHEN querying THEN ValueError."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import query_knowledge_graph
+
         with pytest.raises(ValueError, match="non-empty"):
-            query_knowledge_graph(query="   ", query_type="ir", max_results=10,
-                                  manifest_cid="baf123")
+            query_knowledge_graph(
+                query="   ", query_type="ir", max_results=10, manifest_cid="baf123"
+            )
 
     def test_ir_type_without_manifest_raises(self):
         """GIVEN query_type='ir' without manifest_cid WHEN querying THEN ValueError."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import query_knowledge_graph
+
         with pytest.raises(ValueError, match="manifest_cid"):
-            query_knowledge_graph(query='[{"op":"ScanType","entity_type":"X"}]',
-                                  query_type="ir", max_results=10)
+            query_knowledge_graph(
+                query='[{"op":"ScanType","entity_type":"X"}]', query_type="ir", max_results=10
+            )
 
     def test_unsupported_query_type_raises(self):
         """GIVEN unsupported query_type='fts' WHEN querying THEN ValueError."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import query_knowledge_graph
+
         with pytest.raises(ValueError, match="Unsupported"):
             query_knowledge_graph(query="search", query_type="fts", max_results=10)
 
     def test_legacy_type_without_graph_id_raises(self):
         """GIVEN query_type='cypher' without graph_id WHEN querying THEN ValueError."""
         from ipfs_datasets_py.knowledge_graphs.query.knowledge_graph import query_knowledge_graph
+
         with pytest.raises(ValueError, match="graph_id"):
-            query_knowledge_graph(query="MATCH (n) RETURN n", query_type="cypher",
-                                  max_results=10, graph_id=None)
+            query_knowledge_graph(
+                query="MATCH (n) RETURN n", query_type="cypher", max_results=10, graph_id=None
+            )

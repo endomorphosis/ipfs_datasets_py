@@ -524,11 +524,24 @@ Weeks 30-31:   Final Integration & Polish
 **Task 2.2: Error Handling Enhancement (Week 2, Days 3-4)**
 - Define custom exception hierarchy:
   ```python
-  class CECError(Exception): pass
-  class ParsingError(CECError): pass
-  class ProvingError(CECError): pass
-  class ConversionError(CECError): pass
-  class ValidationError(CECError): pass
+  class CECError(Exception):
+      pass
+
+
+  class ParsingError(CECError):
+      pass
+
+
+  class ProvingError(CECError):
+      pass
+
+
+  class ConversionError(CECError):
+      pass
+
+
+  class ValidationError(CECError):
+      pass
   ```
 - Add meaningful error messages
 - Include context in exceptions (formula, location)

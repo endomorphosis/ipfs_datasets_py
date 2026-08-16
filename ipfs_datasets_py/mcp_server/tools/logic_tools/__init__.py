@@ -60,7 +60,12 @@ from .cec_parse_tool import cec_parse, cec_validate_formula
 from .cec_analysis_tool import cec_analyze_formula, cec_formula_complexity
 from .logic_capabilities_tool import logic_capabilities, logic_health
 from .logic_graphrag_tool import logic_build_knowledge_graph, logic_verify_rag_output
-from .flogic_tool import flogic_assert, flogic_query, flogic_check_consistency, flogic_normalize_term
+from .flogic_tool import (
+    flogic_assert,
+    flogic_query,
+    flogic_check_consistency,
+    flogic_normalize_term,
+)
 
 __all__ = [
     # temporal deontic logic

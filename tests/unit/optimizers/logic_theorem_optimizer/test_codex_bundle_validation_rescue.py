@@ -90,7 +90,10 @@ def test_bundles_only_verified_four_factor_compatible_todos() -> None:
     assert compatible.logic_families == ("deontic",)
     assert compatible.shared_validation_commands == ("pytest focused",)
     assert len(bundles) == 5
-    assert next(bundle for bundle in bundles if bundle.task_ids == ("blocked",)).readiness_verified is False
+    assert (
+        next(bundle for bundle in bundles if bundle.task_ids == ("blocked",)).readiness_verified
+        is False
+    )
 
 
 def test_task_packet_aliases_and_observed_throughput_drive_selection() -> None:

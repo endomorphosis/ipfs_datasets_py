@@ -117,15 +117,9 @@ def make_goal_snapshot(**overrides) -> GoalSnapshot:
     return GoalSnapshot(**defaults)
 
 
-LEAN_SORRY_SOURCE = (
-    "theorem hammer_fallback_thm (n : Nat) : n = n := by\n  sorry\n"
-)
-LEAN_FALSE_SOURCE = (
-    "theorem hammer_fallback_thm (n : Nat) : n + 1 = n + 2 := by\n  sorry\n"
-)
-COQ_SORRY_SOURCE = (
-    "Theorem hammer_fallback_thm (n : nat) : n = n.\nProof.\n  intros.\nAdmitted.\n"
-)
+LEAN_SORRY_SOURCE = "theorem hammer_fallback_thm (n : Nat) : n = n := by\n  sorry\n"
+LEAN_FALSE_SOURCE = "theorem hammer_fallback_thm (n : Nat) : n + 1 = n + 2 := by\n  sorry\n"
+COQ_SORRY_SOURCE = "Theorem hammer_fallback_thm (n : nat) : n = n.\nProof.\n  intros.\nAdmitted.\n"
 
 
 class FakeReconstructor:
@@ -157,9 +151,7 @@ class FakeReconstructor:
             return CapabilityEvidence(
                 itp=self.itp,
                 available=True,
-                executables={
-                    "fake": {"found": True, "path": "/fake/bin", "version": "fake-1.0"}
-                },
+                executables={"fake": {"found": True, "path": "/fake/bin", "version": "fake-1.0"}},
             )
         return CapabilityEvidence(
             itp=self.itp,
@@ -177,15 +169,11 @@ class FakeReconstructor:
         environment_lock=None,
         timeout=None,
     ):
-        self.reconstruct_calls.append(
-            (request, candidate, goal_snapshot, native_source)
-        )
+        self.reconstruct_calls.append((request, candidate, goal_snapshot, native_source))
         if self._raise_input_error:
             raise ReconstructionInputError("fake input error")
         if self._raise_kernel_unavailable:
-            raise KernelUnavailableError(
-                "fake kernel unavailable", capability=self.capability()
-            )
+            raise KernelUnavailableError("fake kernel unavailable", capability=self.capability())
 
         lock = environment_lock or EnvironmentLockRecord(
             lock_id="fake-lock",
@@ -293,21 +281,19 @@ class TestSplitTopLevelConjuncts:
         ]
 
     def test_three_way_split_within_bound(self):
-        assert fb.split_top_level_conjuncts(
-            "a = a ∧ b = b ∧ c = c", max_parts=4
-        ) == ["a = a", "b = b", "c = c"]
+        assert fb.split_top_level_conjuncts("a = a ∧ b = b ∧ c = c", max_parts=4) == [
+            "a = a",
+            "b = b",
+            "c = c",
+        ]
 
     def test_bound_folds_excess_conjuncts_into_final_subgoal(self):
-        result = fb.split_top_level_conjuncts(
-            "a = a ∧ b = b ∧ c = c ∧ d = d", max_parts=2
-        )
+        result = fb.split_top_level_conjuncts("a = a ∧ b = b ∧ c = c ∧ d = d", max_parts=2)
         # Only 2 parts allowed: first conjunct alone, everything else folded.
         assert result == ["a = a", "b = b ∧ c = c ∧ d = d"]
 
     def test_nested_parens_are_not_split(self):
-        result = fb.split_top_level_conjuncts(
-            "(a = a ∧ b = b) ∧ c = c", max_parts=4
-        )
+        result = fb.split_top_level_conjuncts("(a = a ∧ b = b) ∧ c = c", max_parts=4)
         assert result == ["(a = a ∧ b = b)", "c = c"]
 
     def test_single_conjunct_inside_parens_only_returns_empty(self):
@@ -621,9 +607,7 @@ class TestDecompositionSubgoal:
             subgoal.validate()
 
     def test_verified_native_with_reconstruction_id_is_valid(self):
-        subgoal = self._native(
-            status=fb.SubgoalStatus.VERIFIED, reconstruction_id="recon-1"
-        )
+        subgoal = self._native(status=fb.SubgoalStatus.VERIFIED, reconstruction_id="recon-1")
         subgoal.validate()
 
     def test_llm_verified_requires_reviewed_status(self):
@@ -830,20 +814,13 @@ class TestBuildDecompositionPlan:
         )
 
         assert [s.statement for s in plan.subgoals] == ["n = n", "m = m"]
-        assert all(
-            s.source is fb.DecompositionSource.NATIVE_STRUCTURAL
-            for s in plan.subgoals
-        )
-        assert all(
-            s.review_status is fb.ReviewStatus.NOT_REQUIRED for s in plan.subgoals
-        )
+        assert all(s.source is fb.DecompositionSource.NATIVE_STRUCTURAL for s in plan.subgoals)
+        assert all(s.review_status is fb.ReviewStatus.NOT_REQUIRED for s in plan.subgoals)
         assert [s.rank for s in plan.subgoals] == [0, 1]
 
     def test_llm_ignored_when_policy_disabled(self):
         request = make_request(
-            policy=make_policy(
-                max_decomposition_subgoals=4, allow_llm_decomposition_hints=False
-            )
+            policy=make_policy(max_decomposition_subgoals=4, allow_llm_decomposition_hints=False)
         )
         snapshot = make_goal_snapshot(goal_text="n = n")
 
@@ -855,15 +832,11 @@ class TestBuildDecompositionPlan:
         )
 
         assert plan.subgoals == []
-        assert any(
-            "allow_llm_decomposition_hints is False" in note for note in plan.notes
-        )
+        assert any("allow_llm_decomposition_hints is False" in note for note in plan.notes)
 
     def test_llm_used_when_policy_enabled(self):
         request = make_request(
-            policy=make_policy(
-                max_decomposition_subgoals=4, allow_llm_decomposition_hints=True
-            )
+            policy=make_policy(max_decomposition_subgoals=4, allow_llm_decomposition_hints=True)
         )
         snapshot = make_goal_snapshot(goal_text="n = n")
 
@@ -884,9 +857,7 @@ class TestBuildDecompositionPlan:
 
     def test_native_subgoals_take_priority_over_llm_within_bound(self):
         request = make_request(
-            policy=make_policy(
-                max_decomposition_subgoals=2, allow_llm_decomposition_hints=True
-            )
+            policy=make_policy(max_decomposition_subgoals=2, allow_llm_decomposition_hints=True)
         )
         snapshot = make_goal_snapshot(goal_text="n = n ∧ m = m")
 
@@ -900,17 +871,12 @@ class TestBuildDecompositionPlan:
         # The native split alone already fills max_subgoals=2; no room left
         # for the LLM suggestion.
         assert len(plan.subgoals) == 2
-        assert all(
-            s.source is fb.DecompositionSource.NATIVE_STRUCTURAL
-            for s in plan.subgoals
-        )
+        assert all(s.source is fb.DecompositionSource.NATIVE_STRUCTURAL for s in plan.subgoals)
         assert any("already reached" in note for note in plan.notes)
 
     def test_llm_suggestions_beyond_remaining_budget_are_truncated_with_note(self):
         request = make_request(
-            policy=make_policy(
-                max_decomposition_subgoals=2, allow_llm_decomposition_hints=True
-            )
+            policy=make_policy(max_decomposition_subgoals=2, allow_llm_decomposition_hints=True)
         )
         snapshot = make_goal_snapshot(goal_text="n = n")
 
@@ -943,7 +909,9 @@ class TestBuildDecompositionPlan:
         snapshot = make_goal_snapshot()
         with pytest.raises(fb.FallbackInputError):
             fb.build_decomposition_plan(
-                request=request, trigger="not-a-trigger", goal_snapshot=snapshot  # type: ignore[arg-type]
+                request=request,
+                trigger="not-a-trigger",
+                goal_snapshot=snapshot,  # type: ignore[arg-type]
             )
 
 
@@ -1041,9 +1009,7 @@ class TestVerifyDecompositionSubgoal:
         snapshot = make_goal_snapshot()
         subgoal = self._native_subgoal(request_id="other-request")
         with pytest.raises(fb.FallbackInputError):
-            fb.verify_decomposition_subgoal(
-                subgoal, request=request, goal_snapshot=snapshot
-            )
+            fb.verify_decomposition_subgoal(subgoal, request=request, goal_snapshot=snapshot)
 
     def test_refuses_already_verified(self):
         request = make_request(request_id="req-1")
@@ -1052,9 +1018,7 @@ class TestVerifyDecompositionSubgoal:
             status=fb.SubgoalStatus.VERIFIED, reconstruction_id="recon-1"
         )
         with pytest.raises(fb.FallbackInputError):
-            fb.verify_decomposition_subgoal(
-                subgoal, request=request, goal_snapshot=snapshot
-            )
+            fb.verify_decomposition_subgoal(subgoal, request=request, goal_snapshot=snapshot)
 
     def test_refuses_review_rejected(self):
         request = make_request(request_id="req-1")
@@ -1063,18 +1027,14 @@ class TestVerifyDecompositionSubgoal:
             review_status=fb.ReviewStatus.REJECTED, status=fb.SubgoalStatus.REJECTED
         )
         with pytest.raises(fb.FallbackInputError):
-            fb.verify_decomposition_subgoal(
-                subgoal, request=request, goal_snapshot=snapshot
-            )
+            fb.verify_decomposition_subgoal(subgoal, request=request, goal_snapshot=snapshot)
 
     def test_refuses_unreviewed_llm_subgoal(self):
         request = make_request(request_id="req-1")
         snapshot = make_goal_snapshot()
         subgoal = self._llm_subgoal()
         with pytest.raises(fb.FallbackInputError):
-            fb.verify_decomposition_subgoal(
-                subgoal, request=request, goal_snapshot=snapshot
-            )
+            fb.verify_decomposition_subgoal(subgoal, request=request, goal_snapshot=snapshot)
 
     def test_kernel_unavailable_marks_skipped(self):
         request = make_request(request_id="req-1")
@@ -1278,9 +1238,7 @@ class TestAttemptFallback:
 
     def test_disabled_native_automation_builds_decomposition(self):
         request = make_request(
-            policy=make_policy(
-                allow_native_automation_fallback=False, max_decomposition_subgoals=4
-            )
+            policy=make_policy(allow_native_automation_fallback=False, max_decomposition_subgoals=4)
         )
         snapshot = make_goal_snapshot(goal_text="n = n ∧ m = m")
 
@@ -1301,9 +1259,7 @@ class TestAttemptFallback:
 
     def test_rejected_native_automation_records_error_and_builds_decomposition(self):
         request = make_request(
-            policy=make_policy(
-                allow_native_automation_fallback=True, max_decomposition_subgoals=4
-            )
+            policy=make_policy(allow_native_automation_fallback=True, max_decomposition_subgoals=4)
         )
         snapshot = make_goal_snapshot(goal_text="n = n ∧ m = m")
         reconstructor = FakeReconstructor(accept=False)
@@ -1323,9 +1279,7 @@ class TestAttemptFallback:
 
     def test_round_trip(self):
         request = make_request(
-            policy=make_policy(
-                allow_native_automation_fallback=False, max_decomposition_subgoals=4
-            )
+            policy=make_policy(allow_native_automation_fallback=False, max_decomposition_subgoals=4)
         )
         snapshot = make_goal_snapshot(goal_text="n = n ∧ m = m")
 
@@ -1360,9 +1314,7 @@ class TestAttemptFallback:
     def test_real_lean_end_to_end_decomposition_after_rejection(self):
         request = make_request(
             theorem_id="hammer_fallback_reject_thm",
-            policy=make_policy(
-                allow_native_automation_fallback=True, max_decomposition_subgoals=4
-            ),
+            policy=make_policy(allow_native_automation_fallback=True, max_decomposition_subgoals=4),
             goal_statement="n + 1 = n + 2",
         )
         snapshot = make_goal_snapshot(

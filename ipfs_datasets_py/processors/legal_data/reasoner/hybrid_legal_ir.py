@@ -251,7 +251,12 @@ def _rank_modal_candidates(text: str) -> List[Dict[str, Any]]:
     candidates: List[Dict[str, Any]] = []
 
     rules: List[Tuple[str, DeonticOp, float, str]] = [
-        (r"\b(shall\s+not|must\s+not|prohibited)\b", DeonticOp.F, 0.97, "explicit prohibition token"),
+        (
+            r"\b(shall\s+not|must\s+not|prohibited)\b",
+            DeonticOp.F,
+            0.97,
+            "explicit prohibition token",
+        ),
         (r"\bshall\b", DeonticOp.O, 0.94, "explicit obligation token"),
         (r"\bmust\b", DeonticOp.O, 0.93, "strong obligation token"),
         (r"\bmay\b", DeonticOp.P, 0.90, "permission token"),
@@ -397,7 +402,9 @@ def parse_cnl_sentence(
             action_text = _norm_text(action_text[: em.start()])
             break
     # Count possible competing markers in the original sentence.
-    exception_hits += len(re.findall(r"\b(unless|except\s+as\s+to)\b", text, re.IGNORECASE)) - (1 if exception_text else 0)
+    exception_hits += len(re.findall(r"\b(unless|except\s+as\s+to)\b", text, re.IGNORECASE)) - (
+        1 if exception_text else 0
+    )
     if exception_hits > 1:
         ambiguity_flags.append("multiple_exception_markers")
 
@@ -413,12 +420,14 @@ def parse_cnl_sentence(
         ambiguity_flags.append("multiple_activation_markers")
 
     if fail_on_ambiguity and ambiguity_flags:
-        raise ValueError(
-            "Ambiguous CNL parse: " + ", ".join(ambiguity_flags)
-        )
+        raise ValueError("Ambiguous CNL parse: " + ", ".join(ambiguity_flags))
 
     temporal_ref = None
-    t_match = re.search(r"\bwithin\s+(\d+)\s+(day|days|hour|hours|month|months|year|years)\b", action_text, re.IGNORECASE)
+    t_match = re.search(
+        r"\bwithin\s+(\d+)\s+(day|days|hour|hours|month|months|year|years)\b",
+        action_text,
+        re.IGNORECASE,
+    )
     if t_match:
         duration = f"{t_match.group(1)}{t_match.group(2).lower().rstrip('s')}"
         tc_id = deterministic_id("tmp", [duration, "window", action_text])
@@ -432,7 +441,9 @@ def parse_cnl_sentence(
         action_text = _norm_text(action_text[: t_match.start()])
 
     agent_id = deterministic_id("ent", [agent_text or "anonymous_agent"])
-    ir.entities[agent_id.ref()] = Entity(id=agent_id, type_name="LegalActor", attrs={"label": agent_text})
+    ir.entities[agent_id.ref()] = Entity(
+        id=agent_id, type_name="LegalActor", attrs={"label": agent_text}
+    )
 
     frame_id = deterministic_id("frm", [agent_text, action_text, jurisdiction])
     frame = ActionFrame(
@@ -466,7 +477,10 @@ def parse_cnl_sentence(
     if exception_text:
         exceptions.append(Condition.atom_pred("exception_clause", exception_text))
 
-    norm_id = deterministic_id("nrm", [op.value, frame.id.ref(), activation_text or "", exception_text or "", temporal_ref or ""])
+    norm_id = deterministic_id(
+        "nrm",
+        [op.value, frame.id.ref(), activation_text or "", exception_text or "", temporal_ref or ""],
+    )
     norm = Norm(
         id=norm_id,
         op=op,
@@ -518,7 +532,9 @@ def normalize_ir(ir: LegalIR) -> LegalIR:
         if isinstance(frame, ActionFrame):
             frame.verb = _normalize_verb_lexical(frame.verb)
             if "action_text" in frame.attrs:
-                frame.attrs["action_text"] = _normalize_verb_lexical(str(frame.attrs.get("action_text") or ""))
+                frame.attrs["action_text"] = _normalize_verb_lexical(
+                    str(frame.attrs.get("action_text") or "")
+                )
 
     for tmp in ir.temporal.values():
         tmp.expr.duration = _normalize_temporal_duration(tmp.expr.duration)
@@ -562,7 +578,9 @@ def compile_to_dcec(ir: LegalIR) -> List[str]:
 
     for norm in ir.norms.values():
         act = _cond_to_dcec(norm.activation)
-        exc = " and ".join(_cond_to_dcec(e) for e in norm.exceptions) if norm.exceptions else "false"
+        exc = (
+            " and ".join(_cond_to_dcec(e) for e in norm.exceptions) if norm.exceptions else "false"
+        )
         t_guard = "true"
         if norm.temporal_ref and norm.temporal_ref in ir.temporal:
             tc = ir.temporal[norm.temporal_ref]
@@ -603,7 +621,9 @@ def compile_to_temporal_deontic_fol(ir: LegalIR, *, canonical_predicates: bool =
         if canonical_predicates:
             action_name = _canonical_action_predicate(frame, norm)
         else:
-            action_name = frame.attrs.get("action_text") if isinstance(frame, ActionFrame) else frame.id.value
+            action_name = (
+                frame.attrs.get("action_text") if isinstance(frame, ActionFrame) else frame.id.value
+            )
             action_name = re.sub(r"[^A-Za-z0-9]+", "_", str(action_name)).strip("_") or "Action"
         pred = f"{action_name}({', '.join(frame.roles.values())}, t)"
         act = _cond_to_fol(norm.activation)
@@ -611,7 +631,9 @@ def compile_to_temporal_deontic_fol(ir: LegalIR, *, canonical_predicates: bool =
         t_guard = "true"
         if norm.temporal_ref and norm.temporal_ref in ir.temporal:
             t_guard = f"TemporalGuard({norm.temporal_ref}, t)"
-        formulas.append(f"forall t. ({act} and {t_guard} and not ({exc})) -> {norm.op.value}_t({pred}).")
+        formulas.append(
+            f"forall t. ({act} and {t_guard} and not ({exc})) -> {norm.op.value}_t({pred})."
+        )
     return formulas
 
 
@@ -737,12 +759,22 @@ def compile_differential_report(
         d_formula = dcec[idx]
         t_formula = tdfol[idx]
 
-        modal_consistent = (modal_to_dcec[norm.op] in d_formula) and (modal_to_tdfol[norm.op] in t_formula)
+        modal_consistent = (modal_to_dcec[norm.op] in d_formula) and (
+            modal_to_tdfol[norm.op] in t_formula
+        )
         temporal_expected = bool(norm.temporal_ref)
-        temporal_consistent = ("TemporalGuard(" in d_formula) == temporal_expected and ("TemporalGuard(" in t_formula) == temporal_expected
+        temporal_consistent = ("TemporalGuard(" in d_formula) == temporal_expected and (
+            "TemporalGuard(" in t_formula
+        ) == temporal_expected
 
-        activation_expected = norm.activation.op == "atom" and bool(norm.activation.atom) and norm.activation.atom.pred == "activation_clause"
-        activation_consistent = ("activation_clause(" in d_formula) == activation_expected and ("activation_clause(" in t_formula) == activation_expected
+        activation_expected = (
+            norm.activation.op == "atom"
+            and bool(norm.activation.atom)
+            and norm.activation.atom.pred == "activation_clause"
+        )
+        activation_consistent = ("activation_clause(" in d_formula) == activation_expected and (
+            "activation_clause(" in t_formula
+        ) == activation_expected
 
         entry = {
             "formula_ref": deterministic_id("cmp", [norm.id.ref(), d_formula, t_formula]).ref(),
@@ -789,7 +821,9 @@ def generate_cnl(norm: Norm, ir: LegalIR) -> str:
     """Deterministic CNL back-translation for one norm."""
     frame = ir.frames[norm.target_frame_ref]
     agent = frame.roles.get("agent", "ent:unknown")
-    agent_label = ir.entities.get(agent).attrs.get("label", agent) if agent in ir.entities else agent
+    agent_label = (
+        ir.entities.get(agent).attrs.get("label", agent) if agent in ir.entities else agent
+    )
     action_text = frame.attrs.get("action_text", getattr(frame, "verb", "act"))
 
     modal = {
@@ -804,7 +838,11 @@ def generate_cnl(norm: Norm, ir: LegalIR) -> str:
         if tc.expr.duration:
             parts.append(f"within {tc.expr.duration}")
 
-    if norm.activation.op == "atom" and norm.activation.atom and norm.activation.atom.pred == "activation_clause":
+    if (
+        norm.activation.op == "atom"
+        and norm.activation.atom
+        and norm.activation.atom.pred == "activation_clause"
+    ):
         parts.append(norm.activation.atom.args[0])
 
     if norm.exceptions:
@@ -819,7 +857,9 @@ def generate_cnl(norm: Norm, ir: LegalIR) -> str:
     return sentence
 
 
-def ir_semantic_roundtrip_score(source_text: str, decoded_text: str, model_name: str = "all-MiniLM-L6-v2") -> float:
+def ir_semantic_roundtrip_score(
+    source_text: str, decoded_text: str, model_name: str = "all-MiniLM-L6-v2"
+) -> float:
     """Cosine similarity helper for roundtrip fidelity checks.
 
     Uses sentence-transformers if available; raises ImportError otherwise.

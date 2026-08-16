@@ -22,7 +22,11 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Select canary route from shadow-mode audit")
     ap.add_argument("--audit", required=True, help="Shadow mode audit JSON path")
     ap.add_argument("--risk-level", choices=["low", "medium", "high"], default="low")
-    ap.add_argument("--allow-without-shadow-ready", action="store_true", help="Allow hybrid routing even when shadow_ready is false")
+    ap.add_argument(
+        "--allow-without-shadow-ready",
+        action="store_true",
+        help="Allow hybrid routing even when shadow_ready is false",
+    )
     ap.add_argument("--output", required=True, help="Output decision JSON path")
     args = ap.parse_args()
 

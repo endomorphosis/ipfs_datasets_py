@@ -95,18 +95,14 @@ def _sha256_digest(data: bytes) -> str:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise LegalProofCacheError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise LegalProofCacheError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
 def _require_profile(value: Any) -> str:
     profile = _require_text(value, "profile")
     if not _PROFILE_RE.fullmatch(profile):
-        raise LegalProofCacheError(
-            "profile must be a lowercase hyphenated identifier"
-        )
+        raise LegalProofCacheError("profile must be a lowercase hyphenated identifier")
     return profile
 
 
@@ -115,18 +111,14 @@ def _require_jurisdiction(value: Any) -> str:
         return ""
     jurisdiction = _require_text(value, "jurisdiction")
     if not _JURISDICTION_RE.fullmatch(jurisdiction):
-        raise LegalProofCacheError(
-            "jurisdiction must be a lowercase hyphenated identifier"
-        )
+        raise LegalProofCacheError("jurisdiction must be a lowercase hyphenated identifier")
     return jurisdiction
 
 
 def _require_digest(value: Any, field_name: str) -> str:
     digest = _require_text(value, field_name)
     if not _DIGEST_RE.fullmatch(digest):
-        raise LegalProofCacheError(
-            f"{field_name} must be a sha256:<hex> digest"
-        )
+        raise LegalProofCacheError(f"{field_name} must be a sha256:<hex> digest")
     return digest
 
 
@@ -183,13 +175,9 @@ def _normalize_artifact(
         produced = artifact
     else:
         try:
-            produced = FormalizationArtifact.from_dict(
-                _as_mapping(artifact, "artifact")
-            )
+            produced = FormalizationArtifact.from_dict(_as_mapping(artifact, "artifact"))
         except (TypeError, ValueError) as exc:
-            raise LegalProofCacheError(
-                f"invalid formalization artifact: {exc}"
-            ) from exc
+            raise LegalProofCacheError(f"invalid formalization artifact: {exc}") from exc
     if produced.domain != "legal":
         raise LegalProofCacheError(
             "legal proof cache only accepts legal-domain formalization artifacts"
@@ -206,17 +194,11 @@ def _normalize_theorem_receipt(value: Any) -> dict[str, Any]:
         try:
             receipt = ProofReceipt.from_dict(value)
         except (TypeError, ValueError) as exc:
-            raise LegalProofCacheError(
-                f"invalid theorem proof receipt: {exc}"
-            ) from exc
+            raise LegalProofCacheError(f"invalid theorem proof receipt: {exc}") from exc
     else:
-        raise LegalProofCacheError(
-            "theorem receipt must be a ProofReceipt or mapping"
-        )
+        raise LegalProofCacheError("theorem receipt must be a ProofReceipt or mapping")
     if receipt.proof_authority is not AuthorityKind.THEOREM_PROOF:
-        raise LegalProofCacheError(
-            "theorem receipt proof_authority must be theorem_proof"
-        )
+        raise LegalProofCacheError("theorem receipt proof_authority must be theorem_proof")
     if receipt.status is not ResultStatus.PROVED:
         raise LegalProofCacheError(
             "theorem receipt status must be proved (no proof authority without receipt)"
@@ -241,18 +223,14 @@ class LegalProofRecord:
     schema_version: str = LEGAL_PROOF_RECORD_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "source_id", _require_text(self.source_id, "source_id")
-        )
+        object.__setattr__(self, "source_id", _require_text(self.source_id, "source_id"))
         object.__setattr__(
             self,
             "source_digest",
             _require_digest(self.source_digest, "source_digest"),
         )
         object.__setattr__(self, "profile", _require_profile(self.profile))
-        object.__setattr__(
-            self, "jurisdiction", _require_jurisdiction(self.jurisdiction)
-        )
+        object.__setattr__(self, "jurisdiction", _require_jurisdiction(self.jurisdiction))
         artifact_map = dict(_as_mapping(self.artifact, "artifact"))
         object.__setattr__(self, "artifact", MappingProxyType(artifact_map))
 
@@ -327,9 +305,7 @@ class LegalProofRecord:
             "schema_version": self.schema_version,
             "source_digest": self.source_digest,
             "source_id": self.source_id,
-            "theorem_receipts": [
-                _json_ready(dict(item)) for item in self.theorem_receipts
-            ],
+            "theorem_receipts": [_json_ready(dict(item)) for item in self.theorem_receipts],
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -356,9 +332,7 @@ class LegalProofRecord:
             try:
                 results.append(ProofReceipt.from_dict(dict(item)))
             except (TypeError, ValueError) as exc:
-                raise LegalProofIntegrityError(
-                    f"stored theorem receipt is invalid: {exc}"
-                ) from exc
+                raise LegalProofIntegrityError(f"stored theorem receipt is invalid: {exc}") from exc
         return tuple(results)
 
     def verify_integrity(self) -> "LegalProofRecord":
@@ -366,25 +340,16 @@ class LegalProofRecord:
 
         artifact = self.formalization_artifact()
         if artifact.domain != "legal":
-            raise LegalProofIntegrityError(
-                "stored artifact domain is not legal"
-            )
+            raise LegalProofIntegrityError("stored artifact domain is not legal")
         if artifact.digest != self.artifact_digest:
             raise LegalProofIntegrityError(
                 "stored artifact_digest does not match recomputed identity"
             )
         if artifact.artifact_id != self.artifact_cid:
-            raise LegalProofIntegrityError(
-                "stored artifact_cid does not match recomputed identity"
-            )
+            raise LegalProofIntegrityError("stored artifact_cid does not match recomputed identity")
         if artifact.declaration_digest != self.source_digest:
-            raise LegalProofIntegrityError(
-                "source_digest drifted from artifact declaration_digest"
-            )
-        if (
-            artifact.declaration_id != self.source_id
-            and artifact.sample_id != self.source_id
-        ):
+            raise LegalProofIntegrityError("source_digest drifted from artifact declaration_digest")
+        if artifact.declaration_id != self.source_id and artifact.sample_id != self.source_id:
             raise LegalProofIntegrityError(
                 "source_id drifted from artifact declaration/sample identity"
             )
@@ -394,9 +359,7 @@ class LegalProofRecord:
                     "theorem receipt lost theorem_proof authority under reload"
                 )
             if receipt.status is not ResultStatus.PROVED:
-                raise LegalProofIntegrityError(
-                    "theorem receipt lost proved status under reload"
-                )
+                raise LegalProofIntegrityError("theorem receipt lost proved status under reload")
             if receipt.declaration_id and receipt.declaration_id not in {
                 self.source_id,
                 artifact.declaration_id,
@@ -411,9 +374,7 @@ class LegalProofRecord:
         value = _as_mapping(value, "legal proof record")
         unknown = sorted(set(value) - _RECORD_FIELDS)
         if unknown:
-            raise LegalProofCacheError(
-                "unknown legal proof record field(s): " + ", ".join(unknown)
-            )
+            raise LegalProofCacheError("unknown legal proof record field(s): " + ", ".join(unknown))
         return cls(
             source_id=value.get("source_id", ""),
             source_digest=value.get("source_digest", ""),
@@ -425,9 +386,7 @@ class LegalProofRecord:
             jurisdiction=value.get("jurisdiction", "") or "",
             content_digest=value.get("content_digest", ""),
             content_cid=value.get("content_cid", ""),
-            schema_version=value.get(
-                "schema_version", LEGAL_PROOF_RECORD_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", LEGAL_PROOF_RECORD_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -447,16 +406,12 @@ class LegalProofRecord:
         resolved_source_id = source_id or produced.declaration_id or produced.sample_id
         resolved_source_digest = source_digest or produced.declaration_digest
         if source_digest is not None:
-            resolved_source_digest = _require_digest(
-                source_digest, "source_digest"
-            )
+            resolved_source_digest = _require_digest(source_digest, "source_digest")
             if resolved_source_digest != produced.declaration_digest:
                 raise LegalProofCacheError(
                     "source_digest does not match artifact declaration_digest"
                 )
-        receipt_payloads = tuple(
-            _normalize_theorem_receipt(item) for item in theorem_receipts
-        )
+        receipt_payloads = tuple(_normalize_theorem_receipt(item) for item in theorem_receipts)
         for receipt in receipt_payloads:
             declaration_id = receipt.get("declaration_id", "")
             if declaration_id and declaration_id not in {
@@ -468,9 +423,7 @@ class LegalProofRecord:
                 )
         return cls(
             source_id=_require_text(resolved_source_id, "source_id"),
-            source_digest=_require_digest(
-                resolved_source_digest, "source_digest"
-            ),
+            source_digest=_require_digest(resolved_source_digest, "source_digest"),
             profile=_require_profile(profile),
             artifact=artifact_payload,
             artifact_digest=produced.digest,
@@ -490,21 +443,13 @@ class LegalProofCache:
     """
 
     root: Path | None = None
-    _records: dict[str, LegalProofRecord] = field(
-        default_factory=dict, init=False, repr=False
-    )
-    _profile_index: dict[str, str] = field(
-        default_factory=dict, init=False, repr=False
-    )
+    _records: dict[str, LegalProofRecord] = field(default_factory=dict, init=False, repr=False)
+    _profile_index: dict[str, str] = field(default_factory=dict, init=False, repr=False)
     # source_digest -> profile -> content_cid
-    _source_index: dict[str, dict[str, str]] = field(
-        default_factory=dict, init=False, repr=False
-    )
+    _source_index: dict[str, dict[str, str]] = field(default_factory=dict, init=False, repr=False)
     _hits: int = field(default=0, init=False, repr=False)
     _misses: int = field(default=0, init=False, repr=False)
-    _lock: threading.RLock = field(
-        default_factory=threading.RLock, init=False, repr=False
-    )
+    _lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if self.root is not None:
@@ -563,9 +508,7 @@ class LegalProofCache:
 
     def put(
         self,
-        artifact: FormalizationArtifact
-        | Mapping[str, Any]
-        | LegalProofRecord,
+        artifact: FormalizationArtifact | Mapping[str, Any] | LegalProofRecord,
         *,
         profile: str | None = None,
         source_id: str | None = None,
@@ -577,9 +520,7 @@ class LegalProofCache:
 
         with self._lock:
             if isinstance(artifact, LegalProofRecord):
-                if profile is not None and artifact.profile != _require_profile(
-                    profile
-                ):
+                if profile is not None and artifact.profile != _require_profile(profile):
                     raise LegalProofCacheError(
                         "profile argument conflicts with the supplied record"
                     )
@@ -591,10 +532,7 @@ class LegalProofCache:
                     raise LegalProofCacheError(
                         "source_id argument conflicts with the supplied record"
                     )
-                if (
-                    source_digest is not None
-                    and source_digest != artifact.source_digest
-                ):
+                if source_digest is not None and source_digest != artifact.source_digest:
                     raise LegalProofCacheError(
                         "source_digest argument conflicts with the supplied record"
                     )
@@ -605,9 +543,7 @@ class LegalProofCache:
                 record = artifact.verify_integrity()
             else:
                 if profile is None:
-                    raise LegalProofCacheError(
-                        "profile is required when putting an artifact"
-                    )
+                    raise LegalProofCacheError("profile is required when putting an artifact")
                 record = LegalProofRecord.build(
                     artifact,
                     profile=profile,
@@ -634,9 +570,7 @@ class LegalProofCache:
             path = self._record_path(cid)
             if path is None or not path.is_file():
                 self._misses += 1
-                raise LegalProofCacheError(
-                    f"proof record not found for content_cid={cid!r}"
-                )
+                raise LegalProofCacheError(f"proof record not found for content_cid={cid!r}")
             record = self._load_record_file(path)
             if record.content_cid != cid:
                 raise LegalProofIntegrityError(
@@ -654,9 +588,7 @@ class LegalProofCache:
             cid = self._profile_index.get(profile)
             if cid is None:
                 self._misses += 1
-                raise LegalProofCacheError(
-                    f"no proof record indexed for profile={profile!r}"
-                )
+                raise LegalProofCacheError(f"no proof record indexed for profile={profile!r}")
             return self.get(cid)
 
     def get_by_source_digest(
@@ -681,17 +613,14 @@ class LegalProofCache:
                 by_profile = self._source_index.get(source_digest)
             if not by_profile:
                 self._misses += 1
-                raise LegalProofCacheError(
-                    f"no proof record for source_digest={source_digest!r}"
-                )
+                raise LegalProofCacheError(f"no proof record for source_digest={source_digest!r}")
             if profile is not None:
                 profile = _require_profile(profile)
                 cid = by_profile.get(profile)
                 if cid is None:
                     self._misses += 1
                     raise LegalProofCacheError(
-                        f"no proof record for source_digest={source_digest!r} "
-                        f"profile={profile!r}"
+                        f"no proof record for source_digest={source_digest!r} profile={profile!r}"
                     )
                 return self.get(cid)
             if len(by_profile) > 1:
@@ -760,25 +689,20 @@ class LegalProofCache:
                     )
                 loaded[record.content_cid] = record
                 profile_index[record.profile] = record.content_cid
-                source_index.setdefault(record.source_digest, {})[
-                    record.profile
-                ] = record.content_cid
+                source_index.setdefault(record.source_digest, {})[record.profile] = (
+                    record.content_cid
+                )
 
             index_path = self._index_path()
             if index_path is not None and index_path.is_file():
                 try:
-                    index_payload = json.loads(
-                        index_path.read_text(encoding="utf-8")
-                    )
+                    index_payload = json.loads(index_path.read_text(encoding="utf-8"))
                 except (OSError, UnicodeError, json.JSONDecodeError) as exc:
                     raise LegalProofIntegrityError(
                         f"legal proof cache index is unreadable: {exc}"
                     ) from exc
                 index_payload = _as_mapping(index_payload, "legal proof cache index")
-                if (
-                    index_payload.get("schema_version")
-                    != LEGAL_PROOF_INDEX_SCHEMA_VERSION
-                ):
+                if index_payload.get("schema_version") != LEGAL_PROOF_INDEX_SCHEMA_VERSION:
                     raise LegalProofIntegrityError(
                         "unsupported legal proof cache index schema: "
                         f"{index_payload.get('schema_version')!r}"
@@ -810,9 +734,7 @@ class LegalProofCache:
                         "legal proof cache index source_digests must be a mapping"
                     )
                 for source_digest, profile_map in sources.items():
-                    source_digest = _require_digest(
-                        source_digest, "index source_digest"
-                    )
+                    source_digest = _require_digest(source_digest, "index source_digest")
                     if not isinstance(profile_map, Mapping):
                         raise LegalProofIntegrityError(
                             "source_digests entries must map profiles to CIDs"
@@ -861,17 +783,11 @@ class LegalProofCache:
             return
         payload = {
             "interface": LEGAL_PROOF_CACHE_INTERFACE,
-            "profiles": {
-                profile: cid
-                for profile, cid in sorted(self._profile_index.items())
-            },
+            "profiles": {profile: cid for profile, cid in sorted(self._profile_index.items())},
             "record_cids": sorted(self._records),
             "schema_version": LEGAL_PROOF_INDEX_SCHEMA_VERSION,
             "source_digests": {
-                digest: {
-                    profile: cid
-                    for profile, cid in sorted(profiles.items())
-                }
+                digest: {profile: cid for profile, cid in sorted(profiles.items())}
                 for digest, profiles in sorted(self._source_index.items())
             },
         }
@@ -881,9 +797,7 @@ class LegalProofCache:
         try:
             raw = path.read_bytes()
         except OSError as exc:
-            raise LegalProofIntegrityError(
-                f"unable to read proof record {path}: {exc}"
-            ) from exc
+            raise LegalProofIntegrityError(f"unable to read proof record {path}: {exc}") from exc
         try:
             payload = json.loads(raw.decode("utf-8"))
         except (UnicodeError, json.JSONDecodeError) as exc:
@@ -891,18 +805,14 @@ class LegalProofCache:
                 f"proof record {path.name} is not valid JSON: {exc}"
             ) from exc
         try:
-            record = LegalProofRecord.from_dict(
-                _as_mapping(payload, "legal proof record")
-            )
+            record = LegalProofRecord.from_dict(_as_mapping(payload, "legal proof record"))
         except LegalProofCacheError as exc:
             raise LegalProofIntegrityError(
                 f"proof record {path.name} failed validation: {exc}"
             ) from exc
         recomputed = _sha256_digest(_canonical_bytes(record._identity_payload()))
         if recomputed != record.content_digest:
-            raise LegalProofIntegrityError(
-                f"proof record {path.name} failed content rehash"
-            )
+            raise LegalProofIntegrityError(f"proof record {path.name} failed content rehash")
         return record.verify_integrity()
 
 
@@ -956,21 +866,15 @@ def rebuild_offline_from_fixture_dir(
     fixture_dir = Path(fixture_dir)
     manifest_path = fixture_dir / "manifest.json"
     if not manifest_path.is_file():
-        raise LegalProofCacheError(
-            f"fixture manifest not found: {manifest_path}"
-        )
+        raise LegalProofCacheError(f"fixture manifest not found: {manifest_path}")
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise LegalProofCacheError(
-            f"unable to read fixture manifest: {exc}"
-        ) from exc
+        raise LegalProofCacheError(f"unable to read fixture manifest: {exc}") from exc
     if not isinstance(manifest, Mapping):
         raise LegalProofCacheError("fixture manifest must be a mapping")
     if manifest.get("interface") != LEGAL_PROOF_CACHE_INTERFACE:
-        raise LegalProofCacheError(
-            "fixture manifest interface is not LegalProofCache@1"
-        )
+        raise LegalProofCacheError("fixture manifest interface is not LegalProofCache@1")
     cache = LegalProofCache(root=Path(root) if root is not None else None)
     samples = manifest.get("samples", {})
     if not isinstance(samples, Mapping):

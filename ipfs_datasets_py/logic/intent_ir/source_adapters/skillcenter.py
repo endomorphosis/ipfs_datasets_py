@@ -102,9 +102,7 @@ class SkillCenterEntryIdentity:
                 "entry identity does not use CIDv1/raw/sha2-256 consistently"
             )
         if self.identity_schema_version != SKILLCENTER_ENTRY_IDENTITY_SCHEMA_VERSION:
-            raise SkillCenterRecordError(
-                "entry identity schema version is unsupported"
-            )
+            raise SkillCenterRecordError("entry identity schema version is unsupported")
 
     def to_dict(self) -> dict[str, str]:
         return {
@@ -250,9 +248,8 @@ class SkillCenterSkillRecord:
 
     @property
     def license_expression(self) -> str:
-        return (
-            _metadata_scalar(self.metadata_yaml, "license_spdx")
-            or _metadata_scalar(self.metadata_yaml, "license")
+        return _metadata_scalar(self.metadata_yaml, "license_spdx") or _metadata_scalar(
+            self.metadata_yaml, "license"
         )
 
     @property
@@ -277,9 +274,7 @@ class SkillCenterSkillRecord:
             f"{self.dataset_id}@{self.dataset_revision}/"
             f"{self.repository_file}#{self.skill_id}:{self.content_sha256}"
         )
-        reference_digest = hashlib.sha256(
-            reference_material.encode("utf-8")
-        ).hexdigest()
+        reference_digest = hashlib.sha256(reference_material.encode("utf-8")).hexdigest()
         return SourceRef(
             ref_id=f"skillcenter:{reference_digest}",
             source_uri=self.source_url or container_uri,
@@ -312,17 +307,13 @@ class SkillCenterBundleReader:
         self.repository_file = str(repository_file or self.path.name).strip()
         self.dataset_id = str(dataset_id or "").strip()
         self.max_text_chars = int(max_text_chars)
-        self.allow_declared_count_mismatch = bool(
-            allow_declared_count_mismatch
-        )
+        self.allow_declared_count_mismatch = bool(allow_declared_count_mismatch)
         self.declared_total_skills: int | None = None
         self._manifest: SkillCenterBundleManifest | None = None
         if not self.dataset_revision:
             raise ValueError("dataset_revision is required; mutable 'main' is unsafe")
         if self.dataset_revision.lower() in _MUTABLE_REVISION_NAMES:
-            raise ValueError(
-                "dataset_revision must be an immutable commit, not a mutable ref"
-            )
+            raise ValueError("dataset_revision must be an immutable commit, not a mutable ref")
         if not self.dataset_id or not self.repository_file:
             raise ValueError("dataset_id and repository_file are required")
         if self.max_text_chars < 1:
@@ -338,16 +329,12 @@ class SkillCenterBundleReader:
             self._validate_schema(connection)
             metadata = {
                 str(row["key"]): str(row["value"] or "")
-                for row in connection.execute(
-                    "SELECT key, value FROM bundle_meta ORDER BY key"
-                )
+                for row in connection.execute("SELECT key, value FROM bundle_meta ORDER BY key")
             }
             total_skills = _positive_or_zero_int(
                 metadata.get("total_skills"), "bundle_meta.total_skills"
             )
-            index_rows = int(
-                connection.execute("SELECT COUNT(*) FROM skills_index").fetchone()[0]
-            )
+            index_rows = int(connection.execute("SELECT COUNT(*) FROM skills_index").fetchone()[0])
             content_rows = int(
                 connection.execute("SELECT COUNT(*) FROM skills_content").fetchone()[0]
             )
@@ -364,10 +351,7 @@ class SkillCenterBundleReader:
                     f"declared={total_skills}, index={index_rows}, "
                     f"content={content_rows}, joined={joined_rows}"
                 )
-            if (
-                total_skills != index_rows
-                and not self.allow_declared_count_mismatch
-            ):
+            if total_skills != index_rows and not self.allow_declared_count_mismatch:
                 raise SkillCenterBundleSchemaError(
                     "SkillCenter row counts disagree: "
                     f"declared={total_skills}, index={index_rows}, "
@@ -401,17 +385,13 @@ class SkillCenterBundleReader:
             raise ValueError("limit must be a non-negative integer or None")
         batch_size = int(batch_size)
         if not 1 <= batch_size <= MAX_BATCH_SIZE:
-            raise ValueError(
-                f"batch_size must be between 1 and {MAX_BATCH_SIZE}"
-            )
+            raise ValueError(f"batch_size must be between 1 and {MAX_BATCH_SIZE}")
         manifest = self.inspect()
         remaining = None if limit is None else int(limit)
         last_skill_id = str(start_after or "")
         with closing(self._connect()) as connection:
             while remaining is None or remaining > 0:
-                fetch_size = (
-                    batch_size if remaining is None else min(batch_size, remaining)
-                )
+                fetch_size = batch_size if remaining is None else min(batch_size, remaining)
                 where = ["i.skill_id > ?"]
                 parameters: list[Any] = [last_skill_id]
                 if domain is not None:
@@ -476,9 +456,7 @@ class SkillCenterBundleReader:
                 raise SkillCenterRecordError(f"{name} must not be empty")
         for name in ("metadata_yaml", "skill_md", "library_md"):
             if len(values[name]) > self.max_text_chars:
-                raise SkillCenterRecordError(
-                    f"{values['skill_id']}: {name} exceeds max_text_chars"
-                )
+                raise SkillCenterRecordError(f"{values['skill_id']}: {name} exceeds max_text_chars")
         score = row["overall_score"]
         if score is not None:
             try:
@@ -488,9 +466,7 @@ class SkillCenterBundleReader:
                     f"{values['skill_id']}: invalid overall_score"
                 ) from exc
             if not math.isfinite(score):
-                raise SkillCenterRecordError(
-                    f"{values['skill_id']}: overall_score must be finite"
-                )
+                raise SkillCenterRecordError(f"{values['skill_id']}: overall_score must be finite")
         return SkillCenterSkillRecord(
             **values,
             overall_score=score,
@@ -502,14 +478,10 @@ class SkillCenterBundleReader:
 
     def _validate_file_header(self) -> None:
         if not self.path.is_file():
-            raise SkillCenterBundleSchemaError(
-                f"SkillCenter bundle does not exist: {self.path}"
-            )
+            raise SkillCenterBundleSchemaError(f"SkillCenter bundle does not exist: {self.path}")
         with self.path.open("rb") as handle:
             if handle.read(len(_SQLITE_HEADER)) != _SQLITE_HEADER:
-                raise SkillCenterBundleSchemaError(
-                    "SkillCenter bundle is not a SQLite 3 database"
-                )
+                raise SkillCenterBundleSchemaError("SkillCenter bundle is not a SQLite 3 database")
 
     def _connect(self) -> sqlite3.Connection:
         uri = f"{self.path.as_uri()}?mode=ro&immutable=1"
@@ -524,8 +496,7 @@ class SkillCenterBundleReader:
         tables = {
             str(row[0])
             for row in connection.execute(
-                "SELECT name FROM sqlite_master "
-                "WHERE type IN ('table', 'view') ORDER BY name"
+                "SELECT name FROM sqlite_master WHERE type IN ('table', 'view') ORDER BY name"
             )
         }
         missing_tables = sorted(set(_REQUIRED_COLUMNS) - tables)
@@ -535,10 +506,7 @@ class SkillCenterBundleReader:
             )
         for table, required_columns in _REQUIRED_COLUMNS.items():
             # Table names come only from the constant allowlist above.
-            columns = {
-                str(row[1])
-                for row in connection.execute(f"PRAGMA table_info({table})")
-            }
+            columns = {str(row[1]) for row in connection.execute(f"PRAGMA table_info({table})")}
             missing_columns = sorted(required_columns - columns)
             if missing_columns:
                 raise SkillCenterBundleSchemaError(

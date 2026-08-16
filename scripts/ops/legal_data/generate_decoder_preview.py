@@ -34,7 +34,9 @@ def _fmt(v: Optional[float]) -> str:
     return f"{v:.16f}".rstrip("0").rstrip(".")
 
 
-def _pick_preview_text(rec: Dict[str, Any], mode: str) -> Tuple[Optional[str], Optional[str], Optional[float]]:
+def _pick_preview_text(
+    rec: Dict[str, Any], mode: str
+) -> Tuple[Optional[str], Optional[str], Optional[float]]:
     if mode == "hybrid":
         txt = rec.get("hybrid_roundtrip_text")
         cos = rec.get("semantic_similarity_hybrid")
@@ -47,7 +49,11 @@ def _pick_preview_text(rec: Dict[str, Any], mode: str) -> Tuple[Optional[str], O
     origin = rec.get("final_decoded_text_origin")
     cos = rec.get("semantic_similarity_final_decoded")
     if isinstance(txt, str) and txt.strip():
-        return txt.strip(), str(origin) if origin else None, float(cos) if isinstance(cos, (int, float)) else None
+        return (
+            txt.strip(),
+            str(origin) if origin else None,
+            float(cos) if isinstance(cos, (int, float)) else None,
+        )
     return None, None, None
 
 
@@ -64,7 +70,9 @@ def _build_lines(records: List[Dict[str, Any]], mode: str, max_rows: int) -> Lis
 
     cos_vals = [c for (_, _, _, c) in kept if isinstance(c, float)]
     decoder_enabled = any(bool(rec.get("llm_decoder_pass_applied")) for rec, _, _, _ in kept)
-    decoder_applied_count = sum(1 for rec, _, _, _ in kept if bool(rec.get("llm_decoder_pass_applied")))
+    decoder_applied_count = sum(
+        1 for rec, _, _, _ in kept if bool(rec.get("llm_decoder_pass_applied"))
+    )
     decoder_rejected_count = sum(
         1
         for rec, _, _, _ in kept
@@ -100,9 +108,13 @@ def _build_lines(records: List[Dict[str, Any]], mode: str, max_rows: int) -> Lis
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Generate markdown decoder preview from conversion records.")
+    ap = argparse.ArgumentParser(
+        description="Generate markdown decoder preview from conversion records."
+    )
     ap.add_argument("--records", required=True, help="Path to records.jsonl")
-    ap.add_argument("--report", default="", help="Optional report.json path (reserved for future enrichments)")
+    ap.add_argument(
+        "--report", default="", help="Optional report.json path (reserved for future enrichments)"
+    )
     ap.add_argument("--output", required=True, help="Output markdown path")
     ap.add_argument(
         "--mode",

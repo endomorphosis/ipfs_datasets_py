@@ -132,10 +132,7 @@ class ZkpAttestationBridgeAdapter:
                 format="zkp-attestation-records",
                 source_component="zkp.circuits",
                 payload={
-                    "records": [
-                        _public_attestation_record(record)
-                        for record in attestations
-                    ]
+                    "records": [_public_attestation_record(record) for record in attestations]
                 },
                 metadata={
                     "attestation_count": len(attestations),
@@ -227,18 +224,14 @@ class ZkpAttestationBridgeAdapter:
         )
         from ipfs_datasets_py.logic.zkp import zkp_attestation_legal_ir_view_loss
 
-        legal_ir_view_loss = zkp_attestation_legal_ir_view_loss(
-            public_attestation_records
-        )
+        legal_ir_view_loss = zkp_attestation_legal_ir_view_loss(public_attestation_records)
         proof_gate = _proof_gate_from_attestations(attestations)
         graph_result = GraphProjectionResult.from_graph_data(context["graph_data"])
         attempted = max(1, len(attestations))
         verified_count = sum(1 for record in attestations if record["verified"])
         missing_loss = 0.0 if attestations else 1.0
         verification_failure_ratio = (
-            max(0.0, (attempted - verified_count) / attempted)
-            if attestations
-            else 1.0
+            max(0.0, (attempted - verified_count) / attempted) if attestations else 1.0
         )
         round_trip = RoundTripMetrics(
             cosine_similarity=max(0.0, 1.0 - missing_loss),
@@ -265,12 +258,8 @@ class ZkpAttestationBridgeAdapter:
             status=status,
             metadata={
                 "adapter": "zkp_attestation_bridge_v1",
-                "compiler_guidance_applied": bool(
-                    context.get("compiler_guidance_ref")
-                ),
-                "compiler_guidance_ref": str(
-                    context.get("compiler_guidance_ref") or ""
-                ),
+                "compiler_guidance_applied": bool(context.get("compiler_guidance_ref")),
+                "compiler_guidance_ref": str(context.get("compiler_guidance_ref") or ""),
                 "proof_system": "simulated_zkp",
                 "simulated_only": True,
             },
@@ -380,9 +369,7 @@ def _zkp_attestation_records_cache_key(
         "version": 1,
     }
     return hashlib.sha256(
-        json.dumps(payload, default=str, ensure_ascii=True, sort_keys=True).encode(
-            "utf-8"
-        )
+        json.dumps(payload, default=str, ensure_ascii=True, sort_keys=True).encode("utf-8")
     ).hexdigest()
 
 
@@ -421,10 +408,7 @@ def _remember_zkp_attestation_records(
     records: Sequence[Mapping[str, Any]],
 ) -> None:
     with _ZKP_ATTESTATION_RECORD_CACHE_LOCK:
-        if (
-            len(_ZKP_ATTESTATION_RECORD_CACHE)
-            >= _ZKP_ATTESTATION_RECORD_CACHE_MAX_ITEMS
-        ):
+        if len(_ZKP_ATTESTATION_RECORD_CACHE) >= _ZKP_ATTESTATION_RECORD_CACHE_MAX_ITEMS:
             _ZKP_ATTESTATION_RECORD_CACHE.pop(
                 next(iter(_ZKP_ATTESTATION_RECORD_CACHE)),
                 None,
@@ -433,9 +417,7 @@ def _remember_zkp_attestation_records(
 
 
 def _zkp_attestation_records_disk_cache_enabled() -> bool:
-    raw = str(
-        os.environ.get(_ZKP_ATTESTATION_RECORD_DISK_CACHE_ENABLED_ENV) or ""
-    ).strip().lower()
+    raw = str(os.environ.get(_ZKP_ATTESTATION_RECORD_DISK_CACHE_ENABLED_ENV) or "").strip().lower()
     return raw not in _FALSE_ENV_VALUES
 
 
@@ -472,11 +454,7 @@ def _zkp_attestation_records_code_fingerprint() -> str:
         ]
         tokens: list[str] = []
         for candidate in candidates:
-            paths = (
-                sorted(candidate.rglob("*.py"))
-                if candidate.is_dir()
-                else [candidate]
-            )
+            paths = sorted(candidate.rglob("*.py")) if candidate.is_dir() else [candidate]
             for path in paths:
                 try:
                     stat = path.stat()
@@ -488,9 +466,7 @@ def _zkp_attestation_records_code_fingerprint() -> str:
                     relative = path
                 tokens.append(f"{relative}:{stat.st_mtime_ns}:{stat.st_size}")
         _ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_VALUE = (
-            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest()
-            if tokens
-            else "unknown"
+            hashlib.sha256("\n".join(tokens).encode("utf-8")).hexdigest() if tokens else "unknown"
         )
         return _ZKP_ATTESTATION_RECORD_CODE_FINGERPRINT_VALUE
 
@@ -512,12 +488,7 @@ def _zkp_attestation_records_disk_cache_path(cache_key: str) -> Optional[Path]:
     if root is None:
         return None
     disk_key = _zkp_attestation_records_disk_cache_key(cache_key)
-    return (
-        root
-        / _ZKP_ATTESTATION_RECORD_DISK_CACHE_KIND
-        / disk_key[:2]
-        / f"{disk_key}.json"
-    )
+    return root / _ZKP_ATTESTATION_RECORD_DISK_CACHE_KIND / disk_key[:2] / f"{disk_key}.json"
 
 
 def _read_zkp_attestation_records_disk_cache(
@@ -543,9 +514,7 @@ def _read_zkp_attestation_records_disk_cache(
     records = wrapper.get("records")
     if not isinstance(records, list):
         return None
-    return _clone_attestation_records(
-        [record for record in records if isinstance(record, Mapping)]
-    )
+    return _clone_attestation_records([record for record in records if isinstance(record, Mapping)])
 
 
 def _write_zkp_attestation_records_disk_cache(
@@ -623,9 +592,7 @@ def _zkp_frame_logic_triples(
     *,
     attestations: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, str]]:
-    triples = [
-        {"subject": document_id, "predicate": "type", "object": "legal_zkp_document"}
-    ]
+    triples = [{"subject": document_id, "predicate": "type", "object": "legal_zkp_document"}]
     for record in attestations:
         source_id = str(record.get("source_id") or "")
         if not source_id:
@@ -634,19 +601,29 @@ def _zkp_frame_logic_triples(
         proof_node = f"{source_id}:zkp_proof"
         triples.extend(
             [
-                {"subject": document_id, "predicate": "contains_zkp_attestation", "object": proof_node},
+                {
+                    "subject": document_id,
+                    "predicate": "contains_zkp_attestation",
+                    "object": proof_node,
+                },
                 {"subject": proof_node, "predicate": "type", "object": "zkp_attestation"},
                 {"subject": proof_node, "predicate": "attests_formula", "object": source_id},
-                {"subject": proof_node, "predicate": "proof_hash", "object": str(record.get("proof_hash") or "")},
-                {"subject": proof_node, "predicate": "verified", "object": str(bool(record.get("verified"))).lower()},
+                {
+                    "subject": proof_node,
+                    "predicate": "proof_hash",
+                    "object": str(record.get("proof_hash") or ""),
+                },
+                {
+                    "subject": proof_node,
+                    "predicate": "verified",
+                    "object": str(bool(record.get("verified"))).lower(),
+                },
             ]
         )
         for key in ("theorem_hash", "axioms_commitment", "ruleset_id"):
             value = public_inputs.get(key)
             if value:
-                triples.append(
-                    {"subject": proof_node, "predicate": key, "object": str(value)}
-                )
+                triples.append({"subject": proof_node, "predicate": key, "object": str(value)})
     return [triple for triple in triples if triple["object"]]
 
 
@@ -683,9 +660,7 @@ def _public_attestation_record(record: Mapping[str, Any]) -> dict[str, Any]:
     )
     return {
         "attestation_ref": str(
-            public_inputs.get("attestation_ref")
-            or attestation_view.get("attestation_ref")
-            or ""
+            public_inputs.get("attestation_ref") or attestation_view.get("attestation_ref") or ""
         ),
         "attestation_view": dict(attestation_view),
         "attestation_view_version": int(
@@ -700,31 +675,23 @@ def _public_attestation_record(record: Mapping[str, Any]) -> dict[str, Any]:
             or ""
         ),
         "circuit_ref": str(
-            public_inputs.get("circuit_ref")
-            or attestation_view.get("circuit_ref")
-            or ""
+            public_inputs.get("circuit_ref") or attestation_view.get("circuit_ref") or ""
         ),
         "error": record.get("error") or "",
         "proof_hash": proof_hash,
         "proof_system": str(
-            attestation_view.get("proof_system")
-            or proof_metadata.get("proof_system")
-            or ""
+            attestation_view.get("proof_system") or proof_metadata.get("proof_system") or ""
         ),
         "proof_size_bytes": int(proof.get("size_bytes") or 0),
         "compiler_guidance_ref": compiler_guidance_ref,
         "public_inputs": public_inputs,
         "ruleset_id": str(
-            public_inputs.get("ruleset_id")
-            or attestation_view.get("ruleset_id")
-            or ""
+            public_inputs.get("ruleset_id") or attestation_view.get("ruleset_id") or ""
         ),
         "source_id": record.get("source_id") or "",
         "theorem": record.get("theorem") or "",
         "theorem_hash": str(
-            public_inputs.get("theorem_hash")
-            or attestation_view.get("theorem_hash")
-            or ""
+            public_inputs.get("theorem_hash") or attestation_view.get("theorem_hash") or ""
         ),
         "verified": bool(record.get("verified")),
     }

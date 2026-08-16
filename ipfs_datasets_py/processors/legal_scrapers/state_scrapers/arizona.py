@@ -24,11 +24,11 @@ class ArizonaScraper(BaseStateScraper):
         r"\s*</li>\s*<li[^>]+class=[\"'][^\"']*\bcolright\b[^\"']*[\"'][^>]*>\s*(?P<title>.*?)\s*</li>",
         re.IGNORECASE | re.DOTALL,
     )
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Arizona's legislative website."""
         return "https://www.azleg.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Arizona."""
         # Arizona publishes titles behind a consistent static endpoint. Return
@@ -42,7 +42,7 @@ class ArizonaScraper(BaseStateScraper):
             }
             for title in range(1, 50)
         ]
-    
+
     async def _fetch_official_az_html(self, url: str, timeout_seconds: int = 8) -> str:
         cached = await self._load_page_bytes_from_any_cache(url)
         if cached:
@@ -140,7 +140,9 @@ class ArizonaScraper(BaseStateScraper):
 
         url_match = self._AZ_SECTION_DOC_RE.search(section_url)
         title_number = url_match.group(1) if url_match else section_number.split("-", 1)[0]
-        chapter_number = section_number.split("-", 1)[1].split(".", 1)[0][:2] if "-" in section_number else None
+        chapter_number = (
+            section_number.split("-", 1)[1].split(".", 1)[0][:2] if "-" in section_number else None
+        )
 
         return NormalizedStatute(
             state_code=self.state_code,
@@ -171,17 +173,19 @@ class ArizonaScraper(BaseStateScraper):
         max_statutes: int | None = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Arizona's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=240)
         statutes: List[NormalizedStatute] = []
-        for section_url, section_number, section_title in await self._discover_section_links(code_url):
+        for section_url, section_number, section_title in await self._discover_section_links(
+            code_url
+        ):
             if limit is not None and len(statutes) >= limit:
                 break
             statute = await self._build_statute_from_section_page(

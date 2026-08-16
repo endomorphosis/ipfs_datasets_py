@@ -28,9 +28,7 @@ _PACKET_000114_FAMILY_PAIRS = (
 
 
 def test_packet_000114_pairs_match_registry_constant() -> None:
-    assert tuple(COMPILER_REFINED_PACKET_000114_FAMILY_PAIRS) == (
-        _PACKET_000114_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_REFINED_PACKET_000114_FAMILY_PAIRS) == (_PACKET_000114_FAMILY_PAIRS)
 
 
 def test_packet_000114_pairs_are_supported_across_compiler_policies() -> None:

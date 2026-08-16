@@ -103,10 +103,7 @@ Successfully integrated comprehensive FFmpeg-based audio/visual data processing 
 ```python
 # Convert AVI to MP4 with H.264
 await ffmpeg_convert(
-    input_file="video.avi",
-    output_file="video.mp4", 
-    video_codec="libx264",
-    audio_codec="aac"
+    input_file="video.avi", output_file="video.mp4", video_codec="libx264", audio_codec="aac"
 )
 ```
 
@@ -117,7 +114,7 @@ await ffmpeg_batch_process(
     input_files=["file1.avi", "file2.mov"],
     output_directory="./converted/",
     operation="convert",
-    max_parallel=3
+    max_parallel=3,
 )
 ```
 
@@ -128,18 +125,14 @@ await ffmpeg_apply_filters(
     input_file="input.mp4",
     output_file="enhanced.mp4",
     video_filters=["scale=1280:720", "brightness=0.1"],
-    audio_filters=["volume=0.8"]
+    audio_filters=["volume=0.8"],
 )
 ```
 
 ### 4. Media Analysis
 ```python
 # Get detailed media information
-await ffmpeg_probe(
-    input_file="media.mp4",
-    show_format=True,
-    show_streams=True
-)
+await ffmpeg_probe(input_file="media.mp4", show_format=True, show_streams=True)
 ```
 
 ## 🛡️ Security & Quality Features

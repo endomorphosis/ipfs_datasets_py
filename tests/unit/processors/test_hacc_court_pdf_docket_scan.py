@@ -35,7 +35,9 @@ def test_analyze_pdf_for_court_case_uses_ocr_fallback(monkeypatch, tmp_path: Pat
     monkeypatch.setattr(
         scan_module,
         "_extract_pdf_ocr_text",
-        lambda path, max_pages=5: "IN THE UNITED STATES DISTRICT COURT\nCase No. 1:24-cv-9999\nDoe v. Example\nComplaint",
+        lambda path, max_pages=5: (
+            "IN THE UNITED STATES DISTRICT COURT\nCase No. 1:24-cv-9999\nDoe v. Example\nComplaint"
+        ),
     )
 
     result = analyze_pdf_for_court_case(pdf_path)
@@ -181,10 +183,15 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
     assert dataset["metadata"]["scan_status"] == "completed"
     assert dataset["metadata"]["collected_pdf_count"] == 2
     assert len(dataset["metadata"]["collected_pdf_paths"]) == 2
-    assert dataset["metadata"]["matched_relative_paths"] == ["case_a/complaint.pdf", "case_a/motion.pdf"]
+    assert dataset["metadata"]["matched_relative_paths"] == [
+        "case_a/complaint.pdf",
+        "case_a/motion.pdf",
+    ]
     assert dataset["metadata"]["scan_confidence_summary"]["average_confidence"] >= 0.85
     assert dataset["metadata"]["scan_case_graph"]["summary"]["entity_count"] >= 1
-    document_rows = [json.loads(row["payload_json"]) for row in dataset_rows if row["section"] == "documents"]
+    document_rows = [
+        json.loads(row["payload_json"]) for row in dataset_rows if row["section"] == "documents"
+    ]
     assert len(document_rows) == 2
     assert document_rows[0]["metadata"]["scan_detection"]["confidence"] >= 0.85
     assert document_rows[0]["metadata"]["scan_detection"]["is_likely_court_case"] is True
@@ -224,7 +231,9 @@ def test_scan_hacc_pdfs_for_dockets_enables_full_enrichment_by_default(tmp_path:
     assert manifest["scan_parameters"]["include_router_enrichment"] is True
 
 
-def test_scan_hacc_pdfs_for_dockets_sets_router_timeout_env_for_packaging(monkeypatch, tmp_path: Path) -> None:
+def test_scan_hacc_pdfs_for_dockets_sets_router_timeout_env_for_packaging(
+    monkeypatch, tmp_path: Path
+) -> None:
     scan_root = tmp_path / "hacc"
     _write_pdf(
         scan_root / "case_a" / "complaint.pdf",

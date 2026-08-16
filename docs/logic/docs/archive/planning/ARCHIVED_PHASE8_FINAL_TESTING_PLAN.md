@@ -37,35 +37,32 @@ This document outlines the comprehensive testing strategy for final validation o
 ```python
 class TestBridgeIntegration:
     """Test interactions between TDFOL and external systems."""
-    
+
     def test_tdfol_cec_roundtrip(self):
         """GIVEN: TDFOL formula
         WHEN: Converted to CEC and back
         THEN: Result semantically equivalent"""
         formula = Formula.parse("∀x (P(x) → Q(x))")
         bridge = TDFOLCECBridge()
-        
+
         # Convert to CEC
         cec_form = bridge.to_target_format(formula)
         assert cec_form is not None
-        
+
         # Prove with CEC
         result = bridge.prove(formula)
-        assert result.status in [
-            ProofStatus.PROVED,
-            ProofStatus.UNPROVABLE
-        ]
-        
+        assert result.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE]
+
         # Convert back
         tdfol_result = bridge.from_target_format(result)
         assert tdfol_result.formula == formula
-    
+
     def test_fallback_behavior(self):
         """GIVEN: SymbolicAI not available
         WHEN: Using fallback methods
         THEN: Results still correct (but slower)"""
         # Simulate missing dependency
-        with mock.patch('symbolic_logic_primitives.SYMBOLIC_AI_AVAILABLE', False):
+        with mock.patch("symbolic_logic_primitives.SYMBOLIC_AI_AVAILABLE", False):
             symbol = Symbol("All cats are animals")
             fol = symbol.to_fol()
             assert "∀x" in fol.value
@@ -89,45 +86,46 @@ class TestBridgeIntegration:
 ```python
 import pytest
 
+
 class TestPerformance:
     """Performance regression tests."""
-    
+
     @pytest.mark.benchmark(group="conversion")
     def test_simple_conversion_speed(self, benchmark):
         """Simple FOL conversion should be <100ms."""
+
         def convert():
-            return FOLConverter().convert(
-                "All cats are animals"
-            )
-        
+            return FOLConverter().convert("All cats are animals")
+
         result = benchmark(convert)
         assert result.conversion_time_ms < 100
-    
+
     @pytest.mark.benchmark(group="proving")
     def test_simple_proof_speed(self, benchmark):
         """Simple proof should be <500ms."""
+
         def prove():
             return prove_formula("P → Q", ["P"])
-        
+
         result = benchmark(prove)
         assert result.time_ms < 500
-    
+
     def test_cache_speedup(self):
         """GIVEN: Formula proven once
         WHEN: Proving same formula again
         THEN: 10x+ speedup from cache"""
         formula = "∀x (P(x) → Q(x))"
-        
+
         # First proof (no cache)
         start = time.perf_counter()
         prove_formula(formula)
         first_time = time.perf_counter() - start
-        
+
         # Second proof (cached)
         start = time.perf_counter()
         prove_formula(formula)
         cached_time = time.perf_counter() - start
-        
+
         assert first_time / cached_time > 10
 ```
 
@@ -210,55 +208,51 @@ class TestSecurity:
 ```python
 class TestStress:
     """Stress and load testing."""
-    
+
     @pytest.mark.slow
     def test_large_formula_set(self):
         """GIVEN: 10,000 formulas
         WHEN: Processing batch
         THEN: Completes without crash or memory leak"""
-        formulas = [
-            f"P{i} → Q{i}" for i in range(10_000)
-        ]
-        
+        formulas = [f"P{i} → Q{i}" for i in range(10_000)]
+
         # Monitor memory
         import tracemalloc
+
         tracemalloc.start()
-        
+
         results = batch_prove(formulas)
-        
+
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
-        
+
         # Should use <1GB for 10K formulas
         assert peak < 1_000_000_000
         assert len(results) == 10_000
-    
+
     def test_concurrent_proving(self):
         """GIVEN: Multiple threads proving simultaneously
         WHEN: Running for 60 seconds
         THEN: No deadlocks or race conditions"""
         import threading
-        
+
         errors = []
-        
+
         def prove_repeatedly():
             try:
                 for _ in range(100):
                     prove_formula("P → Q", ["P"])
             except Exception as e:
                 errors.append(e)
-        
+
         # 10 threads, 100 proofs each
-        threads = [
-            threading.Thread(target=prove_repeatedly)
-            for _ in range(10)
-        ]
-        
+        threads = [threading.Thread(target=prove_repeatedly) for _ in range(10)]
+
         for t in threads:
             t.start()
         for t in threads:
             t.join()
-        
+
         assert len(errors) == 0
 ```
 
@@ -280,7 +274,7 @@ class TestStress:
 ```python
 class TestDocumentation:
     """Validate documentation examples."""
-    
+
     def test_readme_examples(self):
         """All README.md examples should run."""
         # Example 1: Basic conversion
@@ -288,18 +282,16 @@ class TestDocumentation:
         result = converter.convert("All cats are animals")
         assert result.success
         assert "∀x" in result.fol
-        
+
         # Example 2: Theorem proving
         result = prove_formula("Q", assumptions=["P → Q", "P"])
         assert result.status == ProofStatus.PROVED
-    
+
     def test_troubleshooting_examples(self):
         """All TROUBLESHOOTING.md examples should work."""
         # Feature detection example
-        from ipfs_datasets_py.logic.common.feature_detection import (
-            FeatureDetector
-        )
-        
+        from ipfs_datasets_py.logic.common.feature_detection import FeatureDetector
+
         features = FeatureDetector.get_available_features()
         assert isinstance(features, list)
 ```
@@ -321,7 +313,7 @@ class TestDocumentation:
 ```python
 class TestEdgeCases:
     """Test unusual or boundary conditions."""
-    
+
     def test_empty_formula(self):
         """GIVEN: Empty string
         WHEN: Converting to FOL
@@ -330,7 +322,7 @@ class TestEdgeCases:
         result = converter.convert("")
         assert not result.success
         assert "empty" in result.error.lower()
-    
+
     def test_unicode_formula(self):
         """GIVEN: Unicode characters
         WHEN: Processing formula
@@ -338,22 +330,15 @@ class TestEdgeCases:
         formula = "∀x (P(x) → Q(x))"
         result = prove_formula(formula)
         assert result.status != ProofStatus.ERROR
-    
+
     def test_circular_dependencies(self):
         """GIVEN: Circular rule definitions
         WHEN: Proving
         THEN: Detected and handled"""
         # A → B, B → C, C → A
-        result = prove_formula(
-            "A",
-            assumptions=["A → B", "B → C", "C → A"]
-        )
+        result = prove_formula("A", assumptions=["A → B", "B → C", "C → A"])
         # Should not infinite loop
-        assert result.status in [
-            ProofStatus.PROVED,
-            ProofStatus.UNPROVABLE,
-            ProofStatus.TIMEOUT
-        ]
+        assert result.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE, ProofStatus.TIMEOUT]
 ```
 
 **Test Coverage:**

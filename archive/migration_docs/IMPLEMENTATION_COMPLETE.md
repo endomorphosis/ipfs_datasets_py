@@ -154,13 +154,12 @@ print(f"Status: {result['status']}")
 
 ### MCP Tool Usage
 ```python
-from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_ingest_to_graphrag import pdf_ingest_to_graphrag
+from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_ingest_to_graphrag import (
+    pdf_ingest_to_graphrag,
+)
 import json
 
-request = {
-    "pdf_path": "research_paper.pdf",
-    "options": {"enable_llm_optimization": True}
-}
+request = {"pdf_path": "research_paper.pdf", "options": {"enable_llm_optimization": True}}
 result = await pdf_ingest_to_graphrag(json.dumps(request))
 ```
 

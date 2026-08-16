@@ -178,24 +178,12 @@ def test_canonical_serialization_is_independent_of_registry_order() -> None:
         severity=DiagnosticSeverity.INFO,
     )
 
-    forward_provenance = replace(
-        provenance, sources=(provenance.sources[0], second_source)
-    )
-    reverse_provenance = replace(
-        provenance, sources=(second_source, provenance.sources[0])
-    )
-    forward_evidence = replace(
-        evidence, references=(evidence.references[0], second_evidence)
-    )
-    reverse_evidence = replace(
-        evidence, references=(second_evidence, evidence.references[0])
-    )
-    forward_report = replace(
-        report, diagnostics=(report.diagnostics[0], second_diagnostic)
-    )
-    reverse_report = replace(
-        report, diagnostics=(second_diagnostic, report.diagnostics[0])
-    )
+    forward_provenance = replace(provenance, sources=(provenance.sources[0], second_source))
+    reverse_provenance = replace(provenance, sources=(second_source, provenance.sources[0]))
+    forward_evidence = replace(evidence, references=(evidence.references[0], second_evidence))
+    reverse_evidence = replace(evidence, references=(second_evidence, evidence.references[0]))
+    forward_report = replace(report, diagnostics=(report.diagnostics[0], second_diagnostic))
+    reverse_report = replace(report, diagnostics=(second_diagnostic, report.diagnostics[0]))
 
     assert forward_provenance.to_json() == reverse_provenance.to_json()
     assert forward_evidence.to_json() == reverse_evidence.to_json()
@@ -242,9 +230,7 @@ def test_construction_defensively_copies_and_deeply_freezes_inputs() -> None:
 
 def test_source_bodies_and_config_payloads_are_not_embedded() -> None:
     provenance, evidence, report = _records()
-    serialized = (
-        provenance.to_json() + evidence.to_json() + report.to_json()
-    )
+    serialized = provenance.to_json() + evidence.to_json() + report.to_json()
 
     assert "normalized_text" not in serialized
     assert "source_body" not in serialized
@@ -259,44 +245,34 @@ def test_source_bodies_and_config_payloads_are_not_embedded() -> None:
         (
             lambda p: replace(
                 p,
-                spans=(
-                    replace(p.spans[0], source_ref_id="source:missing"),
-                ),
+                spans=(replace(p.spans[0], source_ref_id="source:missing"),),
             ),
             "unknown ids",
         ),
         (
             lambda p: replace(
                 p,
-                bindings=(
-                    replace(p.bindings[0], span_ids=("span:missing",)),
-                ),
+                bindings=(replace(p.bindings[0], span_ids=("span:missing",)),),
             ),
             "unknown ids",
         ),
         (
             lambda p: replace(
                 p,
-                bindings=(
-                    replace(p.bindings[0], producer_id="producer:missing"),
-                ),
+                bindings=(replace(p.bindings[0], producer_id="producer:missing"),),
             ),
             "unknown ids",
         ),
         (
             lambda p: replace(
                 p,
-                bindings=(
-                    replace(p.bindings[0], config_id="config:missing"),
-                ),
+                bindings=(replace(p.bindings[0], config_id="config:missing"),),
             ),
             "unknown ids",
         ),
     ],
 )
-def test_provenance_rejects_dangling_cross_references(
-    replacement: object, match: str
-) -> None:
+def test_provenance_rejects_dangling_cross_references(replacement: object, match: str) -> None:
     provenance, _, _ = _records()
     broken = replacement(provenance)  # type: ignore[operator]
 
@@ -329,13 +305,9 @@ def test_span_must_belong_to_the_listed_source() -> None:
 
 def test_evidence_rejects_dangling_source_and_parent_references() -> None:
     provenance, evidence, _ = _records()
-    missing_source = replace(
-        evidence.references[0], source_ref_ids=("source:missing",)
-    )
+    missing_source = replace(evidence.references[0], source_ref_ids=("source:missing",))
     with pytest.raises(EvidenceValidationError, match="unknown ids"):
-        replace(evidence, references=(missing_source,)).validate(
-            provenance=provenance
-        )
+        replace(evidence, references=(missing_source,)).validate(provenance=provenance)
 
     missing_parent = replace(
         evidence.references[0],
@@ -372,9 +344,7 @@ def test_provenance_and_evidence_lineage_cycles_are_rejected() -> None:
         parent_evidence_ids=(first_evidence.evidence_id,),
     )
     with pytest.raises(EvidenceValidationError, match="cycle"):
-        replace(
-            evidence, references=(first_evidence, second_evidence)
-        ).validate()
+        replace(evidence, references=(first_evidence, second_evidence)).validate()
 
 
 def test_diagnostics_reject_dangling_source_evidence_and_related_ids() -> None:
@@ -383,26 +353,20 @@ def test_diagnostics_reject_dangling_source_evidence_and_related_ids() -> None:
 
     bad_location = replace(
         diagnostic,
-        location=replace(
-            diagnostic.location, span_ids=("span:missing",)
-        ),
+        location=replace(diagnostic.location, span_ids=("span:missing",)),
     )
     with pytest.raises(DiagnosticValidationError, match="unknown ids"):
         replace(report, diagnostics=(bad_location,)).validate(
             provenance=provenance, evidence=evidence
         )
 
-    bad_evidence = replace(
-        diagnostic, evidence_ref_ids=("evidence:missing",)
-    )
+    bad_evidence = replace(diagnostic, evidence_ref_ids=("evidence:missing",))
     with pytest.raises(DiagnosticValidationError, match="unknown ids"):
         replace(report, diagnostics=(bad_evidence,)).validate(
             provenance=provenance, evidence=evidence
         )
 
-    bad_relation = replace(
-        diagnostic, related_diagnostic_ids=("diagnostic:missing",)
-    )
+    bad_relation = replace(diagnostic, related_diagnostic_ids=("diagnostic:missing",))
     with pytest.raises(DiagnosticValidationError, match="unknown ids"):
         replace(report, diagnostics=(bad_relation,)).validate()
 

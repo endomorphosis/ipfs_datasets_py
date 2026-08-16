@@ -23,14 +23,10 @@ from benchmarks.logic_pipeline import (
 
 
 def _sha(value: object) -> str:
-    return hashlib.sha256(
-        contracts.canonical_json(value).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(contracts.canonical_json(value).encode("utf-8")).hexdigest()
 
 
-def _case(
-    *, ambiguous: bool = True, proof_obligation: bool = True
-) -> ablation.AblationCase:
+def _case(*, ambiguous: bool = True, proof_obligation: bool = True) -> ablation.AblationCase:
     proof_fields: dict[str, object] = (
         {
             "obligation_id": "case-1-obligation",
@@ -46,10 +42,7 @@ def _case(
     return ablation.AblationCase.create(
         "case-1",
         {
-            "text": (
-                "Every reviewer is trained. Alice is a reviewer. "
-                "Therefore Alice is trained."
-            ),
+            "text": ("Every reviewer is trained. Alice is a reviewer. Therefore Alice is trained."),
             **proof_fields,
             "ambiguity_detected": ambiguous,
         },
@@ -92,9 +85,7 @@ def _fully_rehashed_suppressed_result(
         contracts.StageName.LEANSTRAL: "proof_scheduled",
         contracts.StageName.KERNEL: "independent_native_kernel",
     }
-    invocations: dict[
-        contracts.StageName, adapters.StageInvocation
-    ] = {}
+    invocations: dict[contracts.StageName, adapters.StageInvocation] = {}
     artifacts: list[adapters.StageArtifact] = []
     for invocation_index, stage in enumerate(order):
         request = adapters.StageRequest(
@@ -174,9 +165,7 @@ class _GraphHandlers:
     def mapping(self) -> MappingProxyType:
         return MappingProxyType(
             {
-                stage: adapters.StageAdapter(
-                    stage, handler=self._handler(stage)
-                )
+                stage: adapters.StageAdapter(stage, handler=self._handler(stage))
                 for stage in contracts.StageName
             }
         )
@@ -189,9 +178,7 @@ class _GraphHandlers:
                 return adapters.StageOutput(
                     data={
                         "stage": stage.value,
-                        "ambiguity_detected": request.input_data[
-                            "ambiguity_detected"
-                        ],
+                        "ambiguity_detected": request.input_data["ambiguity_detected"],
                         **(self.compiler_data or {}),
                     },
                     effective_identity=(
@@ -227,9 +214,7 @@ class _GraphHandlers:
                     "protocol_sha256": request.protocol_sha256,
                     "run_id": request.run_id,
                     "case_id": request.case_id,
-                    "case_manifest_sha256": (
-                        request.case_manifest_sha256
-                    ),
+                    "case_manifest_sha256": (request.case_manifest_sha256),
                     "variant_id": request.variant_id,
                     "split": request.split.value,
                     "cache_mode": request.cache_mode.value,
@@ -243,9 +228,7 @@ class _GraphHandlers:
                     candidate_sha256 = request.upstream_artifacts[0].digest
                     attempt_body = {
                         "attempt_index": 0,
-                        "candidate_source": (
-                            contracts.StageName.COMPILER.value
-                        ),
+                        "candidate_source": (contracts.StageName.COMPILER.value),
                         "candidate_artifact_sha256": candidate_sha256,
                         "source_sha256": _sha("source"),
                         "command_sha256": _sha("command"),
@@ -268,17 +251,12 @@ class _GraphHandlers:
                         {
                             "compiled_obligation_sha256": _sha("compiled"),
                             "obligation_sha256": _sha("obligation"),
-                            "candidate_source": attempt[
-                                "candidate_source"
-                            ],
+                            "candidate_source": attempt["candidate_source"],
                             "candidate_artifact_sha256": candidate_sha256,
                             "source_sha256": attempt["source_sha256"],
-                            "semantic_context_sha256": _sha(
-                                "semantic-context"
-                            ),
+                            "semantic_context_sha256": _sha("semantic-context"),
                             "semantic_artifact_sha256s": [
-                                artifact.digest
-                                for artifact in request.upstream_artifacts
+                                artifact.digest for artifact in request.upstream_artifacts
                             ],
                             "command_sha256": attempt["command_sha256"],
                             "stdout_sha256": attempt["stdout_sha256"],
@@ -286,15 +264,9 @@ class _GraphHandlers:
                             "returncode": attempt["returncode"],
                             "timed_out": attempt["timed_out"],
                             "cancelled": attempt["cancelled"],
-                            "resource_exhausted": attempt[
-                                "resource_exhausted"
-                            ],
-                            "termination_reason": attempt[
-                                "termination_reason"
-                            ],
-                            "process_group_reaped": attempt[
-                                "process_group_reaped"
-                            ],
+                            "resource_exhausted": attempt["resource_exhausted"],
+                            "termination_reason": attempt["termination_reason"],
+                            "process_group_reaped": attempt["process_group_reaped"],
                             "candidate_attempts": [attempt],
                             "candidate_attempts_sha256": _sha([attempt]),
                             "selected_attempt": {
@@ -318,9 +290,7 @@ class _GraphHandlers:
                         "receipt_sha256": receipt_sha256,
                     },
                     kernel_accepted=self.kernel_accepts,
-                    kernel_receipt_sha256=(
-                        receipt_sha256 if self.kernel_accepts else None
-                    ),
+                    kernel_receipt_sha256=(receipt_sha256 if self.kernel_accepts else None),
                 )
             return adapters.StageOutput(data={"stage": stage.value})
 
@@ -336,9 +306,7 @@ def _unsupported_runtime_compiler_data() -> dict[str, object]:
     assert compiled is not None
     assert "translation:unsupported" in compiled.source_template
     return {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"),
         "compiled_obligation": compiled.to_dict(),
         "compiled_obligation_sha256": compiled.digest,
         "entailment_translation": None,
@@ -375,9 +343,7 @@ def _supported_runtime_compiler_data(
         "requires_independent_kernel": True,
     }
     return {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"),
         "compiled_obligation": compiled.to_dict(),
         "compiled_obligation_sha256": compiled.digest,
         "entailment_translation": translation.to_dict(),
@@ -435,10 +401,7 @@ def test_every_arm_executes_its_registered_graph_and_proof_order(
     assert result.validate_provenance() is None
     assert run.contracts == plan.run_contracts
     assert len(
-        {
-            (contract.requested_variant_id, contract.cache_mode)
-            for contract in run.contracts
-        }
+        {(contract.requested_variant_id, contract.cache_mode) for contract in run.contracts}
     ) == len(run.contracts)
     if contracts.StageName.KERNEL in graph.requests:
         kernel = graph.requests[contracts.StageName.KERNEL]
@@ -452,10 +415,7 @@ def test_every_arm_executes_its_registered_graph_and_proof_order(
         assert kernel_record.stage is contracts.StageName.KERNEL
         assert kernel_record.kernel_accepted is False
         assert kernel_record.data["accepted"] is False
-        assert (
-            kernel_record.data["reason"]
-            == "diagnostic_only_authority_withheld"
-        )
+        assert kernel_record.data["reason"] == "diagnostic_only_authority_withheld"
         assert kernel_record.data["diagnostic_only"] is True
         assert kernel_record.data["authority_withheld"] is True
         assert kernel_record.data["diagnostic_kernel_accepted"] is True
@@ -477,18 +437,12 @@ def test_s1_rejects_rehashed_nested_diagnostic_from_another_case(
     ).results[0]
     assert result.terminal_kernel_accepted is True
 
-    kernel_value = json.loads(
-        contracts.canonical_json(result.stages[-1].to_dict())
-    )
+    kernel_value = json.loads(contracts.canonical_json(result.stages[-1].to_dict()))
     data = kernel_value["data"]
     nested = data["diagnostic_receipt"]
     nested["case_id"] = "copied-diagnostic-case"
     nested["receipt_sha256"] = _sha(
-        {
-            key: value
-            for key, value in nested.items()
-            if key != "receipt_sha256"
-        }
+        {key: value for key, value in nested.items() if key != "receipt_sha256"}
     )
     data["diagnostic_receipt_sha256"] = nested["receipt_sha256"]
     data["receipt_sha256"] = _sha(
@@ -505,9 +459,7 @@ def test_s1_rejects_rehashed_nested_diagnostic_from_another_case(
         contracts.ProtocolContractError,
         match="coordinate or source binding",
     ):
-        contracts.CaseResultRecord.from_stages(
-            (*result.stages[:-1], copied)
-        )
+        contracts.CaseResultRecord.from_stages((*result.stages[:-1], copied))
 
 
 def test_unsupported_raw_kernel_acceptance_stops_before_the_next_job(
@@ -546,10 +498,7 @@ def test_unsupported_raw_kernel_acceptance_stops_before_the_next_job(
     )
 
     assert run.complete is False
-    assert (
-        run.stop_failure_code
-        is contracts.FailureCode.INVALID_CONTROL_VERIFIED
-    )
+    assert run.stop_failure_code is contracts.FailureCode.INVALID_CONTROL_VERIFIED
     assert len(run.results) == 1
     assert run.results[0].status is contracts.OutcomeStatus.VERIFIED
     assert run.results[0].failure_code is None
@@ -574,11 +523,7 @@ def test_ambiguity_gate_is_zero_call_but_retains_typed_stage_record(
         resume=False,
     )
     result = run.results[0]
-    symai = next(
-        stage
-        for stage in result.stages
-        if stage.stage is contracts.StageName.SYMAI
-    )
+    symai = next(stage for stage in result.stages if stage.stage is contracts.StageName.SYMAI)
 
     assert contracts.StageName.SYMAI not in graph.calls
     assert symai.status is contracts.StageStatus.SUCCESS
@@ -600,17 +545,15 @@ def test_hammer_success_suppresses_bounded_fallback_and_flows_artifacts(
     )
     result = run.results[0]
     leanstral = next(
-        stage
-        for stage in result.stages
-        if stage.stage is contracts.StageName.LEANSTRAL
+        stage for stage in result.stages if stage.stage is contracts.StageName.LEANSTRAL
     )
 
     assert contracts.StageName.LEANSTRAL not in graph.calls
     assert leanstral.data["invoked"] is False
     assert leanstral.data["reason"] == "proof_fallback_suppressed"
-    assert graph.requests[contracts.StageName.KERNEL].artifact(
-        contracts.StageName.HAMMER
-    ) is not None
+    assert (
+        graph.requests[contracts.StageName.KERNEL].artifact(contracts.StageName.HAMMER) is not None
+    )
     assert result.status is contracts.OutcomeStatus.VERIFIED
 
 
@@ -638,21 +581,17 @@ def test_lean_first_invocation_is_preserved_with_canonical_durable_records(
     assert [
         stage.stage
         for stage in result.stages
-        if stage.stage
-        in {contracts.StageName.HAMMER, contracts.StageName.LEANSTRAL}
+        if stage.stage in {contracts.StageName.HAMMER, contracts.StageName.LEANSTRAL}
     ] == [contracts.StageName.HAMMER, contracts.StageName.LEANSTRAL]
     hammer_record = next(
-        stage
-        for stage in result.stages
-        if stage.stage is contracts.StageName.HAMMER
+        stage for stage in result.stages if stage.stage is contracts.StageName.HAMMER
     )
-    assert hammer_record.provenance.effective_identity[
-        "graph_invocation_index"
-    ] < next(
-        stage
-        for stage in result.stages
-        if stage.stage is contracts.StageName.KERNEL
-    ).provenance.effective_identity["graph_invocation_index"]
+    assert (
+        hammer_record.provenance.effective_identity["graph_invocation_index"]
+        < next(
+            stage for stage in result.stages if stage.stage is contracts.StageName.KERNEL
+        ).provenance.effective_identity["graph_invocation_index"]
+    )
     assert result.validate_provenance() is None
 
 
@@ -714,8 +653,7 @@ def test_explicit_unsupported_compiler_translation_suppresses_proof_calls_but_no
     proof_records = [
         stage
         for stage in result.stages
-        if stage.stage
-        in {contracts.StageName.HAMMER, contracts.StageName.LEANSTRAL}
+        if stage.stage in {contracts.StageName.HAMMER, contracts.StageName.LEANSTRAL}
     ]
     assert {stage.stage for stage in proof_records} == {
         contracts.StageName.HAMMER,
@@ -750,9 +688,7 @@ def test_incomplete_compiler_contract_fails_open_for_injected_handlers(
 
     assert contracts.StageName.LEANSTRAL in graph.calls
     leanstral = next(
-        stage
-        for stage in result.stages
-        if stage.stage is contracts.StageName.LEANSTRAL
+        stage for stage in result.stages if stage.stage is contracts.StageName.LEANSTRAL
     )
     assert leanstral.provenance.effective_identity["graph_invoked"] is True
     assert result.status is contracts.OutcomeStatus.VERIFIED
@@ -775,9 +711,7 @@ def test_a9_suppresses_index_zero_leanstral_fallback_for_source_bound_native_can
     assert contracts.StageName.LEANSTRAL not in graph.calls
     assert contracts.StageName.KERNEL in graph.calls
     leanstral = next(
-        stage
-        for stage in result.stages
-        if stage.stage is contracts.StageName.LEANSTRAL
+        stage for stage in result.stages if stage.stage is contracts.StageName.LEANSTRAL
     )
     assert leanstral.status is contracts.StageStatus.SUCCESS
     assert leanstral.data["invoked"] is False
@@ -832,9 +766,7 @@ def test_warm_symai_ablation_primes_then_measures_under_one_graph_stage(
         runtime._current_compiler_handler
     )
     route[contracts.StageName.SPACY] = adapters.SpacyAdapter(
-        config=adapters.SpacyAdapterConfig(
-            mode=adapters.SpacyAdapterMode.REGEX_LEGAL
-        )
+        config=adapters.SpacyAdapterConfig(mode=adapters.SpacyAdapterMode.REGEX_LEGAL)
     )
     route[contracts.StageName.SYMAI] = adapters.SymaiAdapter(
         config=adapters.SymaiAdapterConfig(
@@ -867,19 +799,9 @@ def test_warm_symai_ablation_primes_then_measures_under_one_graph_stage(
         output_root=tmp_path,
         resume=False,
     )
-    result = next(
-        item
-        for item in run.results
-        if item.cache_mode is contracts.CacheMode.WARM
-    )
-    symai = next(
-        stage
-        for stage in result.stages
-        if stage.stage is contracts.StageName.SYMAI
-    )
-    receipt = cache_measurement.validate_symai_warm_cache_measurement(
-        symai
-    )
+    result = next(item for item in run.results if item.cache_mode is contracts.CacheMode.WARM)
+    symai = next(stage for stage in result.stages if stage.stage is contracts.StageName.SYMAI)
+    receipt = cache_measurement.validate_symai_warm_cache_measurement(symai)
 
     assert engine.calls == 2
     assert symai.provenance.effective_identity["graph_invoked"] is True
@@ -911,21 +833,12 @@ def test_warm_symai_ablation_primes_then_measures_under_one_graph_stage(
     assert cache_summary["inclusive_model_calls"] == 1
     assert cache_summary["leanstral_cache_semantics"] == "not_applicable"
     aggregate = metrics.aggregate_case_results([result])
-    measured_model_calls = sum(
-        stage.telemetry.model_calls for stage in result.stages
-    )
-    assert (
-        aggregate.telemetry_totals["model_calls"]
-        == measured_model_calls + 1
-    )
+    measured_model_calls = sum(stage.telemetry.model_calls for stage in result.stages)
+    assert aggregate.telemetry_totals["model_calls"] == measured_model_calls + 1
     measured_model_stages = sum(
-        stage.telemetry.resource_lane is contracts.ResourceLane.MODEL
-        for stage in result.stages
+        stage.telemetry.resource_lane is contracts.ResourceLane.MODEL for stage in result.stages
     )
-    assert (
-        aggregate.resource_lane_measurements["model"]["stage_count"]
-        == measured_model_stages + 1
-    )
+    assert aggregate.resource_lane_measurements["model"]["stage_count"] == measured_model_stages + 1
     symai_cost = metrics.EfficiencyComponentCost(
         component_id="symai",
         model_calls=1,
@@ -944,11 +857,14 @@ def test_warm_symai_ablation_primes_then_measures_under_one_graph_stage(
         measurement_sha256="d" * 64,
         component_costs=(symai_cost,),
     )
-    assert metrics.EfficiencyObservation(
-        case_result=result,
-        resource_receipt=resource_receipt,
-        invalid_control=False,
-    ).resource_receipt == resource_receipt
+    assert (
+        metrics.EfficiencyObservation(
+            case_result=result,
+            resource_receipt=resource_receipt,
+            invalid_control=False,
+        ).resource_receipt
+        == resource_receipt
+    )
     forged_cost_fields = (
         {"component_calls": 1},
         {"component_calls": 3},
@@ -1019,16 +935,11 @@ def test_current_v2_envelope_rejects_masked_terminal_kernel_acceptance(
         graph.requests[contracts.StageName.LEANSTRAL] = request
         return adapters.StageOutput(
             status=contracts.StageStatus.FAILED,
-            failure_code=(
-                contracts.FailureCode
-                .LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
-            ),
+            failure_code=(contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT),
             failure_detail="bounded test proof-attempt failure",
         )
 
-    route[contracts.StageName.LEANSTRAL] = adapters.LeanstralAdapter(
-        failed_leanstral
-    )
+    route[contracts.StageName.LEANSTRAL] = adapters.LeanstralAdapter(failed_leanstral)
     plan = _plan("A6")
     run = ablation.execute_ablation(
         plan,
@@ -1045,31 +956,24 @@ def test_current_v2_envelope_rejects_masked_terminal_kernel_acceptance(
     case_result.update(
         {
             "status": contracts.OutcomeStatus.REJECTED.value,
-            "verification_authority": (
-                contracts.VerificationAuthority.NONE.value
-            ),
+            "verification_authority": (contracts.VerificationAuthority.NONE.value),
             "kernel_accepted": False,
             "kernel_receipt_sha256": None,
             "failure_code": (
-                contracts.FailureCode
-                .LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT.value
+                contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT.value
             ),
             "failure_detail": "legacy masked projection",
         }
     )
     masked = contracts.CaseResultRecord.from_dict(case_result)
     envelope["case_result_sha256"] = masked.digest
-    result_path.write_text(
-        contracts.canonical_json(envelope) + "\n", encoding="utf-8"
-    )
+    result_path.write_text(contracts.canonical_json(envelope) + "\n", encoding="utf-8")
 
     with pytest.raises(
         ablation.AblationValidationError,
         match="masks its canonical terminal outcome",
     ):
-        ablation.validate_ablation_evidence(
-            plan, output_root=tmp_path
-        )
+        ablation.validate_ablation_evidence(plan, output_root=tmp_path)
 
 
 def test_current_v2_envelope_rejects_normalized_noncanonical_wire_record(
@@ -1085,21 +989,15 @@ def test_current_v2_envelope_rejects_normalized_noncanonical_wire_record(
     result_path = run.result_paths[0]
     envelope = json.loads(result_path.read_text(encoding="utf-8"))
     envelope["case_result"]["receipt"] = None
-    normalized = contracts.CaseResultRecord.from_dict(
-        envelope["case_result"]
-    )
+    normalized = contracts.CaseResultRecord.from_dict(envelope["case_result"])
     envelope["case_result_sha256"] = normalized.digest
-    result_path.write_text(
-        contracts.canonical_json(envelope) + "\n", encoding="utf-8"
-    )
+    result_path.write_text(contracts.canonical_json(envelope) + "\n", encoding="utf-8")
 
     with pytest.raises(
         ablation.AblationValidationError,
         match="noncanonical wire record",
     ):
-        ablation.validate_ablation_evidence(
-            plan, output_root=tmp_path
-        )
+        ablation.validate_ablation_evidence(plan, output_root=tmp_path)
 
 
 def test_current_v2_graph_rejects_a_missing_registered_stage(
@@ -1114,9 +1012,7 @@ def test_current_v2_graph_rejects_a_missing_registered_stage(
     )
     forged = contracts.CaseResultRecord.from_stages(
         tuple(
-            stage
-            for stage in run.results[0].stages
-            if stage.stage is not contracts.StageName.SYMAI
+            stage for stage in run.results[0].stages if stage.stage is not contracts.StageName.SYMAI
         )
     )
 
@@ -1142,9 +1038,7 @@ def test_current_v2_graph_rejects_a_substituted_registered_stage(
         resume=False,
     )
     symai = next(
-        stage
-        for stage in run.results[0].stages
-        if stage.stage is contracts.StageName.SYMAI
+        stage for stage in run.results[0].stages if stage.stage is contracts.StageName.SYMAI
     )
     substituted = replace(
         symai,
@@ -1155,10 +1049,7 @@ def test_current_v2_graph_rejects_a_substituted_registered_stage(
         ),
     )
     forged = contracts.CaseResultRecord.from_stages(
-        tuple(
-            substituted if stage is symai else stage
-            for stage in run.results[0].stages
-        )
+        tuple(substituted if stage is symai else stage for stage in run.results[0].stages)
     )
 
     with pytest.raises(
@@ -1183,21 +1074,13 @@ def test_current_v2_graph_rejects_reordered_invocation_indices(
         resume=False,
     )
     compiler = next(
-        stage
-        for stage in run.results[0].stages
-        if stage.stage is contracts.StageName.COMPILER
+        stage for stage in run.results[0].stages if stage.stage is contracts.StageName.COMPILER
     )
     spacy = next(
-        stage
-        for stage in run.results[0].stages
-        if stage.stage is contracts.StageName.SPACY
+        stage for stage in run.results[0].stages if stage.stage is contracts.StageName.SPACY
     )
-    compiler_index = compiler.provenance.effective_identity[
-        "graph_invocation_index"
-    ]
-    spacy_index = spacy.provenance.effective_identity[
-        "graph_invocation_index"
-    ]
+    compiler_index = compiler.provenance.effective_identity["graph_invocation_index"]
+    spacy_index = spacy.provenance.effective_identity["graph_invocation_index"]
     replacements = {
         contracts.StageName.COMPILER: replace(
             compiler,
@@ -1221,10 +1104,7 @@ def test_current_v2_graph_rejects_reordered_invocation_indices(
         ),
     }
     forged = contracts.CaseResultRecord.from_stages(
-        tuple(
-            replacements.get(stage.stage, stage)
-            for stage in run.results[0].stages
-        )
+        tuple(replacements.get(stage.stage, stage) for stage in run.results[0].stages)
     )
 
     with pytest.raises(
@@ -1240,9 +1120,7 @@ def test_current_v2_graph_rejects_reordered_invocation_indices(
 
 def test_current_v2_graph_rejects_fully_rehashed_invocation_permutation() -> None:
     plan = _plan("A6")
-    frozen = ablation._frozen_invocation_order(
-        variants.get_variant_definition("A6")
-    )
+    frozen = ablation._frozen_invocation_order(variants.get_variant_definition("A6"))
     permutation = (frozen[1], frozen[0], *frozen[2:])
     forged = _fully_rehashed_suppressed_result(
         plan,
@@ -1264,8 +1142,7 @@ def test_current_v2_graph_rejects_fully_rehashed_all_suppressed_route() -> None:
     plan = _plan("A6")
     forged = _fully_rehashed_suppressed_result(plan)
     assert all(
-        stage.provenance.effective_identity["graph_invoked"] is False
-        for stage in forged.stages
+        stage.provenance.effective_identity["graph_invoked"] is False for stage in forged.stages
     )
 
     with pytest.raises(
@@ -1290,9 +1167,7 @@ def test_current_v2_graph_rejects_invoked_stage_as_forged_suppression(
         resume=False,
     )
     symai = next(
-        stage
-        for stage in run.results[0].stages
-        if stage.stage is contracts.StageName.SYMAI
+        stage for stage in run.results[0].stages if stage.stage is contracts.StageName.SYMAI
     )
     forged_stage = replace(
         symai,
@@ -1306,10 +1181,7 @@ def test_current_v2_graph_rejects_invoked_stage_as_forged_suppression(
         ),
     )
     forged = contracts.CaseResultRecord.from_stages(
-        tuple(
-            forged_stage if stage is symai else stage
-            for stage in run.results[0].stages
-        )
+        tuple(forged_stage if stage is symai else stage for stage in run.results[0].stages)
     )
 
     with pytest.raises(
@@ -1335,16 +1207,13 @@ def test_a9_native_candidate_gate_fails_open_for_legacy_malformed_and_wrong_sour
     malformed["native_proof_candidate"] = malformed_candidate
 
     invalid_certificate = _supported_runtime_compiler_data()
-    invalid_candidate = dict(
-        invalid_certificate["native_proof_candidate"]
-    )
+    invalid_candidate = dict(invalid_certificate["native_proof_candidate"])
     invalid_candidate["certificate"] = "by sorry"
     invalid_certificate["native_proof_candidate"] = invalid_candidate
 
     different_input = dict(_case().input_data)
     different_input["text"] = (
-        "Every reviewer is trained. Bob is a reviewer. "
-        "Therefore Bob is trained."
+        "Every reviewer is trained. Bob is a reviewer. Therefore Bob is trained."
     )
     wrong_source = _supported_runtime_compiler_data(different_input)
 
@@ -1370,9 +1239,7 @@ def test_a9_native_candidate_gate_fails_open_for_legacy_malformed_and_wrong_sour
 
         assert contracts.StageName.LEANSTRAL in graph.calls
         leanstral = next(
-            stage
-            for stage in result.stages
-            if stage.stage is contracts.StageName.LEANSTRAL
+            stage for stage in result.stages if stage.stage is contracts.StageName.LEANSTRAL
         )
         assert leanstral.provenance.effective_identity["graph_invoked"] is True
         assert leanstral.data["proof_success"] is True
@@ -1419,8 +1286,7 @@ def test_compiler_native_candidate_does_not_change_other_arm_routing(
     proof_calls = tuple(
         stage
         for stage in graph.calls
-        if stage
-        in {contracts.StageName.HAMMER, contracts.StageName.LEANSTRAL}
+        if stage in {contracts.StageName.HAMMER, contracts.StageName.LEANSTRAL}
     )
     assert proof_calls == expected_proof_calls
     assert result.status is contracts.OutcomeStatus.VERIFIED

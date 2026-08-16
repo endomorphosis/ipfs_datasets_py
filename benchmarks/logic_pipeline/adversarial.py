@@ -23,32 +23,20 @@ import unicodedata
 from .contracts import FailureCode
 
 
-CONTROL_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.adversarial-control.v1"
-)
-CONTROL_MANIFEST_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.adversarial-manifest.v1"
-)
+CONTROL_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.adversarial-control.v1"
+CONTROL_MANIFEST_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.adversarial-manifest.v1"
 CONTROL_SUITE_ID: Final = "hammer-symai-spacy-leanstral-adversarial-v1"
 CONTROL_SUITE_VERSION: Final = 1
 DEFAULT_ADVERSARIAL_DIRECTORY: Final = (
-    Path(__file__).parents[2]
-    / "tests"
-    / "fixtures"
-    / "logic_pipeline_benchmark"
-    / "adversarial"
+    Path(__file__).parents[2] / "tests" / "fixtures" / "logic_pipeline_benchmark" / "adversarial"
 )
 DEFAULT_CONTROLS_PATH: Final = DEFAULT_ADVERSARIAL_DIRECTORY / "controls.jsonl"
 DEFAULT_MANIFEST_PATH: Final = DEFAULT_ADVERSARIAL_DIRECTORY / "manifest.json"
 
 # These constants bind the reviewed bytes, not merely the values decoded from
 # them.  They are updated only when the adversarial corpus receives a version.
-FROZEN_CONTROLS_SHA256: Final = (
-    "41cf374ccc4cbf9fd0605ee1156f78d7656b213f3b0cfb9b4bdf3715f599974b"
-)
-FROZEN_MANIFEST_SHA256: Final = (
-    "3bd5ef467195f246f66e2ecd07251e1a942608adaba2babd2ad401d01bc0e235"
-)
+FROZEN_CONTROLS_SHA256: Final = "41cf374ccc4cbf9fd0605ee1156f78d7656b213f3b0cfb9b4bdf3715f599974b"
+FROZEN_MANIFEST_SHA256: Final = "3bd5ef467195f246f66e2ecd07251e1a942608adaba2babd2ad401d01bc0e235"
 
 _SAFE_ID = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}\Z")
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -123,37 +111,25 @@ def canonical_json(value: object) -> str:
             separators=(",", ":"),
         )
     except (TypeError, ValueError) as exc:
-        raise AdversarialContractError(
-            "value is not canonical JSON data"
-        ) from exc
+        raise AdversarialContractError("value is not canonical JSON data") from exc
 
 
 def _nonempty(value: object, field: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not value.strip()
-        or value != value.strip()
-    ):
-        raise AdversarialContractError(
-            f"{field} must be a nonempty string without edge whitespace"
-        )
+    if not isinstance(value, str) or not value.strip() or value != value.strip():
+        raise AdversarialContractError(f"{field} must be a nonempty string without edge whitespace")
     return value
 
 
 def _safe_id(value: object, field: str) -> str:
     result = _nonempty(value, field)
     if not _SAFE_ID.fullmatch(result) or result in {".", ".."}:
-        raise AdversarialContractError(
-            f"{field} must be a safe lowercase identifier"
-        )
+        raise AdversarialContractError(f"{field} must be a safe lowercase identifier")
     return result
 
 
 def _digest(value: object, field: str) -> str:
     if not isinstance(value, str) or not _SHA256.fullmatch(value):
-        raise AdversarialContractError(
-            f"{field} must be a lowercase SHA-256 digest"
-        )
+        raise AdversarialContractError(f"{field} must be a lowercase SHA-256 digest")
     return value
 
 
@@ -164,16 +140,12 @@ def _positive_integer(value: object, field: str) -> int:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise AdversarialContractError(f"{field} must be a JSON object")
     return value
 
 
-def _exact_keys(
-    value: Mapping[str, object], expected: set[str], field: str
-) -> None:
+def _exact_keys(value: Mapping[str, object], expected: set[str], field: str) -> None:
     missing = expected - set(value)
     unknown = set(value) - expected
     if missing or unknown:
@@ -182,9 +154,7 @@ def _exact_keys(
             details.append(f"missing {sorted(missing)!r}")
         if unknown:
             details.append(f"unknown {sorted(unknown)!r}")
-        raise AdversarialContractError(
-            f"{field} fields invalid: {', '.join(details)}"
-        )
+        raise AdversarialContractError(f"{field} fields invalid: {', '.join(details)}")
 
 
 def _duplicate_rejecting_object(
@@ -204,9 +174,7 @@ def _decode_json(text: str, context: str) -> object:
     except AdversarialContractError:
         raise
     except (json.JSONDecodeError, ValueError) as exc:
-        raise AdversarialContractError(
-            f"{context} is not valid strict JSON: {exc}"
-        ) from exc
+        raise AdversarialContractError(f"{context} is not valid strict JSON: {exc}") from exc
 
 
 def _control_kind(value: object, field: str = "control_kind") -> ControlKind:
@@ -215,9 +183,7 @@ def _control_kind(value: object, field: str = "control_kind") -> ControlKind:
     try:
         return ControlKind(value)
     except ValueError as exc:
-        raise AdversarialContractError(
-            f"unsupported {field}: {value!r}"
-        ) from exc
+        raise AdversarialContractError(f"unsupported {field}: {value!r}") from exc
 
 
 def _normalized_copy_text(value: str) -> str:
@@ -256,27 +222,15 @@ class AdversarialControl:
             raise AdversarialContractError("unsupported control schema")
         _safe_id(self.control_id, "control_id")
         if not isinstance(self.control_kind, ControlKind):
-            raise AdversarialContractError(
-                "control_kind must be a ControlKind"
-            )
+            raise AdversarialContractError("control_kind must be a ControlKind")
         _nonempty(self.source_text, "source_text")
         _nonempty(self.candidate_text, "candidate_text")
         if self.protected_text is not None:
             _nonempty(self.protected_text, "protected_text")
-        if (
-            self.control_kind is ControlKind.COPIED
-            and self.protected_text is None
-        ):
-            raise AdversarialContractError(
-                "copied controls require protected_text"
-            )
-        if (
-            self.control_kind is not ControlKind.COPIED
-            and self.protected_text is not None
-        ):
-            raise AdversarialContractError(
-                "only copied controls may carry protected_text"
-            )
+        if self.control_kind is ControlKind.COPIED and self.protected_text is None:
+            raise AdversarialContractError("copied controls require protected_text")
+        if self.control_kind is not ControlKind.COPIED and self.protected_text is not None:
+            raise AdversarialContractError("only copied controls may carry protected_text")
         _nonempty(self.rationale, "rationale")
 
     def to_dict(self) -> dict[str, object]:
@@ -300,14 +254,8 @@ class AdversarialControl:
             control_id=_safe_id(data["control_id"], "control_id"),
             control_kind=_control_kind(data["control_kind"]),
             source_text=_nonempty(data["source_text"], "source_text"),
-            candidate_text=_nonempty(
-                data["candidate_text"], "candidate_text"
-            ),
-            protected_text=(
-                None
-                if protected is None
-                else _nonempty(protected, "protected_text")
-            ),
+            candidate_text=_nonempty(data["candidate_text"], "candidate_text"),
+            protected_text=(None if protected is None else _nonempty(protected, "protected_text")),
             rationale=_nonempty(data["rationale"], "rationale"),
         )
 
@@ -318,12 +266,8 @@ class AdversarialControl:
 
 def control_sha256(control: AdversarialControl) -> str:
     if not isinstance(control, AdversarialControl):
-        raise AdversarialContractError(
-            "control must be an AdversarialControl"
-        )
-    return hashlib.sha256(
-        canonical_json(control.to_dict()).encode("utf-8")
-    ).hexdigest()
+        raise AdversarialContractError("control must be an AdversarialControl")
+    return hashlib.sha256(canonical_json(control.to_dict()).encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)
@@ -349,9 +293,7 @@ class ControlDigest:
         _exact_keys(data, set(cls.__dataclass_fields__), "control_digest")
         return cls(
             control_id=_safe_id(data["control_id"], "control_id"),
-            control_sha256=_digest(
-                data["control_sha256"], "control_sha256"
-            ),
+            control_sha256=_digest(data["control_sha256"], "control_sha256"),
         )
 
 
@@ -377,13 +319,9 @@ class ControlManifest:
         if self.suite_version != CONTROL_SUITE_VERSION:
             raise AdversarialContractError("unsupported control suite version")
         if self.evidence != HSSLEV0224A96():
-            raise AdversarialContractError(
-                "manifest does not bind objective evidence"
-            )
+            raise AdversarialContractError("manifest does not bind objective evidence")
         if self.controls_file != "controls.jsonl":
-            raise AdversarialContractError(
-                "controls_file must be controls.jsonl"
-            )
+            raise AdversarialContractError("controls_file must be controls.jsonl")
         _digest(self.controls_sha256, "controls_sha256")
         _positive_integer(self.control_count, "control_count")
         if (
@@ -400,18 +338,12 @@ class ControlManifest:
                 "controls must be an immutable tuple of ControlDigest records"
             )
         if self.control_count != len(self.controls):
-            raise AdversarialContractError(
-                "control_count does not match controls"
-            )
+            raise AdversarialContractError("control_count does not match controls")
         ids = tuple(item.control_id for item in self.controls)
         if len(ids) != len(set(ids)):
-            raise AdversarialContractError(
-                "manifest contains duplicate control ids"
-            )
+            raise AdversarialContractError("manifest contains duplicate control ids")
         if ids != tuple(sorted(ids)):
-            raise AdversarialContractError(
-                "manifest controls must be ordered by control_id"
-            )
+            raise AdversarialContractError("manifest controls must be ordered by control_id")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -422,9 +354,7 @@ class ControlManifest:
             "controls_file": self.controls_file,
             "controls_sha256": self.controls_sha256,
             "control_count": self.control_count,
-            "required_control_kinds": [
-                kind.value for kind in self.required_control_kinds
-            ],
+            "required_control_kinds": [kind.value for kind in self.required_control_kinds],
             "controls": [item.to_dict() for item in self.controls],
         }
 
@@ -435,34 +365,21 @@ class ControlManifest:
         raw_kinds = data["required_control_kinds"]
         raw_controls = data["controls"]
         if not isinstance(raw_kinds, list):
-            raise AdversarialContractError(
-                "required_control_kinds must be an array"
-            )
+            raise AdversarialContractError("required_control_kinds must be an array")
         if not isinstance(raw_controls, list):
             raise AdversarialContractError("controls must be an array")
         return cls(
             schema=_nonempty(data["schema"], "schema"),
             suite_id=_nonempty(data["suite_id"], "suite_id"),
-            suite_version=_positive_integer(
-                data["suite_version"], "suite_version"
-            ),
+            suite_version=_positive_integer(data["suite_version"], "suite_version"),
             evidence=_nonempty(data["evidence"], "evidence"),
-            controls_file=_nonempty(
-                data["controls_file"], "controls_file"
-            ),
-            controls_sha256=_digest(
-                data["controls_sha256"], "controls_sha256"
-            ),
-            control_count=_positive_integer(
-                data["control_count"], "control_count"
-            ),
+            controls_file=_nonempty(data["controls_file"], "controls_file"),
+            controls_sha256=_digest(data["controls_sha256"], "controls_sha256"),
+            control_count=_positive_integer(data["control_count"], "control_count"),
             required_control_kinds=tuple(
-                _control_kind(item, "required_control_kinds[]")
-                for item in raw_kinds
+                _control_kind(item, "required_control_kinds[]") for item in raw_kinds
             ),
-            controls=tuple(
-                ControlDigest.from_dict(item) for item in raw_controls
-            ),
+            controls=tuple(ControlDigest.from_dict(item) for item in raw_controls),
         )
 
 
@@ -476,15 +393,11 @@ class ControlSuite:
 
     def __post_init__(self) -> None:
         if not isinstance(self.manifest, ControlManifest):
-            raise AdversarialContractError(
-                "manifest must be a ControlManifest"
-            )
+            raise AdversarialContractError("manifest must be a ControlManifest")
         if not isinstance(self.controls, tuple) or not all(
             isinstance(item, AdversarialControl) for item in self.controls
         ):
-            raise AdversarialContractError(
-                "controls must be an immutable tuple"
-            )
+            raise AdversarialContractError("controls must be an immutable tuple")
         _digest(self.manifest_sha256, "manifest_sha256")
         expected_manifest_sha256 = hashlib.sha256(
             (canonical_json(self.manifest.to_dict()) + "\n").encode("utf-8")
@@ -494,14 +407,9 @@ class ControlSuite:
                 "manifest_sha256 does not match canonical manifest bytes"
             )
         validate_control_coverage(self.controls)
-        expected = tuple(
-            ControlDigest(item.control_id, item.sha256)
-            for item in self.controls
-        )
+        expected = tuple(ControlDigest(item.control_id, item.sha256) for item in self.controls)
         if self.manifest.controls != expected:
-            raise AdversarialContractError(
-                "manifest record identities do not match controls"
-            )
+            raise AdversarialContractError("manifest record identities do not match controls")
 
     @property
     def by_id(self) -> Mapping[str, AdversarialControl]:
@@ -509,9 +417,7 @@ class ControlSuite:
 
         from types import MappingProxyType
 
-        return MappingProxyType(
-            {control.control_id: control for control in self.controls}
-        )
+        return MappingProxyType({control.control_id: control for control in self.controls})
 
 
 def classify_candidate(
@@ -569,32 +475,23 @@ def validate_control_coverage(
     """Require unique, sorted, executable coverage of the frozen taxonomy."""
 
     if isinstance(controls, (str, bytes)):
-        raise AdversarialContractError(
-            "controls must contain AdversarialControl records"
-        )
+        raise AdversarialContractError("controls must contain AdversarialControl records")
     try:
         records = tuple(controls)
     except TypeError as exc:
         raise AdversarialContractError("controls must be iterable") from exc
-    if not records or not all(
-        isinstance(item, AdversarialControl) for item in records
-    ):
-        raise AdversarialContractError(
-            "controls must contain AdversarialControl records"
-        )
+    if not records or not all(isinstance(item, AdversarialControl) for item in records):
+        raise AdversarialContractError("controls must contain AdversarialControl records")
     ids = tuple(item.control_id for item in records)
     if len(ids) != len(set(ids)):
         raise AdversarialContractError("controls contain duplicate ids")
     if ids != tuple(sorted(ids)):
-        raise AdversarialContractError(
-            "controls must be ordered by control_id"
-        )
+        raise AdversarialContractError("controls must be ordered by control_id")
     covered = {item.control_kind for item in records}
     missing = set(REQUIRED_CONTROL_KINDS) - covered
     if missing:
         raise AdversarialContractError(
-            "control coverage missing "
-            + ", ".join(sorted(kind.value for kind in missing))
+            "control coverage missing " + ", ".join(sorted(kind.value for kind in missing))
         )
     repeated = tuple(
         kind
@@ -609,14 +506,11 @@ def validate_control_coverage(
     for item in records:
         detected = classify_candidate(
             item.candidate_text,
-            protected_texts=(
-                () if item.protected_text is None else (item.protected_text,)
-            ),
+            protected_texts=(() if item.protected_text is None else (item.protected_text,)),
         )
         if item.control_kind not in detected:
             raise AdversarialContractError(
-                f"{item.control_id} does not exercise "
-                f"{item.control_kind.value}"
+                f"{item.control_id} does not exercise {item.control_kind.value}"
             )
 
 
@@ -634,13 +528,9 @@ class CandidateClaim:
         _safe_id(self.candidate_id, "candidate_id")
         _nonempty(self.candidate_text, "candidate_text")
         if type(self.claimed_verified) is not bool:
-            raise AdversarialContractError(
-                "claimed_verified must be a boolean"
-            )
+            raise AdversarialContractError("claimed_verified must be a boolean")
         if type(self.kernel_accepted) is not bool:
-            raise AdversarialContractError(
-                "kernel_accepted must be a boolean"
-            )
+            raise AdversarialContractError("kernel_accepted must be a boolean")
         if self.kernel_receipt_sha256 is not None:
             _digest(
                 self.kernel_receipt_sha256,
@@ -665,45 +555,23 @@ class CandidateAssessment:
         _digest(self.candidate_sha256, "candidate_sha256")
         if (
             not isinstance(self.classifications, tuple)
-            or any(
-                not isinstance(kind, ControlKind)
-                for kind in self.classifications
-            )
+            or any(not isinstance(kind, ControlKind) for kind in self.classifications)
             or self.classifications
-            != tuple(
-                kind
-                for kind in REQUIRED_CONTROL_KINDS
-                if kind in self.classifications
-            )
+            != tuple(kind for kind in REQUIRED_CONTROL_KINDS if kind in self.classifications)
         ):
-            raise AdversarialContractError(
-                "classifications must be unique and in frozen order"
-            )
+            raise AdversarialContractError("classifications must be unique and in frozen order")
         if not isinstance(self.disposition, CandidateDisposition):
-            raise AdversarialContractError(
-                "disposition must be a CandidateDisposition"
-            )
+            raise AdversarialContractError("disposition must be a CandidateDisposition")
         if type(self.eligible_for_verified_improvement) is not bool:
-            raise AdversarialContractError(
-                "eligible_for_verified_improvement must be a boolean"
-            )
-        if self.failure_code is not None and not isinstance(
-            self.failure_code, FailureCode
-        ):
-            raise AdversarialContractError(
-                "failure_code must be a FailureCode"
-            )
+            raise AdversarialContractError("eligible_for_verified_improvement must be a boolean")
+        if self.failure_code is not None and not isinstance(self.failure_code, FailureCode):
+            raise AdversarialContractError("failure_code must be a FailureCode")
         if (
             not isinstance(self.reasons, tuple)
             or not self.reasons
-            or any(
-                not isinstance(reason, str) or not reason
-                for reason in self.reasons
-            )
+            or any(not isinstance(reason, str) or not reason for reason in self.reasons)
         ):
-            raise AdversarialContractError(
-                "reasons must be a nonempty immutable tuple"
-            )
+            raise AdversarialContractError("reasons must be a nonempty immutable tuple")
         if self.classifications and self.eligible_for_verified_improvement:
             raise AdversarialContractError(
                 "adversarial candidates can never be verified improvements"
@@ -713,13 +581,9 @@ class CandidateAssessment:
                 self.disposition is not CandidateDisposition.ELIGIBLE
                 or self.failure_code is not None
             ):
-                raise AdversarialContractError(
-                    "eligible assessment has inconsistent status"
-                )
+                raise AdversarialContractError("eligible assessment has inconsistent status")
         elif self.disposition is CandidateDisposition.ELIGIBLE:
-            raise AdversarialContractError(
-                "eligible disposition requires improvement eligibility"
-            )
+            raise AdversarialContractError("eligible disposition requires improvement eligibility")
 
 
 def gate_candidate(
@@ -738,9 +602,7 @@ def gate_candidate(
     if not isinstance(claim, CandidateClaim):
         raise AdversarialContractError("claim must be a CandidateClaim")
     if control is not None and not isinstance(control, AdversarialControl):
-        raise AdversarialContractError(
-            "control must be an AdversarialControl"
-        )
+        raise AdversarialContractError("control must be an AdversarialControl")
     references: list[object] = list(protected_texts)
     if control is not None and control.protected_text is not None:
         references.append(control.protected_text)
@@ -757,17 +619,11 @@ def gate_candidate(
         found = {ControlKind.INVALID}
     if control is not None:
         found.add(control.control_kind)
-    classifications = tuple(
-        kind for kind in REQUIRED_CONTROL_KINDS if kind in found
-    )
-    candidate_digest = hashlib.sha256(
-        claim.candidate_text.encode("utf-8")
-    ).hexdigest()
+    classifications = tuple(kind for kind in REQUIRED_CONTROL_KINDS if kind in found)
+    candidate_digest = hashlib.sha256(claim.candidate_text.encode("utf-8")).hexdigest()
 
     valid_kernel_claim = (
-        claim.claimed_verified
-        and claim.kernel_accepted
-        and claim.kernel_receipt_sha256 is not None
+        claim.claimed_verified and claim.kernel_accepted and claim.kernel_receipt_sha256 is not None
     )
     if classifications:
         incident = valid_kernel_claim
@@ -776,9 +632,7 @@ def gate_candidate(
             candidate_sha256=candidate_digest,
             classifications=classifications,
             disposition=(
-                CandidateDisposition.SAFETY_INCIDENT
-                if incident
-                else CandidateDisposition.REJECTED
+                CandidateDisposition.SAFETY_INCIDENT if incident else CandidateDisposition.REJECTED
             ),
             eligible_for_verified_improvement=False,
             failure_code=(
@@ -786,10 +640,7 @@ def gate_candidate(
                 if incident
                 else FailureCode.SAFETY_CONTROL_FAILURE
             ),
-            reasons=tuple(
-                f"candidate classified as {kind.value}"
-                for kind in classifications
-            ),
+            reasons=tuple(f"candidate classified as {kind.value}" for kind in classifications),
         )
     if valid_kernel_claim:
         return CandidateAssessment(
@@ -816,9 +667,7 @@ def _read_bytes(path: Path, field: str) -> bytes:
     try:
         return path.read_bytes()
     except OSError as exc:
-        raise AdversarialContractError(
-            f"unable to read {field}: {path}"
-        ) from exc
+        raise AdversarialContractError(f"unable to read {field}: {path}") from exc
 
 
 def load_control_suite(
@@ -833,64 +682,43 @@ def load_control_suite(
     manifest_bytes = _read_bytes(manifest_file, "manifest")
     controls_digest = hashlib.sha256(controls_bytes).hexdigest()
     manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
-    using_defaults = (
-        controls_file.resolve(strict=False)
-        == DEFAULT_CONTROLS_PATH.resolve(strict=False)
-        and manifest_file.resolve(strict=False)
-        == DEFAULT_MANIFEST_PATH.resolve(strict=False)
-    )
+    using_defaults = controls_file.resolve(strict=False) == DEFAULT_CONTROLS_PATH.resolve(
+        strict=False
+    ) and manifest_file.resolve(strict=False) == DEFAULT_MANIFEST_PATH.resolve(strict=False)
     if using_defaults and controls_digest != FROZEN_CONTROLS_SHA256:
-        raise AdversarialContractError(
-            "bundled controls do not match the frozen revision"
-        )
+        raise AdversarialContractError("bundled controls do not match the frozen revision")
     if using_defaults and manifest_digest != FROZEN_MANIFEST_SHA256:
-        raise AdversarialContractError(
-            "bundled manifest does not match the frozen revision"
-        )
+        raise AdversarialContractError("bundled manifest does not match the frozen revision")
     try:
         controls_text = controls_bytes.decode("utf-8")
         manifest_text = manifest_bytes.decode("utf-8")
     except UnicodeDecodeError as exc:
-        raise AdversarialContractError(
-            "control files must be valid UTF-8"
-        ) from exc
+        raise AdversarialContractError("control files must be valid UTF-8") from exc
     if not controls_text or not controls_text.endswith("\n"):
-        raise AdversarialContractError(
-            "controls JSONL must end with exactly one record newline"
-        )
+        raise AdversarialContractError("controls JSONL must end with exactly one record newline")
     lines = controls_text.splitlines()
     if any(not line for line in lines):
-        raise AdversarialContractError(
-            "controls JSONL must not contain blank lines"
-        )
+        raise AdversarialContractError("controls JSONL must not contain blank lines")
     controls: list[AdversarialControl] = []
     for index, line in enumerate(lines, start=1):
         decoded = _decode_json(line, f"controls line {index}")
         control = AdversarialControl.from_dict(decoded)
         if line != canonical_json(control.to_dict()):
-            raise AdversarialContractError(
-                f"controls line {index} is not canonical JSON"
-            )
+            raise AdversarialContractError(f"controls line {index} is not canonical JSON")
         controls.append(control)
     decoded_manifest = _decode_json(manifest_text, "manifest")
     manifest = ControlManifest.from_dict(decoded_manifest)
     if manifest_text != canonical_json(manifest.to_dict()) + "\n":
-        raise AdversarialContractError(
-            "manifest is not canonical JSON with one trailing newline"
-        )
+        raise AdversarialContractError("manifest is not canonical JSON with one trailing newline")
     if manifest.controls_sha256 != controls_digest:
-        raise AdversarialContractError(
-            "manifest controls_sha256 does not match controls bytes"
-        )
+        raise AdversarialContractError("manifest controls_sha256 does not match controls bytes")
     suite = ControlSuite(
         manifest=manifest,
         controls=tuple(controls),
         manifest_sha256=manifest_digest,
     )
     if suite.manifest.control_count != len(suite.controls):
-        raise AdversarialContractError(
-            "manifest control_count does not match JSONL"
-        )
+        raise AdversarialContractError("manifest control_count does not match JSONL")
     return suite
 
 

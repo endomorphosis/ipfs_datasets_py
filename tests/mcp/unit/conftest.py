@@ -3,6 +3,7 @@ Test fixtures for MCP server unit tests.
 
 Provides reusable fixtures for testing server functionality.
 """
+
 import pytest
 from unittest.mock import Mock, MagicMock, AsyncMock, patch
 from typing import Dict, Any
@@ -38,10 +39,11 @@ def mock_mcp_server():
 @pytest.fixture
 def mock_tool_function():
     """Create a mock tool function."""
+
     async def mock_tool(param1: str, param2: int = 10) -> Dict[str, Any]:
         """Mock tool for testing."""
         return {"status": "success", "param1": param1, "param2": param2}
-    
+
     mock_tool.__name__ = "mock_tool"
     mock_tool.__doc__ = "Mock tool for testing"
     return mock_tool
@@ -55,12 +57,9 @@ def sample_tool_schema():
         "description": "A test tool",
         "input_schema": {
             "type": "object",
-            "properties": {
-                "input": {"type": "string"},
-                "count": {"type": "integer", "default": 1}
-            },
-            "required": ["input"]
-        }
+            "properties": {"input": {"type": "string"}, "count": {"type": "integer", "default": 1}},
+            "required": ["input"],
+        },
     }
 
 

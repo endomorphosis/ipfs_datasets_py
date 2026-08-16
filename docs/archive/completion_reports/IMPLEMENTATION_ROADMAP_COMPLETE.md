@@ -194,10 +194,12 @@ ipfs_datasets_py/
 ```python
 # v1.x (deprecated)
 from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
+
 processor = GraphRAGProcessor()
 
 # v2.0 (unified)
 from ipfs_datasets_py import UnifiedGraphRAGProcessor, GraphRAGConfiguration
+
 config = GraphRAGConfiguration(processing_mode="balanced")
 processor = UnifiedGraphRAGProcessor(config=config)
 ```

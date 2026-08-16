@@ -8,6 +8,7 @@ Business logic has been extracted to the canonical package module:
 
 This file is now a thin re-export shim so existing imports continue to work.
 """
+
 import sys
 
 from ipfs_datasets_py.processors.dashboard.js_error_reporter_engine import (  # noqa: F401

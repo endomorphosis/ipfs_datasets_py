@@ -21,10 +21,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_hard_negatives
 )
 
 
-LEGAL_TEXT = (
-    "The agency shall provide notice unless emergency conditions exist "
-    "within 30 days."
-)
+LEGAL_TEXT = "The agency shall provide notice unless emergency conditions exist within 30 days."
 
 
 def _reference_ir() -> dict[str, object]:
@@ -100,9 +97,9 @@ def test_curriculum_builds_all_required_verified_hard_negative_families() -> Non
     assert curriculum.by_family(SOURCE_COPY_SPAN)
     assert curriculum.by_family(DECOMPILER_HALLUCINATION)
     assert all(example.is_training_label for example in curriculum.examples)
-    assert {
-        example.training_partition for example in curriculum.examples
-    } == {"trusted_hard_negative"}
+    assert {example.training_partition for example in curriculum.examples} == {
+        "trusted_hard_negative"
+    }
 
 
 def test_curriculum_schedules_negatives_by_family_difficulty() -> None:
@@ -112,11 +109,7 @@ def test_curriculum_schedules_negatives_by_family_difficulty() -> None:
         config=LegalIRHardNegativeConfig(stage_count=5),
     )
 
-    scheduled = [
-        example
-        for stage in curriculum.stages
-        for example in stage.examples
-    ]
+    scheduled = [example for stage in curriculum.stages for example in stage.examples]
     assert {example.example_id for example in scheduled} == {
         example.example_id for example in curriculum.examples
     }
@@ -147,10 +140,7 @@ def test_unverified_model_negatives_are_rejected_not_training_labels() -> None:
         rejected.reason == "unverified_model_negative_not_training_label"
         for rejected in curriculum.rejected_candidates
     )
-    assert all(
-        example.sample_id != "unverified-model-negative"
-        for example in curriculum.examples
-    )
+    assert all(example.sample_id != "unverified-model-negative" for example in curriculum.examples)
 
 
 def test_effect_report_proves_false_positive_reduction_without_positive_degradation() -> None:

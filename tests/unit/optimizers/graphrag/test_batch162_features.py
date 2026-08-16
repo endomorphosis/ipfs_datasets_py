@@ -6,19 +6,24 @@ Methods under test:
   - OntologyPipeline.run_score_deltas()
   - OntologyGenerator.relationship_type_counts(result)
 """
+
 import pytest
 from unittest.mock import MagicMock, patch
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     gen = MagicMock()
     critic = MagicMock()
     return OntologyMediator(gen, critic)
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -30,6 +35,7 @@ def _push_feedback(a, score):
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -41,16 +47,19 @@ def _push_run(p, score):
 
 def _make_entity(eid, etype="Person"):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type=etype, text=eid)
 
 
 def _make_relationship(rid, rtype):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+
     return Relationship(id=rid, type=rtype, source_id="a", target_id="b")
 
 
 def _make_result(entities=None, rels=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=rels or [],
@@ -62,12 +71,14 @@ def _make_result(entities=None, rels=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 # ---------------------------------------------------------------------------
 # OntologyMediator.action_count_unique
 # ---------------------------------------------------------------------------
+
 
 class TestActionCountUnique:
     def test_no_actions_returns_zero(self):
@@ -90,6 +101,7 @@ class TestActionCountUnique:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_improvement_rate
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackImprovementRate:
     def test_empty_returns_zero(self):
@@ -125,6 +137,7 @@ class TestFeedbackImprovementRate:
 # OntologyPipeline.run_score_deltas
 # ---------------------------------------------------------------------------
 
+
 class TestRunScoreDeltas:
     def test_empty_returns_empty(self):
         p = _make_pipeline()
@@ -159,6 +172,7 @@ class TestRunScoreDeltas:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.relationship_type_counts
 # ---------------------------------------------------------------------------
+
 
 class TestRelationshipTypeCounts:
     def test_empty_returns_empty(self):

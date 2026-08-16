@@ -92,17 +92,12 @@ RECEIPTS_PATH = ROOT / DEFAULT_RECEIPTS_RELATIVE_PATH
 
 # PLAT2-040 holdout teacher receipts (prover-gated on holdout residuals).
 HOLDOUT_RECEIPTS_RELATIVE_PATH = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "holdout_leanstral_proposal_receipts.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/holdout_leanstral_proposal_receipts.json"
 )
 HOLDOUT_RECEIPTS_PATH = ROOT / HOLDOUT_RECEIPTS_RELATIVE_PATH
-HOLDOUT_CASES_PATH = (
-    ROOT / "tests/fixtures/semantic_roundtrip/holdout_cases.json"
-)
+HOLDOUT_CASES_PATH = ROOT / "tests/fixtures/semantic_roundtrip/holdout_cases.json"
 HOLDOUT_CATALOG_PATH = (
-    ROOT
-    / "workspace/benchmarks/semantic-roundtrip-compositions/"
-    / "holdout_residual_catalog.json"
+    ROOT / "workspace/benchmarks/semantic-roundtrip-compositions/" / "holdout_residual_catalog.json"
 )
 HOLDOUT_TASK_ID = "PLAT2-040"
 HOLDOUT_BOARD_NAMESPACE = "semantic-roundtrip-plateau-holdout-v1"
@@ -117,13 +112,10 @@ HOLDOUT_ACTIVATION_CASE_IDS = (
 # PLAT2-040 repair-development multi-teacher receipts (evidence-gated).
 # Additive to the holdout Leanstral proposal pack above — do not replace it.
 REPAIR_DEV_TEACHER_RECEIPTS_RELATIVE_PATH = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "repair_dev_teacher_receipts.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_teacher_receipts.json"
 )
 REPAIR_DEV_TEACHER_RECEIPTS_PATH = ROOT / REPAIR_DEV_TEACHER_RECEIPTS_RELATIVE_PATH
-REPAIR_DEV_CASES_PATH = (
-    ROOT / "tests/fixtures/semantic_roundtrip/repair_dev_cases.json"
-)
+REPAIR_DEV_CASES_PATH = ROOT / "tests/fixtures/semantic_roundtrip/repair_dev_cases.json"
 REPAIR_DEV_CATALOG_PATH = (
     ROOT
     / "workspace/benchmarks/semantic-roundtrip-compositions/"
@@ -145,9 +137,7 @@ REPAIR_DEV_BOARD_NAMESPACE = "semantic-roundtrip-plateau-holdout-v2"
 REPAIR_DEV_EVIDENCE = "PLAT2EV040TCH"
 REPAIR_DEV_FIXTURE_PACK_ID = "repair-dev-teacher-dry-run-fixtures@1"
 REPAIR_DEV_TEACHER_INTERFACE = "RepairDevTeacherReceipts@1"
-REPAIR_DEV_TEACHER_SCHEMA = (
-    "ipfs-datasets.semantic-roundtrip-repair-dev-teacher-receipts.v1"
-)
+REPAIR_DEV_TEACHER_SCHEMA = "ipfs-datasets.semantic-roundtrip-repair-dev-teacher-receipts.v1"
 REPAIR_DEV_POPULATION_KIND = "repair_development"
 REPAIR_DEV_ACTIVATION_CASE_IDS = (
     "missing_temporal",
@@ -249,9 +239,7 @@ def _passing_selector(
 
 def test_interface_constants_are_frozen() -> None:
     assert PLATEAU_LEANSTRAL_PROPOSALS_INTERFACE == "PlateauLeanstralProposals@1"
-    assert PLATEAU_LEANSTRAL_PROPOSAL_RECEIPTS_INTERFACE == (
-        "PlateauLeanstralProposalReceipts@1"
-    )
+    assert PLATEAU_LEANSTRAL_PROPOSAL_RECEIPTS_INTERFACE == ("PlateauLeanstralProposalReceipts@1")
     assert PLATEAU_LEANSTRAL_PROPOSAL_RECEIPTS_SCHEMA.startswith("ipfs-datasets.")
     assert PLATEAU_LEANSTRAL_PROPOSALS_EVIDENCE == "PLATEV040LLM"
     assert PLATEAU_BREAK_TASK_ID == "PLAT-040"
@@ -259,17 +247,18 @@ def test_interface_constants_are_frozen() -> None:
     assert DRY_RUN_FIXTURE_PACK_ID.startswith("plateau-leanstral-proposal")
     assert "accept_rate" in ACCEPT_RATE_DEFINITION
     assert "retry_exhausted" in RETRY_EXHAUSTED_RATE_DEFINITION
-    assert "end-to-end" in ACCEPT_RATE_DEFINITION or "e2e" in ACCEPT_RATE_DEFINITION.lower() or "end-to-end" in ACCEPT_RATE_DEFINITION
+    assert (
+        "end-to-end" in ACCEPT_RATE_DEFINITION
+        or "e2e" in ACCEPT_RATE_DEFINITION.lower()
+        or "end-to-end" in ACCEPT_RATE_DEFINITION
+    )
 
 
 def test_dry_run_fixture_pack_covers_acceptance_outcomes() -> None:
     pack = dry_run_fixture_pack()
     outcomes = {item.case_id: item.expected_outcome for item in pack}
     assert outcomes["fixture_accept_missing_object"] is ProposalOutcome.ACCEPTED
-    assert (
-        outcomes["fixture_admission_reject_untriggered"]
-        is ProposalOutcome.ADMISSION_REJECTED
-    )
+    assert outcomes["fixture_admission_reject_untriggered"] is ProposalOutcome.ADMISSION_REJECTED
     assert outcomes["fixture_retry_exhausted"] is ProposalOutcome.RETRY_EXHAUSTED
     assert outcomes["fixture_not_triggered"] is ProposalOutcome.NOT_TRIGGERED
 
@@ -305,9 +294,7 @@ def test_dry_run_fixtures_pass_without_live_model() -> None:
     assert rejected.implementable is False
     assert rejected.prior_l1_unchanged is True
     assert rejected.admitted_l1_digest == rejected.baseline_l1_digest
-    assert rejected.admission_disposition == (
-        AdmissionDisposition.VALIDATOR_REJECT.value
-    )
+    assert rejected.admission_disposition == (AdmissionDisposition.VALIDATOR_REJECT.value)
 
     exhausted = sealed.by_case_id()["fixture_retry_exhausted"]
     assert exhausted.outcome is ProposalOutcome.RETRY_EXHAUSTED
@@ -341,9 +328,7 @@ def test_accept_rate_and_retry_exhausted_recorded_separately() -> None:
     )
     # not_triggered is outside the denominator
     assert rel.not_triggered >= 1
-    assert rel.accept_rate == pytest.approx(
-        rel.accepted_proposals / rel.proposal_attempts
-    )
+    assert rel.accept_rate == pytest.approx(rel.accepted_proposals / rel.proposal_attempts)
     assert rel.retry_exhausted_rate == pytest.approx(
         rel.retry_exhausted_proposals / rel.proposal_attempts
     )
@@ -354,20 +339,17 @@ def test_accept_rate_and_retry_exhausted_recorded_separately() -> None:
     # Both counters are present as separate tallies even when equal numerically.
     assert "accepted_proposals" in payload
     assert "retry_exhausted_proposals" in payload
-    assert payload["accepted_proposals"] + payload["retry_exhausted_proposals"] <= (
-        payload["proposal_attempts"]
+    assert (
+        payload["accepted_proposals"] + payload["retry_exhausted_proposals"]
+        <= (payload["proposal_attempts"])
     )
 
 
 def test_only_triggered_fields_may_change() -> None:
     baseline = _baseline()
     trigger = _object_trigger()
-    legal = apply_field_patch(
-        baseline, rule_index=0, canonical_field="object", value="records"
-    )
-    illegal = apply_field_patch(
-        legal, rule_index=1, canonical_field="actor", value="controller"
-    )
+    legal = apply_field_patch(baseline, rule_index=0, canonical_field="object", value="records")
+    illegal = apply_field_patch(legal, rule_index=1, canonical_field="actor", value="controller")
     assert only_triggered_fields_changed(baseline, legal, (trigger,)) is True
     assert only_triggered_fields_changed(baseline, illegal, (trigger,)) is False
     assert trigger_paths((trigger,)) == ("rules[0].object",)
@@ -376,9 +358,7 @@ def test_only_triggered_fields_may_change() -> None:
 def test_structural_admission_gate_required_before_implementable() -> None:
     baseline = _baseline()
     trigger = _object_trigger()
-    candidate = apply_field_patch(
-        baseline, rule_index=0, canonical_field="object", value="records"
-    )
+    candidate = apply_field_patch(baseline, rule_index=0, canonical_field="object", value="records")
 
     reject_gate = StructuralAdmissionGate(
         StructuralAdmissionPolicy(tools=(StructuralTool.HAMMER_CVC5,)),
@@ -403,9 +383,7 @@ def test_structural_admission_gate_required_before_implementable() -> None:
     assert receipt.implementable is False
     assert receipt.outcome is ProposalOutcome.ADMISSION_REJECTED
     assert receipt.prior_l1_unchanged is True
-    assert receipt.admission_disposition == (
-        AdmissionDisposition.VALIDATOR_REJECT.value
-    )
+    assert receipt.admission_disposition == (AdmissionDisposition.VALIDATOR_REJECT.value)
 
     accept_gate = StructuralAdmissionGate(
         StructuralAdmissionPolicy(
@@ -519,9 +497,7 @@ def test_live_path_records_retry_exhausted_separately() -> None:
 def test_live_path_accepts_only_triggered_repair_after_admission() -> None:
     baseline = _baseline()
     trigger = _object_trigger()
-    repaired = apply_field_patch(
-        baseline, rule_index=0, canonical_field="object", value="records"
-    )
+    repaired = apply_field_patch(baseline, rule_index=0, canonical_field="object", value="records")
     client = RecordingClient([repaired.to_dict(), repaired.to_dict()])
     policy = SelectiveRepairPolicy(candidate_count=2)
     repairer = SelectiveLeanstralRepair(
@@ -561,9 +537,7 @@ def test_rejects_retain_prior_l1_digest() -> None:
     baseline = _baseline()
     trigger = _object_trigger()
     illegal = apply_field_patch(
-        apply_field_patch(
-            baseline, rule_index=0, canonical_field="object", value="records"
-        ),
+        apply_field_patch(baseline, rule_index=0, canonical_field="object", value="records"),
         rule_index=1,
         canonical_field="action",
         value="delete",
@@ -621,9 +595,7 @@ def test_teacher_never_marks_leanstral_as_default_realizer() -> None:
 def test_dry_run_does_not_require_constructor_request() -> None:
     teacher = LeanstralSelectiveProposalTeacher(mode=ProposalMode.DRY_RUN)
     baseline = _baseline()
-    candidate = apply_field_patch(
-        baseline, rule_index=0, canonical_field="object", value="records"
-    )
+    candidate = apply_field_patch(baseline, rule_index=0, canonical_field="object", value="records")
     receipt = teacher.propose(
         case_id="no-request",
         baseline_l1=baseline,
@@ -680,9 +652,7 @@ def _repair_trigger_from_binding(raw: dict[str, Any]) -> RepairTrigger:
 
 
 def _holdout_activation_rows() -> list[dict[str, Any]]:
-    assert HOLDOUT_CASES_PATH.is_file(), (
-        "holdout_cases.json must exist (PLAT2-020)"
-    )
+    assert HOLDOUT_CASES_PATH.is_file(), "holdout_cases.json must exist (PLAT2-020)"
     rows = json.loads(HOLDOUT_CASES_PATH.read_text(encoding="utf-8"))
     assert isinstance(rows, list)
     activation: list[dict[str, Any]] = []
@@ -712,9 +682,7 @@ def holdout_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
         bindings = row["score_bindings"]
         baseline = CanonicalRuleIR.from_dict(bindings["baseline_ir"])
         candidate = CanonicalRuleIR.from_dict(bindings["repaired_ir"])
-        triggers = tuple(
-            _repair_trigger_from_binding(item) for item in bindings["triggers"]
-        )
+        triggers = tuple(_repair_trigger_from_binding(item) for item in bindings["triggers"])
         vocab = (
             AllowedAtomVocabulary.from_dict(row["allowed_atoms"])
             if row.get("allowed_atoms")
@@ -727,9 +695,7 @@ def holdout_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
                 triggers=triggers,
                 candidate_l1=candidate,
                 expected_outcome=ProposalOutcome.ACCEPTED,
-                residual_field_paths=tuple(
-                    str(item["path"]) for item in bindings["triggers"]
-                ),
+                residual_field_paths=tuple(str(item["path"]) for item in bindings["triggers"]),
                 detail=f"holdout dry-run selective proposal for {row['id']}",
                 source_text=str(row["source_text"]),
                 vocabulary=vocab,
@@ -744,9 +710,7 @@ def holdout_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
     lc_illegal = apply_field_patch(
         lc_legal, rule_index=0, canonical_field="actor", value="processor"
     )
-    lc_triggers = tuple(
-        _repair_trigger_from_binding(item) for item in lc_bindings["triggers"]
-    )
+    lc_triggers = tuple(_repair_trigger_from_binding(item) for item in lc_bindings["triggers"])
     fixtures.append(
         DryRunFixtureCase(
             case_id="holdout_admission_reject_untriggered",
@@ -754,13 +718,8 @@ def holdout_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
             triggers=lc_triggers,
             candidate_l1=lc_illegal,
             expected_outcome=ProposalOutcome.ADMISSION_REJECTED,
-            residual_field_paths=tuple(
-                str(item["path"]) for item in lc_bindings["triggers"]
-            ),
-            detail=(
-                "holdout dry-run candidate changes untriggered field; "
-                "gate retains prior L1"
-            ),
+            residual_field_paths=tuple(str(item["path"]) for item in lc_bindings["triggers"]),
+            detail=("holdout dry-run candidate changes untriggered field; gate retains prior L1"),
             source_text=str(lc["source_text"]),
         )
     )
@@ -771,9 +730,7 @@ def holdout_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
             triggers=lc_triggers,
             candidate_l1=None,
             expected_outcome=ProposalOutcome.RETRY_EXHAUSTED,
-            residual_field_paths=tuple(
-                str(item["path"]) for item in lc_bindings["triggers"]
-            ),
+            residual_field_paths=tuple(str(item["path"]) for item in lc_bindings["triggers"]),
             force_retry_exhausted=True,
             detail="holdout dry-run live-path analogue: all model calls failed",
             source_text=str(lc["source_text"]),
@@ -783,9 +740,7 @@ def holdout_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
     fixtures.append(
         DryRunFixtureCase(
             case_id="holdout_not_triggered",
-            baseline_l1=CanonicalRuleIR.from_dict(
-                mt["score_bindings"]["baseline_ir"]
-            ),
+            baseline_l1=CanonicalRuleIR.from_dict(mt["score_bindings"]["baseline_ir"]),
             triggers=(),
             candidate_l1=None,
             expected_outcome=ProposalOutcome.NOT_TRIGGERED,
@@ -836,13 +791,9 @@ def validate_holdout_dry_run_fixture_pack(
 
     sealed = receipts or build_holdout_dry_run_proposal_receipts()
     if sealed.mode is not ProposalMode.DRY_RUN:
-        raise PlateauLeanstralProposalError(
-            "holdout fixture pack validation requires dry_run mode"
-        )
+        raise PlateauLeanstralProposalError("holdout fixture pack validation requires dry_run mode")
     if sealed.task_id != HOLDOUT_TASK_ID:
-        raise PlateauLeanstralProposalError(
-            f"holdout receipts task_id must be {HOLDOUT_TASK_ID}"
-        )
+        raise PlateauLeanstralProposalError(f"holdout receipts task_id must be {HOLDOUT_TASK_ID}")
     if sealed.board_namespace != HOLDOUT_BOARD_NAMESPACE:
         raise PlateauLeanstralProposalError(
             f"holdout receipts board_namespace must be {HOLDOUT_BOARD_NAMESPACE}"
@@ -873,20 +824,10 @@ def validate_holdout_dry_run_fixture_pack(
             raise PlateauLeanstralProposalError(
                 f"{case_id}: accepted proposal changed untriggered fields"
             )
-        if (
-            receipt.outcome is ProposalOutcome.ADMISSION_REJECTED
-            and not receipt.prior_l1_unchanged
-        ):
-            raise PlateauLeanstralProposalError(
-                f"{case_id}: reject must retain prior L1"
-            )
-        if (
-            receipt.outcome is ProposalOutcome.RETRY_EXHAUSTED
-            and not receipt.retry_exhausted
-        ):
-            raise PlateauLeanstralProposalError(
-                f"{case_id}: retry_exhausted outcome missing flag"
-            )
+        if receipt.outcome is ProposalOutcome.ADMISSION_REJECTED and not receipt.prior_l1_unchanged:
+            raise PlateauLeanstralProposalError(f"{case_id}: reject must retain prior L1")
+        if receipt.outcome is ProposalOutcome.RETRY_EXHAUSTED and not receipt.retry_exhausted:
+            raise PlateauLeanstralProposalError(f"{case_id}: retry_exhausted outcome missing flag")
     rel = sealed.reliability
     if rel.accept_rate is None or rel.retry_exhausted_rate is None:
         raise PlateauLeanstralProposalError(
@@ -902,9 +843,7 @@ def validate_holdout_dry_run_fixture_pack(
             "Leanstral must not be the default realizer on holdout path"
         )
     if sealed.structural_admission_required is not True:
-        raise PlateauLeanstralProposalError(
-            "StructuralAdmission required on holdout teacher path"
-        )
+        raise PlateauLeanstralProposalError("StructuralAdmission required on holdout teacher path")
     if not sealed.receipts_cid:
         raise PlateauLeanstralProposalError(
             "holdout receipts must be CID-bindable (receipts_cid missing)"
@@ -917,10 +856,7 @@ def test_holdout_dry_run_fixture_pack_covers_activation_and_controls() -> None:
     outcomes = {item.case_id: item.expected_outcome for item in pack}
     for case_id in HOLDOUT_ACTIVATION_CASE_IDS:
         assert outcomes[case_id] is ProposalOutcome.ACCEPTED
-    assert (
-        outcomes["holdout_admission_reject_untriggered"]
-        is ProposalOutcome.ADMISSION_REJECTED
-    )
+    assert outcomes["holdout_admission_reject_untriggered"] is ProposalOutcome.ADMISSION_REJECTED
     assert outcomes["holdout_retry_exhausted"] is ProposalOutcome.RETRY_EXHAUSTED
     assert outcomes["holdout_not_triggered"] is ProposalOutcome.NOT_TRIGGERED
 
@@ -965,9 +901,7 @@ def test_holdout_dry_run_fixtures_pass_without_live_model() -> None:
     assert rejected.implementable is False
     assert rejected.prior_l1_unchanged is True
     assert rejected.admitted_l1_digest == rejected.baseline_l1_digest
-    assert rejected.admission_disposition == (
-        AdmissionDisposition.VALIDATOR_REJECT.value
-    )
+    assert rejected.admission_disposition == (AdmissionDisposition.VALIDATOR_REJECT.value)
 
     exhausted = by_id["holdout_retry_exhausted"]
     assert exhausted.outcome is ProposalOutcome.RETRY_EXHAUSTED
@@ -985,9 +919,7 @@ def test_holdout_only_triggered_fields_change_on_accepted() -> None:
         bindings = row["score_bindings"]
         baseline = CanonicalRuleIR.from_dict(bindings["baseline_ir"])
         candidate = CanonicalRuleIR.from_dict(bindings["repaired_ir"])
-        triggers = tuple(
-            _repair_trigger_from_binding(item) for item in bindings["triggers"]
-        )
+        triggers = tuple(_repair_trigger_from_binding(item) for item in bindings["triggers"])
         assert only_triggered_fields_changed(baseline, candidate, triggers) is True
         # Mutating an untriggered field must fail the invariant.
         if not triggers:
@@ -1013,17 +945,11 @@ def test_holdout_only_triggered_fields_change_on_accepted() -> None:
 
 
 def test_holdout_structural_admission_required_before_implementable() -> None:
-    row = next(
-        item
-        for item in _holdout_activation_rows()
-        if item["id"] == "missing_temporal"
-    )
+    row = next(item for item in _holdout_activation_rows() if item["id"] == "missing_temporal")
     bindings = row["score_bindings"]
     baseline = CanonicalRuleIR.from_dict(bindings["baseline_ir"])
     candidate = CanonicalRuleIR.from_dict(bindings["repaired_ir"])
-    triggers = tuple(
-        _repair_trigger_from_binding(item) for item in bindings["triggers"]
-    )
+    triggers = tuple(_repair_trigger_from_binding(item) for item in bindings["triggers"])
 
     reject_gate = StructuralAdmissionGate(
         StructuralAdmissionPolicy(tools=(StructuralTool.HAMMER_CVC5,)),
@@ -1048,9 +974,7 @@ def test_holdout_structural_admission_required_before_implementable() -> None:
     assert receipt.implementable is False
     assert receipt.outcome is ProposalOutcome.ADMISSION_REJECTED
     assert receipt.prior_l1_unchanged is True
-    assert receipt.admission_disposition == (
-        AdmissionDisposition.VALIDATOR_REJECT.value
-    )
+    assert receipt.admission_disposition == (AdmissionDisposition.VALIDATOR_REJECT.value)
 
     accept_gate = StructuralAdmissionGate(
         StructuralAdmissionPolicy(
@@ -1145,24 +1069,14 @@ def test_holdout_checked_in_receipts_artifact() -> None:
         assert case_id in by_id
         assert by_id[case_id].implementable is True
         assert by_id[case_id].only_triggered_fields_changed is True
-        assert by_id[case_id].admission_disposition == (
-            AdmissionDisposition.ACCEPTED.value
-        )
+        assert by_id[case_id].admission_disposition == (AdmissionDisposition.ACCEPTED.value)
         assert regen_by_id[case_id].implementable is True
         assert regen_by_id[case_id].outcome is by_id[case_id].outcome
-        assert (
-            regen_by_id[case_id].admission_disposition
-            == by_id[case_id].admission_disposition
-        )
+        assert regen_by_id[case_id].admission_disposition == by_id[case_id].admission_disposition
     assert by_id["holdout_admission_reject_untriggered"].implementable is False
     assert by_id["holdout_admission_reject_untriggered"].prior_l1_unchanged is True
-    assert (
-        regen_by_id["holdout_admission_reject_untriggered"].implementable is False
-    )
-    assert (
-        regen_by_id["holdout_admission_reject_untriggered"].prior_l1_unchanged
-        is True
-    )
+    assert regen_by_id["holdout_admission_reject_untriggered"].implementable is False
+    assert regen_by_id["holdout_admission_reject_untriggered"].prior_l1_unchanged is True
 
 
 def test_holdout_reliability_separate_from_e2e() -> None:
@@ -1183,9 +1097,7 @@ def test_holdout_reliability_separate_from_e2e() -> None:
         + rel.model_rejected_proposals
         + rel.failed_proposals
     )
-    assert sealed.accept_rate == pytest.approx(
-        rel.accepted_proposals / rel.proposal_attempts
-    )
+    assert sealed.accept_rate == pytest.approx(rel.accepted_proposals / rel.proposal_attempts)
     assert sealed.retry_exhausted_rate == pytest.approx(
         rel.retry_exhausted_proposals / rel.proposal_attempts
     )
@@ -1200,9 +1112,7 @@ def test_holdout_reliability_separate_from_e2e() -> None:
 
 
 def _repair_dev_activation_rows() -> list[dict[str, Any]]:
-    assert REPAIR_DEV_CASES_PATH.is_file(), (
-        "repair_dev_cases.json must exist (PLAT2-020)"
-    )
+    assert REPAIR_DEV_CASES_PATH.is_file(), "repair_dev_cases.json must exist (PLAT2-020)"
     rows = json.loads(REPAIR_DEV_CASES_PATH.read_text(encoding="utf-8"))
     assert isinstance(rows, list)
     activation: list[dict[str, Any]] = []
@@ -1213,9 +1123,7 @@ def _repair_dev_activation_rows() -> list[dict[str, Any]]:
         if isinstance(bindings, dict) and bindings.get("triggers"):
             activation.append(row)
     by_id = {str(row["id"]): row for row in activation}
-    missing = [
-        cid for cid in REPAIR_DEV_ACTIVATION_CASE_IDS if cid not in by_id
-    ]
+    missing = [cid for cid in REPAIR_DEV_ACTIVATION_CASE_IDS if cid not in by_id]
     assert not missing, f"missing repair-dev activation cases: {missing}"
     return [by_id[cid] for cid in REPAIR_DEV_ACTIVATION_CASE_IDS]
 
@@ -1234,9 +1142,7 @@ def repair_dev_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
         bindings = row["score_bindings"]
         baseline = CanonicalRuleIR.from_dict(bindings["baseline_ir"])
         candidate = CanonicalRuleIR.from_dict(bindings["repaired_ir"])
-        triggers = tuple(
-            _repair_trigger_from_binding(item) for item in bindings["triggers"]
-        )
+        triggers = tuple(_repair_trigger_from_binding(item) for item in bindings["triggers"])
         vocab = (
             AllowedAtomVocabulary.from_dict(row["allowed_atoms"])
             if row.get("allowed_atoms")
@@ -1249,9 +1155,7 @@ def repair_dev_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
                 triggers=triggers,
                 candidate_l1=candidate,
                 expected_outcome=ProposalOutcome.ACCEPTED,
-                residual_field_paths=tuple(
-                    str(item["path"]) for item in bindings["triggers"]
-                ),
+                residual_field_paths=tuple(str(item["path"]) for item in bindings["triggers"]),
                 detail=f"repair-dev dry-run selective proposal for {row['id']}",
                 source_text=str(row["source_text"]),
                 vocabulary=vocab,
@@ -1266,9 +1170,7 @@ def repair_dev_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
     lc_illegal = apply_field_patch(
         lc_legal, rule_index=0, canonical_field="actor", value="processor"
     )
-    lc_triggers = tuple(
-        _repair_trigger_from_binding(item) for item in lc_bindings["triggers"]
-    )
+    lc_triggers = tuple(_repair_trigger_from_binding(item) for item in lc_bindings["triggers"])
     fixtures.append(
         DryRunFixtureCase(
             case_id="repair_dev_admission_reject_untriggered",
@@ -1276,12 +1178,9 @@ def repair_dev_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
             triggers=lc_triggers,
             candidate_l1=lc_illegal,
             expected_outcome=ProposalOutcome.ADMISSION_REJECTED,
-            residual_field_paths=tuple(
-                str(item["path"]) for item in lc_bindings["triggers"]
-            ),
+            residual_field_paths=tuple(str(item["path"]) for item in lc_bindings["triggers"]),
             detail=(
-                "repair-dev dry-run candidate changes untriggered field; "
-                "gate retains prior L1"
+                "repair-dev dry-run candidate changes untriggered field; gate retains prior L1"
             ),
             source_text=str(lc["source_text"]),
         )
@@ -1293,13 +1192,9 @@ def repair_dev_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
             triggers=lc_triggers,
             candidate_l1=None,
             expected_outcome=ProposalOutcome.RETRY_EXHAUSTED,
-            residual_field_paths=tuple(
-                str(item["path"]) for item in lc_bindings["triggers"]
-            ),
+            residual_field_paths=tuple(str(item["path"]) for item in lc_bindings["triggers"]),
             force_retry_exhausted=True,
-            detail=(
-                "repair-dev dry-run live-path analogue: all model calls failed"
-            ),
+            detail=("repair-dev dry-run live-path analogue: all model calls failed"),
             source_text=str(lc["source_text"]),
         )
     )
@@ -1307,9 +1202,7 @@ def repair_dev_dry_run_fixture_pack() -> tuple[DryRunFixtureCase, ...]:
     fixtures.append(
         DryRunFixtureCase(
             case_id="repair_dev_not_triggered",
-            baseline_l1=CanonicalRuleIR.from_dict(
-                mt["score_bindings"]["baseline_ir"]
-            ),
+            baseline_l1=CanonicalRuleIR.from_dict(mt["score_bindings"]["baseline_ir"]),
             triggers=(),
             candidate_l1=None,
             expected_outcome=ProposalOutcome.NOT_TRIGGERED,
@@ -1369,8 +1262,7 @@ def validate_repair_dev_leanstral_fixture_pack(
         )
     if sealed.board_namespace != REPAIR_DEV_BOARD_NAMESPACE:
         raise PlateauLeanstralProposalError(
-            "repair-dev receipts board_namespace must be "
-            f"{REPAIR_DEV_BOARD_NAMESPACE}"
+            f"repair-dev receipts board_namespace must be {REPAIR_DEV_BOARD_NAMESPACE}"
         )
     by_id = sealed.by_case_id()
     expected = {item.case_id: item for item in repair_dev_dry_run_fixture_pack()}
@@ -1398,20 +1290,10 @@ def validate_repair_dev_leanstral_fixture_pack(
             raise PlateauLeanstralProposalError(
                 f"{case_id}: accepted proposal changed untriggered fields"
             )
-        if (
-            receipt.outcome is ProposalOutcome.ADMISSION_REJECTED
-            and not receipt.prior_l1_unchanged
-        ):
-            raise PlateauLeanstralProposalError(
-                f"{case_id}: reject must retain prior L1"
-            )
-        if (
-            receipt.outcome is ProposalOutcome.RETRY_EXHAUSTED
-            and not receipt.retry_exhausted
-        ):
-            raise PlateauLeanstralProposalError(
-                f"{case_id}: retry_exhausted outcome missing flag"
-            )
+        if receipt.outcome is ProposalOutcome.ADMISSION_REJECTED and not receipt.prior_l1_unchanged:
+            raise PlateauLeanstralProposalError(f"{case_id}: reject must retain prior L1")
+        if receipt.outcome is ProposalOutcome.RETRY_EXHAUSTED and not receipt.retry_exhausted:
+            raise PlateauLeanstralProposalError(f"{case_id}: retry_exhausted outcome missing flag")
         if receipt.semantic_authority is not False:
             raise PlateauLeanstralProposalError(
                 f"{case_id}: teacher receipt claimed semantic_authority"
@@ -1419,8 +1301,7 @@ def validate_repair_dev_leanstral_fixture_pack(
     rel = sealed.reliability
     if rel.accept_rate is None or rel.retry_exhausted_rate is None:
         raise PlateauLeanstralProposalError(
-            "repair-dev fixture pack must record accept_rate and "
-            "retry_exhausted_rate"
+            "repair-dev fixture pack must record accept_rate and retry_exhausted_rate"
         )
     rel_payload = rel.to_dict()
     if rel_payload.get("end_to_end_loss") is not None:
@@ -1436,9 +1317,7 @@ def validate_repair_dev_leanstral_fixture_pack(
             "StructuralAdmission required on repair-dev teacher path"
         )
     if not sealed.receipts_cid:
-        raise PlateauLeanstralProposalError(
-            "repair-dev leanstral receipts must be CID-bindable"
-        )
+        raise PlateauLeanstralProposalError("repair-dev leanstral receipts must be CID-bindable")
     return sealed
 
 
@@ -1461,25 +1340,20 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
     if payload.get("interface") != REPAIR_DEV_TEACHER_INTERFACE:
         raise PlateauLeanstralProposalError("teacher receipts interface mismatch")
     if payload.get("schema_version") != REPAIR_DEV_TEACHER_SCHEMA:
-        raise PlateauLeanstralProposalError(
-            "teacher receipts schema_version mismatch"
-        )
+        raise PlateauLeanstralProposalError("teacher receipts schema_version mismatch")
     if payload.get("task_id") != REPAIR_DEV_TASK_ID:
         raise PlateauLeanstralProposalError(
             f"teacher receipts task_id must be {REPAIR_DEV_TASK_ID}"
         )
     if payload.get("board_namespace") != REPAIR_DEV_BOARD_NAMESPACE:
-        raise PlateauLeanstralProposalError(
-            "teacher receipts board_namespace mismatch"
-        )
+        raise PlateauLeanstralProposalError("teacher receipts board_namespace mismatch")
     if payload.get("population_kind") != REPAIR_DEV_POPULATION_KIND:
         raise PlateauLeanstralProposalError(
             "teacher receipts must target repair_development population"
         )
     if payload.get("mode") != ProposalMode.DRY_RUN.value:
         raise PlateauLeanstralProposalError(
-            "checked-in teacher receipts must be dry_run when live model "
-            "unavailable"
+            "checked-in teacher receipts must be dry_run when live model unavailable"
         )
     if payload.get("evidence") != REPAIR_DEV_EVIDENCE:
         raise PlateauLeanstralProposalError("teacher receipts evidence mismatch")
@@ -1506,9 +1380,9 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
     if not isinstance(assumptions, list) or not assumptions:
         raise PlateauLeanstralProposalError("assumptions must be a non-empty list")
     expected_digest = hashlib.sha256(
-        json.dumps(
-            assumptions, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-        ).encode("utf-8")
+        json.dumps(assumptions, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+            "utf-8"
+        )
     ).hexdigest()
     if bindings["assumptions_digest"] != expected_digest:
         raise PlateauLeanstralProposalError("assumptions_digest mismatch")
@@ -1522,21 +1396,15 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
     if routes.get("symai_proof_credit") is not False:
         raise PlateauLeanstralProposalError("SyMAI cannot receive proof credit")
     if routes.get("symai_cannot_receive_proof_credit") is not True:
-        raise PlateauLeanstralProposalError(
-            "symai_cannot_receive_proof_credit must be true"
-        )
+        raise PlateauLeanstralProposalError("symai_cannot_receive_proof_credit must be true")
     if routes.get("direct_route") != DIRECT_ROUTE_ID:
         raise PlateauLeanstralProposalError("direct_route identity mismatch")
     if routes.get("symai_route") != SYMAI_ROUTE:
         raise PlateauLeanstralProposalError("symai_route identity mismatch")
     if routes.get("leanstral_route") == routes.get("symai_route"):
-        raise PlateauLeanstralProposalError(
-            "leanstral and symai routes must remain distinct"
-        )
+        raise PlateauLeanstralProposalError("leanstral and symai routes must remain distinct")
 
-    symai = payload.get("symai_orchestration") or payload.get("methods", {}).get(
-        "symai"
-    )
+    symai = payload.get("symai_orchestration") or payload.get("methods", {}).get("symai")
     if not isinstance(symai, dict) or symai.get("proof_credit") is not False:
         raise PlateauLeanstralProposalError("SyMAI proof_credit must be false")
     if symai.get("executed") is not False:
@@ -1548,15 +1416,11 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
     spacy = payload.get("spacy_diagnostics") or {}
     ae = payload.get("autoencoder_guidance") or {}
     if not isinstance(spacy, dict) or spacy.get("semantic_authority") is not False:
-        raise PlateauLeanstralProposalError(
-            "spaCy diagnostics cannot claim semantic_authority"
-        )
+        raise PlateauLeanstralProposalError("spaCy diagnostics cannot claim semantic_authority")
     if spacy.get("output_kind") != "diagnostics":
         raise PlateauLeanstralProposalError("spaCy output_kind must be diagnostics")
     if not isinstance(ae, dict) or ae.get("semantic_authority") is not False:
-        raise PlateauLeanstralProposalError(
-            "AE guidance cannot claim semantic_authority"
-        )
+        raise PlateauLeanstralProposalError("AE guidance cannot claim semantic_authority")
     if ae.get("eligible") is not False or ae.get("executed") is not False:
         raise PlateauLeanstralProposalError(
             "terminal AE guidance must remain ineligible and unexecuted"
@@ -1569,13 +1433,9 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
     if admission.get("required") is not True:
         raise PlateauLeanstralProposalError("StructuralAdmission is required")
     if admission.get("may_substitute_for_e2e_loss") is not False:
-        raise PlateauLeanstralProposalError(
-            "StructuralAdmission cannot substitute for e2e loss"
-        )
+        raise PlateauLeanstralProposalError("StructuralAdmission cannot substitute for e2e loss")
     if admission.get("semantic_authority") is not False:
-        raise PlateauLeanstralProposalError(
-            "StructuralAdmission semantic_authority must be false"
-        )
+        raise PlateauLeanstralProposalError("StructuralAdmission semantic_authority must be false")
     if admission.get("checks_declared_structural_properties_only") is not True:
         raise PlateauLeanstralProposalError(
             "StructuralAdmission must check only declared structural properties"
@@ -1588,9 +1448,7 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
     for control_id in ("nc_no_edit", "nc_withhold_optional_teacher"):
         row = neg.get(control_id)
         if not isinstance(row, dict) or row.get("status") != "pass":
-            raise PlateauLeanstralProposalError(
-                f"negative control {control_id} must pass"
-            )
+            raise PlateauLeanstralProposalError(f"negative control {control_id} must pass")
         if row.get("always_pass") is not True:
             raise PlateauLeanstralProposalError(
                 f"negative control {control_id} must be always_pass"
@@ -1604,26 +1462,16 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
         )
     for attempt in attempts:
         if not isinstance(attempt, dict):
-            raise PlateauLeanstralProposalError(
-                "residual_teacher_attempts rows must be objects"
-            )
+            raise PlateauLeanstralProposalError("residual_teacher_attempts rows must be objects")
         if attempt.get("population_kind") != REPAIR_DEV_POPULATION_KIND:
-            raise PlateauLeanstralProposalError(
-                "teacher attempts must stay on repair_development"
-            )
+            raise PlateauLeanstralProposalError("teacher attempts must stay on repair_development")
         if attempt.get("blind_data_used") is not False:
-            raise PlateauLeanstralProposalError(
-                "teacher attempts must not use blind data"
-            )
+            raise PlateauLeanstralProposalError("teacher attempts must not use blind data")
         for adv in attempt.get("executed_advisories") or ():
             if not isinstance(adv, dict) or adv.get("eligible") is not True:
-                raise PlateauLeanstralProposalError(
-                    "executed advisories must be registry-eligible"
-                )
+                raise PlateauLeanstralProposalError("executed advisories must be registry-eligible")
             if adv.get("semantic_authority") is not False:
-                raise PlateauLeanstralProposalError(
-                    "advisory semantic_authority must be false"
-                )
+                raise PlateauLeanstralProposalError("advisory semantic_authority must be false")
         for adv in attempt.get("skipped_advisories") or ():
             if not isinstance(adv, dict):
                 raise PlateauLeanstralProposalError("skipped advisories malformed")
@@ -1638,10 +1486,7 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
                 raise PlateauLeanstralProposalError(
                     "SyMAI must remain ineligible for proof-credit advisory"
                 )
-            if (
-                adv.get("method_id") == "autoencoder"
-                and adv.get("eligible") is not False
-            ):
+            if adv.get("method_id") == "autoencoder" and adv.get("eligible") is not False:
                 raise PlateauLeanstralProposalError(
                     "autoencoder must remain ineligible without scored_supported"
                 )
@@ -1649,18 +1494,14 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
             if not isinstance(gate, dict):
                 raise PlateauLeanstralProposalError("structural gate row malformed")
             if gate.get("may_substitute_for_e2e") is not False:
-                raise PlateauLeanstralProposalError(
-                    "structural gates cannot substitute for e2e"
-                )
+                raise PlateauLeanstralProposalError("structural gates cannot substitute for e2e")
             if gate.get("semantic_authority") is not False:
                 raise PlateauLeanstralProposalError(
                     "structural gates semantic_authority must be false"
                 )
         for control in attempt.get("negative_controls") or ():
             if not isinstance(control, dict) or control.get("status") != "pass":
-                raise PlateauLeanstralProposalError(
-                    "per-residual negative controls must pass"
-                )
+                raise PlateauLeanstralProposalError("per-residual negative controls must pass")
 
     # Leanstral nested proposals: parse + fixture acceptance.
     leanstral = payload.get("leanstral_proposals")
@@ -1690,14 +1531,10 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
     if not isinstance(dry_controls, dict):
         raise PlateauLeanstralProposalError("typed dry_run_controls required")
     if not dry_controls.get("retry_exhausted", {}).get("recorded"):
-        raise PlateauLeanstralProposalError(
-            "retry_exhausted must be recorded in dry-run controls"
-        )
+        raise PlateauLeanstralProposalError("retry_exhausted must be recorded in dry-run controls")
     live = typed.get("live_inference") or {}
     if live.get("health_only_cannot_establish_inference") is not True:
-        raise PlateauLeanstralProposalError(
-            "health-only probes cannot establish model inference"
-        )
+        raise PlateauLeanstralProposalError("health-only probes cannot establish model inference")
 
     # Blind holdout never accessed.
     blind = payload.get("blind_holdout")
@@ -1717,9 +1554,7 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
         "cache_namespaces_accessed",
     ):
         if blind.get(flag) is not False:
-            raise PlateauLeanstralProposalError(
-                f"blind_holdout.{flag} must be false"
-            )
+            raise PlateauLeanstralProposalError(f"blind_holdout.{flag} must be false")
 
     doctrine = payload.get("doctrine") or {}
     if not isinstance(doctrine, dict):
@@ -1749,9 +1584,7 @@ def validate_repair_dev_teacher_receipts(payload: dict[str, Any]) -> None:
     bindable.pop("receipts_cid_scope", None)
     expected_cid = cid_for_dag_json(bindable)
     if receipts_cid != expected_cid:
-        raise PlateauLeanstralProposalError(
-            "receipts_cid does not match teacher receipts payload"
-        )
+        raise PlateauLeanstralProposalError("receipts_cid does not match teacher receipts payload")
 
 
 def test_repair_dev_dry_run_fixture_pack_covers_activation_and_controls() -> None:
@@ -1759,10 +1592,7 @@ def test_repair_dev_dry_run_fixture_pack_covers_activation_and_controls() -> Non
     outcomes = {item.case_id: item.expected_outcome for item in pack}
     for case_id in REPAIR_DEV_ACTIVATION_CASE_IDS:
         assert outcomes[case_id] is ProposalOutcome.ACCEPTED
-    assert (
-        outcomes["repair_dev_admission_reject_untriggered"]
-        is ProposalOutcome.ADMISSION_REJECTED
-    )
+    assert outcomes["repair_dev_admission_reject_untriggered"] is ProposalOutcome.ADMISSION_REJECTED
     assert outcomes["repair_dev_retry_exhausted"] is ProposalOutcome.RETRY_EXHAUSTED
     assert outcomes["repair_dev_not_triggered"] is ProposalOutcome.NOT_TRIGGERED
 
@@ -1808,9 +1638,7 @@ def test_repair_dev_dry_run_fixtures_pass_without_live_model() -> None:
     assert rejected.implementable is False
     assert rejected.prior_l1_unchanged is True
     assert rejected.admitted_l1_digest == rejected.baseline_l1_digest
-    assert rejected.admission_disposition == (
-        AdmissionDisposition.VALIDATOR_REJECT.value
-    )
+    assert rejected.admission_disposition == (AdmissionDisposition.VALIDATOR_REJECT.value)
 
     exhausted = by_id["repair_dev_retry_exhausted"]
     assert exhausted.outcome is ProposalOutcome.RETRY_EXHAUSTED
@@ -1828,9 +1656,7 @@ def test_repair_dev_only_triggered_fields_change_on_accepted() -> None:
         bindings = row["score_bindings"]
         baseline = CanonicalRuleIR.from_dict(bindings["baseline_ir"])
         candidate = CanonicalRuleIR.from_dict(bindings["repaired_ir"])
-        triggers = tuple(
-            _repair_trigger_from_binding(item) for item in bindings["triggers"]
-        )
+        triggers = tuple(_repair_trigger_from_binding(item) for item in bindings["triggers"])
         assert only_triggered_fields_changed(baseline, candidate, triggers) is True
         if not triggers:
             continue
@@ -1854,17 +1680,11 @@ def test_repair_dev_only_triggered_fields_change_on_accepted() -> None:
 
 
 def test_repair_dev_structural_admission_required_before_implementable() -> None:
-    row = next(
-        item
-        for item in _repair_dev_activation_rows()
-        if item["id"] == "missing_temporal"
-    )
+    row = next(item for item in _repair_dev_activation_rows() if item["id"] == "missing_temporal")
     bindings = row["score_bindings"]
     baseline = CanonicalRuleIR.from_dict(bindings["baseline_ir"])
     candidate = CanonicalRuleIR.from_dict(bindings["repaired_ir"])
-    triggers = tuple(
-        _repair_trigger_from_binding(item) for item in bindings["triggers"]
-    )
+    triggers = tuple(_repair_trigger_from_binding(item) for item in bindings["triggers"])
 
     reject_gate = StructuralAdmissionGate(
         StructuralAdmissionPolicy(tools=(StructuralTool.HAMMER_CVC5,)),
@@ -1889,9 +1709,7 @@ def test_repair_dev_structural_admission_required_before_implementable() -> None
     assert receipt.implementable is False
     assert receipt.outcome is ProposalOutcome.ADMISSION_REJECTED
     assert receipt.prior_l1_unchanged is True
-    assert receipt.admission_disposition == (
-        AdmissionDisposition.VALIDATOR_REJECT.value
-    )
+    assert receipt.admission_disposition == (AdmissionDisposition.VALIDATOR_REJECT.value)
 
     accept_gate = StructuralAdmissionGate(
         StructuralAdmissionPolicy(
@@ -1969,9 +1787,7 @@ def test_repair_dev_checked_in_teacher_receipts_artifact() -> None:
     # Bindings match frozen PLAT2-030/035/010/025 artifacts.
     catalog = json.loads(REPAIR_DEV_CATALOG_PATH.read_text(encoding="utf-8"))
     registry = json.loads(REPAIR_DEV_REGISTRY_PATH.read_text(encoding="utf-8"))
-    packet_metrics = json.loads(
-        REPAIR_DEV_PACKET_METRICS_PATH.read_text(encoding="utf-8")
-    )
+    packet_metrics = json.loads(REPAIR_DEV_PACKET_METRICS_PATH.read_text(encoding="utf-8"))
     bindings = payload["bindings"]
     assert bindings["catalog_cid"] == catalog["catalog_cid"]
     assert bindings["tree_cid"] == catalog["tree_cid"]
@@ -1996,9 +1812,7 @@ def test_repair_dev_checked_in_teacher_receipts_artifact() -> None:
     for case_id in REPAIR_DEV_ACTIVATION_CASE_IDS:
         assert by_id[case_id].implementable is True
         assert by_id[case_id].only_triggered_fields_changed is True
-        assert by_id[case_id].admission_disposition == (
-            AdmissionDisposition.ACCEPTED.value
-        )
+        assert by_id[case_id].admission_disposition == (AdmissionDisposition.ACCEPTED.value)
         assert by_id[case_id].semantic_authority is False
         assert regen_by_id[case_id].implementable is True
         assert regen_by_id[case_id].outcome is by_id[case_id].outcome
@@ -2034,9 +1848,7 @@ def test_repair_dev_reliability_separate_from_e2e() -> None:
         + rel.model_rejected_proposals
         + rel.failed_proposals
     )
-    assert sealed.accept_rate == pytest.approx(
-        rel.accepted_proposals / rel.proposal_attempts
-    )
+    assert sealed.accept_rate == pytest.approx(rel.accepted_proposals / rel.proposal_attempts)
     assert sealed.retry_exhausted_rate == pytest.approx(
         rel.retry_exhausted_proposals / rel.proposal_attempts
     )
@@ -2065,9 +1877,7 @@ def test_repair_dev_only_eligible_methods_and_residuals_execute() -> None:
     payload = load_repair_dev_teacher_receipts()
     registry = json.loads(REPAIR_DEV_REGISTRY_PATH.read_text(encoding="utf-8"))
     mapping_ids = {m["mapping_id"] for m in registry["residual_mappings"]}
-    attempt_ids = {
-        row["mapping_id"] for row in payload["residual_teacher_attempts"]
-    }
+    attempt_ids = {row["mapping_id"] for row in payload["residual_teacher_attempts"]}
     assert attempt_ids == mapping_ids
 
     for attempt in payload["residual_teacher_attempts"]:
@@ -2083,13 +1893,9 @@ def test_repair_dev_only_eligible_methods_and_residuals_execute() -> None:
                 assert adv["eligible"] is False
         # Cross-check against registry residual mapping.
         reg_map = next(
-            m
-            for m in registry["residual_mappings"]
-            if m["mapping_id"] == attempt["mapping_id"]
+            m for m in registry["residual_mappings"] if m["mapping_id"] == attempt["mapping_id"]
         )
-        reg_by_method = {
-            a["method_id"]: a for a in reg_map["optional_advisories"]
-        }
+        reg_by_method = {a["method_id"]: a for a in reg_map["optional_advisories"]}
         for adv in attempt["executed_advisories"]:
             assert reg_by_method[adv["method_id"]]["eligible"] is True
         for adv in attempt["skipped_advisories"]:
@@ -2157,9 +1963,7 @@ def test_repair_dev_typed_model_outcome_taxonomy() -> None:
     # Closed ModelOutputRecovery taxonomy maps detailed labels correctly.
     assert classify_model_rejection("blank_output") is ModelRejectionReason.BLANK
     assert classify_model_rejection("malformed_output") is ModelRejectionReason.SCHEMA
-    assert (
-        classify_model_rejection("polarity_ambiguous") is ModelRejectionReason.POLARITY
-    )
+    assert classify_model_rejection("polarity_ambiguous") is ModelRejectionReason.POLARITY
     assert classify_model_rejection("empty_output") is ModelRejectionReason.EMPTY_RULES
     assert classify_model_rejection("call_timeout") is ModelRejectionReason.TIMEOUT
     # Dry-run control records retry_exhausted separately.

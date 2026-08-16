@@ -99,10 +99,9 @@ await call_tool("category.dataset", action="list")
 await call_tool("category.dataset.load_dataset", source="squad")
 
 # Alternative: single dispatch tool
-await call_tool("tools.dispatch", 
-    category="dataset", 
-    tool="load_dataset", 
-    params={"source": "squad"})
+await call_tool(
+    "tools.dispatch", category="dataset", tool="load_dataset", params={"source": "squad"}
+)
 ```
 
 ### 2. Core Module Organization
@@ -139,14 +138,15 @@ MCP tools become thin wrappers:
 # ipfs_datasets_py/mcp_server/tools/dataset_tools/load_dataset.py
 """MCP wrapper for dataset loading."""
 
+
 async def load_dataset(source: str, format: str = None, **options):
     """Load a dataset from various sources.
-    
+
     This is an MCP tool wrapper. Core implementation:
     ipfs_datasets_py.datasets.loader.DatasetLoader
     """
     from ipfs_datasets_py.datasets.loader import DatasetLoader
-    
+
     loader = DatasetLoader()
     return await loader.load(source, format=format, **options)
 ```
@@ -496,43 +496,39 @@ This logic is used by:
 from typing import Dict, Any, Optional, Union
 from pathlib import Path
 
+
 class DatasetLoader:
     """Load datasets from various sources."""
-    
+
     def __init__(self):
         self.cache = {}
-    
-    async def load(
-        self,
-        source: str,
-        format: Optional[str] = None,
-        **options
-    ) -> Dict[str, Any]:
+
+    async def load(self, source: str, format: Optional[str] = None, **options) -> Dict[str, Any]:
         """Load a dataset from a source.
-        
+
         Args:
             source: Dataset source (HF name, file path, URL, IPFS CID)
             format: Format hint (json, csv, parquet, etc.)
             **options: Additional loading options
-            
+
         Returns:
             Dict with status, dataset_id, metadata, summary
-            
+
         Raises:
             ValueError: Invalid source or format
             IOError: Failed to load dataset
         """
         # Core loading logic here
         pass
-    
+
     async def load_from_huggingface(self, name: str, **options):
         """Load from Hugging Face Hub."""
         pass
-    
+
     async def load_from_file(self, path: Path, format: str, **options):
         """Load from local file."""
         pass
-    
+
     async def load_from_ipfs(self, cid: str, **options):
         """Load from IPFS."""
         pass
@@ -556,38 +552,29 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-async def load_dataset(
-    source: str,
-    format: Optional[str] = None,
-    **options
-) -> Dict[str, Any]:
+
+async def load_dataset(source: str, format: Optional[str] = None, **options) -> Dict[str, Any]:
     """Load a dataset from various sources.
-    
+
     MCP tool for loading datasets. Delegates to core implementation.
-    
+
     Args:
         source: Dataset source identifier
         format: Optional format hint
         **options: Additional loading options
-        
+
     Returns:
         Dict with loading results
     """
     from ipfs_datasets_py.datasets.loader import DatasetLoader
-    
+
     try:
         loader = DatasetLoader()
         result = await loader.load(source, format=format, **options)
-        return {
-            "status": "success",
-            **result
-        }
+        return {"status": "success", **result}
     except Exception as e:
         logger.error(f"Failed to load dataset: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 ```
 
 ---

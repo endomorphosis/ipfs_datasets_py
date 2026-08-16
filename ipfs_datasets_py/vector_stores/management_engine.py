@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import faiss  # type: ignore
+
     FAISS_AVAILABLE = True
 except (ImportError, ModuleNotFoundError):
     FAISS_AVAILABLE = False
@@ -31,6 +32,7 @@ except (ImportError, ModuleNotFoundError):
 try:
     from qdrant_client import QdrantClient  # type: ignore
     from qdrant_client.http import models as qdrant_models  # type: ignore
+
     QDRANT_AVAILABLE = True
 except (ImportError, ModuleNotFoundError):
     QDRANT_AVAILABLE = False
@@ -39,6 +41,7 @@ except (ImportError, ModuleNotFoundError):
 
 try:
     from elasticsearch import Elasticsearch  # type: ignore
+
     ELASTICSEARCH_AVAILABLE = True
 except (ImportError, ModuleNotFoundError):
     ELASTICSEARCH_AVAILABLE = False
@@ -46,6 +49,7 @@ except (ImportError, ModuleNotFoundError):
 
 try:
     from ipfs_datasets_py.embeddings.embeddings_engine import AdvancedIPFSEmbeddings  # type: ignore
+
     EMBEDDINGS_AVAILABLE = True
 except (ImportError, ModuleNotFoundError):
     EMBEDDINGS_AVAILABLE = False
@@ -362,13 +366,15 @@ class VectorStoreManager:
                             if os.path.exists(meta_path):
                                 with open(meta_path) as fh:
                                     meta = json.load(fh)
-                                faiss_indexes.append({
-                                    "name": item,
-                                    "backend": "faiss",
-                                    "vector_dim": meta.get("vector_dim"),
-                                    "document_count": meta.get("document_count"),
-                                    "distance_metric": meta.get("distance_metric"),
-                                })
+                                faiss_indexes.append(
+                                    {
+                                        "name": item,
+                                        "backend": "faiss",
+                                        "vector_dim": meta.get("vector_dim"),
+                                        "document_count": meta.get("document_count"),
+                                        "distance_metric": meta.get("distance_metric"),
+                                    }
+                                )
                 indexes["faiss"] = faiss_indexes
             return {"status": "success", "backend": backend, "indexes": indexes}
         except OSError as e:

@@ -95,7 +95,7 @@ artifact = LearnedModelArtifact.create(
     bias=-1.6,
 )
 artifact.model_digest  # "sha256:...", derived from (model_id, feature_version,
-                        # feature_names, weights, bias) -- never independently set
+# feature_names, weights, bias) -- never independently set
 artifact.save("model.json")
 loaded = LearnedModelArtifact.load("model.json")  # re-validates + re-checks the digest
 ```
@@ -157,13 +157,17 @@ silently downgraded to a fallback.
 from ipfs_datasets_py.logic.hammers.learned_selector import select_premises_gated
 
 outcome = select_premises_gated(
-    manifest, goal, top_k=16, policy=policy, learned_config=config,
+    manifest,
+    goal,
+    top_k=16,
+    policy=policy,
+    learned_config=config,
 )
-outcome.used_learned_selector   # True only if every gate below passed
-outcome.fallback_reason         # SelectorFallbackReason.NONE when used_learned_selector
-outcome.selection                # a standard PremiseSelectionResult either way
+outcome.used_learned_selector  # True only if every gate below passed
+outcome.fallback_reason  # SelectorFallbackReason.NONE when used_learned_selector
+outcome.selection  # a standard PremiseSelectionResult either way
 outcome.selection.selected[0].selection_method  # "learned-selector:sha256:..." or
-                                                  # "deterministic-baseline"
+# "deterministic-baseline"
 ```
 
 Gates, checked in order, each falling back to

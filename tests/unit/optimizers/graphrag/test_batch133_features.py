@@ -5,6 +5,7 @@ Methods under test:
   - EntityExtractionResult.relationship_ids property
   - OntologyLearningAdapter.improvement_trend(window)
 """
+
 import pytest
 
 
@@ -12,13 +13,16 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_entity(eid, confidence=0.8):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="person", text=eid, properties={}, confidence=confidence)
 
 
 def _make_result(entities, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities,
         relationships=relationships or [],
@@ -27,7 +31,10 @@ def _make_result(entities, relationships=None):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -38,6 +45,7 @@ def _push(adapter, score):
 # ---------------------------------------------------------------------------
 # EntityExtractionResult.entity_ids
 # ---------------------------------------------------------------------------
+
 
 class TestEntityIds:
     def test_empty(self):
@@ -61,6 +69,7 @@ class TestEntityIds:
 # EntityExtractionResult.relationship_ids
 # ---------------------------------------------------------------------------
 
+
 class TestRelationshipIds:
     def test_empty(self):
         result = _make_result([])
@@ -68,6 +77,7 @@ class TestRelationshipIds:
 
     def test_relationships_without_id_skipped(self):
         from unittest.mock import MagicMock
+
         result = _make_result([], relationships=[MagicMock(spec=[])])
         # spec=[] means MagicMock has no attributes
         assert result.relationship_ids == []
@@ -80,6 +90,7 @@ class TestRelationshipIds:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.improvement_trend
 # ---------------------------------------------------------------------------
+
 
 class TestImprovementTrend:
     def test_empty_returns_zero(self):

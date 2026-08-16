@@ -100,10 +100,7 @@ def _audit(
 
 
 def test_objective_evidence_and_public_api_are_stable() -> None:
-    assert (
-        cases.HSSLEV0232D57()
-        == "frozen split integrity and audited leakage-free holdout access"
-    )
+    assert cases.HSSLEV0232D57() == "frozen split integrity and audited leakage-free holdout access"
     assert logic_pipeline.HSSLEV0232D57 is cases.HSSLEV0232D57
     assert cases.SPLIT_MANIFEST_SCHEMA.endswith(".split-manifest.v1")
     assert cases.SPLIT_INTEGRITY_SCHEMA.endswith(".split-integrity.v1")
@@ -128,13 +125,11 @@ def test_default_split_membership_and_digests_are_frozen(
         "dd68177636a3db87752de54399ed8f066d5fdefe568649d9551bb29a0fb529d0"
     )
     assert integrity.integrity_sha256 == cases.FROZEN_SPLIT_INTEGRITY_SHA256
-    assert {
-        item.split: item.split_sha256 for item in integrity.splits
-    } == dict(cases.FROZEN_SPLIT_SHA256)
-    assert tuple(len(item.case_ids) for item in integrity.splits) == (10, 10, 10)
-    assert integrity.holdout.case_ids == tuple(
-        f"holdout-h{index:02d}" for index in range(1, 11)
+    assert {item.split: item.split_sha256 for item in integrity.splits} == dict(
+        cases.FROZEN_SPLIT_SHA256
     )
+    assert tuple(len(item.case_ids) for item in integrity.splits) == (10, 10, 10)
+    assert integrity.holdout.case_ids == tuple(f"holdout-h{index:02d}" for index in range(1, 11))
     assert cases.frozen_holdout_manifest(corpus) == integrity.holdout
 
 
@@ -189,9 +184,7 @@ def test_normalized_cross_split_duplicate_is_rejected(
     holdout = _replace_source(corpus.cases[20], copied)
     candidate = corpus.cases[:20] + (holdout,) + corpus.cases[21:]
 
-    with pytest.raises(
-        cases.CorpusContractError, match="normalized source duplicate"
-    ):
+    with pytest.raises(cases.CorpusContractError, match="normalized source duplicate"):
         cases.validate_split_integrity(candidate)
 
 
@@ -232,9 +225,7 @@ def test_reused_cross_split_provenance_is_rejected(
     holdout = replace(corpus.cases[20], provenance=provenance)
 
     with pytest.raises(cases.CorpusContractError, match="provenance reused"):
-        cases.validate_split_integrity(
-            corpus.cases[:20] + (holdout,) + corpus.cases[21:]
-        )
+        cases.validate_split_integrity(corpus.cases[:20] + (holdout,) + corpus.cases[21:])
 
 
 def test_holdout_prompt_exposure_is_rejected(
@@ -247,9 +238,7 @@ def test_holdout_prompt_exposure_is_rejected(
     )
 
     with pytest.raises(cases.CorpusContractError, match="holdout prompt leakage"):
-        cases.validate_split_integrity(
-            corpus.cases[:20] + (exposed,) + corpus.cases[21:]
-        )
+        cases.validate_split_integrity(corpus.cases[:20] + (exposed,) + corpus.cases[21:])
 
 
 def test_prompt_example_copy_and_near_copy_are_rejected(
@@ -369,9 +358,7 @@ def test_holdout_access_rejects_reordered_or_tampered_receipts(
     with pytest.raises(cases.CorpusContractError, match="frozen manifest order"):
         _audit(
             corpus,
-            accessed_case_ids=tuple(
-                reversed(corpus.split_integrity.holdout.case_ids)
-            ),
+            accessed_case_ids=tuple(reversed(corpus.split_integrity.holdout.case_ids)),
         )
 
     value = _audit(corpus).to_dict()
@@ -400,9 +387,7 @@ def test_serialized_holdout_access_cannot_relax_freeze_or_tuning(
     data[field] = value
     payload = dict(data)
     payload.pop("audit_sha256")
-    data["audit_sha256"] = hashlib.sha256(
-        cases.canonical_json(payload).encode("utf-8")
-    ).hexdigest()
+    data["audit_sha256"] = hashlib.sha256(cases.canonical_json(payload).encode("utf-8")).hexdigest()
 
     with pytest.raises(cases.CorpusContractError, match=message):
         cases.HoldoutAccessAudit.from_dict(data)

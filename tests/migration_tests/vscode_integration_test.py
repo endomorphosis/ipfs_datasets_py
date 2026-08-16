@@ -21,6 +21,7 @@ from pathlib import Path
 # Add current directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+
 def test_vscode_integration():
     """Test VS Code integration with development tools."""
     print("=" * 50)
@@ -39,19 +40,21 @@ def test_vscode_integration():
         return False
 
     try:
-        with open(settings_path, 'r') as f:
+        with open(settings_path, "r") as f:
             settings = json.load(f)
 
-        if 'mcpServers' not in settings:
+        if "mcpServers" not in settings:
             print("❌ Error: mcpServers section missing in MCP settings!")
             return False
 
-        if 'ipfs_datasets' not in settings['mcpServers']:
+        if "ipfs_datasets" not in settings["mcpServers"]:
             print("❌ Error: ipfs_datasets server configuration missing!")
             return False
 
         print("✅ VS Code MCP settings found and validated")
-        print(f"   Server command: {settings['mcpServers']['ipfs_datasets']['command']} {' '.join(settings['mcpServers']['ipfs_datasets']['args'])}")
+        print(
+            f"   Server command: {settings['mcpServers']['ipfs_datasets']['command']} {' '.join(settings['mcpServers']['ipfs_datasets']['args'])}"
+        )
 
     except Exception as e:
         print(f"❌ Error reading VS Code settings: {e}")
@@ -61,6 +64,7 @@ def test_vscode_integration():
     print("\n2. Testing MCP server setup...")
     try:
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
+
         server = IPFSDatasetsMCPServer()
         print("✅ MCP server imported successfully")
     except Exception as e:
@@ -73,11 +77,11 @@ def test_vscode_integration():
         server.register_tools()
 
         expected_tools = [
-            'test_generator',
-            'codebase_search',
-            'documentation_generator',
-            'lint_python_codebase',
-            'run_comprehensive_tests'
+            "test_generator",
+            "codebase_search",
+            "documentation_generator",
+            "lint_python_codebase",
+            "run_comprehensive_tests",
         ]
 
         found_tools = [name for name in server.tools.keys() if name in expected_tools]
@@ -100,7 +104,7 @@ def test_vscode_integration():
     test_file_path = Path(__file__).parent / "vscode_test_marker.py"
 
     try:
-        with open(test_file_path, 'w') as f:
+        with open(test_file_path, "w") as f:
             f.write(f"""# VS Code Integration Test Marker
 # Generated at {time.ctime()}
 # Do not modify this file - it's used for VS Code Copilot Chat testing
@@ -148,11 +152,12 @@ To complete the VS Code integration test:
 
     return True
 
+
 def create_test_results_template():
     """Create a template for recording test results."""
     results_path = Path(__file__).parent / "vscode_integration_results.md"
 
-    with open(results_path, 'w') as f:
+    with open(results_path, "w") as f:
         f.write("""# VS Code Integration Test Results
 
 ## Test Environment
@@ -186,6 +191,7 @@ Legend:
 
     print(f"📝 Test results template created: {results_path}")
     print("   Fill this out after completing the VS Code integration test")
+
 
 if __name__ == "__main__":
     success = test_vscode_integration()

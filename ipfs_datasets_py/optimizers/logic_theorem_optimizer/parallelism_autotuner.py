@@ -29,9 +29,7 @@ from typing import Any, Final, Mapping, Sequence
 PARALLELISM_AUTOTUNER_SCHEMA_VERSION: Final = "legal-ir-parallelism-autotuner-v1"
 PIPELINE_BENCHMARK_SCHEMA_VERSION: Final = "legal-ir-optimizer-pipeline-benchmark-v1"
 DGX_SPARK_PROFILE_SCHEMA_VERSION: Final = "legal-ir-dgx-spark-production-profile-v1"
-ADAPTIVE_PIPELINE_PARALLELISM_SCHEMA_VERSION: Final = (
-    "legal-ir-adaptive-pipeline-parallelism-v1"
-)
+ADAPTIVE_PIPELINE_PARALLELISM_SCHEMA_VERSION: Final = "legal-ir-adaptive-pipeline-parallelism-v1"
 BATCH_SIZE_AUTOTUNER_SCHEMA_VERSION: Final = "modal-autoencoder-batch-autotuner-v1"
 
 HIGHER_IS_BETTER_QUALITY: Final = frozenset(
@@ -137,14 +135,28 @@ class ParallelismProfile:
             raise ValueError("profile name must be a non-empty portable identifier")
         object.__setattr__(self, "name", name)
         for field_name in (
-            "hammer_workers", "lean_reconstruction_workers", "leanstral_workers",
-            "legal_ir_family_workers", "incremental_validation_workers",
-            "snapshot_evaluator_workers", "codex_workers", "orchestration_workers",
-            "trainer_count", "leanstral_batch_min", "leanstral_batch_max",
-            "snapshot_queue_capacity", "leanstral_queue_capacity", "codex_queue_capacity",
-            "hammer_lean_cpu_slots", "validation_cpu_slots", "codex_cpu_slots",
-            "orchestration_cpu_slots", "reserve_cpu_slots", "memory_budget_mb",
-            "modal_autoencoder_batch_min", "modal_autoencoder_batch_max",
+            "hammer_workers",
+            "lean_reconstruction_workers",
+            "leanstral_workers",
+            "legal_ir_family_workers",
+            "incremental_validation_workers",
+            "snapshot_evaluator_workers",
+            "codex_workers",
+            "orchestration_workers",
+            "trainer_count",
+            "leanstral_batch_min",
+            "leanstral_batch_max",
+            "snapshot_queue_capacity",
+            "leanstral_queue_capacity",
+            "codex_queue_capacity",
+            "hammer_lean_cpu_slots",
+            "validation_cpu_slots",
+            "codex_cpu_slots",
+            "orchestration_cpu_slots",
+            "reserve_cpu_slots",
+            "memory_budget_mb",
+            "modal_autoencoder_batch_min",
+            "modal_autoencoder_batch_max",
         ):
             _integer(getattr(self, field_name), name=field_name, minimum=1)
         if self.leanstral_batch_min > self.leanstral_batch_max:
@@ -157,8 +169,11 @@ class ParallelismProfile:
     @property
     def allocated_cpu_slots(self) -> int:
         return (
-            self.hammer_lean_cpu_slots + self.validation_cpu_slots + self.codex_cpu_slots
-            + self.orchestration_cpu_slots + self.reserve_cpu_slots
+            self.hammer_lean_cpu_slots
+            + self.validation_cpu_slots
+            + self.codex_cpu_slots
+            + self.orchestration_cpu_slots
+            + self.reserve_cpu_slots
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -253,9 +268,7 @@ class GlobalResourceBounds:
         if profile.trainer_count != 1:
             failures.append(f"trainer_count:{profile.trainer_count}!=1")
         hammer_lane_workers = (
-            profile.hammer_workers
-            + profile.lean_reconstruction_workers
-            + profile.leanstral_workers
+            profile.hammer_workers + profile.lean_reconstruction_workers + profile.leanstral_workers
         )
         if hammer_lane_workers > profile.hammer_lean_cpu_slots:
             failures.append("hammer_lean_workers_exceed_lane")
@@ -297,9 +310,12 @@ class TrustBounds:
 
     def __post_init__(self) -> None:
         for name in (
-            "max_transient_failure_rate", "max_relative_throughput_regression",
-            "max_latency_regression", "max_quality_regression",
-            "max_proof_rate_regression", "max_reconstruction_rate_regression",
+            "max_transient_failure_rate",
+            "max_relative_throughput_regression",
+            "max_latency_regression",
+            "max_quality_regression",
+            "max_proof_rate_regression",
+            "max_reconstruction_rate_regression",
         ):
             _ratio(getattr(self, name), name=name)
         _integer(self.minimum_sample_count, name="minimum_sample_count", minimum=1)
@@ -365,25 +381,41 @@ class PipelineBenchmarkMetrics:
 
     def __post_init__(self) -> None:
         nonnegative = (
-            "cold_cache_throughput_per_hour", "warm_cache_throughput_per_hour",
-            "proof_throughput_per_hour", "reconstruction_throughput_per_hour",
-            "leanstral_average_batch_size", "gpu_memory_percent_peak", "memory_percent_peak", "swap_percent_peak",
-            "queue_lag_p50_seconds", "queue_lag_p95_seconds",
-            "codex_accepted_patches_per_hour", "cycle_seconds",
+            "cold_cache_throughput_per_hour",
+            "warm_cache_throughput_per_hour",
+            "proof_throughput_per_hour",
+            "reconstruction_throughput_per_hour",
+            "leanstral_average_batch_size",
+            "gpu_memory_percent_peak",
+            "memory_percent_peak",
+            "swap_percent_peak",
+            "queue_lag_p50_seconds",
+            "queue_lag_p95_seconds",
+            "codex_accepted_patches_per_hour",
+            "cycle_seconds",
         )
         for name in nonnegative:
             _finite(getattr(self, name), name=name, minimum=0.0)
         for name in (
-            "trainer_duty_cycle", "leanstral_batch_efficiency", "cpu_utilization_average",
-            "cpu_utilization_peak", "gpu_utilization_average", "gpu_utilization_peak",
-            "cold_cache_hit_rate", "warm_cache_hit_rate", "transient_failure_rate",
+            "trainer_duty_cycle",
+            "leanstral_batch_efficiency",
+            "cpu_utilization_average",
+            "cpu_utilization_peak",
+            "gpu_utilization_average",
+            "gpu_utilization_peak",
+            "cold_cache_hit_rate",
+            "warm_cache_hit_rate",
+            "transient_failure_rate",
         ):
             _ratio(getattr(self, name), name=name)
         if not isinstance(self.gpu_telemetry_known, bool):
             raise ValueError("gpu_telemetry_known must be a bool")
         for name in (
-            "memory_used_bytes_peak", "swap_used_bytes_peak", "child_process_count_peak",
-            "queue_depth_peak", "sample_count",
+            "memory_used_bytes_peak",
+            "swap_used_bytes_peak",
+            "child_process_count_peak",
+            "queue_depth_peak",
+            "sample_count",
         ):
             _integer(getattr(self, name), name=name, minimum=0)
         if self.cpu_utilization_peak < self.cpu_utilization_average:
@@ -422,9 +454,8 @@ class PipelineBenchmarkMetrics:
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "PipelineBenchmarkMetrics":
         payload = dict(value)
-        if (
-            payload.get("schema_version") == PIPELINE_BENCHMARK_SCHEMA_VERSION
-            and isinstance(payload.get("metrics"), Mapping)
+        if payload.get("schema_version") == PIPELINE_BENCHMARK_SCHEMA_VERSION and isinstance(
+            payload.get("metrics"), Mapping
         ):
             payload = dict(payload["metrics"])
         allowed = set(cls.__dataclass_fields__)
@@ -484,7 +515,11 @@ class AutotuneResult:
             "selected_metrics": self.selected.metrics.to_dict(),
         }
         selected_comparison = next(
-            (item.to_dict() for item in self.evaluations if item.profile_name == self.selected.profile.name),
+            (
+                item.to_dict()
+                for item in self.evaluations
+                if item.profile_name == self.selected.profile.name
+            ),
             {
                 "profile_name": self.baseline.profile.name,
                 "eligible": True,
@@ -514,7 +549,9 @@ class AutotuneResult:
                 "environment": {
                     "IPFS_DATASETS_RESOURCE_CPU_SLOTS": str(self.resource_bounds.total_cpu_slots),
                     "IPFS_DATASETS_RESOURCE_MEMORY_MB": str(settings.memory_budget_mb),
-                    "IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS": str(settings.legal_ir_family_workers),
+                    "IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS": str(
+                        settings.legal_ir_family_workers
+                    ),
                 },
                 "daemon_arguments": {
                     "--autoencoder-bridge-workers": settings.legal_ir_family_workers,
@@ -770,7 +807,9 @@ class AdaptivePipelineSignals:
                 )
                 or 0
             ),
-            merge_conflict_rate=data.get("merge_conflict_rate", data.get("apply_conflict_rate", 0.0)),
+            merge_conflict_rate=data.get(
+                "merge_conflict_rate", data.get("apply_conflict_rate", 0.0)
+            ),
             accepted_patch_throughput_per_hour=data.get(
                 "accepted_patch_throughput_per_hour",
                 data.get("accepted_patches_per_hour", 0.0),
@@ -971,10 +1010,7 @@ class AdaptivePipelineParallelismController:
         elif pressure.cpu_utilization >= soft_high:
             factor = min(factor, 0.75)
             reasons.append("cpu_precontention")
-        elif (
-            pressure.cpu_utilization < low
-            and sum(signals.ready_queue_depth.values()) > 0
-        ):
+        elif pressure.cpu_utilization < low and sum(signals.ready_queue_depth.values()) > 0:
             reasons.append("cpu_under_target_with_ready_work")
         if pressure.memory_pressure >= 0.90:
             factor = min(factor, 0.40)
@@ -1095,7 +1131,9 @@ class AdaptivePipelineParallelismController:
             ),
         )
         if not signals.resource_pressure.gpu_telemetry_known:
-            leanstral = min(leanstral, max(1, signals.active_count_for("leanstral_workers", "leanstral")))
+            leanstral = min(
+                leanstral, max(1, signals.active_count_for("leanstral_workers", "leanstral"))
+            )
 
         legal_ir = self._demand_workers(
             signals,
@@ -1136,15 +1174,16 @@ class AdaptivePipelineParallelismController:
             capacity=codex_capacity,
         )
         if signals.merge_conflict_rate >= 0.10:
-            codex = max(1, math.floor(codex * (0.75 if signals.merge_conflict_rate < 0.20 else 0.50)))
+            codex = max(
+                1, math.floor(codex * (0.75 if signals.merge_conflict_rate < 0.20 else 0.50))
+            )
         backlog_high_watermark = max(2, validation_cap * 2)
         if signals.validation_backlog > backlog_high_watermark and codex > 1:
             codex = max(1, math.floor(codex * 0.50))
             policy_reasons.append("validation_backlog_throttles_codex")
         if signals.accepted_patch_target_per_hour > 0.0:
             accepted_ratio = (
-                signals.accepted_patch_throughput_per_hour
-                / signals.accepted_patch_target_per_hour
+                signals.accepted_patch_throughput_per_hour / signals.accepted_patch_target_per_hour
             )
             if accepted_ratio < 0.50 and codex > 1:
                 codex = max(1, math.floor(codex * 0.75))
@@ -1170,7 +1209,9 @@ class AdaptivePipelineParallelismController:
         pressure_total_cap, reasons = self._pressure_cap(signals, counts)
         reasons.extend(policy_reasons)
         counts = self._reduce_to_total_cap(counts, pressure_total_cap)
-        counts["hammer_workers"] = self._apply_cap(counts["hammer_workers"], selected_profile.hammer_workers)
+        counts["hammer_workers"] = self._apply_cap(
+            counts["hammer_workers"], selected_profile.hammer_workers
+        )
         counts["lean_reconstruction_workers"] = self._apply_cap(
             counts["lean_reconstruction_workers"],
             selected_profile.lean_reconstruction_workers,
@@ -1213,7 +1254,10 @@ class AdaptivePipelineParallelismController:
                 + counts["lean_reconstruction_workers"]
                 + counts["leanstral_workers"]
             )
-        if signals.resource_pressure.cpu_utilization > self.resource_bounds.useful_cpu_utilization_max:
+        if (
+            signals.resource_pressure.cpu_utilization
+            > self.resource_bounds.useful_cpu_utilization_max
+        ):
             reasons.append("scaled_down_before_contention")
         elif (
             signals.resource_pressure.cpu_utilization
@@ -1328,8 +1372,7 @@ class BatchSizeMeasurement:
             "memory_headroom_fraction": self.memory_headroom_fraction,
             "peak_memory_bytes": self.peak_memory_bytes,
             "quality_metrics": {
-                str(name): float(value)
-                for name, value in sorted(self.quality_metrics.items())
+                str(name): float(value) for name, value in sorted(self.quality_metrics.items())
             },
             "recoverable_oom": self.recoverable_oom,
             "sample_count": self.sample_count,
@@ -1362,8 +1405,7 @@ class BatchAutotuneConfig:
     def __post_init__(self) -> None:
         candidates = tuple(sorted(set(self.candidate_batch_sizes)))
         if not candidates or any(
-            isinstance(size, bool) or not isinstance(size, int) or size < 1
-            for size in candidates
+            isinstance(size, bool) or not isinstance(size, int) or size < 1 for size in candidates
         ):
             raise ValueError("candidate_batch_sizes must contain positive integers")
         object.__setattr__(self, "candidate_batch_sizes", candidates)
@@ -1438,8 +1480,7 @@ def _quality_is_lower_better(name: str) -> bool:
         return True
     lowered = name.lower()
     return any(
-        marker in lowered
-        for marker in ("loss", "penalty", "error", "cross_entropy", "latency")
+        marker in lowered for marker in ("loss", "penalty", "error", "cross_entropy", "latency")
     )
 
 
@@ -1466,10 +1507,7 @@ class BatchSizeAutotuner:
             failures.append("gpu_telemetry_unknown")
         if candidate.memory_capacity_bytes <= 0:
             failures.append("memory_capacity_unknown")
-        elif (
-            candidate.memory_headroom_fraction + 1.0e-12
-            < config.minimum_memory_headroom_fraction
-        ):
+        elif candidate.memory_headroom_fraction + 1.0e-12 < config.minimum_memory_headroom_fraction:
             failures.append("insufficient_memory_headroom")
         if candidate.peak_memory_bytes > candidate.memory_capacity_bytes:
             failures.append("memory_capacity_exceeded")
@@ -1576,9 +1614,7 @@ class BatchSizeAutotuner:
         per_sample = _integer(bytes_per_sample, name="bytes_per_sample", minimum=1)
         usable = max(
             0,
-            int(capacity * (1.0 - self.config.minimum_memory_headroom_fraction))
-            - used
-            - fixed,
+            int(capacity * (1.0 - self.config.minimum_memory_headroom_fraction)) - used - fixed,
         )
         admitted = [
             size
@@ -1680,12 +1716,8 @@ class ParallelismAutotuner:
         proof_trial = trial.quality_metrics.get("hammer_proof_success_rate", 0.0)
         if proof_trial < proof_base - trust.max_proof_rate_regression:
             failures.append("proof_success_rate_regression")
-        reconstruction_base = base.quality_metrics.get(
-            "hammer_reconstruction_success_rate", 0.0
-        )
-        reconstruction_trial = trial.quality_metrics.get(
-            "hammer_reconstruction_success_rate", 0.0
-        )
+        reconstruction_base = base.quality_metrics.get("hammer_reconstruction_success_rate", 0.0)
+        reconstruction_trial = trial.quality_metrics.get("hammer_reconstruction_success_rate", 0.0)
         if reconstruction_trial < reconstruction_base - trust.max_reconstruction_rate_regression:
             failures.append("reconstruction_success_rate_regression")
 
@@ -1721,7 +1753,9 @@ class ParallelismAutotuner:
                 trial.warm_cache_throughput_per_hour,
                 base.warm_cache_throughput_per_hour,
             ),
-            "proof_throughput": _relative(trial.proof_throughput_per_hour, base.proof_throughput_per_hour),
+            "proof_throughput": _relative(
+                trial.proof_throughput_per_hour, base.proof_throughput_per_hour
+            ),
             "reconstruction_throughput": _relative(
                 trial.reconstruction_throughput_per_hour,
                 base.reconstruction_throughput_per_hour,
@@ -1731,15 +1765,20 @@ class ParallelismAutotuner:
                 base.codex_accepted_patches_per_hour,
             ),
             "cycle_time_improvement": _relative(base.cycle_seconds, trial.cycle_seconds),
-            "queue_tail_improvement": _relative(base.queue_lag_p95_seconds, trial.queue_lag_p95_seconds),
+            "queue_tail_improvement": _relative(
+                base.queue_lag_p95_seconds, trial.queue_lag_p95_seconds
+            ),
             "phase_tail_improvement": tail_delta,
-            "leanstral_batch_efficiency": trial.leanstral_batch_efficiency - base.leanstral_batch_efficiency,
+            "leanstral_batch_efficiency": trial.leanstral_batch_efficiency
+            - base.leanstral_batch_efficiency,
             "trainer_duty_cycle": trial.trainer_duty_cycle - base.trainer_duty_cycle,
             "quality_improvement": _mean(quality_improvements),
         }
         # End-to-end work dominates; CPU proximity contributes only 3% and
         # cannot compensate for a failed gate.
-        utilization_midpoint = (bounds.useful_cpu_utilization_min + bounds.useful_cpu_utilization_max) / 2.0
+        utilization_midpoint = (
+            bounds.useful_cpu_utilization_min + bounds.useful_cpu_utilization_max
+        ) / 2.0
         utilization_signal = 1.0 - min(1.0, abs(cpu - utilization_midpoint) / 0.25)
         score = (
             0.13 * deltas["cold_cache_throughput"]
@@ -1764,7 +1803,9 @@ class ParallelismAutotuner:
             trial_evidence_digest=canonical_digest(candidate.to_dict()),
         )
 
-    def tune(self, baseline: BenchmarkTrial, candidates: Sequence[BenchmarkTrial]) -> AutotuneResult:
+    def tune(
+        self, baseline: BenchmarkTrial, candidates: Sequence[BenchmarkTrial]
+    ) -> AutotuneResult:
         if baseline.profile.name != "fixed_baseline":
             raise ValueError("baseline profile must be named 'fixed_baseline'")
         baseline_profile_failures = self.resource_bounds.profile_violations(baseline.profile)
@@ -1774,8 +1815,7 @@ class ParallelismAutotuner:
                 + ", ".join(baseline_profile_failures)
             )
         missing_baseline_quality = sorted(
-            set(self.trust_bounds.required_quality_metrics)
-            - set(baseline.metrics.quality_metrics)
+            set(self.trust_bounds.required_quality_metrics) - set(baseline.metrics.quality_metrics)
         )
         if missing_baseline_quality:
             raise ValueError(
@@ -1788,16 +1828,24 @@ class ParallelismAutotuner:
             raise ValueError("at least one measured candidate is required")
         names = [candidate.profile.name for candidate in candidates]
         if len(names) != len(set(names)) or "fixed_baseline" in names:
-            raise ValueError("candidate profile names must be unique and cannot reuse fixed_baseline")
+            raise ValueError(
+                "candidate profile names must be unique and cannot reuse fixed_baseline"
+            )
         evaluated = [(candidate, self.evaluate(baseline, candidate)) for candidate in candidates]
-        eligible = [(candidate, result) for candidate, result in evaluated if result.eligible and result.score > 0.0]
+        eligible = [
+            (candidate, result)
+            for candidate, result in evaluated
+            if result.eligible and result.score > 0.0
+        ]
         if eligible:
             # Canonical name tie-break makes output independent of input order.
             selected, _ = min(eligible, key=lambda pair: (-pair[1].score, pair[0].profile.name))
             promoted = True
         else:
             selected, promoted = baseline, False
-        evaluations = tuple(result for _, result in sorted(evaluated, key=lambda pair: pair[0].profile.name))
+        evaluations = tuple(
+            result for _, result in sorted(evaluated, key=lambda pair: pair[0].profile.name)
+        )
         return AutotuneResult(
             baseline=baseline,
             selected=selected,
@@ -1842,19 +1890,43 @@ def write_reproducible_profile(path: str | os.PathLike[str], result: AutotuneRes
 
 __all__ = [
     "ADAPTIVE_PIPELINE_PARALLELISM_SCHEMA_VERSION",
-    "BATCH_SIZE_AUTOTUNER_SCHEMA_VERSION", "DGX_SPARK_BATCH_AUTOTUNE_CONFIG",
-    "DGX_SPARK_PROFILE_SCHEMA_VERSION", "FIXED_DGX_SPARK_BASELINE",
-    "DGX_SPARK_INITIAL_PIPELINE_PROFILE", "DGX_SPARK_INITIAL_STAGE_PROFILE",
-    "HIGHER_IS_BETTER_QUALITY", "LOWER_IS_BETTER_QUALITY",
-    "PARALLELISM_AUTOTUNER_SCHEMA_VERSION", "PIPELINE_BENCHMARK_SCHEMA_VERSION",
-    "AdaptivePipelineDecision", "AdaptivePipelineParallelismController",
-    "AdaptivePipelineSignals", "AdaptiveWorkerCounts", "AutotuneResult",
-    "BatchAutotuneConfig", "BatchAutotuneDecision", "BatchCandidateEvaluation",
-    "BatchAutotuner", "BatchTuningConfig", "BatchTuningResult",
-    "BatchCandidateMeasurement", "BatchResourceMeasurement", "BatchSizeAutotuner",
-    "BatchSizeMeasurement", "ResourceSafeBatchAutotuner", "autotune_batch_size",
-    "BenchmarkTrial", "CandidateEvaluation", "GlobalResourceBounds",
-    "ParallelismAutotuner", "ParallelismProfile", "PhaseLatency",
-    "PipelineBenchmarkMetrics", "TrustBounds", "autotune_parallelism",
-    "RuntimeResourcePressure", "canonical_digest", "write_reproducible_profile",
+    "BATCH_SIZE_AUTOTUNER_SCHEMA_VERSION",
+    "DGX_SPARK_BATCH_AUTOTUNE_CONFIG",
+    "DGX_SPARK_PROFILE_SCHEMA_VERSION",
+    "FIXED_DGX_SPARK_BASELINE",
+    "DGX_SPARK_INITIAL_PIPELINE_PROFILE",
+    "DGX_SPARK_INITIAL_STAGE_PROFILE",
+    "HIGHER_IS_BETTER_QUALITY",
+    "LOWER_IS_BETTER_QUALITY",
+    "PARALLELISM_AUTOTUNER_SCHEMA_VERSION",
+    "PIPELINE_BENCHMARK_SCHEMA_VERSION",
+    "AdaptivePipelineDecision",
+    "AdaptivePipelineParallelismController",
+    "AdaptivePipelineSignals",
+    "AdaptiveWorkerCounts",
+    "AutotuneResult",
+    "BatchAutotuneConfig",
+    "BatchAutotuneDecision",
+    "BatchCandidateEvaluation",
+    "BatchAutotuner",
+    "BatchTuningConfig",
+    "BatchTuningResult",
+    "BatchCandidateMeasurement",
+    "BatchResourceMeasurement",
+    "BatchSizeAutotuner",
+    "BatchSizeMeasurement",
+    "ResourceSafeBatchAutotuner",
+    "autotune_batch_size",
+    "BenchmarkTrial",
+    "CandidateEvaluation",
+    "GlobalResourceBounds",
+    "ParallelismAutotuner",
+    "ParallelismProfile",
+    "PhaseLatency",
+    "PipelineBenchmarkMetrics",
+    "TrustBounds",
+    "autotune_parallelism",
+    "RuntimeResourcePressure",
+    "canonical_digest",
+    "write_reproducible_profile",
 ]

@@ -12,8 +12,8 @@ from .advanced_archiving import (
 )
 
 __all__ = [
-    'AdvancedWebArchiver',
-    'ArchivingConfig',
-    'WebResource',
-    'ArchiveCollection',
+    "AdvancedWebArchiver",
+    "ArchivingConfig",
+    "WebResource",
+    "ArchiveCollection",
 ]

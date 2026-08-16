@@ -78,9 +78,9 @@ Successfully integrated zero-knowledge proofs (ZKP) and proof caching into the C
 ```python
 # Create cached prover
 prover = CachedTheoremProver(
-    cache_size=1000,      # Max cached proofs
-    cache_ttl=3600,       # Time-to-live (seconds)
-    use_global_cache=True # Use shared cache
+    cache_size=1000,  # Max cached proofs
+    cache_ttl=3600,  # Time-to-live (seconds)
+    use_global_cache=True,  # Use shared cache
 )
 
 # Prove with automatic caching
@@ -119,10 +119,7 @@ prover.clear_cache()
 ```python
 # Create hybrid prover
 prover = ZKPCECProver(
-    enable_zkp=True,
-    enable_caching=True,
-    zkp_backend="simulated",
-    zkp_fallback="standard"
+    enable_zkp=True, enable_caching=True, zkp_backend="simulated", zkp_fallback="standard"
 )
 
 # Automatic optimization
@@ -131,15 +128,16 @@ result = prover.prove_theorem(goal, axioms)
 
 # Force ZKP for privacy
 result = prover.prove_theorem(
-    goal, axioms,
-    prefer_zkp=True,        # Prefer ZKP
-    private_axioms=True     # Hide axioms
+    goal,
+    axioms,
+    prefer_zkp=True,  # Prefer ZKP
+    private_axioms=True,  # Hide axioms
 )
 
 # Check result
-print(f"Method: {result.method.value}")     # e.g., "cec_zkp"
-print(f"Private: {result.is_private}")       # True
-print(f"From cache: {result.from_cache}")    # False
+print(f"Method: {result.method.value}")  # e.g., "cec_zkp"
+print(f"Private: {result.is_private}")  # True
+print(f"From cache: {result.from_cache}")  # False
 
 # Get statistics
 stats = prover.get_statistics()
@@ -152,10 +150,7 @@ stats = prover.get_statistics()
 # Quick hybrid prover setup
 from ipfs_datasets_py.logic.CEC.native import create_hybrid_prover
 
-prover = create_hybrid_prover(
-    enable_zkp=True,
-    enable_caching=True
-)
+prover = create_hybrid_prover(enable_zkp=True, enable_caching=True)
 
 # Global cached prover (singleton)
 from ipfs_datasets_py.logic.CEC.native import get_global_cached_prover
@@ -238,11 +233,13 @@ prover = get_global_cached_prover()
 ```python
 # Old code (still works)
 from ipfs_datasets_py.logic.CEC.native import TheoremProver
+
 prover = TheoremProver()
 result = prover.prove_theorem(goal, axioms)
 
 # New code (opt-in, faster)
 from ipfs_datasets_py.logic.CEC.native import CachedTheoremProver
+
 prover = CachedTheoremProver()
 result = prover.prove_theorem(goal, axioms)
 # Same interface, automatic speedup!
@@ -319,37 +316,31 @@ from ipfs_datasets_py.logic.CEC.native import create_hybrid_prover
 from ipfs_datasets_py.logic.CEC.native.dcec_core import parse_dcec
 
 # Create hybrid prover
-prover = create_hybrid_prover(
-    enable_zkp=True,
-    enable_caching=True,
-    zkp_backend="simulated"
-)
+prover = create_hybrid_prover(enable_zkp=True, enable_caching=True, zkp_backend="simulated")
 
 # Define sensitive problem
 goal = parse_dcec("O(share_patient_data)")
-axioms = [
-    parse_dcec("patient_consent"),
-    parse_dcec("patient_consent -> O(share_patient_data)")
-]
+axioms = [parse_dcec("patient_consent"), parse_dcec("patient_consent -> O(share_patient_data)")]
 
 # Automatic optimization (cache → ZKP → standard)
 result = prover.prove_theorem(goal, axioms)
 
-print(f"Proved: {result.is_proved}")          # True
-print(f"Method: {result.method.value}")       # "cec_standard" or "cec_cached"
-print(f"Time: {result.proof_time:.4f}s")      # Variable
-print(f"From cache: {result.from_cache}")     # True/False
+print(f"Proved: {result.is_proved}")  # True
+print(f"Method: {result.method.value}")  # "cec_standard" or "cec_cached"
+print(f"Time: {result.proof_time:.4f}s")  # Variable
+print(f"From cache: {result.from_cache}")  # True/False
 
 # Force ZKP for privacy-preserving proof
 result_private = prover.prove_theorem(
-    goal, axioms,
-    prefer_zkp=True,        # Prefer ZKP over standard
-    private_axioms=True     # Hide axioms in proof
+    goal,
+    axioms,
+    prefer_zkp=True,  # Prefer ZKP over standard
+    private_axioms=True,  # Hide axioms in proof
 )
 
-print(f"Private: {result_private.is_private}")    # True
-print(f"Method: {result_private.method.value}")   # "cec_zkp"
-print(f"ZKP backend: {result_private.zkp_backend}") # "simulated"
+print(f"Private: {result_private.is_private}")  # True
+print(f"Method: {result_private.method.value}")  # "cec_zkp"
+print(f"ZKP backend: {result_private.zkp_backend}")  # "simulated"
 
 # Verify proof can be validated without revealing axioms
 # (ZKP backend handles this automatically)
@@ -388,7 +379,7 @@ print(f"Hit rate: {stats['hit_rate']:.1%}")
 print(f"Total lookups: {stats['total_lookups']}")
 
 # Clear cache if needed
-if stats['hit_rate'] < 0.20:  # Low hit rate
+if stats["hit_rate"] < 0.20:  # Low hit rate
     prover.clear_cache()
     print("Cache cleared due to low hit rate")
 
@@ -438,6 +429,7 @@ else:
 
 # Always safe to instantiate - graceful degradation
 from ipfs_datasets_py.logic.CEC.native import CachedTheoremProver
+
 prover = CachedTheoremProver()  # Works even if HAVE_CACHE=False
 # Just won't cache (acts like regular TheoremProver)
 ```

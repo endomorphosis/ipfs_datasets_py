@@ -118,9 +118,7 @@ def test_compiler_preserves_packet_000663_explicit_ambiguity_policy_pairs() -> N
         expected_priority,
         expected_type,
     ) in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _mock_adaptive_ranking(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -151,17 +149,10 @@ def test_compiler_preserves_packet_000663_explicit_ambiguity_policy_pairs() -> N
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
         assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin)
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
-        assert (
-            abs(
-                float(ambiguity.metadata.get("adaptive_priority", 0.0))
-                - expected_priority
-            )
+            abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12
         )

@@ -130,9 +130,9 @@ def _compiler_record() -> contracts.StageRecord:
         split=contracts.Split.PILOT,
         cache_mode=contracts.CacheMode.COLD,
         input_data={"text": SOURCE_TEXT},
-        requested_identity=variants.get_variant_definition(
-            "A0"
-        ).requested_identity(contracts.StageName.COMPILER),
+        requested_identity=variants.get_variant_definition("A0").requested_identity(
+            contracts.StageName.COMPILER
+        ),
         environment_sha256=ENVIRONMENT_SHA256,
         source=("synthetic-g211-test",),
         semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID,
@@ -167,9 +167,7 @@ def _evidence(tmp_path: Path):
         tmp_path / "kernel-state",
     )
     return execute_causal_runtime_case_v2(
-        contracts.CaseResultRecord.from_stages(
-            (exposure.compiler_record,)
-        ),
+        contracts.CaseResultRecord.from_stages((exposure.compiler_record,)),
         SOURCE_TEXT,
         PROOF_CONTEXT,
         exposure,
@@ -198,9 +196,7 @@ def _inputs(tmp_path: Path):
         semantic_calibration_artifact_cid=cid_for_dag_json(
             {"schema": "synthetic-g200-calibration.v1"}
         ),
-        compiler_reference_population_cid=str(
-            population["population_cid"]
-        ),
+        compiler_reference_population_cid=str(population["population_cid"]),
         environment_sha256=ENVIRONMENT_SHA256,
     )
     return plan, manifest, profile, evidence_by_job
@@ -223,21 +219,13 @@ def _persist(tmp_path: Path):
 def _build_namespace_evidence(plan, evidence_by_job):
     policy = build_g240_namespace_policy_v2(
         (plan,),
-        source_commit_cid=cid_for_dag_json(
-            {"schema": "synthetic-source-commit.v1"}
-        ),
-        recursive_gitlinks_cid=cid_for_dag_json(
-            {"schema": "synthetic-recursive-gitlinks.v1"}
-        ),
-        environment_cid=cid_for_dag_json(
-            {"schema": "synthetic-environment.v1"}
-        ),
+        source_commit_cid=cid_for_dag_json({"schema": "synthetic-source-commit.v1"}),
+        recursive_gitlinks_cid=cid_for_dag_json({"schema": "synthetic-recursive-gitlinks.v1"}),
+        environment_cid=cid_for_dag_json({"schema": "synthetic-environment.v1"}),
         runtime_orchestration_policy_cid=cid_for_dag_json(
             {"schema": "synthetic-source-executor-contract.v1"}
         ),
-        namespace_authority_cid=cid_for_dag_json(
-            {"authority": "synthetic-namespace-policy"}
-        ),
+        namespace_authority_cid=cid_for_dag_json({"authority": "synthetic-namespace-policy"}),
     )
     job = plan.jobs[0]
     evidence = evidence_by_job[job.job_id]
@@ -246,12 +234,8 @@ def _build_namespace_evidence(plan, evidence_by_job):
         plan=plan,
         job=job,
         evidence=evidence,
-        executor_identity_cid=cid_for_dag_json(
-            {"authority": "synthetic-runtime-executor"}
-        ),
-        observer_identity_cid=cid_for_dag_json(
-            {"authority": "synthetic-namespace-observer"}
-        ),
+        executor_identity_cid=cid_for_dag_json({"authority": "synthetic-runtime-executor"}),
+        observer_identity_cid=cid_for_dag_json({"authority": "synthetic-namespace-observer"}),
         process_group_started=True,
         process_group_reaped=True,
         active_process_count_after_reap=0,
@@ -266,9 +250,7 @@ def _build_namespace_evidence(plan, evidence_by_job):
         policy=policy,
         plan_cids=(plan_cid,),
         receipts=(receipt,),
-        validator_identity_cid=cid_for_dag_json(
-            {"authority": "synthetic-namespace-validator"}
-        ),
+        validator_identity_cid=cid_for_dag_json({"authority": "synthetic-namespace-validator"}),
     )
     return plan, evidence_by_job, policy, receipt, evidence_set
 
@@ -288,9 +270,7 @@ def test_g211_marker_and_public_contract_are_stable() -> None:
 def test_g240_namespace_preimages_and_lifecycle_replay_from_sources(
     tmp_path: Path,
 ) -> None:
-    plan, evidence_by_job, policy, receipt, evidence_set = (
-        _namespace_evidence(tmp_path)
-    )
+    plan, evidence_by_job, policy, receipt, evidence_set = _namespace_evidence(tmp_path)
     job = plan.jobs[0]
     evidence = evidence_by_job[job.job_id]
 
@@ -323,19 +303,11 @@ def test_g240_namespace_preimages_and_lifecycle_replay_from_sources(
 def test_g240_caller_copied_namespace_cid_fails_source_replay(
     tmp_path: Path,
 ) -> None:
-    plan, evidence_by_job, policy, receipt, _evidence_set = (
-        _namespace_evidence(tmp_path)
-    )
+    plan, evidence_by_job, policy, receipt, _evidence_set = _namespace_evidence(tmp_path)
     value = receipt.to_dict()
-    value["process_namespace_cid"] = cid_for_dag_json(
-        {"opaque": "caller-selected"}
-    )
+    value["process_namespace_cid"] = cid_for_dag_json({"opaque": "caller-selected"})
     value["receipt_cid"] = cid_for_dag_json(
-        {
-            key: member
-            for key, member in value.items()
-            if key != "receipt_cid"
-        }
+        {key: member for key, member in value.items() if key != "receipt_cid"}
     )
 
     with pytest.raises(
@@ -354,18 +326,12 @@ def test_g240_caller_copied_namespace_cid_fails_source_replay(
 def test_g240_incomplete_process_lifecycle_fails_closed(
     tmp_path: Path,
 ) -> None:
-    _plan_value, _evidence, _policy, receipt, _evidence_set = (
-        _namespace_evidence(tmp_path)
-    )
+    _plan_value, _evidence, _policy, receipt, _evidence_set = _namespace_evidence(tmp_path)
     value = receipt.to_dict()
     value["process_group_reaped"] = False
     value["active_process_count_after_reap"] = 1
     value["receipt_cid"] = cid_for_dag_json(
-        {
-            key: member
-            for key, member in value.items()
-            if key != "receipt_cid"
-        }
+        {key: member for key, member in value.items() if key != "receipt_cid"}
     )
 
     with pytest.raises(
@@ -378,17 +344,11 @@ def test_g240_incomplete_process_lifecycle_fails_closed(
 def test_g240_public_receipt_rejects_path_instead_of_cid(
     tmp_path: Path,
 ) -> None:
-    _plan_value, _evidence, _policy, receipt, _evidence_set = (
-        _namespace_evidence(tmp_path)
-    )
+    _plan_value, _evidence, _policy, receipt, _evidence_set = _namespace_evidence(tmp_path)
     value = receipt.to_dict()
     value["output_namespace_cid"] = "/tmp/private-run/results"
     value["receipt_cid"] = cid_for_dag_json(
-        {
-            key: member
-            for key, member in value.items()
-            if key != "receipt_cid"
-        }
+        {key: member for key, member in value.items() if key != "receipt_cid"}
     )
 
     with pytest.raises(
@@ -402,8 +362,8 @@ def test_g211_persists_and_replays_complete_g240_namespace_evidence(
     tmp_path: Path,
 ) -> None:
     plan, manifest, profile, evidence_by_job = _inputs(tmp_path)
-    _plan, _evidence, policy, _receipt, evidence_set = (
-        _build_namespace_evidence(plan, evidence_by_job)
+    _plan, _evidence, policy, _receipt, evidence_set = _build_namespace_evidence(
+        plan, evidence_by_job
     )
     root = tmp_path / "g211-with-g240"
 
@@ -424,21 +384,10 @@ def test_g211_persists_and_replays_complete_g240_namespace_evidence(
 
     assert result.runtime_namespace_evidence_set is not None
     assert restored.runtime_namespace_evidence_set is not None
-    assert (
-        restored.runtime_namespace_evidence_set.evidence_set_cid
-        == evidence_set.evidence_set_cid
-    )
-    assert (
-        restored.receipt["runtime_namespace_policy_cid"]
-        == policy.policy_cid
-    )
-    assert (
-        restored.receipt["runtime_namespace_evidence_set_cid"]
-        == evidence_set.evidence_set_cid
-    )
-    assert (
-        root / "state" / "runtime-namespace-evidence-set.json"
-    ).is_file()
+    assert restored.runtime_namespace_evidence_set.evidence_set_cid == evidence_set.evidence_set_cid
+    assert restored.receipt["runtime_namespace_policy_cid"] == policy.policy_cid
+    assert restored.receipt["runtime_namespace_evidence_set_cid"] == evidence_set.evidence_set_cid
+    assert (root / "state" / "runtime-namespace-evidence-set.json").is_file()
 
 
 def test_relative_output_root_is_rejected(
@@ -544,14 +493,10 @@ def test_existing_group_accessible_output_root_is_rejected(
 def test_absolute_tmp_path_run_directories_are_private(
     tmp_path: Path,
 ) -> None:
-    _plan_value, _manifest_value, _profile, _evidence_value, root, _result = (
-        _persist(tmp_path)
-    )
+    _plan_value, _manifest_value, _profile, _evidence_value, root, _result = _persist(tmp_path)
 
     assert root.is_absolute()
-    directories = (root,) + tuple(
-        path for path in root.rglob("*") if path.is_dir()
-    )
+    directories = (root,) + tuple(path for path in root.rglob("*") if path.is_dir())
     assert directories
     for directory in directories:
         assert stat.S_ISDIR(directory.lstat().st_mode)
@@ -588,10 +533,7 @@ def test_resume_is_byte_immutable_and_resume_false_rejects(
     tmp_path: Path,
 ) -> None:
     plan, manifest, profile, evidence, root, first = _persist(tmp_path)
-    before = {
-        path.relative_to(root): path.read_bytes()
-        for path in root.rglob("*.json")
-    }
+    before = {path.relative_to(root): path.read_bytes() for path in root.rglob("*.json")}
 
     resumed = persist_causal_runtime_batch_v2(
         plan,
@@ -601,10 +543,7 @@ def test_resume_is_byte_immutable_and_resume_false_rejects(
         output_root=root,
         resume=True,
     )
-    after = {
-        path.relative_to(root): path.read_bytes()
-        for path in root.rglob("*.json")
-    }
+    after = {path.relative_to(root): path.read_bytes() for path in root.rglob("*.json")}
     assert resumed.receipt_cid == first.receipt_cid
     assert resumed.executed_job_ids == ()
     assert resumed.resumed_job_ids == (plan.jobs[0].job_id,)
@@ -632,12 +571,8 @@ def test_profile_must_bind_the_derived_compiler_population_before_writes(
         plan_cid=profile.plan_cid,
         source_manifest_cid=profile.source_manifest_cid,
         rescue_manifest_cid=profile.rescue_manifest_cid,
-        semantic_calibration_artifact_cid=(
-            profile.semantic_calibration_artifact_cid
-        ),
-        compiler_reference_population_cid=cid_for_dag_json(
-            {"schema": "substituted-population.v1"}
-        ),
+        semantic_calibration_artifact_cid=(profile.semantic_calibration_artifact_cid),
+        compiler_reference_population_cid=cid_for_dag_json({"schema": "substituted-population.v1"}),
         environment_sha256=profile.environment_sha256,
     )
     root = tmp_path / "must-not-exist"
@@ -665,12 +600,8 @@ def test_reviewed_proof_context_mismatch_fails_before_writes(
         plan_cid=profile.plan_cid,
         source_manifest_cid=changed_manifest.source_manifest_cid,
         rescue_manifest_cid=changed_manifest.manifest_cid,
-        semantic_calibration_artifact_cid=(
-            profile.semantic_calibration_artifact_cid
-        ),
-        compiler_reference_population_cid=(
-            profile.compiler_reference_population_cid
-        ),
+        semantic_calibration_artifact_cid=(profile.semantic_calibration_artifact_cid),
+        compiler_reference_population_cid=(profile.compiler_reference_population_cid),
         environment_sha256=profile.environment_sha256,
     )
     root = tmp_path / "must-not-exist"
@@ -692,26 +623,13 @@ def test_reviewed_proof_context_mismatch_fails_before_writes(
 def test_rebased_outer_envelope_cannot_hide_tampered_full_evidence(
     tmp_path: Path,
 ) -> None:
-    plan, manifest, profile, _evidence_value, root, _result = _persist(
-        tmp_path
-    )
-    path = (
-        root
-        / "results"
-        / "pilot"
-        / "cold"
-        / "A0"
-        / f"{CASE_ID}.json"
-    )
+    plan, manifest, profile, _evidence_value, root, _result = _persist(tmp_path)
+    path = root / "results" / "pilot" / "cold" / "A0" / f"{CASE_ID}.json"
     value = json.loads(path.read_text(encoding="utf-8"))
     nested = value["causal_runtime_evidence"]
     nested["source_text_utf8"] = "substituted source"
     value["envelope_cid"] = cid_for_dag_json(
-        {
-            key: member
-            for key, member in value.items()
-            if key != "envelope_cid"
-        }
+        {key: member for key, member in value.items() if key != "envelope_cid"}
     )
     path.write_bytes(canonical_dag_json_bytes(value) + b"\n")
 
@@ -730,9 +648,7 @@ def test_rebased_outer_envelope_cannot_hide_tampered_full_evidence(
 def test_foreign_result_is_rejected_without_mutating_authority(
     tmp_path: Path,
 ) -> None:
-    plan, manifest, profile, _evidence_value, root, _result = _persist(
-        tmp_path
-    )
+    plan, manifest, profile, _evidence_value, root, _result = _persist(tmp_path)
     foreign = root / "results" / "foreign.json"
     foreign.write_bytes(canonical_dag_json_bytes({"foreign": True}) + b"\n")
 
@@ -767,9 +683,7 @@ def test_concurrent_persistence_converges_on_one_exact_envelope(
     with ThreadPoolExecutor(max_workers=2) as executor:
         results = tuple(executor.map(lambda _index: persist(), range(2)))
 
-    assert {item.receipt_cid for item in results} == {
-        results[0].receipt_cid
-    }
+    assert {item.receipt_cid for item in results} == {results[0].receipt_cid}
     assert sum(len(item.executed_job_ids) for item in results) == 1
     assert sum(len(item.resumed_job_ids) for item in results) == 1
     restored = validate_causal_runtime_batch_v2(

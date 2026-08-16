@@ -133,9 +133,7 @@ def test_registry_preserves_every_canonical_legal_view_and_alias() -> None:
 
 def test_adapt_sample_is_grounded_source_free_and_preserves_legacy_identity() -> None:
     legal = _reviewed_fixture()
-    adapter = LegalIRFormalizationAdapter(
-        source_review_status=SourceReviewStatus.TRUSTED_FIXTURE
-    )
+    adapter = LegalIRFormalizationAdapter(source_review_status=SourceReviewStatus.TRUSTED_FIXTURE)
     sample = adapter.adapt_sample(legal)
     payload = sample.payload.to_dict()
     legacy_hash = legal.modal_ir.canonical_hash()
@@ -147,9 +145,7 @@ def test_adapt_sample_is_grounded_source_free_and_preserves_legacy_identity() ->
     assert sample.metadata["legacy_output_identity"] == legacy_hash
     assert payload["legacy_output_identity"]["hexdigest"] == legacy_hash
     assert payload["legal_document"]["modal_ir"] == {
-        key: value
-        for key, value in legal.modal_ir.to_dict().items()
-        if key != "normalized_text"
+        key: value for key, value in legal.modal_ir.to_dict().items() if key != "normalized_text"
     }
     assert "text" not in payload["legal_document"]
     assert "embedding_vector" not in payload["legal_document"]
@@ -168,9 +164,7 @@ def test_complete_adaptation_conforms_to_shared_and_legal_view_contracts() -> No
     artifact = adapter.adapt(legal)
     legacy_hash = legal.modal_ir.canonical_hash()
     deontic = next(
-        formula
-        for formula in artifact.formulas
-        if formula.view_id == "legal-ir-view/deontic/v1"
+        formula for formula in artifact.formulas if formula.view_id == "legal-ir-view/deontic/v1"
     )
     frame = next(
         formula
@@ -183,22 +177,14 @@ def test_complete_adaptation_conforms_to_shared_and_legal_view_contracts() -> No
     assert artifact.metadata["legacy_output_identity"] == legacy_hash
     assert artifact.metadata["legacy_modal_ir_canonical_hash"] == legacy_hash
     assert deontic.formula_id == legal.modal_ir.formulas[0].formula_id
-    assert (
-        deontic.to_dict()["expression"]["legal_modal_ir"]
-        == legal.modal_ir.formulas[0].to_dict()
-    )
+    assert deontic.to_dict()["expression"]["legal_modal_ir"] == legal.modal_ir.formulas[0].to_dict()
     assert deontic.opaque is False
     assert (
-        frame.to_dict()["expression"]["legal_frame_logic"]
-        == legal.modal_ir.frame_logic.to_dict()
+        frame.to_dict()["expression"]["legal_frame_logic"] == legal.modal_ir.frame_logic.to_dict()
     )
     assert frame.opaque is False
-    assert LEGAL_IR_VIEW_CONTRACTS.validate(
-        "deontic", deontic.expression
-    ).valid
-    assert LEGAL_IR_VIEW_CONTRACTS.validate(
-        "frame_logic", frame.expression
-    ).valid
+    assert LEGAL_IR_VIEW_CONTRACTS.validate("deontic", deontic.expression).valid
+    assert LEGAL_IR_VIEW_CONTRACTS.validate("frame_logic", frame.expression).valid
     assert artifact.cross_view_links[0].relation.value == "corresponds_to"
     assert FormalizationArtifact.from_json(artifact.to_json()) == artifact
     assert adapt_legal_sample(legal).declaration_digest == artifact.declaration_digest
@@ -211,13 +197,8 @@ def test_unsupported_legal_fields_are_explicit_grounded_and_content_bound() -> N
     persisted["court_specific_extension"] = {"standard": "strict_scrutiny"}
     sample = adapter.adapt_sample(persisted)
     artifact = adapter.compile(sample, adapter.default_config(sample))
-    manifest = {
-        item["field_path"]: item
-        for item in sample.payload.to_dict()["unsupported_fields"]
-    }
-    diagnostic_paths = {
-        item.location.field_path for item in artifact.unsupported_diagnostics
-    }
+    manifest = {item["field_path"]: item for item in sample.payload.to_dict()["unsupported_fields"]}
+    diagnostic_paths = {item.location.field_path for item in artifact.unsupported_diagnostics}
 
     assert {
         "/text",
@@ -243,9 +224,7 @@ def test_unicode_legal_character_spans_are_converted_to_exact_byte_spans() -> No
     legal = _reviewed_fixture(text="§ 😀 Agency shall publish notice.")
     sample = LegalIRFormalizationAdapter().adapt_sample(legal)
     formula_span = next(
-        span
-        for span in sample.provenance.spans
-        if span.metadata.get("legacy_formula_id")
+        span for span in sample.provenance.spans if span.metadata.get("legacy_formula_id")
     )
     start_char = legal.text.index("Agency")
 
@@ -260,13 +239,10 @@ def test_normalized_offsets_are_not_misrepresented_as_exact_raw_offsets() -> Non
     persisted["text"] = "Agency   shall publish notice unless an emergency applies."
     sample = LegalIRFormalizationAdapter().adapt_sample(persisted)
     formula_span = next(
-        span
-        for span in sample.provenance.spans
-        if span.metadata.get("legacy_formula_id")
+        span for span in sample.provenance.spans if span.metadata.get("legacy_formula_id")
     )
     unsupported_paths = {
-        item["field_path"]
-        for item in sample.payload.to_dict()["unsupported_fields"]
+        item["field_path"] for item in sample.payload.to_dict()["unsupported_fields"]
     }
 
     assert formula_span.start_byte == 0
@@ -277,9 +253,7 @@ def test_normalized_offsets_are_not_misrepresented_as_exact_raw_offsets() -> Non
 
 def test_adapter_rejects_unreviewed_or_internally_inconsistent_legal_inputs() -> None:
     with pytest.raises(LegalIRAdapterError, match="reviewed"):
-        LegalIRFormalizationAdapter(
-            source_review_status=SourceReviewStatus.UNREVIEWED
-        )
+        LegalIRFormalizationAdapter(source_review_status=SourceReviewStatus.UNREVIEWED)
 
     legal = _reviewed_fixture()
     corrupted = legal.to_dict()
@@ -306,14 +280,8 @@ def test_adapter_schema_version_is_exposed_on_every_shared_output() -> None:
     sample = adapter.to_formalization_sample(legal)
     artifact = adapter.adapt_artifact(legal)
 
-    assert (
-        sample.payload["adapter_schema_version"]
-        == LEGAL_IR_FORMALIZATION_ADAPTER_VERSION
-    )
-    assert (
-        artifact.metadata["adapter_schema_version"]
-        == LEGAL_IR_FORMALIZATION_ADAPTER_VERSION
-    )
+    assert sample.payload["adapter_schema_version"] == LEGAL_IR_FORMALIZATION_ADAPTER_VERSION
+    assert artifact.metadata["adapter_schema_version"] == LEGAL_IR_FORMALIZATION_ADAPTER_VERSION
 
 
 def test_custom_generic_config_explains_unemitted_views_and_empty_producer() -> None:

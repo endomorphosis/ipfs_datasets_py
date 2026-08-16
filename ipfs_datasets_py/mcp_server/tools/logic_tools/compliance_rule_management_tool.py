@@ -74,11 +74,13 @@ def _get_checker() -> Any:
             from ipfs_datasets_py.mcp_server.compliance_checker import (  # noqa: PLC0415
                 make_default_compliance_checker,
             )
+
             _GLOBAL_CHECKER = make_default_compliance_checker()
         except Exception:
             from ipfs_datasets_py.mcp_server.compliance_checker import (  # noqa: PLC0415
                 ComplianceChecker,
             )
+
             _GLOBAL_CHECKER = ComplianceChecker()
     return _GLOBAL_CHECKER
 
@@ -86,6 +88,7 @@ def _get_checker() -> Any:
 # ---------------------------------------------------------------------------
 # MCP tools
 # ---------------------------------------------------------------------------
+
 
 async def compliance_add_rule(
     rule_id: str,
@@ -217,10 +220,7 @@ async def compliance_register_interface() -> Dict[str, Any]:
         )
 
         checker = _get_checker()
-        methods = [
-            MethodSignature(name=rule_id)
-            for rule_id in checker.list_rules()
-        ]
+        methods = [MethodSignature(name=rule_id) for rule_id in checker.list_rules()]
         descriptor = InterfaceDescriptor(
             name="compliance_checker",
             namespace="mcp.compliance",

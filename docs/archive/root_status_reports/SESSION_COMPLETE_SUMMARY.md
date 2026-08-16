@@ -183,14 +183,10 @@ class LogicTheoremOptimizer(BaseOptimizer):
 optimizer = LogicTheoremOptimizer(
     config=OptimizerConfig(target_score=0.9),
     extraction_mode=ExtractionMode.TDFOL,
-    use_provers=['z3', 'cvc5'],
-    domain='legal'
+    use_provers=["z3", "cvc5"],
+    domain="legal",
 )
-context = OptimizationContext(
-    session_id='legal-001',
-    input_data=contract_text,
-    domain='legal'
-)
+context = OptimizationContext(session_id="legal-001", input_data=contract_text, domain="legal")
 result = optimizer.run_session(contract_text, context)
 ```
 

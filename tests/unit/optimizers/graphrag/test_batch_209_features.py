@@ -14,6 +14,7 @@ Smoke tests for pre-existing Batch 209 items:
 - LogicValidator.self_loop_count(ontology)
 - LogicValidator.isolated_node_count(ontology)
 """
+
 from __future__ import annotations
 
 import pytest
@@ -41,6 +42,7 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _report(score: float) -> OptimizationReport:
     return OptimizationReport(average_score=score, trend="stable")
 
@@ -61,8 +63,12 @@ def _adapter_with(scores: list[float]) -> OntologyLearningAdapter:
 
 def _make_critic_score(**kwargs) -> CriticScore:
     defaults = dict(
-        completeness=0.8, consistency=0.7, clarity=0.6,
-        granularity=0.5, relationship_coherence=0.4, domain_alignment=0.3,
+        completeness=0.8,
+        consistency=0.7,
+        clarity=0.6,
+        granularity=0.5,
+        relationship_coherence=0.4,
+        domain_alignment=0.3,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -106,6 +112,7 @@ def ontology_builder(ontology_dict_factory):
 # OntologyOptimizer.score_trend_intercept
 # ---------------------------------------------------------------------------
 
+
 class TestScoreTrendIntercept:
     def test_empty_history_returns_zero(self):
         opt = OntologyOptimizer()
@@ -148,6 +155,7 @@ class TestScoreTrendIntercept:
 # OntologyCritic.top_two_dimensions
 # ---------------------------------------------------------------------------
 
+
 class TestTopTwoDimensions:
     def setup_method(self):
         self.critic = OntologyCritic()
@@ -160,14 +168,26 @@ class TestTopTwoDimensions:
 
     def test_top_dimension_is_highest(self):
         # completeness=0.9 is highest
-        score = _make_critic_score(completeness=0.9, consistency=0.5, clarity=0.4,
-                                   granularity=0.3, relationship_coherence=0.2, domain_alignment=0.1)
+        score = _make_critic_score(
+            completeness=0.9,
+            consistency=0.5,
+            clarity=0.4,
+            granularity=0.3,
+            relationship_coherence=0.2,
+            domain_alignment=0.1,
+        )
         assert self.critic.top_two_dimensions(score)[0] == "completeness"
 
     def test_second_dimension_is_second_highest(self):
         # completeness=0.9, consistency=0.8 are top two
-        score = _make_critic_score(completeness=0.9, consistency=0.8, clarity=0.4,
-                                   granularity=0.3, relationship_coherence=0.2, domain_alignment=0.1)
+        score = _make_critic_score(
+            completeness=0.9,
+            consistency=0.8,
+            clarity=0.4,
+            granularity=0.3,
+            relationship_coherence=0.2,
+            domain_alignment=0.1,
+        )
         result = self.critic.top_two_dimensions(score)
         assert result[0] == "completeness"
         assert result[1] == "consistency"
@@ -182,8 +202,14 @@ class TestTopTwoDimensions:
     def test_elements_are_valid_dimension_names(self):
         score = _make_critic_score()
         result = self.critic.top_two_dimensions(score)
-        valid = {"completeness", "consistency", "clarity", "granularity",
-                 "relationship_coherence", "domain_alignment"}
+        valid = {
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        }
         for name in result:
             assert name in valid
 
@@ -196,6 +222,7 @@ class TestTopTwoDimensions:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.avg_relationship_confidence
 # ---------------------------------------------------------------------------
+
 
 class TestAvgRelationshipConfidence:
     def setup_method(self):
@@ -230,6 +257,7 @@ class TestAvgRelationshipConfidence:
 # OntologyLearningAdapter.feedback_trend_intercept
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackTrendIntercept:
     def test_empty_feedback_returns_zero(self):
         adapter = OntologyLearningAdapter(domain="test")
@@ -261,6 +289,7 @@ class TestFeedbackTrendIntercept:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.improving_run_ratio
 # ---------------------------------------------------------------------------
+
 
 class TestImprovingRunRatio:
     def test_empty_returns_zero(self):
@@ -302,6 +331,7 @@ class TestImprovingRunRatio:
 # ---------------------------------------------------------------------------
 # Smoke tests for pre-existing Batch 209 items
 # ---------------------------------------------------------------------------
+
 
 class TestExistingBatch209Methods:
     def test_score_z_scores_returns_list(self):

@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 # Import existing Brave client from same module
 try:
     from ..brave_search_client import BraveSearchClient
+
     HAVE_BRAVE_CLIENT = True
 except ImportError:
     HAVE_BRAVE_CLIENT = False
@@ -37,10 +38,10 @@ except ImportError:
 
 class BraveSearchEngine(SearchEngineAdapter):
     """Brave Search engine adapter.
-    
+
     Wraps the existing BraveSearchClient to provide a unified interface
     compatible with the multi-engine search orchestrator.
-    
+
     Example:
         >>> from ipfs_datasets_py.processors.web_archiving.search_engines import (
         ...     BraveSearchEngine,
@@ -55,24 +56,23 @@ class BraveSearchEngine(SearchEngineAdapter):
         >>> response = engine.search("EPA regulations California")
         >>> print(f"Found {len(response.results)} results")
     """
-    
+
     def __init__(self, config: SearchEngineConfig):
         """Initialize Brave search engine.
-        
+
         Args:
             config: Search engine configuration
-            
+
         Raises:
             SearchEngineError: If Brave client not available
         """
         super().__init__(config)
-        
+
         if not HAVE_BRAVE_CLIENT:
             raise SearchEngineError(
-                "BraveSearchClient not available. "
-                "Install web_archiving dependencies."
+                "BraveSearchClient not available. Install web_archiving dependencies."
             )
-        
+
         # Initialize Brave client
         api_key = config.api_key or None
         self.client = BraveSearchClient(api_key=api_key)
@@ -85,60 +85,57 @@ class BraveSearchEngine(SearchEngineAdapter):
             or ""
         )
         try:
-            backoff_value = float(configured_backoff if configured_backoff is not None else env_backoff or 300.0)
+            backoff_value = float(
+                configured_backoff if configured_backoff is not None else env_backoff or 300.0
+            )
         except Exception:
             backoff_value = 300.0
         self._rate_limit_backoff_seconds = max(5.0, backoff_value)
-        
+
         logger.info("Brave search engine initialized")
-    
+
     def search(
-        self,
-        query: str,
-        max_results: int = 20,
-        offset: int = 0,
-        **kwargs
+        self, query: str, max_results: int = 20, offset: int = 0, **kwargs
     ) -> SearchEngineResponse:
         """Execute a Brave search query.
-        
+
         Args:
             query: Search query string
             max_results: Maximum number of results to return
             offset: Result offset for pagination
             **kwargs: Additional Brave-specific parameters
-            
+
         Returns:
             SearchEngineResponse with normalized results
-            
+
         Raises:
             SearchEngineError: On search failure
         """
         now = time.time()
         if self._quota_exhausted:
-            raise SearchEngineQuotaExceededError("Brave search quota already exhausted for this process")
+            raise SearchEngineQuotaExceededError(
+                "Brave search quota already exhausted for this process"
+            )
         if self._disabled_until > now:
             retry_after = max(0.0, self._disabled_until - now)
-            raise SearchEngineRateLimitError(f"Brave search temporarily rate limited; retry after {retry_after:.1f}s")
+            raise SearchEngineRateLimitError(
+                f"Brave search temporarily rate limited; retry after {retry_after:.1f}s"
+            )
 
         # Check cache first
-        cache_key = self._get_cache_key(
-            query,
-            max_results=max_results,
-            offset=offset,
-            **kwargs
-        )
-        
+        cache_key = self._get_cache_key(query, max_results=max_results, offset=offset, **kwargs)
+
         cached_response = self._get_from_cache(cache_key)
         if cached_response:
             logger.debug(f"Cache hit for query: {query[:50]}...")
             return cached_response
-        
+
         # Check rate limit
         self._check_rate_limit()
-        
+
         # Execute search
         start_time = time.time()
-        
+
         try:
             client_kwargs = {}
             safesearch = kwargs.get("safesearch")
@@ -155,10 +152,10 @@ class BraveSearchEngine(SearchEngineAdapter):
                 offset=offset,
                 **client_kwargs,
             )
-            
+
             # Normalize results
             results = self._normalize_results(brave_results)
-            
+
             # Create response
             response = SearchEngineResponse(
                 results=results,
@@ -168,22 +165,18 @@ class BraveSearchEngine(SearchEngineAdapter):
                 page=(offset // max_results) + 1,
                 took_ms=(time.time() - start_time) * 1000,
                 from_cache=False,
-                metadata={
-                    "offset": offset,
-                    "raw_response": brave_results
-                }
+                metadata={"offset": offset, "raw_response": brave_results},
             )
-            
+
             # Cache response
             self._save_to_cache(cache_key, response)
-            
+
             logger.info(
-                f"Brave search completed: {len(results)} results "
-                f"in {response.took_ms:.0f}ms"
+                f"Brave search completed: {len(results)} results in {response.took_ms:.0f}ms"
             )
-            
+
             return response
-            
+
         except Exception as e:
             self._update_backoff_state(e)
             logger.error(f"Brave search failed: {e}")
@@ -195,10 +188,10 @@ class BraveSearchEngine(SearchEngineAdapter):
                     f"Brave search rate limited: retry after {retry_after:.1f}s; {e}"
                 ) from e
             raise SearchEngineError(f"Brave search error: {e}") from e
-    
+
     def test_connection(self) -> bool:
         """Test if Brave Search API is accessible.
-        
+
         Returns:
             True if connection successful, False otherwise
         """
@@ -209,16 +202,13 @@ class BraveSearchEngine(SearchEngineAdapter):
         except Exception as e:
             logger.error(f"Brave connection test failed: {e}")
             return False
-    
-    def _normalize_results(
-        self,
-        brave_results: Any
-    ) -> list[SearchEngineResult]:
+
+    def _normalize_results(self, brave_results: Any) -> list[SearchEngineResult]:
         """Normalize Brave API results to standard format.
-        
+
         Args:
             brave_results: Raw Brave API response
-            
+
         Returns:
             List of normalized SearchEngineResult objects
         """
@@ -233,7 +223,7 @@ class BraveSearchEngine(SearchEngineAdapter):
                 domain = urlparse(result.get("url", "")).netloc
             except Exception:
                 domain = None
-            
+
             # Create normalized result
             normalized = SearchEngineResult(
                 title=result.get("title", ""),
@@ -247,11 +237,11 @@ class BraveSearchEngine(SearchEngineAdapter):
                     "extra_snippets": result.get("extra_snippets", []),
                     "language": result.get("language", None),
                     "family_friendly": result.get("family_friendly", True),
-                }
+                },
             )
-            
+
             results.append(normalized)
-        
+
         return results
 
     @staticmethod
@@ -291,7 +281,11 @@ class BraveSearchEngine(SearchEngineAdapter):
             self._quota_exhausted = True
             self._disabled_until = float("inf")
             return
-        if "RATE_LIMITED" in upper_message or "RATE LIMIT" in upper_message or "HTTP 429" in upper_message:
+        if (
+            "RATE_LIMITED" in upper_message
+            or "RATE LIMIT" in upper_message
+            or "HTTP 429" in upper_message
+        ):
             retry_after_seconds = self._extract_retry_after_seconds(message)
             cooldown_seconds = (
                 max(5.0, float(retry_after_seconds))

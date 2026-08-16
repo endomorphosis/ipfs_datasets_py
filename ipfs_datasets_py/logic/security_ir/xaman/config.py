@@ -20,9 +20,7 @@ from ...ir_core.canonical import canonical_json_bytes
 XAMAN_ADAPTER_CONFIG_VERSION: Final = "xaman-security-adapter-config/v1"
 XAMAN_VOCABULARY: Final = "security.xaman"
 XAMAN_VOCABULARY_VERSION: Final = "v1"
-XAMAN_VOCABULARY_SCHEMA_VERSION: Final = (
-    f"{XAMAN_VOCABULARY}/{XAMAN_VOCABULARY_VERSION}"
-)
+XAMAN_VOCABULARY_SCHEMA_VERSION: Final = f"{XAMAN_VOCABULARY}/{XAMAN_VOCABULARY_VERSION}"
 XAMAN_EXTENSION_ID: Final = "extension:security.xaman:v1"
 XAMAN_SECURITY_DOMAINS: Final = frozenset(
     {
@@ -39,14 +37,9 @@ XAMAN_ASSUMPTIONS: Final = MappingProxyType(
     {
         "A1": "cryptographic primitives are unbroken",
         "A2": "private keys are generated with sufficient entropy",
-        "A3": (
-            "signing code signs only approved canonical transaction bytes"
-        ),
+        "A3": ("signing code signs only approved canonical transaction bytes"),
         "A6": "the declared XRPL finality threshold is sufficient",
-        "A9": (
-            "external XRPL providers may lie, delay, or censor only within "
-            "the modeled bounds"
-        ),
+        "A9": ("external XRPL providers may lie, delay, or censor only within the modeled bounds"),
     }
 )
 
@@ -148,27 +141,16 @@ def _requirement_mapping(
         raise XamanConfigError("evidence_requirements must be a mapping")
     result: dict[str, tuple[str, ...]] = {}
     for raw_assumption_id, raw_items in raw.items():
-        assumption_id = _identifier(
-            raw_assumption_id, "evidence requirement assumption id"
-        )
-        if isinstance(raw_items, (str, bytes, bytearray)) or not isinstance(
-            raw_items, Sequence
-        ):
-            raise XamanConfigError(
-                f"evidence_requirements[{assumption_id!r}] must be a sequence"
-            )
+        assumption_id = _identifier(raw_assumption_id, "evidence requirement assumption id")
+        if isinstance(raw_items, (str, bytes, bytearray)) or not isinstance(raw_items, Sequence):
+            raise XamanConfigError(f"evidence_requirements[{assumption_id!r}] must be a sequence")
         items = tuple(
-            _text(item, f"evidence_requirements[{assumption_id!r}]")
-            for item in raw_items
+            _text(item, f"evidence_requirements[{assumption_id!r}]") for item in raw_items
         )
         if not items:
-            raise XamanConfigError(
-                f"evidence_requirements[{assumption_id!r}] must not be empty"
-            )
+            raise XamanConfigError(f"evidence_requirements[{assumption_id!r}] must not be empty")
         if len(items) != len(set(items)):
-            raise XamanConfigError(
-                f"evidence_requirements[{assumption_id!r}] must be unique"
-            )
+            raise XamanConfigError(f"evidence_requirements[{assumption_id!r}] must be unique")
         result[assumption_id] = items
     return MappingProxyType(dict(sorted(result.items())))
 
@@ -184,15 +166,11 @@ class XamanSourceConfig:
     review_status: str = "unreviewed"
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "source_id", _identifier(self.source_id, "source_id")
-        )
+        object.__setattr__(self, "source_id", _identifier(self.source_id, "source_id"))
         object.__setattr__(self, "uri", _text(self.uri, "uri"))
         object.__setattr__(self, "revision", _text(self.revision, "revision"))
         if self.content_sha256 and not _SHA256_RE.fullmatch(self.content_sha256):
-            raise XamanConfigError(
-                "content_sha256 must be a lowercase SHA-256 hex digest"
-            )
+            raise XamanConfigError("content_sha256 must be a lowercase SHA-256 hex digest")
         object.__setattr__(
             self,
             "review_status",
@@ -221,9 +199,7 @@ class XamanSourceConfig:
         }
         unknown = sorted(set(value) - allowed)
         if unknown:
-            raise XamanConfigError(
-                "unknown source config field(s): " + ", ".join(unknown)
-            )
+            raise XamanConfigError("unknown source config field(s): " + ", ".join(unknown))
         return cls(
             source_id=value.get("source_id", ""),
             uri=value.get("uri", ""),
@@ -252,13 +228,9 @@ class XamanAdapterConfig:
     def __post_init__(self) -> None:
         if not isinstance(self.source, XamanSourceConfig):
             raise XamanConfigError("source must be a XamanSourceConfig")
-        object.__setattr__(
-            self, "config_id", _identifier(self.config_id, "config_id")
-        )
+        object.__setattr__(self, "config_id", _identifier(self.config_id, "config_id"))
         if self.schema_version != XAMAN_ADAPTER_CONFIG_VERSION:
-            raise XamanConfigError(
-                f"unsupported Xaman config version: {self.schema_version!r}"
-            )
+            raise XamanConfigError(f"unsupported Xaman config version: {self.schema_version!r}")
         object.__setattr__(
             self,
             "task_ids",
@@ -268,9 +240,7 @@ class XamanAdapterConfig:
                 validate_values_as_identifiers=True,
             ),
         )
-        object.__setattr__(
-            self, "artifact_paths", _artifact_paths(self.artifact_paths)
-        )
+        object.__setattr__(self, "artifact_paths", _artifact_paths(self.artifact_paths))
         object.__setattr__(
             self,
             "evidence_requirements",
@@ -282,8 +252,7 @@ class XamanAdapterConfig:
             "artifact_paths": dict(self.artifact_paths),
             "config_id": self.config_id,
             "evidence_requirements": {
-                key: list(values)
-                for key, values in self.evidence_requirements.items()
+                key: list(values) for key, values in self.evidence_requirements.items()
             },
             "schema_version": self.schema_version,
             "source": self.source.to_dict(),
@@ -304,20 +273,14 @@ class XamanAdapterConfig:
         }
         unknown = sorted(set(value) - allowed)
         if unknown:
-            raise XamanConfigError(
-                "unknown adapter config field(s): " + ", ".join(unknown)
-            )
+            raise XamanConfigError("unknown adapter config field(s): " + ", ".join(unknown))
         return cls(
             source=XamanSourceConfig.from_dict(value.get("source", {})),
-            config_id=value.get(
-                "config_id", "config:xaman-security-adapter"
-            ),
+            config_id=value.get("config_id", "config:xaman-security-adapter"),
             task_ids=value.get("task_ids", {}),
             artifact_paths=value.get("artifact_paths", {}),
             evidence_requirements=value.get("evidence_requirements"),
-            schema_version=value.get(
-                "schema_version", XAMAN_ADAPTER_CONFIG_VERSION
-            ),
+            schema_version=value.get("schema_version", XAMAN_ADAPTER_CONFIG_VERSION),
         )
 
     @property
@@ -326,9 +289,7 @@ class XamanAdapterConfig:
 
         import hashlib
 
-        return "sha256:" + hashlib.sha256(
-            canonical_json_bytes(self.to_dict())
-        ).hexdigest()
+        return "sha256:" + hashlib.sha256(canonical_json_bytes(self.to_dict())).hexdigest()
 
 
 # Readable aliases for callers that describe the source as a binding.

@@ -3,16 +3,16 @@
 """
 CLI tool for executing commands through the MCP interface.
 """
+
 from typing import Dict, Any, Optional, List
 
 import logging
 
 logger = logging.getLogger(__name__)
 
+
 async def execute_command(
-    command: str,
-    args: Optional[List[str]] = None,
-    timeout_seconds: int = 60
+    command: str, args: Optional[List[str]] = None, timeout_seconds: int = 60
 ) -> Dict[str, Any]:
     """
     Execute a command through the MCP interface.
@@ -39,14 +39,9 @@ async def execute_command(
             "status": "success",
             "command": command,
             "args": args,
-            "message": f"Command '{command}' received but not executed for security reasons"
+            "message": f"Command '{command}' received but not executed for security reasons",
         }
 
     except Exception as e:
         logger.error(f"Error executing command: {e}")
-        return {
-            "status": "error",
-            "command": command,
-            "args": args,
-            "error": str(e)
-        }
+        return {"status": "error", "command": command, "args": args, "error": str(e)}

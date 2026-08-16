@@ -5,10 +5,10 @@ import os
 from types_ import Logger, Generator
 
 
-def _resolve_path(str_path: str, logger: Logger)  -> Generator[str, None, None]:
+def _resolve_path(str_path: str, logger: Logger) -> Generator[str, None, None]:
     """Generator that yields resolved file paths."""
     # Check if path contains glob patterns
-    if '*' in str_path or '?' in str_path or '[' in str_path:
+    if "*" in str_path or "?" in str_path or "[" in str_path:
         # Handle glob patterns
         glob_matches = glob.glob(str_path, recursive=True)
         for match in glob_matches:
@@ -38,15 +38,15 @@ def _resolve_path(str_path: str, logger: Logger)  -> Generator[str, None, None]:
 
 def resolve_paths(file_paths: list[str] | str, logger: Logger) -> list[str]:
     """Resolve file paths, expanding directories if necessary.
-    
+
     Args:
         file_paths: list of file paths or a directory path.
-        
+
     Returns:
         List of resolved file paths.
     """
     resolved = []
-    
+
     # Handle input based on type
     if isinstance(file_paths, str):
         # Single path - consume the generator and extend the resolved list

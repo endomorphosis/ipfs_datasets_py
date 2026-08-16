@@ -200,25 +200,17 @@ class ResolvedScopeClaim:
         attributes: Mapping[str, Any] | None = None,
     ) -> None:
         if not isinstance(entry_id, str) or not _ID_RE.fullmatch(entry_id):
-            raise SkillCenterInvocationError(
-                f"scope claim entry_id is invalid: {entry_id!r}"
-            )
+            raise SkillCenterInvocationError(f"scope claim entry_id is invalid: {entry_id!r}")
         if not isinstance(value, str) or not value.strip() or value != value.strip():
-            raise SkillCenterInvocationError(
-                f"scope claim value is invalid for {entry_id}"
-            )
+            raise SkillCenterInvocationError(f"scope claim value is invalid for {entry_id}")
         if len(value) > MAX_STRING_CHARS:
             raise SkillCenterInvocationBoundError(
                 f"scope claim value for {entry_id} exceeds maximum string length"
             )
         if description is None:
             description = ""
-        if not isinstance(description, str) or (
-            description and description != description.strip()
-        ):
-            raise SkillCenterInvocationError(
-                f"scope claim description is invalid for {entry_id}"
-            )
+        if not isinstance(description, str) or (description and description != description.strip()):
+            raise SkillCenterInvocationError(f"scope claim description is invalid for {entry_id}")
         if len(description) > MAX_STRING_CHARS:
             raise SkillCenterInvocationBoundError(
                 f"scope claim description for {entry_id} exceeds maximum string length"
@@ -291,19 +283,13 @@ class SkillCenterInvocationContext:
         object.__setattr__(
             self, "envelope_id", _require_identifier(self.envelope_id, "envelope_id")
         )
-        object.__setattr__(
-            self, "tenant_id", _require_identifier(self.tenant_id, "tenant_id")
-        )
+        object.__setattr__(self, "tenant_id", _require_identifier(self.tenant_id, "tenant_id"))
         if not isinstance(self.actor, ActorBinding):
             raise SkillCenterInvocationContextError("actor must be an ActorBinding")
         if not isinstance(self.audience, AudienceBinding):
-            raise SkillCenterInvocationContextError(
-                "audience must be an AudienceBinding"
-            )
+            raise SkillCenterInvocationContextError("audience must be an AudienceBinding")
         if not isinstance(self.environment, EnvironmentBinding):
-            raise SkillCenterInvocationContextError(
-                "environment must be an EnvironmentBinding"
-            )
+            raise SkillCenterInvocationContextError("environment must be an EnvironmentBinding")
         if not self.environment.environment_id:
             raise SkillCenterInvocationContextError(
                 "environment.environment_id is required runtime context"
@@ -375,26 +361,20 @@ class SkillCenterInvocationContext:
             object.__setattr__(self, "delegation", tuple(self.delegation))
         for link in self.delegation:
             if not isinstance(link, DelegationLink):
-                raise SkillCenterInvocationError(
-                    "delegation entries must be DelegationLink"
-                )
+                raise SkillCenterInvocationError("delegation entries must be DelegationLink")
         if not isinstance(self.purpose, PurposeContext):
             raise SkillCenterInvocationError("purpose must be a PurposeContext")
         if not isinstance(self.policy, PolicyRequirements):
             raise SkillCenterInvocationError("policy must be PolicyRequirements")
         object.__setattr__(self, "nonce", _require_identifier(self.nonce, "nonce"))
-        object.__setattr__(
-            self, "created_at", _require_text(self.created_at, "created_at")
-        )
+        object.__setattr__(self, "created_at", _require_text(self.created_at, "created_at"))
         object.__setattr__(self, "deadline", _require_text(self.deadline, "deadline"))
         object.__setattr__(
             self,
             "trust_domain",
             _optional_identifier(self.trust_domain, "trust_domain"),
         )
-        object.__setattr__(
-            self, "trace_id", _optional_identifier(self.trace_id, "trace_id")
-        )
+        object.__setattr__(self, "trace_id", _optional_identifier(self.trace_id, "trace_id"))
         for name in (
             "intent_document_id",
             "formalization_artifact_id",
@@ -430,11 +410,7 @@ class SkillCenterInvocationContext:
             object.__setattr__(self, "rollback", tuple(self.rollback))
         if not isinstance(self.verification, tuple):
             object.__setattr__(self, "verification", tuple(self.verification))
-        if (
-            self.allow_network
-            or self.allow_skill_execute
-            or self.allow_command_execution
-        ):
+        if self.allow_network or self.allow_skill_execute or self.allow_command_execution:
             raise SkillCenterInvocationSideEffectError(
                 "network, skill execution, and command execution are forbidden "
                 "during SkillCenter adaptation"
@@ -462,9 +438,7 @@ class SkillCenterInvocationAdapter:
         max_argument_depth: int = MAX_JSON_DEPTH,
         max_argument_chars: int = MAX_STRING_CHARS,
     ) -> None:
-        if normalizer is not None and not isinstance(
-            normalizer, SkillCenterIntentNormalizer
-        ):
+        if normalizer is not None and not isinstance(normalizer, SkillCenterIntentNormalizer):
             raise TypeError("normalizer must be a SkillCenterIntentNormalizer")
         if policy is not None and not isinstance(policy, SkillSourcePolicy):
             raise TypeError("policy must be a SkillSourcePolicy")
@@ -584,10 +558,7 @@ class SkillCenterInvocationAdapter:
                 continue
             if statement.kind is StatementKind.PRECONDITION and text not in preconditions:
                 preconditions.append(text)
-            elif (
-                statement.kind is StatementKind.POSTCONDITION
-                and text not in postconditions
-            ):
+            elif statement.kind is StatementKind.POSTCONDITION and text not in postconditions:
                 postconditions.append(text)
             elif statement.kind is StatementKind.FAILURE and text not in failure_modes:
                 failure_modes.append(text)
@@ -630,18 +601,15 @@ class SkillCenterInvocationAdapter:
         )
 
         diagnostics = (
-            (
-                InvocationDiagnostic(
-                    code="invocation.skillcenter.adapted",
-                    message=(
-                        f"Adapted SkillCenter skill {record.skill_id!r} via "
-                        f"{SKILLCENTER_INVOCATION_ADAPTER} without execution"
-                    ),
-                    severity=DiagnosticSeverity.INFO,
+            InvocationDiagnostic(
+                code="invocation.skillcenter.adapted",
+                message=(
+                    f"Adapted SkillCenter skill {record.skill_id!r} via "
+                    f"{SKILLCENTER_INVOCATION_ADAPTER} without execution"
                 ),
-            )
-            + diagnostics
-        )
+                severity=DiagnosticSeverity.INFO,
+            ),
+        ) + diagnostics
 
         try:
             envelope = InvocationIntentEnvelope(
@@ -708,11 +676,7 @@ class SkillCenterInvocationAdapter:
     # ------------------------------------------------------------------
 
     def _reject_side_effects(self, context: SkillCenterInvocationContext) -> None:
-        if (
-            context.allow_network
-            or context.allow_skill_execute
-            or context.allow_command_execution
-        ):
+        if context.allow_network or context.allow_skill_execute or context.allow_command_execution:
             raise SkillCenterInvocationSideEffectError(
                 "network, skill execution, and command execution are forbidden "
                 "during SkillCenter adaptation"
@@ -770,24 +734,15 @@ class SkillCenterInvocationAdapter:
             raise SkillCenterInvocationIdentityError(
                 "content_sha256 mismatch (identity drift or wrong revision)"
             )
-        if (
-            context.expected_entry_cid
-            and context.expected_entry_cid != record.entry_cid
-        ):
+        if context.expected_entry_cid and context.expected_entry_cid != record.entry_cid:
             raise SkillCenterInvocationIdentityError(
                 "entry_cid mismatch between context expectation and record"
             )
-        if (
-            context.expected_content_cid
-            and context.expected_content_cid != record.content_cid
-        ):
+        if context.expected_content_cid and context.expected_content_cid != record.content_cid:
             raise SkillCenterInvocationIdentityError(
                 "content_cid mismatch between context expectation and record"
             )
-        if (
-            context.expected_dataset_id
-            and context.expected_dataset_id != record.dataset_id
-        ):
+        if context.expected_dataset_id and context.expected_dataset_id != record.dataset_id:
             raise SkillCenterInvocationIdentityError(
                 f"dataset_id mismatch: expected {context.expected_dataset_id!r}, "
                 f"got {record.dataset_id!r}"
@@ -833,10 +788,7 @@ class SkillCenterInvocationAdapter:
                     "expected_formalization_artifact_id set but no formalization "
                     "artifact identity was supplied"
                 )
-            if (
-                context.expected_formalization_artifact_id
-                != formalization_artifact_id
-            ):
+            if context.expected_formalization_artifact_id != formalization_artifact_id:
                 raise SkillCenterInvocationIdentityError(
                     "formalization_artifact_id mismatch between context expectation "
                     "and supplied identity"
@@ -866,8 +818,7 @@ class SkillCenterInvocationAdapter:
         ):
             if _is_caller_dispatcher_marker(candidate):
                 raise SkillCenterInvocationDispatcherError(
-                    "caller-controlled dispatcher audience is rejected "
-                    f"({label}={candidate!r})"
+                    f"caller-controlled dispatcher audience is rejected ({label}={candidate!r})"
                 )
         for key, value in audience.attributes.items():
             if isinstance(value, str) and _is_caller_dispatcher_marker(value):
@@ -875,9 +826,7 @@ class SkillCenterInvocationAdapter:
                     "caller-controlled dispatcher audience is rejected "
                     f"(attributes.{key}={value!r})"
                 )
-            if key in {"authority", "controlled_by", "source"} and isinstance(
-                value, str
-            ):
+            if key in {"authority", "controlled_by", "source"} and isinstance(value, str):
                 if value.lower() in _CALLER_DISPATCHER_MARKERS:
                     raise SkillCenterInvocationDispatcherError(
                         "audience.attributes.authority must not be caller-controlled"
@@ -909,14 +858,10 @@ class SkillCenterInvocationAdapter:
                 )
             for key, item in value.items():
                 if not isinstance(key, str):
-                    raise SkillCenterInvocationBoundError(
-                        f"{path}: argument keys must be strings"
-                    )
+                    raise SkillCenterInvocationBoundError(f"{path}: argument keys must be strings")
                 self._reject_dynamic_arguments(item, path=f"{path}.{key}")
             return
-        if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
             for index, item in enumerate(value):
                 self._reject_dynamic_arguments(item, path=f"{path}[{index}]")
 
@@ -963,9 +908,7 @@ class SkillCenterInvocationAdapter:
                     counter=counter,
                 )
             return
-        if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
             if len(value) > MAX_COLLECTION_ITEMS:
                 raise SkillCenterInvocationBoundError(
                     f"{name} sequence exceeds maximum of {MAX_COLLECTION_ITEMS} items"
@@ -981,9 +924,7 @@ class SkillCenterInvocationAdapter:
                     counter=counter,
                 )
 
-    def _commit_arguments(
-        self, context: SkillCenterInvocationContext
-    ) -> ArgumentCommitment:
+    def _commit_arguments(self, context: SkillCenterInvocationContext) -> ArgumentCommitment:
         try:
             return ArgumentCommitment.from_redacted(
                 dict(context.redacted_arguments),
@@ -1037,9 +978,7 @@ class SkillCenterInvocationAdapter:
         formalization_artifact_id: str,
     ) -> SourceBinding:
         source_ref = record.to_source_ref()
-        source_id = (
-            record.primary_source_id or record.source_id or record.skill_id
-        )
+        source_id = record.primary_source_id or record.source_id or record.skill_id
         # SourceBinding.source_id must be a stable identifier when present.
         if source_id and not _ID_RE.fullmatch(source_id):
             source_id = f"source:{hashlib.sha256(source_id.encode('utf-8')).hexdigest()[:24]}"
@@ -1146,14 +1085,9 @@ class SkillCenterInvocationAdapter:
             text = statement.normalized_text.strip()
             if not text:
                 continue
-            entry_id = (
-                f"scope:effect:intent:{_safe_token(statement.statement_id)[:40]}"
-            )
+            entry_id = f"scope:effect:intent:{_safe_token(statement.statement_id)[:40]}"
             if not _ID_RE.fullmatch(entry_id):
-                entry_id = (
-                    f"scope:effect:intent:{index}:"
-                    f"{_hash_token(statement.statement_id)}"
-                )
+                entry_id = f"scope:effect:intent:{index}:{_hash_token(statement.statement_id)}"
             effect_entries.append(
                 ScopeEntry(
                     entry_id=entry_id,
@@ -1173,8 +1107,7 @@ class SkillCenterInvocationAdapter:
                 source_maps.append(
                     SourceMapEntry(
                         map_id=(
-                            f"map:effect:{map_index}:"
-                            f"{_hash_token(statement.statement_id)[:12]}"
+                            f"map:effect:{map_index}:{_hash_token(statement.statement_id)[:12]}"
                         ),
                         field_path=f"/scope/effects/{len(effect_entries) - 1}",
                         source_ref=record.to_source_ref().ref_id,
@@ -1189,24 +1122,15 @@ class SkillCenterInvocationAdapter:
             effects=tuple(effect_entries),
             capabilities=tuple(capability_entries),
             assets=_claims_to_entries(context.resolved_assets, ScopeKind.ASSET),
-            resources=_claims_to_entries(
-                context.resolved_resources, ScopeKind.RESOURCE
-            ),
-            data_classes=_claims_to_entries(
-                context.resolved_data_classes, ScopeKind.DATA
-            ),
+            resources=_claims_to_entries(context.resolved_resources, ScopeKind.RESOURCE),
+            data_classes=_claims_to_entries(context.resolved_data_classes, ScopeKind.DATA),
             network=_claims_to_entries(context.resolved_network, ScopeKind.NETWORK),
-            filesystem=_claims_to_entries(
-                context.resolved_filesystem, ScopeKind.FILESYSTEM
-            ),
-            subprocess=_claims_to_entries(
-                context.resolved_subprocess, ScopeKind.SUBPROCESS
-            ),
+            filesystem=_claims_to_entries(context.resolved_filesystem, ScopeKind.FILESYSTEM),
+            subprocess=_claims_to_entries(context.resolved_subprocess, ScopeKind.SUBPROCESS),
             secret_refs=tuple(
                 ScopeEntry(
                     entry_id=(
-                        f"scope:sref:{index}:"
-                        f"{hashlib.sha256(ref.encode('utf-8')).hexdigest()[:16]}"
+                        f"scope:sref:{index}:{hashlib.sha256(ref.encode('utf-8')).hexdigest()[:16]}"
                     ),
                     kind=ScopeKind.SECRET_REF,
                     value=ref,
@@ -1233,10 +1157,7 @@ class SkillCenterInvocationAdapter:
 
         if normalization is not None:
             for item in normalization.diagnostics:
-                if (
-                    ".unsupported" not in item.code
-                    and ".ambiguous" not in item.code
-                ):
+                if ".unsupported" not in item.code and ".ambiguous" not in item.code:
                     continue
                 field_path = "/skill_md"
                 start = end = None
@@ -1308,9 +1229,7 @@ class SkillCenterInvocationAdapter:
             )
             assumptions.append(
                 InvocationAssumption(
-                    assumption_id=_stable_assumption_id(
-                        record, "unsupported-retained"
-                    ),
+                    assumption_id=_stable_assumption_id(record, "unsupported-retained"),
                     statement=(
                         "Unsupported and ambiguous skill constructs were retained "
                         "as diagnostics and unsupported fields"
@@ -1324,9 +1243,7 @@ class SkillCenterInvocationAdapter:
             if statement.kind is StatementKind.ASSUMPTION:
                 assumptions.append(
                     InvocationAssumption(
-                        assumption_id=(
-                            f"assume:intent:{_hash_token(statement.statement_id)}"
-                        ),
+                        assumption_id=(f"assume:intent:{_hash_token(statement.statement_id)}"),
                         statement=statement.normalized_text[:MAX_STRING_CHARS],
                         source_ref=source_ref,
                         attributes={"statement_id": statement.statement_id},
@@ -1403,9 +1320,7 @@ def _optional_identifier(value: Any, name: str) -> str:
     return _require_identifier(value, name)
 
 
-def _unique_strings(
-    values: Sequence[str] | Iterable[str] | None, name: str
-) -> tuple[str, ...]:
+def _unique_strings(values: Sequence[str] | Iterable[str] | None, name: str) -> tuple[str, ...]:
     if values is None:
         return ()
     if isinstance(values, (str, bytes, bytearray)):
@@ -1424,15 +1339,11 @@ def _unique_strings(
     return tuple(result)
 
 
-def _unique_identifiers(
-    values: Sequence[str] | Iterable[str] | None, name: str
-) -> tuple[str, ...]:
+def _unique_identifiers(values: Sequence[str] | Iterable[str] | None, name: str) -> tuple[str, ...]:
     items = _unique_strings(values, name)
     for item in items:
         if not _ID_RE.fullmatch(item):
-            raise SkillCenterInvocationError(
-                f"{name} contains an invalid identifier: {item!r}"
-            )
+            raise SkillCenterInvocationError(f"{name} contains an invalid identifier: {item!r}")
     return items
 
 
@@ -1453,13 +1364,9 @@ def _unique_texts(
         result: list[str] = []
         for item in items:
             if not isinstance(item, str) or not item.strip() or item != item.strip():
-                raise SkillCenterInvocationError(
-                    f"{name} entries must be non-empty strings"
-                )
+                raise SkillCenterInvocationError(f"{name} entries must be non-empty strings")
             if len(item) > MAX_STRING_CHARS:
-                raise SkillCenterInvocationBoundError(
-                    f"{name} entry exceeds maximum length"
-                )
+                raise SkillCenterInvocationBoundError(f"{name} entry exceeds maximum length")
             result.append(item)
         return tuple(result)
     return _unique_strings(values, name)
@@ -1472,9 +1379,7 @@ def _coerce_claims(
     if values is None:
         return ()
     if isinstance(values, (str, bytes, bytearray)):
-        raise SkillCenterInvocationError(
-            f"{name} must be a sequence of ResolvedScopeClaim"
-        )
+        raise SkillCenterInvocationError(f"{name} must be a sequence of ResolvedScopeClaim")
     items = tuple(values)
     if len(items) > MAX_COLLECTION_ITEMS:
         raise SkillCenterInvocationBoundError(f"{name} exceeds maximum collection size")
@@ -1489,13 +1394,9 @@ def _coerce_claims(
                 attributes=item.get("attributes"),
             )
         if not isinstance(item, ResolvedScopeClaim):
-            raise SkillCenterInvocationError(
-                f"{name} entries must be ResolvedScopeClaim"
-            )
+            raise SkillCenterInvocationError(f"{name} entries must be ResolvedScopeClaim")
         if item.entry_id in seen:
-            raise SkillCenterInvocationError(
-                f"duplicate scope claim entry_id: {item.entry_id}"
-            )
+            raise SkillCenterInvocationError(f"duplicate scope claim entry_id: {item.entry_id}")
         seen.add(item.entry_id)
         result.append(item)
     return tuple(result)

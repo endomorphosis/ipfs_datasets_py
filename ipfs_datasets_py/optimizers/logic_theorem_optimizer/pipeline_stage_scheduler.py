@@ -355,10 +355,12 @@ class PipelineSchedulerSignals:
             if name not in {"ready_depth_by_stage", "service_rate_by_stage"}
         }
         result["ready_depth_by_stage"] = {
-            stage.value: depth for stage, depth in sorted(self.ready_depth_by_stage.items(), key=lambda x: x[0].value)
+            stage.value: depth
+            for stage, depth in sorted(self.ready_depth_by_stage.items(), key=lambda x: x[0].value)
         }
         result["service_rate_by_stage"] = {
-            stage.value: rate for stage, rate in sorted(self.service_rate_by_stage.items(), key=lambda x: x[0].value)
+            stage.value: rate
+            for stage, rate in sorted(self.service_rate_by_stage.items(), key=lambda x: x[0].value)
         }
         return result
 
@@ -482,7 +484,11 @@ class _CanonicalWriteLock:
 
 
 def _default_lane(stage: PipelineStage) -> str:
-    if stage in {PipelineStage.CANONICAL_TRAINER, PipelineStage.HAMMER, PipelineStage.LEANSTRAL_SERVICE}:
+    if stage in {
+        PipelineStage.CANONICAL_TRAINER,
+        PipelineStage.HAMMER,
+        PipelineStage.LEANSTRAL_SERVICE,
+    }:
         return ResourceLane.HAMMER_LEAN.value
     if stage is PipelineStage.CODEX_GENERATION:
         return ResourceLane.CODEX.value
@@ -568,10 +574,17 @@ class PipelineStageScheduler:
                 raise DuplicateTaskError(f"tasks already submitted: {', '.join(conflicts)}")
             known = set(self._tasks) | set(identifiers)
             missing = sorted(
-                {dependency for task in batch for dependency in task.dependencies if dependency not in known}
+                {
+                    dependency
+                    for task in batch
+                    for dependency in task.dependencies
+                    if dependency not in known
+                }
             )
             if missing:
-                raise UnknownDependencyError(f"unknown dependency identifiers: {', '.join(missing)}")
+                raise UnknownDependencyError(
+                    f"unknown dependency identifiers: {', '.join(missing)}"
+                )
             now = time.time()
             for task in batch:
                 self._tasks[task.task_id] = task
@@ -631,7 +644,16 @@ class PipelineStageScheduler:
                 if self._statuses[task_id] is StageStatus.PENDING
                 and all(self._statuses[item] is StageStatus.SUCCEEDED for item in task.dependencies)
             ]
-            return tuple(sorted(ready, key=lambda item: (item.stage.value, self._submitted_at[item.task_id], item.task_id)))
+            return tuple(
+                sorted(
+                    ready,
+                    key=lambda item: (
+                        item.stage.value,
+                        self._submitted_at[item.task_id],
+                        item.task_id,
+                    ),
+                )
+            )
 
     def _effective_limits(self) -> StageConcurrencyLimits:
         s = self.signals
@@ -670,7 +692,9 @@ class PipelineStageScheduler:
         if s.validation_backlog > max(1, base["validation"] * 2):
             # Stop generation from growing an already saturated validation
             # queue while preserving at least one repair/generation lane.
-            base["codex_generation"] = min(base["codex_generation"], max(1, base["validation"] // 2))
+            base["codex_generation"] = min(
+                base["codex_generation"], max(1, base["validation"] // 2)
+            )
         if s.disjoint_codex_scopes:
             base["codex_generation"] = min(base["codex_generation"], s.disjoint_codex_scopes)
         if s.conflict_rate >= 0.20:
@@ -798,7 +822,11 @@ class PipelineStageScheduler:
             if status is StageStatus.SUCCEEDED:
                 self._results[task_id] = result
             elif error is not None:
-                self._errors[task_id] = f"{type(error).__name__}: {error}" if isinstance(error, BaseException) else str(error)
+                self._errors[task_id] = (
+                    f"{type(error).__name__}: {error}"
+                    if isinstance(error, BaseException)
+                    else str(error)
+                )
             try:
                 admission.lease.release()
             finally:
@@ -843,7 +871,9 @@ class PipelineStageScheduler:
     def done(self) -> bool:
         with self._lock:
             self._propagate_blocked()
-            return bool(self._tasks) and all(status in _TERMINAL_STATUSES for status in self._statuses.values())
+            return bool(self._tasks) and all(
+                status in _TERMINAL_STATUSES for status in self._statuses.values()
+            )
 
     def run(
         self,
@@ -862,7 +892,11 @@ class PipelineStageScheduler:
 
         normalized_handlers = {_stage(stage): handler for stage, handler in handlers.items()}
         missing_handlers = sorted(
-            {task.stage.value for task in self._tasks.values() if task.stage not in normalized_handlers}
+            {
+                task.stage.value
+                for task in self._tasks.values()
+                if task.stage not in normalized_handlers
+            }
         )
         if missing_handlers:
             raise ValueError(f"missing handlers for stages: {', '.join(missing_handlers)}")
@@ -879,7 +913,9 @@ class PipelineStageScheduler:
         started = time.monotonic()
         failures: dict[str, BaseException] = {}
         futures: MutableMapping[Future[Any], str] = {}
-        with ThreadPoolExecutor(max_workers=worker_cap, thread_name_prefix="legal-ir-stage") as pool:
+        with ThreadPoolExecutor(
+            max_workers=worker_cap, thread_name_prefix="legal-ir-stage"
+        ) as pool:
             while not self.done or futures:
                 if timeout is not None and time.monotonic() - started >= timeout:
                     for task_id in tuple(self._admissions):
@@ -962,9 +998,8 @@ def build_canonical_pipeline_dag(
     prefix: str = "cycle",
     *,
     revision: str = "",
-    resources_by_stage: Mapping[
-        PipelineStage | str, StageResourceRequest | Mapping[str, Any]
-    ] | None = None,
+    resources_by_stage: Mapping[PipelineStage | str, StageResourceRequest | Mapping[str, Any]]
+    | None = None,
     payload_by_stage: Mapping[PipelineStage | str, Any] | None = None,
 ) -> tuple[PipelineTask, ...]:
     """Build the canonical eight-stage, immutable-snapshot dependency DAG."""

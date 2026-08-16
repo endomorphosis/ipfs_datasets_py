@@ -37,9 +37,7 @@ from .samples import (
 
 
 FORMALIZATION_VIEW_SCHEMA_VERSION: Final = "formalization-view/v1"
-FORMALIZATION_VIEW_REGISTRY_SCHEMA_VERSION: Final = (
-    "formalization-view-registry/v1"
-)
+FORMALIZATION_VIEW_REGISTRY_SCHEMA_VERSION: Final = "formalization-view-registry/v1"
 FORMAL_SYMBOL_TABLE_SCHEMA_VERSION: Final = "formal-symbol-table/v1"
 FORMAL_FORMULA_SCHEMA_VERSION: Final = "formal-formula/v1"
 FORMAL_CROSS_VIEW_LINK_SCHEMA_VERSION: Final = "formal-cross-view-link/v1"
@@ -71,9 +69,7 @@ class FormalizationView:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "view_id", _identifier(self.view_id, "view_id"))
-        object.__setattr__(
-            self, "logic_family", _identifier(self.logic_family, "logic_family")
-        )
+        object.__setattr__(self, "logic_family", _identifier(self.logic_family, "logic_family"))
         if not isinstance(self.description, str):
             raise FormalizationValidationError("description must be a string")
         object.__setattr__(
@@ -93,9 +89,7 @@ class FormalizationView:
             if isinstance(self.metadata, FrozenMap)
             else FrozenMap(_mapping(self.metadata, "metadata")),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != FORMALIZATION_VIEW_SCHEMA_VERSION:
             raise FormalizationValidationError(
                 f"unsupported formalization view schema: {self.schema_version!r}"
@@ -134,16 +128,10 @@ class FormalizationView:
             view_id=value.get("view_id", ""),
             logic_family=value.get("logic_family", ""),
             description=value.get("description", ""),
-            formula_schema=value.get(
-                "formula_schema", FORMAL_FORMULA_SCHEMA_VERSION
-            ),
-            capabilities=tuple(
-                _sequence(value.get("capabilities", ()), "capabilities")
-            ),
+            formula_schema=value.get("formula_schema", FORMAL_FORMULA_SCHEMA_VERSION),
+            capabilities=tuple(_sequence(value.get("capabilities", ()), "capabilities")),
             metadata=FrozenMap(_mapping(value.get("metadata", {}), "metadata")),
-            schema_version=value.get(
-                "schema_version", FORMALIZATION_VIEW_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", FORMALIZATION_VIEW_SCHEMA_VERSION),
         )
 
 
@@ -174,9 +162,7 @@ class ViewRegistry(Mapping[str, FormalizationView]):
             for item in views
         )
         if not normalized:
-            raise FormalizationValidationError(
-                "view registry must contain at least one view"
-            )
+            raise FormalizationValidationError("view registry must contain at least one view")
         by_id = {item.view_id: item for item in normalized}
         if len(by_id) != len(normalized):
             raise FormalizationValidationError("view IDs must be unique")
@@ -251,9 +237,7 @@ class ViewRegistry(Mapping[str, FormalizationView]):
                 for item in _sequence(value.get("views", ()), "views")
             ),
             registry_id=value.get("registry_id", ""),
-            schema_version=value.get(
-                "schema_version", FORMALIZATION_VIEW_REGISTRY_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", FORMALIZATION_VIEW_REGISTRY_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -261,9 +245,7 @@ class ViewRegistry(Mapping[str, FormalizationView]):
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise FormalizationValidationError(
-                "view registry must be valid JSON"
-            ) from exc
+            raise FormalizationValidationError("view registry must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "view registry"))
 
 
@@ -280,9 +262,7 @@ class FormalSymbol:
     metadata: FrozenMap = field(default_factory=FrozenMap)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "symbol_id", _identifier(self.symbol_id, "symbol_id")
-        )
+        object.__setattr__(self, "symbol_id", _identifier(self.symbol_id, "symbol_id"))
         object.__setattr__(self, "name", _text(self.name, "symbol name"))
         object.__setattr__(self, "kind", _identifier(self.kind, "symbol kind"))
         object.__setattr__(self, "sort", _identifier(self.sort, "symbol sort"))
@@ -291,13 +271,9 @@ class FormalSymbol:
             "source_ref_ids",
             _unique_identifiers(self.source_ref_ids, "source_ref_ids"),
         )
-        object.__setattr__(
-            self, "span_ids", _unique_identifiers(self.span_ids, "span_ids")
-        )
+        object.__setattr__(self, "span_ids", _unique_identifiers(self.span_ids, "span_ids"))
         if not self.source_ref_ids and not self.span_ids:
-            raise FormalizationValidationError(
-                f"symbol {self.symbol_id!r} must be source-grounded"
-            )
+            raise FormalizationValidationError(f"symbol {self.symbol_id!r} must be source-grounded")
         object.__setattr__(
             self,
             "metadata",
@@ -340,9 +316,7 @@ class FormalSymbol:
             name=value.get("name", ""),
             kind=value.get("kind", ""),
             sort=value.get("sort", "untyped"),
-            source_ref_ids=tuple(
-                _sequence(value.get("source_ref_ids", ()), "source_ref_ids")
-            ),
+            source_ref_ids=tuple(_sequence(value.get("source_ref_ids", ()), "source_ref_ids")),
             span_ids=tuple(_sequence(value.get("span_ids", ()), "span_ids")),
             metadata=FrozenMap(_mapping(value.get("metadata", {}), "metadata")),
         )
@@ -378,9 +352,7 @@ class SymbolTable:
             if isinstance(self.metadata, FrozenMap)
             else FrozenMap(_mapping(self.metadata, "metadata")),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != FORMAL_SYMBOL_TABLE_SCHEMA_VERSION:
             raise FormalizationValidationError(
                 f"unsupported symbol table schema: {self.schema_version!r}"
@@ -419,9 +391,7 @@ class SymbolTable:
                 for item in _sequence(value.get("symbols", ()), "symbols")
             ),
             metadata=FrozenMap(_mapping(value.get("metadata", {}), "metadata")),
-            schema_version=value.get(
-                "schema_version", FORMAL_SYMBOL_TABLE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", FORMAL_SYMBOL_TABLE_SCHEMA_VERSION),
         )
 
 
@@ -442,9 +412,7 @@ class FormalFormula:
     schema_version: str = FORMAL_FORMULA_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "formula_id", _identifier(self.formula_id, "formula_id")
-        )
+        object.__setattr__(self, "formula_id", _identifier(self.formula_id, "formula_id"))
         object.__setattr__(self, "view_id", _identifier(self.view_id, "view_id"))
         expression = freeze_json(self.expression)
         if expression is None or (isinstance(expression, str) and not expression.strip()):
@@ -475,9 +443,7 @@ class FormalFormula:
             if isinstance(self.metadata, FrozenMap)
             else FrozenMap(_mapping(self.metadata, "metadata")),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != FORMAL_FORMULA_SCHEMA_VERSION:
             raise FormalizationValidationError(
                 f"unsupported formula schema: {self.schema_version!r}"
@@ -524,19 +490,11 @@ class FormalFormula:
             formula_id=value.get("formula_id", ""),
             view_id=value.get("view_id", ""),
             expression=value.get("expression"),
-            symbol_ids=tuple(
-                _sequence(value.get("symbol_ids", ()), "symbol_ids")
-            ),
-            source_ref_ids=tuple(
-                _sequence(value.get("source_ref_ids", ()), "source_ref_ids")
-            ),
+            symbol_ids=tuple(_sequence(value.get("symbol_ids", ()), "symbol_ids")),
+            source_ref_ids=tuple(_sequence(value.get("source_ref_ids", ()), "source_ref_ids")),
             span_ids=tuple(_sequence(value.get("span_ids", ()), "span_ids")),
-            assumption_ids=tuple(
-                _sequence(value.get("assumption_ids", ()), "assumption_ids")
-            ),
-            input_node_ids=tuple(
-                _sequence(value.get("input_node_ids", ()), "input_node_ids")
-            ),
+            assumption_ids=tuple(_sequence(value.get("assumption_ids", ()), "assumption_ids")),
+            input_node_ids=tuple(_sequence(value.get("input_node_ids", ()), "input_node_ids")),
             opaque=value.get("opaque", False),
             metadata=FrozenMap(_mapping(value.get("metadata", {}), "metadata")),
             schema_version=value.get("schema_version", FORMAL_FORMULA_SCHEMA_VERSION),
@@ -587,18 +545,14 @@ class CrossViewLink:
         object.__setattr__(
             self,
             "preserved_properties",
-            _unique_identifiers(
-                self.preserved_properties, "preserved_properties"
-            ),
+            _unique_identifiers(self.preserved_properties, "preserved_properties"),
         )
         object.__setattr__(
             self,
             "source_ref_ids",
             _unique_identifiers(self.source_ref_ids, "source_ref_ids"),
         )
-        object.__setattr__(
-            self, "span_ids", _unique_identifiers(self.span_ids, "span_ids")
-        )
+        object.__setattr__(self, "span_ids", _unique_identifiers(self.span_ids, "span_ids"))
         object.__setattr__(
             self,
             "metadata",
@@ -606,9 +560,7 @@ class CrossViewLink:
             if isinstance(self.metadata, FrozenMap)
             else FrozenMap(_mapping(self.metadata, "metadata")),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != FORMAL_CROSS_VIEW_LINK_SCHEMA_VERSION:
             raise FormalizationValidationError(
                 f"unsupported cross-view link schema: {self.schema_version!r}"
@@ -653,18 +605,12 @@ class CrossViewLink:
             target_formula_id=value.get("target_formula_id", ""),
             relation=value.get("relation", ""),
             preserved_properties=tuple(
-                _sequence(
-                    value.get("preserved_properties", ()), "preserved_properties"
-                )
+                _sequence(value.get("preserved_properties", ()), "preserved_properties")
             ),
-            source_ref_ids=tuple(
-                _sequence(value.get("source_ref_ids", ()), "source_ref_ids")
-            ),
+            source_ref_ids=tuple(_sequence(value.get("source_ref_ids", ()), "source_ref_ids")),
             span_ids=tuple(_sequence(value.get("span_ids", ()), "span_ids")),
             metadata=FrozenMap(_mapping(value.get("metadata", {}), "metadata")),
-            schema_version=value.get(
-                "schema_version", FORMAL_CROSS_VIEW_LINK_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", FORMAL_CROSS_VIEW_LINK_SCHEMA_VERSION),
         )
 
 
@@ -698,20 +644,15 @@ def validate_view_artifacts(
     for formula in formulas:
         if formula.view_id not in registry:
             raise FormalizationValidationError(
-                f"formula {formula.formula_id!r} references unknown view "
-                f"{formula.view_id!r}"
+                f"formula {formula.formula_id!r} references unknown view {formula.view_id!r}"
             )
-        _require_known(
-            formula.symbol_ids, symbols, f"formula {formula.formula_id} symbols"
-        )
+        _require_known(formula.symbol_ids, symbols, f"formula {formula.formula_id} symbols")
         _require_known(
             formula.source_ref_ids,
             known_sources,
             f"formula {formula.formula_id} sources",
         )
-        _require_known(
-            formula.span_ids, known_spans, f"formula {formula.formula_id} spans"
-        )
+        _require_known(formula.span_ids, known_spans, f"formula {formula.formula_id} spans")
         _require_known(
             formula.assumption_ids,
             known_assumptions,
@@ -734,19 +675,14 @@ def validate_view_artifacts(
             known_sources,
             f"cross-view link {link.link_id} sources",
         )
-        _require_known(
-            link.span_ids, known_spans, f"cross-view link {link.link_id} spans"
-        )
+        _require_known(link.span_ids, known_spans, f"cross-view link {link.link_id} spans")
 
 
-def _require_known(
-    values: Sequence[str], known: set[str], field_name: str
-) -> None:
+def _require_known(values: Sequence[str], known: set[str], field_name: str) -> None:
     unknown = set(values) - known
     if unknown:
         raise FormalizationValidationError(
-            f"{field_name} references unknown identifiers: "
-            + ", ".join(sorted(unknown))
+            f"{field_name} references unknown identifiers: " + ", ".join(sorted(unknown))
         )
 
 

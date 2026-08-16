@@ -3,6 +3,7 @@ Text Processing Utilities for PDF Pipeline
 
 Provides text processing, chunking, and optimization utilities.
 """
+
 from __future__ import annotations
 from collections import Counter
 import inspect
@@ -16,6 +17,7 @@ from typing import Any, Callable, Optional
 # Import NLTK with graceful fallback
 try:
     import nltk
+
     HAVE_NLTK = True
 except ImportError:
     nltk = None
@@ -24,6 +26,7 @@ except ImportError:
         "TextProcessor using basic text processing (NLTK not available)"
     )
 # from nltk.tokenize import sent_tokenize
+
 
 class TextProcessor:
     """
@@ -99,23 +102,23 @@ class TextProcessor:
     Usage Examples:
         # Initialize text processor
         processor = TextProcessor()
-        
+
         # Clean and normalize raw text
         raw_text = "  This is a sample text...  with irregular   spacing!  "
         clean_text = processor.clean_text(raw_text)
         print(f"Cleaned: {clean_text}")
-        
+
         # Split text into sentences
         document_text = "First sentence. Second sentence! Third sentence?"
         sentences = processor.split_sentences(document_text)
         for i, sentence in enumerate(sentences):
             print(f"Sentence {i+1}: {sentence}")
-        
+
         # Extract keywords for content analysis
         content = "Machine learning and artificial intelligence..."
         keywords = processor.extract_keywords(content, max_keywords=5)
         print(f"Keywords: {keywords}")
-        
+
         # Assess text quality for filtering
         quality_metrics = processor.assess_quality(content)
         if quality_metrics['coherence_score'] > 0.7:
@@ -127,7 +130,7 @@ class TextProcessor:
         - logging: Structured logging for processing status and error reporting
         - typing: Type annotations for improved code reliability and documentation
         - collections: Counter utility for frequency analysis and keyword extraction
-        
+
         Optional:
         - nltk: Advanced natural language processing capabilities
         - langdetect: Language detection for multilingual content processing
@@ -143,32 +146,114 @@ class TextProcessor:
         - Language detection enables multilingual processing with appropriate models
         - Processing speed scales linearly with text length for predictable performance
     """
+
     STOP_WORDS = {
         # Articles
-        'the', 'a', 'an',
+        "the",
+        "a",
+        "an",
         # Conjunctions
-        'and', 'or', 'but', 'so', 'yet', 'for', 'nor',
+        "and",
+        "or",
+        "but",
+        "so",
+        "yet",
+        "for",
+        "nor",
         # Prepositions
-        'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 
-        'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between',
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "with",
+        "by",
+        "from",
+        "up",
+        "about",
+        "into",
+        "through",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "between",
         # Pronouns
-        'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them',
-        'my', 'your', 'his', 'her', 'its', 'our', 'their', 'mine', 'yours', 'ours', 'theirs',
-        'this', 'that', 'these', 'those',
+        "i",
+        "you",
+        "he",
+        "she",
+        "it",
+        "we",
+        "they",
+        "me",
+        "him",
+        "her",
+        "us",
+        "them",
+        "my",
+        "your",
+        "his",
+        "her",
+        "its",
+        "our",
+        "their",
+        "mine",
+        "yours",
+        "ours",
+        "theirs",
+        "this",
+        "that",
+        "these",
+        "those",
         # Auxiliary verbs
-        'is', 'are', 'was', 'were', 'be', 'been', 'being', 'am',
-        'have', 'has', 'had', 'having',
-        'do', 'does', 'did', 'doing',
-        'will', 'would', 'shall', 'should', 'may', 'might', 'can', 'could', 'must',
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "am",
+        "have",
+        "has",
+        "had",
+        "having",
+        "do",
+        "does",
+        "did",
+        "doing",
+        "will",
+        "would",
+        "shall",
+        "should",
+        "may",
+        "might",
+        "can",
+        "could",
+        "must",
         # Common adverbs/modifiers
-        'not', 'no', 'yes', 'very', 'too', 'so', 'just', 'only', 'even', 'also', 'still'
+        "not",
+        "no",
+        "yes",
+        "very",
+        "too",
+        "so",
+        "just",
+        "only",
+        "even",
+        "also",
+        "still",
     }
 
-    def __init__(self, 
-                 stop_words: Optional[set[str]] = None,
-                 logger: logging.Logger = logging.getLogger(__name__),
-                 sent_tokenize: Optional[Callable] = None,
-                 ):
+    def __init__(
+        self,
+        stop_words: Optional[set[str]] = None,
+        logger: logging.Logger = logging.getLogger(__name__),
+        sent_tokenize: Optional[Callable] = None,
+    ):
         """
         Initialize Text Processing Utility with Comprehensive Language Resources
 
@@ -189,7 +274,7 @@ class TextProcessor:
                 including common articles, prepositions, conjunctions, and
                 auxiliary verbs. This vocabulary is used for content filtering,
                 keyword extraction, and relevance analysis. The collection includes:
-                
+
                 - Articles: 'the', 'a', 'an'
                 - Prepositions: 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'
                 - Conjunctions: 'and', 'or', 'but'
@@ -197,14 +282,14 @@ class TextProcessor:
                 - Auxiliary verbs: 'is', 'are', 'was', 'were', 'be', 'been', 'being'
                 - Modal verbs: 'have', 'has', 'had', 'do', 'does', 'did'
                 - Future/conditional: 'will', 'would', 'could', 'should'
-                
+
                 The stop word list can be extended or customized for domain-specific
                 applications requiring specialized vocabulary filtering.
 
         Examples:
             # Basic initialization for general text processing
             processor = TextProcessor()
-            
+
             # The processor is now ready for text operations
             cleaned_text = processor.clean_text("Sample text with   irregular spacing!")
             sentences = processor.split_sentences(cleaned_text)
@@ -243,30 +328,31 @@ class TextProcessor:
         self.logger = logger
         self.stop_words = stop_words if stop_words is not None else self.STOP_WORDS
         self.sent_tokenize = sent_tokenize
-    
+
     def _basic_sentence_tokenize(self, text: str) -> list[str]:
         """Basic sentence tokenization when NLTK is not available."""
         # Simple sentence splitting on common sentence endings
         import re
-        sentences = re.split(r'[.!?]+', text)
+
+        sentences = re.split(r"[.!?]+", text)
         return [s.strip() for s in sentences if s.strip()]
 
     def clean_text(self, text: str) -> str:
         """Clean and normalize text."""
         if not text:
             return ""
-        
+
         # Remove extra whitespace
-        text = re.sub(r'\s+', ' ', text)
-        
+        text = re.sub(r"\s+", " ", text)
+
         # Remove special characters but keep basic punctuation
-        text = re.sub(r'[^\w\s.,!?;:()\-]', '', text)
-        
+        text = re.sub(r"[^\w\s.,!?;:()\-]", "", text)
+
         # Normalize quotes
-        text = re.sub(r'[""''`]', '"', text)
-        
+        text = re.sub(r'[""' "`]", '"', text)
+
         return text.strip()
-    
+
     def split_sentences(self, text: str) -> list[str]:
         """Split text into sentences."""
         if not isinstance(text, str):
@@ -295,60 +381,59 @@ class TextProcessor:
         """Split text into paragraphs."""
         if not text:
             return []
-        
+
         # Split on double newlines
-        paragraphs = re.split(r'\n\s*\n', text)
-        
+        paragraphs = re.split(r"\n\s*\n", text)
+
         # Clean and filter paragraphs
         cleaned_paragraphs = []
         for paragraph in paragraphs:
             paragraph = paragraph.strip()
             if len(paragraph) > min_paragraph_length:
                 cleaned_paragraphs.append(paragraph)
-        
+
         return cleaned_paragraphs
-    
+
     def extract_keywords(self, text: str, top_k: int = 20) -> list[str]:
         """Extract keywords from text."""
         if not text:
             return []
-        
+
         # Convert to lowercase and split into words
-        words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
-        
+        words = re.findall(r"\b[a-zA-Z]{3,}\b", text.lower())
+
         # Filter stop words
         filtered_words = [w for w in words if w not in self.stop_words]
-        
+
         # Count frequency
         word_freq = Counter(filtered_words)
-        
+
         # Return top keywords
         top_keywords = [word for word, freq in word_freq.most_common(top_k)]
         return top_keywords
-    
+
     def extract_phrases(self, text: str, min_length: int = 2, max_length: int = 4) -> list[str]:
         """Extract key phrases from text."""
         if not text:
             return []
-        
+
         # Split into words
-        words = re.findall(r'\b[a-zA-Z]+\b', text.lower())
-        
+        words = re.findall(r"\b[a-zA-Z]+\b", text.lower())
+
         # Filter stop words
         filtered_words = [w for w in words if w not in self.stop_words]
-        
+
         # Extract n-grams
         phrases = []
         for n in range(min_length, max_length + 1):
             for i in range(len(filtered_words) - n + 1):
-                phrase = ' '.join(filtered_words[i:i+n])
+                phrase = " ".join(filtered_words[i : i + n])
                 phrases.append(phrase)
-        
+
         # Count frequency and return top phrases
         phrase_freq = Counter(phrases)
         top_phrases = [phrase for phrase, freq in phrase_freq.most_common(20)]
         return top_phrases
-
 
     def calculate_readability_score(self, text: str) -> float:
         """Calculate a readability score."""
@@ -357,17 +442,17 @@ class TextProcessor:
 
         if not text:
             return 0.0
-        
+
         sentences = self.split_sentences(text)
         words = text.split()
-        
+
         if not sentences or not words:
             return 0.0
 
         # Simple metrics
         avg_sentence_length = len(words) / len(sentences)
         avg_word_length = sum(len(word) for word in words) / len(words)
-        
+
         # Simple readability score (lower is easier to read)
         readability: int = (avg_sentence_length * 0.4) + (avg_word_length * 0.6)
 
@@ -376,9 +461,8 @@ class TextProcessor:
 
         return normalized_score
 
-
-    # def calculate_readability_score(self, 
-    #                                 text: str, 
+    # def calculate_readability_score(self,
+    #                                 text: str,
     #                                 metrics_dict: Optional[dict[str, tuple[Callable, float]]] = None,
     #                                 ) -> float:
     #     """Calculate a readability score."""
@@ -387,17 +471,17 @@ class TextProcessor:
 
     #     if not text:
     #         return 0.0
-        
+
     #     sentences = self.split_sentences(text)
     #     words = text.split()
-        
+
     #     if not sentences or not words:
     #         return 0.0
 
     #     # Simple metrics
     #     avg_sentence_length = len(words) / len(sentences)
     #     avg_word_length = sum(len(word) for word in words) / len(words)
-        
+
     #     # Simple readability score (lower is easier to read)
     #     readability: int = (avg_sentence_length * 0.4) + (avg_word_length * 0.6)
 
@@ -405,8 +489,8 @@ class TextProcessor:
     #         if not isinstance(metrics_dict, dict):
     #             raise TypeError("metrics_dict must be a dictionary")
     #         correct_key_values = [
-    #             isinstance(k, str) 
-    #             and isinstance(v, tuple) 
+    #             isinstance(k, str)
+    #             and isinstance(v, tuple)
     #             and len(v) == 2
     #             and inspect.isfunction(v[0])
     #             and isinstance(v[1], (int, float))
@@ -456,35 +540,116 @@ class TextProcessor:
     #                 )
 
     #             metric_dict.update({metric: partial(func, **kwarg_dict)})
-            
+
     #         readability = sum(func() * weight for func, weight in metric_dict.values())
 
     #     # Normalize to 0-1 scale (inverted so higher is better)
     #     normalized_score = max(0, min(1, 1 - (readability - 10) / 20))
-        
+
     #     return normalized_score
 
-def make_text_processor(mock_dict: Optional[dict[str, Any]] = None) -> 'TextProcessor':
+
+def make_text_processor(mock_dict: Optional[dict[str, Any]] = None) -> "TextProcessor":
     """Factory Function to create TextProcessor instance with default configurations."""
     stop_words = {
         # Articles
-        'the', 'a', 'an',
+        "the",
+        "a",
+        "an",
         # Conjunctions
-        'and', 'or', 'but', 'so', 'yet', 'for', 'nor',
+        "and",
+        "or",
+        "but",
+        "so",
+        "yet",
+        "for",
+        "nor",
         # Prepositions
-        'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 
-        'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between',
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "with",
+        "by",
+        "from",
+        "up",
+        "about",
+        "into",
+        "through",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "between",
         # Pronouns
-        'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them',
-        'my', 'your', 'his', 'her', 'its', 'our', 'their', 'mine', 'yours', 'ours', 'theirs',
-        'this', 'that', 'these', 'those',
+        "i",
+        "you",
+        "he",
+        "she",
+        "it",
+        "we",
+        "they",
+        "me",
+        "him",
+        "her",
+        "us",
+        "them",
+        "my",
+        "your",
+        "his",
+        "her",
+        "its",
+        "our",
+        "their",
+        "mine",
+        "yours",
+        "ours",
+        "theirs",
+        "this",
+        "that",
+        "these",
+        "those",
         # Auxiliary verbs
-        'is', 'are', 'was', 'were', 'be', 'been', 'being', 'am',
-        'have', 'has', 'had', 'having',
-        'do', 'does', 'did', 'doing',
-        'will', 'would', 'shall', 'should', 'may', 'might', 'can', 'could', 'must',
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "am",
+        "have",
+        "has",
+        "had",
+        "having",
+        "do",
+        "does",
+        "did",
+        "doing",
+        "will",
+        "would",
+        "shall",
+        "should",
+        "may",
+        "might",
+        "can",
+        "could",
+        "must",
         # Common adverbs/modifiers
-        'not', 'no', 'yes', 'very', 'too', 'so', 'just', 'only', 'even', 'also', 'still'
+        "not",
+        "no",
+        "yes",
+        "very",
+        "too",
+        "so",
+        "just",
+        "only",
+        "even",
+        "also",
+        "still",
     }
     init_dict = {
         "stop_words": stop_words,

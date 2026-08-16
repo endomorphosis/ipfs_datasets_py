@@ -54,21 +54,13 @@ from ipfs_datasets_py.logic.modal.leanstral_verifier import (
 )
 
 
-LEANSTRAL_RULE_GAP_REAUDIT_SCHEMA_VERSION = (
-    "legal-ir-leanstral-rule-gap-reaudit-v1"
-)
-LEANSTRAL_RULE_GAP_FRESH_EVIDENCE_SCHEMA_VERSION = (
-    "legal-ir-leanstral-rule-gap-current-evidence-v1"
-)
-LEANSTRAL_RULE_GAP_GUIDANCE_SCHEMA_VERSION = (
-    "legal-ir-leanstral-rule-gap-bounded-guidance-v1"
-)
+LEANSTRAL_RULE_GAP_REAUDIT_SCHEMA_VERSION = "legal-ir-leanstral-rule-gap-reaudit-v1"
+LEANSTRAL_RULE_GAP_FRESH_EVIDENCE_SCHEMA_VERSION = "legal-ir-leanstral-rule-gap-current-evidence-v1"
+LEANSTRAL_RULE_GAP_GUIDANCE_SCHEMA_VERSION = "legal-ir-leanstral-rule-gap-bounded-guidance-v1"
 LEANSTRAL_DETERMINISTIC_EXTRACTION_RECEIPT_SCHEMA_VERSION = (
     "legal-ir-leanstral-current-extraction-receipt-v1"
 )
-LEANSTRAL_CANDIDATE_SCHEMA_RECEIPT_VERSION = (
-    "legal-ir-leanstral-candidate-schema-receipt-v1"
-)
+LEANSTRAL_CANDIDATE_SCHEMA_RECEIPT_VERSION = "legal-ir-leanstral-candidate-schema-receipt-v1"
 
 CANONICAL_HISTORICAL_REPORT_RELATIVE_PATHS = (
     "leanstral-local-compact-20260718T075226Z/rule-gaps.json",
@@ -81,18 +73,14 @@ CANONICAL_HISTORICAL_REPORT_RELATIVE_PATHS = (
     "leanstral-local-smoke-20260718T072926Z/rule-gaps.json",
     "leanstral-local-smoke-20260718T073126Z/rule-gaps.json",
 )
-CANONICAL_HISTORICAL_REPORT_COUNT = len(
-    CANONICAL_HISTORICAL_REPORT_RELATIVE_PATHS
-)
+CANONICAL_HISTORICAL_REPORT_COUNT = len(CANONICAL_HISTORICAL_REPORT_RELATIVE_PATHS)
 CANONICAL_UNIQUE_GAP_COUNT = 1
 CANONICAL_FRAME_LOGIC_COMPONENT = "modal.frame_logic"
 CANONICAL_FRAME_LOGIC_FAMILY = "frame_logic"
 ZERO_GUIDANCE_ID = "leanstral-rule-gap-zero-guidance-baseline"
 
 _SHA256_RE = re.compile(r"^(?:sha256:)?[0-9a-f]{64}$")
-_TYPED_ATOM_RE = re.compile(
-    r"(?:not\s+)?[A-Za-z_][A-Za-z0-9_.:-]*\s*\([^()\n]*\)"
-)
+_TYPED_ATOM_RE = re.compile(r"(?:not\s+)?[A-Za-z_][A-Za-z0-9_.:-]*\s*\([^()\n]*\)")
 _TYPED_CONNECTOR_RE = re.compile(
     r"\s+(?:and|or|unless|implies|until|before|after)\s+",
     re.IGNORECASE,
@@ -175,15 +163,11 @@ def canonical_historical_rule_gap_report_paths(
     """Return the lineage-bound report inventory beneath ``reports_root``."""
 
     root = Path(reports_root)
-    paths = tuple(
-        root / relative
-        for relative in CANONICAL_HISTORICAL_REPORT_RELATIVE_PATHS
-    )
+    paths = tuple(root / relative for relative in CANONICAL_HISTORICAL_REPORT_RELATIVE_PATHS)
     missing = [str(path) for path in paths if not path.is_file()]
     if missing:
         raise LeanstralRuleGapReauditError(
-            "canonical historical rule-gap inventory is incomplete: "
-            + ", ".join(missing)
+            "canonical historical rule-gap inventory is incomplete: " + ", ".join(missing)
         )
     return paths
 
@@ -212,10 +196,7 @@ class LeanstralRuleGapReauditPolicy:
         )
 
     def __post_init__(self) -> None:
-        if (
-            self.expected_historical_reports is not None
-            and self.expected_historical_reports < 0
-        ):
+        if self.expected_historical_reports is not None and self.expected_historical_reports < 0:
             raise ValueError("expected_historical_reports must be non-negative")
         if self.expected_unique_gaps is not None and self.expected_unique_gaps < 0:
             raise ValueError("expected_unique_gaps must be non-negative")
@@ -292,9 +273,7 @@ def _json_ready(value: Any) -> Any:
     to_dict = getattr(value, "to_dict", None)
     if callable(to_dict):
         return _json_ready(to_dict())
-    raise LeanstralRuleGapReauditError(
-        f"unsupported evidence type: {type(value).__name__}"
-    )
+    raise LeanstralRuleGapReauditError(f"unsupported evidence type: {type(value).__name__}")
 
 
 def canonical_json_bytes(value: Any) -> bytes:
@@ -347,11 +326,7 @@ def _strings(value: Any) -> tuple[str, ...]:
     values = value if isinstance(value, (list, tuple, set, frozenset)) else (value,)
     return tuple(
         sorted(
-            {
-                str(item).strip()
-                for item in values
-                if isinstance(item, str) and str(item).strip()
-            }
+            {str(item).strip() for item in values if isinstance(item, str) and str(item).strip()}
         )
     )
 
@@ -364,9 +339,7 @@ def _strict_fields(
 ) -> None:
     unknown = sorted(set(value) - set(allowed))
     if unknown:
-        raise LeanstralRuleGapReauditError(
-            f"{label} contains unknown fields: {', '.join(unknown)}"
-        )
+        raise LeanstralRuleGapReauditError(f"{label} contains unknown fields: {', '.join(unknown)}")
 
 
 def _valid_sha256(value: Any) -> bool:
@@ -386,9 +359,7 @@ def _source_id(path: Path, digest: str) -> str:
 def _validate_historical_report(report: Mapping[str, Any], *, label: str) -> None:
     _strict_fields(report, _HISTORICAL_REPORT_FIELDS, label=label)
     if report.get("schema_version") != LEANSTRAL_RULE_GAP_REPORT_SCHEMA_VERSION:
-        raise LeanstralRuleGapReauditError(
-            f"{label} has unsupported schema_version"
-        )
+        raise LeanstralRuleGapReauditError(f"{label} has unsupported schema_version")
     for count_field in (
         "accepted_supporting_audit_count",
         "conflicting_audit_count",
@@ -400,9 +371,7 @@ def _validate_historical_report(report: Mapping[str, Any], *, label: str) -> Non
                 f"{label}.{count_field} must be a non-negative integer"
             )
     gaps = _sequence(report.get("gaps"), label=f"{label}.gaps")
-    rejected = _sequence(
-        report.get("rejected_audits"), label=f"{label}.rejected_audits"
-    )
+    rejected = _sequence(report.get("rejected_audits"), label=f"{label}.rejected_audits")
     for index, raw_gap in enumerate(gaps):
         gap = _mapping(raw_gap, label=f"{label}.gaps[{index}]")
         _strict_fields(gap, _HISTORICAL_GAP_FIELDS, label=f"{label}.gaps[{index}]")
@@ -412,9 +381,7 @@ def _validate_historical_report(report: Mapping[str, Any], *, label: str) -> Non
                 label=f"{label}.gaps[{index}].{evidence_field}",
             )
     for index, raw_rejection in enumerate(rejected):
-        rejection = _mapping(
-            raw_rejection, label=f"{label}.rejected_audits[{index}]"
-        )
+        rejection = _mapping(raw_rejection, label=f"{label}.rejected_audits[{index}]")
         _strict_fields(
             rejection,
             _HISTORICAL_REJECTION_FIELDS,
@@ -434,9 +401,7 @@ def load_historical_rule_gap_report(
         try:
             size = path.stat().st_size
         except OSError as exc:
-            raise LeanstralRuleGapReauditError(
-                f"cannot stat historical report: {path}"
-            ) from exc
+            raise LeanstralRuleGapReauditError(f"cannot stat historical report: {path}") from exc
         if size > max_bytes:
             raise LeanstralRuleGapReauditError(
                 f"historical report exceeds {max_bytes} bytes: {path}"
@@ -449,9 +414,7 @@ def load_historical_rule_gap_report(
                 parse_constant=_reject_nonfinite,
             )
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise LeanstralRuleGapReauditError(
-                f"cannot parse historical report: {path}"
-            ) from exc
+            raise LeanstralRuleGapReauditError(f"cannot parse historical report: {path}") from exc
         digest = f"sha256:{hashlib.sha256(raw_bytes).hexdigest()}"
         source_id = _source_id(path, digest)
     else:
@@ -477,9 +440,7 @@ def load_historical_rule_gap_reports(
     selected_policy = policy or LeanstralRuleGapReauditPolicy()
     entries = [
         (
-            load_historical_rule_gap_report(
-                source, max_bytes=selected_policy.max_report_bytes
-            ),
+            load_historical_rule_gap_report(source, max_bytes=selected_policy.max_report_bytes),
             isinstance(source, (str, os.PathLike)),
         )
         for source in sources
@@ -493,9 +454,7 @@ def load_historical_rule_gap_reports(
         seen[key] = occurrence
         if occurrence > 1:
             if is_path_source:
-                raise LeanstralRuleGapReauditError(
-                    "duplicate historical report source"
-                )
+                raise LeanstralRuleGapReauditError("duplicate historical report source")
             # Mapping inputs have no path identity.  Preserve repeated
             # no-decision runs as distinct, deterministic corpus members.
             item = HistoricalRuleGapSource(
@@ -579,8 +538,7 @@ def _historical_records(
                         "classifications": _strings(evidence.get("classification")),
                         "decision": decision,
                         "evidence_ids": _safe_evidence_ids(evidence),
-                        "families": _strings(evidence.get("affected_ir_families"))
-                        or families,
+                        "families": _strings(evidence.get("affected_ir_families")) or families,
                         "gap_ids": _strings(gap.get("gap_id")),
                         "proof_ids": _strings(evidence.get("proof_obligation_ids")),
                         "report_sha256": source.report_sha256,
@@ -592,19 +550,14 @@ def _historical_records(
                     report_decisions.append(decision)
                     report_decision_details.append(
                         {
-                            "classification": str(
-                                evidence.get("classification") or ""
-                            ),
+                            "classification": str(evidence.get("classification") or ""),
                             "decision": decision,
                             "historical_gap_id": str(gap.get("gap_id") or ""),
                             "reason_codes": [
-                                _reason_code(reason)
-                                for reason in _strings(evidence.get("reasons"))
+                                _reason_code(reason) for reason in _strings(evidence.get("reasons"))
                             ],
                             "request_id": str(evidence.get("request_id") or ""),
-                            "response_hash": str(
-                                evidence.get("response_hash") or ""
-                            ),
+                            "response_hash": str(evidence.get("response_hash") or ""),
                             "role": role,
                             "target_component": component,
                         }
@@ -612,9 +565,7 @@ def _historical_records(
         for raw_rejection in report.get("rejected_audits", ()):
             rejection = dict(raw_rejection)
             outcome = _reason_code(
-                rejection.get("verification_outcome")
-                or rejection.get("status")
-                or "rejected"
+                rejection.get("verification_outcome") or rejection.get("status") or "rejected"
             )
             decision = "rejected" if outcome == "rejected" else outcome
             components = _surface_components(rejection.get("proposed_surfaces"))
@@ -635,13 +586,10 @@ def _historical_records(
             report_decision_details.append(
                 {
                     "audit_id": str(rejection.get("audit_id") or ""),
-                    "classification": str(
-                        rejection.get("classification") or ""
-                    ),
+                    "classification": str(rejection.get("classification") or ""),
                     "decision": decision,
                     "reason_codes": [
-                        _reason_code(reason)
-                        for reason in _strings(rejection.get("reasons"))
+                        _reason_code(reason) for reason in _strings(rejection.get("reasons"))
                     ],
                     "request_id": str(rejection.get("request_id") or ""),
                     "response_hash": str(rejection.get("response_hash") or ""),
@@ -669,9 +617,7 @@ def _historical_records(
                 "source_audit_count": int(report.get("source_audit_count") or 0),
                 "source_id": source.source_id,
                 "status": (
-                    "abstained"
-                    if report_decisions == ["abstained"]
-                    else "historical_evidence_only"
+                    "abstained" if report_decisions == ["abstained"] else "historical_evidence_only"
                 ),
             }
         )
@@ -770,47 +716,27 @@ def deduplicate_historical_rule_gaps(
     identities: list[HistoricalGapIdentity] = []
     for group in groups.values():
         target_components = tuple(
-            sorted(
-                {
-                    value
-                    for record in group
-                    for value in record["target_components"]
-                }
-            )
+            sorted({value for record in group for value in record["target_components"]})
         )
-        families = tuple(
-            sorted({value for record in group for value in record["families"]})
-        )
-        request_ids = tuple(
-            sorted({value for record in group for value in record["request_ids"]})
-        )
-        proof_ids = tuple(
-            sorted({value for record in group for value in record["proof_ids"]})
-        )
+        families = tuple(sorted({value for record in group for value in record["families"]}))
+        request_ids = tuple(sorted({value for record in group for value in record["request_ids"]}))
+        proof_ids = tuple(sorted({value for record in group for value in record["proof_ids"]}))
         evidence_ids = tuple(
             sorted({value for record in group for value in record["evidence_ids"]})
         )
-        gap_ids = tuple(
-            sorted({value for record in group for value in record["gap_ids"]})
-        )
+        gap_ids = tuple(sorted({value for record in group for value in record["gap_ids"]}))
         classifications = tuple(
-            sorted(
-                {value for record in group for value in record["classifications"]}
-            )
+            sorted({value for record in group for value in record["classifications"]})
         )
-        report_hashes = tuple(
-            sorted({str(record["report_sha256"]) for record in group})
-        )
+        report_hashes = tuple(sorted({str(record["report_sha256"]) for record in group}))
         decision_counts = {
             decision: sum(1 for record in group if record["decision"] == decision)
             for decision in sorted({str(record["decision"]) for record in group})
         }
         accepted = decision_counts.get("accepted", 0) > 0
-        nonaccepted = sum(
-            count
-            for decision, count in decision_counts.items()
-            if decision != "accepted"
-        ) > 0
+        nonaccepted = (
+            sum(count for decision, count in decision_counts.items() if decision != "accepted") > 0
+        )
         conflict = accepted and nonaccepted
         identity_payload = {
             "affected_ir_families": list(families),
@@ -994,12 +920,8 @@ def _check_fresh_evidence(
     obligations = extraction.get("proof_obligations")
     if not isinstance(obligations, Sequence) or isinstance(obligations, (str, bytes)):
         obligations = []
-    obligation_records = [
-        dict(item) for item in obligations if isinstance(item, Mapping)
-    ]
-    obligation_ids = {
-        str(item.get("obligation_id") or "") for item in obligation_records
-    }
+    obligation_records = [dict(item) for item in obligations if isinstance(item, Mapping)]
+    obligation_ids = {str(item.get("obligation_id") or "") for item in obligation_records}
     contract_ids = {str(item.get("contract_id") or "") for item in obligation_records}
     if candidate:
         if summary["proof_obligation_id"] not in obligation_ids:
@@ -1016,10 +938,7 @@ def _check_fresh_evidence(
         if isinstance(evidence.get("schema_validation"), Mapping)
         else {}
     )
-    if (
-        schema_validation.get("schema_version")
-        != LEANSTRAL_CANDIDATE_SCHEMA_RECEIPT_VERSION
-    ):
+    if schema_validation.get("schema_version") != LEANSTRAL_CANDIDATE_SCHEMA_RECEIPT_VERSION:
         reasons.append("unexpected_schema_receipt_version")
     if schema_validation.get("accepted") is not True:
         reasons.append("current_schema_validation_rejected")
@@ -1122,10 +1041,7 @@ def _check_fresh_evidence(
     if not matching_receipts:
         reasons.append("missing_reconstruction_receipt")
     for receipt in matching_receipts:
-        if (
-            receipt.get("schema_version")
-            != LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION
-        ):
+        if receipt.get("schema_version") != LEGAL_IR_HAMMER_RECONSTRUCTION_RECEIPT_SCHEMA_VERSION:
             reasons.append("unexpected_reconstruction_receipt_schema")
         if (
             receipt.get("trusted") is not True
@@ -1154,9 +1070,7 @@ def _check_fresh_evidence(
             "target_family": family,
         },
         "hammer": {
-            "native_reconstruction_required": bool(
-                policy.require_native_reconstruction
-            ),
+            "native_reconstruction_required": bool(policy.require_native_reconstruction),
             "obligation_count": int(obligation_count or 0),
             "proof_receipt_ids": sorted(set(proof_receipt_ids)),
             "trusted_candidate_count": len(trusted_results),
@@ -1166,11 +1080,7 @@ def _check_fresh_evidence(
                 schema_validation.get("candidate_schema_version") or ""
             ),
             "current": schema_validation.get("current") is True,
-            "status": (
-                "accepted"
-                if schema_validation.get("accepted") is True
-                else "rejected"
-            ),
+            "status": ("accepted" if schema_validation.get("accepted") is True else "rejected"),
         },
         "status": "accepted" if not reasons else "rejected",
     }
@@ -1195,9 +1105,7 @@ def _check_fresh_evidence(
             "proof_fact_without_receipt",
             "source_text_target",
         ],
-        "guidance_id": (
-            f"leanstral-rule-gap-guidance-{content_sha256(guidance_payload)[7:23]}"
-        ),
+        "guidance_id": (f"leanstral-rule-gap-guidance-{content_sha256(guidance_payload)[7:23]}"),
         "influence": float(policy.max_guidance_influence),
         "premise_hint_ids": summary["premise_hint_ids"],
         "proof_obligation_ids": [summary["proof_obligation_id"]],
@@ -1230,9 +1138,7 @@ def build_current_rule_gap_evidence(
 
     if not str(audit_run_id or "").strip():
         raise LeanstralRuleGapReauditError("audit_run_id is required")
-    sanitization = sanitize_leanstral_failure_branch_candidates(
-        task, candidate_response, failures
-    )
+    sanitization = sanitize_leanstral_failure_branch_candidates(task, candidate_response, failures)
     hammer = _mapping(hammer_verification, label="hammer_verification")
     # The sanitizer already resolved arbitrary Hammer report/failure shapes
     # against the task's deterministic obligations.  Reuse only its accepted
@@ -1252,9 +1158,7 @@ def build_current_rule_gap_evidence(
             continue
         metadata = raw.get("metadata")
         contract_id = (
-            str(metadata.get("contract_id") or "")
-            if isinstance(metadata, Mapping)
-            else ""
+            str(metadata.get("contract_id") or "") if isinstance(metadata, Mapping) else ""
         )
         proof_obligations.append(
             {
@@ -1285,22 +1189,10 @@ def build_current_rule_gap_evidence(
         if sanitization.accepted and len(sanitization.candidates) == 1
         else {}
     )
-    target_components = {
-        item["target_view"] for item in proof_obligations if item["target_view"]
-    }
-    target_families = {
-        item["logic_family"] for item in proof_obligations if item["logic_family"]
-    }
-    target_component = (
-        next(iter(target_components))
-        if len(target_components) == 1
-        else ""
-    )
-    target_family = (
-        next(iter(target_families))
-        if len(target_families) == 1
-        else ""
-    )
+    target_components = {item["target_view"] for item in proof_obligations if item["target_view"]}
+    target_families = {item["logic_family"] for item in proof_obligations if item["logic_family"]}
+    target_component = next(iter(target_components)) if len(target_components) == 1 else ""
+    target_family = next(iter(target_families)) if len(target_families) == 1 else ""
     return {
         "audit_run_id": str(audit_run_id),
         "candidate_sanitization": sanitization.to_dict(),
@@ -1343,12 +1235,8 @@ def reaudit_leanstral_rule_gaps(
     if raw_sources and isinstance(raw_sources[0], HistoricalRuleGapSource):
         sources = tuple(raw_sources)  # type: ignore[assignment]
     else:
-        sources = load_historical_rule_gap_reports(
-            raw_sources, policy=selected_policy
-        )
-    identities, provenance = deduplicate_historical_rule_gaps(
-        sources, policy=selected_policy
-    )
+        sources = load_historical_rule_gap_reports(raw_sources, policy=selected_policy)
+    identities, provenance = deduplicate_historical_rule_gaps(sources, policy=selected_policy)
     target_identities = [
         identity
         for identity in identities
@@ -1400,17 +1288,11 @@ def reaudit_leanstral_rule_gaps(
         "gap_identities": [identity.to_dict() for identity in identities],
         "historical_conflict_provenance": list(provenance),
         "historical_report_count": len(sources),
-        "historical_report_sha256s": sorted(
-            source.report_sha256 for source in sources
-        ),
+        "historical_report_sha256s": sorted(source.report_sha256 for source in sources),
         "historical_unique_gap_count": len(identities),
         "reaudit_policy": {
-            "max_guidance_influence": float(
-                selected_policy.max_guidance_influence
-            ),
-            "require_native_reconstruction": bool(
-                selected_policy.require_native_reconstruction
-            ),
+            "max_guidance_influence": float(selected_policy.max_guidance_influence),
+            "require_native_reconstruction": bool(selected_policy.require_native_reconstruction),
             "target_component": selected_policy.target_component,
             "target_family": selected_policy.target_family,
         },
@@ -1476,9 +1358,7 @@ def leanstral_rule_gap_reaudit_to_json(report: Mapping[str, Any]) -> str:
     )
 
 
-def write_reaudit_report_atomic(
-    path: str | os.PathLike[str], report: Mapping[str, Any]
-) -> None:
+def write_reaudit_report_atomic(path: str | os.PathLike[str], report: Mapping[str, Any]) -> None:
     """Atomically persist a verified, source-free re-audit report."""
 
     verify_reaudit_report(report)

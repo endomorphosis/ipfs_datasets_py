@@ -46,6 +46,8 @@ def _get_or_create_hf_runtime(
             cached = (torch, tokenizer, model)
             _HF_RUNTIME_CACHE[cache_key] = cached
     return cached
+
+
 def _truthy(value: Optional[str]) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -209,7 +211,9 @@ def embed_texts(
         )
         env_batch_size = os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_BATCH_SIZE")
         env_num_workers = os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_NUM_WORKERS")
-        runtime_batch_size = kwargs.get("batch_size") or kwargs.get("embedding_batch_size") or embedding_batch_size
+        runtime_batch_size = (
+            kwargs.get("batch_size") or kwargs.get("embedding_batch_size") or embedding_batch_size
+        )
         runtime_num_workers = kwargs.get("embedding_num_workers") or embedding_num_workers
         if env_batch_size and str(runtime_batch_size).strip() in {"", "0"}:
             runtime_batch_size = env_batch_size
@@ -218,7 +222,9 @@ def embed_texts(
 
         device_name = device or os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_DEVICE")
         if not device_name:
-            torch = resolve_module("torch", deps=deps, module_override=torch_module, cache_key="pip::torch")
+            torch = resolve_module(
+                "torch", deps=deps, module_override=torch_module, cache_key="pip::torch"
+            )
             try:
                 device_name = "cuda" if (torch is not None and torch.cuda.is_available()) else "cpu"
             except Exception:

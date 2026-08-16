@@ -16,9 +16,13 @@ from ipfs_datasets_py.processors.legal_data import (
 
 def _load_single_bundle_export_module():
     module_path = Path(__file__).resolve().parent / "export_workspace_dataset_single_bundle.py"
-    spec = importlib.util.spec_from_file_location("workspace_export_single_bundle_for_package", module_path)
+    spec = importlib.util.spec_from_file_location(
+        "workspace_export_single_bundle_for_package", module_path
+    )
     if spec is None or spec.loader is None:
-        raise ImportError(f"Unable to load workspace single-bundle export script from {module_path}")
+        raise ImportError(
+            f"Unable to load workspace single-bundle export script from {module_path}"
+        )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -29,24 +33,59 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         description="Package a workspace dataset into chain-loadable Parquet (and optional CAR) artifacts."
     )
     parser.add_argument("--input-json", default="", help="Path to a workspace JSON payload.")
-    parser.add_argument("--input-directory", default="", help="Path to a directory of evidence files.")
+    parser.add_argument(
+        "--input-directory", default="", help="Path to a directory of evidence files."
+    )
     parser.add_argument(
         "--input-type",
-        choices=["workspace-json", "directory", "google-voice-manifest", "discord-export", "email-export", "imap-snippet-summary"],
+        choices=[
+            "workspace-json",
+            "directory",
+            "google-voice-manifest",
+            "discord-export",
+            "email-export",
+            "imap-snippet-summary",
+        ],
         default="",
         help="Explicit input type when using --input-path. Omit it to auto-detect supported source shapes.",
     )
-    parser.add_argument("--input-path", default="", help="Input path for generic or source-specific workspace imports.")
-    parser.add_argument("--output-dir", required=True, help="Directory to write the packaged bundle.")
-    parser.add_argument("--package-name", default="", help="Optional package name for structured bundle output.")
-    parser.add_argument("--workspace-id", default="", help="Optional workspace id override for directory ingestion.")
-    parser.add_argument("--workspace-name", default="", help="Optional workspace name override for directory ingestion.")
+    parser.add_argument(
+        "--input-path",
+        default="",
+        help="Input path for generic or source-specific workspace imports.",
+    )
+    parser.add_argument(
+        "--output-dir", required=True, help="Directory to write the packaged bundle."
+    )
+    parser.add_argument(
+        "--package-name", default="", help="Optional package name for structured bundle output."
+    )
+    parser.add_argument(
+        "--workspace-id", default="", help="Optional workspace id override for directory ingestion."
+    )
+    parser.add_argument(
+        "--workspace-name",
+        default="",
+        help="Optional workspace name override for directory ingestion.",
+    )
     parser.add_argument("--source-type", default="", help="Logical workspace source type label.")
-    parser.add_argument("--strict-evidence-mode", action="store_true", help="Restrict to the plain_text+ retrieval subset.")
-    parser.add_argument("--vector-dimension", type=int, default=16, help="Vector dimension for local embeddings.")
+    parser.add_argument(
+        "--strict-evidence-mode",
+        action="store_true",
+        help="Restrict to the plain_text+ retrieval subset.",
+    )
+    parser.add_argument(
+        "--vector-dimension", type=int, default=16, help="Vector dimension for local embeddings."
+    )
     parser.add_argument("--glob-pattern", default="*", help="Glob filter for directory ingestion.")
-    parser.add_argument("--no-car", action="store_true", help="Disable CAR emission and write parquet-only bundles.")
-    parser.add_argument("--write-normalized-json", default="", help="Optional path to persist normalized workspace JSON.")
+    parser.add_argument(
+        "--no-car", action="store_true", help="Disable CAR emission and write parquet-only bundles."
+    )
+    parser.add_argument(
+        "--write-normalized-json",
+        default="",
+        help="Optional path to persist normalized workspace JSON.",
+    )
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON output.")
     args = parser.parse_args(argv)
     if not str(args.input_json or "").strip() and not str(args.input_directory or "").strip():
@@ -57,7 +96,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def _build_strict_subset(workspace: dict, builder: WorkspaceDatasetBuilder) -> dict:
     preview = builder.preview_retrieval_index(workspace, min_evidence_quality="plain_text")
-    selected_ids = {str(doc.get("document_id") or "") for doc in list(preview.get("documents") or [])}
+    selected_ids = {
+        str(doc.get("document_id") or "") for doc in list(preview.get("documents") or [])
+    }
     strict_docs = [
         document
         for document in list(workspace.get("documents") or [])
@@ -65,7 +106,10 @@ def _build_strict_subset(workspace: dict, builder: WorkspaceDatasetBuilder) -> d
     ]
     return {
         "workspace_id": workspace.get("workspace_id") or workspace.get("id") or "workspace",
-        "workspace_name": workspace.get("workspace_name") or workspace.get("title") or workspace.get("workspace_id") or "workspace",
+        "workspace_name": workspace.get("workspace_name")
+        or workspace.get("title")
+        or workspace.get("workspace_id")
+        or "workspace",
         "source_type": f"{workspace.get('source_type') or 'workspace'}_plain_text_plus_bundle",
         "source_path": workspace.get("source_path") or "",
         "metadata": {
@@ -80,8 +124,6 @@ def _build_strict_subset(workspace: dict, builder: WorkspaceDatasetBuilder) -> d
         "collections": list(workspace.get("collections") or []),
         "documents": strict_docs,
     }
-
-
 
 
 def _build_workspace_dataset(args: argparse.Namespace, export_module) -> dict:

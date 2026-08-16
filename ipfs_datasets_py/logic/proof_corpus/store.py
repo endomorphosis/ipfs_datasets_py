@@ -50,9 +50,7 @@ class ProofCorpusStoreError(ProofCorpusSchemaError):
     """Raised when a proof corpus store operation cannot proceed safely."""
 
 
-class ProofCorpusStoreIntegrityError(
-    ProofCorpusStoreError, ProofCorpusIntegrityError
-):
+class ProofCorpusStoreIntegrityError(ProofCorpusStoreError, ProofCorpusIntegrityError):
     """Raised when a stored envelope or index fails integrity verification."""
 
 
@@ -88,26 +86,16 @@ class ProofCorpusStore:
     """
 
     root: Path | None = None
-    _envelopes: dict[str, ArtifactEnvelope] = field(
-        default_factory=dict, init=False, repr=False
-    )
+    _envelopes: dict[str, ArtifactEnvelope] = field(default_factory=dict, init=False, repr=False)
     # family -> content_cid set
-    _family_index: dict[str, set[str]] = field(
-        default_factory=dict, init=False, repr=False
-    )
+    _family_index: dict[str, set[str]] = field(default_factory=dict, init=False, repr=False)
     # source_digest -> profile -> content_cid
-    _source_index: dict[str, dict[str, str]] = field(
-        default_factory=dict, init=False, repr=False
-    )
+    _source_index: dict[str, dict[str, str]] = field(default_factory=dict, init=False, repr=False)
     # profile -> content_cid (last writer wins for a profile key)
-    _profile_index: dict[str, str] = field(
-        default_factory=dict, init=False, repr=False
-    )
+    _profile_index: dict[str, str] = field(default_factory=dict, init=False, repr=False)
     _hits: int = field(default=0, init=False, repr=False)
     _misses: int = field(default=0, init=False, repr=False)
-    _lock: threading.RLock = field(
-        default_factory=threading.RLock, init=False, repr=False
-    )
+    _lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if self.root is not None:
@@ -177,10 +165,7 @@ class ProofCorpusStore:
         if path is None:
             return
         with self._lock:
-            families = {
-                family: sorted(cids)
-                for family, cids in sorted(self._family_index.items())
-            }
+            families = {family: sorted(cids) for family, cids in sorted(self._family_index.items())}
             sources = {
                 digest: dict(sorted(profiles.items()))
                 for digest, profiles in sorted(self._source_index.items())
@@ -204,9 +189,7 @@ class ProofCorpusStore:
                 f"proof corpus envelope is unreadable ({path.name}): {exc}"
             ) from exc
         try:
-            envelope = ArtifactEnvelope.from_dict(
-                as_mapping(payload, "artifact envelope")
-            )
+            envelope = ArtifactEnvelope.from_dict(as_mapping(payload, "artifact envelope"))
         except ProofCorpusSchemaError as exc:
             raise ProofCorpusStoreIntegrityError(
                 f"proof corpus envelope failed integrity ({path.name}): {exc}"
@@ -218,9 +201,7 @@ class ProofCorpusStore:
 
     def put(
         self,
-        value: ArtifactEnvelope
-        | FormalizationArtifact
-        | Mapping[str, Any],
+        value: ArtifactEnvelope | FormalizationArtifact | Mapping[str, Any],
         *,
         profile: str | None = None,
         family: ProofCorpusFamily | str | None = None,
@@ -239,9 +220,7 @@ class ProofCorpusStore:
 
         with self._lock:
             if isinstance(value, ArtifactEnvelope):
-                if profile is not None and value.profile != require_profile(
-                    profile
-                ):
+                if profile is not None and value.profile != require_profile(profile):
                     raise ProofCorpusStoreError(
                         "profile argument conflicts with the supplied envelope"
                     )
@@ -253,10 +232,7 @@ class ProofCorpusStore:
                     raise ProofCorpusStoreError(
                         "source_id argument conflicts with the supplied envelope"
                     )
-                if (
-                    source_digest is not None
-                    and source_digest != value.source_digest
-                ):
+                if source_digest is not None and source_digest != value.source_digest:
                     raise ProofCorpusStoreError(
                         "source_digest argument conflicts with the supplied envelope"
                     )
@@ -290,9 +266,7 @@ class ProofCorpusStore:
                 # Finished envelope mapping (has family + content fields or profile)
                 if "family" in mapping or "content_cid" in mapping:
                     envelope = ArtifactEnvelope.from_dict(mapping)
-                    if profile is not None and envelope.profile != require_profile(
-                        profile
-                    ):
+                    if profile is not None and envelope.profile != require_profile(profile):
                         raise ProofCorpusStoreError(
                             "profile argument conflicts with the supplied envelope"
                         )
@@ -331,9 +305,7 @@ class ProofCorpusStore:
             path = self._envelope_path(cid)
             if path is None or not path.is_file():
                 self._misses += 1
-                raise ProofCorpusStoreError(
-                    f"envelope not found for content_cid={cid!r}"
-                )
+                raise ProofCorpusStoreError(f"envelope not found for content_cid={cid!r}")
             envelope = self._load_envelope_file(path)
             if envelope.content_cid != cid:
                 raise ProofCorpusStoreIntegrityError(
@@ -356,9 +328,7 @@ class ProofCorpusStore:
             cid = self._profile_index.get(profile)
             if cid is None:
                 self._misses += 1
-                raise ProofCorpusStoreError(
-                    f"no envelope indexed for profile={profile!r}"
-                )
+                raise ProofCorpusStoreError(f"no envelope indexed for profile={profile!r}")
             return self.get(cid)
 
     def get_by_source_digest(
@@ -382,17 +352,14 @@ class ProofCorpusStore:
                 by_profile = self._source_index.get(source_digest)
             if not by_profile:
                 self._misses += 1
-                raise ProofCorpusStoreError(
-                    f"no envelope for source_digest={source_digest!r}"
-                )
+                raise ProofCorpusStoreError(f"no envelope for source_digest={source_digest!r}")
             if profile is not None:
                 profile = require_profile(profile)
                 cid = by_profile.get(profile)
                 if cid is None:
                     self._misses += 1
                     raise ProofCorpusStoreError(
-                        f"no envelope for source_digest={source_digest!r} "
-                        f"profile={profile!r}"
+                        f"no envelope for source_digest={source_digest!r} profile={profile!r}"
                     )
                 return self.get(cid)
             if len(by_profile) > 1:
@@ -404,9 +371,7 @@ class ProofCorpusStore:
             cid = next(iter(by_profile.values()))
             return self.get(cid)
 
-    def list_by_family(
-        self, family: ProofCorpusFamily | str
-    ) -> tuple[ArtifactEnvelope, ...]:
+    def list_by_family(self, family: ProofCorpusFamily | str) -> tuple[ArtifactEnvelope, ...]:
         """Return all stored envelopes for one family (sorted by content_cid)."""
 
         family = parse_family(family)
@@ -472,33 +437,25 @@ class ProofCorpusStore:
                 envelope = self._load_envelope_file(path)
                 if envelope.content_cid in loaded:
                     raise ProofCorpusStoreIntegrityError(
-                        f"duplicate envelope content_cid on disk: "
-                        f"{envelope.content_cid}"
+                        f"duplicate envelope content_cid on disk: {envelope.content_cid}"
                     )
                 loaded[envelope.content_cid] = envelope
-                family_index.setdefault(envelope.family.value, set()).add(
+                family_index.setdefault(envelope.family.value, set()).add(envelope.content_cid)
+                source_index.setdefault(envelope.source_digest, {})[envelope.profile] = (
                     envelope.content_cid
                 )
-                source_index.setdefault(envelope.source_digest, {})[
-                    envelope.profile
-                ] = envelope.content_cid
                 profile_index[envelope.profile] = envelope.content_cid
 
             index_path = self._index_path()
             if index_path is not None and index_path.is_file():
                 try:
-                    index_payload = json.loads(
-                        index_path.read_text(encoding="utf-8")
-                    )
+                    index_payload = json.loads(index_path.read_text(encoding="utf-8"))
                 except (OSError, UnicodeError, json.JSONDecodeError) as exc:
                     raise ProofCorpusStoreIntegrityError(
                         f"proof corpus index is unreadable: {exc}"
                     ) from exc
                 index_payload = as_mapping(index_payload, "proof corpus index")
-                if (
-                    index_payload.get("schema_version")
-                    != PROOF_CORPUS_INDEX_SCHEMA_VERSION
-                ):
+                if index_payload.get("schema_version") != PROOF_CORPUS_INDEX_SCHEMA_VERSION:
                     raise ProofCorpusStoreIntegrityError(
                         "unsupported proof corpus index schema: "
                         f"{index_payload.get('schema_version')!r}"
@@ -560,14 +517,10 @@ def put_family_fixtures(
     """
 
     intent_env = store.put(
-        ArtifactEnvelope.from_intent_artifact(
-            intent_artifact, profile=intent_profile
-        )
+        ArtifactEnvelope.from_intent_artifact(intent_artifact, profile=intent_profile)
     )
     legal_env = store.put(ArtifactEnvelope.from_legal_record(legal_record))
-    security_env = store.put(
-        ArtifactEnvelope.from_security_record(security_record)
-    )
+    security_env = store.put(ArtifactEnvelope.from_security_record(security_record))
     return intent_env, legal_env, security_env
 
 

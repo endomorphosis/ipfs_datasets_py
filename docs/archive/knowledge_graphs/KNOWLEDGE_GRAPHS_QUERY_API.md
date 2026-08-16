@@ -24,14 +24,14 @@ ipfs_datasets_py.knowledge_graphs.query/
 from ipfs_datasets_py.knowledge_graphs.query import (
     UnifiedQueryEngine,
     HybridSearchEngine,
-    BudgetManager
+    BudgetManager,
 )
 
 # Budget utilities
 from ipfs_datasets_py.search.graph_query.budgets import (
     ExecutionBudgets,
     ExecutionCounters,
-    budgets_from_preset
+    budgets_from_preset,
 )
 ```
 
@@ -66,11 +66,7 @@ UnifiedQueryEngine(
 ```python
 from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine
 
-engine = UnifiedQueryEngine(
-    backend=ipld_backend,
-    enable_caching=True,
-    default_budgets='moderate'
-)
+engine = UnifiedQueryEngine(backend=ipld_backend, enable_caching=True, default_budgets="moderate")
 ```
 
 ### Methods
@@ -93,18 +89,16 @@ Execute a query with automatic type detection.
 result = engine.execute_query("MATCH (n:Person) RETURN n LIMIT 10")
 
 # With parameters
-result = engine.execute_query(
-    "MATCH (n:Person {name: $name}) RETURN n",
-    params={"name": "Alice"}
-)
+result = engine.execute_query("MATCH (n:Person {name: $name}) RETURN n", params={"name": "Alice"})
 
 # With budgets
 from ipfs_datasets_py.search.graph_query.budgets import budgets_from_preset
-budgets = budgets_from_preset('strict')
+
+budgets = budgets_from_preset("strict")
 result = engine.execute_query(query, budgets=budgets)
 
 # Explicit query type
-result = engine.execute_query(query, query_type='cypher')
+result = engine.execute_query(query, query_type="cypher")
 ```
 
 #### `execute_cypher(query, params=None, budgets=None) -> QueryResult`
@@ -122,7 +116,7 @@ Execute a Cypher query.
 ```python
 result = engine.execute_cypher(
     "MATCH (p:Person)-[:WORKS_AT]->(c:Company) WHERE p.name = $name RETURN p, c",
-    params={"name": "John Doe"}
+    params={"name": "John Doe"},
 )
 
 print(f"Found {len(result.items)} results")
@@ -147,18 +141,15 @@ Execute hybrid search combining vector similarity and graph traversal.
 **Example:**
 ```python
 # Basic hybrid search
-result = engine.execute_hybrid(
-    query="What is IPFS?",
-    k=20
-)
+result = engine.execute_hybrid(query="What is IPFS?", k=20)
 
 # Tune weights for more semantic focus
 result = engine.execute_hybrid(
     query="content addressing",
     k=15,
     vector_weight=0.8,  # More emphasis on semantic similarity
-    graph_weight=0.2,   # Less emphasis on graph structure
-    max_hops=3
+    graph_weight=0.2,  # Less emphasis on graph structure
+    max_hops=3,
 )
 
 # Process results
@@ -180,8 +171,7 @@ Execute full GraphRAG pipeline: hybrid search + LLM reasoning.
 **Example:**
 ```python
 result = engine.execute_graphrag(
-    question="Explain how content addressing works in IPFS",
-    context={"embeddings": embeddings_dict}
+    question="Explain how content addressing works in IPFS", context={"embeddings": embeddings_dict}
 )
 
 print(f"Answer: {result.reasoning['answer']}")
@@ -204,13 +194,13 @@ Execute multiple queries in batch.
 queries = [
     "MATCH (n:Person) RETURN n LIMIT 5",
     "MATCH (n:Company) RETURN n LIMIT 5",
-    "MATCH (n:Technology) RETURN n LIMIT 5"
+    "MATCH (n:Technology) RETURN n LIMIT 5",
 ]
 
 results = engine.batch_execute(queries)
 
 for i, result in enumerate(results):
-    print(f"Query {i+1}: {len(result.items)} results")
+    print(f"Query {i + 1}: {len(result.items)} results")
 ```
 
 ### Properties
@@ -293,7 +283,7 @@ engine = HybridSearchEngine(
     backend=ipld_backend,
     vector_store=faiss_store,
     default_vector_weight=0.7,
-    default_graph_weight=0.3
+    default_graph_weight=0.3,
 )
 ```
 
@@ -316,16 +306,13 @@ Perform hybrid search.
 **Example:**
 ```python
 # Basic search
-results = engine.search(
-    query="machine learning algorithms",
-    k=20
-)
+results = engine.search(query="machine learning algorithms", k=20)
 
 # With score threshold
 results = engine.search(
     query="neural networks",
     k=50,
-    min_score=0.5  # Only results with score >= 0.5
+    min_score=0.5,  # Only results with score >= 0.5
 )
 
 # Customize weights
@@ -334,7 +321,7 @@ results = engine.search(
     k=30,
     vector_weight=0.8,  # Emphasize semantic similarity
     graph_weight=0.2,
-    max_hops=3          # Explore further in graph
+    max_hops=3,  # Explore further in graph
 )
 
 # Process results
@@ -376,11 +363,7 @@ Expand from seed nodes via graph traversal.
 ```python
 # Start from specific nodes
 seed_ids = ["node1", "node2", "node3"]
-results = engine.graph_expand(
-    seed_nodes=seed_ids,
-    max_hops=3,
-    max_results=200
-)
+results = engine.graph_expand(seed_nodes=seed_ids, max_hops=3, max_results=200)
 ```
 
 #### `fuse_results(vector_results, graph_results, vector_weight=0.6, graph_weight=0.4, strategy='weighted') -> List[HybridSearchResult]`
@@ -409,19 +392,11 @@ graph_results = engine.graph_expand(seed_nodes, max_hops=2)
 
 # Fuse with weighted strategy
 fused = engine.fuse_results(
-    vector_results,
-    graph_results,
-    vector_weight=0.7,
-    graph_weight=0.3,
-    strategy='weighted'
+    vector_results, graph_results, vector_weight=0.7, graph_weight=0.3, strategy="weighted"
 )
 
 # Fuse with RRF (rank-based)
-fused_rrf = engine.fuse_results(
-    vector_results,
-    graph_results,
-    strategy='rrf'
-)
+fused_rrf = engine.fuse_results(vector_results, graph_results, strategy="rrf")
 ```
 
 #### `clear_cache()`
@@ -484,12 +459,12 @@ Context manager for tracking budget usage.
 from ipfs_datasets_py.search.graph_query.budgets import budgets_from_preset
 
 manager = BudgetManager()
-budgets = budgets_from_preset('moderate')
+budgets = budgets_from_preset("moderate")
 
 with manager.track(budgets) as tracker:
     # Execute operations
     result = execute_expensive_query()
-    
+
     # Periodically check budgets
     tracker.check_timeout()
     tracker.check_nodes()
@@ -523,9 +498,9 @@ Create budgets from preset name.
 
 **Example:**
 ```python
-strict = manager.create_preset_budgets('strict')
-moderate = manager.create_preset_budgets('moderate')
-permissive = manager.create_preset_budgets('permissive')
+strict = manager.create_preset_budgets("strict")
+moderate = manager.create_preset_budgets("moderate")
+permissive = manager.create_preset_budgets("permissive")
 
 # Use in query
 result = engine.execute_query(query, budgets=strict)
@@ -544,7 +519,7 @@ Check if any budget limits are exceeded.
 **Example:**
 ```python
 counters = ExecutionCounters(nodes_visited=150, edges_scanned=600)
-budgets = budgets_from_preset('strict')
+budgets = budgets_from_preset("strict")
 
 error = manager.check_exceeded(counters, budgets)
 if error:
@@ -572,7 +547,7 @@ budgets = ExecutionBudgets(
     max_nodes_visited=500,
     max_edges_scanned=2000,
     max_traversal_depth=4,
-    max_backend_calls=30
+    max_backend_calls=30,
 )
 ```
 
@@ -616,7 +591,7 @@ Tracks budget usage within a context.
 from ipfs_datasets_py.search.graph_query.errors import (
     BudgetExceededError,
     QueryError,
-    InvalidQueryError
+    InvalidQueryError,
 )
 
 try:
@@ -635,7 +610,7 @@ except QueryError as e:
 from ipfs_datasets_py.search.graph_query.budgets import budgets_from_preset
 from ipfs_datasets_py.search.graph_query.errors import BudgetExceededError
 
-budgets = budgets_from_preset('strict')
+budgets = budgets_from_preset("strict")
 
 try:
     result = engine.execute_query(large_query, budgets=budgets)
@@ -643,8 +618,8 @@ except BudgetExceededError as e:
     # Retry with more permissive budgets
     print(f"Strict budgets exceeded: {e}")
     print("Retrying with moderate budgets...")
-    
-    moderate_budgets = budgets_from_preset('moderate')
+
+    moderate_budgets = budgets_from_preset("moderate")
     result = engine.execute_query(large_query, budgets=moderate_budgets)
 ```
 
@@ -664,14 +639,14 @@ engine = UnifiedQueryEngine(
     vector_store=faiss_production,
     llm_processor=gpt4_processor,
     enable_caching=True,
-    default_budgets='moderate'
+    default_budgets="moderate",
 )
 
 # Development configuration (more permissive)
 dev_engine = UnifiedQueryEngine(
     backend=dev_backend,
     enable_caching=False,  # Disable for fresh results
-    default_budgets='permissive'
+    default_budgets="permissive",
 )
 ```
 
@@ -686,23 +661,17 @@ semantic_engine = HybridSearchEngine(
     vector_store=vector_store,
     default_vector_weight=0.8,
     default_graph_weight=0.2,
-    cache_size=5000
+    cache_size=5000,
 )
 
 # Structure-focused (good for relationship queries)
 structure_engine = HybridSearchEngine(
-    backend=backend,
-    vector_store=vector_store,
-    default_vector_weight=0.3,
-    default_graph_weight=0.7
+    backend=backend, vector_store=vector_store, default_vector_weight=0.3, default_graph_weight=0.7
 )
 
 # Balanced (general purpose)
 balanced_engine = HybridSearchEngine(
-    backend=backend,
-    vector_store=vector_store,
-    default_vector_weight=0.5,
-    default_graph_weight=0.5
+    backend=backend, vector_store=vector_store, default_vector_weight=0.5, default_graph_weight=0.5
 )
 ```
 
@@ -715,7 +684,7 @@ balanced_engine = HybridSearchEngine(
 ```python
 from ipfs_datasets_py.search.graph_query.budgets import budgets_from_preset
 
-budgets = budgets_from_preset('moderate')
+budgets = budgets_from_preset("moderate")
 result = engine.execute_query(query, budgets=budgets)
 ```
 
@@ -729,31 +698,23 @@ engine = UnifiedQueryEngine(backend, enable_caching=True)
 
 ```python
 # More semantic for abstract concepts
-result = engine.execute_hybrid(
-    "machine learning paradigms",
-    vector_weight=0.8,
-    graph_weight=0.2
-)
+result = engine.execute_hybrid("machine learning paradigms", vector_weight=0.8, graph_weight=0.2)
 
 # More structural for relationships
-result = engine.execute_hybrid(
-    "who works with whom",
-    vector_weight=0.3,
-    graph_weight=0.7
-)
+result = engine.execute_hybrid("who works with whom", vector_weight=0.3, graph_weight=0.7)
 ```
 
 ### 4. Use Appropriate Budgets
 
 ```python
 # Quick queries
-quick_budgets = budgets_from_preset('strict')
+quick_budgets = budgets_from_preset("strict")
 
 # Standard queries
-standard_budgets = budgets_from_preset('moderate')
+standard_budgets = budgets_from_preset("moderate")
 
 # Complex analytics
-complex_budgets = budgets_from_preset('permissive')
+complex_budgets = budgets_from_preset("permissive")
 ```
 
 ### 5. Handle Errors Gracefully

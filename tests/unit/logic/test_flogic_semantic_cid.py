@@ -28,6 +28,7 @@ class TestSemanticNormalizer:
             get_global_normalizer,
             _SYMAI_AVAILABLE,
         )
+
         self.SemanticNormalizer = SemanticNormalizer
         self.DEFAULT_SYNONYM_MAP = DEFAULT_SYNONYM_MAP
         self.get_global_normalizer = get_global_normalizer
@@ -131,6 +132,7 @@ class TestCIDCacheKey:
             _HAVE_CID,
         )
         from ipfs_datasets_py.logic.flogic.flogic_types import FLogicClass
+
         self.CachedErgoAIWrapper = CachedErgoAIWrapper
         self.FLogicClass = FLogicClass
         self._HAVE_CID = _HAVE_CID
@@ -201,6 +203,7 @@ class TestSynonymCacheSharing:
         from ipfs_datasets_py.logic.flogic.flogic_proof_cache import CachedErgoAIWrapper
         from ipfs_datasets_py.logic.flogic.semantic_normalizer import SemanticNormalizer
         from ipfs_datasets_py.logic.flogic.flogic_types import FLogicClass
+
         self.CachedErgoAIWrapper = CachedErgoAIWrapper
         self.SemanticNormalizer = SemanticNormalizer
         self.FLogicClass = FLogicClass
@@ -218,10 +221,10 @@ class TestSynonymCacheSharing:
         ergo.add_class(self.FLogicClass("Animal"))
         ergo.add_class(self.FLogicClass("Dog", superclasses=["Animal"]))
 
-        r1 = ergo.query("?X : Dog")           # cache miss → stores under "?X : dog" key
+        r1 = ergo.query("?X : Dog")  # cache miss → stores under "?X : dog" key
         assert not r1.from_cache
 
-        r2 = ergo.query("?X : Canine")        # synonym → normalises to "?X : dog" → HIT
+        r2 = ergo.query("?X : Canine")  # synonym → normalises to "?X : dog" → HIT
         assert r2.from_cache, "Synonym should share cache entry with 'Dog'"
 
     def test_original_goal_preserved_in_result(self):
@@ -258,6 +261,7 @@ class TestSynonymCacheSharing:
 class TestFlogicNormalizeTermTool:
     def setup_method(self):
         import warnings
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             from ipfs_datasets_py.mcp_server.tools.logic_tools.flogic_tool import (
@@ -271,7 +275,7 @@ class TestFlogicNormalizeTermTool:
         by_input = {x["input"]: x for x in r["normalized"]}
         assert by_input["canine"]["canonical"] == "dog"
         assert by_input["feline"]["canonical"] == "cat"
-        assert by_input["Dog"]["canonical"] == "dog"   # maps to canonical "dog"
+        assert by_input["Dog"]["canonical"] == "dog"  # maps to canonical "dog"
 
     def test_unchanged_term(self):
         r = run(self.flogic_normalize_term(["dog"]))
@@ -303,4 +307,5 @@ class TestFlogicNormalizeTermTool:
 
     def test_mcp_export(self):
         from ipfs_datasets_py.mcp_server.tools.logic_tools import flogic_normalize_term
+
         assert callable(flogic_normalize_term)

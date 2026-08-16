@@ -105,10 +105,15 @@ goal.
 # Goal imports "Goal.Import"; `Bridge` imports both "Goal.Import" and
 # "Shared.Module"; `Indirect` only imports "Shared.Module" and therefore has
 # zero *direct* import overlap with the goal, but a positive graph_score.
-manifest.add_theorem(theorem_id="Bridge", corpus_id="mathlib4",
-                      statement="...", imports=["Goal.Import", "Shared.Module"])
-manifest.add_theorem(theorem_id="Indirect", corpus_id="mathlib4",
-                      statement="...", imports=["Shared.Module"])
+manifest.add_theorem(
+    theorem_id="Bridge",
+    corpus_id="mathlib4",
+    statement="...",
+    imports=["Goal.Import", "Shared.Module"],
+)
+manifest.add_theorem(
+    theorem_id="Indirect", corpus_id="mathlib4", statement="...", imports=["Shared.Module"]
+)
 ```
 
 ## 5. Scoring and weights
@@ -168,10 +173,10 @@ the result.
 
 ```python
 result = select_premises(manifest, goal, top_k=16, policy=policy)
-result.corpus_revision   # == manifest.revision
-result.top_k             # == 16 (the enforced cutoff)
-result.selected          # List[PremiseRecord], rank 0..len-1, descending score
-result.excluded          # List[ExcludedPremise], each with a `.reason`
+result.corpus_revision  # == manifest.revision
+result.top_k  # == 16 (the enforced cutoff)
+result.selected  # List[PremiseRecord], rank 0..len-1, descending score
+result.excluded  # List[ExcludedPremise], each with a `.reason`
 ```
 
 ## 7. `PremiseSelectionResult` and its invariants

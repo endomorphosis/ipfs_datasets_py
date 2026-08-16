@@ -96,9 +96,9 @@ Users can customize the fallback order:
 
 ```python
 fallback_methods = [
-    "common_crawl",      # Try Common Crawl first
-    "wayback_machine",   # Then Internet Archive
-    "playwright"         # Then direct scraping
+    "common_crawl",  # Try Common Crawl first
+    "wayback_machine",  # Then Internet Archive
+    "playwright",  # Then direct scraping
 ]
 ```
 
@@ -118,12 +118,9 @@ fallback_methods = [
 ```python
 class MunicipalScraperFallbacks:
     """Manages fallback scraping strategies."""
-    
+
     async def scrape_with_fallbacks(
-        url: str,
-        jurisdiction: str,
-        fallback_methods: List[str],
-        **kwargs
+        url: str, jurisdiction: str, fallback_methods: List[str], **kwargs
     ) -> Dict[str, Any]:
         """
         Attempt scraping with fallback methods.
@@ -160,7 +157,7 @@ The MCP tool (`ScrapeMunicipalCodesTool`) includes:
 ```python
 {
     "jurisdiction": "Seattle, WA",
-    "enable_fallbacks": True  # Uses all 6 methods
+    "enable_fallbacks": True,  # Uses all 6 methods
 }
 ```
 
@@ -169,7 +166,7 @@ The MCP tool (`ScrapeMunicipalCodesTool`) includes:
 {
     "jurisdiction": "Portland, OR",
     "enable_fallbacks": True,
-    "fallback_methods": ["wayback_machine", "archive_is"]
+    "fallback_methods": ["wayback_machine", "archive_is"],
 }
 ```
 
@@ -177,7 +174,7 @@ The MCP tool (`ScrapeMunicipalCodesTool`) includes:
 ```python
 {
     "jurisdiction": "Austin, TX",
-    "enable_fallbacks": False  # Only primary attempt
+    "enable_fallbacks": False,  # Only primary attempt
 }
 ```
 
@@ -186,12 +183,7 @@ The MCP tool (`ScrapeMunicipalCodesTool`) includes:
 {
     "jurisdiction": "Miami, FL",
     "enable_fallbacks": True,
-    "fallback_methods": [
-        "wayback_machine",
-        "archive_is",
-        "common_crawl",
-        "ipwb"
-    ]
+    "fallback_methods": ["wayback_machine", "archive_is", "common_crawl", "ipwb"],
 }
 ```
 
@@ -314,7 +306,7 @@ The MCP tool (`ScrapeMunicipalCodesTool`) includes:
 ```python
 from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.municipal_scraper_fallbacks import (
     MunicipalScraperFallbacks,
-    scrape_with_fallbacks
+    scrape_with_fallbacks,
 )
 
 # Use the class
@@ -322,14 +314,11 @@ scraper = MunicipalScraperFallbacks()
 result = await scraper.scrape_with_fallbacks(
     url="https://example.com/codes",
     jurisdiction="Seattle, WA",
-    fallback_methods=["wayback_machine", "archive_is"]
+    fallback_methods=["wayback_machine", "archive_is"],
 )
 
 # Or use the convenience function
-result = await scrape_with_fallbacks(
-    url="https://example.com/codes",
-    jurisdiction="Portland, OR"
-)
+result = await scrape_with_fallbacks(url="https://example.com/codes", jurisdiction="Portland, OR")
 ```
 
 ### Method Information

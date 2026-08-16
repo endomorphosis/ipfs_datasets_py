@@ -30,11 +30,11 @@ def pipeline(ontology_pipeline_factory):
     return ontology_pipeline_factory(domain="test", use_llm=False)
 
 
-@pytest.fixture  
+@pytest.fixture
 def create_result(ontology_dict_factory, critic_score_factory):
     """Factory for creating PipelineResult instances."""
     from unittest.mock import Mock
-    
+
     def _create_result(
         entity_count=5,
         rel_count=None,
@@ -48,26 +48,26 @@ def create_result(ontology_dict_factory, critic_score_factory):
             relationship_count = rel_count
         elif relationship_count is None:
             relationship_count = 3
-        
+
         ontology = ontology_dict_factory(
             entity_count=entity_count,
             relationship_count=relationship_count,
         )
-        
-        #Create mock score
+
+        # Create mock score
         score = Mock()
         score.overall = score_val
-        
-        # Mock PipelineResult 
+
+        # Mock PipelineResult
         result = Mock()
         result.ontology = ontology
         result.score = score
         result.entities = ontology["entities"]
         result.relationships = ontology["relationships"]
         result.actions_applied = actions or []
-        
+
         return result
-    
+
     return _create_result
 
 
@@ -365,7 +365,12 @@ class TestBatch204Integration:
         """Test complete analysis workflow."""
         pipeline._run_history = [
             create_result(entity_count=10, rel_count=20, score_val=0.6, actions=["merge_entities"]),
-            create_result(entity_count=15, rel_count=25, score_val=0.7, actions=["merge_entities", "add_relationship"]),
+            create_result(
+                entity_count=15,
+                rel_count=25,
+                score_val=0.7,
+                actions=["merge_entities", "add_relationship"],
+            ),
             create_result(entity_count=12, rel_count=22, score_val=0.8, actions=["merge_entities"]),
         ]
 

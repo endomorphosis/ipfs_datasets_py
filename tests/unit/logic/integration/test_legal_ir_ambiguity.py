@@ -81,9 +81,7 @@ def test_competing_parses_are_typed_serializable_and_fail_closed() -> None:
     assert not report.learned_target_safe
     assert report.audit_required
     assert report.route is LegalIRAmbiguityRoute.HAMMER_LEANSTRAL_AUDIT
-    assert {
-        diagnostic.diagnostic_type for diagnostic in report.diagnostics
-    } >= {
+    assert {diagnostic.diagnostic_type for diagnostic in report.diagnostics} >= {
         LegalIRAmbiguityDiagnosticType.COMPETING_PARSE_WITHOUT_CHOICE,
         LegalIRAmbiguityDiagnosticType.HIGH_IMPACT_AMBIGUITY,
         LegalIRAmbiguityDiagnosticType.LEARNED_LABEL_COLLAPSE_BLOCKED,
@@ -133,9 +131,7 @@ def test_unsupported_interpretations_and_human_review_route_explicitly() -> None
     assert routed["audit_ambiguities"][0]["ambiguity_id"] == "amb:unsupported-temporal"
     assert routed["operator_diagnostic_count"] == 1
     assert routed["operator_diagnostics"][0]["ambiguity_id"] == "amb:operator-review"
-    assert {
-        diagnostic.diagnostic_type for diagnostic in report.diagnostics
-    } >= {
+    assert {diagnostic.diagnostic_type for diagnostic in report.diagnostics} >= {
         LegalIRAmbiguityDiagnosticType.UNSUPPORTED_INTERPRETATION_PRESENT,
         LegalIRAmbiguityDiagnosticType.HUMAN_REVIEW_REQUIRED,
     }
@@ -195,8 +191,5 @@ def test_uncertainty_gate_routes_ambiguity_to_audit_not_learned_label() -> None:
 
     assert routed["codex_guidance_items"] == []
     assert routed["audit_guidance_items"][0]["ambiguity_id"] == "amb:learned-collapse"
-    assert (
-        routed["audit_guidance_items"][0]["uncertainty_route"]
-        == ROUTE_HAMMER_LEANSTRAL_AUDIT
-    )
+    assert routed["audit_guidance_items"][0]["uncertainty_route"] == ROUTE_HAMMER_LEANSTRAL_AUDIT
     assert routed["report"]["audit_guidance_ids"] == ["amb:learned-collapse"]

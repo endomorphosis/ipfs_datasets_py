@@ -15,14 +15,15 @@ cancellation. Mock infrastructure lives in `background_task_engine.py`.
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.background_task_tools import (
-    create_background_task, check_task_status
+    create_background_task,
+    check_task_status,
 )
 
 # Submit a background task
 task = await create_background_task(
     task_type="embedding_generation",
     params={"dataset": "my_corpus", "model": "all-MiniLM-L6-v2"},
-    priority=2
+    priority=2,
 )
 task_id = task["task_id"]
 
@@ -35,15 +36,14 @@ status = await check_task_status(task_id=task_id)
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.background_task_tools import (
-    submit_task, get_task_result, cancel_task, list_tasks
+    submit_task,
+    get_task_result,
+    cancel_task,
+    list_tasks,
 )
 
 # Submit with retry
-task = await submit_task(
-    task_type="index_rebuild",
-    params={"index": "legal_corpus"},
-    max_retries=3
-)
+task = await submit_task(task_type="index_rebuild", params={"index": "legal_corpus"}, max_retries=3)
 
 # Get result when complete
 result = await get_task_result(task_id=task["task_id"], wait=True, timeout=300)

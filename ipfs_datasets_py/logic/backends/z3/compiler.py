@@ -47,11 +47,8 @@ class Z3Compiler:
     capabilities = Z3_CAPABILITIES
 
     def supports(self, request: BackendRequest) -> bool:
-        return (
-            isinstance(request, BackendRequest)
-            and self.capabilities.supports(
-                request.logic_family, request.query_kind
-            )
+        return isinstance(request, BackendRequest) and self.capabilities.supports(
+            request.logic_family, request.query_kind
         )
 
     def compile(self, request: BackendRequest) -> CompiledBackendRequest:
@@ -59,8 +56,7 @@ class Z3Compiler:
             raise TypeError("request must be a BackendRequest")
         if not self.supports(request):
             raise UnsupportedBackendRequest(
-                f"z3 does not support "
-                f"{request.logic_family}/{request.query_kind.value}"
+                f"z3 does not support {request.logic_family}/{request.query_kind.value}"
             )
         return compile_smtlib_request(
             request,
@@ -82,9 +78,7 @@ def compile_request(request: BackendRequest) -> CompiledBackendRequest:
 
 
 def _z3_runner(executable: str) -> BackendRunner:
-    def run(
-        compiled: CompiledBackendRequest, request: BackendRequest
-    ) -> BackendRunnerOutput:
+    def run(compiled: CompiledBackendRequest, request: BackendRequest) -> BackendRunnerOutput:
         started = time.monotonic()
         completed = subprocess.run(
             [executable, "-in", "-smt2"],

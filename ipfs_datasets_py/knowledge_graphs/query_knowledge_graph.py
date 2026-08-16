@@ -5,7 +5,9 @@
     ``ipfs_datasets_py.knowledge_graphs.query.knowledge_graph``.
     Update your imports accordingly.
 """
+
 import warnings
+
 warnings.warn(
     "ipfs_datasets_py.knowledge_graphs.query_knowledge_graph is deprecated. "
     "Use ipfs_datasets_py.knowledge_graphs.query.knowledge_graph instead.",

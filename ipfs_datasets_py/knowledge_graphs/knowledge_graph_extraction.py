@@ -44,7 +44,7 @@ warnings.warn(
     "Use 'from ipfs_datasets_py.knowledge_graphs.extraction import ...' instead. "
     "See docs/knowledge_graphs/MIGRATION_GUIDE.md for details.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Re-export all classes from extraction package for backward compatibility
@@ -55,7 +55,6 @@ from ipfs_datasets_py.knowledge_graphs.extraction import (
     KnowledgeGraph,
     KnowledgeGraphExtractor,
     KnowledgeGraphExtractorWithValidation as _NewKnowledgeGraphExtractorWithValidation,
-    
     # Types
     EntityID,
     RelationshipID,
@@ -64,7 +63,6 @@ from ipfs_datasets_py.knowledge_graphs.extraction import (
     DEFAULT_CONFIDENCE,
     MIN_CONFIDENCE,
     MAX_CONFIDENCE,
-    
     # Integrations
     HAVE_TRACER,
     HAVE_ACCELERATE,
@@ -89,32 +87,31 @@ class KnowledgeGraphExtractorWithValidation(_NewKnowledgeGraphExtractorWithValid
             return result["knowledge_graph"]
         return result
 
+
 __all__ = [
     # Core classes
-    'Entity',
-    'Relationship',
-    'KnowledgeGraph',
-    'KnowledgeGraphExtractor',
-    'KnowledgeGraphExtractorWithValidation',
-    
+    "Entity",
+    "Relationship",
+    "KnowledgeGraph",
+    "KnowledgeGraphExtractor",
+    "KnowledgeGraphExtractorWithValidation",
     # Types
-    'EntityID',
-    'RelationshipID',
-    'EntityType',
-    'RelationshipType',
-    'DEFAULT_CONFIDENCE',
-    'MIN_CONFIDENCE',
-    'MAX_CONFIDENCE',
-    
+    "EntityID",
+    "RelationshipID",
+    "EntityType",
+    "RelationshipType",
+    "DEFAULT_CONFIDENCE",
+    "MIN_CONFIDENCE",
+    "MAX_CONFIDENCE",
     # Integrations
-    'HAVE_TRACER',
-    'HAVE_ACCELERATE',
-    'WikipediaKnowledgeGraphTracer',
-    'AccelerateManager',
-    'is_accelerate_available',
-    'get_accelerate_status',
+    "HAVE_TRACER",
+    "HAVE_ACCELERATE",
+    "WikipediaKnowledgeGraphTracer",
+    "AccelerateManager",
+    "is_accelerate_available",
+    "get_accelerate_status",
 ]
 
-__version__ = '0.1.0-deprecated'
+__version__ = "0.1.0-deprecated"
 __deprecated__ = True
-__migration_guide__ = 'docs/knowledge_graphs/MIGRATION_GUIDE.md'
+__migration_guide__ = "docs/knowledge_graphs/MIGRATION_GUIDE.md"

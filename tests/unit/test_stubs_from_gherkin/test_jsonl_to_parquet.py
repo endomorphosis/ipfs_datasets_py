@@ -4,11 +4,13 @@ Test stubs for jsonl_to_parquet module.
 Feature: JSONL to Parquet Conversion
   Convert JSONL data files to Parquet format
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_jsonl_file_and_a_schema_definition():
@@ -92,6 +94,7 @@ def a_valid_jsonl_file():
 
 
 # Test scenarios
+
 
 def test_convert_jsonl_file_to_parquet():
     """
@@ -194,6 +197,7 @@ def test_convert_with_column_selection():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a JSONL file and a schema definition")

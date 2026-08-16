@@ -18,14 +18,14 @@ import asyncio
 
 async def demo_first_order_logic():
     """Demonstrate First-Order Logic (FOL)."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 1: First-Order Logic (FOL)")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🧮 First-Order Logic")
     print("   Express statements with quantifiers and predicates")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.logic import FOLEngine
 
 # Initialize FOL engine
@@ -52,21 +52,21 @@ if proof.is_valid:
         print(f"{i}. {step.statement} ({step.rule})")
 else:
     print(f"❌ Could not prove: {theorem}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_temporal_logic():
     """Demonstrate temporal logic reasoning."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 2: Temporal Logic")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n⏰ Temporal Logic")
     print("   Reason about time and sequences")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.logic import TemporalLogicEngine
 
 # Initialize temporal logic
@@ -100,21 +100,21 @@ timeline = await tl.generate_timeline(
 
 for t, state in timeline.items():
     print(f"Time {t}: {', '.join(state)}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_deontic_logic():
     """Demonstrate deontic logic (obligations and permissions)."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 3: Deontic Logic")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n⚖️  Deontic Logic")
     print("   Reason about obligations, permissions, and prohibitions")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.logic import DeonticLogicEngine
 
 # Initialize deontic logic
@@ -148,21 +148,21 @@ print(f"Can steal: {can_steal}")  # Should be False
 conflicts = await dl.find_conflicts()
 for conflict in conflicts:
     print(f"Conflict: {conflict}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_theorem_proving():
     """Use Z3 theorem prover for complex proofs."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 4: Theorem Proving with Z3")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🔬 Z3 Theorem Prover")
     print("   SMT (Satisfiability Modulo Theories) solving")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.logic import Z3TheoremProver
 
 prover = Z3TheoremProver()
@@ -192,22 +192,22 @@ theorem = "x > 5"
 proof = await prover.prove(theorem)
 
 print(f"\\nTheorem '{theorem}': {proof.is_valid}")
-    '''
-    
+    """
+
     print(example_code)
-    
+
     print("\n💡 Install Z3: pip install z3-solver")
 
 
 async def demo_logic_to_text():
     """Convert between natural language and formal logic."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 5: Natural Language ↔ Logic")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n💬 Natural Language to Logic")
     print("   Parse and generate logical statements")
-    
+
     example_code = '''
 from ipfs_datasets_py.logic import LogicParser, LogicGenerator
 
@@ -242,19 +242,19 @@ logic = await parser.parse(legal_text)
 print(f"\\nLegal text as logic:")
 print(f"{logic[0].formula}")
     '''
-    
+
     print(example_code)
 
 
 async def demo_constraint_solving():
     """Solve constraint satisfaction problems."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 6: Constraint Satisfaction")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🧩 Constraint Satisfaction Problems")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.logic import ConstraintSolver
 
 solver = ConstraintSolver()
@@ -285,20 +285,20 @@ if solution:
 # Find all solutions
 all_solutions = await solver.solve_all()
 print(f"\\nFound {len(all_solutions)} possible schedules")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_logic_validation():
     """Validate logical consistency."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 7: Logic Validation")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n✅ Consistency Checking")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.logic import LogicValidator
 
 validator = LogicValidator()
@@ -327,58 +327,58 @@ print("\\nSuggested fixes:")
 for fix in fixes:
     print(f"  - {fix.description}")
     print(f"    Change: {fix.original} → {fix.fixed}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 def show_tips():
     """Show tips for logic reasoning."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TIPS FOR LOGIC REASONING")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n1. Choosing Logic Systems:")
     print("   - FOL: General purpose, most expressive")
     print("   - Temporal: Time-based reasoning, workflows")
     print("   - Deontic: Legal/ethical reasoning")
     print("   - Modal: Necessity and possibility")
-    
+
     print("\n2. Theorem Proving:")
     print("   - Start with simple proofs")
     print("   - Use Z3 for complex constraints")
     print("   - Cache proven theorems")
     print("   - Limit proof search depth")
-    
+
     print("\n3. Performance:")
     print("   - Logic reasoning can be computationally expensive")
     print("   - Use caching aggressively")
     print("   - Simplify formulas when possible")
     print("   - Consider approximate reasoning for scale")
-    
+
     print("\n4. Practical Applications:")
     print("   - Verification and validation")
     print("   - Policy compliance checking")
     print("   - Automated reasoning in RAG")
     print("   - Knowledge base consistency")
-    
+
     print("\n5. Integration:")
     print("   - Combine with knowledge graphs")
     print("   - Use in RAG for constraint-based retrieval")
     print("   - Validate extracted information")
     print("   - Generate explanations")
-    
+
     print("\n6. Debugging:")
     print("   - Check axiom consistency")
     print("   - Validate predicate definitions")
     print("   - Test with simple examples first")
     print("   - Use proof visualization")
-    
+
     print("\n7. Advanced Topics:")
     print("   - See neurosymbolic/ examples for neural+symbolic")
     print("   - See external_provers/ for Z3 integration")
     print("   - See 16_logic_enhanced_rag.py for RAG integration")
-    
+
     print("\n8. Resources:")
     print("   - Learn formal logic fundamentals")
     print("   - Study SMT solving")
@@ -387,10 +387,10 @@ def show_tips():
 
 async def main():
     """Run all logic reasoning demonstrations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("IPFS DATASETS PYTHON - LOGIC REASONING")
-    print("="*70)
-    
+    print("=" * 70)
+
     await demo_first_order_logic()
     await demo_temporal_logic()
     await demo_deontic_logic()
@@ -398,12 +398,12 @@ async def main():
     await demo_logic_to_text()
     await demo_constraint_solving()
     await demo_logic_validation()
-    
+
     show_tips()
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("✅ LOGIC REASONING EXAMPLES COMPLETE")
-    print("="*70)
+    print("=" * 70)
 
 
 if __name__ == "__main__":

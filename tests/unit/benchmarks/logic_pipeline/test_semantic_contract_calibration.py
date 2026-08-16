@@ -62,9 +62,7 @@ def _source_only_request(
 def test_live_compiler_shape_fails_closed_without_normalized_contract() -> None:
     case = _unsealed_case()
     request = _source_only_request(case)
-    record = adapters.CompilerAdapter(
-        runtime._current_compiler_handler
-    ).run(request)
+    record = adapters.CompilerAdapter(runtime._current_compiler_handler).run(request)
 
     assert record.status is StageStatus.SUCCESS
     assert record.stage is StageName.COMPILER
@@ -75,10 +73,7 @@ def test_live_compiler_shape_fails_closed_without_normalized_contract() -> None:
         "formulas",
         "normalized_text",
     }
-    assert (
-        validate_label_blind_semantic_input_binding(record, case)
-        == request.input_sha256
-    )
+    assert validate_label_blind_semantic_input_binding(record, case) == request.input_sha256
 
     with pytest.raises(
         SemanticReassessmentError,
@@ -94,9 +89,7 @@ def test_live_regex_spacy_shape_fails_closed_without_normalized_contract() -> No
     case = _unsealed_case()
     request = _source_only_request(case)
     record = adapters.SpacyAdapter(
-        config=adapters.SpacyAdapterConfig(
-            mode=adapters.SpacyAdapterMode.REGEX_LEGAL
-        )
+        config=adapters.SpacyAdapterConfig(mode=adapters.SpacyAdapterMode.REGEX_LEGAL)
     ).run(request)
 
     assert record.status is StageStatus.SUCCESS
@@ -108,10 +101,7 @@ def test_live_regex_spacy_shape_fails_closed_without_normalized_contract() -> No
         "formulas",
         "normalized_text",
     }
-    assert (
-        validate_label_blind_semantic_input_binding(record, case)
-        == request.input_sha256
-    )
+    assert validate_label_blind_semantic_input_binding(record, case) == request.input_sha256
 
     with pytest.raises(
         SemanticReassessmentError,
@@ -135,9 +125,7 @@ class _PropositionsOnlyEngine:
         self.prompts.append(prompt)
         raw = json.dumps(
             {
-                "candidate_ir": {
-                    "propositions": ["an agency has a legal obligation"]
-                },
+                "candidate_ir": {"propositions": ["an agency has a legal obligation"]},
                 "normalized_predicates": ["has_legal_obligation"],
                 "quantifiers": [],
                 "entities": ["agency"],
@@ -176,10 +164,7 @@ def test_strict_symai_live_shape_is_label_blind_but_not_score_calibrated() -> No
     assert record.to_dict()["data"]["candidate_ir"] == {
         "propositions": ["an agency has a legal obligation"]
     }
-    assert (
-        validate_label_blind_semantic_input_binding(record, case)
-        == request.input_sha256
-    )
+    assert validate_label_blind_semantic_input_binding(record, case) == request.input_sha256
     assert len(engine.prompts) == 1
     assert case.source_text in engine.prompts[0]
     for forbidden in (
@@ -204,9 +189,9 @@ def test_strict_symai_live_shape_is_label_blind_but_not_score_calibrated() -> No
 
 def test_reviewed_fields_in_producer_digest_fail_label_isolation() -> None:
     case = _unsealed_case()
-    source_record = adapters.CompilerAdapter(
-        runtime._current_compiler_handler
-    ).run(_source_only_request(case))
+    source_record = adapters.CompilerAdapter(runtime._current_compiler_handler).run(
+        _source_only_request(case)
+    )
     unsafe_input_sha256 = hashlib.sha256(
         canonical_json(
             {
@@ -216,9 +201,7 @@ def test_reviewed_fields_in_producer_digest_fail_label_isolation() -> None:
                     "logic": "fabricated-test-logic",
                     "target": "fabricated-test-target",
                 },
-                "proof_obligation": {
-                    "goal": "fabricated-test-obligation"
-                },
+                "proof_obligation": {"goal": "fabricated-test-obligation"},
             }
         ).encode("utf-8")
     ).hexdigest()
@@ -251,10 +234,7 @@ def test_explicit_normalized_logic_and_target_are_score_calibrated() -> None:
     record = adapters.CompilerAdapter(
         lambda _request: adapters.StageOutput(
             data={
-                "schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark."
-                    "compiler-output.v1"
-                ),
+                "schema": ("ipfs-datasets.logic-pipeline-benchmark.compiler-output.v1"),
                 "modal_ir": modal_ir,
                 "modal_ir_sha256": hashlib.sha256(
                     canonical_json(modal_ir).encode("utf-8")
@@ -268,6 +248,4 @@ def test_explicit_normalized_logic_and_target_are_score_calibrated() -> None:
     projection = validate_normalized_semantic_stage_contract(record)
 
     assert projection["observed_logics"] == ["deontic"]
-    assert projection["observed_targets"] == [
-        "source_derived_obligation"
-    ]
+    assert projection["observed_targets"] == ["source_derived_obligation"]

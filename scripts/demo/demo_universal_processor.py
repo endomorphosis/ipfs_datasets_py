@@ -21,7 +21,7 @@ from ipfs_datasets_py.processors import (
     UniversalProcessor,
     ProcessorConfig,
     ProcessingResult,
-    InputType
+    InputType,
 )
 
 
@@ -31,13 +31,13 @@ async def demo_basic_usage():
     print("DEMO: Universal Processor - Single Entrypoint")
     print("=" * 80)
     print()
-    
+
     # Create processor
     print("1. Creating UniversalProcessor...")
     processor = UniversalProcessor()
     print(f"   ✓ Processor created with {len(processor.registry)} registered processors")
     print()
-    
+
     # List available processors
     print("2. Available Processors:")
     processors_info = processor.list_processors()
@@ -46,7 +46,7 @@ async def demo_basic_usage():
         print(f"     Types: {', '.join(details['types'])}")
         print(f"     Priority: {details['priority']}")
     print()
-    
+
     return processor
 
 
@@ -56,7 +56,7 @@ async def demo_input_detection(processor):
     print("DEMO: Automatic Input Type Detection")
     print("=" * 80)
     print()
-    
+
     test_inputs = [
         "https://example.com",
         "document.pdf",
@@ -64,11 +64,12 @@ async def demo_input_detection(processor):
         "/path/to/folder",
         "QmTest123...",  # IPFS CID
     ]
-    
+
     for input_source in test_inputs:
         from ipfs_datasets_py.processors.input_detection import classify_input
+
         classification = classify_input(input_source)
-        
+
         print(f"Input: {input_source}")
         print(f"  Type: {classification['input_type'].value}")
         print(f"  File Type: {classification.get('file_type', 'N/A')}")
@@ -82,7 +83,7 @@ async def demo_pdf_processing(processor):
     print("DEMO: PDF Processing")
     print("=" * 80)
     print()
-    
+
     # Note: This is simulated since we don't have actual files
     print("Example: processor.process('document.pdf')")
     print()
@@ -94,7 +95,7 @@ async def demo_pdf_processing(processor):
     print("  5. Vector embeddings are generated")
     print("  6. Standardized ProcessingResult is returned")
     print()
-    
+
     # Show what the result would look like
     print("Result structure:")
     print("  ProcessingResult(")
@@ -115,7 +116,7 @@ async def demo_url_processing(processor):
     print("DEMO: URL/Website Processing (GraphRAG)")
     print("=" * 80)
     print()
-    
+
     print("Example: processor.process('https://example.com/article')")
     print()
     print("Expected behavior:")
@@ -126,7 +127,7 @@ async def demo_url_processing(processor):
     print("  5. Knowledge graph is constructed")
     print("  6. Vector embeddings are generated from content")
     print()
-    
+
     print("Knowledge Graph Output:")
     print("  Entities:")
     print("    • WebPage: 'Example Article'")
@@ -147,7 +148,7 @@ async def demo_batch_processing(processor):
     print("DEMO: Batch Processing")
     print("=" * 80)
     print()
-    
+
     print("Example: processor.process([")
     print("  'doc1.pdf',")
     print("  'doc2.pdf',")
@@ -162,7 +163,7 @@ async def demo_batch_processing(processor):
     print("  4. Errors are isolated (one failure doesn't stop others)")
     print("  5. BatchProcessingResult is returned")
     print()
-    
+
     print("BatchProcessingResult structure:")
     print("  results: [ProcessingResult, ProcessingResult, ...]")
     print("  errors: [('input', 'error_message'), ...]")
@@ -181,9 +182,9 @@ async def demo_statistics(processor):
     print("DEMO: Statistics and Monitoring")
     print("=" * 80)
     print()
-    
+
     stats = processor.get_statistics()
-    
+
     print("Processor Statistics:")
     print(f"  Total calls: {stats['total_calls']}")
     print(f"  Successful: {stats['successful_calls']}")
@@ -193,10 +194,10 @@ async def demo_statistics(processor):
     print(f"  Average processing time: {stats['average_processing_time']:.2f}s")
     print(f"  Success rate: {stats['success_rate']:.1%}")
     print()
-    
+
     print("Per-processor statistics:")
-    for proc_name, proc_stats in stats.get('processor_stats', {}).items():
-        if proc_stats.get('calls', 0) > 0:
+    for proc_name, proc_stats in stats.get("processor_stats", {}).items():
+        if proc_stats.get("calls", 0) > 0:
             print(f"  {proc_name}:")
             print(f"    Calls: {proc_stats['calls']}")
             print(f"    Successes: {proc_stats['successes']}")
@@ -210,10 +211,10 @@ async def demo_configuration():
     print("DEMO: Processor Configuration")
     print("=" * 80)
     print()
-    
+
     print("ProcessorConfig options:")
     print()
-    
+
     print("1. Basic configuration:")
     print("   config = ProcessorConfig(")
     print("       enable_caching=True,")
@@ -221,7 +222,7 @@ async def demo_configuration():
     print("       timeout_seconds=300")
     print("   )")
     print()
-    
+
     print("2. Manual routing:")
     print("   config = ProcessorConfig(")
     print("       preferred_processors={")
@@ -230,7 +231,7 @@ async def demo_configuration():
     print("       }")
     print("   )")
     print()
-    
+
     print("3. Error handling:")
     print("   config = ProcessorConfig(")
     print("       fallback_enabled=True,")
@@ -246,11 +247,13 @@ async def demo_comparison():
     print("COMPARISON: Old API vs New API")
     print("=" * 80)
     print()
-    
+
     print("OLD API (Before Refactoring):")
     print("-" * 40)
     print("from ipfs_datasets_py.processors.pdf_processor import PDFProcessor")
-    print("from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor")
+    print(
+        "from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor"
+    )
     print("from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper")
     print()
     print("# Different imports, different APIs")
@@ -266,7 +269,7 @@ async def demo_comparison():
     print("# Different result formats!")
     print()
     print()
-    
+
     print("NEW API (After Refactoring):")
     print("-" * 40)
     print("from ipfs_datasets_py.processors import UniversalProcessor")
@@ -307,7 +310,7 @@ async def main():
     print("║                                                                               ║")
     print("╚═══════════════════════════════════════════════════════════════════════════════╝")
     print()
-    
+
     try:
         # Run demos
         processor = await demo_basic_usage()
@@ -318,7 +321,7 @@ async def main():
         await demo_statistics(processor)
         await demo_configuration()
         await demo_comparison()
-        
+
         print("=" * 80)
         print("DEMO COMPLETE")
         print("=" * 80)
@@ -335,10 +338,11 @@ async def main():
         print("     processor = UniversalProcessor()")
         print("     result = await processor.process('your_file.pdf')")
         print()
-        
+
     except Exception as e:
         print(f"Error running demo: {e}")
         import traceback
+
         traceback.print_exc()
 
 

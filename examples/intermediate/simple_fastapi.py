@@ -18,13 +18,15 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="IPFS Datasets API",
     description="REST API for IPFS Datasets with embedding capabilities",
-    version="1.0.0"
+    version="1.0.0",
 )
+
 
 @app.get("/")
 async def root():
     """Root endpoint."""
     return {"message": "IPFS Datasets API", "version": "1.0.0"}
+
 
 @app.get("/health")
 async def health_check():
@@ -32,8 +34,9 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "service": "IPFS Datasets API"
+        "service": "IPFS Datasets API",
     }
+
 
 @app.get("/api/status")
 async def api_status():
@@ -44,13 +47,15 @@ async def api_status():
         "status": "operational",
         "features": [
             "Dataset management",
-            "Embedding generation", 
+            "Embedding generation",
             "Vector search",
             "IPFS integration",
-            "MCP tools"
-        ]
+            "MCP tools",
+        ],
     }
+
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

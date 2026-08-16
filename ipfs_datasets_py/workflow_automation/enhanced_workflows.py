@@ -143,9 +143,7 @@ class MockWorkflowService:
             "execution_id": str(uuid.uuid4()),
             "status": workflow.status.value,
             "execution_time": (workflow.completed_at - workflow.started_at).total_seconds(),
-            "steps_completed": len(
-                [s for s in workflow.steps if s.status == StepStatus.COMPLETED]
-            ),
+            "steps_completed": len([s for s in workflow.steps if s.status == StepStatus.COMPLETED]),
             "steps_failed": len([s for s in workflow.steps if s.status == StepStatus.FAILED]),
         }
         self.execution_history.append(execution_record)
@@ -164,9 +162,7 @@ class MockWorkflowService:
             "status": workflow.status.value,
             "created_at": workflow.created_at.isoformat() if workflow.created_at else None,
             "started_at": workflow.started_at.isoformat() if workflow.started_at else None,
-            "completed_at": workflow.completed_at.isoformat()
-            if workflow.completed_at
-            else None,
+            "completed_at": workflow.completed_at.isoformat() if workflow.completed_at else None,
             "steps": [
                 {
                     "id": step.id,

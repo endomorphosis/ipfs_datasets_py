@@ -4,6 +4,7 @@ Phase B2 unit tests — functions/execute_python_snippet tool.
 The tool intentionally does NOT execute arbitrary code for security reasons.
 It returns a dict with status='success' and a message noting the code length.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -21,6 +22,7 @@ class TestExecutePythonSnippet:
         from ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet import (
             execute_python_snippet,
         )
+
         self.fn = execute_python_snippet
 
     def test_returns_dict(self) -> None:

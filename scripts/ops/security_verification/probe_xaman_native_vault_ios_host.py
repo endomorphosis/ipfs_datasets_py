@@ -20,13 +20,17 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_native
 )
 
 
-DEFAULT_OUT = Path('security_ir_artifacts/corpora/xaman-app/runtime/native-vault-ios-host-preflight.json')
-DEFAULT_SOURCE_ROOT = Path.home() / '.local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app'
+DEFAULT_OUT = Path(
+    "security_ir_artifacts/corpora/xaman-app/runtime/native-vault-ios-host-preflight.json"
+)
+DEFAULT_SOURCE_ROOT = Path.home() / ".local/share/ipfs-datasets-xaman-testnet-verifier/xaman-app"
 
 
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n', encoding='utf-8')
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
 
 
 def _resolve(root: Path, value: str) -> Path:
@@ -36,16 +40,20 @@ def _resolve(root: Path, value: str) -> Path:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root.')
-    parser.add_argument('--source-root', default=str(DEFAULT_SOURCE_ROOT), help='Explicit Xaman source root.')
-    parser.add_argument('--xcodebuild', default='/usr/bin/xcodebuild', help='Explicit xcodebuild binary.')
-    parser.add_argument('--xcrun', default='/usr/bin/xcrun', help='Explicit xcrun binary.')
+    parser.add_argument("--repo-root", default=str(ROOT_DIR), help="Repository root.")
     parser.add_argument(
-        '--emit-blocked-artifact',
-        action='store_true',
-        help='Write a deterministic blocked artifact when host preconditions are unavailable.',
+        "--source-root", default=str(DEFAULT_SOURCE_ROOT), help="Explicit Xaman source root."
     )
-    parser.add_argument('--out', default=str(DEFAULT_OUT), help='Redacted preflight artifact path.')
+    parser.add_argument(
+        "--xcodebuild", default="/usr/bin/xcodebuild", help="Explicit xcodebuild binary."
+    )
+    parser.add_argument("--xcrun", default="/usr/bin/xcrun", help="Explicit xcrun binary.")
+    parser.add_argument(
+        "--emit-blocked-artifact",
+        action="store_true",
+        help="Write a deterministic blocked artifact when host preconditions are unavailable.",
+    )
+    parser.add_argument("--out", default=str(DEFAULT_OUT), help="Redacted preflight artifact path.")
     args = parser.parse_args(argv)
     root = Path(args.repo_root).resolve()
     try:
@@ -62,9 +70,9 @@ def main(argv: list[str] | None = None) -> int:
     print(
         json.dumps(
             {
-                'artifact_cid': report['artifact_cid'],
-                'out': str(out.relative_to(root)) if out.is_relative_to(root) else str(out),
-                'security_decision': report['security_decision'],
+                "artifact_cid": report["artifact_cid"],
+                "out": str(out.relative_to(root)) if out.is_relative_to(root) else str(out),
+                "security_decision": report["security_decision"],
             },
             sort_keys=True,
         )
@@ -72,5 +80,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

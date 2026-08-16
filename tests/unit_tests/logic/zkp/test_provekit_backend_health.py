@@ -44,6 +44,7 @@ KNOWN_CIRCUITS: dict[str, str] = {
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_executable(path: Path) -> Path:
     """Create a minimal shell stub that exits 0 and is executable."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -68,14 +69,17 @@ def _sha256_file(path: Path) -> str:
 # Binary availability checks
 # ---------------------------------------------------------------------------
 
+
 def test_binary_discovery_returns_none_when_no_binary_configured(monkeypatch):
     """discover_provekit_binary must return None when no binary is found."""
     from ipfs_datasets_py.logic.zkp.provekit.cli import discover_provekit_binary
 
     # Clear all env vars that could point to a real binary.
     cleared_env: dict[str, str] = {
-        k: v for k, v in os.environ.items()
-        if k not in {
+        k: v
+        for k, v in os.environ.items()
+        if k
+        not in {
             "IPFS_DATASETS_PROVEKIT_CLI",
             "IPFS_DATASETS_PROVEKIT_BIN",
             "PROVEKIT_CLI",
@@ -92,8 +96,7 @@ def test_binary_discovery_returns_none_when_no_binary_configured(monkeypatch):
     )
 
     assert result is None, (
-        "discover_provekit_binary must return None when no binary is available; "
-        f"got: {result}"
+        f"discover_provekit_binary must return None when no binary is available; got: {result}"
     )
 
 
@@ -161,6 +164,7 @@ def test_binary_unavailable_backend_reports_false(monkeypatch):
 # ---------------------------------------------------------------------------
 # Fail-closed readiness checks
 # ---------------------------------------------------------------------------
+
 
 def test_generate_proof_fails_closed_without_binary(monkeypatch):
     """generate_proof must raise ZKPError (not return a simulated proof) when no binary."""
@@ -260,6 +264,7 @@ def test_verify_proof_fails_closed_without_verifier_key(tmp_path):
 # Circuit manifest checks
 # ---------------------------------------------------------------------------
 
+
 def test_all_known_circuits_have_nargo_toml():
     """Each packaged circuit directory must contain a Nargo.toml."""
     for circuit_name in KNOWN_CIRCUITS:
@@ -275,9 +280,7 @@ def test_all_known_circuits_have_main_nr():
     for circuit_name in KNOWN_CIRCUITS:
         circuit_dir = CIRCUITS_ROOT / circuit_name
         main_nr = circuit_dir / "src" / "main.nr"
-        assert main_nr.is_file(), (
-            f"Missing src/main.nr for circuit '{circuit_name}': {main_nr}"
-        )
+        assert main_nr.is_file(), f"Missing src/main.nr for circuit '{circuit_name}': {main_nr}"
 
 
 def test_nargo_toml_package_names_match_expected_names():
@@ -330,6 +333,7 @@ def test_circuit_manifests_accessible_via_circuits_root_constant():
 # Artifact integrity checks (manifest validation)
 # ---------------------------------------------------------------------------
 
+
 def test_sha256_file_helper_produces_deterministic_digest(tmp_path):
     """sha256_file must produce the same digest for identical content."""
     from ipfs_datasets_py.logic.zkp.provekit.artifacts import sha256_file
@@ -352,7 +356,7 @@ def test_sha256_directory_helper_produces_deterministic_digest(tmp_path):
     d2 = tmp_path / "dir2"
     for d in (d1, d2):
         d.mkdir()
-        (d / "Nargo.toml").write_text("[package]\nname = \"test\"\n", encoding="utf-8")
+        (d / "Nargo.toml").write_text('[package]\nname = "test"\n', encoding="utf-8")
         (d / "src").mkdir()
         (d / "src" / "main.nr").write_text("fn main() {}\n", encoding="utf-8")
 
@@ -365,7 +369,7 @@ def test_sha256_directory_ignores_excluded_suffixes(tmp_path):
 
     circuit_dir = tmp_path / "circuit"
     circuit_dir.mkdir()
-    (circuit_dir / "Nargo.toml").write_text("[package]\nname = \"test\"\n", encoding="utf-8")
+    (circuit_dir / "Nargo.toml").write_text('[package]\nname = "test"\n', encoding="utf-8")
 
     digest_before = sha256_directory(circuit_dir)
 
@@ -392,7 +396,7 @@ def test_artifact_manifest_validates_digest_mismatch_fails_closed(tmp_path):
 
     noir_pkg = tmp_path / "circuit"
     noir_pkg.mkdir()
-    (noir_pkg / "Nargo.toml").write_text("[package]\nname = \"test\"\n", encoding="utf-8")
+    (noir_pkg / "Nargo.toml").write_text('[package]\nname = "test"\n', encoding="utf-8")
     pkp = tmp_path / "test.pkp"
     pkv = tmp_path / "test.pkv"
     pkp.write_bytes(b"prover key")
@@ -448,7 +452,7 @@ def test_manifest_round_trip_preserves_all_fields(tmp_path):
 
     noir_pkg = tmp_path / "circuit"
     noir_pkg.mkdir()
-    (noir_pkg / "Nargo.toml").write_text("[package]\nname = \"rt\"\n", encoding="utf-8")
+    (noir_pkg / "Nargo.toml").write_text('[package]\nname = "rt"\n', encoding="utf-8")
     pkp = tmp_path / "rt.pkp"
     pkv = tmp_path / "rt.pkv"
     pkp.write_bytes(b"prover key roundtrip")
@@ -485,6 +489,7 @@ def test_manifest_round_trip_preserves_all_fields(tmp_path):
 # ---------------------------------------------------------------------------
 # Backend enablement / registry checks
 # ---------------------------------------------------------------------------
+
 
 def test_backend_registry_includes_provekit():
     """list_backends must include 'provekit' with WHIR in its description."""
@@ -535,6 +540,7 @@ def test_provekit_backend_reports_correct_proof_system():
 # Build-script packaging check (operator convenience)
 # ---------------------------------------------------------------------------
 
+
 def test_build_script_exists_and_is_executable():
     """The ProveKit build.sh helper must exist and be executable."""
     assert BUILD_SCRIPT.is_file(), f"build.sh not found at {BUILD_SCRIPT}"
@@ -578,6 +584,7 @@ def test_build_script_does_not_clone_or_build_rust():
 # Witness no-leak (boundary checks)
 # ---------------------------------------------------------------------------
 
+
 def test_private_witness_does_not_appear_in_manifest_fields(tmp_path):
     """Artifact manifests must not contain private witness field names."""
     from ipfs_datasets_py.logic.zkp.provekit.artifacts import (
@@ -589,7 +596,7 @@ def test_private_witness_does_not_appear_in_manifest_fields(tmp_path):
 
     noir_pkg = tmp_path / "circuit"
     noir_pkg.mkdir()
-    (noir_pkg / "Nargo.toml").write_text("[package]\nname = \"wl\"\n", encoding="utf-8")
+    (noir_pkg / "Nargo.toml").write_text('[package]\nname = "wl"\n', encoding="utf-8")
     pkp = tmp_path / "wl.pkp"
     pkv = tmp_path / "wl.pkv"
     pkp.write_bytes(b"pk")
@@ -617,9 +624,7 @@ def test_private_witness_does_not_appear_in_manifest_fields(tmp_path):
     # These keys would indicate private witness data in the manifest.
     private_witness_keys = {"private_axioms", "witness", "prover_toml", "axiom_text"}
     for key in private_witness_keys:
-        assert key not in manifest_dict, (
-            f"Manifest must not contain private witness field '{key}'"
-        )
+        assert key not in manifest_dict, f"Manifest must not contain private witness field '{key}'"
         assert f'"{key}"' not in manifest_json, (
             f"Manifest JSON must not contain private witness key '{key}'"
         )

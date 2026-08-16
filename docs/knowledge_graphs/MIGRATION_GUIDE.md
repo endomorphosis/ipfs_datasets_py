@@ -41,7 +41,7 @@ from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
     Entity,
     Relationship,
     KnowledgeGraph,
-    KnowledgeGraphExtractor
+    KnowledgeGraphExtractor,
 )
 ```
 
@@ -53,7 +53,7 @@ from ipfs_datasets_py.knowledge_graphs.extraction import (
     Entity,
     Relationship,
     KnowledgeGraph,
-    KnowledgeGraphExtractor
+    KnowledgeGraphExtractor,
 )
 ```
 
@@ -256,11 +256,7 @@ See [DEFERRED_FEATURES.md](DEFERRED_FEATURES.md) for implementation history.
 from ipfs_datasets_py.knowledge_graphs.migration import Neo4jExporter
 
 # Connect to Neo4j
-exporter = Neo4jExporter(
-    uri="bolt://localhost:7687",
-    user="neo4j",
-    password="password"
-)
+exporter = Neo4jExporter(uri="bolt://localhost:7687", user="neo4j", password="password")
 
 # Export to intermediate format
 exporter.export_to_json("neo4j_export.json")
@@ -298,10 +294,7 @@ print(f"Graph stored at CID: {cid}")
 from ipfs_datasets_py.knowledge_graphs.migration import IntegrityVerifier
 
 verifier = IntegrityVerifier()
-is_valid, errors = verifier.verify(
-    source="neo4j_export.json",
-    target_cid=cid
-)
+is_valid, errors = verifier.verify(source="neo4j_export.json", target_cid=cid)
 
 if is_valid:
     print("Migration successful!")
@@ -414,7 +407,7 @@ from ipfs_datasets_py.knowledge_graphs.exceptions import (
     ExtractionError,
     ValidationError,
     QueryError,
-    StorageError
+    StorageError,
 )
 
 try:
@@ -441,7 +434,7 @@ from ipfs_datasets_py.knowledge_graphs.query import BudgetManager
 budget_manager = BudgetManager()
 
 # Try with moderate budget instead of strict
-budgets = budget_manager.create_preset_budgets('moderate')
+budgets = budget_manager.create_preset_budgets("moderate")
 result = engine.execute_cypher(query, budgets=budgets)
 ```
 

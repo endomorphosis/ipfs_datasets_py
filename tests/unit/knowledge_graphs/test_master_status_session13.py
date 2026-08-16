@@ -4,6 +4,7 @@ transaction manager.
 
 Targeting uncovered branches/statements to push overall coverage from 75% to ~78%.
 """
+
 from __future__ import annotations
 
 import time
@@ -22,7 +23,7 @@ def _make_engine(nodes=None, rels=None):
 
     def _create_node(labels=None, properties=None):
         n = MagicMock()
-        n.id = f"node-{len(engine._nodes)+1}"
+        n.id = f"node-{len(engine._nodes) + 1}"
         n.labels = labels or []
         n._properties = properties or {}
         engine._nodes[n.id] = n
@@ -45,13 +46,12 @@ class TestCypherParserCase(unittest.TestCase):
 
     def _parse(self, query: str):
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
+
         return CypherParser().parse(query)
 
     def test_simple_case_expression(self):
         """GIVEN a query with CASE expr WHEN v THEN r END WHEN query is parsed THEN CaseExpressionNode produced."""
-        ast = self._parse(
-            "MATCH (n) RETURN CASE n.status WHEN 'active' THEN 1 ELSE 0 END AS flag"
-        )
+        ast = self._parse("MATCH (n) RETURN CASE n.status WHEN 'active' THEN 1 ELSE 0 END AS flag")
         self.assertIsNotNone(ast)
 
     def test_generic_case_no_test_expression(self):
@@ -73,9 +73,7 @@ class TestCypherParserCase(unittest.TestCase):
 
     def test_case_no_else(self):
         """GIVEN CASE without ELSE WHEN parsed THEN ast produced correctly."""
-        ast = self._parse(
-            "MATCH (n) RETURN CASE WHEN n.active THEN 'yes' END AS flag"
-        )
+        ast = self._parse("MATCH (n) RETURN CASE WHEN n.active THEN 'yes' END AS flag")
         self.assertIsNotNone(ast)
 
 
@@ -87,6 +85,7 @@ class TestCypherParserStringOps(unittest.TestCase):
 
     def _parse(self, query: str):
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
+
         return CypherParser().parse(query)
 
     def test_detach_delete(self):
@@ -133,6 +132,7 @@ class TestCypherParserOrderSkipLimit(unittest.TestCase):
 
     def _parse(self, query: str):
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
+
         return CypherParser().parse(query)
 
     def test_order_by_asc(self):
@@ -194,13 +194,12 @@ class TestCypherParserForeachBody(unittest.TestCase):
 
     def _parse(self, query: str):
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
+
         return CypherParser().parse(query)
 
     def test_foreach_with_create_body(self):
         """GIVEN FOREACH with CREATE body WHEN parsed THEN ForeachClause with CreateClause body."""
-        ast = self._parse(
-            "FOREACH (val IN [1, 2] | CREATE (:Number {v: val}))"
-        )
+        ast = self._parse("FOREACH (val IN [1, 2] | CREATE (:Number {v: val}))")
         self.assertIsNotNone(ast)
 
 
@@ -239,6 +238,7 @@ class TestIRExecutorOrderByLimitSkip(unittest.TestCase):
 
     def _make_records(self, dicts):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Record
+
         return [Record(keys=list(d.keys()), values=list(d.values())) for d in dicts]
 
     def test_limit_trims_final_results(self):
@@ -247,11 +247,14 @@ class TestIRExecutorOrderByLimitSkip(unittest.TestCase):
         nodes = [engine.create_node(labels=["Node"], properties={"i": i}) for i in range(5)]
         engine.find_nodes.return_value = nodes
 
-        results = self._run([
-            {"op": "ScanLabel", "label": "Node", "variable": "n"},
-            {"op": "Project", "items": [{"expression": {"var": "n"}, "alias": "n"}]},
-            {"op": "Limit", "count": 3},
-        ], engine=engine)
+        results = self._run(
+            [
+                {"op": "ScanLabel", "label": "Node", "variable": "n"},
+                {"op": "Project", "items": [{"expression": {"var": "n"}, "alias": "n"}]},
+                {"op": "Limit", "count": 3},
+            ],
+            engine=engine,
+        )
         self.assertLessEqual(len(results), 3)
 
     def test_skip_removes_initial_results(self):
@@ -260,11 +263,14 @@ class TestIRExecutorOrderByLimitSkip(unittest.TestCase):
         nodes = [engine.create_node(labels=["N"], properties={"i": i}) for i in range(5)]
         engine.find_nodes.return_value = nodes
 
-        results = self._run([
-            {"op": "ScanLabel", "label": "N", "variable": "n"},
-            {"op": "Project", "items": [{"expression": {"var": "n"}, "alias": "n"}]},
-            {"op": "Skip", "count": 2},
-        ], engine=engine)
+        results = self._run(
+            [
+                {"op": "ScanLabel", "label": "N", "variable": "n"},
+                {"op": "Project", "items": [{"expression": {"var": "n"}, "alias": "n"}]},
+                {"op": "Skip", "count": 2},
+            ],
+            engine=engine,
+        )
         self.assertLessEqual(len(results), 3)
 
     def test_orderby_with_property_sort(self):
@@ -275,25 +281,32 @@ class TestIRExecutorOrderByLimitSkip(unittest.TestCase):
         engine.find_nodes.return_value = [n1, n2]
 
         # Just check it doesn't raise
-        results = self._run([
-            {"op": "ScanLabel", "label": "P", "variable": "n"},
-            {"op": "Project", "items": [{"expression": {"var": "n"}, "alias": "n"}]},
-            {"op": "OrderBy", "items": [{"expression": "age", "ascending": True}]},
-        ], engine=engine)
+        results = self._run(
+            [
+                {"op": "ScanLabel", "label": "P", "variable": "n"},
+                {"op": "Project", "items": [{"expression": {"var": "n"}, "alias": "n"}]},
+                {"op": "OrderBy", "items": [{"expression": "age", "ascending": True}]},
+            ],
+            engine=engine,
+        )
         self.assertIsInstance(results, list)
 
     def test_orderby_no_items_is_noop(self):
         """GIVEN OrderBy with empty items WHEN executed THEN results unchanged."""
-        results = self._run([
-            {"op": "OrderBy", "items": []},
-        ])
+        results = self._run(
+            [
+                {"op": "OrderBy", "items": []},
+            ]
+        )
         self.assertEqual(results, [])
 
     def test_orderby_no_results_is_noop(self):
         """GIVEN OrderBy with no prior results WHEN executed THEN empty list returned."""
-        results = self._run([
-            {"op": "OrderBy", "items": [{"expression": "name", "ascending": True}]},
-        ])
+        results = self._run(
+            [
+                {"op": "OrderBy", "items": [{"expression": "name", "ascending": True}]},
+            ]
+        )
         self.assertEqual(results, [])
 
 
@@ -327,43 +340,51 @@ class TestIRExecutorForeachCallSubquery(unittest.TestCase):
     def test_foreach_creates_nodes_for_each_element(self):
         """GIVEN Foreach over [1,2,3] with CreateNode body WHEN executed THEN 3 nodes created."""
         engine = _make_engine()
-        results = self._run([
-            {
-                "op": "Foreach",
-                "variable": "x",
-                "expression": [1, 2, 3],
-                "body_ops": [
-                    {"op": "CreateNode", "variable": "n", "labels": ["Num"], "properties": {}}
-                ],
-            }
-        ], engine=engine)
+        results = self._run(
+            [
+                {
+                    "op": "Foreach",
+                    "variable": "x",
+                    "expression": [1, 2, 3],
+                    "body_ops": [
+                        {"op": "CreateNode", "variable": "n", "labels": ["Num"], "properties": {}}
+                    ],
+                }
+            ],
+            engine=engine,
+        )
         # 3 CreateNode calls from body
         self.assertEqual(engine.create_node.call_count, 3)
 
     def test_foreach_empty_list_no_body_runs(self):
         """GIVEN Foreach over empty list WHEN executed THEN no body ops run."""
         engine = _make_engine()
-        results = self._run([
-            {
-                "op": "Foreach",
-                "variable": "x",
-                "expression": [],
-                "body_ops": [
-                    {"op": "CreateNode", "variable": "n", "labels": ["X"], "properties": {}}
-                ],
-            }
-        ], engine=engine)
+        results = self._run(
+            [
+                {
+                    "op": "Foreach",
+                    "variable": "x",
+                    "expression": [],
+                    "body_ops": [
+                        {"op": "CreateNode", "variable": "n", "labels": ["X"], "properties": {}}
+                    ],
+                }
+            ],
+            engine=engine,
+        )
         engine.create_node.assert_not_called()
 
     def test_call_subquery_empty_inner(self):
         """GIVEN CallSubquery with no inner ops WHEN executed THEN outer bindings unchanged."""
-        results = self._run([
-            {
-                "op": "CallSubquery",
-                "inner_ops": [],
-                "yield_items": [],
-            }
-        ])
+        results = self._run(
+            [
+                {
+                    "op": "CallSubquery",
+                    "inner_ops": [],
+                    "yield_items": [],
+                }
+            ]
+        )
         self.assertEqual(results, [])
 
     def test_unwind_from_literal(self):
@@ -432,10 +453,13 @@ class TestIRExecutorMutations(unittest.TestCase):
         node = engine.create_node(labels=["X"], properties={})
         engine.find_nodes.return_value = [node]
 
-        self._run([
-            {"op": "ScanLabel", "label": "X", "variable": "n"},
-            {"op": "Delete", "variable": "n"},
-        ], engine=engine)
+        self._run(
+            [
+                {"op": "ScanLabel", "label": "X", "variable": "n"},
+                {"op": "Delete", "variable": "n"},
+            ],
+            engine=engine,
+        )
         engine.delete_node.assert_called()
 
     def test_set_property_updates_nodes(self):
@@ -444,10 +468,13 @@ class TestIRExecutorMutations(unittest.TestCase):
         node = engine.create_node(labels=["P"], properties={"x": 0})
         engine.find_nodes.return_value = [node]
 
-        self._run([
-            {"op": "ScanLabel", "label": "P", "variable": "n"},
-            {"op": "SetProperty", "variable": "n", "property": "x", "value": 99},
-        ], engine=engine)
+        self._run(
+            [
+                {"op": "ScanLabel", "label": "P", "variable": "n"},
+                {"op": "SetProperty", "variable": "n", "property": "x", "value": 99},
+            ],
+            engine=engine,
+        )
         engine.update_node.assert_called()
 
     def test_optional_expand_returns_null_when_no_match(self):
@@ -457,22 +484,28 @@ class TestIRExecutorMutations(unittest.TestCase):
         engine.find_nodes.return_value = [node]
         engine.get_relationships.return_value = []
 
-        results = self._run([
-            {"op": "ScanLabel", "label": "A", "variable": "a"},
-            {
-                "op": "OptionalExpand",
-                "from_variable": "a",
-                "to_variable": "b",
-                "rel_variable": "r",
-                "direction": "out",
-                "rel_types": None,
-                "target_labels": None,
-            },
-            {"op": "Project", "items": [
-                {"expression": {"var": "a"}, "alias": "a"},
-                {"expression": {"var": "b"}, "alias": "b"},
-            ]},
-        ], engine=engine)
+        results = self._run(
+            [
+                {"op": "ScanLabel", "label": "A", "variable": "a"},
+                {
+                    "op": "OptionalExpand",
+                    "from_variable": "a",
+                    "to_variable": "b",
+                    "rel_variable": "r",
+                    "direction": "out",
+                    "rel_types": None,
+                    "target_labels": None,
+                },
+                {
+                    "op": "Project",
+                    "items": [
+                        {"expression": {"var": "a"}, "alias": "a"},
+                        {"expression": {"var": "b"}, "alias": "b"},
+                    ],
+                },
+            ],
+            engine=engine,
+        )
         # OptionalExpand with no rels should yield one row with b=None
         self.assertIsInstance(results, list)
 
@@ -491,11 +524,13 @@ class _MockStorage:
         self._counter += 1
         cid = f"cid-{self._counter}"
         import json
+
         self._store[cid] = json.dumps(data)
         return cid
 
     def retrieve_json(self, cid: str) -> Dict:
         import json
+
         raw = self._store.get(cid)
         if raw is None:
             raise KeyError(f"CID not found: {cid}")
@@ -504,8 +539,12 @@ class _MockStorage:
 
 def _make_wal_entry(txn_id: str, state=None, ops=None, prev_cid=None):
     from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-        WALEntry, Operation, OperationType, TransactionState
+        WALEntry,
+        Operation,
+        OperationType,
+        TransactionState,
     )
+
     if state is None:
         state = TransactionState.COMMITTED
     if ops is None:
@@ -525,6 +564,7 @@ class TestWALCompact(unittest.TestCase):
     def test_compact_returns_new_cid(self):
         """GIVEN a WAL with entries WHEN compact called THEN returns new CID string."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
 
@@ -538,6 +578,7 @@ class TestWALCompact(unittest.TestCase):
     def test_compact_resets_entry_count(self):
         """GIVEN 5 appended entries WHEN compact called THEN _entry_count reset to 0 (reset after checkpoint append)."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
 
@@ -553,6 +594,7 @@ class TestWALCompact(unittest.TestCase):
     def test_compact_updates_head(self):
         """GIVEN a WAL WHEN compact called THEN wal_head_cid becomes the checkpoint CID."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         wal.append(_make_wal_entry("txn-001"))
@@ -568,6 +610,7 @@ class TestWALRecover(unittest.TestCase):
     def test_recover_empty_wal_returns_empty(self):
         """GIVEN a WAL with no head WHEN recover called THEN returns empty list."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         ops = wal.recover()
@@ -577,8 +620,11 @@ class TestWALRecover(unittest.TestCase):
         """GIVEN a committed entry in WAL WHEN recover called THEN its operations included."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType, TransactionState
+            Operation,
+            OperationType,
+            TransactionState,
         )
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
 
@@ -594,8 +640,11 @@ class TestWALRecover(unittest.TestCase):
         """GIVEN an aborted entry in WAL WHEN recover called THEN its operations NOT included."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType, TransactionState
+            Operation,
+            OperationType,
+            TransactionState,
         )
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
 
@@ -610,8 +659,11 @@ class TestWALRecover(unittest.TestCase):
         """GIVEN explicit head CID WHEN recover(wal_head_cid=...) called THEN ops recovered."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType, TransactionState
+            Operation,
+            OperationType,
+            TransactionState,
         )
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
 
@@ -629,6 +681,7 @@ class TestWALGetHistory(unittest.TestCase):
     def test_history_returns_matching_entries(self):
         """GIVEN entry with txn_id='txn-A' WHEN history queried for 'txn-A' THEN entry returned."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         wal.append(_make_wal_entry("txn-A"))
@@ -640,6 +693,7 @@ class TestWALGetHistory(unittest.TestCase):
     def test_history_returns_empty_for_unknown(self):
         """GIVEN no matching txn WHEN history queried THEN empty list returned."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         wal.append(_make_wal_entry("txn-X"))
@@ -654,6 +708,7 @@ class TestWALVerifyIntegrity(unittest.TestCase):
     def test_empty_wal_verifies_true(self):
         """GIVEN empty WAL WHEN verify_integrity called THEN returns True."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         self.assertTrue(wal.verify_integrity())
@@ -662,8 +717,11 @@ class TestWALVerifyIntegrity(unittest.TestCase):
         """GIVEN single committed entry WHEN verify_integrity called THEN returns True."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType, TransactionState
+            Operation,
+            OperationType,
+            TransactionState,
         )
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         op = Operation(type=OperationType.WRITE_NODE, node_id="n1")
@@ -673,9 +731,8 @@ class TestWALVerifyIntegrity(unittest.TestCase):
     def test_entry_with_empty_operations_fails_integrity(self):
         """GIVEN entry with empty operations WHEN verify_integrity called THEN returns False."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
-        from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            WALEntry, TransactionState
-        )
+        from ipfs_datasets_py.knowledge_graphs.transactions.types import WALEntry, TransactionState
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         # Append entry with empty operations list
@@ -696,6 +753,7 @@ class TestWALGetStats(unittest.TestCase):
     def test_get_stats_keys(self):
         """GIVEN a WAL WHEN get_stats called THEN dict has required keys."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         stats = wal.get_stats()
@@ -707,6 +765,7 @@ class TestWALGetStats(unittest.TestCase):
     def test_get_stats_increments_with_appends(self):
         """GIVEN 3 appended entries WHEN get_stats called THEN entry_count is 3."""
         from ipfs_datasets_py.knowledge_graphs.transactions.wal import WriteAheadLog
+
         storage = _MockStorage()
         wal = WriteAheadLog(storage)
         for i in range(3):
@@ -723,6 +782,7 @@ class TestLineageVisualizerRenderNetworkx(unittest.TestCase):
     def _make_graph(self):
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
         from ipfs_datasets_py.knowledge_graphs.lineage.types import LineageLink
+
         tracker = LineageTracker()
         tracker.track_node("ds1", "dataset", metadata={"label": "raw"})
         tracker.track_node("t1", "transformation", metadata={"label": "clean"})
@@ -735,6 +795,7 @@ class TestLineageVisualizerRenderNetworkx(unittest.TestCase):
         except ImportError:
             self.skipTest("matplotlib not installed")
         from ipfs_datasets_py.knowledge_graphs.lineage.visualization import LineageVisualizer
+
         g = self._make_graph()
         viz = LineageVisualizer(g)
         result = viz.render_networkx()
@@ -748,9 +809,10 @@ class TestLineageVisualizerRenderNetworkx(unittest.TestCase):
         except ImportError:
             self.skipTest("matplotlib not installed")
         from ipfs_datasets_py.knowledge_graphs.lineage.visualization import LineageVisualizer
+
         g = self._make_graph()
         viz = LineageVisualizer(g)
-        result = viz.render_networkx(layout='circular')
+        result = viz.render_networkx(layout="circular")
         self.assertIsInstance(result, bytes)
 
     def test_render_networkx_hierarchical_layout(self):
@@ -764,9 +826,10 @@ class TestLineageVisualizerRenderNetworkx(unittest.TestCase):
         except ImportError:
             self.skipTest("scipy not installed (required for hierarchical layout)")
         from ipfs_datasets_py.knowledge_graphs.lineage.visualization import LineageVisualizer
+
         g = self._make_graph()
         viz = LineageVisualizer(g)
-        result = viz.render_networkx(layout='hierarchical')
+        result = viz.render_networkx(layout="hierarchical")
         self.assertIsInstance(result, bytes)
 
     def test_render_networkx_unknown_layout_fallback(self):
@@ -776,20 +839,23 @@ class TestLineageVisualizerRenderNetworkx(unittest.TestCase):
         except ImportError:
             self.skipTest("matplotlib not installed")
         from ipfs_datasets_py.knowledge_graphs.lineage.visualization import LineageVisualizer
+
         g = self._make_graph()
         viz = LineageVisualizer(g)
-        result = viz.render_networkx(layout='unknown-xyz')
+        result = viz.render_networkx(layout="unknown-xyz")
         self.assertIsInstance(result, bytes)
 
     def test_render_networkx_with_output_path(self):
         """GIVEN output_path WHEN render_networkx called THEN None returned (file written)."""
         import tempfile
         import os
+
         try:
             import matplotlib  # noqa
         except ImportError:
             self.skipTest("matplotlib not installed")
         from ipfs_datasets_py.knowledge_graphs.lineage.visualization import LineageVisualizer
+
         g = self._make_graph()
         viz = LineageVisualizer(g)
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
@@ -807,6 +873,7 @@ class TestLineageVisualizerMissingMatplotlib(unittest.TestCase):
 
     def _make_graph(self):
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
+
         tracker = LineageTracker()
         tracker.track_node("n1", "dataset", metadata={})
         return tracker.graph
@@ -814,6 +881,7 @@ class TestLineageVisualizerMissingMatplotlib(unittest.TestCase):
     def test_render_networkx_raises_if_matplotlib_missing(self):
         """GIVEN matplotlib not available WHEN render_networkx called THEN ImportError raised."""
         from ipfs_datasets_py.knowledge_graphs.lineage import visualization as viz_mod
+
         g = self._make_graph()
         viz = viz_mod.LineageVisualizer(g)
 
@@ -829,6 +897,7 @@ class TestLineageVisualizerMissingMatplotlib(unittest.TestCase):
     def test_render_plotly_raises_if_plotly_missing(self):
         """GIVEN plotly not available WHEN render_plotly called THEN ImportError raised."""
         from ipfs_datasets_py.knowledge_graphs.lineage import visualization as viz_mod
+
         g = self._make_graph()
         viz = viz_mod.LineageVisualizer(g)
 
@@ -846,6 +915,7 @@ class TestVisualizeLinkageFunction(unittest.TestCase):
 
     def _make_tracker(self):
         from ipfs_datasets_py.knowledge_graphs.lineage.core import LineageTracker
+
         tracker = LineageTracker()
         tracker.track_node("ds1", "dataset", metadata={"label": "test"})
         return tracker
@@ -853,6 +923,7 @@ class TestVisualizeLinkageFunction(unittest.TestCase):
     def test_visualize_lineage_unknown_renderer_raises(self):
         """GIVEN unknown renderer WHEN visualize_lineage called THEN ValueError raised."""
         from ipfs_datasets_py.knowledge_graphs.lineage.visualization import visualize_lineage
+
         tracker = self._make_tracker()
         with self.assertRaises(ValueError):
             visualize_lineage(tracker, renderer="unknown-xyz")
@@ -864,8 +935,9 @@ class TestVisualizeLinkageFunction(unittest.TestCase):
         except ImportError:
             self.skipTest("matplotlib not installed")
         from ipfs_datasets_py.knowledge_graphs.lineage.visualization import visualize_lineage
+
         tracker = self._make_tracker()
-        result = visualize_lineage(tracker, renderer='networkx')
+        result = visualize_lineage(tracker, renderer="networkx")
         self.assertIsInstance(result, bytes)
 
 
@@ -887,8 +959,11 @@ class TestTransactionManagerApplyOps(unittest.TestCase):
     def test_apply_write_node_creates_node(self):
         """GIVEN a WRITE_NODE operation in a committed transaction WHEN committed THEN create_node called."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType, IsolationLevel
+            Operation,
+            OperationType,
+            IsolationLevel,
         )
+
         mgr, engine = self._make_manager()
         txn = mgr.begin(IsolationLevel.READ_COMMITTED)
         op = Operation(type=OperationType.WRITE_NODE, data={"labels": ["X"], "properties": {}})
@@ -899,8 +974,11 @@ class TestTransactionManagerApplyOps(unittest.TestCase):
     def test_apply_delete_node_deletes_from_engine(self):
         """GIVEN a DELETE_NODE operation WHEN committed THEN node removed from engine._nodes."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType, IsolationLevel
+            Operation,
+            OperationType,
+            IsolationLevel,
         )
+
         mgr, engine = self._make_manager()
         # Pre-populate engine with a node
         node = engine.create_node(labels=["D"], properties={})
@@ -915,17 +993,18 @@ class TestTransactionManagerApplyOps(unittest.TestCase):
     def test_apply_set_property_updates_node(self):
         """GIVEN SET_PROPERTY op WHEN committed THEN node property updated."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Operation, OperationType, IsolationLevel
+            Operation,
+            OperationType,
+            IsolationLevel,
         )
+
         mgr, engine = self._make_manager()
         # Fake node as a dict in engine._nodes (matches _apply_operations code path)
         engine._nodes["n99"] = {"properties": {"x": 0}}
 
         txn = mgr.begin(IsolationLevel.READ_COMMITTED)
         op = Operation(
-            type=OperationType.SET_PROPERTY,
-            node_id="n99",
-            data={"property": "x", "value": 42}
+            type=OperationType.SET_PROPERTY, node_id="n99", data={"property": "x", "value": 42}
         )
         mgr.add_operation(txn, op)
         mgr.commit(txn)
@@ -934,9 +1013,11 @@ class TestTransactionManagerApplyOps(unittest.TestCase):
     def test_commit_raises_on_aborted_transaction(self):
         """GIVEN aborted transaction WHEN commit called THEN TransactionAbortedError raised."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            IsolationLevel, TransactionState
+            IsolationLevel,
+            TransactionState,
         )
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionAbortedError
+
         mgr, engine = self._make_manager()
         txn = mgr.begin(IsolationLevel.READ_COMMITTED)
         # Force-abort the transaction
@@ -947,6 +1028,7 @@ class TestTransactionManagerApplyOps(unittest.TestCase):
     def test_rollback_removes_from_active(self):
         """GIVEN active transaction WHEN rollback called THEN transaction removed from active dict."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import IsolationLevel
+
         mgr, engine = self._make_manager()
         txn = mgr.begin(IsolationLevel.READ_COMMITTED)
         self.assertIn(txn.txn_id, mgr._active_transactions)
@@ -996,31 +1078,26 @@ class TestCypherParserCallYield(unittest.TestCase):
 
     def _parse(self, query: str):
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
+
         return CypherParser().parse(query)
 
     def test_call_subquery_with_yield(self):
         """GIVEN CALL { RETURN ... } YIELD name WHEN parsed THEN CallSubquery with yield_items."""
         ast = self._parse(
-            "CALL { MATCH (n:Person) RETURN n.name AS pname } "
-            "YIELD pname "
-            "RETURN pname"
+            "CALL { MATCH (n:Person) RETURN n.name AS pname } YIELD pname RETURN pname"
         )
         self.assertIsNotNone(ast)
 
     def test_call_subquery_yield_with_alias(self):
         """GIVEN CALL YIELD name AS alias WHEN parsed THEN yield_items has alias."""
         ast = self._parse(
-            "CALL { MATCH (n) RETURN count(n) AS total } "
-            "YIELD total AS cnt "
-            "RETURN cnt"
+            "CALL { MATCH (n) RETURN count(n) AS total } YIELD total AS cnt RETURN cnt"
         )
         self.assertIsNotNone(ast)
 
     def test_call_subquery_no_yield(self):
         """GIVEN CALL without YIELD WHEN parsed THEN CallSubquery with empty yield_items."""
-        ast = self._parse(
-            "CALL { MATCH (n) RETURN n }"
-        )
+        ast = self._parse("CALL { MATCH (n) RETURN n }")
         self.assertIsNotNone(ast)
 
 

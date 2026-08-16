@@ -23,20 +23,22 @@ pip install -e ".[test]"
 from ipfs_datasets_py.core_operations import DatasetLoader, IPFSPinner, KnowledgeGraphManager
 import asyncio
 
+
 async def main():
     # Load dataset
     loader = DatasetLoader()
     data = await loader.load("squad")
-    
+
     # Pin to IPFS
     pinner = IPFSPinner()
     result = await pinner.pin({"my": "data"})
     print(f"CID: {result['cid']}")
-    
+
     # Knowledge graph
     kg = KnowledgeGraphManager()
     await kg.create()
     await kg.add_entity("p1", "Person", {"name": "Alice"})
+
 
 asyncio.run(main())
 ```
@@ -67,13 +69,13 @@ manager = HierarchicalToolManager()
 categories = manager.list_categories()
 
 # List tools in category
-tools = manager.list_tools('graph_tools')
+tools = manager.list_tools("graph_tools")
 
 # Execute tool
 result = await manager.dispatch_tool(
-    'graph_tools',
-    'graph_add_entity',
-    {'entity_id': 'p1', 'entity_type': 'Person', 'properties': {'name': 'Alice'}}
+    "graph_tools",
+    "graph_add_entity",
+    {"entity_id": "p1", "entity_type": "Person", "properties": {"name": "Alice"}},
 )
 ```
 

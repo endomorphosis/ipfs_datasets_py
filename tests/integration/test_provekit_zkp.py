@@ -133,4 +133,3 @@ def test_real_provekit_prepare_prove_verify_roundtrip(tmp_path: Path):
     assert roundtrip.proof_data == proof.proof_data
     assert roundtrip.public_inputs == proof.public_inputs
     assert roundtrip.metadata == proof.metadata
-

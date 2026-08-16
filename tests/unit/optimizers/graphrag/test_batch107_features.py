@@ -11,6 +11,7 @@ Methods under test:
   - LogicValidator.entity_type_set()
   - LogicValidator.dangling_references()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -18,6 +19,7 @@ from unittest.mock import MagicMock
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
@@ -52,6 +54,7 @@ def _make_validator():
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.trend_string
 # ---------------------------------------------------------------------------
+
 
 class TestTrendString:
     def test_returns_na_when_empty(self):
@@ -92,6 +95,7 @@ class TestTrendString:
 # OntologyOptimizer.entries_above_score
 # ---------------------------------------------------------------------------
 
+
 class TestEntriesAboveScore:
     def test_empty_history(self):
         opt = _make_optimizer()
@@ -117,6 +121,7 @@ class TestEntriesAboveScore:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.running_average
 # ---------------------------------------------------------------------------
+
 
 class TestRunningAverage:
     def test_raises_for_window_zero(self):
@@ -152,6 +157,7 @@ class TestRunningAverage:
 # OntologyOptimizer.score_quartiles
 # ---------------------------------------------------------------------------
 
+
 class TestScoreQuartiles:
     def test_empty_returns_zeros(self):
         opt = _make_optimizer()
@@ -185,6 +191,7 @@ class TestScoreQuartiles:
 # OntologyOptimizer.score_iqr
 # ---------------------------------------------------------------------------
 
+
 class TestScoreIQR:
     def test_empty_returns_zero(self):
         opt = _make_optimizer()
@@ -208,6 +215,7 @@ class TestScoreIQR:
 # ---------------------------------------------------------------------------
 # LogicValidator.all_entity_ids
 # ---------------------------------------------------------------------------
+
 
 class TestAllEntityIds:
     def test_empty(self):
@@ -234,6 +242,7 @@ class TestAllEntityIds:
 # LogicValidator.all_relationship_ids
 # ---------------------------------------------------------------------------
 
+
 class TestAllRelationshipIds:
     def test_empty(self):
         v = _make_validator()
@@ -253,6 +262,7 @@ class TestAllRelationshipIds:
 # ---------------------------------------------------------------------------
 # LogicValidator.entity_type_set
 # ---------------------------------------------------------------------------
+
 
 class TestEntityTypeSet:
     def test_empty(self):
@@ -280,6 +290,7 @@ class TestEntityTypeSet:
 # ---------------------------------------------------------------------------
 # LogicValidator.dangling_references
 # ---------------------------------------------------------------------------
+
 
 class TestDanglingReferences:
     def test_no_dangling(self):

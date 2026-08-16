@@ -19,7 +19,7 @@ from .workflow_tools import (
     calculate_peer_distance,
     get_workflow_tags,
     merge_merkle_clock,
-    get_assigned_workflows
+    get_assigned_workflows,
 )
 
 from .enhanced_workflow_tools import (
@@ -45,5 +45,5 @@ __all__ = [
     "calculate_peer_distance",
     "get_workflow_tags",
     "merge_merkle_clock",
-    "get_assigned_workflows"
+    "get_assigned_workflows",
 ]

@@ -7,6 +7,7 @@ Methods under test:
   - OntologyGenerator.confidence_histogram(result, bins)
   - OntologyGenerator.mean_confidence(result)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -15,8 +16,10 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -35,21 +38,29 @@ def _push_opt(opt, avg, trend="stable"):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_result(*confidences):
-    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity, EntityExtractionResult
+    from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
+        Entity,
+        EntityExtractionResult,
+    )
+
     entities = [
         Entity(id=f"e{i}", type="TYPE", text=f"e{i}", properties={}, confidence=c)
         for i, c in enumerate(confidences)
     ]
-    return EntityExtractionResult(entities=entities, relationships=[], confidence=0.5, metadata={}, errors=[])
+    return EntityExtractionResult(
+        entities=entities, relationships=[], confidence=0.5, metadata={}, errors=[]
+    )
 
 
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.top_k_history
 # ---------------------------------------------------------------------------
+
 
 class TestTopKHistory:
     @pytest.mark.parametrize(
@@ -74,6 +85,7 @@ class TestTopKHistory:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.history_score_std
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryScoreStd:
     @pytest.mark.parametrize(
@@ -103,6 +115,7 @@ class TestHistoryScoreStd:
 # OntologyOptimizer.count_entries_with_trend
 # ---------------------------------------------------------------------------
 
+
 class TestCountEntriesWithTrend:
     @pytest.mark.parametrize(
         "entries,trend,expected",
@@ -129,6 +142,7 @@ class TestCountEntriesWithTrend:
 # OntologyGenerator.confidence_histogram
 # ---------------------------------------------------------------------------
 
+
 class TestConfidenceHistogram:
     @pytest.mark.parametrize(
         "confidences,bins,expected_total,expected_buckets",
@@ -138,7 +152,9 @@ class TestConfidenceHistogram:
             ([0.1, 0.3, 0.7, 0.95], 4, 4, 4),
         ],
     )
-    def test_confidence_histogram_scenarios(self, confidences, bins, expected_total, expected_buckets):
+    def test_confidence_histogram_scenarios(
+        self, confidences, bins, expected_total, expected_buckets
+    ):
         g = _make_generator()
         r = _make_result(*confidences)
         hist = g.confidence_histogram(r, bins=bins)
@@ -157,6 +173,7 @@ class TestConfidenceHistogram:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.mean_confidence
 # ---------------------------------------------------------------------------
+
 
 class TestMeanConfidence:
     @pytest.mark.parametrize(

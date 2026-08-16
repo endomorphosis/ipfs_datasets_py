@@ -33,11 +33,7 @@ DEFAULT_REVISION = INSPECTED_SKILLCENTER_PILOT_REVISION
 
 def _data_home() -> Path:
     configured = str(os.environ.get("XDG_DATA_HOME") or "").strip()
-    return (
-        Path(configured).expanduser()
-        if configured
-        else Path("~/.local/share").expanduser()
-    )
+    return Path(configured).expanduser() if configured else Path("~/.local/share").expanduser()
 
 
 def _defaults(revision: str) -> dict[str, Path]:
@@ -45,42 +41,17 @@ def _defaults(revision: str) -> dict[str, Path]:
     return {
         "bm25": base / "skillcenter-bm25" / revision / "full-cid",
         "corpus": base / "skillcenter-corpus" / revision / "full",
-        "graph": (
-            base
-            / "skillcenter-graphrag"
-            / revision
-            / "full-cid-bm25"
-        ),
-        "output": (
-            base
-            / "skillcenter-huggingface"
-            / revision
-            / "full-cid-zstd"
-        ),
+        "graph": (base / "skillcenter-graphrag" / revision / "full-cid-bm25"),
+        "output": (base / "skillcenter-huggingface" / revision / "full-cid-zstd"),
         "centroid_output": (
-            base
-            / "skillcenter-huggingface"
-            / revision
-            / "full-cid-zstd-centroid-v2"
+            base / "skillcenter-huggingface" / revision / "full-cid-zstd-centroid-v2"
         ),
-        "graph_output": (
-            base
-            / "skillcenter-huggingface"
-            / revision
-            / "full-cid-zstd-graph-v3"
-        ),
+        "graph_output": (base / "skillcenter-huggingface" / revision / "full-cid-zstd-graph-v3"),
         "publicus_output": (
-            base
-            / "skillcenter-huggingface"
-            / revision
-            / "publicus-skillcenter-ir"
+            base / "skillcenter-huggingface" / revision / "publicus-skillcenter-ir"
         ),
         "vectors": (
-            base
-            / "skillcenter-vectors"
-            / revision
-            / "full-cid"
-            / "thenlper-gte-small-cuda"
+            base / "skillcenter-vectors" / revision / "full-cid" / "thenlper-gte-small-cuda"
         ),
     }
 
@@ -129,20 +100,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--query-script",
         type=Path,
-        default=(
-            REPOSITORY_ROOT
-            / "scripts"
-            / "ops"
-            / "intent_ir"
-            / "query_skillcenter_hf.py"
-        ),
+        default=(REPOSITORY_ROOT / "scripts" / "ops" / "intent_ir" / "query_skillcenter_hf.py"),
     )
     parser.add_argument(
         "--skill-dir",
         type=Path,
-        default=(
-            REPOSITORY_ROOT / "skills" / "query-skillcenter-hf"
-        ),
+        default=(REPOSITORY_ROOT / "skills" / "query-skillcenter-hf"),
     )
     parser.add_argument(
         "--semantic-traversal-module",
@@ -182,8 +145,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         > 1
     ):
         raise SystemExit(
-            "--rebalance-from, --graph-navigation-from, and --retarget-from "
-            "are mutually exclusive"
+            "--rebalance-from, --graph-navigation-from, and --retarget-from are mutually exclusive"
         )
     defaults = _defaults(args.revision)
     output_dir = args.output_dir or (

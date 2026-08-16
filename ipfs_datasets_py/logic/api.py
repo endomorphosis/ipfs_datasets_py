@@ -21,28 +21,28 @@ import warnings
 # hints in some submodules. The superproject enforces that Quick Start imports
 # are quiet, even under ``warnings.simplefilter('always')``.
 try:  # pragma: no cover
-	from beartype.roar import BeartypeDecorHintPep585DeprecationWarning  # type: ignore
+    from beartype.roar import BeartypeDecorHintPep585DeprecationWarning  # type: ignore
 except Exception:  # pragma: no cover
-	BeartypeDecorHintPep585DeprecationWarning = None  # type: ignore
+    BeartypeDecorHintPep585DeprecationWarning = None  # type: ignore
 
 if BeartypeDecorHintPep585DeprecationWarning is not None:
-	warnings.filterwarnings(
-		"ignore",
-		category=BeartypeDecorHintPep585DeprecationWarning,  # type: ignore[arg-type]
-	)
+    warnings.filterwarnings(
+        "ignore",
+        category=BeartypeDecorHintPep585DeprecationWarning,  # type: ignore[arg-type]
+    )
 
 from typing import Any, Optional
 
 # Lightweight topology/introspection helpers
 from .submodule_registry import (
-	LogicSubmoduleSpec,
-	logic_integration_manifest,
-	logic_optimizer_scope_for_component,
-	logic_optimizer_target_file_hints,
-	logic_submodule_import_report,
-	logic_submodule_names,
-	logic_submodule_spec,
-	logic_submodule_specs,
+    LogicSubmoduleSpec,
+    logic_integration_manifest,
+    logic_optimizer_scope_for_component,
+    logic_optimizer_target_file_hints,
+    logic_submodule_import_report,
+    logic_submodule_names,
+    logic_submodule_spec,
+    logic_submodule_specs,
 )
 
 # Core converters
@@ -51,131 +51,132 @@ from .deontic import DeonticConverter, convert_legal_text_to_deontic
 
 # Common primitives (errors, base converter abstractions, caches)
 from .common import (
-	LogicError,
-	ConversionError,
-	ValidationError,
-	ProofError,
-	TranslationError,
-	BridgeError,
-	ConfigurationError,
-	DeonticError,
-	ModalError,
-	TemporalError,
-	LogicConverter,
-	ChainedConverter,
-	ConversionResult,
-	ConversionStatus,
-	ValidationResult,
-	UtilityMonitor,
-	track_performance,
-	with_caching,
-	get_global_stats,
-	clear_global_cache,
-	reset_global_stats,
-	BoundedCache,
-	ProofCache,
-	CachedProofResult,
-	get_global_cache,
+    LogicError,
+    ConversionError,
+    ValidationError,
+    ProofError,
+    TranslationError,
+    BridgeError,
+    ConfigurationError,
+    DeonticError,
+    ModalError,
+    TemporalError,
+    LogicConverter,
+    ChainedConverter,
+    ConversionResult,
+    ConversionStatus,
+    ValidationResult,
+    UtilityMonitor,
+    track_performance,
+    with_caching,
+    get_global_stats,
+    clear_global_cache,
+    reset_global_stats,
+    BoundedCache,
+    ProofCache,
+    CachedProofResult,
+    get_global_cache,
 )
 
 # Shared types. Import leaf modules directly so the stable API surface does not
 # trigger compatibility shims in ``logic.types.__init__`` that load the heavier
 # integration namespace.
 from .types.deontic_types import (
-	DeonticOperator,
-	DeonticFormula,
-	DeonticRuleSet,
-	LegalAgent,
-	LegalContext,
-	TemporalCondition,
-	TemporalOperator,
+    DeonticOperator,
+    DeonticFormula,
+    DeonticRuleSet,
+    LegalAgent,
+    LegalContext,
+    TemporalCondition,
+    TemporalOperator,
 )
 from .types.proof_types import (
-	ProofStatus,
-	ProofResult,
-	ProofStep,
+    ProofStatus,
+    ProofResult,
+    ProofStep,
 )
 from .types.translation_types import (
-	LogicTranslationTarget,
-	TranslationResult,
-	AbstractLogicFormula,
+    LogicTranslationTarget,
+    TranslationResult,
+    AbstractLogicFormula,
 )
 from .TDFOL.tdfol_core import (
-	Formula,
-	Predicate,
-	Variable,
-	Constant,
-	create_conjunction,
-	create_disjunction,
-	create_existential,
-	create_implication,
-	create_negation,
-	create_universal,
+    Formula,
+    Predicate,
+    Variable,
+    Constant,
+    create_conjunction,
+    create_disjunction,
+    create_existential,
+    create_implication,
+    create_negation,
+    create_universal,
 )
 from .types.common_types import (
-	LogicOperator,
-	Quantifier,
-	FormulaType,
-	ConfidenceScore,
-	ComplexityScore,
-	ComplexityMetrics,
-	Prover,
-	Converter,
+    LogicOperator,
+    Quantifier,
+    FormulaType,
+    ConfidenceScore,
+    ComplexityScore,
+    ComplexityMetrics,
+    Prover,
+    Converter,
 )
 from .types.bridge_types import (
-	BridgeCapability,
-	BridgeMetadata,
-	BridgeConfig,
-	ProverRecommendation,
+    BridgeCapability,
+    BridgeMetadata,
+    BridgeConfig,
+    ProverRecommendation,
 )
 from .bridge import (
-	BridgeEvaluationReport,
-	GraphProjectionResult,
-	LegalIRDocument,
-	LegalIRTrainingTarget,
-	LogicBridgeSpec,
-	LogicIRView,
-	MultiViewLegalIRReport,
-	ProofGateResult,
-	RoundTripMetrics,
-	bridge_name_for_component,
-	evaluate_legal_ir_multiview,
-	load_logic_bridge_adapter,
-	logic_bridge_manifest,
-	logic_bridge_spec,
-	logic_bridge_specs,
+    BridgeEvaluationReport,
+    GraphProjectionResult,
+    LegalIRDocument,
+    LegalIRTrainingTarget,
+    LogicBridgeSpec,
+    LogicIRView,
+    MultiViewLegalIRReport,
+    ProofGateResult,
+    RoundTripMetrics,
+    bridge_name_for_component,
+    evaluate_legal_ir_multiview,
+    load_logic_bridge_adapter,
+    logic_bridge_manifest,
+    logic_bridge_spec,
+    logic_bridge_specs,
 )
 from .types.fol_types import (
-	FOLOutputFormat,
-	PredicateCategory,
-	FOLFormula,
-	FOLConversionResult,
-	PredicateExtraction,
+    FOLOutputFormat,
+    PredicateCategory,
+    FOLFormula,
+    FOLConversionResult,
+    PredicateExtraction,
 )
 
 
 def And(left: Formula, right: Formula) -> Formula:
-	return create_conjunction(left, right)
+    return create_conjunction(left, right)
 
 
 def Or(left: Formula, right: Formula) -> Formula:
-	return create_disjunction(left, right)
+    return create_disjunction(left, right)
 
 
 def Not(formula: Formula) -> Formula:
-	return create_negation(formula)
+    return create_negation(formula)
 
 
 def Implies(antecedent: Formula, consequent: Formula) -> Formula:
-	return create_implication(antecedent, consequent)
+    return create_implication(antecedent, consequent)
 
 
 def Forall(variable: Variable, formula: Formula) -> Formula:
-	return create_universal(variable, formula)
+    return create_universal(variable, formula)
 
 
 def Exists(variable: Variable, formula: Formula) -> Formula:
-	return create_existential(variable, formula)
+    return create_existential(variable, formula)
+
 
 # ── NL→UCAN deontic policy pipeline (lazy imports, no hard dependency) ────────
 # These are available when the CEC/nl and integration sub-packages are present.
@@ -184,57 +185,59 @@ def Exists(variable: Variable, formula: Formula) -> Formula:
 
 
 def _lazy_nl_ucan():
-	"""Return the NL-UCAN pipeline symbols as a namespace, or None on import error."""
-	try:
-		from .CEC.nl.nl_to_policy_compiler import NLToDCECCompiler, compile_nl_to_policy  # type: ignore[import-not-found]
-		from .CEC.nl.dcec_to_ucan_bridge import DCECToUCANBridge  # type: ignore[import-not-found]
-		from .CEC.nl.grammar_nl_policy_compiler import GrammarNLPolicyCompiler  # type: ignore[import-not-found]
-		from .integration.nl_ucan_policy_compiler import NLUCANPolicyCompiler  # type: ignore[import-not-found]
-		from .integration.ucan_policy_bridge import (  # type: ignore[import-not-found]
-			UCANPolicyBridge,
-			SignedPolicyResult,
-			BridgeCompileResult,
-			BridgeEvaluationResult,
-		)
-		return dict(
-			NLToDCECCompiler=NLToDCECCompiler,
-			compile_nl_to_policy=compile_nl_to_policy,
-			DCECToUCANBridge=DCECToUCANBridge,
-			GrammarNLPolicyCompiler=GrammarNLPolicyCompiler,
-			NLUCANPolicyCompiler=NLUCANPolicyCompiler,
-			UCANPolicyBridge=UCANPolicyBridge,
-			SignedPolicyResult=SignedPolicyResult,
-			BridgeCompileResult=BridgeCompileResult,
-			BridgeEvaluationResult=BridgeEvaluationResult,
-		)
-	except Exception:
-		return None
+    """Return the NL-UCAN pipeline symbols as a namespace, or None on import error."""
+    try:
+        from .CEC.nl.nl_to_policy_compiler import NLToDCECCompiler, compile_nl_to_policy  # type: ignore[import-not-found]
+        from .CEC.nl.dcec_to_ucan_bridge import DCECToUCANBridge  # type: ignore[import-not-found]
+        from .CEC.nl.grammar_nl_policy_compiler import GrammarNLPolicyCompiler  # type: ignore[import-not-found]
+        from .integration.nl_ucan_policy_compiler import NLUCANPolicyCompiler  # type: ignore[import-not-found]
+        from .integration.ucan_policy_bridge import (  # type: ignore[import-not-found]
+            UCANPolicyBridge,
+            SignedPolicyResult,
+            BridgeCompileResult,
+            BridgeEvaluationResult,
+        )
+
+        return dict(
+            NLToDCECCompiler=NLToDCECCompiler,
+            compile_nl_to_policy=compile_nl_to_policy,
+            DCECToUCANBridge=DCECToUCANBridge,
+            GrammarNLPolicyCompiler=GrammarNLPolicyCompiler,
+            NLUCANPolicyCompiler=NLUCANPolicyCompiler,
+            UCANPolicyBridge=UCANPolicyBridge,
+            SignedPolicyResult=SignedPolicyResult,
+            BridgeCompileResult=BridgeCompileResult,
+            BridgeEvaluationResult=BridgeEvaluationResult,
+        )
+    except Exception:
+        return None
 
 
 def _api_compile_nl_to_policy(text: str, **kw) -> Any:  # type: ignore[return]
-	"""Compile *text* to a :class:`PolicyObject` via the NL→UCAN pipeline."""
-	ns = _lazy_nl_ucan()
-	if ns is None:
-		raise ImportError(
-			"NL→UCAN pipeline is not available.  Ensure the logic/CEC and "
-			"logic/integration sub-packages are importable."
-		)
-	return ns["compile_nl_to_policy"](text, **kw)
+    """Compile *text* to a :class:`PolicyObject` via the NL→UCAN pipeline."""
+    ns = _lazy_nl_ucan()
+    if ns is None:
+        raise ImportError(
+            "NL→UCAN pipeline is not available.  Ensure the logic/CEC and "
+            "logic/integration sub-packages are importable."
+        )
+    return ns["compile_nl_to_policy"](text, **kw)
 
 
 def _api_evaluate_nl_policy(nl_text: str, *, tool: str, actor: Optional[str] = None, **kw) -> Any:  # type: ignore[return]
-	"""Compile *nl_text* and evaluate it against *tool*/*actor*."""
-	from .integration.ucan_policy_bridge import compile_and_evaluate as _ce  # type: ignore[import-not-found]
-	return _ce(nl_text, tool=tool, actor=actor, **kw)
+    """Compile *nl_text* and evaluate it against *tool*/*actor*."""
+    from .integration.ucan_policy_bridge import compile_and_evaluate as _ce  # type: ignore[import-not-found]
+
+    return _ce(nl_text, tool=tool, actor=actor, **kw)
 
 
 async def _api_build_signed_delegation(nl_text: str, *, audience_did: str, **kw) -> Any:  # type: ignore[return]
-	"""Compile *nl_text* and sign the resulting delegation tokens (Phase 2b)."""
-	ns = _lazy_nl_ucan()
-	if ns is None:
-		raise ImportError("NL→UCAN pipeline is not available.")
-	bridge = ns["UCANPolicyBridge"]()
-	return await bridge.compile_and_sign(nl_text, audience_did=audience_did, **kw)
+    """Compile *nl_text* and sign the resulting delegation tokens (Phase 2b)."""
+    ns = _lazy_nl_ucan()
+    if ns is None:
+        raise ImportError("NL→UCAN pipeline is not available.")
+    bridge = ns["UCANPolicyBridge"]()
+    return await bridge.compile_and_sign(nl_text, audience_did=audience_did, **kw)
 
 
 # Public aliases that appear in __all__
@@ -243,21 +246,22 @@ evaluate_nl_policy = _api_evaluate_nl_policy
 build_signed_delegation = _api_build_signed_delegation
 
 _NL_UCAN_EXPORT_NAMES = {
-	"NLToDCECCompiler",
-	"DCECToUCANBridge",
-	"GrammarNLPolicyCompiler",
-	"NLUCANPolicyCompiler",
-	"UCANPolicyBridge",
-	"SignedPolicyResult",
-	"BridgeCompileResult",
-	"BridgeEvaluationResult",
+    "NLToDCECCompiler",
+    "DCECToUCANBridge",
+    "GrammarNLPolicyCompiler",
+    "NLUCANPolicyCompiler",
+    "UCANPolicyBridge",
+    "SignedPolicyResult",
+    "BridgeCompileResult",
+    "BridgeEvaluationResult",
 }
 
 # BW133: Populate UCAN delegation + conflict detector into namespace (best-effort)
 # These are imported lazily (via __getattr__) to keep logic.api lightweight.
 _BW133_DELEGATION_AVAILABLE = None  # None = not yet probed
-_BW133_CONFLICT_AVAILABLE = None    # None = not yet probed
-_CD140_I18N_AVAILABLE = None        # None = not yet probed
+_BW133_CONFLICT_AVAILABLE = None  # None = not yet probed
+_CD140_I18N_AVAILABLE = None  # None = not yet probed
+
 
 def _probe_bw133_delegation():
     global _BW133_DELEGATION_AVAILABLE, DelegationManager, get_delegation_manager  # noqa: PLW0603
@@ -265,6 +269,7 @@ def _probe_bw133_delegation():
         return _BW133_DELEGATION_AVAILABLE
     try:
         import warnings as _dw
+
         with _dw.catch_warnings():
             _dw.simplefilter("ignore")
             from ipfs_datasets_py.mcp_server.ucan_delegation import (  # type: ignore[import-not-found]
@@ -278,12 +283,14 @@ def _probe_bw133_delegation():
         _BW133_DELEGATION_AVAILABLE = False
     return _BW133_DELEGATION_AVAILABLE
 
+
 def _probe_bw133_conflict():
     global _BW133_CONFLICT_AVAILABLE, _CD140_I18N_AVAILABLE  # noqa: PLW0603
     if _BW133_CONFLICT_AVAILABLE is not None:
         return _BW133_CONFLICT_AVAILABLE
     try:
         import warnings as _cw
+
         with _cw.catch_warnings():
             _cw.simplefilter("ignore")
             from .CEC.nl.nl_policy_conflict_detector import (  # type: ignore[import-not-found]
@@ -291,7 +298,7 @@ def _probe_bw133_conflict():
                 PolicyConflict as _PC,
                 detect_conflicts as _DC,
                 detect_i18n_conflicts as _DIC,  # CB138
-                I18NConflictResult as _ICR,     # CB138
+                I18NConflictResult as _ICR,  # CB138
             )
         globals()["NLPolicyConflictDetector"] = _NLPCD
         globals()["PolicyConflict"] = _PC
@@ -305,132 +312,134 @@ def _probe_bw133_conflict():
         _CD140_I18N_AVAILABLE = False
     return _BW133_CONFLICT_AVAILABLE
 
+
 __all__ = [
-	# FOL
-	"FOLConverter",
-	"convert_text_to_fol",
-	# Deontic
-	"DeonticConverter",
-	"convert_legal_text_to_deontic",
-	# Common errors
-	"LogicError",
-	"ConversionError",
-	"ValidationError",
-	"ProofError",
-	"TranslationError",
-	"BridgeError",
-	"ConfigurationError",
-	"DeonticError",
-	"ModalError",
-	"TemporalError",
-	# Common converter abstractions
-	"LogicConverter",
-	"ChainedConverter",
-	"ConversionResult",
-	"ConversionStatus",
-	"ValidationResult",
-	# Monitoring
-	"UtilityMonitor",
-	"track_performance",
-	"with_caching",
-	"get_global_stats",
-	"clear_global_cache",
-	"reset_global_stats",
-	# Caching
-	"BoundedCache",
-	"ProofCache",
-	"CachedProofResult",
-	"get_global_cache",
-	# Types (selection)
-	"DeonticOperator",
-	"DeonticFormula",
-	"DeonticRuleSet",
-	"LegalAgent",
-	"LegalContext",
-	"TemporalCondition",
-	"TemporalOperator",
-	"ProofStatus",
-	"ProofResult",
-	"ProofStep",
-	"LogicTranslationTarget",
-	"TranslationResult",
-	"AbstractLogicFormula",
-	"Formula",
-	"Predicate",
-	"Variable",
-	"Constant",
-	"And",
-	"Or",
-	"Not",
-	"Implies",
-	"Forall",
-	"Exists",
-	"LogicOperator",
-	"Quantifier",
-	"FormulaType",
-	"ConfidenceScore",
-	"ComplexityScore",
-	"ComplexityMetrics",
-	"Prover",
-	"Converter",
-	"BridgeCapability",
-	"BridgeMetadata",
-	"BridgeConfig",
-	"ProverRecommendation",
-	"BridgeEvaluationReport",
-	"GraphProjectionResult",
-	"LegalIRDocument",
-	"LegalIRTrainingTarget",
-	"LogicBridgeSpec",
-	"LogicIRView",
-	"MultiViewLegalIRReport",
-	"ProofGateResult",
-	"RoundTripMetrics",
-	"bridge_name_for_component",
-	"evaluate_legal_ir_multiview",
-	"load_logic_bridge_adapter",
-	"logic_bridge_manifest",
-	"logic_bridge_spec",
-	"logic_bridge_specs",
-	"FOLOutputFormat",
-	"PredicateCategory",
-	"FOLFormula",
-	"FOLConversionResult",
-	"PredicateExtraction",
-	# Logic submodule topology
-	"LogicSubmoduleSpec",
-	"logic_integration_manifest",
-	"logic_optimizer_scope_for_component",
-	"logic_optimizer_target_file_hints",
-	"logic_submodule_import_report",
-	"logic_submodule_names",
-	"logic_submodule_spec",
-	"logic_submodule_specs",
-	# NL→UCAN policy pipeline (Phase 1-3)
-	"compile_nl_to_policy",
-	"evaluate_nl_policy",
-	"build_signed_delegation",
-	"NLToDCECCompiler",
-	"DCECToUCANBridge",
-	"NLUCANPolicyCompiler",
-	"GrammarNLPolicyCompiler",
-	"UCANPolicyBridge",
-	"SignedPolicyResult",
-	"BridgeCompileResult",
-	"BridgeEvaluationResult",
+    # FOL
+    "FOLConverter",
+    "convert_text_to_fol",
+    # Deontic
+    "DeonticConverter",
+    "convert_legal_text_to_deontic",
+    # Common errors
+    "LogicError",
+    "ConversionError",
+    "ValidationError",
+    "ProofError",
+    "TranslationError",
+    "BridgeError",
+    "ConfigurationError",
+    "DeonticError",
+    "ModalError",
+    "TemporalError",
+    # Common converter abstractions
+    "LogicConverter",
+    "ChainedConverter",
+    "ConversionResult",
+    "ConversionStatus",
+    "ValidationResult",
+    # Monitoring
+    "UtilityMonitor",
+    "track_performance",
+    "with_caching",
+    "get_global_stats",
+    "clear_global_cache",
+    "reset_global_stats",
+    # Caching
+    "BoundedCache",
+    "ProofCache",
+    "CachedProofResult",
+    "get_global_cache",
+    # Types (selection)
+    "DeonticOperator",
+    "DeonticFormula",
+    "DeonticRuleSet",
+    "LegalAgent",
+    "LegalContext",
+    "TemporalCondition",
+    "TemporalOperator",
+    "ProofStatus",
+    "ProofResult",
+    "ProofStep",
+    "LogicTranslationTarget",
+    "TranslationResult",
+    "AbstractLogicFormula",
+    "Formula",
+    "Predicate",
+    "Variable",
+    "Constant",
+    "And",
+    "Or",
+    "Not",
+    "Implies",
+    "Forall",
+    "Exists",
+    "LogicOperator",
+    "Quantifier",
+    "FormulaType",
+    "ConfidenceScore",
+    "ComplexityScore",
+    "ComplexityMetrics",
+    "Prover",
+    "Converter",
+    "BridgeCapability",
+    "BridgeMetadata",
+    "BridgeConfig",
+    "ProverRecommendation",
+    "BridgeEvaluationReport",
+    "GraphProjectionResult",
+    "LegalIRDocument",
+    "LegalIRTrainingTarget",
+    "LogicBridgeSpec",
+    "LogicIRView",
+    "MultiViewLegalIRReport",
+    "ProofGateResult",
+    "RoundTripMetrics",
+    "bridge_name_for_component",
+    "evaluate_legal_ir_multiview",
+    "load_logic_bridge_adapter",
+    "logic_bridge_manifest",
+    "logic_bridge_spec",
+    "logic_bridge_specs",
+    "FOLOutputFormat",
+    "PredicateCategory",
+    "FOLFormula",
+    "FOLConversionResult",
+    "PredicateExtraction",
+    # Logic submodule topology
+    "LogicSubmoduleSpec",
+    "logic_integration_manifest",
+    "logic_optimizer_scope_for_component",
+    "logic_optimizer_target_file_hints",
+    "logic_submodule_import_report",
+    "logic_submodule_names",
+    "logic_submodule_spec",
+    "logic_submodule_specs",
+    # NL→UCAN policy pipeline (Phase 1-3)
+    "compile_nl_to_policy",
+    "evaluate_nl_policy",
+    "build_signed_delegation",
+    "NLToDCECCompiler",
+    "DCECToUCANBridge",
+    "NLUCANPolicyCompiler",
+    "GrammarNLPolicyCompiler",
+    "UCANPolicyBridge",
+    "SignedPolicyResult",
+    "BridgeCompileResult",
+    "BridgeEvaluationResult",
 ]
 # BW133: conditionally extend __all__ with symbols that loaded successfully
 if _BW133_DELEGATION_AVAILABLE:
-	__all__ += ["DelegationManager", "get_delegation_manager"]
+    __all__ += ["DelegationManager", "get_delegation_manager"]
 if _BW133_CONFLICT_AVAILABLE:
-	__all__ += ["NLPolicyConflictDetector", "PolicyConflict", "detect_conflicts"]
+    __all__ += ["NLPolicyConflictDetector", "PolicyConflict", "detect_conflicts"]
 # CD140: i18n conflict symbols
 if _CD140_I18N_AVAILABLE:
-	__all__ += ["detect_i18n_conflicts", "I18NConflictResult"]
+    __all__ += ["detect_i18n_conflicts", "I18NConflictResult"]
 
 # ---------------------------------------------------------------------------
 # CN150: evaluate_with_manager convenience wrapper
 # ---------------------------------------------------------------------------
+
 
 def evaluate_with_manager(
     policy_cid: str,
@@ -468,6 +477,7 @@ def evaluate_with_manager(
     """
     try:
         from ipfs_datasets_py.logic.integration.ucan_policy_bridge import get_ucan_policy_bridge
+
         bridge = get_ucan_policy_bridge()
         return bridge.evaluate_audited_with_manager(
             policy_cid,
@@ -480,6 +490,7 @@ def evaluate_with_manager(
         )
     except (ImportError, ModuleNotFoundError, AttributeError) as exc:
         import logging as _logging
+
         _logging.getLogger(__name__).debug("evaluate_with_manager: unavailable: %s", exc)
         return None
 
@@ -492,6 +503,7 @@ try:
     from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (  # noqa: F401
         detect_i18n_clauses,
     )
+
     __all__ += ["detect_i18n_clauses"]
 except (ImportError, ModuleNotFoundError):
     pass
@@ -533,8 +545,7 @@ class I18NConflictReport:
     def to_dict(self) -> Any:
         """Return a plain-dict representation suitable for JSON serialisation."""
         return {
-            lang: [c.to_dict() for c in conflicts]
-            for lang, conflicts in self.by_language.items()
+            lang: [c.to_dict() for c in conflicts] for lang, conflicts in self.by_language.items()
         }
 
     def most_conflicted_language(self) -> Optional[str]:
@@ -615,10 +626,7 @@ class I18NConflictReport:
             Sorted list of ISO 639-1 language codes whose conflict count
             exceeds *n*.  Empty when no language exceeds the threshold.
         """
-        return sorted(
-            lang for lang, conflicts in self.by_language.items()
-            if len(conflicts) > n
-        )
+        return sorted(lang for lang, conflicts in self.by_language.items() if len(conflicts) > n)
 
 
 def detect_all_languages(text: str) -> "I18NConflictReport":
@@ -649,12 +657,34 @@ def detect_all_languages(text: str) -> "I18NConflictReport":
         Report with per-language conflict lists (empty list when no conflict
         or when the parser module is unavailable).
     """
-    _SUPPORTED_LANGS = ("fr", "es", "de", "en", "pt", "nl", "it", "ja", "zh", "ko", "ar", "sv", "ru", "el", "tr", "hi", "pl", "vi", "th", "id")  # FK225/FL226/FU235/FV236/GA241/GB242/GC243/GL252/GM253/GV262/GW263
+    _SUPPORTED_LANGS = (
+        "fr",
+        "es",
+        "de",
+        "en",
+        "pt",
+        "nl",
+        "it",
+        "ja",
+        "zh",
+        "ko",
+        "ar",
+        "sv",
+        "ru",
+        "el",
+        "tr",
+        "hi",
+        "pl",
+        "vi",
+        "th",
+        "id",
+    )  # FK225/FL226/FU235/FV236/GA241/GB242/GC243/GL252/GM253/GV262/GW263
     report = I18NConflictReport()
     try:
         from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (  # noqa: F401
             detect_i18n_clauses as _detect_i18n_clauses,
         )
+
         _available = True
     except (ImportError, ModuleNotFoundError):
         _available = False
@@ -672,9 +702,12 @@ def detect_all_languages(text: str) -> "I18NConflictReport":
 # CT156: extend __all__
 __all__ += ["I18NConflictReport", "detect_all_languages"]
 
+
 # DW185: compile_explain_iter re-export. Import the compiler only when called
 # so importing ``logic.api`` stays lightweight.
-def compile_explain_iter(sentences: _List[str], policy_id: Optional[str] = None, max_lines: Optional[int] = None):  # type: ignore[misc]
+def compile_explain_iter(
+    sentences: _List[str], policy_id: Optional[str] = None, max_lines: Optional[int] = None
+):  # type: ignore[misc]
     """Module-level wrapper for :meth:`NLUCANPolicyCompiler.compile_explain_iter`."""
     from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (  # type: ignore[import-not-found]
         NLUCANPolicyCompiler as _NLUCANPolicyCompiler_dw185,
@@ -689,9 +722,13 @@ __all__ += ["compile_explain_iter"]
 
 _BW133_LAZY_NAMES = {"DelegationManager", "get_delegation_manager"}
 _BW133_CONFLICT_LAZY_NAMES = {
-    "NLPolicyConflictDetector", "PolicyConflict", "detect_conflicts",
-    "detect_i18n_conflicts", "I18NConflictResult",
+    "NLPolicyConflictDetector",
+    "PolicyConflict",
+    "detect_conflicts",
+    "detect_i18n_conflicts",
+    "I18NConflictResult",
 }
+
 
 def __getattr__(name: str) -> Any:
     """Lazily expose optional API classes without import-time side effects."""

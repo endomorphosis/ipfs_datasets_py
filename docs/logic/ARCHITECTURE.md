@@ -350,6 +350,7 @@ def extract_predicates(text, use_nlp=True):
 ```python
 _global_cache = None
 
+
 def get_global_cache():
     global _global_cache
     if _global_cache is None:
@@ -496,7 +497,7 @@ def custom_predicate_extractor(text):
     """Add domain-specific extraction."""
     predicates = {
         "nouns": [...],
-        "custom_category": [...]  # Your category
+        "custom_category": [...],  # Your category
     }
     return predicates
 ```
@@ -655,7 +656,7 @@ USE_NLP = True  # If spaCy available
 ```python
 # Monitor cache performance
 stats = cache.get_statistics()
-if stats['hit_rate'] < 0.5:
+if stats["hit_rate"] < 0.5:
     logger.warning("Low cache hit rate")
 
 # Monitor throughput

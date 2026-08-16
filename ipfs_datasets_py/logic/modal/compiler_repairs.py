@@ -31,7 +31,9 @@ _ROLE_RE = re.compile(
     r"within|until|no\s+later\s+than|not\s+later\s+than)\b|[.;]|$)",
     re.IGNORECASE,
 )
-_RECIPIENT_RE = re.compile(r"\b(?:to|for)\s+(?:the\s+|an?\s+)?(?P<value>[A-Za-z][A-Za-z -]{1,48})$", re.I)
+_RECIPIENT_RE = re.compile(
+    r"\b(?:to|for)\s+(?:the\s+|an?\s+)?(?P<value>[A-Za-z][A-Za-z -]{1,48})$", re.I
+)
 _SPACE_RE = re.compile(r"\s+")
 
 
@@ -43,7 +45,12 @@ def compile_exception_precedence(text: str, *, provenance_id: str = "") -> dict[
     for order, match in enumerate(_EXCEPTION_RE.finditer(str(text or "")), start=1):
         cue = _atom(match.group("cue"))
         condition = _semantic_phrase(match.group("body"), fallback="scoped_condition")
-        identity = {"condition": condition, "cue": cue, "order": order, "provenance_ids": provenance_ids}
+        identity = {
+            "condition": condition,
+            "cue": cue,
+            "order": order,
+            "provenance_ids": provenance_ids,
+        }
         exceptions.append(
             {
                 "condition": condition,
@@ -92,7 +99,12 @@ def compile_frame_role_bindings(text: str, *, provenance_id: str = "") -> dict[s
         ):
             if value:
                 bindings.append({"role": role, "value": value, "value_type": value_type})
-    identity = {"bindings": bindings, "modality": modality, "polarity": polarity, "provenance_ids": provenance_ids}
+    identity = {
+        "bindings": bindings,
+        "modality": modality,
+        "polarity": polarity,
+        "provenance_ids": provenance_ids,
+    }
     return {
         "bindings": bindings,
         "frame_id": f"legal-frame:{_digest(identity)[:24]}",
@@ -120,7 +132,9 @@ def _semantic_phrase(value: Any, *, fallback: str) -> str:
 
 
 def _digest(value: Any) -> str:
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+    ).hexdigest()
 
 
 __all__ = [

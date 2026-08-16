@@ -38,9 +38,9 @@ except ImportError:
     DocumentConsistencyChecker = None
 
 __all__ = [
-    'LegalDomainKnowledge',
-    'LegalSymbolicAnalyzer',
-    'DeonticQueryEngine',
-    'TemporalDeonticAPI',
-    'DocumentConsistencyChecker',
+    "LegalDomainKnowledge",
+    "LegalSymbolicAnalyzer",
+    "DeonticQueryEngine",
+    "TemporalDeonticAPI",
+    "DocumentConsistencyChecker",
 ]

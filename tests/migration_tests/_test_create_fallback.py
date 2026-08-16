@@ -10,7 +10,11 @@ from collections import defaultdict
 
 # Import the module
 sys.path.append(os.getcwd())
-from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, GraphRAGQueryStats
+from ipfs_datasets_py.rag.rag_query_optimizer import (
+    UnifiedGraphRAGQueryOptimizer,
+    GraphRAGQueryStats,
+)
+
 
 class TestOptimizer(UnifiedGraphRAGQueryOptimizer):
     """A minimal test optimizer for testing fallback."""
@@ -18,14 +22,16 @@ class TestOptimizer(UnifiedGraphRAGQueryOptimizer):
     def __init__(self):
         # Skip parent initialization
         self._traversal_stats = {
-            'paths_explored': [],
-            'path_scores': {},
-            'entity_frequency': defaultdict(int),
-            'entity_connectivity': {},
-            'relation_usefulness': defaultdict(float)
+            "paths_explored": [],
+            "path_scores": {},
+            "entity_frequency": defaultdict(int),
+            "entity_connectivity": {},
+            "relation_usefulness": defaultdict(float),
         }
 
-    def _create_test_fallback(self, query: Dict[str, Any], error: str = "Test error") -> Dict[str, Any]:
+    def _create_test_fallback(
+        self, query: Dict[str, Any], error: str = "Test error"
+    ) -> Dict[str, Any]:
         """Test the fallback plan creation logic directly."""
         # Create a safe copy of the query with defaults
         fallback_query = query.copy()
@@ -51,15 +57,13 @@ class TestOptimizer(UnifiedGraphRAGQueryOptimizer):
             "weights": {"vector": 0.7, "graph": 0.3},
             "budget": {"vector_search_ms": 500, "graph_traversal_ms": 1000},
             "graph_type": "generic",
-            "statistics": {
-                "fallback": True,
-                "error_handled": True
-            },
+            "statistics": {"fallback": True, "error_handled": True},
             "caching": {"enabled": False},
             "traversal_strategy": "default",
             "fallback": True,
-            "error": error
+            "error": error,
         }
+
 
 def test_create_fallback():
     """Test the fallback plan creation."""
@@ -68,9 +72,9 @@ def test_create_fallback():
 
     # Create a test query
     test_query = {
-        'query_text': 'test query',
-        'query_vector': np.array([0.1, 0.2, 0.3]),
-        'traversal': {'max_depth': 2}
+        "query_text": "test query",
+        "query_vector": np.array([0.1, 0.2, 0.3]),
+        "traversal": {"max_depth": 2},
     }
 
     # Create a fallback plan
@@ -82,7 +86,8 @@ def test_create_fallback():
     print(f"Contains error: {fallback.get('error')}")
     print(f"Keys: {sorted(list(fallback.keys()))}")
 
-    return fallback is not None and fallback.get('fallback', False)
+    return fallback is not None and fallback.get("fallback", False)
+
 
 if __name__ == "__main__":
     # Run the test

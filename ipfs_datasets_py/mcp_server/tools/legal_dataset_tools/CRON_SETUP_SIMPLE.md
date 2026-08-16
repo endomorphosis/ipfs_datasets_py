@@ -166,19 +166,21 @@ For RECAP Archive, you can use similar patterns but the scraper is already resum
 import asyncio
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_recap_archive
 
+
 async def update_recap():
     # Scrape last 7 days of opinions from key circuits
     result = await scrape_recap_archive(
-        courts=['ca9', 'ca2', 'cadc'],  # 9th, 2nd, DC circuits
-        document_types=['opinion'],
-        filed_after='7_days_ago',  # Helper for relative dates
+        courts=["ca9", "ca2", "cadc"],  # 9th, 2nd, DC circuits
+        document_types=["opinion"],
+        filed_after="7_days_ago",  # Helper for relative dates
         include_text=True,
         max_documents=100,
-        job_id='recap_weekly_update'
+        job_id="recap_weekly_update",
     )
     print(f"Updated {result['metadata']['documents_count']} documents")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     asyncio.run(update_recap())
 ```
 

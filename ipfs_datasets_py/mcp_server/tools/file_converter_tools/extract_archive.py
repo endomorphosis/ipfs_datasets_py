@@ -8,9 +8,7 @@ from ipfs_datasets_py.processors.file_converter.exports import extract_archive_c
 
 
 async def extract_archive_tool(
-    archive_path: str,
-    max_depth: int = 3,
-    recursive: bool = True
+    archive_path: str, max_depth: int = 3, recursive: bool = True
 ) -> dict:
     """
     Extract contents from an archive file.

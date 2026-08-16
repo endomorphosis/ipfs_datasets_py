@@ -60,10 +60,10 @@ Add graceful import handling (try/except)
 Main integration/__init__.py re-exports common classes:
 ```python
 from ipfs_datasets_py.logic.integration import (
-    ProofExecutionEngine,      # ✅ Works
-    DeonticLogicConverter,     # ✅ Works
-    SymbolicFOLBridge,         # ✅ Works
-    TDFOLCECBridge,           # ✅ Works
+    ProofExecutionEngine,  # ✅ Works
+    DeonticLogicConverter,  # ✅ Works
+    SymbolicFOLBridge,  # ✅ Works
+    TDFOLCECBridge,  # ✅ Works
 )
 ```
 
@@ -83,7 +83,7 @@ from ipfs_datasets_py.logic.integration import (
     DeonticLogicConverter,
     SymbolicFOLBridge,
     TDFOLCECBridge,
-    TDFOLGrammarBridge
+    TDFOLGrammarBridge,
 )
 
 # Subdirectory imports

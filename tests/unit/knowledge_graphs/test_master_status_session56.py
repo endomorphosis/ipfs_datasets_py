@@ -31,6 +31,7 @@ import pytest
 # Helpers for execute_ir_operations (matching session24 pattern)
 # ---------------------------------------------------------------------------
 
+
 def _resolve_value(val, params):
     if isinstance(val, dict) and "param" in val:
         return params.get(val["param"], val)
@@ -121,12 +122,38 @@ class TestCrossDocumentZeroNormProof:
         THEN the result is non-empty (confirming pre-check relevance)
         """
         import re
+
         text = "Alice collaborated with Bob on the research project."
-        stop = {"the", "a", "an", "and", "or", "but", "if", "then", "else",
-                "of", "to", "in", "on", "for", "with", "by", "from", "as",
-                "is", "are", "was", "were", "be", "been", "being"}
-        tokens = [t for t in re.findall(r"[a-z0-9]+", text.lower())
-                  if len(t) >= 3 and t not in stop]
+        stop = {
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "if",
+            "then",
+            "else",
+            "of",
+            "to",
+            "in",
+            "on",
+            "for",
+            "with",
+            "by",
+            "from",
+            "as",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+        }
+        tokens = [
+            t for t in re.findall(r"[a-z0-9]+", text.lower()) if len(t) >= 3 and t not in stop
+        ]
         assert len(tokens) > 0, "tokenizer must produce non-empty list for typical text"
 
     def test_zero_norm_only_possible_from_empty_counter(self):
@@ -147,6 +174,7 @@ class TestCrossDocumentZeroNormProof:
             CrossDocumentReasoner,
         )
         from ipfs_datasets_py.knowledge_graphs.reasoning.types import DocumentNode
+
         reasoner = CrossDocumentReasoner()
         doc_a = DocumentNode(
             id="a",
@@ -170,6 +198,7 @@ class TestCrossDocumentZeroNormProof:
             CrossDocumentReasoner,
         )
         from ipfs_datasets_py.knowledge_graphs.reasoning.types import DocumentNode
+
         reasoner = CrossDocumentReasoner()
         doc_a = DocumentNode(id="a", content="the and or in on", source="test")
         doc_b = DocumentNode(id="b", content="is are was were", source="test")
@@ -202,6 +231,7 @@ class TestIRExecutorOrderByStringExpr:
     @pytest.fixture
     def graph_engine(self):
         from ipfs_datasets_py.knowledge_graphs.core.graph_engine import GraphEngine
+
         engine = GraphEngine()
         return engine
 
@@ -210,6 +240,7 @@ class TestIRExecutorOrderByStringExpr:
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import (
             UnifiedQueryEngine,
         )
+
         uqe = UnifiedQueryEngine(graph_engine)
         return dict(
             graph_engine=graph_engine,
@@ -227,6 +258,7 @@ class TestIRExecutorOrderByStringExpr:
         THEN it returns the value without raising — confirming the try/except was dead
         """
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Record
+
         record = Record(["n.name", "n.age"], ["Alice", 30])
         assert record.get("n.name") == "Alice"
         assert record.get("n.age") == 30
@@ -237,6 +269,7 @@ class TestIRExecutorOrderByStringExpr:
         THEN it returns None (not raises) — confirming try/except was dead
         """
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Record
+
         record = Record(["n.name"], ["Alice"])
         assert record.get("missing") is None
         assert record.get("missing", "default") == "default"
@@ -247,6 +280,7 @@ class TestIRExecutorOrderByStringExpr:
         THEN the default is returned without raising
         """
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Record
+
         record = Record(["a", "b"], [1, 2])
         assert record.get("c", 99) == 99
 
@@ -265,12 +299,13 @@ class TestIRExecutorOrderByStringExpr:
 
         ops = [
             {"op": "ScanLabel", "label": "Thing", "variable": "n"},
-            {"op": "Project",
-             "items": [{"expression": {"var": "n"}, "alias": "n"}],
-             "distinct": False},
+            {
+                "op": "Project",
+                "items": [{"expression": {"var": "n"}, "alias": "n"}],
+                "distinct": False,
+            },
             # String dotted expression — the simplified code path
-            {"op": "OrderBy",
-             "items": [{"expression": "n.score", "ascending": True}]},
+            {"op": "OrderBy", "items": [{"expression": "n.score", "ascending": True}]},
         ]
 
         def _eval_with_dot(expr, binding):
@@ -307,12 +342,13 @@ class TestIRExecutorOrderByStringExpr:
 
         ops = [
             {"op": "ScanLabel", "label": "Widget", "variable": "n"},
-            {"op": "Project",
-             "items": [{"expression": {"var": "n"}, "alias": "n"}],
-             "distinct": False},
+            {
+                "op": "Project",
+                "items": [{"expression": {"var": "n"}, "alias": "n"}],
+                "distinct": False,
+            },
             # Non-dotted string expression
-            {"op": "OrderBy",
-             "items": [{"expression": "n", "ascending": True}]},
+            {"op": "OrderBy", "items": [{"expression": "n", "ascending": True}]},
         ]
 
         results = execute_ir_operations(
@@ -326,4 +362,3 @@ class TestIRExecutorOrderByStringExpr:
             compute_aggregation=_compute_agg,
         )
         assert len(results) == 3
-

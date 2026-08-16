@@ -61,19 +61,37 @@ def _profiles() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="default",
                     split="train",
-                    features=["ipfs_cid", "state_code", "source_id", "identifier", "name", "text", "jsonld"],
+                    features=[
+                        "ipfs_cid",
+                        "state_code",
+                        "source_id",
+                        "identifier",
+                        "name",
+                        "text",
+                        "jsonld",
+                    ],
                 )
             ],
         ),
         DatasetProfile(
             dataset_id="justicedao/ipfs_state_admin_rules",
-            parquet_files=["US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/state_admin_rules_all_states.parquet"],
+            parquet_files=[
+                "US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/state_admin_rules_all_states.parquet"
+            ],
             top_level_paths=["OR", "US_ADMINISTRATIVE_RULES"],
             configs=[
                 DatasetConfigProfile(
                     config="default",
                     split="train",
-                    features=["ipfs_cid", "state_code", "source_id", "identifier", "name", "text", "jsonld"],
+                    features=[
+                        "ipfs_cid",
+                        "state_code",
+                        "source_id",
+                        "identifier",
+                        "name",
+                        "text",
+                        "jsonld",
+                    ],
                 )
             ],
         ),
@@ -85,7 +103,15 @@ def _profiles() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="default",
                     split="train",
-                    features=["ipfs_cid", "state_code", "source_id", "identifier", "name", "text", "jsonld"],
+                    features=[
+                        "ipfs_cid",
+                        "state_code",
+                        "source_id",
+                        "identifier",
+                        "name",
+                        "text",
+                        "jsonld",
+                    ],
                 )
             ],
         ),
@@ -133,7 +159,14 @@ def _profiles() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="laws",
                     split="train",
-                    features=["citation", "identifier", "law_identifier", "official_identifier", "text", "metadata"],
+                    features=[
+                        "citation",
+                        "identifier",
+                        "law_identifier",
+                        "official_identifier",
+                        "text",
+                        "metadata",
+                    ],
                 )
             ],
         ),
@@ -145,7 +178,13 @@ def _profiles() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="documents",
                     split="train",
-                    features=["citation", "law_identifier", "article_identifier", "source_cid", "text_preview"],
+                    features=[
+                        "citation",
+                        "law_identifier",
+                        "article_identifier",
+                        "source_cid",
+                        "text_preview",
+                    ],
                 )
             ],
         ),
@@ -157,7 +196,13 @@ def _profiles() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="nodes",
                     split="train",
-                    features=["law_identifier", "article_identifier", "jsonld_id", "label", "source_cid"],
+                    features=[
+                        "law_identifier",
+                        "article_identifier",
+                        "jsonld_id",
+                        "label",
+                        "source_cid",
+                    ],
                 )
             ],
         ),
@@ -175,7 +220,14 @@ def _profiles_with_germany_family() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="laws",
                     split="train",
-                    features=["citation", "identifier", "law_identifier", "official_identifier", "text", "metadata"],
+                    features=[
+                        "citation",
+                        "identifier",
+                        "law_identifier",
+                        "official_identifier",
+                        "text",
+                        "metadata",
+                    ],
                 )
             ],
         ),
@@ -187,7 +239,13 @@ def _profiles_with_germany_family() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="documents",
                     split="train",
-                    features=["citation", "law_identifier", "article_identifier", "source_cid", "text_preview"],
+                    features=[
+                        "citation",
+                        "law_identifier",
+                        "article_identifier",
+                        "source_cid",
+                        "text_preview",
+                    ],
                 )
             ],
         ),
@@ -199,7 +257,13 @@ def _profiles_with_germany_family() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="nodes",
                     split="train",
-                    features=["law_identifier", "article_identifier", "jsonld_id", "label", "source_cid"],
+                    features=[
+                        "law_identifier",
+                        "article_identifier",
+                        "jsonld_id",
+                        "label",
+                        "source_cid",
+                    ],
                 )
             ],
         ),
@@ -217,7 +281,14 @@ def _profiles_with_france_family() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="laws",
                     split="train",
-                    features=["citation", "identifier", "law_identifier", "official_identifier", "text", "metadata"],
+                    features=[
+                        "citation",
+                        "identifier",
+                        "law_identifier",
+                        "official_identifier",
+                        "text",
+                        "metadata",
+                    ],
                 )
             ],
         ),
@@ -229,7 +300,13 @@ def _profiles_with_france_family() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="documents",
                     split="train",
-                    features=["citation", "law_identifier", "article_identifier", "source_cid", "text_preview"],
+                    features=[
+                        "citation",
+                        "law_identifier",
+                        "article_identifier",
+                        "source_cid",
+                        "text_preview",
+                    ],
                 )
             ],
         ),
@@ -241,7 +318,13 @@ def _profiles_with_france_family() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="nodes",
                     split="train",
-                    features=["law_identifier", "article_identifier", "jsonld_id", "label", "source_cid"],
+                    features=[
+                        "law_identifier",
+                        "article_identifier",
+                        "jsonld_id",
+                        "label",
+                        "source_cid",
+                    ],
                 )
             ],
         ),
@@ -259,7 +342,14 @@ def _profiles_with_spain_family() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="laws",
                     split="train",
-                    features=["citation", "identifier", "law_identifier", "official_identifier", "text", "metadata"],
+                    features=[
+                        "citation",
+                        "identifier",
+                        "law_identifier",
+                        "official_identifier",
+                        "text",
+                        "metadata",
+                    ],
                 )
             ],
         ),
@@ -271,7 +361,13 @@ def _profiles_with_spain_family() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="documents",
                     split="train",
-                    features=["citation", "law_identifier", "article_identifier", "source_cid", "text_preview"],
+                    features=[
+                        "citation",
+                        "law_identifier",
+                        "article_identifier",
+                        "source_cid",
+                        "text_preview",
+                    ],
                 )
             ],
         ),
@@ -283,7 +379,13 @@ def _profiles_with_spain_family() -> list[DatasetProfile]:
                 DatasetConfigProfile(
                     config="nodes",
                     split="train",
-                    features=["law_identifier", "article_identifier", "jsonld_id", "label", "source_cid"],
+                    features=[
+                        "law_identifier",
+                        "article_identifier",
+                        "jsonld_id",
+                        "label",
+                        "source_cid",
+                    ],
                 )
             ],
         ),
@@ -359,7 +461,9 @@ def test_filter_dataset_profiles_can_select_eu_branch_and_country():
         "justicedao/ipfs_netherlands_laws_bm25_index",
         "justicedao/ipfs_netherlands_laws_knowledge_graph",
     ]
-    assert [profile.dataset_id for profile in nl_profiles] == [profile.dataset_id for profile in eu_profiles]
+    assert [profile.dataset_id for profile in nl_profiles] == [
+        profile.dataset_id for profile in eu_profiles
+    ]
     assert "justicedao/ipfs_uscode" in {profile.dataset_id for profile in us_profiles}
 
 
@@ -404,7 +508,11 @@ def test_build_eu_country_corpus_onboarding_plan_marks_observed_proposed_dataset
     plan = build_eu_country_corpus_onboarding_plan(
         [
             *_profiles(),
-            DatasetProfile(dataset_id="justicedao/ipfs_it_laws_bm25_index", legal_branch="eu", country_codes=["IT"]),
+            DatasetProfile(
+                dataset_id="justicedao/ipfs_it_laws_bm25_index",
+                legal_branch="eu",
+                country_codes=["IT"],
+            ),
         ],
         expected_country_codes=["IT"],
     )
@@ -463,8 +571,8 @@ def test_build_justicedao_legal_citation_query_plan_marks_sidecars_as_secondary(
     strategies = derive_justicedao_legal_citation_strategies(
         [
             *_profiles_with_france_family(),
-            *_profiles_with_spain_family()[len(_profiles()):],
-            *_profiles_with_germany_family()[len(_profiles()):],
+            *_profiles_with_spain_family()[len(_profiles()) :],
+            *_profiles_with_germany_family()[len(_profiles()) :],
         ]
     )
     assert strategies["justicedao/ipfs_netherlands_laws_bm25_index"].support_level == "sidecar"
@@ -495,8 +603,12 @@ def test_justicedao_legal_citation_query_plan_aliases_match_bluebook_functions(t
     legacy_plan = build_justicedao_bluebook_query_plan(text, profiles=_profiles())
 
     assert isinstance(alias_plan, LegalCitationDatasetQueryPlan)
-    assert legal_citation_dataset_query_plan_to_dict(alias_plan) == bluebook_dataset_query_plan_to_dict(legacy_plan)
-    assert render_justicedao_legal_citation_query_plan_markdown(alias_plan) == render_bluebook_dataset_query_plan_markdown(legacy_plan)
+    assert legal_citation_dataset_query_plan_to_dict(
+        alias_plan
+    ) == bluebook_dataset_query_plan_to_dict(legacy_plan)
+    assert render_justicedao_legal_citation_query_plan_markdown(
+        alias_plan
+    ) == render_bluebook_dataset_query_plan_markdown(legacy_plan)
 
     uscode_path = tmp_path / "us_code_alias.parquet"
     pq.write_table(
@@ -546,7 +658,9 @@ def test_justicedao_legal_citation_query_plan_aliases_match_bluebook_functions(t
         },
     )
 
-    assert legal_citation_dataset_execution_result_to_dict(alias_result) == bluebook_dataset_execution_result_to_dict(legacy_result)
+    assert legal_citation_dataset_execution_result_to_dict(
+        alias_result
+    ) == bluebook_dataset_execution_result_to_dict(legacy_result)
 
 
 def test_justicedao_legal_citation_strategy_aliases_match_bluebook_functions():
@@ -657,7 +771,7 @@ def test_legal_citation_query_plan_renderers_include_dataset_guidance():
 def test_build_justicedao_legal_citation_query_plan_includes_eu_member_state_citations():
     profiles = [
         *_profiles_with_spain_family(),
-        *_profiles_with_germany_family()[len(_profiles()):],
+        *_profiles_with_germany_family()[len(_profiles()) :],
     ]
 
     plan = build_justicedao_legal_citation_query_plan(
@@ -669,7 +783,9 @@ def test_build_justicedao_legal_citation_query_plan_includes_eu_member_state_cit
     assert "eu_de_gg_article" in eu_types
     assert "eu_es_cc_article" in eu_types
 
-    germany_plan = next(item for item in plan.query_plans if item.citation_type == "eu_de_gg_article")
+    germany_plan = next(
+        item for item in plan.query_plans if item.citation_type == "eu_de_gg_article"
+    )
     spain_plan = next(item for item in plan.query_plans if item.citation_type == "eu_es_cc_article")
     assert germany_plan.citation_text == "Art. 1 GG"
     assert spain_plan.citation_text == "Articulo 1902 del Codigo Civil"
@@ -687,13 +803,20 @@ def test_build_justicedao_legal_citation_query_plan_uses_parser_friendly_text_fo
         profiles=_profiles(),
     )
 
-    france_citation_plan = next(item for item in france_plan.query_plans if item.citation_type == "eu_fr_cc_article")
-    netherlands_citation_plan = next(item for item in netherlands_plan.query_plans if item.citation_type == "eu_nl_bw_article")
+    france_citation_plan = next(
+        item for item in france_plan.query_plans if item.citation_type == "eu_fr_cc_article"
+    )
+    netherlands_citation_plan = next(
+        item for item in netherlands_plan.query_plans if item.citation_type == "eu_nl_bw_article"
+    )
 
     assert france_citation_plan.citation_text == "Article 1240 du code civil"
     assert france_citation_plan.candidate_datasets[0].dataset_id == "justicedao/ipfs_france_laws"
     assert netherlands_citation_plan.citation_text == "Artikel 6:162 BW"
-    assert netherlands_citation_plan.candidate_datasets[0].dataset_id == "justicedao/ipfs_netherlands_laws"
+    assert (
+        netherlands_citation_plan.candidate_datasets[0].dataset_id
+        == "justicedao/ipfs_netherlands_laws"
+    )
 
 
 def test_execute_justicedao_legal_citation_query_plan_matches_state_laws_and_uscode(tmp_path):
@@ -745,11 +868,15 @@ def test_execute_justicedao_legal_citation_query_plan_matches_state_laws_and_usc
     payload = legal_citation_dataset_execution_result_to_dict(result)
     assert len(payload["execution_results"]) == 2
 
-    state_result = next(item for item in payload["execution_results"] if item["citation_type"] == "state_statute")
+    state_result = next(
+        item for item in payload["execution_results"] if item["citation_type"] == "state_statute"
+    )
     assert state_result["matches"][0]["dataset_id"] == "justicedao/ipfs_state_laws"
     assert state_result["matches"][0]["rows"][0]["identifier"] == "Or. Rev. Stat. § 90.155"
 
-    usc_result = next(item for item in payload["execution_results"] if item["citation_type"] == "usc")
+    usc_result = next(
+        item for item in payload["execution_results"] if item["citation_type"] == "usc"
+    )
     assert usc_result["matches"][0]["dataset_id"] == "justicedao/ipfs_uscode"
     assert usc_result["matches"][0]["rows"][0]["section_number"] == "1983"
 
@@ -793,7 +920,7 @@ def test_execute_justicedao_legal_citation_query_plan_matches_eu_member_state_ci
 
     profiles = [
         *_profiles_with_spain_family(),
-        *_profiles_with_germany_family()[len(_profiles()):],
+        *_profiles_with_germany_family()[len(_profiles()) :],
     ]
     plan = build_justicedao_legal_citation_query_plan(
         "Art. 1 GG and Articulo 1902 del Codigo Civil.",
@@ -809,15 +936,21 @@ def test_execute_justicedao_legal_citation_query_plan_matches_eu_member_state_ci
     )
 
     payload = legal_citation_dataset_execution_result_to_dict(result)
-    germany_result = next(item for item in payload["execution_results"] if item["citation_type"] == "eu_de_gg_article")
-    spain_result = next(item for item in payload["execution_results"] if item["citation_type"] == "eu_es_cc_article")
+    germany_result = next(
+        item for item in payload["execution_results"] if item["citation_type"] == "eu_de_gg_article"
+    )
+    spain_result = next(
+        item for item in payload["execution_results"] if item["citation_type"] == "eu_es_cc_article"
+    )
     assert germany_result["matches"][0]["dataset_id"] == "justicedao/ipfs_germany_laws"
     assert germany_result["matches"][0]["rows"][0]["law_identifier"] == "GG-Art-1"
     assert spain_result["matches"][0]["dataset_id"] == "justicedao/ipfs_spain_laws"
     assert spain_result["matches"][0]["rows"][0]["law_identifier"] == "CC-Articulo-1902"
 
 
-def test_execute_justicedao_legal_citation_query_plan_matches_france_and_netherlands_member_state_citations(tmp_path):
+def test_execute_justicedao_legal_citation_query_plan_matches_france_and_netherlands_member_state_citations(
+    tmp_path,
+):
     france_path = tmp_path / "france_laws.parquet"
     netherlands_path = tmp_path / "netherlands_laws.parquet"
 
@@ -869,8 +1002,12 @@ def test_execute_justicedao_legal_citation_query_plan_matches_france_and_netherl
     )
 
     payload = legal_citation_dataset_execution_result_to_dict(result)
-    france_result = next(item for item in payload["execution_results"] if item["citation_type"] == "eu_fr_cc_article")
-    netherlands_result = next(item for item in payload["execution_results"] if item["citation_type"] == "eu_nl_bw_article")
+    france_result = next(
+        item for item in payload["execution_results"] if item["citation_type"] == "eu_fr_cc_article"
+    )
+    netherlands_result = next(
+        item for item in payload["execution_results"] if item["citation_type"] == "eu_nl_bw_article"
+    )
     assert france_result["matches"][0]["dataset_id"] == "justicedao/ipfs_france_laws"
     assert france_result["matches"][0]["rows"][0]["law_identifier"] == "CC-Article-1240"
     assert netherlands_result["matches"][0]["dataset_id"] == "justicedao/ipfs_netherlands_laws"
@@ -919,7 +1056,9 @@ def test_execute_justicedao_legal_citation_query_plan_matches_municipal_citation
     )
 
     payload = legal_citation_dataset_execution_result_to_dict(result)
-    state_result = next(item for item in payload["execution_results"] if item["citation_type"] == "state_statute")
+    state_result = next(
+        item for item in payload["execution_results"] if item["citation_type"] == "state_statute"
+    )
     assert state_result["matches"]
     assert state_result["matches"][0]["dataset_id"] == "justicedao/american_municipal_law"
     assert state_result["matches"][0]["rows"][0]["place_name"] == "Buncombe"
@@ -973,7 +1112,9 @@ def test_execute_justicedao_legal_citation_query_plan_can_use_canonical_semantic
     )
 
     payload = legal_citation_dataset_execution_result_to_dict(result)
-    state_result = next(item for item in payload["execution_results"] if item["citation_type"] == "state_statute")
+    state_result = next(
+        item for item in payload["execution_results"] if item["citation_type"] == "state_statute"
+    )
     assert state_result["matches"]
     assert state_result["matches"][0]["dataset_id"] == "justicedao/ipfs_state_laws"
     assert state_result["matches"][0]["rows"][0]["name"] == "Best interests of the child"
@@ -1004,6 +1145,8 @@ def test_summarize_dataset_profiles_by_country_uses_unspecified_bucket_when_miss
 
     assert summary["UNSPECIFIED"]["dataset_count"] == 1
     assert summary["UNSPECIFIED"]["legal_branches"] == ["eu"]
+
+
 def test_query_canonical_legal_corpus_prefers_exact_citation_resolution(tmp_path):
     uscode_path = tmp_path / "laws.parquet"
     pq.write_table(
@@ -1444,7 +1587,9 @@ def test_query_canonical_legal_corpus_can_query_germany_grundgesetz_variant_as_e
     assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-Grundgesetz"
 
 
-def test_query_canonical_legal_corpus_can_query_germany_genitive_grundgesetz_variant_as_eu_branch(tmp_path):
+def test_query_canonical_legal_corpus_can_query_germany_genitive_grundgesetz_variant_as_eu_branch(
+    tmp_path,
+):
     laws_path = tmp_path / "germany_laws_grundgesetz_genitive.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -1514,7 +1659,9 @@ def test_query_canonical_legal_corpus_can_query_germany_paragraph_variant_as_eu_
     assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-Abs-1"
 
 
-def test_query_canonical_legal_corpus_can_query_germany_paragraph_genitive_variant_as_eu_branch(tmp_path):
+def test_query_canonical_legal_corpus_can_query_germany_paragraph_genitive_variant_as_eu_branch(
+    tmp_path,
+):
     laws_path = tmp_path / "germany_laws_paragraph_genitive.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -1549,7 +1696,9 @@ def test_query_canonical_legal_corpus_can_query_germany_paragraph_genitive_varia
     assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-Abs-1-Grundgesetzes"
 
 
-def test_query_canonical_legal_corpus_can_query_germany_roman_paragraph_variant_as_eu_branch(tmp_path):
+def test_query_canonical_legal_corpus_can_query_germany_roman_paragraph_variant_as_eu_branch(
+    tmp_path,
+):
     laws_path = tmp_path / "germany_laws_paragraph_roman.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -1584,7 +1733,9 @@ def test_query_canonical_legal_corpus_can_query_germany_roman_paragraph_variant_
     assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-I"
 
 
-def test_query_canonical_legal_corpus_can_query_germany_roman_paragraph_genitive_gg_variant_as_eu_branch(tmp_path):
+def test_query_canonical_legal_corpus_can_query_germany_roman_paragraph_genitive_gg_variant_as_eu_branch(
+    tmp_path,
+):
     laws_path = tmp_path / "germany_laws_paragraph_roman_genitive_gg.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -1619,7 +1770,9 @@ def test_query_canonical_legal_corpus_can_query_germany_roman_paragraph_genitive
     assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-I-des-GG"
 
 
-def test_query_canonical_legal_corpus_can_query_germany_artikel_absatz_genitive_gg_variant_as_eu_branch(tmp_path):
+def test_query_canonical_legal_corpus_can_query_germany_artikel_absatz_genitive_gg_variant_as_eu_branch(
+    tmp_path,
+):
     laws_path = tmp_path / "germany_laws_paragraph_fullword_genitive_gg.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -1654,7 +1807,9 @@ def test_query_canonical_legal_corpus_can_query_germany_artikel_absatz_genitive_
     assert payload["results"][0]["row"]["law_identifier"] == "GG-Artikel-1-Absatz-1-des-GG"
 
 
-def test_query_canonical_legal_corpus_can_query_germany_artikel_absatz_genitive_grundgesetz_variant_as_eu_branch(tmp_path):
+def test_query_canonical_legal_corpus_can_query_germany_artikel_absatz_genitive_grundgesetz_variant_as_eu_branch(
+    tmp_path,
+):
     laws_path = tmp_path / "germany_laws_paragraph_fullword_genitive_grundgesetz.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -1686,10 +1841,14 @@ def test_query_canonical_legal_corpus_can_query_germany_artikel_absatz_genitive_
     assert payload["mode"] == "exact"
     assert payload["citation_links"][0]["matched"] is True
     assert payload["results"]
-    assert payload["results"][0]["row"]["law_identifier"] == "GG-Artikel-1-Absatz-1-des-Grundgesetzes"
+    assert (
+        payload["results"][0]["row"]["law_identifier"] == "GG-Artikel-1-Absatz-1-des-Grundgesetzes"
+    )
 
 
-def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_genitive_gg_variant_as_eu_branch(tmp_path):
+def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_genitive_gg_variant_as_eu_branch(
+    tmp_path,
+):
     laws_path = tmp_path / "germany_laws_reversed_paragraph_fullword_genitive_gg.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -1721,10 +1880,14 @@ def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_
     assert payload["mode"] == "exact"
     assert payload["citation_links"][0]["matched"] is True
     assert payload["results"]
-    assert payload["results"][0]["row"]["law_identifier"] == "GG-Grundgesetz-Artikel-1-Absatz-1-des-GG"
+    assert (
+        payload["results"][0]["row"]["law_identifier"] == "GG-Grundgesetz-Artikel-1-Absatz-1-des-GG"
+    )
 
 
-def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_genitive_grundgesetz_variant_as_eu_branch(tmp_path):
+def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_genitive_grundgesetz_variant_as_eu_branch(
+    tmp_path,
+):
     laws_path = tmp_path / "germany_laws_reversed_paragraph_fullword_genitive_grundgesetz.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -1756,10 +1919,15 @@ def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_
     assert payload["mode"] == "exact"
     assert payload["citation_links"][0]["matched"] is True
     assert payload["results"]
-    assert payload["results"][0]["row"]["law_identifier"] == "GG-Grundgesetz-Artikel-1-Absatz-1-des-Grundgesetzes"
+    assert (
+        payload["results"][0]["row"]["law_identifier"]
+        == "GG-Grundgesetz-Artikel-1-Absatz-1-des-Grundgesetzes"
+    )
 
 
-def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_variant_as_eu_branch(tmp_path):
+def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_variant_as_eu_branch(
+    tmp_path,
+):
     laws_path = tmp_path / "germany_laws_reversed_paragraph_fullword.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -1794,7 +1962,9 @@ def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_
     assert payload["results"][0]["row"]["law_identifier"] == "GG-Grundgesetz-Artikel-1-Absatz-1"
 
 
-def test_query_canonical_legal_corpus_can_query_reversed_germany_roman_paragraph_variant_as_eu_branch(tmp_path):
+def test_query_canonical_legal_corpus_can_query_reversed_germany_roman_paragraph_variant_as_eu_branch(
+    tmp_path,
+):
     laws_path = tmp_path / "germany_laws_paragraph_roman_reversed.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -1829,7 +1999,9 @@ def test_query_canonical_legal_corpus_can_query_reversed_germany_roman_paragraph
     assert payload["results"][0]["row"]["law_identifier"] == "GG-Grundgesetz-Art-1-I"
 
 
-def test_query_canonical_legal_corpus_can_use_inventory_profile_when_remote_path_misses_templates(tmp_path, monkeypatch):
+def test_query_canonical_legal_corpus_can_use_inventory_profile_when_remote_path_misses_templates(
+    tmp_path, monkeypatch
+):
     state_path = tmp_path / "STATE-MN-live.parquet"
     remote_path = "exports/live/legal/STATE-MN-live.parquet"
 
@@ -1872,7 +2044,15 @@ def test_query_canonical_legal_corpus_can_use_inventory_profile_when_remote_path
                     DatasetConfigProfile(
                         config="state_laws_canonical",
                         split="train",
-                        features=["ipfs_cid", "state_code", "source_id", "identifier", "name", "text", "jsonld"],
+                        features=[
+                            "ipfs_cid",
+                            "state_code",
+                            "source_id",
+                            "identifier",
+                            "name",
+                            "text",
+                            "jsonld",
+                        ],
                         query_modes=["identifier_lookup", "jsonld_lookup"],
                     )
                 ],
@@ -1964,9 +2144,15 @@ def test_build_canonical_corpus_artifacts_writes_cid_bm25_and_knowledge_graph(tm
     assert result["missing_join_values_filled"] == 1
     assert result["cid_index_path"].endswith("STATE-MN_cid_index.parquet")
     assert result["bm25_documents_path"].endswith("STATE-MN_bm25.parquet")
-    assert result["knowledge_graph_entities_path"].endswith("STATE-MN_knowledge_graph_entities.parquet")
-    assert result["knowledge_graph_relationships_path"].endswith("STATE-MN_knowledge_graph_relationships.parquet")
-    assert result["semantic_index"]["embeddings_parquet_path"].endswith("STATE-MN_embeddings.parquet")
+    assert result["knowledge_graph_entities_path"].endswith(
+        "STATE-MN_knowledge_graph_entities.parquet"
+    )
+    assert result["knowledge_graph_relationships_path"].endswith(
+        "STATE-MN_knowledge_graph_relationships.parquet"
+    )
+    assert result["semantic_index"]["embeddings_parquet_path"].endswith(
+        "STATE-MN_embeddings.parquet"
+    )
 
     canonical_rows = pq.read_table(result["updated_canonical_parquet_path"]).to_pylist()
     assert canonical_rows[0]["ipfs_cid"]
@@ -2022,7 +2208,9 @@ def test_rebuild_justicedao_dataset_library_can_use_local_overrides(tmp_path):
     assert artifact["cid_index_path"].endswith("STATE-MN_cid_index.parquet")
 
 
-def test_build_canonical_corpus_artifacts_can_merge_llm_knowledge_graph_enrichment(tmp_path, monkeypatch):
+def test_build_canonical_corpus_artifacts_can_merge_llm_knowledge_graph_enrichment(
+    tmp_path, monkeypatch
+):
     state_path = tmp_path / "STATE-MN.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -2045,7 +2233,9 @@ def test_build_canonical_corpus_artifacts_can_merge_llm_knowledge_graph_enrichme
         return RichDocumentAnalysis(
             classification={"label": "statute", "backend": "llm_router"},
             entities=[{"id": "actor:court", "label": "Court", "type": "legal_actor"}],
-            relationships=[{"source": "bafymn51817", "target": "actor:court", "type": "MENTIONS_ACTOR"}],
+            relationships=[
+                {"source": "bafymn51817", "target": "actor:court", "type": "MENTIONS_ACTOR"}
+            ],
             deontic_statements=[],
             events=[],
             frames=[],
@@ -2326,7 +2516,10 @@ def test_build_justicedao_rebuild_plan_batches_targets_from_profiles():
             canonical_corpus_key="state_laws",
             legal_branch="us",
             country_codes=["US"],
-            parquet_files=["state_laws_parquet_cid/STATE-OR.parquet", "state_laws_parquet_cid/STATE-WA.parquet"],
+            parquet_files=[
+                "state_laws_parquet_cid/STATE-OR.parquet",
+                "state_laws_parquet_cid/STATE-WA.parquet",
+            ],
             top_level_paths=["state_laws_parquet_cid"],
             configs=[],
         ),

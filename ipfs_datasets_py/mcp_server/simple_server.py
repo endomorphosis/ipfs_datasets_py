@@ -34,6 +34,7 @@ Simplified MCP Server implementation for IPFS Datasets Python.
     (``ipfs_datasets_py.mcp_server.fastapi_service``) which is built on
     anyio/uvicorn and integrates properly with the MCP+P2P stack.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -47,6 +48,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 try:
     from flask import Flask, request, jsonify
+
     FLASK_AVAILABLE = True
 except ImportError:
     FLASK_AVAILABLE = True
@@ -150,6 +152,7 @@ except ImportError:
         def run(self, *args, **kwargs):
             return None
 
+
 from ipfs_datasets_py.utils.anyio_compat import run as run_anyio
 
 # Local imports
@@ -160,6 +163,7 @@ from ipfs_datasets_py.mcp_server.exceptions import (
     ToolNotFoundError,
     ConfigurationError,
 )
+
 
 class SimpleCallResult:
     """Simple representation of a tool call result."""
@@ -193,19 +197,26 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
         return tools
 
     for item in directory_path.iterdir():
-        if item.is_file() and item.suffix == '.py' and item.name != '__init__.py' and not item.name.startswith('.') and not item.name.startswith('_'):
+        if (
+            item.is_file()
+            and item.suffix == ".py"
+            and item.name != "__init__.py"
+            and not item.name.startswith(".")
+            and not item.name.startswith("_")
+        ):
             module_name = item.stem
             try:
-                module = importlib.import_module(f"ipfs_datasets_py.mcp_server.tools.{directory_path.name}.{module_name}")
+                module = importlib.import_module(
+                    f"ipfs_datasets_py.mcp_server.tools.{directory_path.name}.{module_name}"
+                )
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    if callable(attr) and not attr_name.startswith('_'):
+                    if callable(attr) and not attr_name.startswith("_"):
                         tools[attr_name] = attr
             except ImportError as e:
                 logger.error(f"Failed to import {module_name}: {e}")
 
     return tools
-
 
 
 def import_argparse_program(directory_path: Path) -> Dict[str, Any]:
@@ -221,12 +232,10 @@ def import_argparse_program(directory_path: Path) -> Dict[str, Any]:
     program_name = None
     try:
         module = importlib.import_module(program_name)
-        return getattr(module, 'main', None)
+        return getattr(module, "main", None)
     except ImportError as e:
         logger.error(f"Failed to import program {program_name}: {e}")
         return None
-
-
 
 
 class SimpleIPFSDatasetsMCPServer:
@@ -276,11 +285,9 @@ class SimpleIPFSDatasetsMCPServer:
         @self.app.route("/", methods=["GET"])
         def root():
             """Root endpoint."""
-            return jsonify({
-                "name": "IPFS Datasets MCP Server",
-                "version": "0.1.0",
-                "status": "healthy"
-            })
+            return jsonify(
+                {"name": "IPFS Datasets MCP Server", "version": "0.1.0", "status": "healthy"}
+            )
 
         @self.app.route("/tools", methods=["GET"])
         def list_tools():
@@ -289,7 +296,7 @@ class SimpleIPFSDatasetsMCPServer:
             for tool_name, tool_func in self.tools.items():
                 tool_info[tool_name] = {
                     "name": tool_name,
-                    "description": tool_func.__doc__ or "No description available"
+                    "description": tool_func.__doc__ or "No description available",
                 }
             return jsonify({"tools": tool_info})
 
@@ -310,6 +317,7 @@ class SimpleIPFSDatasetsMCPServer:
                 # Handle async functions
                 if hasattr(result, "__await__"):
                     import anyio
+
                     result = anyio.run(result)
 
                 return jsonify({"result": result})
@@ -324,7 +332,9 @@ class SimpleIPFSDatasetsMCPServer:
                 return jsonify({"error": "Invalid parameters provided"}), 400
             except Exception as e:
                 logger.error(f"Error calling tool {tool_name}: {e}", exc_info=True)
-                return jsonify({"error": f"Internal server error while calling tool '{tool_name}'"}), 500
+                return jsonify(
+                    {"error": f"Internal server error while calling tool '{tool_name}'"}
+                ), 500
 
     def register_tools(self):
         """Register all tools with the MCP server."""

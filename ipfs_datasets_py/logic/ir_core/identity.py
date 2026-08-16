@@ -119,15 +119,11 @@ def _normalized_discriminator(value: str, *, label: str) -> str:
         raise TypeError(f"{label} must be a string")
     normalized = unicodedata.normalize("NFC", value)
     if not normalized or normalized.strip() != normalized:
-        raise CanonicalizationError(
-            f"{label} must be non-empty and have no surrounding whitespace"
-        )
+        raise CanonicalizationError(f"{label} must be non-empty and have no surrounding whitespace")
     try:
         normalized.encode("utf-8")
     except UnicodeEncodeError as exc:
-        raise CanonicalizationError(
-            f"{label} contains an unpaired Unicode surrogate"
-        ) from exc
+        raise CanonicalizationError(f"{label} contains an unpaired Unicode surrogate") from exc
     return normalized
 
 
@@ -155,19 +151,9 @@ def cid_v1_from_digest(digest: bytes | bytearray | memoryview) -> str:
 
     raw_digest = bytes(digest)
     if len(raw_digest) != DIGEST_SIZE:
-        raise ValueError(
-            f"{MULTIHASH_NAME} digest must be exactly {DIGEST_SIZE} bytes"
-        )
-    multihash = (
-        _varint(MULTIHASH_CODE)
-        + _varint(DIGEST_SIZE)
-        + raw_digest
-    )
-    cid_bytes = (
-        _varint(CID_VERSION)
-        + _varint(MULTICODEC_CODE)
-        + multihash
-    )
+        raise ValueError(f"{MULTIHASH_NAME} digest must be exactly {DIGEST_SIZE} bytes")
+    multihash = _varint(MULTIHASH_CODE) + _varint(DIGEST_SIZE) + raw_digest
+    cid_bytes = _varint(CID_VERSION) + _varint(MULTICODEC_CODE) + multihash
     encoded = base64.b32encode(cid_bytes).decode("ascii").rstrip("=").lower()
     return "b" + encoded
 
@@ -186,32 +172,20 @@ def identity_preimage(
     domain: str,
     schema_version: str,
     collection_schema: (
-        CollectionSchema
-        | Mapping[str, CollectionSemantics | str]
-        | Sequence[CollectionRule]
-        | None
+        CollectionSchema | Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None
     ) = None,
     collection_semantics: (
-        CollectionSchema
-        | Mapping[str, CollectionSemantics | str]
-        | Sequence[CollectionRule]
-        | None
+        CollectionSchema | Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None
     ) = None,
 ) -> bytes:
     """Return canonical bytes for the domain- and schema-separated preimage."""
 
     if collection_schema is not None and collection_semantics is not None:
-        raise TypeError(
-            "use either collection_schema or collection_semantics, not both"
-        )
+        raise TypeError("use either collection_schema or collection_semantics, not both")
     normalized_domain = _normalized_discriminator(domain, label="domain")
-    normalized_version = _normalized_discriminator(
-        schema_version, label="schema_version"
-    )
+    normalized_version = _normalized_discriminator(schema_version, label="schema_version")
     schema = coerce_collection_schema(
-        collection_schema
-        if collection_schema is not None
-        else collection_semantics
+        collection_schema if collection_schema is not None else collection_semantics
     )
 
     # Canonicalize the payload with its path-relative collection declaration,
@@ -240,16 +214,10 @@ def canonical_identity(
     domain: str,
     schema_version: str,
     collection_schema: (
-        CollectionSchema
-        | Mapping[str, CollectionSemantics | str]
-        | Sequence[CollectionRule]
-        | None
+        CollectionSchema | Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None
     ) = None,
     collection_semantics: (
-        CollectionSchema
-        | Mapping[str, CollectionSemantics | str]
-        | Sequence[CollectionRule]
-        | None
+        CollectionSchema | Mapping[str, CollectionSemantics | str] | Sequence[CollectionRule] | None
     ) = None,
 ) -> CanonicalIdentity:
     """Compute the shared canonical identity of an IR payload."""
@@ -265,9 +233,7 @@ def canonical_identity(
     return CanonicalIdentity(
         profile=IDENTITY_PROFILE_NAME,
         domain=_normalized_discriminator(domain, label="domain"),
-        schema_version=_normalized_discriminator(
-            schema_version, label="schema_version"
-        ),
+        schema_version=_normalized_discriminator(schema_version, label="schema_version"),
         canonical_bytes=canonical_bytes,
         digest=f"sha256:{raw_digest.hex()}",
         cid=cid_v1_from_digest(raw_digest),

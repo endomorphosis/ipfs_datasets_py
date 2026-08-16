@@ -362,17 +362,18 @@ This document outlines a comprehensive improvement plan for three critical logic
 
 **Usage Example:**
 ```python
-from ipfs_datasets_py.logic.types import (
-    Prover, Formula, ConfidenceScore, BridgeCapability
-)
+from ipfs_datasets_py.logic.types import Prover, Formula, ConfidenceScore, BridgeCapability
+
 
 # Protocol-based duck typing
 class MyProver:
     def prove(self, formula: str, timeout: int = 30) -> ProofResult:
         # Implementation
         pass
+
     def get_name(self) -> str:
         return "MyProver"
+
 
 # Automatically satisfies Prover protocol
 prover: Prover = MyProver()
@@ -512,11 +513,9 @@ def detect_normative_conflicts(elements: List[Dict[str, Any]]) -> List[Dict[str,
 
 **Phase 1: Basic Conflict Detection (8-12 hours)**
 ```python
-def detect_normative_conflicts(
-    elements: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+def detect_normative_conflicts(elements: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Detect conflicts between normative statements.
-    
+
     Conflict Types:
     1. Direct conflicts: O(p) ∧ F(p) (obligation vs prohibition)
     2. Permission conflicts: P(p) ∧ F(p) (permission vs prohibition)
@@ -524,19 +523,21 @@ def detect_normative_conflicts(
     4. Temporal conflicts: O(p, t1) ∧ F(p, t2) where t1 ∩ t2 ≠ ∅
     """
     conflicts = []
-    
+
     for i, elem1 in enumerate(elements):
-        for j, elem2 in enumerate(elements[i+1:], i+1):
+        for j, elem2 in enumerate(elements[i + 1 :], i + 1):
             conflict = _check_conflict_pair(elem1, elem2)
             if conflict:
-                conflicts.append({
-                    "type": conflict["type"],
-                    "elements": [elem1, elem2],
-                    "severity": conflict["severity"],
-                    "description": conflict["description"],
-                    "resolution_strategies": conflict["strategies"]
-                })
-    
+                conflicts.append(
+                    {
+                        "type": conflict["type"],
+                        "elements": [elem1, elem2],
+                        "severity": conflict["severity"],
+                        "description": conflict["description"],
+                        "resolution_strategies": conflict["strategies"],
+                    }
+                )
+
     return conflicts
 ```
 
@@ -569,23 +570,26 @@ from spacy.tokens import Doc, Token
 
 nlp = spacy.load("en_core_web_sm")
 
+
 def extract_predicates_nlp(sentence: str) -> List[str]:
     """Extract predicates using NLP dependency parsing."""
     doc = nlp(sentence)
     predicates = []
-    
+
     for token in doc:
         if token.pos_ == "VERB":
             # Extract verb + subject + object
             subj = _get_subject(token)
             obj = _get_object(token)
-            predicates.append({
-                "predicate": token.lemma_,
-                "subject": subj,
-                "object": obj,
-                "dependencies": list(token.children)
-            })
-    
+            predicates.append(
+                {
+                    "predicate": token.lemma_,
+                    "subject": subj,
+                    "object": obj,
+                    "dependencies": list(token.children),
+                }
+            )
+
     return predicates
 ```
 
@@ -613,15 +617,17 @@ def extract_predicates_nlp(sentence: str) -> List[str]:
 ```python
 def extract_confidence_features(formula: str, context: Dict) -> np.ndarray:
     """Extract features for confidence scoring."""
-    return np.array([
-        len(formula),  # Formula complexity
-        count_quantifiers(formula),  # Quantifier depth
-        count_operators(formula),  # Operator diversity
-        has_temporal_terms(context),  # Temporal indicators
-        entity_recognition_score(context),  # NER confidence
-        syntax_tree_depth(context),  # Parse tree depth
-        semantic_coherence(context)  # Semantic similarity
-    ])
+    return np.array(
+        [
+            len(formula),  # Formula complexity
+            count_quantifiers(formula),  # Quantifier depth
+            count_operators(formula),  # Operator diversity
+            has_temporal_terms(context),  # Temporal indicators
+            entity_recognition_score(context),  # NER confidence
+            syntax_tree_depth(context),  # Parse tree depth
+            semantic_coherence(context),  # Semantic similarity
+        ]
+    )
 ```
 
 **Phase 2: Model Training (15-20 hours)**
@@ -650,6 +656,7 @@ from typing import Optional
 import hashlib
 import json
 
+
 @dataclass
 class CachedProof:
     formula_hash: str
@@ -658,15 +665,16 @@ class CachedProof:
     timestamp: float
     ttl: int = 3600  # 1 hour default
 
+
 class ProofCache:
     """LRU cache for proof results with IPFS backing."""
-    
+
     def __init__(self, max_size: int = 1000, ipfs_backed: bool = True):
         self._cache: Dict[str, CachedProof] = {}
         self._lru: collections.OrderedDict = collections.OrderedDict()
         self.max_size = max_size
         self.ipfs_backed = ipfs_backed
-    
+
     def get(self, formula: str, prover: str) -> Optional[ProofResult]:
         """Get cached proof result."""
         key = self._make_key(formula, prover)
@@ -674,19 +682,16 @@ class ProofCache:
             self._lru.move_to_end(key)
             return self._cache[key].result
         return None
-    
+
     def put(self, formula: str, prover: str, result: ProofResult):
         """Cache proof result."""
         key = self._make_key(formula, prover)
         if len(self._cache) >= self.max_size:
             oldest = self._lru.popitem(last=False)
             del self._cache[oldest[0]]
-        
+
         self._cache[key] = CachedProof(
-            formula_hash=key,
-            prover=prover,
-            result=result,
-            timestamp=time.time()
+            formula_hash=key, prover=prover, result=result, timestamp=time.time()
         )
         self._lru[key] = None
 ```
@@ -745,30 +750,31 @@ class ProofCache:
 def test_full_legal_reasoning_pipeline():
     """Test: Legal text → Deontic logic → TDFOL → Lean proof → Verification"""
     legal_text = "All citizens must file taxes by April 15th"
-    
+
     # Step 1: Convert to deontic logic
     deontic_result = convert_legal_text_to_deontic(legal_text)
     assert deontic_result["status"] == "success"
-    
+
     # Step 2: Convert to TDFOL
     tdfol_formula = TDFOLConverter().from_deontic(deontic_result)
-    
+
     # Step 3: Prove with Lean
     proof = ProofExecutionEngine().prove(tdfol_formula, prover="lean")
     assert proof.is_proved()
-    
+
     # Step 4: Verify proof
     verification = verify_proof(proof)
     assert verification["valid"]
+
 
 def test_conflict_detection_integration():
     """Test: Multiple norms → Conflict detection → Resolution"""
     norms = [
         "Employees must arrive by 9am",
         "Remote workers may start anytime",
-        "All staff must attend 9am standup"
+        "All staff must attend 9am standup",
     ]
-    
+
     conflicts = detect_conflicts(norms)
     assert len(conflicts) > 0
     assert conflicts[0]["type"] == "temporal_conflict"
@@ -783,18 +789,16 @@ def test_conflict_detection_integration():
 ```python
 from hypothesis import given, strategies as st
 
-@given(
-    text=st.text(min_size=10, max_size=500),
-    confidence=st.floats(min_value=0.0, max_value=1.0)
-)
+
+@given(text=st.text(min_size=10, max_size=500), confidence=st.floats(min_value=0.0, max_value=1.0))
 def test_fol_conversion_properties(text, confidence):
     """Property: FOL conversion never crashes, always returns valid JSON"""
     result = convert_text_to_fol(text, confidence_threshold=confidence)
-    
+
     assert isinstance(result, dict)
     assert "status" in result
     assert result["status"] in ["success", "error"]
-    
+
     if result["status"] == "success":
         assert "fol_formulas" in result
         assert isinstance(result["fol_formulas"], list)
@@ -1011,9 +1015,11 @@ import spacy
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
+
 @dataclass
 class SemanticPredicate:
     """Predicate extracted via NLP."""
+
     verb: str
     subject: Optional[str]
     object: Optional[str]
@@ -1021,41 +1027,40 @@ class SemanticPredicate:
     dependencies: List[str]
     confidence: float
 
+
 class NLPPredicateExtractor:
     """Extract predicates using spaCy NLP."""
-    
+
     def __init__(self, model: str = "en_core_web_sm"):
         self.nlp = spacy.load(model)
-    
+
     def extract_predicates(self, sentence: str) -> List[SemanticPredicate]:
         """Extract predicates with semantic roles."""
         doc = self.nlp(sentence)
         predicates = []
-        
+
         for token in doc:
             if token.pos_ == "VERB":
                 pred = self._analyze_verb(token)
                 predicates.append(pred)
-        
+
         return predicates
-    
+
     def _analyze_verb(self, verb_token) -> SemanticPredicate:
         """Analyze verb and extract semantic roles."""
         subject = self._get_subject(verb_token)
         obj = self._get_object(verb_token)
         modifiers = self._get_modifiers(verb_token)
-        
-        confidence = self._calculate_confidence(
-            verb_token, subject, obj, modifiers
-        )
-        
+
+        confidence = self._calculate_confidence(verb_token, subject, obj, modifiers)
+
         return SemanticPredicate(
             verb=verb_token.lemma_,
             subject=subject,
             object=obj,
             modifiers=modifiers,
             dependencies=[c.dep_ for c in verb_token.children],
-            confidence=confidence
+            confidence=confidence,
         )
 ```
 
@@ -1085,32 +1090,35 @@ from sklearn.ensemble import GradientBoostingClassifier
 import joblib
 from typing import Dict, Any
 
+
 class MLConfidenceScorer:
     """ML-based confidence scoring for FOL conversion."""
-    
+
     def __init__(self, model_path: Optional[str] = None):
         if model_path:
             self.model = joblib.load(model_path)
         else:
             self.model = self._train_default_model()
-    
+
     def score(self, formula: str, context: Dict[str, Any]) -> float:
         """Calculate confidence score using ML model."""
         features = self._extract_features(formula, context)
         confidence = self.model.predict_proba([features])[0][1]
         return float(confidence)
-    
+
     def _extract_features(self, formula: str, context: Dict) -> np.ndarray:
         """Extract features for ML model."""
-        return np.array([
-            len(formula),
-            self._count_quantifiers(formula),
-            self._count_operators(formula),
-            self._syntax_complexity(context),
-            self._semantic_coherence(context),
-            self._entity_confidence(context),
-            self._parse_tree_depth(context)
-        ])
+        return np.array(
+            [
+                len(formula),
+                self._count_quantifiers(formula),
+                self._count_operators(formula),
+                self._syntax_complexity(context),
+                self._semantic_coherence(context),
+                self._entity_confidence(context),
+                self._parse_tree_depth(context),
+            ]
+        )
 ```
 
 **Benefits:**
@@ -1137,27 +1145,28 @@ class MLConfidenceScorer:
 from typing import Dict, List
 import yaml
 
+
 class MultilingualPatterns:
     """Multilingual pattern templates for FOL extraction."""
-    
+
     def __init__(self, lang: str = "en"):
         self.lang = lang
         self.patterns = self._load_patterns(lang)
-    
+
     def _load_patterns(self, lang: str) -> Dict[str, List[str]]:
         """Load language-specific patterns."""
         # Load from YAML: fol/i18n/patterns_en.yaml
         return {
             "quantifiers": {
                 "universal": ["all", "every", "each"],
-                "existential": ["some", "exists", "there is"]
+                "existential": ["some", "exists", "there is"],
             },
             "connectives": {
                 "conjunction": ["and", "&"],
                 "disjunction": ["or", "|"],
                 "implication": ["implies", "if...then"],
-                "negation": ["not", "no"]
-            }
+                "negation": ["not", "no"],
+            },
         }
 ```
 
@@ -1187,21 +1196,23 @@ def test_direct_obligation_prohibition_conflict():
     """O(p) ∧ F(p) should be detected as conflict."""
     elements = [
         {"type": "obligation", "action": "drive", "speed": ">50mph"},
-        {"type": "prohibition", "action": "drive", "speed": ">50mph"}
+        {"type": "prohibition", "action": "drive", "speed": ">50mph"},
     ]
     conflicts = detect_normative_conflicts(elements)
     assert len(conflicts) == 1
     assert conflicts[0]["type"] == "direct_conflict"
 
+
 def test_permission_prohibition_conflict():
     """P(p) ∧ F(p) should be detected as conflict."""
     elements = [
         {"type": "permission", "action": "smoke", "location": "office"},
-        {"type": "prohibition", "action": "smoke", "location": "office"}
+        {"type": "prohibition", "action": "smoke", "location": "office"},
     ]
     conflicts = detect_normative_conflicts(elements)
     assert len(conflicts) == 1
     assert conflicts[0]["type"] == "permission_conflict"
+
 
 def test_temporal_conflict():
     """O(p, t1) ∧ F(p, t2) where t1 ∩ t2 ≠ ∅ should be conflict."""
@@ -1209,13 +1220,13 @@ def test_temporal_conflict():
         {
             "type": "obligation",
             "action": "submit_report",
-            "time": {"start": "2026-02-01", "end": "2026-02-15"}
+            "time": {"start": "2026-02-01", "end": "2026-02-15"},
         },
         {
             "type": "prohibition",
             "action": "submit_report",
-            "time": {"start": "2026-02-10", "end": "2026-02-20"}
-        }
+            "time": {"start": "2026-02-10", "end": "2026-02-20"},
+        },
     ]
     conflicts = detect_normative_conflicts(elements)
     assert len(conflicts) == 1
@@ -1241,15 +1252,19 @@ from enum import Enum
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
+
 class ConflictResolutionRule(Enum):
     """Legal principles for conflict resolution."""
+
     LEX_SUPERIOR = "lex_superior"  # Higher authority wins
     LEX_SPECIALIS = "lex_specialis"  # More specific wins
     LEX_POSTERIOR = "lex_posterior"  # More recent wins
 
+
 @dataclass
 class Norm:
     """Deontic norm with metadata."""
+
     id: str
     type: str  # obligation, permission, prohibition
     action: str
@@ -1258,22 +1273,23 @@ class Norm:
     effective_date: str
     conditions: Dict[str, Any]
 
+
 class NormHierarchyResolver:
     """Resolve conflicts using legal hierarchy principles."""
-    
+
     def resolve_conflict(
         self,
         norm1: Norm,
         norm2: Norm,
-        strategy: ConflictResolutionRule = ConflictResolutionRule.LEX_SUPERIOR
+        strategy: ConflictResolutionRule = ConflictResolutionRule.LEX_SUPERIOR,
     ) -> Norm:
         """Resolve conflict between two norms."""
         if strategy == ConflictResolutionRule.LEX_SUPERIOR:
             return norm1 if norm1.authority_level < norm2.authority_level else norm2
-        
+
         elif strategy == ConflictResolutionRule.LEX_SPECIALIS:
             return norm1 if norm1.specificity > norm2.specificity else norm2
-        
+
         elif strategy == ConflictResolutionRule.LEX_POSTERIOR:
             return norm1 if norm1.effective_date > norm2.effective_date else norm2
 ```

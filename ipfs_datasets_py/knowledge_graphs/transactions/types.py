@@ -14,13 +14,14 @@ from datetime import datetime
 class IsolationLevel(Enum):
     """
     Transaction isolation levels matching Neo4j semantics.
-    
+
     Attributes:
         READ_UNCOMMITTED: No isolation, can read uncommitted changes (not recommended)
         READ_COMMITTED: Can only read committed changes
         REPEATABLE_READ: Snapshot isolation, sees consistent snapshot (default)
         SERIALIZABLE: Full serializability, prevents all anomalies
     """
+
     READ_UNCOMMITTED = "READ_UNCOMMITTED"
     READ_COMMITTED = "READ_COMMITTED"
     REPEATABLE_READ = "REPEATABLE_READ"
@@ -30,7 +31,7 @@ class IsolationLevel(Enum):
 class TransactionState(Enum):
     """
     Transaction lifecycle states.
-    
+
     Attributes:
         ACTIVE: Transaction is active and accepting operations
         PREPARING: Transaction is preparing to commit
@@ -38,6 +39,7 @@ class TransactionState(Enum):
         ABORTED: Transaction was aborted/rolled back
         FAILED: Transaction failed due to error
     """
+
     ACTIVE = "ACTIVE"
     PREPARING = "PREPARING"
     COMMITTED = "COMMITTED"
@@ -48,7 +50,7 @@ class TransactionState(Enum):
 class OperationType(Enum):
     """
     Types of operations that can be recorded in WAL.
-    
+
     Attributes:
         WRITE_NODE: Create or update a node
         WRITE_RELATIONSHIP: Create or update a relationship
@@ -57,6 +59,7 @@ class OperationType(Enum):
         SET_PROPERTY: Set a property on node/relationship
         REMOVE_PROPERTY: Remove a property from node/relationship
     """
+
     WRITE_NODE = "WRITE_NODE"
     WRITE_RELATIONSHIP = "WRITE_RELATIONSHIP"
     DELETE_NODE = "DELETE_NODE"
@@ -69,9 +72,9 @@ class OperationType(Enum):
 class Operation:
     """
     A single operation within a transaction.
-    
+
     Stored in WAL entries and replayed during recovery.
-    
+
     Attributes:
         type: Type of operation
         node_id: ID of affected node (if applicable)
@@ -79,12 +82,13 @@ class Operation:
         data: Operation-specific data (node/rel properties, etc.)
         prev_cid: Previous CID of affected entity (for versioning)
     """
+
     type: OperationType
     node_id: Optional[str] = None
     rel_id: Optional[str] = None
     data: Optional[Dict[str, Any]] = None
     prev_cid: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert operation to dictionary for storage."""
         return {
@@ -92,18 +96,18 @@ class Operation:
             "node_id": self.node_id,
             "rel_id": self.rel_id,
             "data": self.data,
-            "prev_cid": self.prev_cid
+            "prev_cid": self.prev_cid,
         }
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Operation':
+    def from_dict(cls, data: Dict[str, Any]) -> "Operation":
         """Create operation from dictionary."""
         return cls(
             type=OperationType(data["type"]),
             node_id=data.get("node_id"),
             rel_id=data.get("rel_id"),
             data=data.get("data"),
-            prev_cid=data.get("prev_cid")
+            prev_cid=data.get("prev_cid"),
         )
 
 
@@ -111,10 +115,10 @@ class Operation:
 class WALEntry:
     """
     Write-Ahead Log entry stored on IPLD.
-    
+
     Each transaction creates a chain of WAL entries linked by CIDs.
     WAL entries are immutable and form an append-only log.
-    
+
     Attributes:
         txn_id: Unique transaction identifier
         timestamp: Unix timestamp when entry was created
@@ -125,6 +129,7 @@ class WALEntry:
         read_set: Set of CIDs read by transaction (for conflict detection)
         write_set: Set of entity IDs written by transaction
     """
+
     txn_id: str
     timestamp: float
     operations: List[Operation]
@@ -133,11 +138,11 @@ class WALEntry:
     isolation_level: IsolationLevel = IsolationLevel.REPEATABLE_READ
     read_set: List[str] = field(default_factory=list)
     write_set: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert WAL entry to dictionary for IPLD storage.
-        
+
         Returns:
             Dictionary representation suitable for IPLD
         """
@@ -149,17 +154,17 @@ class WALEntry:
             "txn_state": self.txn_state.value,
             "isolation_level": self.isolation_level.value,
             "read_set": self.read_set,
-            "write_set": self.write_set
+            "write_set": self.write_set,
         }
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'WALEntry':
+    def from_dict(cls, data: Dict[str, Any]) -> "WALEntry":
         """
         Create WAL entry from dictionary.
-        
+
         Args:
             data: Dictionary representation
-            
+
         Returns:
             WALEntry instance
         """
@@ -171,7 +176,7 @@ class WALEntry:
             txn_state=TransactionState(data.get("txn_state", "ACTIVE")),
             isolation_level=IsolationLevel(data.get("isolation_level", "REPEATABLE_READ")),
             read_set=data.get("read_set", []),
-            write_set=data.get("write_set", [])
+            write_set=data.get("write_set", []),
         )
 
 
@@ -179,10 +184,10 @@ class WALEntry:
 class Transaction:
     """
     Active transaction context.
-    
+
     Maintains transaction state during execution and tracks
     operations for commit/rollback.
-    
+
     Attributes:
         txn_id: Unique transaction identifier
         isolation_level: Isolation level for this transaction
@@ -194,6 +199,7 @@ class Transaction:
         snapshot_cid: Graph CID at transaction start (for snapshot isolation)
         wal_entries: CIDs of WAL entries created by this transaction
     """
+
     txn_id: str
     isolation_level: IsolationLevel
     state: TransactionState = TransactionState.ACTIVE
@@ -203,38 +209,41 @@ class Transaction:
     start_time: float = field(default_factory=lambda: datetime.now().timestamp())
     snapshot_cid: Optional[str] = None
     wal_entries: List[str] = field(default_factory=list)
-    
+
     def add_operation(self, operation: Operation) -> None:
         """
         Add an operation to the transaction.
-        
+
         Args:
             operation: Operation to add
         """
         self.operations.append(operation)
-        
+
         # Track write set
         if operation.type in (OperationType.WRITE_NODE, OperationType.DELETE_NODE):
             if operation.node_id and operation.node_id not in self.write_set:
                 self.write_set.append(operation.node_id)
-        elif operation.type in (OperationType.WRITE_RELATIONSHIP, OperationType.DELETE_RELATIONSHIP):
+        elif operation.type in (
+            OperationType.WRITE_RELATIONSHIP,
+            OperationType.DELETE_RELATIONSHIP,
+        ):
             if operation.rel_id and operation.rel_id not in self.write_set:
                 self.write_set.append(operation.rel_id)
-    
+
     def add_read(self, entity_cid: str) -> None:
         """
         Track a read operation for conflict detection.
-        
+
         Args:
             entity_cid: CID of entity read
         """
         if entity_cid and entity_cid not in self.read_set:
             self.read_set.append(entity_cid)
-    
+
     def is_active(self) -> bool:
         """Check if transaction is in active state."""
         return self.state == TransactionState.ACTIVE
-    
+
     def can_commit(self) -> bool:
         """Check if transaction can be committed."""
         return self.state in (TransactionState.ACTIVE, TransactionState.PREPARING)
@@ -243,10 +252,11 @@ class Transaction:
 class ConflictError(Exception):
     """
     Raised when a transaction conflict is detected.
-    
+
     Indicates write-write conflict where two transactions
     modified the same entity.
     """
+
     pass
 
 
@@ -254,13 +264,15 @@ class TransactionAbortedError(Exception):
     """
     Raised when operation attempted on aborted transaction.
     """
+
     pass
 
 
 class DeadlockDetectedError(Exception):
     """
     Raised when a deadlock is detected between transactions.
-    
+
     Note: Full deadlock detection is a future enhancement.
     """
+
     pass

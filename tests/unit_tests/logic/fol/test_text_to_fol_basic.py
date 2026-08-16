@@ -30,7 +30,7 @@ class TestBasicConversions:
         """
         text = "All humans are mortal"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         assert len(result["fol_formulas"]) > 0
         formula = result["fol_formulas"][0]
@@ -45,7 +45,7 @@ class TestBasicConversions:
         """
         text = "Some dogs bark"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         assert len(result["fol_formulas"]) > 0
 
@@ -58,7 +58,7 @@ class TestBasicConversions:
         """
         text = "The cat is black and white"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         assert result["summary"]["operator_distribution"]["∧"] >= 0
 
@@ -71,7 +71,7 @@ class TestBasicConversions:
         """
         text = "The bird is red or blue"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         assert result["summary"]["operator_distribution"]["∨"] >= 0
 
@@ -84,7 +84,7 @@ class TestBasicConversions:
         """
         text = "If it rains, then the ground is wet"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         assert result["summary"]["operator_distribution"]["→"] >= 0
 
@@ -97,7 +97,7 @@ class TestBasicConversions:
         """
         text = "The sun is not cold"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         assert result["summary"]["operator_distribution"]["¬"] >= 0
 
@@ -113,7 +113,7 @@ class TestEdgeCases:
         THEN: Should return success with empty results
         """
         result = await convert_text_to_fol("")
-        
+
         assert result["status"] == "success"
         assert result["fol_formulas"] == []
         assert result["summary"]["total_statements"] == 0
@@ -126,7 +126,7 @@ class TestEdgeCases:
         THEN: Should return success with empty results
         """
         result = await convert_text_to_fol("   \n\t  ")
-        
+
         assert result["status"] == "success"
         assert result["fol_formulas"] == []
 
@@ -138,7 +138,7 @@ class TestEdgeCases:
         THEN: Should handle gracefully and return empty results
         """
         result = await convert_text_to_fol(None)
-        
+
         assert result["status"] == "success"
         assert result["fol_formulas"] == []
 
@@ -171,7 +171,7 @@ class TestEdgeCases:
         """
         text = "Test @#$% special *&^ characters!"
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
         # Should not crash, even if conversion quality is low
 
@@ -184,7 +184,7 @@ class TestEdgeCases:
         """
         text = "This is a test " * 100  # 1500+ characters
         result = await convert_text_to_fol(text)
-        
+
         assert result["status"] == "success"
 
 
@@ -201,11 +201,9 @@ class TestConfidenceScoring:
         predicates = {"humans": ["mortal"]}
         quantifiers = ["∀"]
         operators = ["→"]
-        
-        confidence = calculate_conversion_confidence(
-            sentence, predicates, quantifiers, operators
-        )
-        
+
+        confidence = calculate_conversion_confidence(sentence, predicates, quantifiers, operators)
+
         assert 0.0 <= confidence <= 1.0
         assert confidence > 0.5  # Should have reasonable confidence
 
@@ -219,11 +217,9 @@ class TestConfidenceScoring:
         predicates = {}
         quantifiers = []
         operators = []
-        
-        confidence = calculate_conversion_confidence(
-            sentence, predicates, quantifiers, operators
-        )
-        
+
+        confidence = calculate_conversion_confidence(sentence, predicates, quantifiers, operators)
+
         assert 0.0 <= confidence <= 1.0
 
     # DISABLED: Functions removed in refactoring
@@ -234,7 +230,7 @@ class TestConfidenceScoring:
     #     THEN: Should return low complexity score
     #     """
     #     complexity = estimate_sentence_complexity("Dogs bark")
-    #     
+    #
     #     assert complexity > 0
     #     assert complexity < 10  # Should be simple
 
@@ -246,7 +242,7 @@ class TestConfidenceScoring:
     #     """
     #     sentence = "If all humans are mortal and Socrates is a human, then Socrates is mortal"
     #     complexity = estimate_sentence_complexity(sentence)
-    #     
+    #
     #     assert complexity > 5  # Should be more complex
 
     # def test_estimate_formula_complexity(self):
@@ -257,7 +253,7 @@ class TestConfidenceScoring:
     #     """
     #     formula = "∀x(Human(x) → Mortal(x))"
     #     complexity = estimate_formula_complexity(formula)
-    #     
+    #
     #     assert complexity > 0  # Should detect operators
 
 
@@ -272,7 +268,7 @@ class TestDatasetExtraction:
         """
         dataset = {"text": "Test sentence"}
         result = extract_text_from_dataset(dataset)
-        
+
         assert isinstance(result, list)
         assert len(result) > 0
         assert "Test sentence" in result
@@ -283,13 +279,9 @@ class TestDatasetExtraction:
         WHEN: Extracting text
         THEN: Should find text in nested fields
         """
-        dataset = {
-            "data": {
-                "text": "Nested text"
-            }
-        }
+        dataset = {"data": {"text": "Nested text"}}
         result = extract_text_from_dataset(dataset)
-        
+
         assert isinstance(result, list)
 
     def test_extract_from_list_field(self):
@@ -298,11 +290,9 @@ class TestDatasetExtraction:
         WHEN: Extracting text
         THEN: Should handle list properly
         """
-        dataset = {
-            "texts": ["First sentence", "Second sentence"]
-        }
+        dataset = {"texts": ["First sentence", "Second sentence"]}
         result = extract_text_from_dataset(dataset)
-        
+
         assert isinstance(result, list)
 
 
@@ -318,7 +308,7 @@ class TestOutputFormats:
         """
         text = "All birds fly"
         result = await convert_text_to_fol(text, output_format="json")
-        
+
         assert result["status"] == "success"
         assert "fol_formulas" in result
         assert "metadata" in result
@@ -333,7 +323,7 @@ class TestOutputFormats:
         """
         text = "Test sentence"
         result = await convert_text_to_fol(text, include_metadata=True)
-        
+
         assert "metadata" in result
         assert "tool" in result["metadata"]
         assert result["metadata"]["tool"] == "text_to_fol"
@@ -347,7 +337,7 @@ class TestOutputFormats:
         """
         text = "Complex ambiguous unclear sentence structure"
         result = await convert_text_to_fol(text, confidence_threshold=0.9)
-        
+
         assert result["status"] == "success"
         # May have fewer results due to high threshold
         for formula in result["fol_formulas"]:

@@ -40,18 +40,14 @@ def _text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise FormalizationValidationError(f"{field_name} must be a non-empty string")
     if value != value.strip():
-        raise FormalizationValidationError(
-            f"{field_name} must not have surrounding whitespace"
-        )
+        raise FormalizationValidationError(f"{field_name} must not have surrounding whitespace")
     return value
 
 
 def _identifier(value: Any, field_name: str) -> str:
     result = _text(value, field_name)
     if not _ID_RE.fullmatch(result):
-        raise FormalizationValidationError(
-            f"{field_name} must be a stable identifier"
-        )
+        raise FormalizationValidationError(f"{field_name} must be a stable identifier")
     return result
 
 
@@ -59,9 +55,7 @@ def _unique_identifiers(
     values: Sequence[str], field_name: str, *, sort: bool = True
 ) -> tuple[str, ...]:
     if isinstance(values, (str, bytes, bytearray)):
-        raise FormalizationValidationError(
-            f"{field_name} must be a sequence of identifiers"
-        )
+        raise FormalizationValidationError(f"{field_name} must be a sequence of identifiers")
     normalized = tuple(_identifier(value, field_name) for value in values)
     if len(normalized) != len(set(normalized)):
         raise FormalizationValidationError(f"{field_name} values must be unique")
@@ -80,14 +74,10 @@ def _sequence(value: Any, field_name: str) -> Sequence[Any]:
     return value
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise FormalizationValidationError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise FormalizationValidationError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,9 +124,7 @@ class FormalizationSample:
             else FrozenMap(_mapping(self.payload, "payload")),
         )
         if not isinstance(self.provenance, Provenance):
-            raise FormalizationValidationError(
-                "provenance must be a shared Provenance instance"
-            )
+            raise FormalizationValidationError("provenance must be a shared Provenance instance")
         # Normalize through the kernel's canonical projection.  Besides making
         # construction defensive, this gives typed -> JSON -> typed round trips
         # the same deterministic tuple ordering as direct construction.
@@ -145,9 +133,7 @@ class FormalizationSample:
             "provenance",
             Provenance.from_dict(self.provenance.to_dict()),
         )
-        source_ref_ids = _unique_identifiers(
-            self.source_ref_ids, "source_ref_ids"
-        )
+        source_ref_ids = _unique_identifiers(self.source_ref_ids, "source_ref_ids")
         span_ids = _unique_identifiers(self.span_ids, "span_ids")
         assumptions = tuple(
             item
@@ -157,9 +143,7 @@ class FormalizationSample:
         )
         assumption_ids = [item.assumption_id for item in assumptions]
         if len(assumption_ids) != len(set(assumption_ids)):
-            raise FormalizationValidationError(
-                "assumption IDs must be unique within a sample"
-            )
+            raise FormalizationValidationError("assumption IDs must be unique within a sample")
         object.__setattr__(
             self,
             "assumptions",
@@ -179,9 +163,7 @@ class FormalizationSample:
             if isinstance(self.metadata, FrozenMap)
             else FrozenMap(_mapping(self.metadata, "metadata")),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         self.validate()
 
     def validate(self) -> "FormalizationSample":
@@ -202,8 +184,7 @@ class FormalizationSample:
         unknown_spans = set(self.span_ids) - set(spans)
         if unknown_sources:
             raise FormalizationValidationError(
-                "sample references unknown sources: "
-                + ", ".join(sorted(unknown_sources))
+                "sample references unknown sources: " + ", ".join(sorted(unknown_sources))
             )
         if unknown_spans:
             raise FormalizationValidationError(
@@ -223,8 +204,7 @@ class FormalizationSample:
             }
             if mismatched:
                 raise FormalizationValidationError(
-                    "sample spans belong to unlisted sources: "
-                    + ", ".join(sorted(mismatched))
+                    "sample spans belong to unlisted sources: " + ", ".join(sorted(mismatched))
                 )
 
         subject_ids = {item.subject_id for item in self.provenance.bindings}
@@ -328,12 +308,8 @@ class FormalizationSample:
             declaration_id=value.get("declaration_id", ""),
             declaration_digest=value.get("declaration_digest", ""),
             payload=FrozenMap(_mapping(value.get("payload", {}), "payload")),
-            provenance=Provenance.from_dict(
-                _mapping(value.get("provenance", {}), "provenance")
-            ),
-            source_ref_ids=tuple(
-                _sequence(value.get("source_ref_ids", ()), "source_ref_ids")
-            ),
+            provenance=Provenance.from_dict(_mapping(value.get("provenance", {}), "provenance")),
+            source_ref_ids=tuple(_sequence(value.get("source_ref_ids", ()), "source_ref_ids")),
             span_ids=tuple(_sequence(value.get("span_ids", ()), "span_ids")),
             assumptions=tuple(
                 Assumption.from_dict(_mapping(item, "assumption"))
@@ -341,9 +317,7 @@ class FormalizationSample:
             ),
             tags=tuple(_sequence(value.get("tags", ()), "tags")),
             metadata=FrozenMap(_mapping(value.get("metadata", {}), "metadata")),
-            schema_version=value.get(
-                "schema_version", FORMALIZATION_SAMPLE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", FORMALIZATION_SAMPLE_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -351,9 +325,7 @@ class FormalizationSample:
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise FormalizationValidationError(
-                "formalization sample must be valid JSON"
-            ) from exc
+            raise FormalizationValidationError("formalization sample must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "formalization sample"))
 
 

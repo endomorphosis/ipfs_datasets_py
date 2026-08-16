@@ -7,6 +7,7 @@ Tests cover:
 - pdf_optimize_for_llm: LLM optimisation wrapper
 - pdf_batch_process: batch processing wrapper
 """
+
 from __future__ import annotations
 
 import pytest
@@ -25,6 +26,7 @@ class TestPdfQueryCorpus:
         from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_query_corpus import (
             pdf_query_corpus,
         )
+
         result = await pdf_query_corpus(query="machine learning applications")
         assert isinstance(result, dict)
 
@@ -38,6 +40,7 @@ class TestPdfQueryCorpus:
         from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_query_corpus import (
             pdf_query_corpus,
         )
+
         result = await pdf_query_corpus(query="")
         assert isinstance(result, dict)
 
@@ -51,6 +54,7 @@ class TestPdfQueryCorpus:
         from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_query_corpus import (
             pdf_query_corpus,
         )
+
         result = await pdf_query_corpus(query="neural networks")
         assert "content" in result
 
@@ -68,14 +72,11 @@ class TestPdfIngestToGraphrag:
         from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_ingest_to_graphrag import (
             pdf_ingest_to_graphrag,
         )
+
         result = await pdf_ingest_to_graphrag(pdf_source="/tmp/nonexistent.pdf")
         assert isinstance(result, dict)
         # Must not raise; must report the problem
-        has_error = (
-            "error" in result
-            or result.get("success") is False
-            or "message" in result
-        )
+        has_error = "error" in result or result.get("success") is False or "message" in result
         assert has_error
 
     @pytest.mark.asyncio
@@ -88,13 +89,10 @@ class TestPdfIngestToGraphrag:
         from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_ingest_to_graphrag import (
             pdf_ingest_to_graphrag,
         )
+
         result = await pdf_ingest_to_graphrag(pdf_source={"title": "no path here"})
         assert isinstance(result, dict)
-        has_error = (
-            "error" in result
-            or result.get("success") is False
-            or "message" in result
-        )
+        has_error = "error" in result or result.get("success") is False or "message" in result
         assert has_error
 
 
@@ -111,6 +109,7 @@ class TestPdfOptimizeForLlm:
         from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_optimize_for_llm import (
             pdf_optimize_for_llm,
         )
+
         result = await pdf_optimize_for_llm(pdf_source="/tmp/nonexistent.pdf")
         assert isinstance(result, dict)
 
@@ -124,14 +123,11 @@ class TestPdfOptimizeForLlm:
         from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_optimize_for_llm import (
             pdf_optimize_for_llm,
         )
-        result = await pdf_optimize_for_llm(
-            pdf_source="/tmp/test.pdf", target_llm="invalid_model"
-        )
+
+        result = await pdf_optimize_for_llm(pdf_source="/tmp/test.pdf", target_llm="invalid_model")
         assert isinstance(result, dict)
         has_error = (
-            "error" in result
-            or result.get("success") is False
-            or result.get("status") == "error"
+            "error" in result or result.get("success") is False or result.get("status") == "error"
         )
         assert has_error
 
@@ -149,6 +145,7 @@ class TestPdfBatchProcess:
         from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_batch_process import (
             pdf_batch_process,
         )
+
         result = await pdf_batch_process(pdf_sources=[])
         assert isinstance(result, dict)
 
@@ -162,6 +159,7 @@ class TestPdfBatchProcess:
         from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_batch_process import (
             pdf_batch_process,
         )
+
         result = await pdf_batch_process(pdf_sources=["/tmp/ghost.pdf"])
         assert isinstance(result, dict)
 
@@ -175,11 +173,10 @@ class TestPdfBatchProcess:
         from ipfs_datasets_py.mcp_server.tools.pdf_tools.pdf_batch_process import (
             pdf_batch_process,
         )
+
         result = await pdf_batch_process(pdf_sources=["/tmp/a.pdf"], batch_size=0)
         assert isinstance(result, dict)
         has_error = (
-            "error" in result
-            or result.get("success") is False
-            or result.get("status") == "error"
+            "error" in result or result.get("success") is False or result.get("status") == "error"
         )
         assert has_error

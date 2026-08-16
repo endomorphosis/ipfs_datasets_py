@@ -26,6 +26,7 @@ Modules targeted:
 - reasoning/deontological_reasoning_utils.py  lines 107, 180
 - symbolic/neurosymbolic_api.py           lines 121-122, 179-181
 """
+
 import asyncio
 import os
 import sys
@@ -43,6 +44,7 @@ logging.disable(logging.CRITICAL)
 # 1. converters/modal_logic_extension.py  lines 77, 182-188
 # ============================================================
 
+
 class TestModalLogicExtensionUncoveredLines:
     """GIVEN ModalLogicSymbol / _normalize_symbol_items edge cases."""
 
@@ -52,6 +54,7 @@ class TestModalLogicExtensionUncoveredLines:
         from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import (
             ModalLogicSymbol,
         )
+
         sym = ModalLogicSymbol("permission text", semantic=False, unknown_kw="ignored")
         assert sym.value == "permission text"
 
@@ -59,8 +62,10 @@ class TestModalLogicExtensionUncoveredLines:
         """GIVEN _normalize_symbol_items with nested list,
         WHEN called, THEN inner items are flattened (lines 182-183)."""
         from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import (
-            AdvancedLogicConverter, ModalLogicSymbol,
+            AdvancedLogicConverter,
+            ModalLogicSymbol,
         )
+
         converter = AdvancedLogicConverter()
         nested = [["item_a", "item_b"]]
         result = converter._normalize_symbol_items(nested)
@@ -71,8 +76,10 @@ class TestModalLogicExtensionUncoveredLines:
         """GIVEN _normalize_symbol_items with a Symbol object without _semantic,
         WHEN called, THEN _semantic is set to True and item appended (lines 185-188)."""
         from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import (
-            AdvancedLogicConverter, ModalLogicSymbol,
+            AdvancedLogicConverter,
+            ModalLogicSymbol,
         )
+
         converter = AdvancedLogicConverter()
         sym = ModalLogicSymbol("test")
         if hasattr(sym, "_semantic"):
@@ -86,8 +93,10 @@ class TestModalLogicExtensionUncoveredLines:
         """GIVEN a Symbol that already has _semantic,
         WHEN _normalize_symbol_items is called, THEN it still gets appended."""
         from ipfs_datasets_py.logic.integration.converters.modal_logic_extension import (
-            AdvancedLogicConverter, ModalLogicSymbol,
+            AdvancedLogicConverter,
+            ModalLogicSymbol,
         )
+
         converter = AdvancedLogicConverter()
         sym = ModalLogicSymbol("test", semantic=True)
         result = converter._normalize_symbol_items([sym])
@@ -98,17 +107,20 @@ class TestModalLogicExtensionUncoveredLines:
 # 2. bridges/tdfol_cec_bridge.py — various paths
 # ============================================================
 
+
 class TestTDFOLCECBridgeUncoveredPaths:
     """GIVEN TDFOLCECBridge edge cases and exception paths."""
 
     @pytest.fixture
     def bridge(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         return TDFOLCECBridge()
 
     @pytest.fixture
     def goal_formula(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate
+
         return Predicate("P", ())
 
     def test_load_cec_rules_instantiation_exception_is_logged(self, bridge):
@@ -120,6 +132,7 @@ class TestTDFOLCECBridgeUncoveredPaths:
         class BadRule(InferenceRule):
             def apply(self, *a, **kw):
                 return []
+
             def __init__(self):
                 raise ValueError("bad rule instantiation")
 
@@ -127,9 +140,12 @@ class TestTDFOLCECBridgeUncoveredPaths:
         orig_getattr = getattr
 
         with patch.object(prover_core, "BadRuleForTest", BadRule, create=True):
-            with patch("builtins.dir", side_effect=lambda o: (
-                orig_dir + ["BadRuleForTest"] if o is prover_core else orig_dir
-            )):
+            with patch(
+                "builtins.dir",
+                side_effect=lambda o: (
+                    orig_dir + ["BadRuleForTest"] if o is prover_core else orig_dir
+                ),
+            ):
                 rules = bridge._load_cec_rules()
         # No error raised; bad class was skipped
         assert isinstance(rules, list)
@@ -138,6 +154,7 @@ class TestTDFOLCECBridgeUncoveredPaths:
         """GIVEN InferenceRule import fails,
         WHEN _load_cec_rules is called, THEN outer exception is caught (lines 101-102)."""
         import ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge as cmod
+
         original_cec = bridge.cec_available
         try:
             bridge.cec_available = True
@@ -235,7 +252,8 @@ class TestTDFOLCECBridgeUncoveredPaths:
         """GIVEN TDFOL fails but CEC succeeds,
         WHEN EnhancedTDFOLProver.prove is called, THEN cec_result is returned (line 414)."""
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import (
-            EnhancedTDFOLProver, ProofStatus,
+            EnhancedTDFOLProver,
+            ProofStatus,
         )
 
         prover = EnhancedTDFOLProver(use_cec=True)
@@ -256,6 +274,7 @@ class TestTDFOLCECBridgeUncoveredPaths:
 # 3. bridges/tdfol_grammar_bridge.py  lines 67-69, 236-237, 264, 271-272, 352, 598, 613
 # ============================================================
 
+
 class TestTDFOLGrammarBridgeUncoveredPaths:
     """GIVEN TDFOLGrammarBridge edge cases."""
 
@@ -271,9 +290,11 @@ class TestTDFOLGrammarBridgeUncoveredPaths:
         # We patch the module's CEC sub-import to fail
         with patch.dict(
             sys.modules,
-            {"ipfs_datasets_py.logic.CEC.native.grammar_engine": MagicMock(
-                GrammarEngine=MagicMock(side_effect=RuntimeError("engine init failed"))
-            )},
+            {
+                "ipfs_datasets_py.logic.CEC.native.grammar_engine": MagicMock(
+                    GrammarEngine=MagicMock(side_effect=RuntimeError("engine init failed"))
+                )
+            },
         ):
             bridge = TDFOLGrammarBridge()
         # Either available=False or True depending on which import path fails
@@ -292,7 +313,9 @@ class TestTDFOLGrammarBridgeUncoveredPaths:
         expected_formula = Predicate("Obligation", ())
 
         # Mock CEC parse to return a TDFOL Formula
-        with patch.object(_dcec_mod, "parse_dcec_string", create=True, return_value=expected_formula):
+        with patch.object(
+            _dcec_mod, "parse_dcec_string", create=True, return_value=expected_formula
+        ):
             with patch(
                 "ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge.TDFOLGrammarBridge"
                 "._fallback_parse",
@@ -314,9 +337,11 @@ class TestTDFOLGrammarBridgeUncoveredPaths:
         with patch.object(bridge, "_fallback_parse", wraps=bridge._fallback_parse) as mock_fp:
             # Replace so first recursive calls return None
             call_count = [0]
-            original = bridge._fallback_parse.__wrapped__ if hasattr(
-                bridge._fallback_parse, "__wrapped__"
-            ) else None
+            original = (
+                bridge._fallback_parse.__wrapped__
+                if hasattr(bridge._fallback_parse, "__wrapped__")
+                else None
+            )
 
             # Use a simpler approach: pass text where the implication parts are empty
             result = bridge._fallback_parse(" -> ")
@@ -376,9 +401,9 @@ class TestTDFOLGrammarBridgeUncoveredPaths:
         def mock_parse(text):
             call_log.append(text)
             if text == "P":
-                return None          # First call fails — triggers line 598
+                return None  # First call fails — triggers line 598
             if text == "P()":
-                return p_formula     # Second call succeeds
+                return p_formula  # Second call succeeds
             if text in ("Q", "Q()"):
                 return q_formula
             return None
@@ -405,11 +430,11 @@ class TestTDFOLGrammarBridgeUncoveredPaths:
         def mock_parse(text):
             call_log.append(text)
             if text == "P":
-                return p_formula       # Premise parses fine
+                return p_formula  # Premise parses fine
             if text == "Q":
-                return None            # Conclusion fails first — triggers line 613
+                return None  # Conclusion fails first — triggers line 613
             if text == "Q()":
-                return q_formula       # Second try succeeds
+                return q_formula  # Second try succeeds
             return None
 
         with patch.object(nl.grammar_bridge, "parse_natural_language", side_effect=mock_parse):
@@ -421,6 +446,7 @@ class TestTDFOLGrammarBridgeUncoveredPaths:
 # ============================================================
 # 4. bridges/tdfol_shadowprover_bridge.py  lines 65-66, 120, 335
 # ============================================================
+
 
 class TestTDFOLShadowProverBridgeUncoveredPaths:
     """GIVEN TDFOLShadowProverBridge edge cases."""
@@ -459,7 +485,8 @@ class TestTDFOLShadowProverBridgeUncoveredPaths:
         """GIVEN ModalLogicType.K (not K4, S4, S5, D, T),
         WHEN _get_prover is called, THEN k_prover is returned as default (line 335)."""
         from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
-            TDFOLShadowProverBridge, ModalLogicType,
+            TDFOLShadowProverBridge,
+            ModalLogicType,
         )
 
         bridge = TDFOLShadowProverBridge()
@@ -471,6 +498,7 @@ class TestTDFOLShadowProverBridgeUncoveredPaths:
 # ============================================================
 # 5. reasoning/deontological_reasoning.py  lines 128-129, 333-335
 # ============================================================
+
 
 class TestDeontologicalReasoningUncoveredPaths:
     """GIVEN DeontologicalReasoning edge cases."""
@@ -527,9 +555,7 @@ class TestDeontologicalReasoningUncoveredPaths:
 
         loop = asyncio.new_event_loop()
         try:
-            result = loop.run_until_complete(
-                engine.analyze_corpus_for_deontic_conflicts(docs)
-            )
+            result = loop.run_until_complete(engine.analyze_corpus_for_deontic_conflicts(docs))
         finally:
             loop.close()
 
@@ -540,6 +566,7 @@ class TestDeontologicalReasoningUncoveredPaths:
 # ============================================================
 # 6. reasoning/_prover_backend_mixin.py  lines 79, 202-204, 505
 # ============================================================
+
 
 class TestProverBackendMixinUncoveredPaths:
     """GIVEN ProverBackendMixin edge cases."""
@@ -620,6 +647,7 @@ class TestProverBackendMixinUncoveredPaths:
         mock_result.stderr = "cvc5 error"
 
         import time
+
         with patch("subprocess.run", return_value=mock_result):
             result = prover._check_cvc5_consistency(rule_set, time.time())
 
@@ -629,6 +657,7 @@ class TestProverBackendMixinUncoveredPaths:
 # ============================================================
 # 7. reasoning/_logic_verifier_backends_mixin.py  lines 165-167, 230
 # ============================================================
+
 
 class TestLogicVerifierBackendsMixinUncoveredPaths:
     """GIVEN _LogicVerifierBackendsMixin edge cases."""
@@ -644,6 +673,7 @@ class TestLogicVerifierBackendsMixinUncoveredPaths:
         class UncertainSymbol:
             def __init__(self, value, semantic=False):
                 self.value = value
+
             def query(self, prompt):
                 return type("R", (), {"value": "uncertain"})()
 
@@ -665,6 +695,7 @@ class TestLogicVerifierBackendsMixinUncoveredPaths:
         class EmptyProofSymbol:
             def __init__(self, value, semantic=False):
                 self.value = value
+
             def query(self, prompt):
                 # Return a string with no "Step N:" pattern
                 return type("R", (), {"value": "no steps here"})()
@@ -680,6 +711,7 @@ class TestLogicVerifierBackendsMixinUncoveredPaths:
 # 8. converters/logic_translation_core.py  lines 389-391, 555-557, 713
 # ============================================================
 
+
 class TestLogicTranslationCoreUncoveredPaths:
     """GIVEN LogicTranslationCore edge cases."""
 
@@ -691,7 +723,8 @@ class TestLogicTranslationCoreUncoveredPaths:
             CoqTranslator,
         )
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
 
         translator = CoqTranslator()
@@ -716,7 +749,8 @@ class TestLogicTranslationCoreUncoveredPaths:
             SMTTranslator,
         )
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
 
         translator = SMTTranslator()
@@ -749,6 +783,7 @@ class TestLogicTranslationCoreUncoveredPaths:
 # 9. converters/deontic_logic_core.py  lines 333, 355, 357, 380, 498-499, 506-507
 # ============================================================
 
+
 class TestDeonticLogicCoreUncoveredPaths:
     """GIVEN DeonticLogicValidator edge cases and demonstrate_deontic_logic."""
 
@@ -756,7 +791,9 @@ class TestDeonticLogicCoreUncoveredPaths:
         """GIVEN formula.operator is not a DeonticOperator instance,
         WHEN validate_formula is called, THEN error about operator is added (line 333)."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticLogicValidator, DeonticFormula, DeonticOperator,
+            DeonticLogicValidator,
+            DeonticFormula,
+            DeonticOperator,
         )
 
         formula = MagicMock()
@@ -773,7 +810,9 @@ class TestDeonticLogicCoreUncoveredPaths:
         """GIVEN a quantifier with empty variable,
         WHEN validate_formula is called, THEN variable error added (line 355)."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticLogicValidator, DeonticFormula, DeonticOperator,
+            DeonticLogicValidator,
+            DeonticFormula,
+            DeonticOperator,
         )
 
         formula = MagicMock()
@@ -790,7 +829,9 @@ class TestDeonticLogicCoreUncoveredPaths:
         """GIVEN a quantifier with empty domain,
         WHEN validate_formula is called, THEN domain error added (line 357)."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticLogicValidator, DeonticFormula, DeonticOperator,
+            DeonticLogicValidator,
+            DeonticFormula,
+            DeonticOperator,
         )
 
         formula = MagicMock()
@@ -807,7 +848,10 @@ class TestDeonticLogicCoreUncoveredPaths:
         """GIVEN a RuleSet where one formula has a validation error,
         WHEN validate_rule_set is called, THEN error is prefixed with 'Formula N:' (line 380)."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticLogicValidator, DeonticRuleSet, DeonticFormula, DeonticOperator,
+            DeonticLogicValidator,
+            DeonticRuleSet,
+            DeonticFormula,
+            DeonticOperator,
         )
 
         bad_formula = MagicMock()
@@ -844,6 +888,7 @@ class TestDeonticLogicCoreUncoveredPaths:
 # 10. caching/ipfs_proof_cache.py  lines 174-176, 212-215
 # ============================================================
 
+
 class TestIPFSProofCacheUncoveredPaths:
     """GIVEN IPFSProofCache exception and update paths."""
 
@@ -868,7 +913,8 @@ class TestIPFSProofCacheUncoveredPaths:
         WHEN _upload_to_ipfs is called, THEN cached entry updated with CID (lines 212-215)."""
         import time as _time
         from ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache import (
-            IPFSProofCache, IPFSCachedProof,
+            IPFSProofCache,
+            IPFSCachedProof,
         )
 
         cache = IPFSProofCache(enable_ipfs=True)
@@ -897,6 +943,7 @@ class TestIPFSProofCacheUncoveredPaths:
 # 11. caching/proof_cache.py  line 83
 # ============================================================
 
+
 class TestProofCacheModuleDir:
     """GIVEN proof_cache module __dir__ function."""
 
@@ -904,6 +951,7 @@ class TestProofCacheModuleDir:
         """GIVEN the proof_cache module,
         WHEN dir() is called on it, THEN __dir__ returns a sorted list (line 83)."""
         import ipfs_datasets_py.logic.integration.caching.proof_cache as pc_mod
+
         result = pc_mod.__dir__()
         assert isinstance(result, list)
         assert result == sorted(result)
@@ -913,6 +961,7 @@ class TestProofCacheModuleDir:
 # 12. interactive/interactive_fol_constructor.py  lines 153, 281-283, 376, 391-393, 497-499
 # ============================================================
 
+
 class TestInteractiveFOLConstructorUncoveredPaths:
     """GIVEN InteractiveFOLConstructor edge cases."""
 
@@ -921,6 +970,7 @@ class TestInteractiveFOLConstructorUncoveredPaths:
         from ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor import (
             InteractiveFOLConstructor,
         )
+
         return InteractiveFOLConstructor()
 
     def test_add_statement_bridge_returns_no_symbol_raises_value_error(self, constructor):
@@ -1001,6 +1051,7 @@ class TestInteractiveFOLConstructorUncoveredPaths:
 # 13. domain/document_consistency_checker.py  lines 224, 289-292, 474, 524, 529-530
 # ============================================================
 
+
 class TestDocumentConsistencyCheckerUncoveredPaths:
     """GIVEN DocumentConsistencyChecker edge cases."""
 
@@ -1009,6 +1060,7 @@ class TestDocumentConsistencyCheckerUncoveredPaths:
         from ipfs_datasets_py.logic.integration.domain.document_consistency_checker import (
             DocumentConsistencyChecker,
         )
+
         return DocumentConsistencyChecker(rag_store=MagicMock())
 
     def test_generate_debug_report_adds_temporal_fix_suggestion(self, checker):
@@ -1074,6 +1126,7 @@ class TestDocumentConsistencyCheckerUncoveredPaths:
 # 14. converters/deontic_logic_converter.py  lines 293-295, 397, 466, 488, 590-592, 720-725
 # ============================================================
 
+
 class TestDeonticLogicConverterUncoveredPaths:
     """GIVEN DeonticLogicConverter edge cases."""
 
@@ -1082,6 +1135,7 @@ class TestDeonticLogicConverterUncoveredPaths:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             DeonticLogicConverter,
         )
+
         return DeonticLogicConverter()
 
     def test_convert_entities_exception_prints_traceback(self, converter, capsys):
@@ -1118,6 +1172,7 @@ class TestDeonticLogicConverterUncoveredPaths:
 
         # Patch to inject a start_time temporal expression
         import re as _re
+
         with patch.object(
             converter,
             "_extract_entity_text",
@@ -1135,6 +1190,7 @@ class TestDeonticLogicConverterUncoveredPaths:
             DeonticLogicConverter,
         )
         import inspect
+
         # The _extract_relationship_text calls a fallback that uses relationship_type
         rel = MagicMock()
         rel.data = {}  # no 'type' key
@@ -1169,6 +1225,7 @@ class TestDeonticLogicConverterUncoveredPaths:
 # ============================================================
 # 15. domain/temporal_deontic_api.py  lines 178-179, 267-278, 305-307
 # ============================================================
+
 
 class TestTemporalDeonticAPIUncoveredPaths:
     """GIVEN temporal_deontic_api edge cases."""
@@ -1334,6 +1391,7 @@ class TestTemporalDeonticAPIUncoveredPaths:
 # 16. reasoning/deontological_reasoning_utils.py  lines 107, 180
 # ============================================================
 
+
 class TestDeontologicalReasoningUtilsUncoveredPaths:
     """GIVEN deontological_reasoning_utils edge cases."""
 
@@ -1362,6 +1420,7 @@ class TestDeontologicalReasoningUtilsUncoveredPaths:
 # ============================================================
 # 17. symbolic/neurosymbolic_api.py  lines 121-122, 179-181
 # ============================================================
+
 
 class TestNeurosymbolicAPIUncoveredPaths:
     """GIVEN NeurosymbolicReasoner edge cases."""

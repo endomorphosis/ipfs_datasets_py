@@ -8,6 +8,7 @@ Targets missing lines:
 - nl_converter.py: 39-41, 116, 130-132, 141, 146-148, 180-182, 208-219,
   273-282, 300-305, 308-316, 319-327, 330-344, 352, 357, 384-401, 413-423, 435-445
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -22,6 +23,7 @@ from ipfs_datasets_py.logic.CEC.nl.language_detector import Language
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 class _SimpleParser(BaseParser):
     """Minimal concrete parser for testing BaseParser abstract methods."""
@@ -56,6 +58,7 @@ class _ExceptionParser(BaseParser):
 # ===========================================================================
 # ParseResult
 # ===========================================================================
+
 
 class TestParseResultAddError:
     """Lines 61–62 — add_error sets success=False."""
@@ -151,6 +154,7 @@ class TestParseResultStrRepr:
 # BaseParser
 # ===========================================================================
 
+
 class TestBaseParserGetLanguage:
     """Line 166 — get_language returns the language string."""
 
@@ -230,7 +234,9 @@ class TestBaseParserParseLowConfidence:
         p = _LowConfidenceParser()
         result = p.parse("hello world")
         assert result.has_warnings()
-        assert "threshold" in result.warnings[0].lower() or "confidence" in result.warnings[0].lower()
+        assert (
+            "threshold" in result.warnings[0].lower() or "confidence" in result.warnings[0].lower()
+        )
 
 
 class TestBaseParserParseExceptionHandling:
@@ -248,6 +254,7 @@ class TestBaseParserParseExceptionHandling:
 # ===========================================================================
 # get_parser function
 # ===========================================================================
+
 
 class TestGetParserFunction:
     """Lines 307–364 — get_parser factory function."""
@@ -300,6 +307,7 @@ class TestGetParserFunction:
         parser = get_parser("en")
         # Patch the converter's convert_to_dcec to return failure
         from ipfs_datasets_py.logic.CEC.native.nl_converter import ConversionResult
+
         failure_result = ConversionResult(
             english_text="test",
             success=False,

@@ -36,12 +36,7 @@ from ipfs_datasets_py.utils.cache import GitHubCache
 cache = GitHubCache()
 
 # Cache API response with ETag
-cache.set(
-    "repos/owner/repo",
-    response_data,
-    etag="W/\"abc123\"",
-    operation_type="get_repo_info"
-)
+cache.set("repos/owner/repo", response_data, etag='W/"abc123"', operation_type="get_repo_info")
 
 # Get cached response
 cached = cache.get("repos/owner/repo")
@@ -113,14 +108,17 @@ cache/
 ```python
 # Old code
 from ipfs_datasets_py.utils.query_cache import QueryCache
+
 cache = QueryCache(maxsize=100, ttl=300)
 
 # New code (recommended)
 from ipfs_datasets_py.utils.cache import LocalCache
+
 cache = LocalCache(maxsize=100, default_ttl=300)
 
 # Or use backward-compatible alias
 from ipfs_datasets_py.utils.cache import QueryCache
+
 cache = QueryCache(maxsize=100, ttl=300)  # Deprecated warning
 ```
 
@@ -132,6 +130,7 @@ from ipfs_datasets_py.utils.github_wrapper import GitHubAPICache
 
 # New code
 from ipfs_datasets_py.utils.cache import GitHubCache
+
 cache = GitHubCache()
 ```
 
@@ -164,15 +163,16 @@ Extend `BaseCache` or `DistributedCache`:
 ```python
 from ipfs_datasets_py.utils.cache import BaseCache
 
+
 class MyCache(BaseCache):
     def get(self, key: str):
         # Implementation
         pass
-    
+
     def set(self, key: str, value, ttl=None, **metadata):
         # Implementation
         pass
-    
+
     # ... implement other abstract methods
 ```
 

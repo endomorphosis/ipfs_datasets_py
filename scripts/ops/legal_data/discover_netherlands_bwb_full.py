@@ -70,11 +70,23 @@ def parse_sru_page(xml_text: str) -> tuple[list[dict[str, Any]], int | None, int
             records.append(current_record)
         elif current_record is not None and name == "recordPosition" and text.isdigit():
             current_record["record_position"] = int(text)
-        elif current_record is not None and name == "identifier" and text.upper().startswith("BWBR"):
+        elif (
+            current_record is not None and name == "identifier" and text.upper().startswith("BWBR")
+        ):
             current_record["identifier"] = text.upper()
-        elif current_record is not None and name == "title" and text and "title" not in current_record:
+        elif (
+            current_record is not None
+            and name == "title"
+            and text
+            and "title" not in current_record
+        ):
             current_record["title"] = text
-        elif current_record is not None and name == "type" and text and "document_type" not in current_record:
+        elif (
+            current_record is not None
+            and name == "type"
+            and text
+            and "document_type" not in current_record
+        ):
             current_record["document_type"] = text
 
     cleaned: list[dict[str, Any]] = []
@@ -157,7 +169,9 @@ def discover(
                 if attempt < retries:
                     time.sleep(max(1.0, rate_limit_delay))
         if last_error:
-            failed_pages.append({"start_record": next_start_record, "url": url, "error": last_error})
+            failed_pages.append(
+                {"start_record": next_start_record, "url": url, "error": last_error}
+            )
             break
         if not next_start_record:
             break

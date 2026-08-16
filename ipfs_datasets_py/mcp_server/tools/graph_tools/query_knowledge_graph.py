@@ -36,7 +36,9 @@ async def query_knowledge_graph(
     Delegates to `ipfs_datasets_py.knowledge_graphs.query_knowledge_graph.query_knowledge_graph`.
     """
 
-    from ipfs_datasets_py.knowledge_graphs.query_knowledge_graph import query_knowledge_graph as core_query
+    from ipfs_datasets_py.knowledge_graphs.query_knowledge_graph import (
+        query_knowledge_graph as core_query,
+    )
 
     def _run_sync():
         return core_query(

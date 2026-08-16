@@ -73,9 +73,7 @@ class TestP2PMCPRegistryAdapter:
 
         # WHEN: Creating adapter with Trio as default
         adapter = P2PMCPRegistryAdapter(
-            server,
-            default_runtime=RUNTIME_TRIO,
-            enable_runtime_detection=False
+            server, default_runtime=RUNTIME_TRIO, enable_runtime_detection=False
         )
 
         # THEN: Custom settings are applied
@@ -337,9 +335,7 @@ class TestP2PMCPRegistryAdapter:
         server = MockServer()
         server.add_tool("trio_tool", trio_marked_tool)
         adapter = P2PMCPRegistryAdapter(
-            server,
-            default_runtime=RUNTIME_FASTAPI,
-            enable_runtime_detection=False
+            server, default_runtime=RUNTIME_FASTAPI, enable_runtime_detection=False
         )
 
         # WHEN: Getting tools

@@ -62,9 +62,7 @@ from benchmarks.semantic_roundtrip_capabilities import (
 )
 
 
-EXTENDED_SEMANTIC_ROUND_TRIP_MATRIX_INTERFACE: Final = (
-    "ExtendedSemanticRoundTripMatrix@1"
-)
+EXTENDED_SEMANTIC_ROUND_TRIP_MATRIX_INTERFACE: Final = "ExtendedSemanticRoundTripMatrix@1"
 SHARED_MODEL_RESOURCE_ID: Final = "leanstral-local-primary"
 DEFAULT_BASE_CONSTRUCTOR_IDS: Final = ("typed_deontic", "modal_spacy")
 DEFAULT_REALIZER_IDS: Final = (
@@ -90,9 +88,7 @@ def _plain(value: object) -> object:
 
 def _freeze(value: object) -> object:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _freeze(item) for key, item in value.items()}
-        )
+        return MappingProxyType({str(key): _freeze(item) for key, item in value.items()})
     if isinstance(value, (tuple, list)):
         return tuple(_freeze(item) for item in value)
     return value
@@ -144,18 +140,10 @@ class RealizerMode(str, Enum):
 class OmissionReason(str, Enum):
     """Typed reasons for deliberately absent Cartesian products."""
 
-    DETERMINISTIC_CONSTRUCTOR_HAS_NO_MODEL_ROUTE = (
-        "deterministic_constructor_has_no_model_route"
-    )
-    SELECTIVE_REPAIR_HAS_NO_SYMAI_ROUTE = (
-        "selective_repair_has_no_symai_route"
-    )
-    GUIDANCE_CANNOT_WRAP_ALWAYS_ON_MODEL = (
-        "guidance_cannot_wrap_always_on_model"
-    )
-    BASE_CONSTRUCTOR_REPLACED_BY_ALWAYS_ON_MODEL = (
-        "base_constructor_replaced_by_always_on_model"
-    )
+    DETERMINISTIC_CONSTRUCTOR_HAS_NO_MODEL_ROUTE = "deterministic_constructor_has_no_model_route"
+    SELECTIVE_REPAIR_HAS_NO_SYMAI_ROUTE = "selective_repair_has_no_symai_route"
+    GUIDANCE_CANNOT_WRAP_ALWAYS_ON_MODEL = "guidance_cannot_wrap_always_on_model"
+    BASE_CONSTRUCTOR_REPLACED_BY_ALWAYS_ON_MODEL = "base_constructor_replaced_by_always_on_model"
     VALIDATION_IS_NONSCORING_OVERLAY = "validation_is_nonscoring_overlay"
 
 
@@ -169,10 +157,7 @@ class CompositionSpec:
     constructor_route: ModelRoute
 
     def __post_init__(self) -> None:
-        if (
-            not isinstance(self.base_constructor_id, str)
-            or not self.base_constructor_id.strip()
-        ):
+        if not isinstance(self.base_constructor_id, str) or not self.base_constructor_id.strip():
             raise ContractError("base_constructor_id must be nonblank")
         for field, enum_type in (
             ("guidance", GuidanceMode),
@@ -184,15 +169,12 @@ class CompositionSpec:
                 try:
                     object.__setattr__(self, field, enum_type(value))
                 except (TypeError, ValueError) as exc:
-                    raise ContractError(
-                        f"composition {field} is invalid"
-                    ) from exc
+                    raise ContractError(f"composition {field} is invalid") from exc
         if self.repair is RepairMode.ALWAYS_ON:
             if (
                 self.base_constructor_id != "model"
                 or self.guidance is not GuidanceMode.NOT_APPLICABLE
-                or self.constructor_route
-                not in {ModelRoute.DIRECT, ModelRoute.SYMAI}
+                or self.constructor_route not in {ModelRoute.DIRECT, ModelRoute.SYMAI}
             ):
                 raise ContractError(
                     "always-on repair must be the model/not-applicable "
@@ -246,13 +228,9 @@ class RealizerSpec:
             object.__setattr__(self, "route", ModelRoute(self.route))
         if self.mode is RealizerMode.DETERMINISTIC:
             if self.route is not ModelRoute.NOT_APPLICABLE:
-                raise ContractError(
-                    "deterministic realizer route must be not_applicable"
-                )
+                raise ContractError("deterministic realizer route must be not_applicable")
         elif self.route not in {ModelRoute.DIRECT, ModelRoute.SYMAI}:
-            raise ContractError(
-                "model realizer requires a direct or SyMAI route"
-            )
+            raise ContractError("model realizer requires a direct or SyMAI route")
 
     def to_dict(self) -> dict[str, str]:
         return {
@@ -305,9 +283,7 @@ class ValidationOverlaySpec:
         if not self.validator_id or not self.resource_identity:
             raise ContractError("validation overlay identities must be nonblank")
         if self.candidate_mutation_allowed or self.score_mutation_allowed:
-            raise ContractError(
-                "validation-only overlays cannot mutate candidates or scores"
-            )
+            raise ContractError("validation-only overlays cannot mutate candidates or scores")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -331,32 +307,19 @@ class ExtendedMatrixPlan:
     def __post_init__(self) -> None:
         object.__setattr__(self, "compositions", tuple(self.compositions))
         object.__setattr__(self, "realizers", tuple(self.realizers))
-        object.__setattr__(
-            self, "validation_overlays", tuple(self.validation_overlays)
-        )
+        object.__setattr__(self, "validation_overlays", tuple(self.validation_overlays))
         object.__setattr__(self, "omissions", tuple(self.omissions))
-        if not all(
-            isinstance(item, CompositionSpec) for item in self.compositions
-        ):
+        if not all(isinstance(item, CompositionSpec) for item in self.compositions):
             raise ContractError("composition plan contains an invalid arm")
-        if not all(
-            isinstance(item, RealizerSpec) for item in self.realizers
-        ):
+        if not all(isinstance(item, RealizerSpec) for item in self.realizers):
             raise ContractError("composition plan contains an invalid realizer")
-        if not all(
-            isinstance(item, ValidationOverlaySpec)
-            for item in self.validation_overlays
-        ):
+        if not all(isinstance(item, ValidationOverlaySpec) for item in self.validation_overlays):
             raise ContractError("composition plan contains an invalid overlay")
-        if not all(
-            isinstance(item, OmittedComposition) for item in self.omissions
-        ):
+        if not all(isinstance(item, OmittedComposition) for item in self.omissions):
             raise ContractError("composition plan contains an invalid omission")
         arm_ids = [item.arm_id for item in self.compositions]
         realizer_ids = [item.realizer_id for item in self.realizers]
-        validator_ids = [
-            item.validator_id for item in self.validation_overlays
-        ]
+        validator_ids = [item.validator_id for item in self.validation_overlays]
         if not self.compositions or len(set(arm_ids)) != len(arm_ids):
             raise ContractError("composition plan requires unique arms")
         if not self.realizers or len(set(realizer_ids)) != len(realizer_ids):
@@ -376,9 +339,7 @@ class ExtendedMatrixPlan:
         return {
             "compositions": [item.to_dict() for item in self.compositions],
             "realizers": [item.to_dict() for item in self.realizers],
-            "validation_overlays": [
-                item.to_dict() for item in self.validation_overlays
-            ],
+            "validation_overlays": [item.to_dict() for item in self.validation_overlays],
             "omissions": [item.to_dict() for item in self.omissions],
             "cell_count": len(self.cell_ids),
         }
@@ -448,9 +409,7 @@ def build_extended_matrix_plan(
     overlays = tuple(
         ValidationOverlaySpec(
             validator_id,
-            overlay_resources.get(
-                validator_id, f"post-hoc validator:{validator_id}"
-            ),
+            overlay_resources.get(validator_id, f"post-hoc validator:{validator_id}"),
         )
         for validator_id in validator_ids
     )
@@ -526,9 +485,7 @@ EXTENDED_REALIZER_IDS: Final = tuple(
     item.realizer_id for item in DEFAULT_EXTENDED_MATRIX_PLAN.realizers
 )
 EXPECTED_EXTENDED_CELL_IDS: Final = DEFAULT_EXTENDED_MATRIX_PLAN.cell_ids
-EXTENDED_MATRIX_INTERFACE: Final = (
-    EXTENDED_SEMANTIC_ROUND_TRIP_MATRIX_INTERFACE
-)
+EXTENDED_MATRIX_INTERFACE: Final = EXTENDED_SEMANTIC_ROUND_TRIP_MATRIX_INTERFACE
 
 
 @dataclass(frozen=True, slots=True)
@@ -538,9 +495,7 @@ class ExtendedConstructorArm:
 
     def __post_init__(self) -> None:
         if not isinstance(self.component, RoundTripConstructor):
-            raise ContractError(
-                "extended constructor must implement RoundTripConstructor"
-            )
+            raise ContractError("extended constructor must implement RoundTripConstructor")
         _identity(self.component, "constructor")
 
 
@@ -551,9 +506,7 @@ class ExtendedRealizerArm:
 
     def __post_init__(self) -> None:
         if not isinstance(self.component, RoundTripRealizer):
-            raise ContractError(
-                "extended realizer must implement RoundTripRealizer"
-            )
+            raise ContractError("extended realizer must implement RoundTripRealizer")
         _identity(self.component, "realizer")
 
 
@@ -715,9 +668,7 @@ def _find_model_calls(value: object) -> list[Mapping[str, object]]:
         for key, item in value.items():
             if key == "model_calls" and isinstance(item, (tuple, list)):
                 calls.extend(
-                    dict(candidate)
-                    for candidate in item
-                    if isinstance(candidate, Mapping)
+                    dict(candidate) for candidate in item if isinstance(candidate, Mapping)
                 )
             else:
                 calls.extend(_find_model_calls(item))
@@ -727,9 +678,7 @@ def _find_model_calls(value: object) -> list[Mapping[str, object]]:
     return calls
 
 
-def _find_fallbacks(
-    value: object, path: str = "diagnostics"
-) -> list[Mapping[str, object]]:
+def _find_fallbacks(value: object, path: str = "diagnostics") -> list[Mapping[str, object]]:
     fallbacks: list[Mapping[str, object]] = []
     if isinstance(value, Mapping):
         for key, item in value.items():
@@ -758,14 +707,8 @@ def _find_structural_validations(
     actions: list[Mapping[str, object]] = []
     if isinstance(value, Mapping):
         for key, item in value.items():
-            if key == "structural_receipts" and isinstance(
-                item, (tuple, list)
-            ):
-                actions.extend(
-                    dict(receipt)
-                    for receipt in item
-                    if isinstance(receipt, Mapping)
-                )
+            if key == "structural_receipts" and isinstance(item, (tuple, list)):
+                actions.extend(dict(receipt) for receipt in item if isinstance(receipt, Mapping))
             else:
                 actions.extend(_find_structural_validations(item))
     elif isinstance(value, (tuple, list)):
@@ -786,9 +729,7 @@ def _is_selective(component: object) -> bool:
     return "SelectiveLeanstralRepair" in _identity(component, "constructor")
 
 
-def _one_implicit_model_call(
-    component: object, diagnostics: Mapping[str, object]
-) -> bool:
+def _one_implicit_model_call(component: object, diagnostics: Mapping[str, object]) -> bool:
     if not _uses_model(component) or _find_model_calls(diagnostics):
         return False
     if _is_selective(component):
@@ -819,22 +760,16 @@ class _DiagnosticConstructorDelegate:
         if callable(method):
             outcome = method(request)
             result = getattr(outcome, "result", None)
-            diagnostics = getattr(
-                outcome, "diagnostics", getattr(outcome, "receipt", None)
-            )
+            diagnostics = getattr(outcome, "diagnostics", getattr(outcome, "receipt", None))
             if isinstance(result, ConstructorResult):
-                self.last_diagnostics = _freeze(
-                    _diagnostic_value(diagnostics)
-                )  # type: ignore[assignment]
+                self.last_diagnostics = _freeze(_diagnostic_value(diagnostics))  # type: ignore[assignment]
                 return result
         self.last_diagnostics = MappingProxyType({})
         return self._component.construct(request)
 
 
 class _TracingConstructor:
-    def __init__(
-        self, component: RoundTripConstructor, ledger: _ExecutionLedger
-    ) -> None:
+    def __init__(self, component: RoundTripConstructor, ledger: _ExecutionLedger) -> None:
         self.component = component
         self.ledger = ledger
         self.invocations: list[_Invocation] = []
@@ -864,9 +799,7 @@ class _TracingConstructor:
                 result = ConstructorResult(
                     ComponentStatus.FAILED,
                     failure_reason=FailureReason.INVALID_OUTPUT,
-                    failure_detail=(
-                        "constructor returned a non-ConstructorResult"
-                    ),
+                    failure_detail=("constructor returned a non-ConstructorResult"),
                 )
         except (KeyboardInterrupt, SystemExit):
             raise
@@ -874,9 +807,7 @@ class _TracingConstructor:
             result = ConstructorResult(
                 ComponentStatus.FAILED,
                 failure_reason=FailureReason.EXCEPTION,
-                failure_detail=(
-                    f"constructor raised {type(exc).__name__}"
-                )[:1000],
+                failure_detail=(f"constructor raised {type(exc).__name__}")[:1000],
             )
             diagnostic = {
                 "trace_capture": "component_exception",
@@ -891,14 +822,8 @@ class _TracingConstructor:
             model_calls.append(
                 {
                     "role": "constructor",
-                    "route": (
-                        "symai"
-                        if "symai" in self.identity.lower()
-                        else "direct"
-                    ),
-                    "provider_id": getattr(
-                        self.component, "provider_id", LEANSTRAL_PROVIDER
-                    ),
+                    "route": ("symai" if "symai" in self.identity.lower() else "direct"),
+                    "provider_id": getattr(self.component, "provider_id", LEANSTRAL_PROVIDER),
                     "outcome": result.status.value,
                 }
             )
@@ -934,18 +859,14 @@ class _TracingConstructor:
                 request_cid=request_cid,
                 status=result.status.value,
             ),
-            fallbacks=tuple(
-                _freeze(item) for item in fallbacks
-            ),  # type: ignore[arg-type]
+            fallbacks=tuple(_freeze(item) for item in fallbacks),  # type: ignore[arg-type]
         )
         self.invocations.append(invocation)
         return result
 
 
 class _TracingRealizer:
-    def __init__(
-        self, component: RoundTripRealizer, ledger: _ExecutionLedger
-    ) -> None:
+    def __init__(self, component: RoundTripRealizer, ledger: _ExecutionLedger) -> None:
         self.component = component
         self.ledger = ledger
         self.invocations: list[_Invocation] = []
@@ -972,9 +893,7 @@ class _TracingRealizer:
             result = RealizerResult(
                 ComponentStatus.FAILED,
                 failure_reason=FailureReason.EXCEPTION,
-                failure_detail=(
-                    f"realizer raised {type(exc).__name__}"
-                )[:1000],
+                failure_detail=(f"realizer raised {type(exc).__name__}")[:1000],
             )
         diagnostics = _nested_receipts(self.component)
         model_calls: list[Mapping[str, object]] = []
@@ -982,14 +901,8 @@ class _TracingRealizer:
             model_calls.append(
                 {
                     "role": "realizer",
-                    "route": (
-                        "symai"
-                        if "symai" in self.identity.lower()
-                        else "direct"
-                    ),
-                    "provider_id": getattr(
-                        self.component, "provider_id", LEANSTRAL_PROVIDER
-                    ),
+                    "route": ("symai" if "symai" in self.identity.lower() else "direct"),
+                    "provider_id": getattr(self.component, "provider_id", LEANSTRAL_PROVIDER),
                     "outcome": result.status.value,
                     "route_receipt": diagnostics.get("route"),
                 }
@@ -1134,11 +1047,7 @@ class ExtendedMatrixRunResult:
 
     @property
     def coordinates(self) -> tuple[ExtendedCoordinateRecord, ...]:
-        return tuple(
-            coordinate
-            for case in self.cases
-            for coordinate in case.coordinates
-        )
+        return tuple(coordinate for case in self.cases for coordinate in case.coordinates)
 
     def _payload(self) -> dict[str, object]:
         return {
@@ -1169,14 +1078,8 @@ class ExtendedSemanticRoundTripMatrix:
 
     def __init__(
         self,
-        constructor_arms: (
-            Sequence[ExtendedConstructorArm]
-            | Mapping[str, RoundTripConstructor]
-        ),
-        realizer_arms: (
-            Sequence[ExtendedRealizerArm]
-            | Mapping[str, RoundTripRealizer]
-        ),
+        constructor_arms: (Sequence[ExtendedConstructorArm] | Mapping[str, RoundTripConstructor]),
+        realizer_arms: (Sequence[ExtendedRealizerArm] | Mapping[str, RoundTripRealizer]),
         *,
         plan: ExtendedMatrixPlan | None = None,
         constructor_configs: Mapping[str, Mapping[str, object]] | None = None,
@@ -1187,65 +1090,42 @@ class ExtendedSemanticRoundTripMatrix:
         registry_plan = plan or DEFAULT_EXTENDED_MATRIX_PLAN
         if isinstance(constructor_arms, Mapping):
             constructor_registry = dict(constructor_arms)
-            expected = {
-                item.arm_id for item in registry_plan.compositions
-            }
+            expected = {item.arm_id for item in registry_plan.compositions}
             if set(constructor_registry) != expected:
-                raise ContractError(
-                    "constructor registry must equal the extended plan"
-                )
+                raise ContractError("constructor registry must equal the extended plan")
             self._constructor_arms = tuple(
-                ExtendedConstructorArm(
-                    item, constructor_registry[item.arm_id]
-                )
+                ExtendedConstructorArm(item, constructor_registry[item.arm_id])
                 for item in registry_plan.compositions
             )
         else:
             self._constructor_arms = tuple(constructor_arms)
         if isinstance(realizer_arms, Mapping):
             realizer_registry = dict(realizer_arms)
-            expected = {
-                item.realizer_id for item in registry_plan.realizers
-            }
+            expected = {item.realizer_id for item in registry_plan.realizers}
             if set(realizer_registry) != expected:
-                raise ContractError(
-                    "realizer registry must equal the extended plan"
-                )
+                raise ContractError("realizer registry must equal the extended plan")
             self._realizer_arms = tuple(
-                ExtendedRealizerArm(
-                    item, realizer_registry[item.realizer_id]
-                )
+                ExtendedRealizerArm(item, realizer_registry[item.realizer_id])
                 for item in registry_plan.realizers
             )
         else:
             self._realizer_arms = tuple(realizer_arms)
         if not self._constructor_arms or not self._realizer_arms:
-            raise ContractError(
-                "extended matrix requires constructor and realizer arms"
-            )
+            raise ContractError("extended matrix requires constructor and realizer arms")
         constructor_ids = [item.spec.arm_id for item in self._constructor_arms]
-        realizer_ids = [
-            item.spec.realizer_id for item in self._realizer_arms
-        ]
+        realizer_ids = [item.spec.realizer_id for item in self._realizer_arms]
         if len(set(constructor_ids)) != len(constructor_ids):
             raise ContractError("extended constructor arm ids must be unique")
         if len(set(realizer_ids)) != len(realizer_ids):
             raise ContractError("extended realizer ids must be unique")
         selected_validators = (
-            default_post_hoc_validators()
-            if validators is None
-            else dict(validators)
+            default_post_hoc_validators() if validators is None else dict(validators)
         )
-        inferred_compositions = tuple(
-            item.spec for item in self._constructor_arms
-        )
+        inferred_compositions = tuple(item.spec for item in self._constructor_arms)
         inferred_realizers = tuple(item.spec for item in self._realizer_arms)
-        default_shape = (
-            [item.arm_id for item in inferred_compositions]
-            == list(EXTENDED_CONSTRUCTOR_IDS)
-            and [item.realizer_id for item in inferred_realizers]
-            == list(EXTENDED_REALIZER_IDS)
-        )
+        default_shape = [item.arm_id for item in inferred_compositions] == list(
+            EXTENDED_CONSTRUCTOR_IDS
+        ) and [item.realizer_id for item in inferred_realizers] == list(EXTENDED_REALIZER_IDS)
         selected_plan = plan or ExtendedMatrixPlan(
             inferred_compositions,
             inferred_realizers,
@@ -1258,30 +1138,16 @@ class ExtendedSemanticRoundTripMatrix:
                 )
                 for validator_id, validator in selected_validators.items()
             ),
-            (
-                DEFAULT_EXTENDED_MATRIX_PLAN.omissions
-                if default_shape
-                else ()
-            ),
+            (DEFAULT_EXTENDED_MATRIX_PLAN.omissions if default_shape else ()),
         )
-        if constructor_ids != [
-            item.arm_id for item in selected_plan.compositions
-        ]:
-            raise ContractError(
-                "constructor registry order must equal the extended plan"
-            )
-        if realizer_ids != [
-            item.realizer_id for item in selected_plan.realizers
-        ]:
-            raise ContractError(
-                "realizer registry order must equal the extended plan"
-            )
+        if constructor_ids != [item.arm_id for item in selected_plan.compositions]:
+            raise ContractError("constructor registry order must equal the extended plan")
+        if realizer_ids != [item.realizer_id for item in selected_plan.realizers]:
+            raise ContractError("realizer registry order must equal the extended plan")
         if set(selected_validators) != {
             item.validator_id for item in selected_plan.validation_overlays
         }:
-            raise ContractError(
-                "validator registry must equal the plan's overlays"
-            )
+            raise ContractError("validator registry must equal the plan's overlays")
         self.plan = selected_plan
         self._constructor_configs = dict(constructor_configs or {})
         self._realizer_configs = dict(realizer_configs or {})
@@ -1328,9 +1194,7 @@ class ExtendedSemanticRoundTripMatrix:
         ).run(cases)
         return core, constructors, realizers
 
-    def run(
-        self, cases: Sequence[MatrixCase]
-    ) -> ExtendedMatrixRunResult:
+    def run(self, cases: Sequence[MatrixCase]) -> ExtendedMatrixRunResult:
         core, constructors, realizers = self._core_run(cases)
         constructor_cursor = {key: 0 for key in constructors}
         realizer_cursor = {key: 0 for key in realizers}
@@ -1349,12 +1213,9 @@ class ExtendedSemanticRoundTripMatrix:
                     semantic = next(
                         item
                         for item in core_case.coordinates
-                        if item.constructor_id == constructor_id
-                        and item.realizer_id == realizer_id
+                        if item.constructor_id == constructor_id and item.realizer_id == realizer_id
                     )
-                    calls: list[dict[str, object]] = [
-                        initial.to_dict(phase="t0_to_l1")
-                    ]
+                    calls: list[dict[str, object]] = [initial.to_dict(phase="t0_to_l1")]
                     if semantic.result.l1 is not None:
                         index = realizer_cursor[realizer_id]
                         realized = realizers[realizer_id].invocations[index]
@@ -1375,9 +1236,7 @@ class ExtendedSemanticRoundTripMatrix:
                             "receipt": _plain(receipt),
                         }
                         for call in calls
-                        for receipt in _find_structural_validations(
-                            call["diagnostics"]
-                        )
+                        for receipt in _find_structural_validations(call["diagnostics"])
                     ]
                     validation_results = semantic.validation["results"]
                     assert isinstance(validation_results, Mapping)
@@ -1386,13 +1245,9 @@ class ExtendedSemanticRoundTripMatrix:
                         validation_actions.append(
                             {
                                 **overlay.to_dict(),
-                                "phase": (
-                                    "post_hoc_after_candidate_binding"
-                                ),
+                                "phase": ("post_hoc_after_candidate_binding"),
                                 "candidate_cid": semantic.candidate_cid,
-                                "candidate_unchanged": semantic.validation[
-                                    "candidate_unchanged"
-                                ],
+                                "candidate_unchanged": semantic.validation["candidate_unchanged"],
                                 "receipt": _plain(receipt),
                             }
                         )
@@ -1433,9 +1288,7 @@ class ExtendedSemanticRoundTripMatrix:
                             realizer=provisional.realizer,
                             semantic_record=provisional.semantic_record,
                             execution=provisional.execution,
-                            record_cid=cid_for_dag_json(
-                                provisional._payload()
-                            ),
+                            record_cid=cid_for_dag_json(provisional._payload()),
                         )
                     )
             provisional_case = ExtendedCaseRecord(
@@ -1453,9 +1306,7 @@ class ExtendedSemanticRoundTripMatrix:
                     source_text_cid=provisional_case.source_text_cid,
                     gold_ir_cid=provisional_case.gold_ir_cid,
                     coordinates=provisional_case.coordinates,
-                    record_cid=cid_for_dag_json(
-                        provisional_case._payload()
-                    ),
+                    record_cid=cid_for_dag_json(provisional_case._payload()),
                 )
             )
 
@@ -1562,9 +1413,7 @@ def default_extended_component_arms(
                 RepairMode.SELECTIVE,
                 ModelRoute.NOT_APPLICABLE,
             )
-            constructors.append(
-                ExtendedConstructorArm(selective, selective_component)
-            )
+            constructors.append(ExtendedConstructorArm(selective, selective_component))
     constructors.extend(
         (
             ExtendedConstructorArm(
@@ -1633,14 +1482,8 @@ def default_extended_matrix(
 ) -> ExtendedSemanticRoundTripMatrix:
     """Create the complete default matrix, retaining unavailable arms."""
 
-    selected_validators = (
-        default_post_hoc_validators()
-        if validators is None
-        else dict(validators)
-    )
-    plan = build_extended_matrix_plan(
-        validator_ids=tuple(selected_validators)
-    )
+    selected_validators = default_post_hoc_validators() if validators is None else dict(validators)
+    plan = build_extended_matrix_plan(validator_ids=tuple(selected_validators))
     constructors, realizers = default_extended_component_arms(
         leanstral_client=leanstral_client,
         symai_client=symai_client,
@@ -1678,14 +1521,8 @@ def default_extended_component_registries(
 
 def run_extended_matrix(
     cases: Sequence[MatrixCase],
-    constructor_arms: (
-        Sequence[ExtendedConstructorArm]
-        | Mapping[str, RoundTripConstructor]
-    ),
-    realizer_arms: (
-        Sequence[ExtendedRealizerArm]
-        | Mapping[str, RoundTripRealizer]
-    ),
+    constructor_arms: (Sequence[ExtendedConstructorArm] | Mapping[str, RoundTripConstructor]),
+    realizer_arms: (Sequence[ExtendedRealizerArm] | Mapping[str, RoundTripRealizer]),
     *,
     plan: ExtendedMatrixPlan | None = None,
     constructor_configs: Mapping[str, Mapping[str, object]] | None = None,

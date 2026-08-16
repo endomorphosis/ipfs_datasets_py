@@ -32,7 +32,11 @@ except Exception:  # pragma: no cover - optional OCR dependency
 from ..legal_data import export_docket_dataset_single_parquet, ingest_docket_dataset
 from ..legal_data.case_knowledge import build_case_knowledge_graph, summarize_case_graph
 from ..legal_data.document_structure import build_document_knowledge_graph, parse_legal_document
-from ..legal_data.docket_dataset import _extract_case_number_from_text, _extract_text_from_pdf, _normalize_case_number_text
+from ..legal_data.docket_dataset import (
+    _extract_case_number_from_text,
+    _extract_text_from_pdf,
+    _normalize_case_number_text,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -64,12 +68,20 @@ _COURT_HEADER_PATTERNS = [
     re.compile(r"\bUNITED STATES BANKRUPTCY COURT\b", re.IGNORECASE),
     re.compile(r"\bUNITED STATES COURT OF APPEALS\b", re.IGNORECASE),
     re.compile(r"\bIN THE CIRCUIT COURT OF THE STATE OF [A-Z\s]+\b", re.IGNORECASE),
-    re.compile(r"\bIN THE (?:CIRCUIT|SUPERIOR|PROBATE|DISTRICT|JUVENILE|MUNICIPAL) COURT OF [A-Z\s,]+\b", re.IGNORECASE),
+    re.compile(
+        r"\bIN THE (?:CIRCUIT|SUPERIOR|PROBATE|DISTRICT|JUVENILE|MUNICIPAL) COURT OF [A-Z\s,]+\b",
+        re.IGNORECASE,
+    ),
     re.compile(r"\bFOR THE COUNTY OF [A-Z\s]+\b", re.IGNORECASE),
     re.compile(r"\bPROBATE DEPARTMENT\b", re.IGNORECASE),
-    re.compile(r"\bIN THE [A-Z][A-Z\s]+(?:DISTRICT|CIRCUIT|SUPERIOR|PROBATE|APPEALS|SUPREME) COURT\b", re.IGNORECASE),
+    re.compile(
+        r"\bIN THE [A-Z][A-Z\s]+(?:DISTRICT|CIRCUIT|SUPERIOR|PROBATE|APPEALS|SUPREME) COURT\b",
+        re.IGNORECASE,
+    ),
 ]
-_STYLE_LINE_PATTERN = re.compile(r"(?:\bv(?:s)?\.?\s+\S+)|(?:\bversus\b)|(?:\bin re\b)", re.IGNORECASE)
+_STYLE_LINE_PATTERN = re.compile(
+    r"(?:\bv(?:s)?\.?\s+\S+)|(?:\bversus\b)|(?:\bin re\b)", re.IGNORECASE
+)
 _PROBATE_CAPTION_PATTERN = re.compile(r"^in the matter of:?$", re.IGNORECASE)
 
 
@@ -113,10 +125,14 @@ def _scan_result_from_dict(payload: Dict[str, Any]) -> HACCCourtPDFScanResult:
         reasons=[str(item) for item in list(payload.get("reasons") or [])],
         extraction_method=str(payload.get("extraction_method") or ""),
         text_length=int(payload.get("text_length") or 0),
-        matched_court_headers=[str(item) for item in list(payload.get("matched_court_headers") or [])],
+        matched_court_headers=[
+            str(item) for item in list(payload.get("matched_court_headers") or [])
+        ],
         style_lines=[str(item) for item in list(payload.get("style_lines") or [])],
         document_knowledge_graph=dict(payload.get("document_knowledge_graph") or {}),
-        document_knowledge_graph_summary=dict(payload.get("document_knowledge_graph_summary") or {}),
+        document_knowledge_graph_summary=dict(
+            payload.get("document_knowledge_graph_summary") or {}
+        ),
         parsed_document=dict(payload.get("parsed_document") or {}),
         text=str(payload.get("text") or ""),
     )
@@ -148,8 +164,12 @@ def _ocr_support_summary() -> Dict[str, Any]:
     if not (fitz and Image and pytesseract):
         return summary
 
-    configured_command = str(getattr(getattr(pytesseract, "pytesseract", None), "tesseract_cmd", "") or "tesseract").strip()
-    resolved_command = shutil.which(configured_command) or (configured_command if configured_command and Path(configured_command).exists() else "")
+    configured_command = str(
+        getattr(getattr(pytesseract, "pytesseract", None), "tesseract_cmd", "") or "tesseract"
+    ).strip()
+    resolved_command = shutil.which(configured_command) or (
+        configured_command if configured_command and Path(configured_command).exists() else ""
+    )
     summary["tesseract_command"] = resolved_command or configured_command
     try:
         summary["tesseract_version"] = str(pytesseract.get_tesseract_version())
@@ -158,14 +178,18 @@ def _ocr_support_summary() -> Dict[str, Any]:
         return summary
 
     try:
-        summary["languages"] = [str(item).strip() for item in pytesseract.get_languages(config="") if str(item).strip()]
+        summary["languages"] = [
+            str(item).strip() for item in pytesseract.get_languages(config="") if str(item).strip()
+        ]
     except Exception as exc:  # pragma: no cover - environment-dependent
         summary["languages_error"] = str(exc)
 
     supports_english = True
     if summary["languages"]:
         supports_english = "eng" in {str(item).lower() for item in summary["languages"]}
-    summary["available"] = bool(resolved_command and summary["tesseract_version"] and supports_english)
+    summary["available"] = bool(
+        resolved_command and summary["tesseract_version"] and supports_english
+    )
     return summary
 
 
@@ -218,7 +242,10 @@ def _file_metadata(path: Path) -> Dict[str, Any]:
     return {
         "file_name": path.name,
         "file_size_bytes": int(stats.st_size),
-        "modified_at": datetime.fromtimestamp(stats.st_mtime, tz=UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "modified_at": datetime.fromtimestamp(stats.st_mtime, tz=UTC)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z"),
         "suffix": path.suffix.lower(),
         "page_count": _pdf_page_count(path),
     }
@@ -275,7 +302,9 @@ def _matter_of_case_name(lines: Sequence[str]) -> str:
             continue
         caption_parts = ["In the Matter of"]
         for next_line in cleaned_lines[index + 1 : index + 4]:
-            if _COURT_HEADER_PATTERNS[0].search(next_line) or next_line.lower().startswith("case no"):
+            if _COURT_HEADER_PATTERNS[0].search(next_line) or next_line.lower().startswith(
+                "case no"
+            ):
                 break
             caption_parts.append(next_line.rstrip(","))
             if next_line.endswith("."):
@@ -379,7 +408,9 @@ def summarize_scan_manifest(manifest: Dict[str, Any]) -> Dict[str, Any]:
         "output_dir": str(manifest.get("output_dir") or ""),
         "manifest_path": str(manifest.get("manifest_path") or ""),
         "pdf_count": int(manifest.get("pdf_count") or 0),
-        "processed_pdf_count": int(manifest.get("processed_pdf_count") or manifest.get("pdf_count") or 0),
+        "processed_pdf_count": int(
+            manifest.get("processed_pdf_count") or manifest.get("pdf_count") or 0
+        ),
         "total_pdf_count": int(manifest.get("total_pdf_count") or 0),
         "remaining_pdf_count": int(manifest.get("remaining_pdf_count") or 0),
         "matched_pdf_count": int(manifest.get("matched_pdf_count") or 0),
@@ -391,7 +422,9 @@ def summarize_scan_manifest(manifest: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _build_case_graph_summary(results: Sequence[HACCCourtPDFScanResult], *, case_number: str, court: str, case_name: str) -> Dict[str, Any]:
+def _build_case_graph_summary(
+    results: Sequence[HACCCourtPDFScanResult], *, case_number: str, court: str, case_name: str
+) -> Dict[str, Any]:
     entities: List[Dict[str, Any]] = []
     relationships: List[Dict[str, Any]] = []
     case_entity_id = f"case:{_safe_identifier(case_number or case_name)}"
@@ -440,7 +473,9 @@ def _build_case_graph_summary(results: Sequence[HACCCourtPDFScanResult], *, case
     }
 
 
-def _build_case_preview(results: Sequence[HACCCourtPDFScanResult], *, case_number: str) -> Dict[str, Any]:
+def _build_case_preview(
+    results: Sequence[HACCCourtPDFScanResult], *, case_number: str
+) -> Dict[str, Any]:
     court = next((item.court for item in results if item.court), "")
     case_name = next((item.case_name for item in results if item.case_name), case_number)
     confidences = [float(item.confidence or 0.0) for item in results]
@@ -533,15 +568,21 @@ def _package_case_results(
                     },
                     "parsed_legal_document": dict(result.parsed_document),
                     "document_knowledge_graph": dict(result.document_knowledge_graph),
-                    "document_knowledge_graph_summary": dict(result.document_knowledge_graph_summary),
+                    "document_knowledge_graph_summary": dict(
+                        result.document_knowledge_graph_summary
+                    ),
                 },
             }
         )
 
-    case_graph_summary = _build_case_graph_summary(results, case_number=case_number, court=court, case_name=case_name)
+    case_graph_summary = _build_case_graph_summary(
+        results, case_number=case_number, court=court, case_name=case_name
+    )
     previous_router_timeout = os.environ.get("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS")
     if router_timeout_seconds is not None:
-        os.environ["IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS"] = str(max(0.0, float(router_timeout_seconds)))
+        os.environ["IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS"] = str(
+            max(0.0, float(router_timeout_seconds))
+        )
     try:
         dataset = ingest_docket_dataset(
             {
@@ -560,7 +601,9 @@ def _package_case_results(
                     "max_ocr_pages": int(max_ocr_pages),
                     "scan_status": "completed",
                     "router_timeout_seconds": (
-                        None if router_timeout_seconds is None else max(0.0, float(router_timeout_seconds))
+                        None
+                        if router_timeout_seconds is None
+                        else max(0.0, float(router_timeout_seconds))
                     ),
                     "collected_pdf_count": len(copied_paths),
                     "collected_pdf_paths": copied_paths,
@@ -570,7 +613,8 @@ def _package_case_results(
                     "scan_confidence_summary": {
                         "max_confidence": max(item.confidence for item in results),
                         "min_confidence": min(item.confidence for item in results),
-                        "average_confidence": sum(item.confidence for item in results) / len(results),
+                        "average_confidence": sum(item.confidence for item in results)
+                        / len(results),
                     },
                     "scan_case_graph": case_graph_summary,
                 },
@@ -588,7 +632,9 @@ def _package_case_results(
             os.environ.pop("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS", None)
         else:
             os.environ["IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS"] = previous_router_timeout
-    parquet_export = export_docket_dataset_single_parquet(dataset, datasets_root / f"{case_slug}.parquet")
+    parquet_export = export_docket_dataset_single_parquet(
+        dataset, datasets_root / f"{case_slug}.parquet"
+    )
     return {
         "status": "completed",
         "case_number": case_number,
@@ -630,7 +676,8 @@ def package_hacc_case_from_scan_manifest(
     scan_results = [
         _scan_result_from_dict(item)
         for item in list(manifest.get("pdf_results") or [])
-        if str(item.get("case_number") or "") == case_number and bool(item.get("is_likely_court_case"))
+        if str(item.get("case_number") or "") == case_number
+        and bool(item.get("is_likely_court_case"))
     ]
     if not scan_results:
         raise ValueError(f"No matched HACC scan results found for case {case_number}")
@@ -647,18 +694,38 @@ def package_hacc_case_from_scan_manifest(
         results=scan_results,
         glob_pattern=str(params.get("glob_pattern") or "*.pdf"),
         max_ocr_pages=int(params.get("max_ocr_pages") or 5),
-        include_knowledge_graph=bool(params.get("include_knowledge_graph") if include_knowledge_graph is None else include_knowledge_graph),
+        include_knowledge_graph=bool(
+            params.get("include_knowledge_graph")
+            if include_knowledge_graph is None
+            else include_knowledge_graph
+        ),
         include_bm25=bool(params.get("include_bm25") if include_bm25 is None else include_bm25),
-        include_vector_index=bool(params.get("include_vector_index") if include_vector_index is None else include_vector_index),
-        include_formal_logic=bool(params.get("include_formal_logic") if include_formal_logic is None else include_formal_logic),
-        include_router_enrichment=bool(params.get("include_router_enrichment") if include_router_enrichment is None else include_router_enrichment),
+        include_vector_index=bool(
+            params.get("include_vector_index")
+            if include_vector_index is None
+            else include_vector_index
+        ),
+        include_formal_logic=bool(
+            params.get("include_formal_logic")
+            if include_formal_logic is None
+            else include_formal_logic
+        ),
+        include_router_enrichment=bool(
+            params.get("include_router_enrichment")
+            if include_router_enrichment is None
+            else include_router_enrichment
+        ),
         router_timeout_seconds=effective_router_timeout,
     )
 
 
-def analyze_pdf_for_court_case(path: str | Path, *, max_ocr_pages: int = 5) -> HACCCourtPDFScanResult:
+def analyze_pdf_for_court_case(
+    path: str | Path, *, max_ocr_pages: int = 5
+) -> HACCCourtPDFScanResult:
     source_path = Path(path)
-    text, extraction_method = _extract_text_from_pdf_with_ocr(source_path, max_ocr_pages=max_ocr_pages)
+    text, extraction_method = _extract_text_from_pdf_with_ocr(
+        source_path, max_ocr_pages=max_ocr_pages
+    )
     lines = [line.strip() for line in str(text or "").splitlines() if line.strip()]
     parsed = parse_legal_document(text) if text else None
     parsed_header = getattr(parsed, "header", None)
@@ -691,10 +758,16 @@ def analyze_pdf_for_court_case(path: str | Path, *, max_ocr_pages: int = 5) -> H
     elif case_number or has_court_header or has_style_line:
         confidence = 0.45
 
-    court = str((court_lines[0] if court_lines else (matched_headers[0] if matched_headers else "")) or "").strip()
+    court = str(
+        (court_lines[0] if court_lines else (matched_headers[0] if matched_headers else "")) or ""
+    ).strip()
     case_name = _best_case_name(parsed, lines, source_path) if text else source_path.name
     title = str(getattr(parsed, "title", "") or case_name or source_path.stem).strip()
-    document_graph = build_document_knowledge_graph(parsed, graph_id=_safe_identifier(source_path.stem)) if parsed else {}
+    document_graph = (
+        build_document_knowledge_graph(parsed, graph_id=_safe_identifier(source_path.stem))
+        if parsed
+        else {}
+    )
     document_graph_summary = dict((document_graph or {}).get("summary") or {})
 
     return HACCCourtPDFScanResult(
@@ -745,7 +818,9 @@ def scan_hacc_pdfs_for_dockets(
     datasets_root.mkdir(parents=True, exist_ok=True)
     manifest_path = destination_root / "scan_manifest.json"
     scan_started_at = _utc_now_isoformat()
-    candidate_pdf_paths, skipped_pdf_count, duplicate_pdf_count = _scan_candidate_pdf_paths(root, glob_pattern)
+    candidate_pdf_paths, skipped_pdf_count, duplicate_pdf_count = _scan_candidate_pdf_paths(
+        root, glob_pattern
+    )
     ocr_support = _ocr_support_summary()
 
     all_results: List[HACCCourtPDFScanResult] = []
@@ -772,14 +847,18 @@ def scan_hacc_pdfs_for_dockets(
                 "include_formal_logic": bool(include_formal_logic),
                 "include_router_enrichment": bool(include_router_enrichment),
                 "router_timeout_seconds": (
-                    None if router_timeout_seconds is None else max(0.0, float(router_timeout_seconds))
+                    None
+                    if router_timeout_seconds is None
+                    else max(0.0, float(router_timeout_seconds))
                 ),
             },
             "pdf_count": len(all_results),
             "processed_pdf_count": len(all_results),
             "total_pdf_count": len(candidate_pdf_paths),
             "remaining_pdf_count": max(len(candidate_pdf_paths) - len(all_results), 0),
-            "matched_pdf_count": sum(1 for item in all_results if item.is_likely_court_case and item.case_number),
+            "matched_pdf_count": sum(
+                1 for item in all_results if item.is_likely_court_case and item.case_number
+            ),
             "skipped_pdf_count": skipped_pdf_count,
             "duplicate_pdf_count": duplicate_pdf_count,
             "candidate_case_count": len(case_outputs) if status == "completed" else len(grouped),
@@ -790,7 +869,9 @@ def scan_hacc_pdfs_for_dockets(
         }
 
     def _write_manifest(*, status: str) -> None:
-        manifest_path.write_text(json.dumps(_build_manifest(status=status), indent=2, sort_keys=True), encoding="utf-8")
+        manifest_path.write_text(
+            json.dumps(_build_manifest(status=status), indent=2, sort_keys=True), encoding="utf-8"
+        )
 
     case_outputs: List[Dict[str, Any]] = []
     _write_manifest(status="running")
@@ -834,19 +915,53 @@ def scan_hacc_pdfs_for_dockets(
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Scan a HACC PDF tree for likely court filings and emit docket datasets.")
+    parser = argparse.ArgumentParser(
+        description="Scan a HACC PDF tree for likely court filings and emit docket datasets."
+    )
     parser.add_argument("scan_root", nargs="?", help="Directory to scan recursively for PDF files.")
-    parser.add_argument("--output-dir", help="Directory where collected PDFs, datasets, and the manifest will be written.")
-    parser.add_argument("--glob-pattern", default="*.pdf", help="Glob pattern to match PDFs under the scan root.")
-    parser.add_argument("--max-ocr-pages", type=int, default=5, help="Maximum number of pages to OCR for weakly extracted PDFs.")
-    parser.add_argument("--no-knowledge-graph", action="store_true", help="Disable dataset-level knowledge graph generation.")
-    parser.add_argument("--no-bm25", action="store_true", help="Disable dataset BM25 index generation.")
-    parser.add_argument("--no-vector-index", action="store_true", help="Disable dataset vector index generation.")
-    parser.add_argument("--no-formal-logic", action="store_true", help="Disable docket formal-logic enrichment.")
-    parser.add_argument("--no-router-enrichment", action="store_true", help="Disable router enrichment.")
-    parser.add_argument("--router-timeout-seconds", type=float, help="Override the per-document router enrichment timeout in seconds.")
-    parser.add_argument("--manifest-path", help="Read an existing scan manifest instead of running a new scan.")
-    parser.add_argument("--summary-only", action="store_true", help="When reading --manifest-path, print only a condensed status summary.")
+    parser.add_argument(
+        "--output-dir",
+        help="Directory where collected PDFs, datasets, and the manifest will be written.",
+    )
+    parser.add_argument(
+        "--glob-pattern", default="*.pdf", help="Glob pattern to match PDFs under the scan root."
+    )
+    parser.add_argument(
+        "--max-ocr-pages",
+        type=int,
+        default=5,
+        help="Maximum number of pages to OCR for weakly extracted PDFs.",
+    )
+    parser.add_argument(
+        "--no-knowledge-graph",
+        action="store_true",
+        help="Disable dataset-level knowledge graph generation.",
+    )
+    parser.add_argument(
+        "--no-bm25", action="store_true", help="Disable dataset BM25 index generation."
+    )
+    parser.add_argument(
+        "--no-vector-index", action="store_true", help="Disable dataset vector index generation."
+    )
+    parser.add_argument(
+        "--no-formal-logic", action="store_true", help="Disable docket formal-logic enrichment."
+    )
+    parser.add_argument(
+        "--no-router-enrichment", action="store_true", help="Disable router enrichment."
+    )
+    parser.add_argument(
+        "--router-timeout-seconds",
+        type=float,
+        help="Override the per-document router enrichment timeout in seconds.",
+    )
+    parser.add_argument(
+        "--manifest-path", help="Read an existing scan manifest instead of running a new scan."
+    )
+    parser.add_argument(
+        "--summary-only",
+        action="store_true",
+        help="When reading --manifest-path, print only a condensed status summary.",
+    )
     return parser
 
 

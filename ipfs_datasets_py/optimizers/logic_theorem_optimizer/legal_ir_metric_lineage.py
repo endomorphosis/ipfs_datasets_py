@@ -68,11 +68,7 @@ def _json_value(value: Any) -> Any:
         return _json_value(value.to_dict())
     if hasattr(value, "__dict__"):
         return _json_value(
-            {
-                key: item
-                for key, item in vars(value).items()
-                if not str(key).startswith("_")
-            }
+            {key: item for key, item in vars(value).items() if not str(key).startswith("_")}
         )
     return repr(value)
 
@@ -139,7 +135,9 @@ class LegalIRMetricLineage:
         path = str(self.path or "").strip()
         if path not in VALID_LEGAL_IR_METRIC_PATHS:
             raise ValueError(f"path must be one of {sorted(VALID_LEGAL_IR_METRIC_PATHS)}")
-        sample_hashes = tuple(str(value).strip() for value in self.sample_hashes if str(value).strip())
+        sample_hashes = tuple(
+            str(value).strip() for value in self.sample_hashes if str(value).strip()
+        )
         if not sample_hashes:
             raise ValueError("sample_hashes must be non-empty")
         object.__setattr__(self, "path", path)

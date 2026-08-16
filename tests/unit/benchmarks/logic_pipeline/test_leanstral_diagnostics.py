@@ -43,14 +43,10 @@ def _failure_data(
         "http_status": None,
         "request_payload_sha256": SHA_REQUEST,
     }
-    receipt_sha256 = hashlib.sha256(
-        contracts.canonical_json(body).encode("utf-8")
-    ).hexdigest()
+    receipt_sha256 = hashlib.sha256(contracts.canonical_json(body).encode("utf-8")).hexdigest()
     boundary = {
         **body,
-        "receipt_sha256": (
-            "f" * 64 if corrupt_boundary_digest else receipt_sha256
-        ),
+        "receipt_sha256": ("f" * 64 if corrupt_boundary_digest else receipt_sha256),
     }
     return (
         {
@@ -85,11 +81,7 @@ def _result(
         status = contracts.StageStatus.SUCCESS
         failure_code = None
         failure_detail = None
-        data = (
-            {"candidate": "synthetic"}
-            if success_data is None
-            else success_data
-        )
+        data = {"candidate": "synthetic"} if success_data is None else success_data
     else:
         data, receipt_sha256 = _failure_data(
             safe_class,
@@ -107,10 +99,7 @@ def _result(
             expected_code = contracts.FailureCode.CAPABILITY_UNAVAILABLE
         else:
             status = contracts.StageStatus.FAILED
-            expected_code = (
-                contracts.FailureCode
-                .LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
-            )
+            expected_code = contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT
         failure_code = legacy_failure_code or expected_code
         failure_detail = f"synthetic {safe_class}"
 
@@ -223,8 +212,7 @@ def test_projection_covers_every_safe_class_without_sensitive_data() -> None:
     assert receipt["recovered_failure_count"] == 0
     assert receipt["terminal_failure_count"] == 8
     assert receipt["safe_failure_class_counts"] == {
-        safe_class: 1
-        for safe_class in LEANSTRAL_DIAGNOSTIC_SAFE_FAILURE_CLASSES
+        safe_class: 1 for safe_class in LEANSTRAL_DIAGNOSTIC_SAFE_FAILURE_CLASSES
     }
     assert receipt["failure_phase_counts"] == {
         phase: Counter(
@@ -253,8 +241,7 @@ def test_projection_covers_every_safe_class_without_sensitive_data() -> None:
     ):
         assert forbidden not in encoded
     assert not any(
-        token in encoded.casefold()
-        for token in ("raw_output", "source_text", "case_id")
+        token in encoded.casefold() for token in ("raw_output", "source_text", "case_id")
     )
 
 
@@ -279,13 +266,10 @@ def test_projection_partitions_recovered_terminal_and_suppressed_stages() -> Non
         wall_time_ms=0.0,
     )
 
-    receipt = build_leanstral_diagnostic_projection(
-        (recovered, terminal, success, suppressed)
-    )
+    receipt = build_leanstral_diagnostic_projection((recovered, terminal, success, suppressed))
 
     assert recovered.recovered_failure_codes == (
-        contracts.FailureCode
-        .LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT,
+        contracts.FailureCode.LEANSTRAL_TIMEOUT_SCHEMA_OR_FORBIDDEN_CONSTRUCT,
     )
     assert receipt["source_result_count"] == 4
     assert receipt["invocation_count"] == 3
@@ -294,10 +278,7 @@ def test_projection_partitions_recovered_terminal_and_suppressed_stages() -> Non
     assert receipt["recovered_failure_count"] == 1
     assert receipt["terminal_failure_count"] == 1
     assert receipt["safe_failure_class_counts"]["timed_out"] == 2
-    assert (
-        receipt["wall_time_ms_by_safe_failure_class"]["timed_out"]
-        == 200.75
-    )
+    assert receipt["wall_time_ms_by_safe_failure_class"]["timed_out"] == 200.75
 
 
 def test_projection_is_content_addressed_and_source_recomputed() -> None:
@@ -317,9 +298,7 @@ def test_projection_is_content_addressed_and_source_recomputed() -> None:
     assert validate_leanstral_diagnostic_projection(receipt, sources) == receipt
 
     changed_wall = copy.deepcopy(receipt)
-    changed_wall["wall_time_ms_by_safe_failure_class"][
-        "length_exhausted"
-    ] = 41.0
+    changed_wall["wall_time_ms_by_safe_failure_class"]["length_exhausted"] = 41.0
     with pytest.raises(
         LeanstralDiagnosticError,
         match="content address changed",
@@ -334,9 +313,7 @@ def test_projection_is_content_addressed_and_source_recomputed() -> None:
         validate_leanstral_diagnostic_projection(rebound_wall, sources)
 
     changed_source = copy.deepcopy(receipt)
-    changed_source["source_results_cid"] = cid_for_dag_json(
-        {"different": "validated-source-set"}
-    )
+    changed_source["source_results_cid"] = cid_for_dag_json({"different": "validated-source-set"})
     changed_source = _recid(changed_source)
     with pytest.raises(
         LeanstralDiagnosticError,
@@ -348,9 +325,7 @@ def test_projection_is_content_addressed_and_source_recomputed() -> None:
 @pytest.mark.parametrize(
     "mutator",
     (
-        lambda value: value["safe_failure_class_counts"].update(
-            {"unknown": 0}
-        ),
+        lambda value: value["safe_failure_class_counts"].update({"unknown": 0}),
         lambda value: value["failure_phase_counts"].pop("provider"),
         lambda value: value.update({"failure_count": 0}),
         lambda value: value.update({"prompt": "must-not-appear"}),
@@ -390,9 +365,7 @@ def test_projection_rejects_shape_and_total_tampering(mutator) -> None:
                 "bad-legacy-code",
                 safe_class="timed_out",
                 phase="completion_request",
-                legacy_failure_code=(
-                    contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
-                ),
+                legacy_failure_code=(contracts.FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE),
             ),
             "legacy failure contract",
         ),

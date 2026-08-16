@@ -202,9 +202,7 @@ def test_modal_supervisor_health_distinguishes_alive_from_productive_loop() -> N
     assert productive["alive"] is True
     assert productive["productive"] is True
     assert productive["state_to_compiler_patch_lag"]["status"] == "no_data"
-    assert productive["state_to_compiler_patch_lag"][
-        "legacy_counter_inputs_ignored"
-    ] is True
+    assert productive["state_to_compiler_patch_lag"]["legacy_counter_inputs_ignored"] is True
     uncorrelated = state_to_compiler_patch_lag(
         state_update_count=3,
         compiler_patch_count=1,
@@ -356,12 +354,8 @@ def test_production_runner_exports_canonical_disagreement_packets(
     assert report["shared_sample_analysis_cache_hit_count"] == 1
     assert report["schema_failure_count"] == 0
     assert report["reference_example_count"] == 1
-    assert report["reference_example_path"] == str(
-        tmp_path / "run.reference-examples.json"
-    )
-    assert report["reference_example_source_policy"] == (
-        "local_verifier_only_not_prompt_evidence"
-    )
+    assert report["reference_example_path"] == str(tmp_path / "run.reference-examples.json")
+    assert report["reference_example_source_policy"] == ("local_verifier_only_not_prompt_evidence")
     # Guidance reuses the full audit introspection. Both calls are shared by
     # the guided and unguided export roles instead of being repeated per role.
     assert calls == {"guidance": 1, "introspection": 1}
@@ -370,9 +364,9 @@ def test_production_runner_exports_canonical_disagreement_packets(
         for call in guidance_kwargs + introspection_kwargs
     )
     assert report["paths"] == [str(tmp_path / "run.canonical-disagreements.jsonl")]
-    lines = (tmp_path / "run.canonical-disagreements.jsonl").read_text(
-        encoding="utf-8"
-    ).splitlines()
+    lines = (
+        (tmp_path / "run.canonical-disagreements.jsonl").read_text(encoding="utf-8").splitlines()
+    )
     assert len(lines) == 2
     packets = [json.loads(line) for line in lines]
     assert {packet["run_context"]["evaluation_role"] for packet in packets} == {
@@ -392,9 +386,7 @@ def test_production_runner_exports_canonical_disagreement_packets(
     reference_manifest = json.loads(
         (tmp_path / "run.reference-examples.json").read_text(encoding="utf-8")
     )
-    assert reference_manifest["source_policy"] == (
-        "local_verifier_only_not_prompt_evidence"
-    )
+    assert reference_manifest["source_policy"] == ("local_verifier_only_not_prompt_evidence")
     assert reference_manifest["example_count"] == 1
     assert reference_manifest["examples"][0]["sample_id"] == sample.sample_id
     assert reference_manifest["examples"][0]["source_text"] == sample.text
@@ -445,13 +437,11 @@ def test_introspection_export_skips_empty_guided_metric_block(tmp_path) -> None:
 
     assert report["packet_count"] == 1
     assert report["reference_example_count"] == 1
-    lines = (tmp_path / "run.canonical-disagreements.jsonl").read_text(
-        encoding="utf-8"
-    ).splitlines()
+    lines = (
+        (tmp_path / "run.canonical-disagreements.jsonl").read_text(encoding="utf-8").splitlines()
+    )
     packets = [json.loads(line) for line in lines]
-    assert [packet["run_context"]["evaluation_role"] for packet in packets] == [
-        "unguided"
-    ]
+    assert [packet["run_context"]["evaluation_role"] for packet in packets] == ["unguided"]
 
 
 def test_introspection_export_cadence_runs_first_cycle_and_periodically(tmp_path) -> None:
@@ -477,8 +467,7 @@ def test_introspection_export_cadence_runs_first_cycle_and_periodically(tmp_path
 
 def test_introspection_export_budget_preserves_canary_indices() -> None:
     samples = [
-        SimpleNamespace(source="us_code", title="5", section=str(index))
-        for index in range(4)
+        SimpleNamespace(source="us_code", title="5", section=str(index)) for index in range(4)
     ]
 
     selected, selected_indices = _budgeted_audit_samples_with_indices(
@@ -497,8 +486,7 @@ def test_introspection_export_budget_preserves_canary_indices() -> None:
 
 def test_introspection_export_floor_can_exceed_todo_audit_budget() -> None:
     samples = [
-        SimpleNamespace(source="us_code", title="5", section=str(index))
-        for index in range(30)
+        SimpleNamespace(source="us_code", title="5", section=str(index)) for index in range(30)
     ]
     indices = list(range(100, 130))
 
@@ -530,8 +518,7 @@ def test_introspection_export_floor_can_exceed_todo_audit_budget() -> None:
 
 def test_introspection_export_floor_preserves_scope_filters() -> None:
     samples = [
-        SimpleNamespace(source="us_code", title="5", section=str(index))
-        for index in range(8)
+        SimpleNamespace(source="us_code", title="5", section=str(index)) for index in range(8)
     ]
 
     selected, selected_indices = _introspection_export_samples_with_indices(
@@ -550,14 +537,12 @@ def test_introspection_export_floor_preserves_scope_filters() -> None:
 
 
 def test_canonical_restart_requests_real_leanstral_snapshot_floor() -> None:
-    script = Path("scripts/ops/logic/restart_canonical_weights_loop.sh").read_text(
-        encoding="utf-8"
-    )
+    script = Path("scripts/ops/logic/restart_canonical_weights_loop.sh").read_text(encoding="utf-8")
 
     assert '--validation-count "${VALIDATION_COUNT:-25}"' in script
     assert '--validation-canary-count "${VALIDATION_CANARY_COUNT:-25}"' in script
     assert (
-        '--autoencoder-introspection-min-export-samples '
+        "--autoencoder-introspection-min-export-samples "
         '"${AUTOENCODER_INTROSPECTION_MIN_EXPORT_SAMPLES:-25}"'
     ) in script
     assert '--autoencoder-max-audits-per-cycle "${AUTOENCODER_MAX_AUDITS_PER_CYCLE:-4}"' in script

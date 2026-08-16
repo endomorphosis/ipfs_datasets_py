@@ -99,7 +99,9 @@ def _parse_csv(value: Optional[str]) -> Optional[List[str]]:
 def _run_state_laws_full_corpus_guard_audit(*, states: List[str]) -> Dict[str, Any]:
     """Run the static full-corpus scraper guard audit for selected state-law scrapers."""
     script_path = Path(__file__).with_name("audit_state_scraper_full_corpus_guards.py")
-    spec = importlib.util.spec_from_file_location("audit_state_scraper_full_corpus_guards", script_path)
+    spec = importlib.util.spec_from_file_location(
+        "audit_state_scraper_full_corpus_guards", script_path
+    )
     if spec is None or spec.loader is None:
         return {
             "status": "fail",
@@ -107,7 +109,9 @@ def _run_state_laws_full_corpus_guard_audit(*, states: List[str]) -> Dict[str, A
             "missing_states": list(states),
             "error_count": 1,
             "warning_count": 0,
-            "findings": [{"severity": "error", "detail": f"Unable to load audit script: {script_path}"}],
+            "findings": [
+                {"severity": "error", "detail": f"Unable to load audit script: {script_path}"}
+            ],
         }
 
     try:
@@ -117,7 +121,9 @@ def _run_state_laws_full_corpus_guard_audit(*, states: List[str]) -> Dict[str, A
 
         state_modules = dict(getattr(module, "STATE_MODULES", {}) or {})
         repo_root = Path(__file__).resolve().parents[3]
-        scraper_dir = repo_root / "ipfs_datasets_py" / "processors" / "legal_scrapers" / "state_scrapers"
+        scraper_dir = (
+            repo_root / "ipfs_datasets_py" / "processors" / "legal_scrapers" / "state_scrapers"
+        )
         findings: List[Any] = []
         missing_states: List[str] = []
 
@@ -127,7 +133,11 @@ def _run_state_laws_full_corpus_guard_audit(*, states: List[str]) -> Dict[str, A
             if not module_name:
                 missing_states.append(normalized)
                 continue
-            findings.extend(module.audit_file(state=normalized, path=scraper_dir / f"{module_name}.py", repo_root=repo_root))
+            findings.extend(
+                module.audit_file(
+                    state=normalized, path=scraper_dir / f"{module_name}.py", repo_root=repo_root
+                )
+            )
 
         errors = [item for item in findings if getattr(item, "severity", "") == "error"]
         warnings = [item for item in findings if getattr(item, "severity", "") == "warning"]
@@ -171,7 +181,9 @@ def _state_code_to_scraper_file(state_code: str) -> Optional[str]:
     return str(rel) if abs_path.exists() else None
 
 
-def _default_cache_env(output_root: Path, *, cache_to_ipfs: bool, pin_ipfs_pages: bool) -> Dict[str, str]:
+def _default_cache_env(
+    output_root: Path, *, cache_to_ipfs: bool, pin_ipfs_pages: bool
+) -> Dict[str, str]:
     return {
         "IPFS_DATASETS_LEGAL_FETCH_CACHE_ENABLED": "1",
         "IPFS_DATASETS_LEGAL_FETCH_CACHE_IPFS_MIRROR": "1" if cache_to_ipfs else "0",
@@ -215,9 +227,15 @@ def _build_patch_backlog_entry(corpus: str, summary: Dict[str, Any]) -> Optional
         if path not in patch_targets:
             patch_targets.append(path)
 
-    priority_states = [str(item).upper() for item in (critic.get("priority_states") or []) if str(item).strip()]
+    priority_states = [
+        str(item).upper() for item in (critic.get("priority_states") or []) if str(item).strip()
+    ]
     if not priority_states:
-        priority_states = [str(item).upper() for item in (llm_review.get("priority_states") or []) if str(item).strip()]
+        priority_states = [
+            str(item).upper()
+            for item in (llm_review.get("priority_states") or [])
+            if str(item).strip()
+        ]
 
     for state_code in priority_states:
         scraper_file = _state_code_to_scraper_file(state_code)
@@ -285,7 +303,11 @@ async def _run_corpus(
 
     latest_summary_path = corpus_output_dir / "latest_summary.json"
     existing_summary = _load_existing_summary(latest_summary_path)
-    if skip_passed and existing_summary and bool((existing_summary.get("latest_cycle") or {}).get("passed")):
+    if (
+        skip_passed
+        and existing_summary
+        and bool((existing_summary.get("latest_cycle") or {}).get("passed"))
+    ):
         return {
             "status": "skipped",
             "reason": "already-passed",
@@ -344,7 +366,9 @@ async def _run_corpus(
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run the agentic scraper daemon across all state legal corpora.")
+    parser = argparse.ArgumentParser(
+        description="Run the agentic scraper daemon across all state legal corpora."
+    )
     parser.add_argument("--states", default="all", help="Comma-separated state codes, or 'all'.")
     parser.add_argument(
         "--corpora",
@@ -356,31 +380,145 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         default=str(Path.cwd() / "tmp" / "all_state_legal_corpora_agentic"),
         help="Directory containing per-corpus daemon outputs plus the aggregated summary.",
     )
-    parser.add_argument("--max-cycles", type=int, default=1, help="Maximum daemon cycles per corpus.")
-    parser.add_argument("--max-statutes", type=int, default=0, help="Optional per-run cap for debug/smoke runs. 0 means unlimited.")
-    parser.add_argument("--cycle-interval-seconds", type=float, default=900.0, help="Sleep interval between daemon cycles when max-cycles > 1.")
-    parser.add_argument("--explore-probability", type=float, default=0.30, help="Exploration probability for tactic selection.")
-    parser.add_argument("--archive-warmup-urls", type=int, default=25, help="How many weak-state URLs to archive/warm after each cycle.")
-    parser.add_argument("--per-state-timeout-seconds", type=float, default=86400.0, help="Per-state scrape timeout budget.")
-    parser.add_argument("--scrape-timeout-seconds", type=float, default=0.0, help="Optional whole-corpus scrape timeout budget; 0 disables it.")
-    parser.add_argument("--target-score", type=float, default=0.92, help="Critic score threshold used by each daemon.")
-    parser.add_argument("--stop-on-target-score", action="store_true", help="Stop a corpus daemon early when it passes.")
-    parser.add_argument("--min-document-recovery-ratio", type=float, default=0.0, help="Optional minimum processed-document recovery ratio gate.")
-    parser.add_argument("--stop-after-recovered-rows", action="store_true", help="Finalize each daemon cycle immediately after recovered row artifacts are written.")
-    parser.add_argument("--search-engines", default=None, help="Optional comma-separated search engine override for daemon tactics, e.g. duckduckgo.")
-    parser.add_argument("--tactic", default=None, help="Force one tactic profile for each corpus daemon, e.g. document_first.")
-    parser.add_argument("--full-corpus-mode", action="store_true", help="Enable full admin-rules corpus crawling; 0-valued admin caps become effectively unbounded.")
-    parser.add_argument("--preflight-only", action="store_true", help="Write the aggregated preflight summary and exit before starting corpus daemon cycles.")
-    parser.add_argument("--skip-full-corpus-guard-audit", action="store_true", help="Skip the state-law full-corpus static safety audit before unbounded full-corpus runs.")
-    parser.add_argument("--admin-agentic-max-candidates-per-state", type=int, default=0, help="Admin-rule agentic candidate cap per state. 0 means effectively unbounded in full-corpus mode.")
-    parser.add_argument("--admin-agentic-max-fetch-per-state", type=int, default=0, help="Admin-rule agentic fetch/row cap per state. 0 means effectively unbounded in full-corpus mode.")
-    parser.add_argument("--admin-agentic-max-results-per-domain", type=int, default=0, help="Admin-rule search-result cap per domain. 0 means effectively unbounded in full-corpus mode.")
-    parser.add_argument("--admin-agentic-max-hops", type=int, default=0, help="Admin-rule discovery hop cap. 0 means effectively unbounded in full-corpus mode.")
-    parser.add_argument("--admin-agentic-max-pages", type=int, default=0, help="Admin-rule discovery page cap. 0 means effectively unbounded in full-corpus mode.")
-    parser.add_argument("--admin-agentic-fetch-concurrency", type=int, default=6, help="Admin-rule agentic fetch concurrency.")
-    parser.add_argument("--skip-passed", action="store_true", help="Skip corpora whose existing latest summary already passed.")
-    parser.add_argument("--cache-to-ipfs", action=argparse.BooleanOptionalAction, default=True, help="Mirror the shared fetch cache to IPFS.")
-    parser.add_argument("--pin-ipfs-pages", action=argparse.BooleanOptionalAction, default=False, help="Pin per-page IPFS cache entries.")
+    parser.add_argument(
+        "--max-cycles", type=int, default=1, help="Maximum daemon cycles per corpus."
+    )
+    parser.add_argument(
+        "--max-statutes",
+        type=int,
+        default=0,
+        help="Optional per-run cap for debug/smoke runs. 0 means unlimited.",
+    )
+    parser.add_argument(
+        "--cycle-interval-seconds",
+        type=float,
+        default=900.0,
+        help="Sleep interval between daemon cycles when max-cycles > 1.",
+    )
+    parser.add_argument(
+        "--explore-probability",
+        type=float,
+        default=0.30,
+        help="Exploration probability for tactic selection.",
+    )
+    parser.add_argument(
+        "--archive-warmup-urls",
+        type=int,
+        default=25,
+        help="How many weak-state URLs to archive/warm after each cycle.",
+    )
+    parser.add_argument(
+        "--per-state-timeout-seconds",
+        type=float,
+        default=86400.0,
+        help="Per-state scrape timeout budget.",
+    )
+    parser.add_argument(
+        "--scrape-timeout-seconds",
+        type=float,
+        default=0.0,
+        help="Optional whole-corpus scrape timeout budget; 0 disables it.",
+    )
+    parser.add_argument(
+        "--target-score",
+        type=float,
+        default=0.92,
+        help="Critic score threshold used by each daemon.",
+    )
+    parser.add_argument(
+        "--stop-on-target-score",
+        action="store_true",
+        help="Stop a corpus daemon early when it passes.",
+    )
+    parser.add_argument(
+        "--min-document-recovery-ratio",
+        type=float,
+        default=0.0,
+        help="Optional minimum processed-document recovery ratio gate.",
+    )
+    parser.add_argument(
+        "--stop-after-recovered-rows",
+        action="store_true",
+        help="Finalize each daemon cycle immediately after recovered row artifacts are written.",
+    )
+    parser.add_argument(
+        "--search-engines",
+        default=None,
+        help="Optional comma-separated search engine override for daemon tactics, e.g. duckduckgo.",
+    )
+    parser.add_argument(
+        "--tactic",
+        default=None,
+        help="Force one tactic profile for each corpus daemon, e.g. document_first.",
+    )
+    parser.add_argument(
+        "--full-corpus-mode",
+        action="store_true",
+        help="Enable full admin-rules corpus crawling; 0-valued admin caps become effectively unbounded.",
+    )
+    parser.add_argument(
+        "--preflight-only",
+        action="store_true",
+        help="Write the aggregated preflight summary and exit before starting corpus daemon cycles.",
+    )
+    parser.add_argument(
+        "--skip-full-corpus-guard-audit",
+        action="store_true",
+        help="Skip the state-law full-corpus static safety audit before unbounded full-corpus runs.",
+    )
+    parser.add_argument(
+        "--admin-agentic-max-candidates-per-state",
+        type=int,
+        default=0,
+        help="Admin-rule agentic candidate cap per state. 0 means effectively unbounded in full-corpus mode.",
+    )
+    parser.add_argument(
+        "--admin-agentic-max-fetch-per-state",
+        type=int,
+        default=0,
+        help="Admin-rule agentic fetch/row cap per state. 0 means effectively unbounded in full-corpus mode.",
+    )
+    parser.add_argument(
+        "--admin-agentic-max-results-per-domain",
+        type=int,
+        default=0,
+        help="Admin-rule search-result cap per domain. 0 means effectively unbounded in full-corpus mode.",
+    )
+    parser.add_argument(
+        "--admin-agentic-max-hops",
+        type=int,
+        default=0,
+        help="Admin-rule discovery hop cap. 0 means effectively unbounded in full-corpus mode.",
+    )
+    parser.add_argument(
+        "--admin-agentic-max-pages",
+        type=int,
+        default=0,
+        help="Admin-rule discovery page cap. 0 means effectively unbounded in full-corpus mode.",
+    )
+    parser.add_argument(
+        "--admin-agentic-fetch-concurrency",
+        type=int,
+        default=6,
+        help="Admin-rule agentic fetch concurrency.",
+    )
+    parser.add_argument(
+        "--skip-passed",
+        action="store_true",
+        help="Skip corpora whose existing latest summary already passed.",
+    )
+    parser.add_argument(
+        "--cache-to-ipfs",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Mirror the shared fetch cache to IPFS.",
+    )
+    parser.add_argument(
+        "--pin-ipfs-pages",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Pin per-page IPFS cache entries.",
+    )
     return parser
 
 

@@ -12,6 +12,7 @@ Tests cover:
 - LogicValidator.avg_in_degree(ontology)  [alias for average_in_degree]
 - LogicValidator.avg_out_degree(ontology)  [alias for average_out_degree]
 """
+
 from __future__ import annotations
 
 import math
@@ -39,6 +40,7 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_result(
     confidences: list[float] | None = None,
@@ -111,6 +113,7 @@ class _FakeOntology:
 # OntologyOptimizer.score_skewness
 # ---------------------------------------------------------------------------
 
+
 class TestScoreSkewness:
     def test_empty_history_returns_zero(self):
         opt = OntologyOptimizer()
@@ -152,22 +155,31 @@ class TestScoreSkewness:
 # OntologyCritic.dimension_skewness
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionSkewness:
     def setup_method(self):
         self.critic = OntologyCritic()
 
     def test_uniform_dims_returns_zero(self):
         score = _make_critic_score(
-            completeness=0.5, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         assert self.critic.dimension_skewness(score) == pytest.approx(0.0)
 
     def test_symmetric_dims_near_zero(self):
         # [0.1, 0.3, 0.5, 0.5, 0.7, 0.9] is symmetric
         score = _make_critic_score(
-            completeness=0.9, consistency=0.7, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.3, domain_alignment=0.1,
+            completeness=0.9,
+            consistency=0.7,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.3,
+            domain_alignment=0.1,
         )
         assert abs(self.critic.dimension_skewness(score)) < 1e-6
 
@@ -178,16 +190,24 @@ class TestDimensionSkewness:
     def test_right_skew_positive(self):
         # Many low, one high
         score = _make_critic_score(
-            completeness=0.9, consistency=0.1, clarity=0.1,
-            granularity=0.1, relationship_coherence=0.1, domain_alignment=0.1,
+            completeness=0.9,
+            consistency=0.1,
+            clarity=0.1,
+            granularity=0.1,
+            relationship_coherence=0.1,
+            domain_alignment=0.1,
         )
         assert self.critic.dimension_skewness(score) > 0.0
 
     def test_left_skew_negative(self):
         # Many high, one low
         score = _make_critic_score(
-            completeness=0.1, consistency=0.9, clarity=0.9,
-            granularity=0.9, relationship_coherence=0.9, domain_alignment=0.9,
+            completeness=0.1,
+            consistency=0.9,
+            clarity=0.9,
+            granularity=0.9,
+            relationship_coherence=0.9,
+            domain_alignment=0.9,
         )
         assert self.critic.dimension_skewness(score) < 0.0
 
@@ -195,6 +215,7 @@ class TestDimensionSkewness:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.entity_confidence_kurtosis
 # ---------------------------------------------------------------------------
+
 
 class TestEntityConfidenceKurtosis:
     def setup_method(self):
@@ -236,6 +257,7 @@ class TestEntityConfidenceKurtosis:
 # OntologyGenerator.entity_text_length_std
 # ---------------------------------------------------------------------------
 
+
 class TestEntityTextLengthStd:
     def setup_method(self):
         self.gen = OntologyGenerator()
@@ -268,12 +290,15 @@ class TestEntityTextLengthStd:
     def test_longer_texts_more_spread(self):
         low_spread = _make_result(confidences=[0.9, 0.8, 0.7], texts=["abc", "abcd", "abcde"])
         high_spread = _make_result(confidences=[0.9, 0.8, 0.7], texts=["a", "aaaa", "aaaaaaaaaa"])
-        assert self.gen.entity_text_length_std(high_spread) > self.gen.entity_text_length_std(low_spread)
+        assert self.gen.entity_text_length_std(high_spread) > self.gen.entity_text_length_std(
+            low_spread
+        )
 
 
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_rolling_mean
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackRollingMean:
     def test_empty_feedback_returns_empty(self):
@@ -325,6 +350,7 @@ class TestFeedbackRollingMean:
 # OntologyPipeline.run_score_skewness
 # ---------------------------------------------------------------------------
 
+
 class TestRunScoreSkewness:
     def test_empty_returns_zero(self):
         pipeline = OntologyPipeline()
@@ -358,6 +384,7 @@ class TestRunScoreSkewness:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.worst_score_decline
 # ---------------------------------------------------------------------------
+
 
 class TestWorstScoreDecline:
     def test_empty_returns_zero(self):
@@ -394,6 +421,7 @@ class TestWorstScoreDecline:
 # ---------------------------------------------------------------------------
 # LogicValidator.avg_in_degree / avg_out_degree  (aliases)
 # ---------------------------------------------------------------------------
+
 
 class TestAvgInOutDegree:
     def setup_method(self):

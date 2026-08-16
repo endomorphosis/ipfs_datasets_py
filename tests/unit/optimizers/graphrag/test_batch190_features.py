@@ -11,11 +11,13 @@ Methods under test:
   - OntologyLearningAdapter.feedback_median_deviation()
   - OntologyMediator.action_mode()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -28,14 +30,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -43,11 +51,13 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, confidence=0.5, props=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence, properties=props or {})
 
 
@@ -60,6 +70,7 @@ def _make_relationship(rid, weight=None):
 
 def _make_result(entities=None, relationships=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities or [],
         relationships=relationships or [],
@@ -69,11 +80,13 @@ def _make_result(entities=None, relationships=None):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -84,21 +97,27 @@ def _push_run(p, score_val):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 # ── OntologyOptimizer.history_min ────────────────────────────────────────────
+
 
 class TestHistoryMin:
     def test_empty_returns_zero(self):
@@ -119,6 +138,7 @@ class TestHistoryMin:
 
 # ── OntologyOptimizer.history_max ────────────────────────────────────────────
 
+
 class TestHistoryMax:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -137,6 +157,7 @@ class TestHistoryMax:
 
 
 # ── OntologyOptimizer.history_rolling_mean ───────────────────────────────────
+
 
 class TestHistoryRollingMean:
     def test_empty_returns_zero(self):
@@ -165,34 +186,60 @@ class TestHistoryRollingMean:
 
 # ── OntologyCritic.dimension_above_threshold ─────────────────────────────────
 
+
 class TestDimensionAboveThreshold:
     def test_none_above_returns_zero(self):
         c = _make_critic()
-        s = _make_score(completeness=0.3, consistency=0.3, clarity=0.3,
-                        granularity=0.3, relationship_coherence=0.3, domain_alignment=0.3)
+        s = _make_score(
+            completeness=0.3,
+            consistency=0.3,
+            clarity=0.3,
+            granularity=0.3,
+            relationship_coherence=0.3,
+            domain_alignment=0.3,
+        )
         assert c.dimension_above_threshold(s, threshold=0.5) == 0
 
     def test_all_above_returns_six(self):
         c = _make_critic()
-        s = _make_score(completeness=0.9, consistency=0.9, clarity=0.9,
-                        granularity=0.9, relationship_coherence=0.9, domain_alignment=0.9)
+        s = _make_score(
+            completeness=0.9,
+            consistency=0.9,
+            clarity=0.9,
+            granularity=0.9,
+            relationship_coherence=0.9,
+            domain_alignment=0.9,
+        )
         assert c.dimension_above_threshold(s, threshold=0.7) == 6
 
     def test_partial_count(self):
         c = _make_critic()
-        s = _make_score(completeness=0.8, consistency=0.4, clarity=0.9,
-                        granularity=0.3, relationship_coherence=0.85, domain_alignment=0.2)
+        s = _make_score(
+            completeness=0.8,
+            consistency=0.4,
+            clarity=0.9,
+            granularity=0.3,
+            relationship_coherence=0.85,
+            domain_alignment=0.2,
+        )
         assert c.dimension_above_threshold(s, threshold=0.7) == 3
 
     def test_default_threshold(self):
         c = _make_critic()
-        s = _make_score(completeness=0.8, consistency=0.6, clarity=0.75,
-                        granularity=0.5, relationship_coherence=0.9, domain_alignment=0.3)
+        s = _make_score(
+            completeness=0.8,
+            consistency=0.6,
+            clarity=0.75,
+            granularity=0.5,
+            relationship_coherence=0.9,
+            domain_alignment=0.3,
+        )
         # > 0.7: completeness(0.8), clarity(0.75), relationship_coherence(0.9) = 3
         assert c.dimension_above_threshold(s) == 3
 
 
 # ── OntologyGenerator.entity_with_most_properties ────────────────────────────
+
 
 class TestEntityWithMostProperties:
     def test_empty_returns_empty_string(self):
@@ -207,11 +254,13 @@ class TestEntityWithMostProperties:
 
     def test_returns_id_of_entity_with_most(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("e1", props={"a": 1}),
-            _make_entity("e2", props={"a": 1, "b": 2, "c": 3}),
-            _make_entity("e3", props={"x": 0}),
-        ])
+        r = _make_result(
+            [
+                _make_entity("e1", props={"a": 1}),
+                _make_entity("e2", props={"a": 1, "b": 2, "c": 3}),
+                _make_entity("e3", props={"x": 0}),
+            ]
+        )
         assert g.entity_with_most_properties(r) == "e2"
 
     def test_no_properties_returns_first_id(self):
@@ -222,6 +271,7 @@ class TestEntityWithMostProperties:
 
 
 # ── OntologyGenerator.relationship_max_weight ────────────────────────────────
+
 
 class TestRelationshipMaxWeight:
     def test_no_relationships_returns_zero(self):
@@ -244,6 +294,7 @@ class TestRelationshipMaxWeight:
 
 # ── OntologyPipeline.run_score_last ──────────────────────────────────────────
 
+
 class TestRunScoreLast:
     def test_empty_returns_zero(self):
         p = _make_pipeline()
@@ -263,6 +314,7 @@ class TestRunScoreLast:
 
 
 # ── OntologyLearningAdapter.feedback_median_deviation ────────────────────────
+
 
 class TestFeedbackMedianDeviation:
     def test_empty_returns_zero(self):
@@ -289,6 +341,7 @@ class TestFeedbackMedianDeviation:
 
 
 # ── OntologyMediator.action_mode ─────────────────────────────────────────────
+
 
 class TestActionMode:
     def test_no_actions_returns_empty_string(self):

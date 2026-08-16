@@ -22,9 +22,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
 
 def _missing_modal_formula_count(result) -> int:
     return sum(
-        1
-        for ambiguity in result.ambiguities
-        if ambiguity.ambiguity_type == "missing_modal_formula"
+        1 for ambiguity in result.ambiguities if ambiguity.ambiguity_type == "missing_modal_formula"
     )
 
 
@@ -54,8 +52,7 @@ def _has_adaptive_explicit_pair_from_source(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.metadata.get("predicted_family") == predicted_family
         and ambiguity.metadata.get("target_family") == target_family
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == predicted_family_source
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == predicted_family_source
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
         for ambiguity in result.ambiguities
     )
@@ -81,6 +78,8 @@ def _adaptive_explicit_ambiguity_from_source(
             continue
         return ambiguity
     return None
+
+
 def _adaptive_ranking_with_shares(
     family_shares,
 ):
@@ -151,9 +150,7 @@ def test_parser_recovers_standalone_establishment_clause() -> None:
 
 
 def test_compiler_spacy_backend_no_longer_emits_missing_formula_for_regression_cases() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     cases = [
         (
@@ -200,14 +197,16 @@ def test_parser_adds_residual_span_coverage_formula_for_untyped_uscode_segment()
         if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
     ]
     assert residual_formulas
-    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+    assert all(
+        formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas
+    )
     assert all(formula.provenance.citation == "25 U.S.C. 640d-28" for formula in residual_formulas)
 
 
-def test_compiler_spacy_backend_adds_residual_span_coverage_formula_for_untyped_uscode_segment() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_spacy_backend_adds_residual_span_coverage_formula_for_untyped_uscode_segment() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
     result = compiler.compile(
         (
             "The Secretary shall publish the annual report. "
@@ -223,7 +222,9 @@ def test_compiler_spacy_backend_adds_residual_span_coverage_formula_for_untyped_
         if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
     ]
     assert residual_formulas
-    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+    assert all(
+        formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas
+    )
     assert all(formula.provenance.citation == "25 U.S.C. 640d-28" for formula in residual_formulas)
 
 
@@ -255,10 +256,10 @@ def test_parser_adds_residual_span_coverage_after_residual_fallback_formula() ->
     assert modal_ir.formulas[-1].metadata.get("fallback_rule") == "uscode_procedural_clause_v1"
 
 
-def test_compiler_spacy_backend_adds_residual_span_coverage_after_residual_fallback_formula() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_spacy_backend_adds_residual_span_coverage_after_residual_fallback_formula() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
     result = compiler.compile(
         (
             "The Secretary shall publish the annual report. "
@@ -282,7 +283,9 @@ def test_compiler_spacy_backend_adds_residual_span_coverage_after_residual_fallb
 
     assert procedural_fallbacks
     assert residual_formulas
-    assert result.modal_ir.formulas[-1].metadata.get("fallback_rule") == "uscode_procedural_clause_v1"
+    assert (
+        result.modal_ir.formulas[-1].metadata.get("fallback_rule") == "uscode_procedural_clause_v1"
+    )
 
 
 def test_parser_types_notice_comment_residual_span_as_administrative_frame() -> None:
@@ -309,14 +312,16 @@ def test_parser_types_notice_comment_residual_span_as_administrative_frame() -> 
     )
 
     assert "public comments on proposed agency guidance" in residual_text
-    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+    assert all(
+        formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas
+    )
     assert all(formula.provenance.citation == "21 U.S.C. 2013" for formula in residual_formulas)
 
 
-def test_compiler_spacy_backend_types_notice_comment_residual_span_as_administrative_frame() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_spacy_backend_types_notice_comment_residual_span_as_administrative_frame() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
     result = compiler.compile(
         (
             "The agency must retain the contract file. "
@@ -339,7 +344,9 @@ def test_compiler_spacy_backend_types_notice_comment_residual_span_as_administra
     )
 
     assert "administrative comment period" in residual_text
-    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+    assert all(
+        formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas
+    )
     assert all(formula.provenance.citation == "41 U.S.C. 4711" for formula in residual_formulas)
 
 
@@ -379,13 +386,15 @@ def test_parser_types_compact_uncovered_uscode_topic_headings_as_frame_spans() -
     assert "congressional declaration of purpose" in frame_text
     assert "authorization of appropriations" in residual_text
     assert "notification and information sharing" in residual_text
-    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
-
-
-def test_compiler_spacy_backend_types_compact_uncovered_uscode_topic_headings_as_frame_spans() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
+    assert all(
+        formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas
     )
+
+
+def test_compiler_spacy_backend_types_compact_uncovered_uscode_topic_headings_as_frame_spans() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
     result = compiler.compile(
         (
             "The Secretary shall issue guidance. "
@@ -420,13 +429,15 @@ def test_compiler_spacy_backend_types_compact_uncovered_uscode_topic_headings_as
     assert "congressional declaration of purpose" in frame_text
     assert "authorization of appropriations" in residual_text
     assert "notification and information sharing" in residual_text
-    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
-
-
-def test_compiler_spacy_backend_recovers_editorial_status_fallback_when_strict_fallback_is_cue_blocked() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
+    assert all(
+        formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas
     )
+
+
+def test_compiler_spacy_backend_recovers_editorial_status_fallback_when_strict_fallback_is_cue_blocked() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
     result = compiler.compile(
         (
             "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition "
@@ -449,7 +460,9 @@ def test_compiler_spacy_backend_recovers_editorial_status_fallback_when_strict_f
     ]
     assert editorial_formulas
     assert _missing_modal_formula_count(result) == 0
-    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in editorial_formulas)
+    assert all(
+        formula.operator.family == ModalLogicFamily.FRAME.value for formula in editorial_formulas
+    )
     assert all(formula.provenance.citation == "16 U.S.C. 452a" for formula in editorial_formulas)
 
 
@@ -467,7 +480,8 @@ def test_parser_adds_frame_residual_for_omitted_editorial_note_tail_with_non_tem
     )
 
     assert any(
-        "related to a study by the administrator" in modal_ir.normalized_text[
+        "related to a study by the administrator"
+        in modal_ir.normalized_text[
             formula.provenance.start_char : formula.provenance.end_char
         ].lower()
         for formula in modal_ir.formulas
@@ -506,7 +520,8 @@ def test_parser_adds_frame_residual_for_revision_note_omitted_words() -> None:
     )
 
     assert any(
-        "are omitted as unnecessary" in modal_ir.normalized_text[
+        "are omitted as unnecessary"
+        in modal_ir.normalized_text[
             formula.provenance.start_char : formula.provenance.end_char
         ].lower()
         for formula in modal_ir.formulas
@@ -562,9 +577,7 @@ def test_parser_adds_frame_residual_for_legislative_history_parenthetical() -> N
 
 
 def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pairs() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     conditional_result = compiler.compile(
         "As provided in section 3, this authority applies.",
@@ -598,9 +611,7 @@ def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pair
 
 
 def test_compiler_emits_explicit_frame_to_alethic_adaptive_pair_from_low_margin_logits() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -638,9 +649,7 @@ def test_compiler_emits_explicit_frame_to_alethic_adaptive_pair_from_low_margin_
 
 
 def test_compiler_emits_explicit_deontic_to_frame_and_temporal_adaptive_pairs() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     frame_result = compiler.compile(
         "The agency shall administer this program under section 3 of this title.",
@@ -673,9 +682,7 @@ def test_compiler_emits_explicit_deontic_to_frame_and_temporal_adaptive_pairs() 
 
 
 def test_compiler_emits_explicit_deontic_to_conditional_normative_adaptive_pair() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         "The Secretary shall submit the report when the committee approves.",
@@ -689,9 +696,7 @@ def test_compiler_emits_explicit_deontic_to_conditional_normative_adaptive_pair(
 
 
 def test_compiler_emits_explicit_temporal_to_deontic_adaptive_pair() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         "Within 30 days after June 1, 2030, and before the end of the fiscal year, the Secretary may issue guidance.",
@@ -705,9 +710,7 @@ def test_compiler_emits_explicit_temporal_to_deontic_adaptive_pair() -> None:
 
 
 def test_compiler_preserves_temporal_to_deontic_adaptive_logits_evidence_margins() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
     evidence_cases = (
         (
             "us-code-33-2607-b8ef0bc32f81c11c",
@@ -758,8 +761,7 @@ def test_compiler_preserves_temporal_to_deontic_adaptive_logits_evidence_margins
             ambiguity
             for ambiguity in result.ambiguities
             if ambiguity.ambiguity_type == "adaptive_temporal_deontic_outvoted_margin_low"
-            and ambiguity.metadata.get("adaptive_predicted_family_source")
-            == "adaptive_logits"
+            and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
         ]
         assert matches, document_id
         ambiguity = matches[0]
@@ -773,10 +775,10 @@ def test_compiler_preserves_temporal_to_deontic_adaptive_logits_evidence_margins
         assert abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority) <= 1e-12
 
 
-def test_compiler_marks_temporal_to_alethic_pair_as_compiler_ambiguity_bundle_from_adaptive_logits() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_marks_temporal_to_alethic_pair_as_compiler_ambiguity_bundle_from_adaptive_logits() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
     expected_margin = -0.087783806913
     expected_priority = 0.237783806913
     predicted_share = 0.6
@@ -812,8 +814,7 @@ def test_compiler_marks_temporal_to_alethic_pair_as_compiler_ambiguity_bundle_fr
         ambiguity
         for ambiguity in result.ambiguities
         if ambiguity.ambiguity_type == "adaptive_temporal_alethic_outvoted_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
     ]
     assert matches
     ambiguity = matches[0]
@@ -827,10 +828,10 @@ def test_compiler_marks_temporal_to_alethic_pair_as_compiler_ambiguity_bundle_fr
     assert abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority) <= 1e-12
 
 
-def test_compiler_marks_frame_to_deontic_pair_as_compiler_ambiguity_bundle_from_adaptive_logits_evidence_margins() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_marks_frame_to_deontic_pair_as_compiler_ambiguity_bundle_from_adaptive_logits_evidence_margins() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
     expected_margin = -0.424665787791
     expected_priority = 0.574665787791
     ranking = _adaptive_ranking_with_shares(
@@ -863,18 +864,9 @@ def test_compiler_marks_frame_to_deontic_pair_as_compiler_ambiguity_bundle_from_
     assert ambiguity.severity == "requires_rule"
     assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
-    assert (
-        abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin)
-        <= 1e-12
-    )
-    assert (
-        abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-        <= 1e-12
-    )
-    assert (
-        abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
-        <= 1e-12
-    )
+    assert abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
+    assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
+    assert abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority) <= 1e-12
 
 
 def test_compiler_preserves_packet_002937_compiler_ambiguity_policy_pair_margins(
@@ -909,9 +901,7 @@ def test_compiler_preserves_packet_002937_compiler_ambiguity_policy_pair_margins
     )
 
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         expected_margin = float(case["family_margin"])
@@ -949,13 +939,9 @@ def test_compiler_preserves_packet_002937_compiler_ambiguity_policy_pair_margins
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin)
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
             abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12
@@ -1012,9 +998,7 @@ def test_compiler_preserves_compiler_ambiguity_bundle_evidence_for_target_policy
     )
 
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _adaptive_ranking_with_shares(case["shares"])
 
         def _mock_adaptive_family_ranking_from_logits(_encoding, _ranking=ranking):
@@ -1045,10 +1029,7 @@ def test_compiler_preserves_compiler_ambiguity_bundle_evidence_for_target_policy
             <= 1e-12
         )
         assert (
-            abs(
-                float(ambiguity.metadata.get("priority", 0.0))
-                - float(case["expected_priority"])
-            )
+            abs(float(ambiguity.metadata.get("priority", 0.0)) - float(case["expected_priority"]))
             <= 1e-12
         )
         assert (
@@ -1101,9 +1082,7 @@ def test_compiler_preserves_packet_001186_compiler_ambiguity_policy_pair_margins
     )
 
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         expected_margin = float(case["family_margin"])
@@ -1111,9 +1090,7 @@ def test_compiler_preserves_packet_001186_compiler_ambiguity_policy_pair_margins
 
         if predicted_family == target_family:
             predicted_share = (1.0 + expected_margin) / 2.0
-            runner_up_family = str(
-                case.get("runner_up_family", ModalLogicFamily.DEONTIC.value)
-            )
+            runner_up_family = str(case.get("runner_up_family", ModalLogicFamily.DEONTIC.value))
             runner_up_share = predicted_share - expected_margin
             ranking = _adaptive_ranking_with_shares(
                 {
@@ -1156,23 +1133,19 @@ def test_compiler_preserves_packet_001186_compiler_ambiguity_policy_pair_margins
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert (
-            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin)
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )
-        assert (
-            abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority)
-            <= 1e-12
-        )
+        assert abs(float(ambiguity.metadata.get("priority", 0.0)) - expected_priority) <= 1e-12
         assert (
             abs(float(ambiguity.metadata.get("adaptive_priority", 0.0)) - expected_priority)
             <= 1e-12
         )
 
 
-def test_compiler_emits_explicit_temporal_to_epistemic_adaptive_pair_from_low_margin_logits() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_emits_explicit_temporal_to_epistemic_adaptive_pair_from_low_margin_logits() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -1209,10 +1182,10 @@ def test_compiler_emits_explicit_temporal_to_epistemic_adaptive_pair_from_low_ma
     )
 
 
-def test_compiler_emits_explicit_temporal_to_doxastic_adaptive_pair_from_low_margin_logits() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_emits_explicit_temporal_to_doxastic_adaptive_pair_from_low_margin_logits() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -1250,9 +1223,7 @@ def test_compiler_emits_explicit_temporal_to_doxastic_adaptive_pair_from_low_mar
 
 
 def test_compiler_emits_explicit_conditional_normative_to_frame_adaptive_pair() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         "In the event that the authority under section 5 applies, the Administrator acts.",
@@ -1275,9 +1246,7 @@ def test_compiler_emits_explicit_conditional_normative_to_frame_adaptive_pair() 
 
 
 def test_compiler_emits_explicit_conditional_normative_to_epistemic_adaptive_pair() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         "In the event that the Secretary determines eligibility, this authority applies.",
@@ -1291,9 +1260,7 @@ def test_compiler_emits_explicit_conditional_normative_to_epistemic_adaptive_pai
 
 
 def test_compiler_emits_explicit_conditional_normative_to_deontic_adaptive_pair() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         "In the event that this authority applies, the Secretary shall act.",
@@ -1307,9 +1274,7 @@ def test_compiler_emits_explicit_conditional_normative_to_deontic_adaptive_pair(
 
 
 def test_compiler_emits_explicit_conditional_normative_to_temporal_adaptive_pair() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         "In the event that this authority applies, the Administrator acts.",
@@ -1323,9 +1288,7 @@ def test_compiler_emits_explicit_conditional_normative_to_temporal_adaptive_pair
 
 
 def test_compiler_emits_explicit_conditional_normative_to_dynamic_adaptive_pair() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -1370,9 +1333,7 @@ def test_compiler_emits_explicit_conditional_normative_to_dynamic_adaptive_pair(
 
 
 def test_compiler_emits_explicit_deontic_to_dynamic_adaptive_pair() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         "The Secretary shall file the notice upon service.",
@@ -1395,9 +1356,7 @@ def test_compiler_emits_explicit_deontic_to_dynamic_adaptive_pair() -> None:
 
 
 def test_compiler_emits_explicit_pair_from_adaptive_logits_disagreement() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -1441,10 +1400,10 @@ def test_compiler_emits_explicit_pair_from_adaptive_logits_disagreement() -> Non
     )
 
 
-def test_compiler_preserves_frame_to_conditional_and_deontic_pairs_from_compiled_primary_policy() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_preserves_frame_to_conditional_and_deontic_pairs_from_compiled_primary_policy() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -1504,8 +1463,7 @@ def test_compiler_preserves_frame_to_conditional_and_deontic_pairs_from_compiled
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "compiled_primary_family"
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "compiled_primary_family"
         and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.FRAME.value
         and ambiguity.metadata.get("target_family") == ModalLogicFamily.DEONTIC.value
         and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
@@ -1515,9 +1473,7 @@ def test_compiler_preserves_frame_to_conditional_and_deontic_pairs_from_compiled
 
 
 def test_compiler_preserves_temporal_to_deontic_pair_from_compiled_primary_policy() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -1563,9 +1519,7 @@ def test_compiler_preserves_temporal_to_deontic_pair_from_compiled_primary_polic
 
 
 def test_compiler_preserves_temporal_to_frame_pair_from_compiled_primary_policy() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -1611,9 +1565,7 @@ def test_compiler_preserves_temporal_to_frame_pair_from_compiled_primary_policy(
 
 
 def test_compiler_preserves_conditional_to_deontic_pair_from_compiled_primary_policy() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -1659,9 +1611,7 @@ def test_compiler_preserves_conditional_to_deontic_pair_from_compiled_primary_po
 
 
 def test_compiler_preserves_conditional_to_temporal_pair_from_compiled_primary_policy() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -1715,9 +1665,7 @@ def test_compiler_preserves_conditional_to_temporal_pair_from_compiled_primary_p
 
 
 def test_compiler_preserves_conditional_to_dynamic_pair_from_compiled_primary_policy() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -1778,10 +1726,10 @@ def test_compiler_preserves_conditional_to_dynamic_pair_from_compiled_primary_po
     )
 
 
-def test_compiler_preserves_compiled_primary_outvote_margins_for_frame_and_temporal_policy_pairs() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_preserves_compiled_primary_outvote_margins_for_frame_and_temporal_policy_pairs() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     frame_share = 0.30
     frame_to_deontic_margin = -0.424665787791
@@ -1833,7 +1781,9 @@ def test_compiler_preserves_compiled_primary_outvote_margins_for_frame_and_tempo
     assert frame_ambiguity is not None
     assert frame_ambiguity.ambiguity_type == "adaptive_frame_deontic_outvoted_margin_low"
     assert frame_ambiguity.severity == "requires_rule"
-    assert abs(float(frame_ambiguity.metadata["family_margin_raw"]) - frame_to_deontic_margin) <= 1e-12
+    assert (
+        abs(float(frame_ambiguity.metadata["family_margin_raw"]) - frame_to_deontic_margin) <= 1e-12
+    )
     assert abs(float(frame_ambiguity.metadata["priority"]) - 0.574665787791) <= 1e-12
     assert frame_ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
     assert frame_ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
@@ -1918,16 +1868,16 @@ def test_compiler_preserves_compiled_primary_outvote_margins_for_frame_and_tempo
         assert temporal_ambiguity is not None, target_family
         assert temporal_ambiguity.ambiguity_type == expected_type
         assert temporal_ambiguity.severity == "requires_rule"
-        assert abs(float(temporal_ambiguity.metadata["family_margin_raw"]) - expected_margin) <= 1e-12
+        assert (
+            abs(float(temporal_ambiguity.metadata["family_margin_raw"]) - expected_margin) <= 1e-12
+        )
         assert abs(float(temporal_ambiguity.metadata["priority"]) - expected_priority) <= 1e-12
         assert temporal_ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         assert temporal_ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
 
 
 def test_compiler_preserves_frame_self_pair_margin_priority_from_adaptive_logits_evidence() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
     expected_margin = 0.067291518423
     expected_priority = 0.082708481577
 
@@ -1973,9 +1923,7 @@ def test_compiler_preserves_frame_self_pair_margin_priority_from_adaptive_logits
 
 
 def test_compiler_emits_explicit_alethic_to_epistemic_adaptive_pair() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         "It is necessary that the Secretary act.",
@@ -1988,10 +1936,10 @@ def test_compiler_emits_explicit_alethic_to_epistemic_adaptive_pair() -> None:
     )
 
 
-def test_compiler_marks_alethic_to_deontic_pair_as_compiler_ambiguity_bundle_from_adaptive_logits() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_marks_alethic_to_deontic_pair_as_compiler_ambiguity_bundle_from_adaptive_logits() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -2023,22 +1971,19 @@ def test_compiler_marks_alethic_to_deontic_pair_as_compiler_ambiguity_bundle_fro
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
-        and ambiguity.metadata.get("predicted_family")
-        == ModalLogicFamily.ALETHIC.value
-        and ambiguity.metadata.get("target_family")
-        == ModalLogicFamily.DEONTIC.value
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.ALETHIC.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.DEONTIC.value
         and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         for ambiguity in result.ambiguities
     )
 
 
-def test_compiler_marks_alethic_to_epistemic_pair_as_compiler_ambiguity_bundle_from_adaptive_logits() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_marks_alethic_to_epistemic_pair_as_compiler_ambiguity_bundle_from_adaptive_logits() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -2070,12 +2015,9 @@ def test_compiler_marks_alethic_to_epistemic_pair_as_compiler_ambiguity_bundle_f
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
-        and ambiguity.metadata.get("predicted_family")
-        == ModalLogicFamily.ALETHIC.value
-        and ambiguity.metadata.get("target_family")
-        == ModalLogicFamily.EPISTEMIC.value
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.ALETHIC.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.EPISTEMIC.value
         and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         for ambiguity in result.ambiguities
@@ -2083,9 +2025,7 @@ def test_compiler_marks_alethic_to_epistemic_pair_as_compiler_ambiguity_bundle_f
 
 
 def test_compiler_emits_explicit_deontic_self_pair_for_low_family_margin() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     result = compiler.compile(
         "The Secretary shall submit the report by June 1, 2030.",
@@ -2099,9 +2039,7 @@ def test_compiler_emits_explicit_deontic_self_pair_for_low_family_margin() -> No
 
 
 def test_compiler_marks_dynamic_self_pair_as_compiler_required_policy() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -2133,21 +2071,18 @@ def test_compiler_marks_dynamic_self_pair_as_compiler_required_policy() -> None:
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
-        and ambiguity.metadata.get("predicted_family")
-        == ModalLogicFamily.DYNAMIC.value
-        and ambiguity.metadata.get("target_family")
-        == ModalLogicFamily.DYNAMIC.value
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.DYNAMIC.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.DYNAMIC.value
         and ambiguity.metadata.get("is_compiler_required_policy_pair") is True
         for ambiguity in result.ambiguities
     )
 
 
-def test_compiler_marks_temporal_self_pair_as_compiler_ambiguity_bundle_from_adaptive_logits() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_marks_temporal_self_pair_as_compiler_ambiguity_bundle_from_adaptive_logits() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -2179,12 +2114,9 @@ def test_compiler_marks_temporal_self_pair_as_compiler_ambiguity_bundle_from_ada
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
-        and ambiguity.metadata.get("predicted_family")
-        == ModalLogicFamily.TEMPORAL.value
-        and ambiguity.metadata.get("target_family")
-        == ModalLogicFamily.TEMPORAL.value
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.TEMPORAL.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.TEMPORAL.value
         and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         for ambiguity in result.ambiguities
@@ -2236,17 +2168,13 @@ def test_compiler_emits_compiler_ambiguity_pairs_for_evidence_family_margins() -
     ]
 
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         predicted_share = float(case["predicted_share"])
         runner_up_share = float(case["runner_up_share"])
         second_family = (
-            target_family
-            if target_family != predicted_family
-            else ModalLogicFamily.DEONTIC.value
+            target_family if target_family != predicted_family else ModalLogicFamily.DEONTIC.value
         )
         if second_family == predicted_family:
             second_family = ModalLogicFamily.FRAME.value
@@ -2282,9 +2210,7 @@ def test_compiler_emits_compiler_ambiguity_pairs_for_evidence_family_margins() -
 
         result = compiler.compile(
             "As provided in section 3, the Secretary shall act by June 1, 2030.",
-            document_id=(
-                f"compiler-ambiguity-evidence-{predicted_family}-{target_family}"
-            ),
+            document_id=(f"compiler-ambiguity-evidence-{predicted_family}-{target_family}"),
         )
 
         matching_ambiguities = [
@@ -2292,8 +2218,7 @@ def test_compiler_emits_compiler_ambiguity_pairs_for_evidence_family_margins() -
             for ambiguity in result.ambiguities
             if ambiguity.ambiguity_type.startswith("adaptive_")
             and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-            and ambiguity.metadata.get("adaptive_predicted_family_source")
-            == "adaptive_logits"
+            and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
             and ambiguity.metadata.get("predicted_family") == predicted_family
             and ambiguity.metadata.get("target_family") == target_family
         ]
@@ -2315,10 +2240,7 @@ def test_compiler_emits_compiler_ambiguity_pairs_for_evidence_family_margins() -
             <= 1e-12
         )
         assert (
-            abs(
-                float(ambiguity.metadata.get("priority", 0.0))
-                - float(case["expected_priority"])
-            )
+            abs(float(ambiguity.metadata.get("priority", 0.0)) - float(case["expected_priority"]))
             <= 1e-12
         )
 
@@ -2352,9 +2274,7 @@ def test_compiler_preserves_compiler_ambiguity_policy_for_packet_003596_evidence
     ]
 
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         expected_margin = float(case["expected_margin"])
@@ -2407,17 +2327,10 @@ def test_compiler_preserves_compiler_ambiguity_policy_for_packet_003596_evidence
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert (
-            abs(
-                float(ambiguity.metadata.get("family_margin_raw", 0.0))
-                - expected_margin
-            )
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )
         assert (
-            abs(
-                float(ambiguity.metadata.get("priority", 0.0))
-                - float(case["expected_priority"])
-            )
+            abs(float(ambiguity.metadata.get("priority", 0.0)) - float(case["expected_priority"]))
             <= 1e-12
         )
         assert (
@@ -2450,9 +2363,7 @@ def test_compiler_preserves_compiler_ambiguity_policy_for_packet_001970_evidence
     ]
 
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         expected_margin = float(case["expected_margin"])
@@ -2505,17 +2416,10 @@ def test_compiler_preserves_compiler_ambiguity_policy_for_packet_001970_evidence
         assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         assert (
-            abs(
-                float(ambiguity.metadata.get("family_margin_raw", 0.0))
-                - expected_margin
-            )
-            <= 1e-12
+            abs(float(ambiguity.metadata.get("family_margin_raw", 0.0)) - expected_margin) <= 1e-12
         )
         assert (
-            abs(
-                float(ambiguity.metadata.get("priority", 0.0))
-                - float(case["expected_priority"])
-            )
+            abs(float(ambiguity.metadata.get("priority", 0.0)) - float(case["expected_priority"]))
             <= 1e-12
         )
         assert (
@@ -2528,9 +2432,7 @@ def test_compiler_preserves_compiler_ambiguity_policy_for_packet_001970_evidence
 
 
 def test_compiler_marks_epistemic_self_pair_as_compiler_required_policy() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -2562,21 +2464,16 @@ def test_compiler_marks_epistemic_self_pair_as_compiler_required_policy() -> Non
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
-        and ambiguity.metadata.get("predicted_family")
-        == ModalLogicFamily.EPISTEMIC.value
-        and ambiguity.metadata.get("target_family")
-        == ModalLogicFamily.EPISTEMIC.value
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.EPISTEMIC.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.EPISTEMIC.value
         and ambiguity.metadata.get("is_compiler_required_policy_pair") is True
         for ambiguity in result.ambiguities
     )
 
 
 def test_compiler_marks_epistemic_to_deontic_pair_as_compiler_required_policy() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -2608,21 +2505,18 @@ def test_compiler_marks_epistemic_to_deontic_pair_as_compiler_required_policy() 
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
-        and ambiguity.metadata.get("predicted_family")
-        == ModalLogicFamily.EPISTEMIC.value
-        and ambiguity.metadata.get("target_family")
-        == ModalLogicFamily.DEONTIC.value
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.EPISTEMIC.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.DEONTIC.value
         and ambiguity.metadata.get("is_compiler_required_policy_pair") is True
         for ambiguity in result.ambiguities
     )
 
 
-def test_compiler_marks_epistemic_to_temporal_pair_as_compiler_required_policy_without_target_evidence() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_marks_epistemic_to_temporal_pair_as_compiler_required_policy_without_target_evidence() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -2654,22 +2548,19 @@ def test_compiler_marks_epistemic_to_temporal_pair_as_compiler_required_policy_w
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
-        and ambiguity.metadata.get("predicted_family")
-        == ModalLogicFamily.EPISTEMIC.value
-        and ambiguity.metadata.get("target_family")
-        == ModalLogicFamily.TEMPORAL.value
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.EPISTEMIC.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.TEMPORAL.value
         and ambiguity.metadata.get("is_compiler_required_policy_pair") is True
         and ambiguity.metadata.get("signal_free_pair_policy_applied") is True
         for ambiguity in result.ambiguities
     )
 
 
-def test_compiler_marks_epistemic_to_conditional_normative_pair_as_compiler_required_policy_without_target_evidence() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_marks_epistemic_to_conditional_normative_pair_as_compiler_required_policy_without_target_evidence() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -2701,12 +2592,9 @@ def test_compiler_marks_epistemic_to_conditional_normative_pair_as_compiler_requ
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
-        and ambiguity.metadata.get("predicted_family")
-        == ModalLogicFamily.EPISTEMIC.value
-        and ambiguity.metadata.get("target_family")
-        == ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.EPISTEMIC.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.CONDITIONAL_NORMATIVE.value
         and ambiguity.metadata.get("is_compiler_required_policy_pair") is True
         and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
@@ -2715,10 +2603,10 @@ def test_compiler_marks_epistemic_to_conditional_normative_pair_as_compiler_requ
     )
 
 
-def test_compiler_marks_frame_to_temporal_pair_as_compiler_required_policy_without_target_evidence() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_marks_frame_to_temporal_pair_as_compiler_required_policy_without_target_evidence() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -2750,22 +2638,19 @@ def test_compiler_marks_frame_to_temporal_pair_as_compiler_required_policy_witho
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
-        and ambiguity.metadata.get("predicted_family")
-        == ModalLogicFamily.FRAME.value
-        and ambiguity.metadata.get("target_family")
-        == ModalLogicFamily.TEMPORAL.value
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.FRAME.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.TEMPORAL.value
         and ambiguity.metadata.get("is_compiler_required_policy_pair") is True
         and ambiguity.metadata.get("signal_free_pair_policy_applied") is True
         for ambiguity in result.ambiguities
     )
 
 
-def test_compiler_marks_conditional_to_frame_pair_as_compiler_required_policy_without_target_evidence() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_marks_conditional_to_frame_pair_as_compiler_required_policy_without_target_evidence() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -2797,8 +2682,7 @@ def test_compiler_marks_conditional_to_frame_pair_as_compiler_required_policy_wi
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
         and ambiguity.metadata.get("predicted_family")
         == ModalLogicFamily.CONDITIONAL_NORMATIVE.value
         and ambiguity.metadata.get("target_family") == ModalLogicFamily.FRAME.value
@@ -2810,10 +2694,10 @@ def test_compiler_marks_conditional_to_frame_pair_as_compiler_required_policy_wi
     )
 
 
-def test_compiler_marks_frame_to_dynamic_pair_as_compiler_ambiguity_signal_free_policy_without_target_evidence() -> None:
-    compiler = DeterministicModalCompiler(
-        config=ModalCompilerConfig(parser_backend="spacy")
-    )
+def test_compiler_marks_frame_to_dynamic_pair_as_compiler_ambiguity_signal_free_policy_without_target_evidence() -> (
+    None
+):
+    compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
 
     def _mock_adaptive_family_ranking_from_logits(_encoding):
         return [
@@ -2845,12 +2729,9 @@ def test_compiler_marks_frame_to_dynamic_pair_as_compiler_ambiguity_signal_free_
     assert any(
         ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
-        and ambiguity.metadata.get("adaptive_predicted_family_source")
-        == "adaptive_logits"
-        and ambiguity.metadata.get("predicted_family")
-        == ModalLogicFamily.FRAME.value
-        and ambiguity.metadata.get("target_family")
-        == ModalLogicFamily.DYNAMIC.value
+        and ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.FRAME.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.DYNAMIC.value
         and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
         and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         and ambiguity.metadata.get("signal_free_pair_policy_applied") is True

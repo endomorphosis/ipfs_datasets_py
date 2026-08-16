@@ -167,27 +167,26 @@ Final Output
 ```python
 # 1. Define template
 template = WorkflowTemplate(
-    template_id='data_pipeline',
+    template_id="data_pipeline",
     parameters=[
-        TemplateParameter(name='source', type='string', required=True),
-        TemplateParameter(name='format', type='string', default='json')
+        TemplateParameter(name="source", type="string", required=True),
+        TemplateParameter(name="format", type="string", default="json"),
     ],
     steps=[
-        {'step_id': 'fetch', 'action': 'fetch_data', 
-         'inputs': {'url': '${source}'}},
-        {'step_id': 'transform', 'action': 'transform',
-         'inputs': {'format': '${format}'},
-         'depends_on': ['fetch']}
-    ]
+        {"step_id": "fetch", "action": "fetch_data", "inputs": {"url": "${source}"}},
+        {
+            "step_id": "transform",
+            "action": "transform",
+            "inputs": {"format": "${format}"},
+            "depends_on": ["fetch"],
+        },
+    ],
 )
 
 # 2. Register and instantiate
 registry = TemplateRegistry()
 registry.register(template)
-workflow = template.instantiate({
-    'source': 'https://example.com/data',
-    'format': 'parquet'
-})
+workflow = template.instantiate({"source": "https://example.com/data", "format": "parquet"})
 
 # 3. Submit to priority queue
 queue = PriorityTaskQueue(algorithm=SchedulingAlgorithm.PRIORITY_DEADLINE)
@@ -195,27 +194,26 @@ await queue.put_task(
     execute_workflow,
     priority=1.0,
     deadline=datetime.now() + timedelta(hours=1),
-    kwargs={'workflow': workflow}
+    kwargs={"workflow": workflow},
 )
 
 # 4. Execute with DAG + caching
 cache = ResultCache(MemoryCacheBackend())
 dag_executor = WorkflowDAGExecutor()
 
+
 async def cached_executor(step):
     # Check cache first
     if cached := await cache.get(step.step_id, inputs=step.inputs):
         return cached
-    
+
     # Execute and cache
     result = await execute_step(step)
     await cache.put(step.step_id, result, ttl=3600, inputs=step.inputs)
     return result
 
-result = await dag_executor.execute_workflow(
-    workflow['steps'],
-    cached_executor
-)
+
+result = await dag_executor.execute_workflow(workflow["steps"], cached_executor)
 
 # 5. Parallel execution with structured concurrency
 executor = StructuredConcurrencyExecutor(max_concurrent=10)
@@ -386,19 +384,13 @@ ipfs_datasets_py/mcp_server/
 2. **Configure Features:**
    ```python
    # Cache configuration
-   cache = ResultCache(
-       backend=MemoryCacheBackend(max_size=10000, max_memory_mb=100),
-       default_ttl=3600
-   )
-   
+   cache = ResultCache(backend=MemoryCacheBackend(max_size=10000, max_memory_mb=100), default_ttl=3600)
+
    # Executor configuration
    executor = StructuredConcurrencyExecutor(max_concurrent=50)
-   
+
    # Queue configuration
-   queue = PriorityTaskQueue(
-       algorithm=SchedulingAlgorithm.PRIORITY_DEADLINE,
-       max_size=1000
-   )
+   queue = PriorityTaskQueue(algorithm=SchedulingAlgorithm.PRIORITY_DEADLINE, max_size=1000)
    ```
 
 3. **Set Up Monitoring:**

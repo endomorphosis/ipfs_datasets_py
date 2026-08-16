@@ -6,6 +6,7 @@ Covers:
 - analyze_batch_parallel(json_log_path=...) JSON output
 - OntologyLearningAdapter feedback loop integration scenarios
 """
+
 from __future__ import annotations
 
 import json
@@ -26,13 +27,16 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
 # OntologyLearningAdapter — to_dict / from_dict
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestOntologyLearningAdapterSerialization:
     """Round-trip serialization tests for OntologyLearningAdapter."""
 
     def _make_adapter_with_feedback(self) -> OntologyLearningAdapter:
         adapter = OntologyLearningAdapter(domain="medical", base_threshold=0.6)
         adapter.apply_feedback(0.8, actions=[{"action": "add_entity"}])
-        adapter.apply_feedback(0.7, actions=[{"action": "add_entity"}, {"action": "remove_duplicate"}])
+        adapter.apply_feedback(
+            0.7, actions=[{"action": "add_entity"}, {"action": "remove_duplicate"}]
+        )
         adapter.apply_feedback(0.9, actions=[{"action": "add_relationship"}])
         return adapter
 
@@ -44,8 +48,16 @@ class TestOntologyLearningAdapterSerialization:
     def test_to_dict_has_required_keys(self):
         adapter = OntologyLearningAdapter(domain="test")
         d = adapter.to_dict()
-        for key in ("domain", "base_threshold", "current_threshold", "ema_alpha",
-                    "min_samples", "feedback", "action_success", "action_count"):
+        for key in (
+            "domain",
+            "base_threshold",
+            "current_threshold",
+            "ema_alpha",
+            "min_samples",
+            "feedback",
+            "action_success",
+            "action_count",
+        ):
             assert key in d, f"Missing key: {key}"
 
     def test_to_dict_domain(self):
@@ -130,6 +142,7 @@ class TestOntologyLearningAdapterSerialization:
 # OntologyLearningAdapter — feedback loop scenarios
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestOntologyLearningAdapterFeedbackLoop:
     """Integration-level scenarios for the feedback loop."""
 
@@ -187,6 +200,7 @@ class TestOntologyLearningAdapterFeedbackLoop:
 # analyze_batch_parallel — json_log_path
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestAnalyzeBatchParallelJsonLog:
     """Tests for the json_log_path parameter of analyze_batch_parallel."""
 
@@ -205,6 +219,7 @@ class TestAnalyzeBatchParallelJsonLog:
 
     def _make_optimizer(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
         return OntologyOptimizer()
 
     def test_json_log_file_created(self):
@@ -227,8 +242,14 @@ class TestAnalyzeBatchParallelJsonLog:
             optimizer.analyze_batch_parallel(sessions, json_log_path=path)
             with open(path, encoding="utf-8") as fh:
                 data = json.load(fh)
-            for key in ("session_count", "average_score", "trend",
-                        "score_min", "score_max", "recommendations"):
+            for key in (
+                "session_count",
+                "average_score",
+                "trend",
+                "score_min",
+                "score_max",
+                "recommendations",
+            ):
                 assert key in data, f"Missing key: {key}"
         finally:
             os.unlink(path)
@@ -284,6 +305,4 @@ class TestAnalyzeBatchParallelJsonLog:
         optimizer = self._make_optimizer()
         sessions = [self._make_session_result(0.8)]
         # /dev/full would block on Linux; use a non-existent directory instead
-        optimizer.analyze_batch_parallel(
-            sessions, json_log_path="/nonexistent_dir_12345/out.json"
-        )
+        optimizer.analyze_batch_parallel(sessions, json_log_path="/nonexistent_dir_12345/out.json")

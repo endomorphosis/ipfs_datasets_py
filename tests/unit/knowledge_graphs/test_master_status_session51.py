@@ -8,6 +8,7 @@ Targets:
   extraction/_entity_helpers.py:117 – short-name < 2 chars filter
                                  (use mock to inject 1-char match into patterns)
 """
+
 import sys
 import importlib
 from unittest.mock import MagicMock, patch
@@ -18,12 +19,15 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_hybrid_engine(neighbors_map):
     """Create a HybridSearchEngine whose backend returns neighbors from a dict."""
     from ipfs_datasets_py.knowledge_graphs.query.hybrid_search import HybridSearchEngine
 
     backend = MagicMock()
-    backend.get_neighbors = MagicMock(side_effect=lambda nid, rel_types=None: neighbors_map.get(nid, []))
+    backend.get_neighbors = MagicMock(
+        side_effect=lambda nid, rel_types=None: neighbors_map.get(nid, [])
+    )
     eng = HybridSearchEngine(backend=backend)
     return eng
 
@@ -31,6 +35,7 @@ def _make_hybrid_engine(neighbors_map):
 # ---------------------------------------------------------------------------
 # query/hybrid_search.py line 217  (BFS already-visited guard)
 # ---------------------------------------------------------------------------
+
 
 class TestExpandGraphAlreadyVisitedGuard:
     """
@@ -100,6 +105,7 @@ class TestExpandGraphAlreadyVisitedGuard:
 # extraction/_entity_helpers.py line 117  (short-name filter)
 # ---------------------------------------------------------------------------
 
+
 class TestEntityHelpersShortNameFilter:
     """
     GIVEN a pattern that produces a 1-char group match
@@ -150,6 +156,7 @@ class TestEntityHelpersShortNameFilter:
         from ipfs_datasets_py.knowledge_graphs.extraction._entity_helpers import (
             _rule_based_entity_extraction,
         )
+
         text = "Marie Curie worked at the Sorbonne University on radioactivity research."
         entities = _rule_based_entity_extraction(text)
         names = [e.name for e in entities]
@@ -163,6 +170,7 @@ class TestEntityHelpersShortNameFilter:
 # migration/formats.py:921-930 – ipld_car/multiformats ImportError in save_car
 # ---------------------------------------------------------------------------
 
+
 class TestMigrationFormatsCarImportErrors:
     """
     GIVEN libipld / ipld-car / multiformats are absent (simulated via sys.modules mock)
@@ -173,6 +181,7 @@ class TestMigrationFormatsCarImportErrors:
     def _load_formats(self):
         """Reload migration.formats with a clean sys.modules to allow patching."""
         import ipfs_datasets_py.knowledge_graphs.migration.formats as fmt_mod
+
         return fmt_mod
 
     def test_save_car_raises_when_libipld_missing(self, tmp_path):
@@ -180,8 +189,7 @@ class TestMigrationFormatsCarImportErrors:
         fmt = self._load_formats()
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, NodeData
 
-        g = GraphData(nodes=[NodeData(id="n1", labels=["T"], properties={})],
-                      relationships=[])
+        g = GraphData(nodes=[NodeData(id="n1", labels=["T"], properties={})], relationships=[])
         dest = str(tmp_path / "out.car")
 
         # Simulate libipld absent by patching sys.modules inside the function call scope
@@ -201,8 +209,7 @@ class TestMigrationFormatsCarImportErrors:
         fmt = self._load_formats()
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, NodeData
 
-        g = GraphData(nodes=[NodeData(id="n1", labels=["T"], properties={})],
-                      relationships=[])
+        g = GraphData(nodes=[NodeData(id="n1", labels=["T"], properties={})], relationships=[])
         dest = str(tmp_path / "out.car")
 
         # Patch: libipld present (has encode_dag_cbor), ipld_car absent
@@ -229,6 +236,7 @@ class TestMigrationFormatsCarImportErrors:
 # migration/formats.py:950-951 – load_car fallback when libipld absent
 # ---------------------------------------------------------------------------
 
+
 class TestMigrationFormatsCarLoadFallback:
     """
     GIVEN libipld absent and ipld_car present
@@ -241,9 +249,8 @@ class TestMigrationFormatsCarLoadFallback:
         fmt_mod = sys.modules.get("ipfs_datasets_py.knowledge_graphs.migration.formats")
         if fmt_mod is None:
             import importlib as _il
-            fmt_mod = _il.import_module(
-                "ipfs_datasets_py.knowledge_graphs.migration.formats"
-            )
+
+            fmt_mod = _il.import_module("ipfs_datasets_py.knowledge_graphs.migration.formats")
 
         from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, NodeData
 
@@ -255,8 +262,11 @@ class TestMigrationFormatsCarLoadFallback:
         mock_ipld_car = MagicMock()
         # decode returns (header, [(cid, dag_dict)])
         mock_cid = MagicMock()
-        graph_dict = {"nodes": [{"id": "n1", "labels": ["T"], "properties": {}}],
-                      "relationships": [], "metadata": {}}
+        graph_dict = {
+            "nodes": [{"id": "n1", "labels": ["T"], "properties": {}}],
+            "relationships": [],
+            "metadata": {},
+        }
         mock_ipld_car.decode.return_value = ({}, [(mock_cid, graph_dict)])
 
         orig_libipld = sys.modules.get("libipld", None)

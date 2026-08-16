@@ -4,11 +4,13 @@ Test stubs for advanced_knowledge_extractor module.
 Feature: Advanced Knowledge Extractor
   Advanced knowledge extraction from text
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def ambiguous_entity_mentions():
@@ -83,6 +85,7 @@ def text_with_temporal_information():
 
 
 # Test scenarios
+
 
 def test_extract_entities_with_deep_learning():
     """
@@ -173,6 +176,7 @@ def test_extract_temporal_relations():
 
 
 # Step definitions
+
 
 # Given steps
 @given("ambiguous entity mentions")
@@ -343,4 +347,3 @@ def timebased_relationships_are_identified():
     """Step: Then time-based relationships are identified"""
     # TODO: Implement step
     pass
-

@@ -181,7 +181,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     if args.emit_candidates:
-        print(json.dumps([item.to_dict() for item in generate_candidate_profiles()], indent=2, sort_keys=True))
+        print(
+            json.dumps(
+                [item.to_dict() for item in generate_candidate_profiles()], indent=2, sort_keys=True
+            )
+        )
         return 0
     if args.dry_run:
         if args.benchmark is not None:
@@ -192,7 +196,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         trials = dry_run_trials()
     else:
         if args.benchmark is None:
-            raise SystemExit("--benchmark is required unless --dry-run or --emit-candidates is used")
+            raise SystemExit(
+                "--benchmark is required unless --dry-run or --emit-candidates is used"
+            )
         trials = load_benchmark_trials(args.benchmark)
 
     resources = GlobalResourceBounds(

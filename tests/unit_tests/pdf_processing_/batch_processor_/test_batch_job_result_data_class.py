@@ -11,7 +11,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -24,8 +24,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_proces
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 import pytest
 import json
@@ -46,17 +50,23 @@ from ipfs_datasets_py.pdf_processing.batch_processor import (
     BatchProcessor,
     ProcessingJob,
     BatchJobResult,
-    BatchStatus
+    BatchStatus,
 )
 
 import pytest
 from datetime import datetime
 from ipfs_datasets_py.pdf_processing.batch_processor import (
-    ProcessingJob, BatchJobResult, BatchStatus
+    ProcessingJob,
+    BatchJobResult,
+    BatchStatus,
 )
 from .conftest import (
-    CHUNK_COUNT_SMALL, PROCESSING_TIME_FAST, ENTITY_COUNT_LARGE, 
-    RELATIONSHIP_COUNT_LARGE, CHUNK_COUNT_LARGE, PROCESSING_TIME_MEDIUM
+    CHUNK_COUNT_SMALL,
+    PROCESSING_TIME_FAST,
+    ENTITY_COUNT_LARGE,
+    RELATIONSHIP_COUNT_LARGE,
+    CHUNK_COUNT_LARGE,
+    PROCESSING_TIME_MEDIUM,
 )
 
 
@@ -80,14 +90,16 @@ assert BatchProcessor.get_processing_statistics
 assert BatchProcessor.export_batch_results
 
 
-
 class TestBatchJobResultDataclass:
     """Test class for BatchJobResult dataclass functionality."""
 
-    @pytest.mark.parametrize("result_fixture,expected_status", [
-        ("successful_job_result", "completed"),
-        ("failed_job_result", "failed"),
-    ])
+    @pytest.mark.parametrize(
+        "result_fixture,expected_status",
+        [
+            ("successful_job_result", "completed"),
+            ("failed_job_result", "failed"),
+        ],
+    )
     def test_job_result_status(self, request, result_fixture, expected_status):
         """
         GIVEN a BatchJobResult fixture from conftest
@@ -97,10 +109,13 @@ class TestBatchJobResultDataclass:
         result = request.getfixturevalue(result_fixture)
         assert result.status == expected_status
 
-    @pytest.mark.parametrize("result_fixture,expected_job_id", [
-        ("successful_job_result", "success_job_123"),
-        ("failed_job_result", "failed_job_456"),
-    ])
+    @pytest.mark.parametrize(
+        "result_fixture,expected_job_id",
+        [
+            ("successful_job_result", "success_job_123"),
+            ("failed_job_result", "failed_job_456"),
+        ],
+    )
     def test_job_result_id(self, request, result_fixture, expected_job_id):
         """
         GIVEN a BatchJobResult fixture from conftest
@@ -110,10 +125,13 @@ class TestBatchJobResultDataclass:
         result = request.getfixturevalue(result_fixture)
         assert result.job_id == expected_job_id
 
-    @pytest.mark.parametrize("result_fixture,expected_time", [
-        ("successful_job_result", 75.5),
-        ("failed_job_result", PROCESSING_TIME_FAST),
-    ])
+    @pytest.mark.parametrize(
+        "result_fixture,expected_time",
+        [
+            ("successful_job_result", 75.5),
+            ("failed_job_result", PROCESSING_TIME_FAST),
+        ],
+    )
     def test_job_result_processing_time(self, request, result_fixture, expected_time):
         """
         GIVEN a BatchJobResult fixture from conftest
@@ -123,10 +141,13 @@ class TestBatchJobResultDataclass:
         result = request.getfixturevalue(result_fixture)
         assert result.processing_time == expected_time
 
-    @pytest.mark.parametrize("result_fixture,expected_doc_id", [
-        ("successful_job_result", "doc_abc123"),
-        ("failed_job_result", None),
-    ])
+    @pytest.mark.parametrize(
+        "result_fixture,expected_doc_id",
+        [
+            ("successful_job_result", "doc_abc123"),
+            ("failed_job_result", None),
+        ],
+    )
     def test_job_result_document_id(self, request, result_fixture, expected_doc_id):
         """
         GIVEN a BatchJobResult fixture from conftest
@@ -136,10 +157,13 @@ class TestBatchJobResultDataclass:
         result = request.getfixturevalue(result_fixture)
         assert result.document_id == expected_doc_id
 
-    @pytest.mark.parametrize("result_fixture,expected_graph_id", [
-        ("successful_job_result", "graph_xyz789"),
-        ("failed_job_result", None),
-    ])
+    @pytest.mark.parametrize(
+        "result_fixture,expected_graph_id",
+        [
+            ("successful_job_result", "graph_xyz789"),
+            ("failed_job_result", None),
+        ],
+    )
     def test_job_result_knowledge_graph_id(self, request, result_fixture, expected_graph_id):
         """
         GIVEN a BatchJobResult fixture from conftest
@@ -149,10 +173,13 @@ class TestBatchJobResultDataclass:
         result = request.getfixturevalue(result_fixture)
         assert result.knowledge_graph_id == expected_graph_id
 
-    @pytest.mark.parametrize("result_fixture,expected_cid", [
-        ("successful_job_result", "Qm123456789"),
-        ("failed_job_result", None),
-    ])
+    @pytest.mark.parametrize(
+        "result_fixture,expected_cid",
+        [
+            ("successful_job_result", "Qm123456789"),
+            ("failed_job_result", None),
+        ],
+    )
     def test_job_result_ipld_cid(self, request, result_fixture, expected_cid):
         """
         GIVEN a BatchJobResult fixture from conftest
@@ -162,10 +189,13 @@ class TestBatchJobResultDataclass:
         result = request.getfixturevalue(result_fixture)
         assert result.ipld_cid == expected_cid
 
-    @pytest.mark.parametrize("result_fixture,expected_entity_count", [
-        ("successful_job_result", ENTITY_COUNT_LARGE),
-        ("failed_job_result", 0),
-    ])
+    @pytest.mark.parametrize(
+        "result_fixture,expected_entity_count",
+        [
+            ("successful_job_result", ENTITY_COUNT_LARGE),
+            ("failed_job_result", 0),
+        ],
+    )
     def test_job_result_entity_count(self, request, result_fixture, expected_entity_count):
         """
         GIVEN a BatchJobResult fixture from conftest
@@ -175,11 +205,16 @@ class TestBatchJobResultDataclass:
         result = request.getfixturevalue(result_fixture)
         assert result.entity_count == expected_entity_count
 
-    @pytest.mark.parametrize("result_fixture,expected_relationship_count", [
-        ("successful_job_result", RELATIONSHIP_COUNT_LARGE),
-        ("failed_job_result", 0),
-    ])
-    def test_job_result_relationship_count(self, request, result_fixture, expected_relationship_count):
+    @pytest.mark.parametrize(
+        "result_fixture,expected_relationship_count",
+        [
+            ("successful_job_result", RELATIONSHIP_COUNT_LARGE),
+            ("failed_job_result", 0),
+        ],
+    )
+    def test_job_result_relationship_count(
+        self, request, result_fixture, expected_relationship_count
+    ):
         """
         GIVEN a BatchJobResult fixture from conftest
         WHEN accessing the relationship_count attribute
@@ -188,10 +223,13 @@ class TestBatchJobResultDataclass:
         result = request.getfixturevalue(result_fixture)
         assert result.relationship_count == expected_relationship_count
 
-    @pytest.mark.parametrize("result_fixture,expected_chunk_count", [
-        ("successful_job_result", CHUNK_COUNT_LARGE),
-        ("failed_job_result", 0),
-    ])
+    @pytest.mark.parametrize(
+        "result_fixture,expected_chunk_count",
+        [
+            ("successful_job_result", CHUNK_COUNT_LARGE),
+            ("failed_job_result", 0),
+        ],
+    )
     def test_job_result_chunk_count(self, request, result_fixture, expected_chunk_count):
         """
         GIVEN a BatchJobResult fixture from conftest
@@ -201,10 +239,13 @@ class TestBatchJobResultDataclass:
         result = request.getfixturevalue(result_fixture)
         assert result.chunk_count == expected_chunk_count
 
-    @pytest.mark.parametrize("result_fixture,expected_error", [
-        ("successful_job_result", None),
-        ("failed_job_result", "PDF parsing failed: corrupted file structure"),
-    ])
+    @pytest.mark.parametrize(
+        "result_fixture,expected_error",
+        [
+            ("successful_job_result", None),
+            ("failed_job_result", "PDF parsing failed: corrupted file structure"),
+        ],
+    )
     def test_job_result_error_message(self, request, result_fixture, expected_error):
         """
         GIVEN a BatchJobResult fixture from conftest
@@ -213,6 +254,7 @@ class TestBatchJobResultDataclass:
         """
         result = request.getfixturevalue(result_fixture)
         assert result.error_message == expected_error
+
 
 @pytest.fixture
 def partial_batch_job_info():
@@ -226,30 +268,36 @@ def partial_batch_job_info():
         "entity_count": 0,
         "relationship_count": 0,
         "chunk_count": CHUNK_COUNT_SMALL,
-        "error_message": "GraphRAG integration timeout"
+        "error_message": "GraphRAG integration timeout",
     }
+
 
 @pytest.fixture
 def partial_failure_result(partial_batch_job_info):
     return BatchJobResult(**partial_batch_job_info)
 
+
 class TestBatchJobResultDataclassPartialFailure:
     """Test class for BatchJobResult dataclass with partial failure scenario."""
 
-    @pytest.mark.parametrize("field", [
-        "job_id",
-        "status",
-        "processing_time",
-        "document_id",
-        "knowledge_graph_id",
-        "ipld_cid",
-        "entity_count",
-        "relationship_count",
-        "chunk_count",
-        "error_message",
-    ])
+    @pytest.mark.parametrize(
+        "field",
+        [
+            "job_id",
+            "status",
+            "processing_time",
+            "document_id",
+            "knowledge_graph_id",
+            "ipld_cid",
+            "entity_count",
+            "relationship_count",
+            "chunk_count",
+            "error_message",
+        ],
+    )
     def test_partial_failure_result_fields(
-        self, field, partial_failure_result, partial_batch_job_info):
+        self, field, partial_failure_result, partial_batch_job_info
+    ):
         """
         GIVEN a BatchJobResult with partial processing failure
         WHEN accessing various field attributes
@@ -257,8 +305,9 @@ class TestBatchJobResultDataclassPartialFailure:
         """
         expected_value = partial_batch_job_info[field]
         attr = getattr(partial_failure_result, field)
-        assert attr == expected_value, \
+        assert attr == expected_value, (
             f"Expected {field} to be '{expected_value}', got '{attr}' instead."
+        )
 
 
 class TestBatchJobResultDataclassMinimal:
@@ -268,23 +317,24 @@ class TestBatchJobResultDataclassMinimal:
     def minimal_result(self):
         """Create a minimal BatchJobResult."""
         return BatchJobResult(
-            job_id="minimal_job",
-            status="completed",
-            processing_time=PROCESSING_TIME_FAST
+            job_id="minimal_job", status="completed", processing_time=PROCESSING_TIME_FAST
         )
 
-    @pytest.mark.parametrize("field,expected_value", [
-        ("job_id", "minimal_job"),
-        ("status", "completed"),
-        ("processing_time", PROCESSING_TIME_FAST),
-        ("document_id", None),
-        ("knowledge_graph_id", None),
-        ("ipld_cid", None),
-        ("entity_count", 0),
-        ("relationship_count", 0),
-        ("chunk_count", 0),
-        ("error_message", None),
-    ])
+    @pytest.mark.parametrize(
+        "field,expected_value",
+        [
+            ("job_id", "minimal_job"),
+            ("status", "completed"),
+            ("processing_time", PROCESSING_TIME_FAST),
+            ("document_id", None),
+            ("knowledge_graph_id", None),
+            ("ipld_cid", None),
+            ("entity_count", 0),
+            ("relationship_count", 0),
+            ("chunk_count", 0),
+            ("error_message", None),
+        ],
+    )
     def test_minimal_result_fields(self, minimal_result, field, expected_value):
         """
         GIVEN a minimal BatchJobResult with only required fields
@@ -292,9 +342,9 @@ class TestBatchJobResultDataclassMinimal:
         THEN expect the field value to match the expected default value
         """
         attr = getattr(minimal_result, field)
-        assert attr == expected_value, \
+        assert attr == expected_value, (
             f"Expected {field} to be '{expected_value}', got '{attr}' instead."
-
+        )
 
 
 if __name__ == "__main__":

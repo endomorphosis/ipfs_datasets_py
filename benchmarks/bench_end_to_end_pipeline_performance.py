@@ -35,7 +35,9 @@ Key products include CloudSync (data synchronization) and DataVault (security).
 Customers include Acme Corp, Global Finance Inc, and StartupXYZ.
 """
 
-TEST_DOCUMENT_LARGE = TEST_DOCUMENT_MEDIUM + """ 
+TEST_DOCUMENT_LARGE = (
+    TEST_DOCUMENT_MEDIUM
+    + """ 
 Additional business details: Revenue in 2024 was $5.2M (up 40% YoY).
 Operating costs are 32% of revenue. The company has contracts with AWS, 
 Google Cloud, and Microsoft for infrastructure.
@@ -50,6 +52,7 @@ Redis (caching), Kafka (event streaming), Kubernetes (orchestration).
 The product roadmap includes AI/ML features (Q3 2025), mobile app (Q4 2025),
 and enterprise SaaS tier (Q1 2026).
 """
+)
 
 
 @pytest.fixture
@@ -100,18 +103,19 @@ def context_large():
     )
 
 
-@pytest.mark.parametrize("doc_size,doc_text", 
+@pytest.mark.parametrize(
+    "doc_size,doc_text",
     [
         ("small", TEST_DOCUMENT_SMALL),
         ("medium", TEST_DOCUMENT_MEDIUM),
         ("large", TEST_DOCUMENT_LARGE),
-    ]
+    ],
 )
 @pytest.mark.benchmark(group="end_to_end_pipeline")
 def test_pipeline_extract_evaluate(benchmark, generator, critic, doc_size, doc_text):
     """
     Benchmark extraction + evaluation stages.
-    
+
     Represents the minimal pipeline (generate + critique).
     """
     ctx = OntologyGenerationContext(
@@ -119,7 +123,7 @@ def test_pipeline_extract_evaluate(benchmark, generator, critic, doc_size, doc_t
         data_type="text",
         domain="business",
     )
-    
+
     def run_extract_evaluate():
         extraction = generator.extract_entities(doc_text, ctx)
         # Create simple ontology dict
@@ -129,24 +133,27 @@ def test_pipeline_extract_evaluate(benchmark, generator, critic, doc_size, doc_t
         }
         score = critic.evaluate_ontology(ontology, ctx)
         return ontology, score
-    
+
     result = benchmark(run_extract_evaluate)
     ontology, score = result
     assert ontology is not None
     assert score is not None
 
 
-@pytest.mark.parametrize("doc_size,doc_text",
+@pytest.mark.parametrize(
+    "doc_size,doc_text",
     [
         ("small", TEST_DOCUMENT_SMALL),
         ("medium", TEST_DOCUMENT_MEDIUM),
-    ]
+    ],
 )
 @pytest.mark.benchmark(group="end_to_end_pipeline")
-def test_pipeline_extract_evaluate_refine(benchmark, generator, critic, mediator, doc_size, doc_text):
+def test_pipeline_extract_evaluate_refine(
+    benchmark, generator, critic, mediator, doc_size, doc_text
+):
     """
     Benchmark full extraction + evaluation + refinement pipeline.
-    
+
     More realistic workflow with optimization loop.
     """
     ctx = OntologyGenerationContext(
@@ -154,7 +161,7 @@ def test_pipeline_extract_evaluate_refine(benchmark, generator, critic, mediator
         data_type="text",
         domain="business",
     )
-    
+
     def run_full_pipeline():
         # Extraction
         extraction = generator.extract_entities(doc_text, ctx)
@@ -162,18 +169,18 @@ def test_pipeline_extract_evaluate_refine(benchmark, generator, critic, mediator
             "entities": extraction.entities,
             "relationships": extraction.relationships,
         }
-        
+
         # Initial evaluation
         score = critic.evaluate_ontology(ontology, ctx)
-        
+
         # Refinement (single pass)
         refined = mediator.refine_ontology(ontology, score, ctx)
-        
+
         # Re-evaluation
         refined_score = critic.evaluate_ontology(refined, ctx)
-        
+
         return refined, refined_score
-    
+
     result = benchmark(run_full_pipeline)
     ontology, score = result
     assert ontology is not None
@@ -184,7 +191,7 @@ def test_pipeline_extract_evaluate_refine(benchmark, generator, critic, mediator
 def test_pipeline_mixed_sizes(benchmark, generator, critic, mediator):
     """
     Run pipeline on mixed document sizes in succession.
-    
+
     Tests performance with varied input complexity.
     """
     sizes = [
@@ -192,7 +199,7 @@ def test_pipeline_mixed_sizes(benchmark, generator, critic, mediator):
         ("medium", TEST_DOCUMENT_MEDIUM),
         ("small", TEST_DOCUMENT_SMALL),  # repeat small
     ]
-    
+
     def run_mixed_pipeline():
         results = []
         for size_name, doc_text in sizes:
@@ -201,7 +208,7 @@ def test_pipeline_mixed_sizes(benchmark, generator, critic, mediator):
                 data_type="text",
                 domain="business",
             )
-            
+
             extraction = generator.extract_entities(doc_text, ctx)
             ontology = {
                 "entities": extraction.entities,
@@ -209,11 +216,11 @@ def test_pipeline_mixed_sizes(benchmark, generator, critic, mediator):
             }
             score = critic.evaluate_ontology(ontology, ctx)
             refined = mediator.refine_ontology(ontology, score, ctx)
-            
+
             results.append((len(ontology["entities"]), len(ontology["relationships"])))
-        
+
         return results
-    
+
     benchmark(run_mixed_pipeline)
 
 
@@ -221,7 +228,7 @@ def test_pipeline_mixed_sizes(benchmark, generator, critic, mediator):
 def test_pipeline_repeated_refinement(benchmark, generator, critic, mediator):
     """
     Benchmark multiple refinement passes on the same ontology.
-    
+
     Tests how performance scales with optimization iterations.
     """
     ctx = OntologyGenerationContext(
@@ -229,20 +236,20 @@ def test_pipeline_repeated_refinement(benchmark, generator, critic, mediator):
         data_type="text",
         domain="business",
     )
-    
+
     def run_multi_pass_refinement():
         extraction = generator.extract_entities(TEST_DOCUMENT_MEDIUM, ctx)
         ontology = {
             "entities": extraction.entities,
             "relationships": extraction.relationships,
         }
-        
+
         # Multiple refinement passes
         score = critic.evaluate_ontology(ontology, ctx)
         for i in range(3):
             ontology = mediator.refine_ontology(ontology, score, ctx)
             score = critic.evaluate_ontology(ontology, ctx)
-        
+
         return ontology, score
-    
+
     benchmark(run_multi_pass_refinement)

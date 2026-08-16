@@ -19,16 +19,30 @@ from .version import __version__
 
 from .converter import FileConverter, ConversionResult
 from .pipeline import (
-    Result, Error, ErrorType, Outcome,
-    ok, error, wrap_exception,
-    FileUnit, Pipeline, StreamProcessor,
-    validate_file_exists, detect_format, extract_text
+    Result,
+    Error,
+    ErrorType,
+    Outcome,
+    ok,
+    error,
+    wrap_exception,
+    FileUnit,
+    Pipeline,
+    StreamProcessor,
+    validate_file_exists,
+    detect_format,
+    extract_text,
 )
 from .format_detector import FormatDetector, detect_format as detect_file_format
 from .text_extractors import ExtractorRegistry, ExtractionResult, extract_text as extract_file_text
 from .errors import (
-    FileConversionError, ErrorHandler, FallbackStrategy,
-    with_fallback, retry_with_backoff, ignore_errors, aggregate_errors
+    FileConversionError,
+    ErrorHandler,
+    FallbackStrategy,
+    with_fallback,
+    retry_with_backoff,
+    ignore_errors,
+    aggregate_errors,
 )
 
 # Phase 3: IPFS and Acceleration integration
@@ -36,14 +50,17 @@ from .backends.ipfs_backend import IPFSBackend, get_ipfs_backend, IPFS_AVAILABLE
 from .ipfs_accelerate_converter import (
     IPFSAcceleratedConverter,
     IPFSConversionResult,
-    create_converter
+    create_converter,
 )
 
 # Advanced features: Metadata and Batch Processing
 from .metadata_extractor import MetadataExtractor, extract_metadata
 from .batch_processor import (
-    BatchProcessor, BatchProgress, ResourceLimits, CacheManager,
-    create_batch_processor
+    BatchProcessor,
+    BatchProgress,
+    ResourceLimits,
+    CacheManager,
+    create_batch_processor,
 )
 
 # Deprecation utilities
@@ -51,7 +68,7 @@ from .deprecation import (
     warn_deprecated_backend,
     get_deprecation_info,
     is_deprecated,
-    DEPRECATION_TIMELINE
+    DEPRECATION_TIMELINE,
 )
 
 # Knowledge Graph and RAG Integration (Phase 4)
@@ -60,7 +77,7 @@ from .knowledge_graph_integration import (
     TextSummarizationPipeline,
     BatchKnowledgeGraphProcessor,
     KnowledgeGraphResult,
-    TextSummaryResult
+    TextSummaryResult,
 )
 
 # Vector Embedding Integration (Phase 5)
@@ -68,16 +85,11 @@ from .vector_embedding_integration import (
     VectorEmbeddingPipeline,
     VectorEmbeddingResult,
     SearchResult,
-    create_vector_pipeline
+    create_vector_pipeline,
 )
 
 # Archive Handling (Phase 6.1)
-from .archive_handler import (
-    ArchiveHandler,
-    ArchiveExtractionResult,
-    extract_archive,
-    is_archive
-)
+from .archive_handler import ArchiveHandler, ArchiveExtractionResult, extract_archive, is_archive
 
 # Office Format Extractors (Phase 6.2)
 from .office_format_extractors import (
@@ -89,7 +101,7 @@ from .office_format_extractors import (
     extract_office_format,
     get_supported_office_formats,
     is_office_format_supported,
-    OfficeExtractionResult
+    OfficeExtractionResult,
 )
 
 # URL/Network Resource Handler (Phase 6.3)
@@ -98,7 +110,7 @@ from .url_handler import (
     URLDownloadResult,
     download_from_url,
     download_from_url_sync,
-    is_url
+    is_url,
 )
 
 # CLI Interface (Phase 6.4)
@@ -132,85 +144,107 @@ from .exports import (
 )
 
 __all__ = [
-    '__version__',
+    "__version__",
     # Main API (Phase 1)
-    'FileConverter', 
-    'ConversionResult',
-    
+    "FileConverter",
+    "ConversionResult",
     # Pipeline API (Phase 2)
-    'Result', 'Error', 'ErrorType', 'Outcome',
-    'ok', 'error', 'wrap_exception',
-    'FileUnit', 'Pipeline', 'StreamProcessor',
-    'validate_file_exists', 'detect_format', 'extract_text',
-    
+    "Result",
+    "Error",
+    "ErrorType",
+    "Outcome",
+    "ok",
+    "error",
+    "wrap_exception",
+    "FileUnit",
+    "Pipeline",
+    "StreamProcessor",
+    "validate_file_exists",
+    "detect_format",
+    "extract_text",
     # Native components (Phase 2)
-    'FormatDetector', 'detect_file_format',
-    'ExtractorRegistry', 'ExtractionResult', 'extract_file_text',
-    
+    "FormatDetector",
+    "detect_file_format",
+    "ExtractorRegistry",
+    "ExtractionResult",
+    "extract_file_text",
     # Error handling (Phase 2 Feature 4)
-    'FileConversionError', 'ErrorHandler', 'FallbackStrategy',
-    'with_fallback', 'retry_with_backoff', 'ignore_errors', 'aggregate_errors',
-    
+    "FileConversionError",
+    "ErrorHandler",
+    "FallbackStrategy",
+    "with_fallback",
+    "retry_with_backoff",
+    "ignore_errors",
+    "aggregate_errors",
     # IPFS integration (Phase 3)
-    'IPFSBackend', 'get_ipfs_backend', 'IPFS_AVAILABLE',
-    'IPFSAcceleratedConverter', 'IPFSConversionResult', 'create_converter',
-    
+    "IPFSBackend",
+    "get_ipfs_backend",
+    "IPFS_AVAILABLE",
+    "IPFSAcceleratedConverter",
+    "IPFSConversionResult",
+    "create_converter",
     # Advanced features (Phase 3 continued)
-    'MetadataExtractor', 'extract_metadata',
-    'BatchProcessor', 'BatchProgress', 'ResourceLimits', 'CacheManager',
-    'create_batch_processor',
-    
+    "MetadataExtractor",
+    "extract_metadata",
+    "BatchProcessor",
+    "BatchProgress",
+    "ResourceLimits",
+    "CacheManager",
+    "create_batch_processor",
     # Deprecation utilities
-    'warn_deprecated_backend', 'get_deprecation_info', 'is_deprecated',
-    'DEPRECATION_TIMELINE',
-    
+    "warn_deprecated_backend",
+    "get_deprecation_info",
+    "is_deprecated",
+    "DEPRECATION_TIMELINE",
     # Knowledge Graph and RAG Integration (Phase 4)
-    'UniversalKnowledgeGraphPipeline',
-    'TextSummarizationPipeline',
-    'BatchKnowledgeGraphProcessor',
-    'KnowledgeGraphResult',
-    'TextSummaryResult',
-    
+    "UniversalKnowledgeGraphPipeline",
+    "TextSummarizationPipeline",
+    "BatchKnowledgeGraphProcessor",
+    "KnowledgeGraphResult",
+    "TextSummaryResult",
     # Vector Embedding Integration (Phase 5)
-    'VectorEmbeddingPipeline',
-    'VectorEmbeddingResult',
-    'SearchResult',
-    'create_vector_pipeline',
-    
+    "VectorEmbeddingPipeline",
+    "VectorEmbeddingResult",
+    "SearchResult",
+    "create_vector_pipeline",
     # Archive Handling (Phase 6.1)
-    'ArchiveHandler',
-    'ArchiveExtractionResult',
-    'extract_archive',
-    'is_archive',
-    
+    "ArchiveHandler",
+    "ArchiveExtractionResult",
+    "extract_archive",
+    "is_archive",
     # Office Format Extractors (Phase 6.2)
-    'PowerPointExtractor',
-    'ExcelLegacyExtractor',
-    'RTFExtractor',
-    'EPUBExtractor',
-    'OpenDocumentExtractor',
-    'extract_office_format',
-    'get_supported_office_formats',
-    'is_office_format_supported',
-    'OfficeExtractionResult',
-    
+    "PowerPointExtractor",
+    "ExcelLegacyExtractor",
+    "RTFExtractor",
+    "EPUBExtractor",
+    "OpenDocumentExtractor",
+    "extract_office_format",
+    "get_supported_office_formats",
+    "is_office_format_supported",
+    "OfficeExtractionResult",
     # URL/Network Resource Handler (Phase 6.3)
-    'URLHandler',
-    'URLDownloadResult',
-    'download_from_url',
-    'download_from_url_sync',
-    'is_url',
-    
+    "URLHandler",
+    "URLDownloadResult",
+    "download_from_url",
+    "download_from_url_sync",
+    "is_url",
     # CLI Interface (Phase 6.4)
-    'cli_main',
-    
+    "cli_main",
     # Package Exports for External Consumption
-    'convert_file', 'convert_file_sync',
-    'batch_convert_files', 'batch_convert_files_sync',
-    'extract_knowledge_graph', 'extract_knowledge_graph_sync',
-    'generate_summary', 'generate_summary_sync',
-    'generate_embeddings', 'generate_embeddings_sync',
-    'extract_archive_contents', 'extract_archive_contents_sync',
-    'download_from_url_export', 'download_from_url_export_sync',
-    'get_file_info', 'get_file_info_sync',
+    "convert_file",
+    "convert_file_sync",
+    "batch_convert_files",
+    "batch_convert_files_sync",
+    "extract_knowledge_graph",
+    "extract_knowledge_graph_sync",
+    "generate_summary",
+    "generate_summary_sync",
+    "generate_embeddings",
+    "generate_embeddings_sync",
+    "extract_archive_contents",
+    "extract_archive_contents_sync",
+    "download_from_url_export",
+    "download_from_url_export_sync",
+    "get_file_info",
+    "get_file_info_sync",
 ]

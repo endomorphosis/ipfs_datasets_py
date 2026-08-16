@@ -145,7 +145,11 @@ async def query_theorems_from_parameters(
         min_relevance = parameters.get("min_relevance", 0.5)
 
         if not query:
-            return {"success": False, "error": "Query string is required", "error_code": "MISSING_QUERY"}
+            return {
+                "success": False,
+                "error": "Query string is required",
+                "error_code": "MISSING_QUERY",
+            }
 
         rag_store = TemporalDeonticRAGStore()
 
@@ -182,7 +186,9 @@ async def query_theorems_from_parameters(
                     "formula": {
                         "operator": result.formula.operator.name,
                         "proposition": result.formula.proposition,
-                        "agent": result.formula.agent.name if result.formula.agent else "Unspecified",
+                        "agent": result.formula.agent.name
+                        if result.formula.agent
+                        else "Unspecified",
                         "confidence": result.formula.confidence,
                     },
                     "metadata": {
@@ -250,7 +256,11 @@ async def bulk_process_caselaw_from_parameters(
                 logger.warning("Directory not found: %s", directory)
 
         if not valid_directories:
-            return {"success": False, "error": "No valid caselaw directories found", "error_code": "INVALID_DIRECTORIES"}
+            return {
+                "success": False,
+                "error": "No valid caselaw directories found",
+                "error_code": "INVALID_DIRECTORIES",
+            }
 
         config = BulkProcessingConfig(
             caselaw_directories=valid_directories,
@@ -302,7 +312,9 @@ async def bulk_process_caselaw_from_parameters(
                 "metadata": {"tool_version": tool_version},
             }
 
-        result = processor.process_caselaw_directories(directories=valid_directories, progress_callback=None)
+        result = processor.process_caselaw_directories(
+            directories=valid_directories, progress_callback=None
+        )
 
         return {
             "success": True,
@@ -347,7 +359,11 @@ async def add_theorem_from_parameters(
         precedent_strength = parameters.get("precedent_strength", 0.8)
 
         if not proposition:
-            return {"success": False, "error": "Proposition is required", "error_code": "MISSING_PROPOSITION"}
+            return {
+                "success": False,
+                "error": "Proposition is required",
+                "error_code": "MISSING_PROPOSITION",
+            }
 
         operator = DeonticOperator[operator_str]
         agent = LegalAgent(agent_name.lower().replace(" ", "_"), agent_name, "person")

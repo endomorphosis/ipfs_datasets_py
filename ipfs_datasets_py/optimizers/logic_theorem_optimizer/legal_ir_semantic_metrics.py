@@ -35,18 +35,14 @@ from .legal_ir_family_evaluator import (
 )
 
 
-LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION: Final = (
-    "legal-ir-semantic-equivalence-metrics-v1"
-)
+LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION: Final = "legal-ir-semantic-equivalence-metrics-v1"
 
 STRUCTURAL_EQUIVALENCE: Final = "structural_equivalence"
 OBLIGATION_EQUIVALENCE: Final = "obligation_equivalence"
 COUNTEREXAMPLE_EQUIVALENCE: Final = "counterexample_equivalence"
 GRAPH_ISOMORPHISM: Final = "graph_isomorphism"
 TEMPORAL_WINDOW_AGREEMENT: Final = "temporal_window_agreement"
-DECOMPILER_ROUND_TRIP_PRESERVATION: Final = (
-    "decompiler_round_trip_preservation"
-)
+DECOMPILER_ROUND_TRIP_PRESERVATION: Final = "decompiler_round_trip_preservation"
 PROOF_OBLIGATION_DELTA_SCORE: Final = "proof_obligation_delta_score"
 PROOF_OBLIGATION_DELTA: Final = "proof_obligation_delta"
 
@@ -163,9 +159,7 @@ class SemanticEquivalenceConfig:
     require_complete_metrics: bool = True
 
     def __post_init__(self) -> None:
-        families = tuple(
-            canonical_legal_ir_evaluation_family(family) for family in self.families
-        )
+        families = tuple(canonical_legal_ir_evaluation_family(family) for family in self.families)
         if not families:
             raise ValueError("at least one LegalIR family is required")
         if len(set(families)) != len(families):
@@ -296,11 +290,7 @@ class SemanticEquivalenceComparisonReport:
 
     @property
     def failed_families(self) -> tuple[str, ...]:
-        return tuple(
-            family
-            for family, result in self.family_results.items()
-            if not result.passed
-        )
+        return tuple(family for family, result in self.family_results.items() if not result.passed)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -310,8 +300,7 @@ class SemanticEquivalenceComparisonReport:
             "failed_families": list(self.failed_families),
             "families": list(self.family_results),
             "family_results": {
-                family: result.to_dict()
-                for family, result in self.family_results.items()
+                family: result.to_dict() for family, result in self.family_results.items()
             },
             "gate_id": self.gate_id,
             "hard_promotion_gate": True,
@@ -437,9 +426,7 @@ def semantic_equivalence_from_metrics(
         scores[PROOF_OBLIGATION_DELTA_SCORE] = 1.0 / (
             1.0 + max(0.0, raw_deltas[PROOF_OBLIGATION_DELTA])
         )
-    missing = tuple(
-        metric for metric in SEMANTIC_EQUIVALENCE_METRICS if metric not in scores
-    )
+    missing = tuple(metric for metric in SEMANTIC_EQUIVALENCE_METRICS if metric not in scores)
     return SemanticEquivalenceFamilyResult(
         family=_canonical_family_or_unscoped(family),
         scores=scores,
@@ -489,9 +476,7 @@ def compare_legal_ir_semantic_equivalence(
         threshold_failures = _semantic_threshold_failures(after, config)
         if not config.require_complete_metrics:
             threshold_failures = {
-                key: value
-                for key, value in threshold_failures.items()
-                if key in after.scores
+                key: value for key, value in threshold_failures.items() if key in after.scores
             }
         comparison = SemanticEquivalenceFamilyComparison(
             family=family,
@@ -514,12 +499,8 @@ def compare_legal_ir_semantic_equivalence(
         if result.disagreement
     )
     descriptor = {
-        "after": {
-            family: result.after.scores for family, result in family_results.items()
-        },
-        "before": {
-            family: result.before.scores for family, result in family_results.items()
-        },
+        "after": {family: result.after.scores for family, result in family_results.items()},
+        "before": {family: result.before.scores for family, result in family_results.items()},
         "families": config.families,
         "minimum_scores": config.minimum_scores,
     }
@@ -814,8 +795,7 @@ def _obligation_signature(value: Any) -> frozenset[str]:
                 or ""
             )
             if modality in {"obligation", "permission", "prohibition"} or any(
-                name in keys
-                for name in ("obligation", "obligations", "duty", "duties")
+                name in keys for name in ("obligation", "obligations", "duty", "duties")
             ):
                 subject = _normalize_scalar(
                     keys.get("subject")
@@ -958,7 +938,9 @@ def _temporal_window_signature(value: Any) -> frozenset[str]:
                     windows.add(parsed)
             for match in re.finditer(r"\b\d{4}-\d{2}-\d{2}\b", item):
                 windows.add(match.group(0))
-            for match in re.finditer(r"\bwithin\s+\d+\s+(?:day|days|month|months|year|years)\b", item, re.I):
+            for match in re.finditer(
+                r"\bwithin\s+\d+\s+(?:day|days|month|months|year|years)\b", item, re.I
+            ):
                 windows.add(_duration_like(match.group(0)) or _normalize_text(match.group(0)))
 
     visit(value)
@@ -1061,7 +1043,11 @@ def _edge_signature(edge: Any, node_labels: Mapping[str, str]) -> str:
     source_label = node_labels.get(_normalize_scalar(source), _normalize_scalar(source))
     target_label = node_labels.get(_normalize_scalar(target), _normalize_scalar(target))
     return "edge:" + "|".join(
-        (_normalize_scalar(source_label), _normalize_scalar(relation), _normalize_scalar(target_label))
+        (
+            _normalize_scalar(source_label),
+            _normalize_scalar(relation),
+            _normalize_scalar(target_label),
+        )
     )
 
 
@@ -1084,11 +1070,7 @@ def _triple_signature(triple: Any) -> str:
 
 def _flatten_scalars(value: Any) -> set[str]:
     if isinstance(value, Mapping):
-        return {
-            item
-            for child in value.values()
-            for item in _flatten_scalars(child)
-        }
+        return {item for child in value.values() for item in _flatten_scalars(child)}
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return {item for child in value for item in _flatten_scalars(child)}
     return {_normalize_scalar(value)}

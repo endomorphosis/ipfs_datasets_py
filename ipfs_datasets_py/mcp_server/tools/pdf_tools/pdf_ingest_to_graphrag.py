@@ -25,27 +25,28 @@ from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
     parse_json_object,
 )
 
+
 async def pdf_ingest_to_graphrag(
     pdf_source: Union[str, dict],
     metadata: Optional[Dict[str, Any]] = None,
     enable_ocr: bool = True,
     target_llm: str = "gpt-4",
     chunk_strategy: str = "semantic",
-    enable_cross_document: bool = True
+    enable_cross_document: bool = True,
 ) -> Dict[str, Any]:
     """
     Ingest a PDF document into the GraphRAG system with full pipeline processing.
-    
+
     This tool executes the complete PDF processing pipeline:
     1. PDF validation and decomposition
-    2. IPLD structuring  
+    2. IPLD structuring
     3. Multi-engine OCR processing
     4. LLM-optimized content chunking
     5. Entity and relationship extraction
     6. Vector embedding generation
     7. GraphRAG integration and indexing
     8. Cross-document relationship discovery
-    
+
     Args:
         pdf_source: Path to PDF file or PDF data dict
         metadata: Additional metadata for the document
@@ -53,7 +54,7 @@ async def pdf_ingest_to_graphrag(
         target_llm: Target LLM for optimization (gpt-4, claude, etc.)
         chunk_strategy: Chunking strategy ("semantic", "fixed", "adaptive")
         enable_cross_document: Enable cross-document relationship discovery
-        
+
     Returns:
         Dict containing:
         - status: "success" or "error"
@@ -74,7 +75,12 @@ async def pdf_ingest_to_graphrag(
         and target_llm == "gpt-4"
         and chunk_strategy == "semantic"
         and enable_cross_document is True
-        and (pdf_source.lstrip().startswith("{") or pdf_source.lstrip().startswith("[") or any(ch.isspace() for ch in pdf_source) or not pdf_source.strip())
+        and (
+            pdf_source.lstrip().startswith("{")
+            or pdf_source.lstrip().startswith("[")
+            or any(ch.isspace() for ch in pdf_source)
+            or not pdf_source.strip()
+        )
     ):
         data, error = parse_json_object(pdf_source)
         if error is not None:
@@ -107,51 +113,43 @@ async def pdf_ingest_to_graphrag(
         from ipfs_datasets_py.processors.pdf_processing import PDFProcessor as _PDFProcessor
         from ipfs_datasets_py.processors.storage.ipld import IPLDStorage
         from ipfs_datasets_py.monitoring import track_operation
-        
+
         # Initialize processor
         processor = _PDFProcessor(
-            enable_ocr=enable_ocr,
-            target_llm=target_llm,
-            chunk_strategy=chunk_strategy
+            enable_ocr=enable_ocr, target_llm=target_llm, chunk_strategy=chunk_strategy
         )
-        
+
         # Validate PDF source
         if isinstance(pdf_source, str):
             pdf_path = Path(pdf_source)
             if not pdf_path.exists():
-                return {
-                    "status": "error",
-                    "message": f"PDF file not found: {pdf_source}"
-                }
+                return {"status": "error", "message": f"PDF file not found: {pdf_source}"}
         elif isinstance(pdf_source, dict):
             # Handle PDF data dict
             if "path" not in pdf_source:
-                return {
-                    "status": "error", 
-                    "message": "PDF source dict must contain 'path' field"
-                }
+                return {"status": "error", "message": "PDF source dict must contain 'path' field"}
             pdf_path = Path(pdf_source["path"])
             metadata = metadata or {}
             metadata.update(pdf_source.get("metadata", {}))
         else:
             return {
                 "status": "error",
-                "message": "PDF source must be file path string or data dict"
+                "message": "PDF source must be file path string or data dict",
             }
-            
+
         # Track the complete operation
         with track_operation("pdf_ingest_to_graphrag"):
             # Execute the full PDF processing pipeline
             result = await processor.process_complete_pipeline(
                 pdf_path=str(pdf_path),
                 metadata=metadata,
-                enable_cross_document=enable_cross_document
+                enable_cross_document=enable_cross_document,
             )
-            
+
             # Extract result details
             pipeline_stages = result.get("pipeline_stages", {})
             processing_stats = result.get("processing_stats", {})
-            
+
             return {
                 "status": "success",
                 "document_id": result["document_id"],
@@ -167,33 +165,31 @@ async def pdf_ingest_to_graphrag(
                     "llm_optimization": pipeline_stages.get("llm_optimization", {}).get("status"),
                     "entity_extraction": pipeline_stages.get("entity_extraction", {}).get("status"),
                     "vector_embedding": pipeline_stages.get("vector_embedding", {}).get("status"),
-                    "graphrag_integration": pipeline_stages.get("graphrag_integration", {}).get("status"),
-                    "cross_document_analysis": pipeline_stages.get("cross_document_analysis", {}).get("status")
+                    "graphrag_integration": pipeline_stages.get("graphrag_integration", {}).get(
+                        "status"
+                    ),
+                    "cross_document_analysis": pipeline_stages.get(
+                        "cross_document_analysis", {}
+                    ).get("status"),
                 },
                 "content_summary": {
                     "pages_processed": processing_stats.get("pages_processed", 0),
                     "text_length": processing_stats.get("text_length", 0),
                     "images_processed": processing_stats.get("images_processed", 0),
-                    "chunks_created": processing_stats.get("chunks_created", 0)
+                    "chunks_created": processing_stats.get("chunks_created", 0),
                 },
-                "message": f"Successfully ingested PDF into GraphRAG system. Document ID: {result['document_id']}"
+                "message": f"Successfully ingested PDF into GraphRAG system. Document ID: {result['document_id']}",
             }
-            
+
     except ImportError as e:
         logger.error(f"PDF processing dependencies not available: {e}")
         return {
             "status": "error",
-            "message": f"PDF processing dependencies not available: {str(e)}"
+            "message": f"PDF processing dependencies not available: {str(e)}",
         }
     except FileNotFoundError as e:
         logger.error(f"File not found: {e}")
-        return {
-            "status": "error",
-            "message": f"File not found: {str(e)}"
-        }
+        return {"status": "error", "message": f"File not found: {str(e)}"}
     except Exception as e:
         logger.error(f"Error ingesting PDF to GraphRAG: {e}")
-        return {
-            "status": "error",
-            "message": f"Failed to ingest PDF: {str(e)}"
-        }
+        return {"status": "error", "message": f"Failed to ingest PDF: {str(e)}"}

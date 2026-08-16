@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.core_operations.logic_processor import LogicProcessor
+
     _PROCESSOR = LogicProcessor()
     _AVAILABLE = True
 except Exception as _e:
@@ -67,17 +68,29 @@ async def cec_validate_formula(formula: str) -> Dict[str, Any]:
     if not _AVAILABLE:
         return _unavailable("cec_validate_formula")
     if not formula:
-        return {"success": False, "valid": False, "errors": ["'formula' is required."], "warnings": []}
+        return {
+            "success": False,
+            "valid": False,
+            "errors": ["'formula' is required."],
+            "warnings": [],
+        }
     return await _PROCESSOR.validate_formula(formula_str=formula, logic_system="dcec")
 
 
-__all__ = ["cec_parse", "cec_validate_formula",
-           "parse_dcec", "validate_formula", "translate_dcec", "TOOLS"]
+__all__ = [
+    "cec_parse",
+    "cec_validate_formula",
+    "parse_dcec",
+    "validate_formula",
+    "translate_dcec",
+    "TOOLS",
+]
 
 
 def parse_dcec(text: str, language: str = "en", domain: str = "general") -> Dict[str, Any]:
     """Sync wrapper around cec_parse for backward compatibility."""
     import anyio as _al
+
     result = _al.run(lambda: cec_parse(text=text, language=language, domain=domain))
     # When language='auto', add language_detected key
     if language == "auto" and result.get("success") is not False:
@@ -90,6 +103,7 @@ def parse_dcec(text: str, language: str = "en", domain: str = "general") -> Dict
 def validate_formula(formula: str) -> Dict[str, Any]:
     """Sync wrapper around cec_validate_formula for backward compatibility."""
     import anyio as _al
+
     return _al.run(lambda: cec_validate_formula(formula=formula))
 
 
@@ -99,7 +113,10 @@ def translate_dcec(formula: str, target_format: str = "json") -> Dict[str, Any]:
         return {"success": False, "error": "'formula' is required."}
     supported_formats = {"json", "tptp", "text", "fol"}
     if target_format not in supported_formats:
-        return {"success": False, "error": f"Unsupported format '{target_format}'. Use: {sorted(supported_formats)}."}
+        return {
+            "success": False,
+            "error": f"Unsupported format '{target_format}'. Use: {sorted(supported_formats)}.",
+        }
     result: Dict[str, Any] = {"success": True, "formula": formula, "format": target_format}
     if target_format == "json":
         result["json"] = {"type": "formula", "content": formula}

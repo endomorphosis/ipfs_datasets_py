@@ -12,19 +12,21 @@ from .registry import StateScraperRegistry
 
 class MichiganScraper(BaseStateScraper):
     """Scraper for Michigan state laws from http://www.legislature.mi.gov"""
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Michigan's legislative website."""
         return "https://www.legislature.mi.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Michigan."""
-        return [{
-            "name": "Michigan Compiled Laws",
-            "url": f"{self.get_base_url()}/Laws/ChapterIndex",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Michigan Compiled Laws",
+                "url": f"{self.get_base_url()}/Laws/ChapterIndex",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -32,15 +34,19 @@ class MichiganScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Michigan's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(160)
+        limit = (
+            max(1, int(max_statutes))
+            if max_statutes is not None
+            else self._bounded_return_threshold(160)
+        )
         official = await self._scrape_official_chapter_index(code_name, max_statutes=limit)
         if official:
             return official[:limit]
@@ -49,16 +55,22 @@ class MichiganScraper(BaseStateScraper):
             direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
             if direct:
                 return direct
-        return await self._generic_scrape(code_name, code_url, "Mich. Comp. Laws", max_sections=max(10, limit))
+        return await self._generic_scrape(
+            code_name, code_url, "Mich. Comp. Laws", max_sections=max(10, limit)
+        )
 
-    async def _scrape_official_chapter_index(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_official_chapter_index(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return []
 
         index_url = f"{self.get_base_url()}/Laws/ChapterIndex"
-        payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=18)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            index_url, timeout_seconds=18
+        )
         if not payload:
             return []
 
@@ -105,7 +117,9 @@ class MichiganScraper(BaseStateScraper):
         except ImportError:
             return None
 
-        payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=18)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            chapter_url, timeout_seconds=18
+        )
         if not payload:
             return None
         soup = BeautifulSoup(payload, "html.parser")
@@ -151,7 +165,9 @@ class MichiganScraper(BaseStateScraper):
         except ImportError:
             return None
 
-        payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=18)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            section_url, timeout_seconds=18
+        )
         if not payload:
             return None
         soup = BeautifulSoup(payload, "html.parser")
@@ -166,7 +182,9 @@ class MichiganScraper(BaseStateScraper):
             return None
         object_section_number = self._section_number_from_object_name(section_url)
         match = re.search(r"\b(\d+(?:\.\d+)+(?:[a-z])?)\b", title or text, flags=re.IGNORECASE)
-        section_number = object_section_number or (match.group(1) if match else section_url.rsplit("mcl-", 1)[-1])
+        section_number = object_section_number or (
+            match.group(1) if match else section_url.rsplit("mcl-", 1)[-1]
+        )
         chapter_number = self._extract_section_number(chapter_label) or ""
         return NormalizedStatute(
             state_code=self.state_code,
@@ -189,7 +207,9 @@ class MichiganScraper(BaseStateScraper):
             },
         )
 
-    async def _scrape_direct_sections(self, code_name: str, max_statutes: int | None = None) -> List[NormalizedStatute]:
+    async def _scrape_direct_sections(
+        self, code_name: str, max_statutes: int | None = None
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -200,9 +220,15 @@ class MichiganScraper(BaseStateScraper):
             f"{self.get_base_url()}/Laws/MCL?objectName=mcl-600-101",
         ]
         statutes: List[NormalizedStatute] = []
-        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(160)
+        limit = (
+            max(1, int(max_statutes))
+            if max_statutes is not None
+            else self._bounded_return_threshold(160)
+        )
         for source_url in section_urls[:limit]:
-            payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=12)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                source_url, timeout_seconds=12
+            )
             if not payload:
                 continue
             soup = BeautifulSoup(payload, "html.parser")
@@ -228,7 +254,10 @@ class MichiganScraper(BaseStateScraper):
                     source_url=source_url,
                     official_cite=f"Mich. Comp. Laws § {section_number}",
                     metadata=StatuteMetadata(),
-                    structured_data={"source_kind": "official_direct_section", "skip_hydrate": True},
+                    structured_data={
+                        "source_kind": "official_direct_section",
+                        "skip_hydrate": True,
+                    },
                 )
             )
         return statutes
@@ -241,7 +270,9 @@ class MichiganScraper(BaseStateScraper):
 
     @staticmethod
     def _section_number_from_object_name(url: str) -> str:
-        match = re.search(r"objectName=mcl-(\d+)-(\d+[a-z]?)\b", str(url or ""), flags=re.IGNORECASE)
+        match = re.search(
+            r"objectName=mcl-(\d+)-(\d+[a-z]?)\b", str(url or ""), flags=re.IGNORECASE
+        )
         if not match:
             return ""
         return f"{match.group(1)}.{match.group(2)}"

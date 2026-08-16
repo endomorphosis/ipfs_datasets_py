@@ -23,20 +23,14 @@ def _stage(
     cache_mode: CacheMode | None = None,
     variant_id: str = "A5",
 ) -> object:
-    identity = (
-        {}
-        if invoked is None
-        else {"graph_invoked": invoked}
-    )
+    identity = {} if invoked is None else {"graph_invoked": invoked}
     return SimpleNamespace(
         stage=stage,
         provenance=SimpleNamespace(effective_identity=identity),
         cache_setup=cache_setup,
         measured_invoked=measured_invoked,
         cache_mode=(
-            CacheMode.WARM
-            if cache_mode is None and cache_setup
-            else cache_mode or CacheMode.COLD
+            CacheMode.WARM if cache_mode is None and cache_setup else cache_mode or CacheMode.COLD
         ),
         variant_id=variant_id,
     )
@@ -97,9 +91,7 @@ def test_only_invoked_non_kernel_stages_and_warm_setup_count(
         _stage(StageName.KERNEL, invoked=True),
     )
 
-    by_result, setups, backend_calls = (
-        holdout._holdout_execution_accounting((result,))
-    )
+    by_result, setups, backend_calls = holdout._holdout_execution_accounting((result,))
 
     # compiler + measured SyMAI + Leanstral, plus the separate warm prime.
     assert backend_calls == 4
@@ -121,9 +113,7 @@ def test_suppressed_synthetic_stage_records_do_not_count(
         _stage(StageName.KERNEL, invoked=False),
     )
 
-    _by_result, setups, backend_calls = (
-        holdout._holdout_execution_accounting((result,))
-    )
+    _by_result, setups, backend_calls = holdout._holdout_execution_accounting((result,))
 
     assert backend_calls == 0
     assert setups == ()
@@ -189,9 +179,7 @@ def test_warm_legacy_symai_does_not_require_current_prime_receipt(
         ),
     )
 
-    _by_result, setups, backend_calls = (
-        holdout._holdout_execution_accounting((result,))
-    )
+    _by_result, setups, backend_calls = holdout._holdout_execution_accounting((result,))
 
     assert setups == ()
     assert backend_calls == 1
@@ -210,9 +198,7 @@ def test_warm_abort_before_measure_counts_only_the_setup_call(
         ),
     )
 
-    _by_result, setups, backend_calls = (
-        holdout._holdout_execution_accounting((result,))
-    )
+    _by_result, setups, backend_calls = holdout._holdout_execution_accounting((result,))
 
     assert len(setups) == 1
     assert backend_calls == 1
@@ -231,9 +217,7 @@ def test_warm_attempted_measure_failure_counts_both_calls(
         ),
     )
 
-    _by_result, setups, backend_calls = (
-        holdout._holdout_execution_accounting((result,))
-    )
+    _by_result, setups, backend_calls = holdout._holdout_execution_accounting((result,))
 
     assert len(setups) == 1
     assert backend_calls == 2

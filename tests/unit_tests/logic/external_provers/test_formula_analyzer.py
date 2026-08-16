@@ -39,7 +39,7 @@ class TestFormulaAnalyzer:
         THEN: Analyzer is properly initialized with prover profiles
         """
         assert self.analyzer is not None
-        assert hasattr(self.analyzer, 'prover_profiles')
+        assert hasattr(self.analyzer, "prover_profiles")
         assert len(self.analyzer.prover_profiles) > 0
 
     def test_simple_predicate_analysis(self):
@@ -50,9 +50,9 @@ class TestFormulaAnalyzer:
         """
         # Simple predicate
         formula = Predicate("P", [Variable("x")])
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         assert isinstance(analysis, FormulaAnalysis)
         assert analysis.formula_type == FormulaType.PROPOSITIONAL
         assert analysis.quantifier_depth == 0
@@ -67,9 +67,9 @@ class TestFormulaAnalyzer:
         """
         # ∀x. P(x)
         formula = Forall(Variable("x"), Predicate("P", [Variable("x")]))
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         assert analysis.formula_type == FormulaType.QUANTIFIED
         assert analysis.quantifier_depth == 1
         assert analysis.has_quantifiers is True
@@ -84,9 +84,9 @@ class TestFormulaAnalyzer:
         inner = Predicate("P", [Variable("x"), Variable("y")])
         existential = Exists(Variable("y"), inner)
         formula = Forall(Variable("x"), existential)
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         assert analysis.quantifier_depth == 2
         assert analysis.nesting_level >= 3
         assert analysis.has_quantifiers is True
@@ -99,9 +99,9 @@ class TestFormulaAnalyzer:
         """
         # □(P(x)) - Always P(x)
         formula = Predicate("Always", [Predicate("P", [Variable("x")])])
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         assert analysis.has_modal_operators is True
         assert analysis.formula_type in [FormulaType.MODAL, FormulaType.TEMPORAL]
 
@@ -113,9 +113,9 @@ class TestFormulaAnalyzer:
         """
         # Eventually(P(x))
         formula = Predicate("Eventually", [Predicate("P", [Variable("x")])])
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         assert analysis.has_temporal_operators is True
         assert analysis.formula_type in [FormulaType.TEMPORAL, FormulaType.MODAL]
 
@@ -127,9 +127,9 @@ class TestFormulaAnalyzer:
         """
         # Obligatory(Action(x))
         formula = Predicate("Obligatory", [Predicate("Action", [Variable("x")])])
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         assert analysis.has_deontic_operators is True
         assert analysis.formula_type == FormulaType.DEONTIC
 
@@ -147,9 +147,9 @@ class TestFormulaAnalyzer:
         p_pred = Predicate("P", [Variable("x")])
         implies_formula = Implies(p_pred, exists_formula)
         formula = Forall(Variable("x"), implies_formula)
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         assert analysis.quantifier_depth == 2
         assert analysis.nesting_level >= 5
         assert analysis.operator_count >= 3
@@ -165,10 +165,10 @@ class TestFormulaAnalyzer:
         p_pred = Predicate("P", [Variable("x")])
         q_pred = Predicate("Q", [Variable("x")])
         formula = Implies(p_pred, q_pred)
-        
+
         analysis = self.analyzer.analyze(formula)
         recommendations = analysis.recommended_provers
-        
+
         assert len(recommendations) > 0
         # Simple formulas should recommend fast provers
         assert "native" in recommendations[:2] or "z3" in recommendations[:2]
@@ -181,10 +181,10 @@ class TestFormulaAnalyzer:
         """
         # □(P(x))
         formula = Predicate("Always", [Predicate("P", [Variable("x")])])
-        
+
         analysis = self.analyzer.analyze(formula)
         recommendations = analysis.recommended_provers
-        
+
         assert len(recommendations) > 0
         # Modal formulas should recommend modal-capable provers
         modal_provers = ["lean", "coq", "symbolicai"]
@@ -201,10 +201,10 @@ class TestFormulaAnalyzer:
         exists_z = Exists(Variable("z"), inner)
         forall_y = Forall(Variable("y"), exists_z)
         formula = Forall(Variable("x"), forall_y)
-        
+
         analysis = self.analyzer.analyze(formula)
         recommendations = analysis.recommended_provers
-        
+
         assert len(recommendations) > 0
         # Quantified formulas should recommend SMT solvers
         assert "cvc5" in recommendations[:3] or "z3" in recommendations[:3]
@@ -216,9 +216,9 @@ class TestFormulaAnalyzer:
         THEN: Returns low complexity score (0-20)
         """
         formula = Predicate("P", [Variable("x")])
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         assert 0 <= analysis.complexity_score <= 30
         assert analysis.complexity_level in [FormulaComplexity.TRIVIAL, FormulaComplexity.SIMPLE]
 
@@ -233,9 +233,9 @@ class TestFormulaAnalyzer:
         q_pred = Predicate("Q", [Variable("x")])
         implies_formula = Implies(p_pred, q_pred)
         formula = Forall(Variable("x"), implies_formula)
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         assert analysis.complexity_score >= 20
         assert analysis.complexity_level in [FormulaComplexity.SIMPLE, FormulaComplexity.MODERATE]
 
@@ -255,11 +255,15 @@ class TestFormulaAnalyzer:
         forall_x3 = Forall(Variable("x3"), exists_y)
         forall_x2 = Forall(Variable("x2"), forall_x3)
         formula = Forall(Variable("x1"), forall_x2)
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         assert analysis.complexity_score >= 40
-        assert analysis.complexity_level in [FormulaComplexity.MODERATE, FormulaComplexity.COMPLEX, FormulaComplexity.VERY_COMPLEX]
+        assert analysis.complexity_level in [
+            FormulaComplexity.MODERATE,
+            FormulaComplexity.COMPLEX,
+            FormulaComplexity.VERY_COMPLEX,
+        ]
 
     def test_operator_counting(self):
         """
@@ -275,9 +279,9 @@ class TestFormulaAnalyzer:
         and_formula = And(p_pred, q_pred)
         implies_formula = Implies(r_pred, s_pred)
         formula = Or(and_formula, implies_formula)
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         # Should count ∧, ∨, → = 3 operators
         assert analysis.operator_count >= 3
 
@@ -290,11 +294,15 @@ class TestFormulaAnalyzer:
         # ∀x. □(P(x))
         modal_pred = Predicate("Always", [Predicate("P", [Variable("x")])])
         formula = Forall(Variable("x"), modal_pred)
-        
+
         analysis = self.analyzer.analyze(formula)
-        
+
         # Should be identified as mixed or prioritize one type
-        assert analysis.formula_type in [FormulaType.MIXED, FormulaType.MODAL, FormulaType.QUANTIFIED]
+        assert analysis.formula_type in [
+            FormulaType.MIXED,
+            FormulaType.MODAL,
+            FormulaType.QUANTIFIED,
+        ]
         assert analysis.has_modal_operators is True
         assert analysis.has_quantifiers is True
 
@@ -305,10 +313,10 @@ class TestFormulaAnalyzer:
         THEN: Returns same analysis (testing consistency)
         """
         formula = Predicate("P", [Variable("x")])
-        
+
         analysis1 = self.analyzer.analyze(formula)
         analysis2 = self.analyzer.analyze(formula)
-        
+
         # Should return consistent results
         assert analysis1.formula_type == analysis2.formula_type
         assert analysis1.complexity_score == analysis2.complexity_score
@@ -336,7 +344,7 @@ class TestFormulaAnalyzer:
         THEN: All 6 provers have profiles
         """
         expected_provers = ["z3", "cvc5", "lean", "coq", "symbolicai", "native"]
-        
+
         for prover in expected_provers:
             assert prover in self.analyzer.prover_profiles
             profile = self.analyzer.prover_profiles[prover]
@@ -352,10 +360,13 @@ class TestFormulaAnalyzer:
         test_cases = [
             (Predicate("P", [Variable("x")]), FormulaType.PROPOSITIONAL),
             (Forall(Variable("x"), Predicate("P", [Variable("x")])), FormulaType.QUANTIFIED),
-            (Predicate("Always", [Predicate("P", [Variable("x")])]), [FormulaType.MODAL, FormulaType.TEMPORAL]),
+            (
+                Predicate("Always", [Predicate("P", [Variable("x")])]),
+                [FormulaType.MODAL, FormulaType.TEMPORAL],
+            ),
             (Predicate("Obligatory", [Predicate("P", [Variable("x")])]), FormulaType.DEONTIC),
         ]
-        
+
         for formula, expected_type in test_cases:
             analysis = self.analyzer.analyze(formula)
             if isinstance(expected_type, list):
@@ -371,10 +382,10 @@ class TestFormulaAnalyzer:
         """
         # Simple formula should have deterministic ordering
         formula = Predicate("P", [Variable("x")])
-        
+
         analysis = self.analyzer.analyze(formula)
         recommendations = analysis.recommended_provers
-        
+
         # Should have multiple recommendations
         assert len(recommendations) >= 3
         # Should be ordered (no duplicates)
@@ -390,12 +401,12 @@ class TestFormulaAnalyzer:
         level1 = Predicate("P", [Variable("x")])
         analysis1 = self.analyzer.analyze(level1)
         assert analysis1.nesting_level == 1
-        
+
         # Level 2: ¬P(x)
         level2 = Not(Predicate("P", [Variable("x")]))
         analysis2 = self.analyzer.analyze(level2)
         assert analysis2.nesting_level == 2
-        
+
         # Level 3: P(x) ∧ Q(x)
         level3 = And(Predicate("P", [Variable("x")]), Predicate("Q", [Variable("x")]))
         analysis3 = self.analyzer.analyze(level3)
@@ -412,15 +423,15 @@ class TestFormulaAnalysisIntegration:
         THEN: Selects appropriate prover based on analysis
         """
         from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
-        
+
         # Create instances
         ProverRouter()  # Verify router can be instantiated with analyzer
         analyzer = FormulaAnalyzer()
-        
+
         # Simple formula
         formula = Predicate("P", [Variable("x")])
         analysis = analyzer.analyze(formula)
-        
+
         # Router should be able to use this analysis
         assert len(analysis.recommended_provers) > 0
 

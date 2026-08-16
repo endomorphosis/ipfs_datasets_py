@@ -26,6 +26,7 @@ from typing import List, Optional
 
 class Domain(str, Enum):
     """Dataset domain categories."""
+
     LEGAL = "legal"
     MEDICAL = "medical"
     BUSINESS = "business"
@@ -36,6 +37,7 @@ class Domain(str, Enum):
 
 class Complexity(str, Enum):
     """Text complexity levels."""
+
     SIMPLE = "simple"  # <10 entities, <15 relationships, clear structure
     MODERATE = "moderate"  # 10-30 entities, 15-50 relationships, some ambiguity
     COMPLEX = "complex"  # >30 entities, >50 relationships, high ambiguity
@@ -44,7 +46,7 @@ class Complexity(str, Enum):
 @dataclass
 class BenchmarkDataset:
     """A single benchmark dataset with expected results."""
-    
+
     name: str
     domain: Domain
     text: str
@@ -518,18 +520,14 @@ ALL_DATASETS = [
     # Legal
     LEGAL_EMPLOYMENT_SIMPLE,
     LEGAL_CONTRACT_MODERATE,
-    
     # Medical
     MEDICAL_CLINICAL_NOTE_SIMPLE,
     MEDICAL_TRIAL_COMPLEX,
-    
     # Business
     BUSINESS_ORGCHART_MODERATE,
     BUSINESS_ACQUISITION_COMPLEX,
-    
     # Technical
     TECHNICAL_API_SIMPLE,
-    
     # News
     NEWS_PRESS_RELEASE_SIMPLE,
 ]
@@ -537,10 +535,10 @@ ALL_DATASETS = [
 
 def get_dataset(name: str) -> Optional[BenchmarkDataset]:
     """Get dataset by name.
-    
+
     Args:
         name: Dataset name (e.g., "legal_employment_simple")
-        
+
     Returns:
         BenchmarkDataset or None if not found
     """
@@ -552,10 +550,10 @@ def get_dataset(name: str) -> Optional[BenchmarkDataset]:
 
 def get_datasets_by_domain(domain: Domain) -> List[BenchmarkDataset]:
     """Get all datasets for a specific domain.
-    
+
     Args:
         domain: Domain to filter by
-        
+
     Returns:
         List of benchmark datasets
     """
@@ -564,10 +562,10 @@ def get_datasets_by_domain(domain: Domain) -> List[BenchmarkDataset]:
 
 def get_datasets_by_complexity(complexity: Complexity) -> List[BenchmarkDataset]:
     """Get all datasets with specific complexity.
-    
+
     Args:
         complexity: Complexity level to filter by
-        
+
     Returns:
         List of benchmark datasets
     """
@@ -580,22 +578,24 @@ if __name__ == "__main__":
     print("STANDARD BENCHMARK DATASETS CATALOG")
     print("=" * 70)
     print()
-    
+
     by_domain = {}
     for dataset in ALL_DATASETS:
         by_domain.setdefault(dataset.domain, []).append(dataset)
-    
+
     for domain, datasets in sorted(by_domain.items()):
         print(f"\n{domain.value.upper()} ({len(datasets)} datasets):")
         print("-" * 70)
-        
+
         for ds in datasets:
             print(f"\n  {ds.name}")
             print(f"  Complexity: {ds.complexity.value}")
             print(f"  Tokens: ~{ds.approx_tokens}")
-            print(f"  Expected: {ds.expected_entities} entities, {ds.expected_relationships} relationships")
+            print(
+                f"  Expected: {ds.expected_entities} entities, {ds.expected_relationships} relationships"
+            )
             print(f"  Description: {ds.description}")
-    
-    print(f"\n{'='*70}")
+
+    print(f"\n{'=' * 70}")
     print(f"Total: {len(ALL_DATASETS)} datasets")
     print("=" * 70)

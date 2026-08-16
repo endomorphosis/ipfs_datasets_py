@@ -17,7 +17,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -30,22 +30,26 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimize
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
 )
 
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_document.llm_document_factory import (
-    LLMDocumentTestDataFactory
+    LLMDocumentTestDataFactory,
 )
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
-    LLMChunkTestDataFactory
+    LLMChunkTestDataFactory,
 )
 
 
@@ -83,7 +87,6 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
 class TestLLMDocumentMetadataManagement:
     """Test LLMDocument processing metadata management."""
 
@@ -98,9 +101,9 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         comprehensive_metadata = {
             "processing_time": 2.45,
             "model": "advanced_optimizer_v2",
@@ -115,18 +118,18 @@ class TestLLMDocumentMetadataManagement:
             "optimization_enabled": True,
             "chunk_overlap": 200,
             "min_chunk_size": 100,
-            "max_chunk_size": 2048
+            "max_chunk_size": 2048,
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata=comprehensive_metadata
+            processing_metadata=comprehensive_metadata,
         )
-        
+
         # When/Then - validate all keys are strings
         for key in document.processing_metadata.keys():
             assert isinstance(key, str)
@@ -142,24 +145,24 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         comprehensive_metadata = {
             "processing_time": 2.45,
             "model": "advanced_optimizer_v2",
-            "version": "1.2.3"
+            "version": "1.2.3",
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata=comprehensive_metadata
+            processing_metadata=comprehensive_metadata,
         )
-        
+
         # When/Then - validate keys are non-empty
         for key in document.processing_metadata.keys():
             assert len(key) > 0
@@ -175,18 +178,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"processing_time": 2.45}
+            processing_metadata={"processing_time": 2.45},
         )
-        
+
         # When/Then
         assert isinstance(document.processing_metadata["processing_time"], (int, float))
 
@@ -201,18 +204,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"model": "advanced_optimizer_v2"}
+            processing_metadata={"model": "advanced_optimizer_v2"},
         )
-        
+
         # When/Then
         assert isinstance(document.processing_metadata["model"], str)
 
@@ -227,18 +230,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"version": "1.2.3"}
+            processing_metadata={"version": "1.2.3"},
         )
-        
+
         # When/Then
         assert isinstance(document.processing_metadata["version"], str)
 
@@ -253,18 +256,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"chunk_count": 5}
+            processing_metadata={"chunk_count": 5},
         )
-        
+
         # When/Then
         assert isinstance(document.processing_metadata["chunk_count"], int)
 
@@ -279,18 +282,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"token_total": 150}
+            processing_metadata={"token_total": 150},
         )
-        
+
         # When/Then
         assert isinstance(document.processing_metadata["token_total"], int)
 
@@ -305,18 +308,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"entities_found": 3}
+            processing_metadata={"entities_found": 3},
         )
-        
+
         # When/Then
         assert isinstance(document.processing_metadata["entities_found"], int)
 
@@ -331,18 +334,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"confidence_avg": 0.89}
+            processing_metadata={"confidence_avg": 0.89},
         )
-        
+
         # When/Then
         assert isinstance(document.processing_metadata["confidence_avg"], (int, float))
 
@@ -357,18 +360,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"timestamp": "2024-01-01T12:00:00Z"}
+            processing_metadata={"timestamp": "2024-01-01T12:00:00Z"},
         )
-        
+
         # When/Then
         assert isinstance(document.processing_metadata["timestamp"], str)
 
@@ -383,18 +386,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"optimization_enabled": True}
+            processing_metadata={"optimization_enabled": True},
         )
-        
+
         # When/Then
         assert isinstance(document.processing_metadata["optimization_enabled"], bool)
 
@@ -409,18 +412,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"processing_time": 2.45}
+            processing_metadata={"processing_time": 2.45},
         )
-        
+
         # When/Then
         assert document.processing_metadata["processing_time"] > 0
 
@@ -435,18 +438,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"chunk_count": 5}
+            processing_metadata={"chunk_count": 5},
         )
-        
+
         # When/Then
         assert document.processing_metadata["chunk_count"] >= 0
 
@@ -461,18 +464,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"token_total": 150}
+            processing_metadata={"token_total": 150},
         )
-        
+
         # When/Then
         assert document.processing_metadata["token_total"] >= 0
 
@@ -487,18 +490,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"entities_found": 3}
+            processing_metadata={"entities_found": 3},
         )
-        
+
         # When/Then
         assert document.processing_metadata["entities_found"] >= 0
 
@@ -513,18 +516,18 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata validation",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Structure Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata structure",
             key_entities=[],
-            processing_metadata={"confidence_avg": 0.89}
+            processing_metadata={"confidence_avg": 0.89},
         )
-        
+
         # When/Then
         assert 0.0 <= document.processing_metadata["confidence_avg"] <= 1.0
 
@@ -539,28 +542,28 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         initial_metadata = {
             "processing_time": 1.23,
             "model": "initial_model",
             "chunk_count": 3,
-            "confidence_avg": 0.85
+            "confidence_avg": 0.85,
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Modification Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata modifications",
             key_entities=[],
-            processing_metadata=initial_metadata.copy()
+            processing_metadata=initial_metadata.copy(),
         )
-        
+
         # When - modify existing metadata
         document.processing_metadata["processing_time"] = 2.45
-        
+
         # Then - modification should be reflected
         assert document.processing_metadata["processing_time"] == 2.45
 
@@ -575,28 +578,28 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         initial_metadata = {
             "processing_time": 1.23,
             "model": "initial_model",
             "chunk_count": 3,
-            "confidence_avg": 0.85
+            "confidence_avg": 0.85,
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Modification Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata modifications",
             key_entities=[],
-            processing_metadata=initial_metadata.copy()
+            processing_metadata=initial_metadata.copy(),
         )
-        
+
         # When - modify existing string metadata
         document.processing_metadata["model"] = "updated_model"
-        
+
         # Then - modification should be reflected
         assert document.processing_metadata["model"] == "updated_model"
 
@@ -611,28 +614,28 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         initial_metadata = {
             "processing_time": 1.23,
             "model": "initial_model",
             "chunk_count": 3,
-            "confidence_avg": 0.85
+            "confidence_avg": 0.85,
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Modification Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata modifications",
             key_entities=[],
-            processing_metadata=initial_metadata.copy()
+            processing_metadata=initial_metadata.copy(),
         )
-        
+
         # When - add new metadata
         document.processing_metadata["new_field"] = "new_value"
-        
+
         # Then - new field should be added
         assert document.processing_metadata["new_field"] == "new_value"
 
@@ -647,28 +650,28 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         initial_metadata = {
             "processing_time": 1.23,
             "model": "initial_model",
             "chunk_count": 3,
-            "confidence_avg": 0.85
+            "confidence_avg": 0.85,
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Modification Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata modifications",
             key_entities=[],
-            processing_metadata=initial_metadata.copy()
+            processing_metadata=initial_metadata.copy(),
         )
-        
+
         # When - add timestamp metadata
         document.processing_metadata["timestamp"] = "2024-01-01T12:00:00Z"
-        
+
         # Then - timestamp field should be added
         assert document.processing_metadata["timestamp"] == "2024-01-01T12:00:00Z"
 
@@ -683,29 +686,29 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         initial_metadata = {
             "processing_time": 1.23,
             "model": "initial_model",
             "chunk_count": 3,
-            "confidence_avg": 0.85
+            "confidence_avg": 0.85,
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Modification Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata modifications",
             key_entities=[],
-            processing_metadata=initial_metadata.copy()
+            processing_metadata=initial_metadata.copy(),
         )
-        
+
         # When - add new metadata fields
         document.processing_metadata["new_field"] = "new_value"
         document.processing_metadata["timestamp"] = "2024-01-01T12:00:00Z"
-        
+
         # Then - size should reflect additions
         assert len(document.processing_metadata) == 6
 
@@ -720,28 +723,28 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         initial_metadata = {
             "processing_time": 1.23,
             "model": "initial_model",
             "chunk_count": 3,
-            "confidence_avg": 0.85
+            "confidence_avg": 0.85,
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Modification Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata modifications",
             key_entities=[],
-            processing_metadata=initial_metadata.copy()
+            processing_metadata=initial_metadata.copy(),
         )
-        
+
         # When - remove metadata
         del document.processing_metadata["chunk_count"]
-        
+
         # Then - field should be removed
         assert "chunk_count" not in document.processing_metadata
 
@@ -756,32 +759,32 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         initial_metadata = {
             "processing_time": 1.23,
             "model": "initial_model",
             "chunk_count": 3,
-            "confidence_avg": 0.85
+            "confidence_avg": 0.85,
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Modification Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata modifications",
             key_entities=[],
-            processing_metadata=initial_metadata.copy()
+            processing_metadata=initial_metadata.copy(),
         )
-        
+
         # Add fields first
         document.processing_metadata["new_field"] = "new_value"
         document.processing_metadata["timestamp"] = "2024-01-01T12:00:00Z"
-        
+
         # When - remove metadata
         del document.processing_metadata["chunk_count"]
-        
+
         # Then - size should reflect removal
         assert len(document.processing_metadata) == 5
 
@@ -796,32 +799,32 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         initial_metadata = {
             "processing_time": 1.23,
             "model": "initial_model",
             "chunk_count": 3,
-            "confidence_avg": 0.85
+            "confidence_avg": 0.85,
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Modification Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata modifications",
             key_entities=[],
-            processing_metadata=initial_metadata.copy()
+            processing_metadata=initial_metadata.copy(),
         )
-        
+
         # Modify and add fields
         document.processing_metadata["processing_time"] = 2.45
         document.processing_metadata["model"] = "updated_model"
         document.processing_metadata["new_field"] = "new_value"
         document.processing_metadata["timestamp"] = "2024-01-01T12:00:00Z"
         del document.processing_metadata["chunk_count"]
-        
+
         # Then - confidence field should remain intact
         assert document.processing_metadata["confidence_avg"] == 0.85
 
@@ -836,32 +839,32 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         initial_metadata = {
             "processing_time": 1.23,
             "model": "initial_model",
             "chunk_count": 3,
-            "confidence_avg": 0.85
+            "confidence_avg": 0.85,
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Modification Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata modifications",
             key_entities=[],
-            processing_metadata=initial_metadata.copy()
+            processing_metadata=initial_metadata.copy(),
         )
-        
+
         # Modify and add fields
         document.processing_metadata["processing_time"] = 2.45
         document.processing_metadata["model"] = "updated_model"
         document.processing_metadata["new_field"] = "new_value"
         document.processing_metadata["timestamp"] = "2024-01-01T12:00:00Z"
         del document.processing_metadata["chunk_count"]
-        
+
         # Then - processing_time field should remain intact
         assert document.processing_metadata["processing_time"] == 2.45
 
@@ -876,32 +879,32 @@ class TestLLMDocumentMetadataManagement:
             content="Test content for metadata modification",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         initial_metadata = {
             "processing_time": 1.23,
             "model": "initial_model",
             "chunk_count": 3,
-            "confidence_avg": 0.85
+            "confidence_avg": 0.85,
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Metadata Modification Test",
             chunks=[sample_chunk],
             summary="Document for testing metadata modifications",
             key_entities=[],
-            processing_metadata=initial_metadata.copy()
+            processing_metadata=initial_metadata.copy(),
         )
-        
+
         # Modify and add fields
         document.processing_metadata["processing_time"] = 2.45
         document.processing_metadata["model"] = "updated_model"
         document.processing_metadata["new_field"] = "new_value"
         document.processing_metadata["timestamp"] = "2024-01-01T12:00:00Z"
         del document.processing_metadata["chunk_count"]
-        
+
         # Then - model field should remain intact
         assert document.processing_metadata["model"] == "updated_model"
 
@@ -917,69 +920,86 @@ class TestLLMDocumentMetadataManagement:
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk
         from datetime import datetime
         import re
-        
+
         # Given
         sample_chunk = LLMChunkTestDataFactory.create_chunk_instance(
             content="Test content for timestamp tracking",
             chunk_id="chunk_0001",
             source_page=1,
-            token_count=10
+            token_count=10,
         )
-        
+
         timestamp_metadata = {
             "created_at": "2024-01-01T10:00:00Z",
             "started_at": "2024-01-01T10:00:05Z",
             "completed_at": "2024-01-01T10:02:50Z",
             "processing_time": 165.0,  # seconds
             "last_modified": "2024-01-01T10:02:50Z",
-            "version_timestamp": "2024-01-01T09:59:45Z"
+            "version_timestamp": "2024-01-01T09:59:45Z",
         }
-        
+
         document = LLMDocument(
             document_id="doc_001",
             title="Timestamp Tracking Test",
             chunks=[sample_chunk],
             summary="Document for testing timestamp tracking",
             key_entities=[],
-            processing_metadata=timestamp_metadata
+            processing_metadata=timestamp_metadata,
         )
-        
+
         # When/Then - validate timestamp formats (ISO 8601)
-        iso_pattern = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
-        
-        timestamp_fields = ["created_at", "started_at", "completed_at", "last_modified", "version_timestamp"]
+        iso_pattern = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$"
+
+        timestamp_fields = [
+            "created_at",
+            "started_at",
+            "completed_at",
+            "last_modified",
+            "version_timestamp",
+        ]
         for field in timestamp_fields:
             timestamp = document.processing_metadata[field]
             assert isinstance(timestamp, str), f"{field} should be string"
-            assert re.match(iso_pattern, timestamp), f"{field} should be valid ISO 8601 format: {timestamp}"
-        
+            assert re.match(iso_pattern, timestamp), (
+                f"{field} should be valid ISO 8601 format: {timestamp}"
+            )
+
         # When/Then - validate chronological consistency
-        created_time = datetime.fromisoformat(document.processing_metadata["created_at"].replace('Z', '+00:00'))
-        started_time = datetime.fromisoformat(document.processing_metadata["started_at"].replace('Z', '+00:00'))
-        completed_time = datetime.fromisoformat(document.processing_metadata["completed_at"].replace('Z', '+00:00'))
-        version_time = datetime.fromisoformat(document.processing_metadata["version_timestamp"].replace('Z', '+00:00'))
-        
+        created_time = datetime.fromisoformat(
+            document.processing_metadata["created_at"].replace("Z", "+00:00")
+        )
+        started_time = datetime.fromisoformat(
+            document.processing_metadata["started_at"].replace("Z", "+00:00")
+        )
+        completed_time = datetime.fromisoformat(
+            document.processing_metadata["completed_at"].replace("Z", "+00:00")
+        )
+        version_time = datetime.fromisoformat(
+            document.processing_metadata["version_timestamp"].replace("Z", "+00:00")
+        )
+
         # Chronological order should be: version <= created <= started <= completed
-        assert version_time <= created_time, "version_timestamp should be before or equal to created_at"
+        assert version_time <= created_time, (
+            "version_timestamp should be before or equal to created_at"
+        )
         assert created_time <= started_time, "created_at should be before or equal to started_at"
         assert started_time <= completed_time, "started_at should be before completed_at"
-        
+
         # When/Then - validate processing time tracking
         actual_duration = (completed_time - started_time).total_seconds()
         recorded_duration = document.processing_metadata["processing_time"]
-        
+
         assert isinstance(recorded_duration, (int, float)), "processing_time should be numeric"
         assert recorded_duration > 0, "processing_time should be positive"
-        assert abs(actual_duration - recorded_duration) < 1.0, f"Processing time mismatch: actual={actual_duration}, recorded={recorded_duration}"
-        
+        assert abs(actual_duration - recorded_duration) < 1.0, (
+            f"Processing time mismatch: actual={actual_duration}, recorded={recorded_duration}"
+        )
+
         # Verify specific timestamp values
         assert document.processing_metadata["created_at"] == "2024-01-01T10:00:00Z"
         assert document.processing_metadata["started_at"] == "2024-01-01T10:00:05Z"
         assert document.processing_metadata["completed_at"] == "2024-01-01T10:02:50Z"
         assert document.processing_metadata["processing_time"] == 165.0
-
-
-
 
 
 class TestLLMDocumentMetadataCountTracking:
@@ -1000,45 +1020,43 @@ class TestLLMDocumentMetadataCountTracking:
                 content="First chunk with specific token count",
                 chunk_id="chunk_0001",
                 source_page=1,
-                token_count=len(encoding.encode("First chunk with specific token count"))
+                token_count=len(encoding.encode("First chunk with specific token count")),
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk with different token count",
                 chunk_id="chunk_0002",
                 source_page=1,
-                token_count=len(encoding.encode("Second chunk with different token count"))
+                token_count=len(encoding.encode("Second chunk with different token count")),
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Third chunk completing the set",
                 chunk_id="chunk_0003",
                 source_page=2,
-                token_count=len(encoding.encode("Third chunk completing the set"))
-            )
+                token_count=len(encoding.encode("Third chunk completing the set")),
+            ),
         ]
-        
+
         # Create entities for counting
         key_entities = [
             {"type": "PERSON", "value": "John Doe", "confidence": 0.95},
             {"type": "ORG", "value": "OpenAI", "confidence": 0.92},
             {"type": "GPE", "value": "San Francisco", "confidence": 0.88},
-            {"type": "DATE", "value": "January 1st, 2024", "confidence": 0.85}
+            {"type": "DATE", "value": "January 1st, 2024", "confidence": 0.85},
         ]
-        
+
         expected_chunk_count = len(chunks)
-        
-        count_metadata = {
-            "chunk_count": expected_chunk_count
-        }
-        
+
+        count_metadata = {"chunk_count": expected_chunk_count}
+
         document = LLMDocument(
             document_id="doc_001",
             title="Count Tracking Test",
             chunks=chunks,
             summary="Document for testing count tracking consistency",
             key_entities=key_entities,
-            processing_metadata=count_metadata
+            processing_metadata=count_metadata,
         )
-        
+
         # When/Then
         assert document.processing_metadata["chunk_count"] == len(document.chunks)
 
@@ -1057,33 +1075,31 @@ class TestLLMDocumentMetadataCountTracking:
                 content="First chunk with specific token count",
                 chunk_id="chunk_0001",
                 source_page=1,
-                token_count=len(encoding.encode("First chunk with specific token count"))
+                token_count=len(encoding.encode("First chunk with specific token count")),
             )
         ]
-        
+
         # Create entities for counting
         key_entities = [
             {"type": "PERSON", "value": "John Doe", "confidence": 0.95},
             {"type": "ORG", "value": "OpenAI", "confidence": 0.92},
             {"type": "GPE", "value": "San Francisco", "confidence": 0.88},
-            {"type": "DATE", "value": "January 1st, 2024", "confidence": 0.85}
+            {"type": "DATE", "value": "January 1st, 2024", "confidence": 0.85},
         ]
-        
+
         expected_entity_count = len(key_entities)
-        
-        count_metadata = {
-            "entity_count": expected_entity_count
-        }
-        
+
+        count_metadata = {"entity_count": expected_entity_count}
+
         document = LLMDocument(
             document_id="doc_001",
             title="Count Tracking Test",
             chunks=chunks,
             summary="Document for testing count tracking consistency",
             key_entities=key_entities,
-            processing_metadata=count_metadata
+            processing_metadata=count_metadata,
         )
-        
+
         # When/Then
         assert document.processing_metadata["entity_count"] == len(document.key_entities)
 
@@ -1102,31 +1118,29 @@ class TestLLMDocumentMetadataCountTracking:
                 content="First chunk with specific token count",
                 chunk_id="chunk_0001",
                 source_page=1,
-                token_count=len(encoding.encode("First chunk with specific token count"))
+                token_count=len(encoding.encode("First chunk with specific token count")),
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk with different token count",
                 chunk_id="chunk_0002",
                 source_page=1,
-                token_count=len(encoding.encode("Second chunk with different token count"))
-            )
+                token_count=len(encoding.encode("Second chunk with different token count")),
+            ),
         ]
-        
+
         expected_token_total = sum(chunk.token_count for chunk in chunks)
-        
-        count_metadata = {
-            "token_total": expected_token_total
-        }
-        
+
+        count_metadata = {"token_total": expected_token_total}
+
         document = LLMDocument(
             document_id="doc_001",
             title="Count Tracking Test",
             chunks=chunks,
             summary="Document for testing count tracking consistency",
             key_entities=[],
-            processing_metadata=count_metadata
+            processing_metadata=count_metadata,
         )
-        
+
         # When/Then
         actual_token_total = sum(chunk.token_count for chunk in document.chunks)
         assert document.processing_metadata["token_total"] == actual_token_total
@@ -1146,37 +1160,35 @@ class TestLLMDocumentMetadataCountTracking:
                 content="First chunk with specific token count",
                 chunk_id="chunk_0001",
                 source_page=1,
-                token_count=len(encoding.encode("First chunk with specific token count"))
+                token_count=len(encoding.encode("First chunk with specific token count")),
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk with different token count",
                 chunk_id="chunk_0002",
                 source_page=1,
-                token_count=len(encoding.encode("Second chunk with different token count"))
+                token_count=len(encoding.encode("Second chunk with different token count")),
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Third chunk completing the set",
                 chunk_id="chunk_0003",
                 source_page=2,
-                token_count=len(encoding.encode("Third chunk completing the set"))
-            )
+                token_count=len(encoding.encode("Third chunk completing the set")),
+            ),
         ]
-        
+
         expected_page_count = len(set(chunk.source_page for chunk in chunks))
-        
-        count_metadata = {
-            "page_count": expected_page_count
-        }
-        
+
+        count_metadata = {"page_count": expected_page_count}
+
         document = LLMDocument(
             document_id="doc_001",
             title="Count Tracking Test",
             chunks=chunks,
             summary="Document for testing count tracking consistency",
             key_entities=[],
-            processing_metadata=count_metadata
+            processing_metadata=count_metadata,
         )
-        
+
         # When/Then
         actual_page_count = len(set(chunk.source_page for chunk in document.chunks))
         assert document.processing_metadata["page_count"] == actual_page_count
@@ -1197,41 +1209,41 @@ class TestLLMDocumentMetadataCountTracking:
                 chunk_id="chunk_0001",
                 source_page=1,
                 token_count=len(encoding.encode("First paragraph chunk")),
-                source_elements=["paragraph"]
+                source_elements=["paragraph"],
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second paragraph chunk",
                 chunk_id="chunk_0002",
                 source_page=1,
                 token_count=len(encoding.encode("Second paragraph chunk")),
-                source_elements=["paragraph"]
+                source_elements=["paragraph"],
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Table chunk",
                 chunk_id="chunk_0003",
                 source_page=2,
                 token_count=len(encoding.encode("Table chunk")),
-                source_elements=["table"]
-            )
+                source_elements=["table"],
+            ),
         ]
-        
+
         expected_paragraph_count = len([c for c in chunks if c.source_elements == ["paragraph"]])
-        
-        count_metadata = {
-            "paragraph_count": expected_paragraph_count
-        }
-        
+
+        count_metadata = {"paragraph_count": expected_paragraph_count}
+
         document = LLMDocument(
             document_id="doc_001",
             title="Count Tracking Test",
             chunks=chunks,
             summary="Document for testing count tracking consistency",
             key_entities=[],
-            processing_metadata=count_metadata
+            processing_metadata=count_metadata,
         )
-        
+
         # When/Then
-        actual_paragraph_count = len([c for c in document.chunks if c.source_elements == ["paragraph"]])
+        actual_paragraph_count = len(
+            [c for c in document.chunks if c.source_elements == ["paragraph"]]
+        )
         assert document.processing_metadata["paragraph_count"] == actual_paragraph_count
 
     def test_metadata_table_count_matches_actual_tables(self):
@@ -1250,32 +1262,30 @@ class TestLLMDocumentMetadataCountTracking:
                 chunk_id="chunk_0001",
                 source_page=1,
                 token_count=len(encoding.encode("First paragraph chunk")),
-                source_elements=["paragraph"]
+                source_elements=["paragraph"],
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Table chunk",
                 chunk_id="chunk_0002",
                 source_page=2,
                 token_count=len(encoding.encode("Table chunk")),
-                source_elements=["table"]
-            )
+                source_elements=["table"],
+            ),
         ]
-        
+
         expected_table_count = len([c for c in chunks if c.source_elements == ["table"]])
-        
-        count_metadata = {
-            "table_count": expected_table_count
-        }
-        
+
+        count_metadata = {"table_count": expected_table_count}
+
         document = LLMDocument(
             document_id="doc_001",
             title="Count Tracking Test",
             chunks=chunks,
             summary="Document for testing count tracking consistency",
             key_entities=[],
-            processing_metadata=count_metadata
+            processing_metadata=count_metadata,
         )
-        
+
         # When/Then
         actual_table_count = len([c for c in document.chunks if c.source_elements == ["table"]])
         assert document.processing_metadata["table_count"] == actual_table_count
@@ -1296,39 +1306,37 @@ class TestLLMDocumentMetadataCountTracking:
                 chunk_id="chunk_0001",
                 source_page=1,
                 token_count=len(encoding.encode("First text chunk")),
-                semantic_types="text"
+                semantic_types="text",
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second text chunk",
                 chunk_id="chunk_0002",
                 source_page=1,
                 token_count=len(encoding.encode("Second text chunk")),
-                semantic_types="text"
+                semantic_types="text",
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Table chunk",
                 chunk_id="chunk_0003",
                 source_page=2,
                 token_count=len(encoding.encode("Table chunk")),
-                semantic_types="table"
-            )
+                semantic_types="table",
+            ),
         ]
-        
+
         expected_text_chunks = len([c for c in chunks if c.semantic_types == "text"])
-        
-        count_metadata = {
-            "text_chunks": expected_text_chunks
-        }
-        
+
+        count_metadata = {"text_chunks": expected_text_chunks}
+
         document = LLMDocument(
             document_id="doc_001",
             title="Count Tracking Test",
             chunks=chunks,
             summary="Document for testing count tracking consistency",
             key_entities=[],
-            processing_metadata=count_metadata
+            processing_metadata=count_metadata,
         )
-        
+
         # When/Then
         actual_text_chunks = len([c for c in document.chunks if c.semantic_types == "text"])
         assert document.processing_metadata["text_chunks"] == actual_text_chunks
@@ -1349,32 +1357,30 @@ class TestLLMDocumentMetadataCountTracking:
                 chunk_id="chunk_0001",
                 source_page=1,
                 token_count=len(encoding.encode("Text chunk")),
-                semantic_types="text"
+                semantic_types="text",
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Table chunk",
                 chunk_id="chunk_0002",
                 source_page=2,
                 token_count=len(encoding.encode("Table chunk")),
-                semantic_types="table"
-            )
+                semantic_types="table",
+            ),
         ]
-        
+
         expected_table_chunks = len([c for c in chunks if c.semantic_types == "table"])
-        
-        count_metadata = {
-            "table_chunks": expected_table_chunks
-        }
-        
+
+        count_metadata = {"table_chunks": expected_table_chunks}
+
         document = LLMDocument(
             document_id="doc_001",
             title="Count Tracking Test",
             chunks=chunks,
             summary="Document for testing count tracking consistency",
             key_entities=[],
-            processing_metadata=count_metadata
+            processing_metadata=count_metadata,
         )
-        
+
         # When/Then
         actual_table_chunks = len([c for c in document.chunks if c.semantic_types == "table"])
         assert document.processing_metadata["table_chunks"] == actual_table_chunks
@@ -1394,32 +1400,30 @@ class TestLLMDocumentMetadataCountTracking:
                 content="First chunk with specific token count",
                 chunk_id="chunk_0001",
                 source_page=1,
-                token_count=len(encoding.encode("First chunk with specific token count"))
+                token_count=len(encoding.encode("First chunk with specific token count")),
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="Second chunk with different token count",
                 chunk_id="chunk_0002",
                 source_page=1,
-                token_count=len(encoding.encode("Second chunk with different token count"))
-            )
+                token_count=len(encoding.encode("Second chunk with different token count")),
+            ),
         ]
-        
+
         expected_token_total = sum(chunk.token_count for chunk in chunks)
         expected_avg = expected_token_total / len(chunks)
-        
-        count_metadata = {
-            "avg_tokens_per_chunk": expected_avg
-        }
-        
+
+        count_metadata = {"avg_tokens_per_chunk": expected_avg}
+
         document = LLMDocument(
             document_id="doc_001",
             title="Count Tracking Test",
             chunks=chunks,
             summary="Document for testing count tracking consistency",
             key_entities=[],
-            processing_metadata=count_metadata
+            processing_metadata=count_metadata,
         )
-        
+
         # When/Then
         actual_token_total = sum(chunk.token_count for chunk in document.chunks)
         expected_avg = actual_token_total / len(document.chunks)
@@ -1440,31 +1444,29 @@ class TestLLMDocumentMetadataCountTracking:
                 content="Short",
                 chunk_id="chunk_0001",
                 source_page=1,
-                token_count=len(encoding.encode("Short"))
+                token_count=len(encoding.encode("Short")),
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="This is a much longer chunk with more tokens",
                 chunk_id="chunk_0002",
                 source_page=1,
-                token_count=len(encoding.encode("This is a much longer chunk with more tokens"))
-            )
+                token_count=len(encoding.encode("This is a much longer chunk with more tokens")),
+            ),
         ]
-        
+
         expected_min_tokens = min(chunk.token_count for chunk in chunks)
-        
-        count_metadata = {
-            "min_chunk_tokens": expected_min_tokens
-        }
-        
+
+        count_metadata = {"min_chunk_tokens": expected_min_tokens}
+
         document = LLMDocument(
             document_id="doc_001",
             title="Count Tracking Test",
             chunks=chunks,
             summary="Document for testing count tracking consistency",
             key_entities=[],
-            processing_metadata=count_metadata
+            processing_metadata=count_metadata,
         )
-        
+
         # When/Then
         actual_min_tokens = min(chunk.token_count for chunk in document.chunks)
         assert document.processing_metadata["min_chunk_tokens"] == actual_min_tokens
@@ -1484,31 +1486,29 @@ class TestLLMDocumentMetadataCountTracking:
                 content="Short",
                 chunk_id="chunk_0001",
                 source_page=1,
-                token_count=len(encoding.encode("Short"))
+                token_count=len(encoding.encode("Short")),
             ),
             LLMChunkTestDataFactory.create_chunk_instance(
                 content="This is a much longer chunk with more tokens",
                 chunk_id="chunk_0002",
                 source_page=1,
-                token_count=len(encoding.encode("This is a much longer chunk with more tokens"))
-            )
+                token_count=len(encoding.encode("This is a much longer chunk with more tokens")),
+            ),
         ]
-        
+
         expected_max_tokens = max(chunk.token_count for chunk in chunks)
-        
-        count_metadata = {
-            "max_chunk_tokens": expected_max_tokens
-        }
-        
+
+        count_metadata = {"max_chunk_tokens": expected_max_tokens}
+
         document = LLMDocument(
             document_id="doc_001",
             title="Count Tracking Test",
             chunks=chunks,
             summary="Document for testing count tracking consistency",
             key_entities=[],
-            processing_metadata=count_metadata
+            processing_metadata=count_metadata,
         )
-        
+
         # When/Then
         actual_max_tokens = max(chunk.token_count for chunk in document.chunks)
         assert document.processing_metadata["max_chunk_tokens"] == actual_max_tokens

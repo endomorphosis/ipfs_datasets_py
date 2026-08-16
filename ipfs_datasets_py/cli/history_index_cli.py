@@ -33,7 +33,9 @@ def _truncate(text: str, width: int = 220) -> str:
     return clean
 
 
-def _search_documents(con: duckdb.DuckDBPyConnection, query: str, limit: int, source_like: str) -> list[dict[str, Any]]:
+def _search_documents(
+    con: duckdb.DuckDBPyConnection, query: str, limit: int, source_like: str
+) -> list[dict[str, Any]]:
     sql = """
         SELECT
             d.doc_id,
@@ -70,7 +72,9 @@ def _search_documents(con: duckdb.DuckDBPyConnection, query: str, limit: int, so
     ]
 
 
-def _search_chunks(con: duckdb.DuckDBPyConnection, query: str, limit: int, source_like: str) -> list[dict[str, Any]]:
+def _search_chunks(
+    con: duckdb.DuckDBPyConnection, query: str, limit: int, source_like: str
+) -> list[dict[str, Any]]:
     sql = """
         SELECT
             c.chunk_id,
@@ -104,7 +108,9 @@ def _search_chunks(con: duckdb.DuckDBPyConnection, query: str, limit: int, sourc
     ]
 
 
-def _search_entities(con: duckdb.DuckDBPyConnection, query: str, limit: int) -> list[dict[str, Any]]:
+def _search_entities(
+    con: duckdb.DuckDBPyConnection, query: str, limit: int
+) -> list[dict[str, Any]]:
     rows = con.execute(
         """
         SELECT entity_id, entity_type, name, confidence, attributes_json
@@ -133,7 +139,9 @@ def _search_entities(con: duckdb.DuckDBPyConnection, query: str, limit: int) -> 
     ]
 
 
-def _search_relationships(con: duckdb.DuckDBPyConnection, query: str, limit: int) -> list[dict[str, Any]]:
+def _search_relationships(
+    con: duckdb.DuckDBPyConnection, query: str, limit: int
+) -> list[dict[str, Any]]:
     rows = con.execute(
         """
         SELECT relationship_id, source_id, target_id, relation_type, confidence, attributes_json
@@ -164,7 +172,9 @@ def _search_relationships(con: duckdb.DuckDBPyConnection, query: str, limit: int
     ]
 
 
-def search_duckdb(*, db_path: str | Path, query: str, table: str, limit: int = 10, source_like: str = "") -> dict[str, Any]:
+def search_duckdb(
+    *, db_path: str | Path, query: str, table: str, limit: int = 10, source_like: str = ""
+) -> dict[str, Any]:
     resolved = _resolve_db_path(str(db_path))
     con = duckdb.connect(str(resolved), read_only=True)
     try:
@@ -194,7 +204,14 @@ def _print_results(payload: dict[str, Any]) -> None:
     for rank, row in enumerate(payload["results"], start=1):
         if payload["table"] == "chunks":
             print(f"\n#{rank}  {row['chunk_id']}  doc={row['doc_id']}")
-            print(textwrap.fill(_truncate(str(row["text"])), width=90, initial_indent="    ", subsequent_indent="    "))
+            print(
+                textwrap.fill(
+                    _truncate(str(row["text"])),
+                    width=90,
+                    initial_indent="    ",
+                    subsequent_indent="    ",
+                )
+            )
         elif payload["table"] == "documents":
             print(f"\n#{rank}  {row['doc_id']}")
             print(f"    {row['relative_path']}")
@@ -214,10 +231,20 @@ def create_parser() -> argparse.ArgumentParser:
         epilog=textwrap.dedent(__doc__),
     )
     parser.add_argument("query", nargs="+", help="Search query")
-    parser.add_argument("--index-path", default="./research_results/history_index/duckdb/evidence_index.duckdb", help="DuckDB file path or index directory")
-    parser.add_argument("--table", choices=["chunks", "documents", "entities", "relationships"], default="chunks")
+    parser.add_argument(
+        "--index-path",
+        default="./research_results/history_index/duckdb/evidence_index.duckdb",
+        help="DuckDB file path or index directory",
+    )
+    parser.add_argument(
+        "--table", choices=["chunks", "documents", "entities", "relationships"], default="chunks"
+    )
     parser.add_argument("--top-k", type=int, default=10, help="Maximum results to return")
-    parser.add_argument("--source-like", default="", help="Optional metadata substring filter, e.g. google_voice or gmail_email")
+    parser.add_argument(
+        "--source-like",
+        default="",
+        help="Optional metadata substring filter, e.g. google_voice or gmail_email",
+    )
     parser.add_argument("--json", action="store_true", help="Print JSON output")
     return parser
 

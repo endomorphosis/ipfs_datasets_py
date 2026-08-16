@@ -67,11 +67,11 @@ cd omni_converter
 from interfaces.python_api import convert
 
 # Convert a single file
-result = convert.this_file('my_file.html',to='txt')
+result = convert.this_file("my_file.html", to="txt")
 print(f"Extracted text: {result.content}")
 
 # Process a directory of files
-batch_result = convert.this_batch('/path/to/directory', output_dir='/path/to/output')
+batch_result = convert.this_batch("/path/to/directory", output_dir="/path/to/output")
 print(f"Processed {batch_result.total_files} files with {batch_result.successful_files} successful")
 
 # Get supported formats
@@ -79,10 +79,7 @@ formats = convert.supported_formats
 print(formats)
 
 # Configure the converter
-convert.set_config({
-    'output.default_format': 'json',
-    'processing.normalize_text': True
-})
+convert.set_config({"output.default_format": "json", "processing.normalize_text": True})
 ```
 
 For more examples, see the [example documentation](_example_docstring_format.md) and

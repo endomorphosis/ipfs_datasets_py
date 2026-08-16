@@ -141,9 +141,7 @@ print(f"Retrieved graph with {len(data.get('entities', {}))} entities")
 
 ### Pattern 1: Extract and Validate
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractorWithValidation
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractorWithValidation
 
 validator = KnowledgeGraphExtractorWithValidation(validate_during_extraction=True)
 result = validator.extract_knowledge_graph(text, validation_depth=2)
@@ -181,7 +179,7 @@ results = searcher.search(
     query="physicist who won Nobel Prize",
     k=5,
     vector_weight=0.4,  # Weight for vector similarity
-    graph_weight=0.6,   # Weight for graph relevance
+    graph_weight=0.6,  # Weight for graph relevance
 )
 
 for result in results:

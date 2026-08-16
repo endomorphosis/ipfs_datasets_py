@@ -1,4 +1,5 @@
 """Tests for PolicyPack schema and validator (WS12-01)."""
+
 from __future__ import annotations
 
 import pytest
@@ -16,6 +17,7 @@ from reasoner.policy_pack import (
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
 
+
 def _valid_pack(**overrides) -> dict:
     base = {
         "jurisdiction": "US-CA",
@@ -31,6 +33,7 @@ def _valid_pack(**overrides) -> dict:
 # ---------------------------------------------------------------------------
 # TestValidPackPassesValidation
 # ---------------------------------------------------------------------------
+
 
 class TestValidPackPassesValidation:
     def test_valid_pack_is_valid(self):
@@ -59,14 +62,18 @@ class TestValidPackPassesValidation:
 # TestMissingRequiredFields
 # ---------------------------------------------------------------------------
 
+
 class TestMissingRequiredFields:
-    @pytest.mark.parametrize("field_name,error_key", [
-        ("jurisdiction", "missing_jurisdiction"),
-        ("effective_date", "missing_effective_date"),
-        ("priority_policy", "missing_priority_policy"),
-        ("exception_policy", "missing_exception_policy"),
-        ("temporal_policy", "missing_temporal_policy"),
-    ])
+    @pytest.mark.parametrize(
+        "field_name,error_key",
+        [
+            ("jurisdiction", "missing_jurisdiction"),
+            ("effective_date", "missing_effective_date"),
+            ("priority_policy", "missing_priority_policy"),
+            ("exception_policy", "missing_exception_policy"),
+            ("temporal_policy", "missing_temporal_policy"),
+        ],
+    )
     def test_missing_field_emits_correct_error_code(self, field_name, error_key):
         # GIVEN a pack missing one required field
         pack = _valid_pack()
@@ -97,13 +104,17 @@ class TestMissingRequiredFields:
 # TestInvalidFieldTypes
 # ---------------------------------------------------------------------------
 
+
 class TestInvalidFieldTypes:
-    @pytest.mark.parametrize("field_name,bad_value,error_key", [
-        ("priority_policy", "not-a-dict", "invalid_priority_policy_type"),
-        ("priority_policy", 42, "invalid_priority_policy_type"),
-        ("exception_policy", ["list"], "invalid_exception_policy_type"),
-        ("temporal_policy", 3.14, "invalid_temporal_policy_type"),
-    ])
+    @pytest.mark.parametrize(
+        "field_name,bad_value,error_key",
+        [
+            ("priority_policy", "not-a-dict", "invalid_priority_policy_type"),
+            ("priority_policy", 42, "invalid_priority_policy_type"),
+            ("exception_policy", ["list"], "invalid_exception_policy_type"),
+            ("temporal_policy", 3.14, "invalid_temporal_policy_type"),
+        ],
+    )
     def test_wrong_type_emits_correct_error_code(self, field_name, bad_value, error_key):
         # GIVEN a pack with a field of wrong type
         pack = _valid_pack(**{field_name: bad_value})
@@ -127,6 +138,7 @@ class TestInvalidFieldTypes:
 # ---------------------------------------------------------------------------
 # TestStrictMode
 # ---------------------------------------------------------------------------
+
 
 class TestStrictMode:
     def test_strict_mode_raises_on_error(self):
@@ -172,6 +184,7 @@ class TestStrictMode:
 # ---------------------------------------------------------------------------
 # TestBuildPolicyPack
 # ---------------------------------------------------------------------------
+
 
 class TestBuildPolicyPack:
     def test_build_creates_correct_dataclass(self):

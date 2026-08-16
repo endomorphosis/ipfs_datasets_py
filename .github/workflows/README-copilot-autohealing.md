@@ -701,14 +701,16 @@ Implement custom fix logic in `generate_workflow_fix.py`:
 ```python
 def _fix_custom_error(self) -> List[Dict[str, Any]]:
     """Generate custom fix for specific error."""
-    return [{
-        'file': '.github/workflows/target.yml',
-        'action': 'custom_action',
-        'description': 'What this fix does',
-        'changes': {
-            # YAML changes here
-        },
-    }]
+    return [
+        {
+            "file": ".github/workflows/target.yml",
+            "action": "custom_action",
+            "description": "What this fix does",
+            "changes": {
+                # YAML changes here
+            },
+        }
+    ]
 ```
 
 ### Workflow Exclusions

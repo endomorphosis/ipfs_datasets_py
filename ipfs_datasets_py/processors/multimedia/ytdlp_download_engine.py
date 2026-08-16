@@ -15,6 +15,7 @@ Usage::
         ytdlp_batch_download,
     )
 """
+
 from __future__ import annotations
 
 import logging
@@ -24,6 +25,7 @@ from ipfs_datasets_py.processors.multimedia.ytdlp_wrapper import YtDlpWrapper
 
 try:
     import yt_dlp  # noqa: F401
+
     HAVE_YTDLP = True
 except ImportError:
     HAVE_YTDLP = False
@@ -146,7 +148,11 @@ async def ytdlp_download_playlist(
         return {**_UNAVAILABLE, "tool": "ytdlp_download_playlist"}
 
     if not playlist_url or not isinstance(playlist_url, str):
-        return {"status": "error", "error": "Invalid playlist URL provided", "playlist_url": playlist_url}
+        return {
+            "status": "error",
+            "error": "Invalid playlist URL provided",
+            "playlist_url": playlist_url,
+        }
 
     wrapper = YtDlpWrapper(default_output_dir=output_dir, default_quality=quality)
     playlist_opts: Dict[str, Any] = {

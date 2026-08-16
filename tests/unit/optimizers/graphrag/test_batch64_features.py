@@ -2,6 +2,7 @@
 OntologyOptimizer.reset_history + session_count, ExtractionConfig.diff,
 OntologyGenerator.generate_synthetic_ontology.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -26,14 +27,20 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _ctx():
     return OntologyGenerationContext(data_source="test", data_type="text", domain="test")
 
 
 def _score(**kwargs):
     defaults = dict(
-        completeness=0.7, consistency=0.7, clarity=0.6, granularity=0.5,
-        relationship_coherence=0.4, domain_alignment=0.4, recommendations=["Add more entity properties"],
+        completeness=0.7,
+        consistency=0.7,
+        clarity=0.6,
+        granularity=0.5,
+        relationship_coherence=0.4,
+        domain_alignment=0.4,
+        recommendations=["Add more entity properties"],
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -53,8 +60,12 @@ def _make_result(entities=None, relationships=None, confidence=0.8):
 
 def _make_report(score=0.7, n_sessions=0):
     return OptimizationReport(
-        average_score=score, trend="stable", improvement_rate=0.0,
-        recommendations=[], best_ontology=None, worst_ontology=None,
+        average_score=score,
+        trend="stable",
+        improvement_rate=0.0,
+        recommendations=[],
+        best_ontology=None,
+        worst_ontology=None,
         metadata={"num_sessions": n_sessions},
     )
 
@@ -62,6 +73,7 @@ def _make_report(score=0.7, n_sessions=0):
 # ---------------------------------------------------------------------------
 # EntityExtractionResult.merge
 # ---------------------------------------------------------------------------
+
 
 class TestEntityExtractionResultMerge:
     def test_returns_new_instance(self):
@@ -87,7 +99,10 @@ class TestEntityExtractionResultMerge:
     def test_relationships_from_other_included(self):
         a = _make_result([Entity(id="e1", type="T", text="Alice")])
         b = _make_result(
-            entities=[Entity(id="e2", type="T", text="Bob"), Entity(id="e3", type="T", text="Carol")],
+            entities=[
+                Entity(id="e2", type="T", text="Bob"),
+                Entity(id="e3", type="T", text="Carol"),
+            ],
             relationships=[Relationship(id="r1", source_id="e2", target_id="e3", type="knows")],
         )
         merged = a.merge(b)
@@ -112,8 +127,12 @@ class TestEntityExtractionResultMerge:
         assert len(merged.entities) == 1
 
     def test_merge_preserves_metadata(self):
-        a = EntityExtractionResult(entities=[], relationships=[], confidence=0.5, metadata={"k": "v"})
-        b = EntityExtractionResult(entities=[], relationships=[], confidence=0.5, metadata={"m": "n"})
+        a = EntityExtractionResult(
+            entities=[], relationships=[], confidence=0.5, metadata={"k": "v"}
+        )
+        b = EntityExtractionResult(
+            entities=[], relationships=[], confidence=0.5, metadata={"m": "n"}
+        )
         merged = a.merge(b)
         assert merged.metadata.get("k") == "v"
         assert merged.metadata.get("m") == "n"
@@ -122,6 +141,7 @@ class TestEntityExtractionResultMerge:
 # ---------------------------------------------------------------------------
 # OntologyMediator.reset_state
 # ---------------------------------------------------------------------------
+
 
 class TestMediatorResetState:
     def test_resets_action_counts(self):
@@ -161,6 +181,7 @@ class TestMediatorResetState:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.reset_history + session_count
 # ---------------------------------------------------------------------------
+
 
 class TestOptimizerResetHistory:
     def test_returns_count_of_removed_entries(self):
@@ -217,6 +238,7 @@ class TestSessionCount:
 # ExtractionConfig.diff
 # ---------------------------------------------------------------------------
 
+
 class TestExtractionConfigDiff:
     def test_identical_configs_return_empty(self):
         cfg = ExtractionConfig()
@@ -241,12 +263,8 @@ class TestExtractionConfigDiff:
         diff = cfg1.diff(cfg2)
         assert expected_keys.issubset(diff.keys())
         if "confidence_threshold" in expected_keys:
-            assert diff["confidence_threshold"]["self"] == pytest.approx(
-                cfg1.confidence_threshold
-            )
-            assert diff["confidence_threshold"]["other"] == pytest.approx(
-                cfg2.confidence_threshold
-            )
+            assert diff["confidence_threshold"]["self"] == pytest.approx(cfg1.confidence_threshold)
+            assert diff["confidence_threshold"]["other"] == pytest.approx(cfg2.confidence_threshold)
 
     def test_unchanged_fields_not_in_diff(self):
         cfg1 = ExtractionConfig(confidence_threshold=0.5)
@@ -261,6 +279,7 @@ class TestExtractionConfigDiff:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.generate_synthetic_ontology
 # ---------------------------------------------------------------------------
+
 
 class TestGenerateSyntheticOntology:
     @pytest.fixture

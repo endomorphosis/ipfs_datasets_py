@@ -6,6 +6,7 @@ Methods under test:
   - OntologyCritic.score_variance(scores)
   - OntologyCritic.best_score(scores)
 """
+
 import pytest
 import dataclasses as _dc
 
@@ -14,13 +15,16 @@ import dataclasses as _dc
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _score(overall):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     # CriticScore is a dataclass; overall is a @property computed from dims
     # Set equal dims so overall equals the target value
     # overall = mean(completeness, consistency, clarity, granularity, domain_alignment)
@@ -29,7 +33,8 @@ def _score(overall):
         consistency=overall,
         clarity=overall,
         granularity=overall,
-        relationship_coherence=overall, domain_alignment=overall,
+        relationship_coherence=overall,
+        domain_alignment=overall,
     )
     return s
 
@@ -37,6 +42,7 @@ def _score(overall):
 # ---------------------------------------------------------------------------
 # OntologyCritic.score_delta_between
 # ---------------------------------------------------------------------------
+
 
 class TestScoreDeltaBetween:
     @pytest.mark.parametrize(
@@ -55,6 +61,7 @@ class TestScoreDeltaBetween:
 # ---------------------------------------------------------------------------
 # OntologyCritic.all_pass
 # ---------------------------------------------------------------------------
+
 
 class TestAllPass:
     def test_empty_list_is_true(self):
@@ -78,6 +85,7 @@ class TestAllPass:
 # ---------------------------------------------------------------------------
 # OntologyCritic.score_variance
 # ---------------------------------------------------------------------------
+
 
 class TestScoreVariance:
     @pytest.mark.parametrize(
@@ -103,6 +111,7 @@ class TestScoreVariance:
 # ---------------------------------------------------------------------------
 # OntologyCritic.best_score
 # ---------------------------------------------------------------------------
+
 
 class TestBestScore:
     def test_empty_returns_none(self):

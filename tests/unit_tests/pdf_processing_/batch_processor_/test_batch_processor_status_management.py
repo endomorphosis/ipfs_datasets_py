@@ -12,7 +12,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -25,8 +25,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_proces
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 import pytest
 import json
@@ -47,13 +51,15 @@ from ipfs_datasets_py.pdf_processing.batch_processor import (
     BatchProcessor,
     ProcessingJob,
     BatchJobResult,
-    BatchStatus
+    BatchStatus,
 )
 
 import pytest
 from datetime import datetime
 from ipfs_datasets_py.pdf_processing.batch_processor import (
-    ProcessingJob, BatchJobResult, BatchStatus
+    ProcessingJob,
+    BatchJobResult,
+    BatchStatus,
 )
 
 
@@ -77,8 +83,6 @@ assert BatchProcessor.get_processing_statistics
 assert BatchProcessor.export_batch_results
 
 
-
-
 class TestBatchProcessorStatusManagement:
     """Test class for batch status management methods in BatchProcessor."""
 
@@ -97,26 +101,29 @@ class TestBatchProcessorStatusManagement:
             total_processing_time=150.5,
             average_job_time=37.625,
             throughput=0.0,
-            resource_usage={}
+            resource_usage={},
         )
-
-
 
     @pytest.fixture
     def processor_with_mocked_resources(self, processor):
         """Create a processor with mocked resource usage."""
         from unittest.mock import MagicMock
-        processor._get_resource_usage = MagicMock(return_value={
-            'memory_mb': 1024.0,
-            'cpu_percent': 25.5,
-            'active_workers': 4,
-            'queue_size': 10,
-            'peak_memory_mb': 1200.0
-        })
+
+        processor._get_resource_usage = MagicMock(
+            return_value={
+                "memory_mb": 1024.0,
+                "cpu_percent": 25.5,
+                "active_workers": 4,
+                "queue_size": 10,
+                "peak_memory_mb": 1200.0,
+            }
+        )
         return processor
 
     @pytest.mark.asyncio
-    async def test_get_batch_status_existing_batch(self, processor_with_mocked_resources, sample_batch_status):
+    async def test_get_batch_status_existing_batch(
+        self, processor_with_mocked_resources, sample_batch_status
+    ):
         """
         GIVEN an active batch in the processor
         WHEN get_batch_status is called with valid batch_id
@@ -129,19 +136,19 @@ class TestBatchProcessorStatusManagement:
         processor = processor_with_mocked_resources
         batch_id = "batch_test_123"
         processor.active_batches[batch_id] = sample_batch_status
-        
+
         status_dict = await processor.get_batch_status(batch_id)
-        
+
         assert status_dict is not None
         assert isinstance(status_dict, dict)
-        assert status_dict['batch_id'] == batch_id
-        assert status_dict['total_jobs'] == 10
-        assert status_dict['completed_jobs'] == 3
-        assert status_dict['failed_jobs'] == 1
-        assert status_dict['pending_jobs'] == 6
-        assert status_dict['start_time'] == "2024-01-01T10:00:00"
-        assert 'resource_usage' in status_dict
-        assert status_dict['resource_usage']['memory_mb'] == 1024.0
+        assert status_dict["batch_id"] == batch_id
+        assert status_dict["total_jobs"] == 10
+        assert status_dict["completed_jobs"] == 3
+        assert status_dict["failed_jobs"] == 1
+        assert status_dict["pending_jobs"] == 6
+        assert status_dict["start_time"] == "2024-01-01T10:00:00"
+        assert "resource_usage" in status_dict
+        assert status_dict["resource_usage"]["memory_mb"] == 1024.0
 
     @pytest.mark.asyncio
     async def test_get_batch_status_nonexistent_batch(self, processor):
@@ -154,11 +161,13 @@ class TestBatchProcessorStatusManagement:
          - Not create new batch entry
         """
         status = await processor.get_batch_status("nonexistent_batch")
-        
+
         assert status is None
 
     @pytest.mark.asyncio
-    async def test_get_batch_status_resource_usage_integration(self, processor_with_mocked_resources, sample_batch_status):
+    async def test_get_batch_status_resource_usage_integration(
+        self, processor_with_mocked_resources, sample_batch_status
+    ):
         """
         GIVEN an active batch
         WHEN get_batch_status is called
@@ -170,9 +179,9 @@ class TestBatchProcessorStatusManagement:
         processor = processor_with_mocked_resources
         batch_id = "batch_resource_test"
         processor.active_batches[batch_id] = sample_batch_status
-        
+
         await processor.get_batch_status(batch_id)
-        
+
         processor._get_resource_usage.assert_called_once()
 
     @pytest.mark.asyncio
@@ -198,9 +207,9 @@ class TestBatchProcessorStatusManagement:
             total_processing_time=100.0,
             average_job_time=25.0,
             throughput=0.0,
-            resource_usage={}
+            resource_usage={},
         )
-        
+
         # Create completed batch
         completed_batch = BatchStatus(
             batch_id="completed_batch",
@@ -214,17 +223,17 @@ class TestBatchProcessorStatusManagement:
             total_processing_time=200.0,
             average_job_time=50.0,
             throughput=0.1,
-            resource_usage={}
+            resource_usage={},
         )
-        
+
         processor.active_batches["active_batch"] = active_batch
         processor.active_batches["completed_batch"] = completed_batch
-        
+
         active_list = await processor.list_active_batches()
-        
+
         assert len(active_list) == 1
-        assert active_list[0]['batch_id'] == "active_batch"
-        assert active_list[0]['pending_jobs'] == 6
+        assert active_list[0]["batch_id"] == "active_batch"
+        assert active_list[0]["pending_jobs"] == 6
 
     @pytest.mark.asyncio
     async def test_list_active_batches_no_active_batches(self, processor):
@@ -237,13 +246,9 @@ class TestBatchProcessorStatusManagement:
          - Handle empty state gracefully
         """
         active_list = await processor.list_active_batches()
-        
+
         assert active_list == []
         assert isinstance(active_list, list)
-
-
-
-
 
 
 if __name__ == "__main__":

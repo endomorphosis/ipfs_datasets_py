@@ -5,10 +5,12 @@ Feature: UCANManager.initialize()
   Tests the initialize() method of UCANManager.
   This callable loads keypairs, tokens, and revocations from storage.
 """
+
 import pytest
 
 
 # Fixtures for Background
+
 
 @pytest.fixture
 def a_ucanmanager_instance_is_created_via_get_instance():
@@ -30,10 +32,14 @@ def the_default_ucan_directory_exists_at_ipfs_datasetsucan():
 
 # Test scenarios
 
-def test_initialize_succeeds_when_cryptography_module_is_available(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+
+def test_initialize_succeeds_when_cryptography_module_is_available(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize succeeds when cryptography module is available
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the cryptography module is installed
@@ -44,10 +50,13 @@ def test_initialize_succeeds_when_cryptography_module_is_available(a_ucanmanager
     pass
 
 
-def test_initialize_sets_initialized_attribute_to_true(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_sets_initialized_attribute_to_true(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize sets initialized attribute to True
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the cryptography module is installed
@@ -58,10 +67,13 @@ def test_initialize_sets_initialized_attribute_to_true(a_ucanmanager_instance_is
     pass
 
 
-def test_initialize_loads_keypairs_from_keypairsjson(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_loads_keypairs_from_keypairsjson(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize loads keypairs from keypairs.json
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the cryptography module is installed
@@ -72,10 +84,13 @@ def test_initialize_loads_keypairs_from_keypairsjson(a_ucanmanager_instance_is_c
     pass
 
 
-def test_initialize_loads_tokens_from_tokensjson(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_loads_tokens_from_tokensjson(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize loads tokens from tokens.json
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the cryptography module is installed
@@ -86,10 +101,13 @@ def test_initialize_loads_tokens_from_tokensjson(a_ucanmanager_instance_is_creat
     pass
 
 
-def test_initialize_loads_revocations_from_revocationsjson(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_loads_revocations_from_revocationsjson(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize loads revocations from revocations.json
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the cryptography module is installed
@@ -100,10 +118,13 @@ def test_initialize_loads_revocations_from_revocationsjson(a_ucanmanager_instanc
     pass
 
 
-def test_initialize_fails_when_cryptography_module_is_missing(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_fails_when_cryptography_module_is_missing(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize fails when cryptography module is missing
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the cryptography module is not installed
@@ -114,10 +135,13 @@ def test_initialize_fails_when_cryptography_module_is_missing(a_ucanmanager_inst
     pass
 
 
-def test_initialize_leaves_initialized_attribute_false_when_cryptography_missing(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_leaves_initialized_attribute_false_when_cryptography_missing(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize leaves initialized attribute False when cryptography missing
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the cryptography module is not installed
@@ -128,10 +152,13 @@ def test_initialize_leaves_initialized_attribute_false_when_cryptography_missing
     pass
 
 
-def test_initialize_prints_warning_when_cryptography_missing(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_prints_warning_when_cryptography_missing(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize prints warning when cryptography missing
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the cryptography module is not installed
@@ -142,10 +169,13 @@ def test_initialize_prints_warning_when_cryptography_missing(a_ucanmanager_insta
     pass
 
 
-def test_initialize_returns_true_with_empty_storage(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_returns_true_with_empty_storage(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize returns True with empty storage
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the storage files do not exist
@@ -157,10 +187,13 @@ def test_initialize_returns_true_with_empty_storage(a_ucanmanager_instance_is_cr
     pass
 
 
-def test_initialize_creates_empty_keypairs_dictionary_with_empty_storage(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_creates_empty_keypairs_dictionary_with_empty_storage(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize creates empty keypairs dictionary with empty storage
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the storage files do not exist
@@ -172,10 +205,13 @@ def test_initialize_creates_empty_keypairs_dictionary_with_empty_storage(a_ucanm
     pass
 
 
-def test_initialize_creates_empty_tokens_dictionary_with_empty_storage(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_creates_empty_tokens_dictionary_with_empty_storage(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize creates empty tokens dictionary with empty storage
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the storage files do not exist
@@ -187,10 +223,13 @@ def test_initialize_creates_empty_tokens_dictionary_with_empty_storage(a_ucanman
     pass
 
 
-def test_initialize_creates_empty_revocations_dictionary_with_empty_storage(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_creates_empty_revocations_dictionary_with_empty_storage(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize creates empty revocations dictionary with empty storage
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given the storage files do not exist
@@ -202,10 +241,13 @@ def test_initialize_creates_empty_revocations_dictionary_with_empty_storage(a_uc
     pass
 
 
-def test_initialize_loads_3_keypairs_from_file(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_initialize_loads_3_keypairs_from_file(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Initialize loads 3 keypairs from file
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given keypairs.json contains 3 keypairs
@@ -217,10 +259,13 @@ def test_initialize_loads_3_keypairs_from_file(a_ucanmanager_instance_is_created
     pass
 
 
-def test_loaded_keypairs_have_did_attribute(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_loaded_keypairs_have_did_attribute(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Loaded keypairs have did attribute
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given keypairs.json contains 3 keypairs
@@ -232,10 +277,13 @@ def test_loaded_keypairs_have_did_attribute(a_ucanmanager_instance_is_created_vi
     pass
 
 
-def test_loaded_keypairs_have_public_key_pem_attribute(a_ucanmanager_instance_is_created_via_get_instance, the_default_ucan_directory_exists_at_ipfs_datasetsucan):
+def test_loaded_keypairs_have_public_key_pem_attribute(
+    a_ucanmanager_instance_is_created_via_get_instance,
+    the_default_ucan_directory_exists_at_ipfs_datasetsucan,
+):
     """
     Scenario: Loaded keypairs have public_key_pem attribute
-    
+
     Given a UCANManager instance is created via get_instance()
     Given the default UCAN directory exists at ~/.ipfs_datasets/ucan
     Given keypairs.json contains 3 keypairs
@@ -245,4 +293,3 @@ def test_loaded_keypairs_have_public_key_pem_attribute(a_ucanmanager_instance_is
     """
     # TODO: Implement test
     pass
-

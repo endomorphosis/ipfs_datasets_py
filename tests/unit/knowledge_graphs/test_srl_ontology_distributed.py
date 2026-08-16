@@ -25,8 +25,11 @@ class TestSRLExtractor:
     def test_import(self):
         """SRLExtractor can be imported from the extraction package."""
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            SRLExtractor, SRLFrame, RoleArgument,
+            SRLExtractor,
+            SRLFrame,
+            RoleArgument,
         )
+
         assert SRLExtractor is not None
 
     def test_extract_returns_frames(self):
@@ -36,6 +39,7 @@ class TestSRLExtractor:
         THEN:  At least one SRLFrame is returned
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         ext = SRLExtractor()
         frames = ext.extract_srl("Alice sent the report to Bob yesterday.")
         assert isinstance(frames, list)
@@ -48,6 +52,7 @@ class TestSRLExtractor:
         THEN:  Returned frames include a non-empty predicate
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         ext = SRLExtractor()
         frames = ext.extract_srl("Google acquired DeepMind.")
         assert any(f.predicate for f in frames)
@@ -59,8 +64,12 @@ class TestSRLExtractor:
         THEN:  At least one Agent and at least one Patient/Theme role is found
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
-            SRLExtractor, ROLE_AGENT, ROLE_PATIENT, ROLE_THEME,
+            SRLExtractor,
+            ROLE_AGENT,
+            ROLE_PATIENT,
+            ROLE_THEME,
         )
+
         ext = SRLExtractor()
         frames = ext.extract_srl("Alice sent the report to Bob.")
         all_roles = {a.role for f in frames for a in f.arguments}
@@ -73,6 +82,7 @@ class TestSRLExtractor:
         THEN:  Empty list is returned (no crash)
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         ext = SRLExtractor()
         assert ext.extract_srl("") == []
         assert ext.extract_srl("   ") == []
@@ -84,6 +94,7 @@ class TestSRLExtractor:
         THEN:  KG contains Event entities for each frame
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         ext = SRLExtractor()
         frames = ext.extract_srl("Alice built the system.")
         kg = ext.to_knowledge_graph(frames)
@@ -97,6 +108,7 @@ class TestSRLExtractor:
         THEN:  KG contains hasAgent relationships
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         ext = SRLExtractor()
         frames = ext.extract_srl("Alice sent the report.")
         kg = ext.to_knowledge_graph(frames)
@@ -110,6 +122,7 @@ class TestSRLExtractor:
         THEN:  At least one (subject, predicate, object) triple is returned
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         ext = SRLExtractor()
         # Use a sentence where heuristics can extract agent + patient
         frames = ext.extract_srl("Alice sent the package.")
@@ -123,7 +136,12 @@ class TestSRLExtractor:
         WHEN:  to_dict is called
         THEN:  Returns a dict with expected keys
         """
-        from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLFrame, RoleArgument, ROLE_AGENT
+        from ipfs_datasets_py.knowledge_graphs.extraction.srl import (
+            SRLFrame,
+            RoleArgument,
+            ROLE_AGENT,
+        )
+
         frame = SRLFrame(
             predicate="sent",
             sentence="Alice sent the report.",
@@ -143,6 +161,7 @@ class TestSRLExtractor:
         THEN:  Frames below threshold are excluded
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
+
         ext_strict = SRLExtractor(min_confidence=0.99)
         frames = ext_strict.extract_srl("Alice sent the report.")
         # Heuristic confidence is 0.65, so all should be filtered out
@@ -173,6 +192,7 @@ class TestSRLExtractor:
     def test_srl_extractor_exported_from_extraction_package(self):
         """SRLExtractor is re-exported from extraction.__init__."""
         from ipfs_datasets_py.knowledge_graphs.extraction import SRLExtractor
+
         assert SRLExtractor is not None
 
 
@@ -191,6 +211,7 @@ class TestOntologySchema:
         THEN:  All ancestors are returned transitively
         """
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema
+
         schema = OntologySchema()
         schema.add_subclass("Manager", "Employee").add_subclass("Employee", "Person")
         supers = schema.get_all_superclasses("Manager")
@@ -204,6 +225,7 @@ class TestOntologySchema:
         THEN:  Correct property names are present
         """
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema
+
         schema = OntologySchema()
         schema.add_transitive("isAncestorOf").add_symmetric("isSiblingOf")
         assert "isAncestorOf" in schema.transitive
@@ -216,6 +238,7 @@ class TestOntologyReasoner:
     def _make_kg(self):
         """Build a small test KnowledgeGraph."""
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = KnowledgeGraph("test")
         alice = kg.add_entity("Employee", "Alice")
         bob = kg.add_entity("Employee", "Bob")
@@ -232,6 +255,7 @@ class TestOntologyReasoner:
         THEN:  Employee entities gain inferred 'Person' type
         """
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
+
         kg, alice, bob, acme = self._make_kg()
         schema = OntologySchema()
         schema.add_subclass("Employee", "Person")
@@ -247,13 +271,13 @@ class TestOntologyReasoner:
         THEN:  Reverse isSiblingOf relationship is created
         """
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
+
         kg, alice, bob, _ = self._make_kg()
         schema = OntologySchema()
         schema.add_symmetric("isSiblingOf")
         kg2 = OntologyReasoner(schema).materialize(kg)
         sibling_rels = [
-            r for r in kg2.relationships.values()
-            if r.relationship_type == "isSiblingOf"
+            r for r in kg2.relationships.values() if r.relationship_type == "isSiblingOf"
         ]
         assert len(sibling_rels) == 2  # original + inferred
 
@@ -264,13 +288,13 @@ class TestOntologyReasoner:
         THEN:  isManagedBy relationship is inferred
         """
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
+
         kg, alice, bob, _ = self._make_kg()
         schema = OntologySchema()
         schema.add_inverse("isManagerOf", "isManagedBy")
         kg2 = OntologyReasoner(schema).materialize(kg)
         managed_by_rels = [
-            r for r in kg2.relationships.values()
-            if r.relationship_type == "isManagedBy"
+            r for r in kg2.relationships.values() if r.relationship_type == "isManagedBy"
         ]
         assert len(managed_by_rels) == 1
         assert managed_by_rels[0].source_id == bob.entity_id
@@ -283,6 +307,7 @@ class TestOntologyReasoner:
         THEN:  Source entities of worksAt gain 'Person' inferred type
         """
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
+
         kg, alice, bob, acme = self._make_kg()
         schema = OntologySchema()
         schema.add_domain("worksAt", "Person")
@@ -297,6 +322,7 @@ class TestOntologyReasoner:
         THEN:  Target entities of worksAt gain 'Organization' inferred type
         """
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
+
         kg, alice, bob, acme = self._make_kg()
         schema = OntologySchema()
         schema.add_range("worksAt", "Organization")
@@ -312,6 +338,7 @@ class TestOntologyReasoner:
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
+
         kg = KnowledgeGraph("trans_test")
         a = kg.add_entity("Person", "A")
         b = kg.add_entity("Person", "B")
@@ -322,10 +349,7 @@ class TestOntologyReasoner:
         schema = OntologySchema()
         schema.add_transitive("isAncestorOf")
         kg2 = OntologyReasoner(schema).materialize(kg)
-        anc_rels = [
-            r for r in kg2.relationships.values()
-            if r.relationship_type == "isAncestorOf"
-        ]
+        anc_rels = [r for r in kg2.relationships.values() if r.relationship_type == "isAncestorOf"]
         # Should have A->B, B->C, and A->C (inferred)
         pairs = {(r.source_id, r.target_id) for r in anc_rels}
         assert (a.entity_id, c.entity_id) in pairs
@@ -338,6 +362,7 @@ class TestOntologyReasoner:
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
+
         kg = KnowledgeGraph("test")
         alice = kg.add_entity("Employee", "Alice")
         schema = OntologySchema()
@@ -353,6 +378,7 @@ class TestOntologyReasoner:
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
+
         kg = KnowledgeGraph("disjoint_test")
         kg.add_entity("Customer", "Charlie", properties={"inferred_types": ["Employee"]})
         schema = OntologySchema()
@@ -369,6 +395,7 @@ class TestOntologyReasoner:
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
+
         kg = KnowledgeGraph("clean")
         kg.add_entity("Employee", "Alice")
         schema = OntologySchema()
@@ -379,6 +406,7 @@ class TestOntologyReasoner:
     def test_ontology_exported_from_package(self):
         """OntologySchema and OntologyReasoner exportable from ontology package."""
         from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
+
         assert OntologySchema is not None
         assert OntologyReasoner is not None
 
@@ -393,6 +421,7 @@ class TestGraphPartitioner:
 
     def _make_kg(self, n_nodes: int = 10) -> "KnowledgeGraph":
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
+
         kg = KnowledgeGraph("dist_test")
         entities = [
             kg.add_entity("Person", f"Person_{i}", properties={"age": 20 + i})
@@ -409,8 +438,10 @@ class TestGraphPartitioner:
         THEN:  All 10 nodes are tracked in node_to_partition
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, PartitionStrategy,
+            GraphPartitioner,
+            PartitionStrategy,
         )
+
         kg = self._make_kg(10)
         dist = GraphPartitioner(num_partitions=3, strategy=PartitionStrategy.HASH).partition(kg)
         assert dist.total_nodes == 10
@@ -423,8 +454,10 @@ class TestGraphPartitioner:
         THEN:  Each partition gets approximately 5 nodes
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, PartitionStrategy,
+            GraphPartitioner,
+            PartitionStrategy,
         )
+
         kg = self._make_kg(10)
         dist = GraphPartitioner(num_partitions=2, strategy=PartitionStrategy.RANGE).partition(kg)
         stats = dist.get_partition_stats()
@@ -437,10 +470,14 @@ class TestGraphPartitioner:
         THEN:  Each partition has exactly 2 nodes
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, PartitionStrategy,
+            GraphPartitioner,
+            PartitionStrategy,
         )
+
         kg = self._make_kg(8)
-        dist = GraphPartitioner(num_partitions=4, strategy=PartitionStrategy.ROUND_ROBIN).partition(kg)
+        dist = GraphPartitioner(num_partitions=4, strategy=PartitionStrategy.ROUND_ROBIN).partition(
+            kg
+        )
         stats = dist.get_partition_stats()
         assert all(s.node_count == 2 for s in stats)
 
@@ -451,6 +488,7 @@ class TestGraphPartitioner:
         THEN:  Single partition with all nodes is returned
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import GraphPartitioner
+
         kg = self._make_kg(5)
         dist = GraphPartitioner(num_partitions=1).partition(kg)
         assert dist.num_partitions == 1
@@ -463,6 +501,7 @@ class TestGraphPartitioner:
         THEN:  All original nodes are present in the merged graph
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import GraphPartitioner
+
         kg = self._make_kg(10)
         dist = GraphPartitioner(num_partitions=3).partition(kg)
         merged = dist.to_merged_graph()
@@ -476,6 +515,7 @@ class TestGraphPartitioner:
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import GraphPartitioner
+
         kg = KnowledgeGraph("find_partition")
         alice = kg.add_entity("Person", "Alice")
         dist = GraphPartitioner(num_partitions=2).partition(kg)
@@ -490,6 +530,7 @@ class TestGraphPartitioner:
         THEN:  None is returned
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import GraphPartitioner
+
         kg = self._make_kg(3)
         dist = GraphPartitioner(num_partitions=2).partition(kg)
         assert dist.get_partition_for_entity("non-existent-id") is None
@@ -501,6 +542,7 @@ class TestGraphPartitioner:
         THEN:  ValueError is raised
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import GraphPartitioner
+
         with pytest.raises(ValueError):
             GraphPartitioner(num_partitions=0)
 
@@ -511,12 +553,13 @@ class TestFederatedQueryExecutor:
     def _make_dist(self, n_nodes: int = 9, n_partitions: int = 3):
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            GraphPartitioner, PartitionStrategy,
+            GraphPartitioner,
+            PartitionStrategy,
         )
+
         kg = KnowledgeGraph("fq_test")
         entities = [
-            kg.add_entity("Person", f"P{i}", properties={"age": 20 + i})
-            for i in range(n_nodes)
+            kg.add_entity("Person", f"P{i}", properties={"age": 20 + i}) for i in range(n_nodes)
         ]
         for i in range(n_nodes - 1):
             kg.add_relationship("knows", entities[i], entities[i + 1])
@@ -531,11 +574,11 @@ class TestFederatedQueryExecutor:
         THEN:  A FederatedQueryResult is returned with correct metadata
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import FederatedQueryExecutor
+
         dist = self._make_dist()
-        result = FederatedQueryExecutor(dist).execute_cypher(
-            "MATCH (n:Person) RETURN n.name"
-        )
+        result = FederatedQueryExecutor(dist).execute_cypher("MATCH (n:Person) RETURN n.name")
         from ipfs_datasets_py.knowledge_graphs.query.distributed import FederatedQueryResult
+
         assert isinstance(result, FederatedQueryResult)
         assert result.num_partitions == 3
 
@@ -546,10 +589,9 @@ class TestFederatedQueryExecutor:
         THEN:  All 9 distinct names are returned
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import FederatedQueryExecutor
+
         dist = self._make_dist(9, 3)
-        result = FederatedQueryExecutor(dist).execute_cypher(
-            "MATCH (n:Person) RETURN n.name"
-        )
+        result = FederatedQueryExecutor(dist).execute_cypher("MATCH (n:Person) RETURN n.name")
         names = {r.get("n.name") for r in result.records if isinstance(r, dict)}
         assert len(names) == 9
 
@@ -560,8 +602,10 @@ class TestFederatedQueryExecutor:
         THEN:  Result contains no duplicates
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import (
-            FederatedQueryExecutor, FederatedQueryResult,
+            FederatedQueryExecutor,
+            FederatedQueryResult,
         )
+
         dist = self._make_dist(6, 2)
         result = FederatedQueryExecutor(dist, dedup=True).execute_cypher(
             "MATCH (n:Person) RETURN n.name"
@@ -576,6 +620,7 @@ class TestFederatedQueryExecutor:
         THEN:  Results match serial execution
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import FederatedQueryExecutor
+
         dist = self._make_dist(9, 3)
         exec_ = FederatedQueryExecutor(dist)
         serial = exec_.execute_cypher("MATCH (n:Person) RETURN n.name")
@@ -591,10 +636,9 @@ class TestFederatedQueryExecutor:
         THEN:  Contains expected keys
         """
         from ipfs_datasets_py.knowledge_graphs.query.distributed import FederatedQueryExecutor
+
         dist = self._make_dist(3, 2)
-        result = FederatedQueryExecutor(dist).execute_cypher(
-            "MATCH (n:Person) RETURN n.name"
-        )
+        result = FederatedQueryExecutor(dist).execute_cypher("MATCH (n:Person) RETURN n.name")
         d = result.to_dict()
         assert "records" in d
         assert "num_partitions" in d
@@ -603,7 +647,9 @@ class TestFederatedQueryExecutor:
     def test_distributed_exported_from_query_package(self):
         """GraphPartitioner and FederatedQueryExecutor re-exported from query package."""
         from ipfs_datasets_py.knowledge_graphs.query import (
-            GraphPartitioner, FederatedQueryExecutor,
+            GraphPartitioner,
+            FederatedQueryExecutor,
         )
+
         assert GraphPartitioner is not None
         assert FederatedQueryExecutor is not None

@@ -14,9 +14,10 @@ from pathlib import Path
 from datetime import datetime
 from html import escape
 
+
 def create_demo_dashboard_html():
     """Create a demo HTML page showing the deontological analysis interface."""
-    
+
     html_content = """
 <!DOCTYPE html>
 <html lang="en">
@@ -480,16 +481,17 @@ def create_demo_dashboard_html():
 </body>
 </html>
     """
-    
+
     demo_file = Path("/tmp/deontological_analysis_demo.html")
-    with open(demo_file, 'w', encoding='utf-8') as f:
+    with open(demo_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-    
+
     return demo_file
+
 
 def create_analysis_summary():
     """Create a comprehensive analysis summary."""
-    
+
     summary = {
         "feature": "Deontological Reasoning for Legal/Ethical Analysis",
         "implementation_date": datetime.now().isoformat(),
@@ -499,43 +501,43 @@ def create_analysis_summary():
                 "permissions": "Detects may, can, allowed to, permitted to",
                 "prohibitions": "Detects must not, cannot, forbidden to, prohibited from",
                 "conditionals": "Detects if/then/when conditional obligations",
-                "exceptions": "Detects unless, except when exception clauses"
+                "exceptions": "Detects unless, except when exception clauses",
             },
             "conflict_detection": {
                 "direct_contradiction": "X must do A vs X must not do A",
-                "permission_prohibition": "X may do A vs X cannot do A", 
+                "permission_prohibition": "X may do A vs X cannot do A",
                 "obligation_prohibition": "X must do A vs X must not do A",
                 "jurisdictional": "Different rules from different authorities",
                 "conditional_conflict": "Conflicting conditional statements",
-                "temporal": "Rules changing over time"
+                "temporal": "Rules changing over time",
             },
             "entity_analysis": {
                 "entity_extraction": "Identifies who obligations apply to",
                 "entity_grouping": "Groups statements by entity",
                 "conflict_reporting": "Reports conflicts per entity",
-                "cross_reference": "Links related entities and statements"
+                "cross_reference": "Links related entities and statements",
             },
             "query_capabilities": {
                 "statement_search": "Query by entity, modality, action keywords",
                 "conflict_search": "Query by entity, conflict type, severity",
                 "filtering": "Filter by confidence, source, date ranges",
-                "export": "Export results for legal/compliance review"
-            }
+                "export": "Export results for legal/compliance review",
+            },
         },
         "integration": {
             "dashboard_interface": "Full GUI integration with unified investigation dashboard",
             "api_endpoints": [
                 "/api/investigation/analyze/deontological",
-                "/api/investigation/query/deontic_statements", 
-                "/api/investigation/query/deontic_conflicts"
+                "/api/investigation/query/deontic_statements",
+                "/api/investigation/query/deontic_conflicts",
             ],
             "backend_components": [
                 "DeontologicalReasoningEngine",
                 "DeonticExtractor",
                 "ConflictDetector",
                 "DeonticStatement",
-                "DeonticConflict"
-            ]
+                "DeonticConflict",
+            ],
         },
         "test_results": {
             "total_tests": 5,
@@ -543,68 +545,69 @@ def create_analysis_summary():
             "success_rate": "100%",
             "test_categories": [
                 "Legal Obligations Analysis",
-                "Regulatory Conflicts", 
+                "Regulatory Conflicts",
                 "Government Policy Analysis",
                 "Corporate Governance Analysis",
-                "Query Capabilities"
-            ]
+                "Query Capabilities",
+            ],
         },
         "use_cases": {
             "legal_professionals": [
                 "Contract review and conflict detection",
-                "Regulatory compliance analysis", 
+                "Regulatory compliance analysis",
                 "Due diligence investigations",
-                "Legal research across large document sets"
+                "Legal research across large document sets",
             ],
             "data_scientists": [
                 "Policy contradiction analysis",
                 "Large-scale compliance monitoring",
                 "Automated regulatory reporting",
-                "Cross-jurisdictional comparison studies"
+                "Cross-jurisdictional comparison studies",
             ],
             "historians": [
                 "Legal evolution analysis",
                 "Policy change tracking over time",
                 "Institutional constraint analysis",
-                "Comparative governance studies"
+                "Comparative governance studies",
             ],
             "compliance_officers": [
-                "Policy conflict identification", 
+                "Policy conflict identification",
                 "Regulatory gap analysis",
                 "Risk assessment automation",
-                "Audit trail documentation"
-            ]
+                "Audit trail documentation",
+            ],
         },
         "technical_specifications": {
             "pattern_matching": "Advanced regex and NLP-based extraction",
             "conflict_algorithms": "Graph-based conflict detection with severity scoring",
             "performance": "Processes 1000+ documents in under 10 seconds",
             "accuracy": "85-95% precision on deontic statement extraction",
-            "scalability": "Designed for enterprise-scale document collections"
-        }
+            "scalability": "Designed for enterprise-scale document collections",
+        },
     }
-    
+
     return summary
+
 
 async def main():
     """Main demo execution function."""
     print("🎭 Creating Deontological Analysis Demonstration")
     print("=" * 60)
-    
+
     # Create demo HTML interface
     demo_file = create_demo_dashboard_html()
     print(f"✅ Created interactive demo interface: {demo_file}")
-    
+
     # Create analysis summary
     summary = create_analysis_summary()
     summary_file = Path("/tmp/deontological_analysis_summary.json")
-    with open(summary_file, 'w', encoding='utf-8') as f:
+    with open(summary_file, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, default=str)
     print(f"✅ Created comprehensive analysis summary: {summary_file}")
-    
+
     # Create visual documentation
     documentation_file = Path("/tmp/deontological_analysis_documentation.md")
-    with open(documentation_file, 'w', encoding='utf-8') as f:
+    with open(documentation_file, "w", encoding="utf-8") as f:
         f.write(f"""# Deontological Reasoning Implementation
 
 ## Overview
@@ -700,26 +703,27 @@ The News Analysis Dashboard now includes advanced legal/ethical reasoning capabi
 
 The deontological reasoning system is now fully integrated and ready for production use in analyzing legal and ethical conflicts across large unstructured document collections.
 """)
-    
+
     print(f"✅ Created visual documentation: {documentation_file}")
-    
+
     print("\n🎉 DEONTOLOGICAL ANALYSIS DEMO COMPLETE!")
     print("=" * 60)
     print(f"📁 Demo Files Created:")
     print(f"   🌐 Interactive Demo: {demo_file}")
-    print(f"   📊 Analysis Summary: {summary_file}")  
+    print(f"   📊 Analysis Summary: {summary_file}")
     print(f"   📋 Documentation: {documentation_file}")
     print(f"   📋 Test Results: deontological_test_results.json")
-    
+
     print(f"\n💡 Key Capabilities Demonstrated:")
     print(f"   ⚖️  Legal/ethical statement extraction (obligations, permissions, prohibitions)")
     print(f"   ⚔️  Advanced conflict detection across multiple jurisdictions")
     print(f"   🎯 Entity-centric analysis with resolution suggestions")
     print(f"   🔍 Interactive query capabilities for research workflows")
     print(f"   📊 Professional dashboard integration for investigators")
-    
+
     print(f"\n🚀 The deontological reasoning feature is now fully integrated into")
     print(f"   the unified investigation dashboard and ready for production use!")
+
 
 if __name__ == "__main__":
     anyio.run(main())

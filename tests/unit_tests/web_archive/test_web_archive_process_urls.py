@@ -20,10 +20,10 @@ class TestWebArchiveProcessorProcessUrls:
         """
         # GIVEN
         urls = ["https://news.ycombinator.com", "https://reddit.com/r/programming"]
-        
+
         # WHEN
         result = processor.process_urls(urls)
-        
+
         # THEN
         assert isinstance(result, dict)
         # Success rate should be reported in the result
@@ -38,10 +38,10 @@ class TestWebArchiveProcessorProcessUrls:
         """
         # GIVEN
         urls = ["https://news.ycombinator.com", "https://reddit.com/r/programming"]
-        
+
         # WHEN
         result = processor.process_urls(urls)
-        
+
         # THEN
         assert isinstance(result, dict)
         assert "results" in result
@@ -56,16 +56,18 @@ class TestWebArchiveProcessorProcessUrls:
         """
         # GIVEN - list of valid URLs
         urls = ["https://example.com", "https://httpbin.org"]
-        
+
         # WHEN - process_urls is called
         result = processor.process_urls(urls)
-        
+
         # THEN - validate results structure
         assert isinstance(result, dict)
         assert "results" in result or "processed" in result
-        
+
         # Check if individual results have expected structure
-        results_key = "results" if "results" in result else "processed" if "processed" in result else None
+        results_key = (
+            "results" if "results" in result else "processed" if "processed" in result else None
+        )
         if results_key and result[results_key]:
             for item_result in result[results_key]:
                 if isinstance(item_result, dict):
@@ -84,13 +86,13 @@ class TestWebArchiveProcessorProcessUrls:
         """
         # GIVEN - mix of valid and invalid URLs
         urls = ["https://example.com", "not_a_url", "https://httpbin.org", "invalid://fake"]
-        
+
         # WHEN - process_urls is called
         result = processor.process_urls(urls)
-        
+
         # THEN - validate partial success
         assert isinstance(result, dict)
-        
+
         # Check for status indicators
         if "status" in result:
             # If numeric status, should be between 0.0 and 1.0 for partial success
@@ -100,7 +102,11 @@ class TestWebArchiveProcessorProcessUrls:
             assert 0.0 <= result["success_rate"] <= 1.0
         elif "processed" in result and "total" in result:
             # Alternative: check processed vs total counts
-            processed_count = len(result["processed"]) if isinstance(result["processed"], list) else result["processed"]
+            processed_count = (
+                len(result["processed"])
+                if isinstance(result["processed"], list)
+                else result["processed"]
+            )
             assert processed_count <= len(urls)
 
     def test_process_urls_partial_success_contains_results_list(self, processor):
@@ -116,7 +122,9 @@ class TestWebArchiveProcessorProcessUrls:
 
         # TODO: Add specific test logic based on actual method functionality
 
-    def test_process_urls_partial_success_success_results_have_status_and_archive_id(self, processor):
+    def test_process_urls_partial_success_success_results_have_status_and_archive_id(
+        self, processor
+    ):
         """
         GIVEN list with mix of valid and invalid URLs
         WHEN process_urls is called

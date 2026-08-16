@@ -8,6 +8,7 @@ Feature: Federal Register Scraper Verification
   The verifier exits with code 0 when failed count equals 0, and exits with
   code 1 when failed count is greater than 0.
 """
+
 import pytest
 import anyio
 from datetime import datetime, timedelta
@@ -44,34 +45,40 @@ FULL_TEXT_FIELDS = ["full_text", "body"]
 
 # Fixtures from Background
 
+
 @pytest.fixture
 def federal_register_verifier_initialized() -> Dict[str, Any]:
     """
     Given the FederalRegisterVerifier is initialized with empty results dictionary
-    
+
     Returns an initialized verifier state with empty results.
     """
     raise NotImplementedError
+
 
 @pytest.fixture
 def search_federal_register_callable():
     """Fixture providing the actual search_federal_register callable."""
     raise NotImplementedError
 
+
 @pytest.fixture
 def scrape_federal_register_callable():
     """Fixture providing the actual scrape_federal_register callable."""
     raise NotImplementedError
+
 
 @pytest.fixture
 def date_range_week():
     """Fixture providing date range for last 7 days."""
     raise NotImplementedError
 
+
 @pytest.fixture
 def date_range_month():
     """Fixture providing date range for last 30 days."""
     raise NotImplementedError
+
 
 class TestSearchRecentDocuments:
     """Test 1: Search Recent Documents - Searches for documents from last 7 days"""
@@ -82,7 +89,7 @@ class TestSearchRecentDocuments:
         federal_register_verifier_initialized,
         summary_counters_zeroed,
         search_federal_register_callable,
-        date_range_week
+        date_range_week,
     ):
         raise NotImplementedError
 
@@ -91,23 +98,20 @@ class TestSearchRecentDocuments:
         federal_register_verifier_initialized,
         summary_counters_zeroed,
         search_federal_register_callable,
-        date_range_week
+        date_range_week,
     ):
         raise NotImplementedError
 
     def test_search_recent_documents_pass_increments_passed_counter(
-        self,
-        federal_register_verifier_initialized,
-        summary_counters_zeroed
+        self, federal_register_verifier_initialized, summary_counters_zeroed
     ):
         raise NotImplementedError
 
     def test_search_recent_documents_fail_increments_failed_counter(
-        self,
-        federal_register_verifier_initialized,
-        summary_counters_zeroed
+        self, federal_register_verifier_initialized, summary_counters_zeroed
     ):
         raise NotImplementedError
+
 
 class TestScrapeByAgency:
     """Test 2: Scrape by Agency - Scrapes EPA documents from last 30 days"""
@@ -118,7 +122,7 @@ class TestScrapeByAgency:
         federal_register_verifier_initialized,
         summary_counters_zeroed,
         scrape_federal_register_callable,
-        date_range_month
+        date_range_month,
     ):
         raise NotImplementedError
 
@@ -127,9 +131,10 @@ class TestScrapeByAgency:
         federal_register_verifier_initialized,
         summary_counters_zeroed,
         scrape_federal_register_callable,
-        date_range_month
+        date_range_month,
     ):
         raise NotImplementedError
+
 
 class TestScrapeMultipleAgencies:
     """Test 3: Scrape Multiple Agencies - Scrapes EPA and FDA documents"""
@@ -140,7 +145,7 @@ class TestScrapeMultipleAgencies:
         federal_register_verifier_initialized,
         summary_counters_zeroed,
         scrape_federal_register_callable,
-        date_range_month
+        date_range_month,
     ):
         raise NotImplementedError
 
@@ -149,9 +154,10 @@ class TestScrapeMultipleAgencies:
         federal_register_verifier_initialized,
         summary_counters_zeroed,
         scrape_federal_register_callable,
-        date_range_month
+        date_range_month,
     ):
         raise NotImplementedError
+
 
 class TestFilterByDocumentTypes:
     """Test 4: Filter by Document Types - Filters for RULE type documents"""
@@ -161,7 +167,7 @@ class TestFilterByDocumentTypes:
         self,
         federal_register_verifier_initialized,
         summary_counters_zeroed,
-        scrape_federal_register_callable
+        scrape_federal_register_callable,
     ):
         raise NotImplementedError
 
@@ -169,9 +175,10 @@ class TestFilterByDocumentTypes:
         self,
         federal_register_verifier_initialized,
         summary_counters_zeroed,
-        scrape_federal_register_callable
+        scrape_federal_register_callable,
     ):
         raise NotImplementedError
+
 
 class TestValidateDataStructure:
     """Test 5: Validate Data Structure - Checks for required fields in scraped data"""
@@ -181,7 +188,7 @@ class TestValidateDataStructure:
         self,
         federal_register_verifier_initialized,
         summary_counters_zeroed,
-        scrape_federal_register_callable
+        scrape_federal_register_callable,
     ):
         raise NotImplementedError
 
@@ -189,7 +196,7 @@ class TestValidateDataStructure:
         self,
         federal_register_verifier_initialized,
         summary_counters_zeroed,
-        scrape_federal_register_callable
+        scrape_federal_register_callable,
     ):
         raise NotImplementedError
 
@@ -197,9 +204,10 @@ class TestValidateDataStructure:
         self,
         federal_register_verifier_initialized,
         summary_counters_zeroed,
-        scrape_federal_register_callable
+        scrape_federal_register_callable,
     ):
         raise NotImplementedError
+
 
 class TestSearchWithKeywords:
     """Test 6: Search with Keywords - Searches for 'environmental' keyword"""
@@ -210,7 +218,7 @@ class TestSearchWithKeywords:
         federal_register_verifier_initialized,
         summary_counters_zeroed,
         search_federal_register_callable,
-        date_range_month
+        date_range_month,
     ):
         raise NotImplementedError
 
@@ -219,9 +227,10 @@ class TestSearchWithKeywords:
         federal_register_verifier_initialized,
         summary_counters_zeroed,
         search_federal_register_callable,
-        date_range_month
+        date_range_month,
     ):
         raise NotImplementedError
+
 
 class TestFullTextInclusion:
     """Test 7: Full Text Inclusion - Verifies full_text or body field inclusion"""
@@ -231,9 +240,10 @@ class TestFullTextInclusion:
         self,
         federal_register_verifier_initialized,
         summary_counters_zeroed,
-        scrape_federal_register_callable
+        scrape_federal_register_callable,
     ):
         raise NotImplementedError
+
 
 class TestRateLimiting:
     """Test 8: Rate Limiting - Verifies delay between requests is honored"""
@@ -243,23 +253,20 @@ class TestRateLimiting:
         self,
         federal_register_verifier_initialized,
         summary_counters_zeroed,
-        scrape_federal_register_callable
+        scrape_federal_register_callable,
     ):
         raise NotImplementedError
+
 
 class TestExitCodeDetermination:
     """Exit Code Determination - Verifies correct exit codes based on test results"""
 
     def test_verifier_returns_0_when_no_failures(
-        self,
-        federal_register_verifier_initialized,
-        summary_counters_zeroed
+        self, federal_register_verifier_initialized, summary_counters_zeroed
     ):
         raise NotImplementedError
 
     def test_verifier_returns_1_when_failures(
-        self,
-        federal_register_verifier_initialized,
-        summary_counters_zeroed
+        self, federal_register_verifier_initialized, summary_counters_zeroed
     ):
         raise NotImplementedError

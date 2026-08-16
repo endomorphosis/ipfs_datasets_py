@@ -175,7 +175,11 @@ class ProofTactician:
                 if routing_evidence:
                     primary = routing_evidence[0]
                     primary_citation = str(primary.get("citation_text") or "a linked citation")
-                    primary_corpora = [str(item) for item in list(primary.get("corpus_priority") or []) if str(item).strip()]
+                    primary_corpora = [
+                        str(item)
+                        for item in list(primary.get("corpus_priority") or [])
+                        if str(item).strip()
+                    ]
                     primary_source_url = str(primary.get("source_url") or "").strip()
                     primary_source_cid = str(primary.get("source_cid") or "").strip()
                     source_fragment = ""
@@ -191,9 +195,13 @@ class ProofTactician:
                 parser_metadata.update(
                     {
                         "preferred_corpus_keys": list(authority_summary["linked_corpus_keys"]),
-                        "preferred_corpus_priority": list(authority_summary["linked_corpus_priority"]),
+                        "preferred_corpus_priority": list(
+                            authority_summary["linked_corpus_priority"]
+                        ),
                         "preferred_dataset_ids": list(authority_summary["linked_dataset_ids"]),
-                        "preferred_dataset_priority": list(authority_summary["linked_dataset_priority"]),
+                        "preferred_dataset_priority": list(
+                            authority_summary["linked_dataset_priority"]
+                        ),
                         "preferred_state_codes": list(authority_summary["preferred_state_codes"]),
                         "routing_evidence": routing_evidence,
                         "routing_reason": routing_reason,
@@ -344,7 +352,12 @@ class ProofTactician:
                 for source in candidate_sources
             )
             preferred_types = (
-                ["authority_list", "legal_dataset_parser", "local_docket_documents", "local_bm25_index"]
+                [
+                    "authority_list",
+                    "legal_dataset_parser",
+                    "local_docket_documents",
+                    "local_bm25_index",
+                ]
                 if parser_backed_authorities
                 else ["authority_list", "local_docket_documents", "local_bm25_index"]
             )
@@ -361,7 +374,9 @@ class ProofTactician:
                     return source
         return candidate_sources[0] if candidate_sources else None
 
-    def _build_search_stages(self, candidate_sources: Sequence[ProofSearchSource]) -> List[Dict[str, Any]]:
+    def _build_search_stages(
+        self, candidate_sources: Sequence[ProofSearchSource]
+    ) -> List[Dict[str, Any]]:
         grouped: Dict[str, List[str]] = {
             "local": [],
             "parser": [],
@@ -432,7 +447,9 @@ class ProofTactician:
             corpus_key = str(authority.get("corpus_key") or "").strip()
             dataset_id = str(authority.get("dataset_id") or "").strip()
             source_url = str(authority.get("source_url") or "").strip()
-            metadata = authority.get("metadata") if isinstance(authority.get("metadata"), dict) else {}
+            metadata = (
+                authority.get("metadata") if isinstance(authority.get("metadata"), dict) else {}
+            )
             corpus_priority_candidates: List[str] = []
             if corpus_key:
                 corpus_priority_candidates.append(corpus_key)
@@ -481,11 +498,9 @@ class ProofTactician:
             source_ref = str(authority.get("source_ref") or "").strip()
             source_title = str(authority.get("title") or authority.get("label") or "").strip()
             matched = bool(authority.get("matched"))
-            state_code = str(
-                authority.get("state_code")
-                or metadata.get("state_code")
-                or ""
-            ).strip().upper()
+            state_code = (
+                str(authority.get("state_code") or metadata.get("state_code") or "").strip().upper()
+            )
             if state_code and state_code not in preferred_state_codes:
                 preferred_state_codes.append(state_code)
             if normalized_corpus_priority:

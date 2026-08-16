@@ -59,9 +59,7 @@ INTENT_AUTHORIZATION_API_INTERFACE: Final = "IntentAuthorizationAPI@1"
 INTENT_AUTHORIZATION_API_SCHEMA_VERSION: Final = "intent-authorization-api/v1"
 TYPED_DECISION_REF_SCHEMA_VERSION: Final = "typed-decision-ref/v1"
 TYPED_RECEIPT_REF_SCHEMA_VERSION: Final = "typed-receipt-ref/v1"
-REDACTED_AUTHORIZATION_VIEW_SCHEMA_VERSION: Final = (
-    "redacted-authorization-view/v1"
-)
+REDACTED_AUTHORIZATION_VIEW_SCHEMA_VERSION: Final = "redacted-authorization-view/v1"
 AUTHORIZATION_API_RESULT_SCHEMA_VERSION: Final = "authorization-api-result/v1"
 BOUND_CONTEXT_VIEW_SCHEMA_VERSION: Final = "bound-context-view/v1"
 BOUND_ROOTS_VIEW_SCHEMA_VERSION: Final = "bound-roots-view/v1"
@@ -163,17 +161,11 @@ def _text(
     if not isinstance(value, str):
         raise AuthorizationAPIRequestError(f"{name} must be a string")
     if not allow_empty and (not value.strip() or value != value.strip()):
-        raise AuthorizationAPIRequestError(
-            f"{name} must be a non-empty trimmed string"
-        )
+        raise AuthorizationAPIRequestError(f"{name} must be a non-empty trimmed string")
     if value and value != value.strip():
-        raise AuthorizationAPIRequestError(
-            f"{name} must not have surrounding whitespace"
-        )
+        raise AuthorizationAPIRequestError(f"{name} must not have surrounding whitespace")
     if len(value) > max_chars:
-        raise AuthorizationAPIRequestError(
-            f"{name} exceeds maximum length of {max_chars}"
-        )
+        raise AuthorizationAPIRequestError(f"{name} exceeds maximum length of {max_chars}")
     return value
 
 
@@ -201,9 +193,7 @@ def _digest(value: Any, name: str) -> str:
     if text.startswith("sha256:"):
         text = text[len("sha256:") :]
     if not _SHA256_HEX_RE.fullmatch(text):
-        raise AuthorizationAPIRequestError(
-            f"{name} must be a lowercase SHA-256 hex digest"
-        )
+        raise AuthorizationAPIRequestError(f"{name} must be a lowercase SHA-256 hex digest")
     return text
 
 
@@ -219,14 +209,10 @@ def _mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise AuthorizationAPIRequestError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise AuthorizationAPIRequestError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _unique_sorted(
@@ -238,14 +224,10 @@ def _unique_sorted(
 ) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise AuthorizationAPIRequestError(f"{name} must be a sequence of strings")
     if len(values) > max_items:
-        raise AuthorizationAPIRequestError(
-            f"{name} exceeds maximum of {max_items} items"
-        )
+        raise AuthorizationAPIRequestError(f"{name} exceeds maximum of {max_items} items")
     if require_identifier:
         items = tuple(_identifier(item, f"{name} item") for item in values)
     else:
@@ -302,17 +284,12 @@ def redact_mapping(
             key_text = str(key)
             if _is_forbidden_key(key_text):
                 continue
-            out[key_text] = redact_mapping(
-                item, max_depth=max_depth, _depth=_depth + 1
-            )
+            out[key_text] = redact_mapping(item, max_depth=max_depth, _depth=_depth + 1)
         return out
     if isinstance(value, (list, tuple)):
         if len(value) > MAX_COLLECTION_ITEMS:
             value = value[:MAX_COLLECTION_ITEMS]
-        return [
-            redact_mapping(item, max_depth=max_depth, _depth=_depth + 1)
-            for item in value
-        ]
+        return [redact_mapping(item, max_depth=max_depth, _depth=_depth + 1) for item in value]
     if isinstance(value, str):
         if len(value) > MAX_STRING_CHARS:
             return value[:MAX_STRING_CHARS] + "…"
@@ -346,18 +323,14 @@ class TypedDecisionRef:
             "decision_digest",
             _digest(self.decision_digest, "decision_digest"),
         )
-        object.__setattr__(
-            self, "status", _text(self.status, "status", max_chars=64)
-        )
+        object.__setattr__(self, "status", _text(self.status, "status", max_chars=64))
         object.__setattr__(
             self,
             "wire_status",
             _text(self.wire_status, "wire_status", max_chars=32),
         )
         if self.wire_status not in {"allow", "reject", "abstain"}:
-            raise AuthorizationAPIRequestError(
-                "wire_status must be allow, reject, or abstain"
-            )
+            raise AuthorizationAPIRequestError("wire_status must be allow, reject, or abstain")
         object.__setattr__(
             self,
             "profile_id",
@@ -368,9 +341,7 @@ class TypedDecisionRef:
             "policy_digest",
             _optional_digest(self.policy_digest, "policy_digest"),
         )
-        object.__setattr__(
-            self, "interface", _text(self.interface, "interface")
-        )
+        object.__setattr__(self, "interface", _text(self.interface, "interface"))
         object.__setattr__(
             self,
             "schema_version",
@@ -420,15 +391,11 @@ class TypedReceiptRef:
     schema_version: str = TYPED_RECEIPT_REF_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "receipt_id", _identifier(self.receipt_id, "receipt_id")
-        )
+        object.__setattr__(self, "receipt_id", _identifier(self.receipt_id, "receipt_id"))
         digest = self.content_digest
         if digest.startswith("sha256:"):
             digest = digest[len("sha256:") :]
-        object.__setattr__(
-            self, "content_digest", _digest(digest, "content_digest")
-        )
+        object.__setattr__(self, "content_digest", _digest(digest, "content_digest"))
         object.__setattr__(
             self,
             "content_cid",
@@ -440,15 +407,9 @@ class TypedReceiptRef:
             _text(self.wire_status, "wire_status", max_chars=32),
         )
         if self.wire_status not in {"allow", "reject", "abstain"}:
-            raise AuthorizationAPIRequestError(
-                "wire_status must be allow, reject, or abstain"
-            )
-        object.__setattr__(
-            self, "outcome", _text(self.outcome, "outcome", max_chars=64)
-        )
-        object.__setattr__(
-            self, "expiry", _optional_text(self.expiry, "expiry")
-        )
+            raise AuthorizationAPIRequestError("wire_status must be allow, reject, or abstain")
+        object.__setattr__(self, "outcome", _text(self.outcome, "outcome", max_chars=64))
+        object.__setattr__(self, "expiry", _optional_text(self.expiry, "expiry"))
         object.__setattr__(
             self,
             "audience_id",
@@ -459,9 +420,7 @@ class TypedReceiptRef:
             "request_digest",
             _optional_digest(self.request_digest, "request_digest"),
         )
-        object.__setattr__(
-            self, "interface", _text(self.interface, "interface")
-        )
+        object.__setattr__(self, "interface", _text(self.interface, "interface"))
         object.__setattr__(
             self,
             "schema_version",
@@ -528,15 +487,9 @@ class BoundContextView:
             "arguments_digest",
             _digest(self.arguments_digest, "arguments_digest"),
         )
-        object.__setattr__(
-            self, "actor_id", _identifier(self.actor_id, "actor_id")
-        )
-        object.__setattr__(
-            self, "audience_id", _identifier(self.audience_id, "audience_id")
-        )
-        object.__setattr__(
-            self, "tool_id", _optional_identifier(self.tool_id, "tool_id")
-        )
+        object.__setattr__(self, "actor_id", _identifier(self.actor_id, "actor_id"))
+        object.__setattr__(self, "audience_id", _identifier(self.audience_id, "audience_id"))
+        object.__setattr__(self, "tool_id", _optional_identifier(self.tool_id, "tool_id"))
         object.__setattr__(
             self,
             "tool_version",
@@ -545,9 +498,7 @@ class BoundContextView:
         object.__setattr__(
             self,
             "effect_ids",
-            _unique_sorted(
-                self.effect_ids, "effect_ids", require_identifier=True
-            ),
+            _unique_sorted(self.effect_ids, "effect_ids", require_identifier=True),
         )
         object.__setattr__(
             self,
@@ -559,9 +510,7 @@ class BoundContextView:
             "environment_id",
             _optional_identifier(self.environment_id, "environment_id"),
         )
-        object.__setattr__(
-            self, "nonce", _text(self.nonce, "nonce", max_chars=128)
-        )
+        object.__setattr__(self, "nonce", _text(self.nonce, "nonce", max_chars=128))
         object.__setattr__(
             self,
             "schema_version",
@@ -609,9 +558,7 @@ class BoundRootsView:
     schema_version: str = BOUND_ROOTS_VIEW_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "policy_root", _text(self.policy_root, "policy_root")
-        )
+        object.__setattr__(self, "policy_root", _text(self.policy_root, "policy_root"))
         object.__setattr__(
             self,
             "corpus_roots",
@@ -674,23 +621,17 @@ class RedactedAuthorizationView:
             _text(self.wire_status, "wire_status", max_chars=32),
         )
         if self.wire_status not in {"allow", "reject", "abstain"}:
-            raise AuthorizationAPIRequestError(
-                "wire_status must be allow, reject, or abstain"
-            )
+            raise AuthorizationAPIRequestError("wire_status must be allow, reject, or abstain")
         object.__setattr__(
             self,
             "internal_status",
             _text(self.internal_status, "internal_status", max_chars=64),
         )
-        object.__setattr__(
-            self, "reasons", _bounded_reasons(tuple(self.reasons))
-        )
+        object.__setattr__(self, "reasons", _bounded_reasons(tuple(self.reasons)))
         object.__setattr__(
             self,
             "reason_codes",
-            _unique_sorted(
-                self.reason_codes, "reason_codes", max_items=MAX_REASONS
-            ),
+            _unique_sorted(self.reason_codes, "reason_codes", max_items=MAX_REASONS),
         )
         object.__setattr__(
             self,
@@ -698,12 +639,8 @@ class RedactedAuthorizationView:
             _optional_text(self.profile_id, "profile_id"),
         )
         object.__setattr__(self, "executed", bool(self.executed))
-        object.__setattr__(
-            self, "capability_issued", bool(self.capability_issued)
-        )
-        object.__setattr__(
-            self, "capability_consumed", bool(self.capability_consumed)
-        )
+        object.__setattr__(self, "capability_issued", bool(self.capability_issued))
+        object.__setattr__(self, "capability_consumed", bool(self.capability_consumed))
         # Hard safety: public API never claims it issued or consumed a capability.
         if self.capability_issued or self.capability_consumed:
             raise AuthorizationAPIError(
@@ -711,9 +648,7 @@ class RedactedAuthorizationView:
                 "(API never issues or consumes dispatch capabilities)"
             )
         if self.executed:
-            raise AuthorizationAPIError(
-                "redacted view must never report executed=true"
-            )
+            raise AuthorizationAPIError("redacted view must never report executed=true")
         diagnostics = _bounded_reasons(tuple(self.diagnostics))
         if len(diagnostics) > MAX_DIAGNOSTICS:
             diagnostics = diagnostics[:MAX_DIAGNOSTICS]
@@ -733,18 +668,14 @@ class RedactedAuthorizationView:
             "capability_consumed": False,
             "capability_issued": False,
             "context": None if self.context is None else self.context.to_dict(),
-            "decision_ref": (
-                None if self.decision_ref is None else self.decision_ref.to_dict()
-            ),
+            "decision_ref": (None if self.decision_ref is None else self.decision_ref.to_dict()),
             "diagnostics": list(self.diagnostics),
             "executed": False,
             "internal_status": self.internal_status,
             "profile_id": self.profile_id,
             "reason_codes": list(self.reason_codes),
             "reasons": list(self.reasons),
-            "receipt_ref": (
-                None if self.receipt_ref is None else self.receipt_ref.to_dict()
-            ),
+            "receipt_ref": (None if self.receipt_ref is None else self.receipt_ref.to_dict()),
             "roots": None if self.roots is None else self.roots.to_dict(),
             "schema_version": self.schema_version,
             "wire_status": self.wire_status,
@@ -793,32 +724,22 @@ class AuthorizationAPIResult:
             )
         object.__setattr__(self, "wire_status", wire)
         object.__setattr__(self, "internal_status", status)
-        object.__setattr__(
-            self, "reasons", _bounded_reasons(tuple(self.reasons))
-        )
+        object.__setattr__(self, "reasons", _bounded_reasons(tuple(self.reasons)))
         object.__setattr__(
             self,
             "reason_codes",
-            _unique_sorted(
-                self.reason_codes, "reason_codes", max_items=MAX_REASONS
-            ),
+            _unique_sorted(self.reason_codes, "reason_codes", max_items=MAX_REASONS),
         )
         object.__setattr__(
             self,
             "profile_id",
             _optional_text(self.profile_id, "profile_id"),
         )
-        object.__setattr__(
-            self, "producer_id", _text(self.producer_id, "producer_id")
-        )
+        object.__setattr__(self, "producer_id", _text(self.producer_id, "producer_id"))
         if self.interface != INTENT_AUTHORIZATION_API_INTERFACE:
-            raise AuthorizationAPIError(
-                f"unsupported API interface: {self.interface!r}"
-            )
+            raise AuthorizationAPIError(f"unsupported API interface: {self.interface!r}")
         if self.schema_version != AUTHORIZATION_API_RESULT_SCHEMA_VERSION:
-            raise AuthorizationAPIError(
-                f"unsupported API result schema: {self.schema_version!r}"
-            )
+            raise AuthorizationAPIError(f"unsupported API result schema: {self.schema_version!r}")
 
     @property
     def is_allow(self) -> bool:
@@ -832,18 +753,14 @@ class AuthorizationAPIResult:
         """Public serialization — redacted, no service internals, no capability."""
 
         payload = {
-            "decision_ref": (
-                None if self.decision_ref is None else self.decision_ref.to_dict()
-            ),
+            "decision_ref": (None if self.decision_ref is None else self.decision_ref.to_dict()),
             "interface": self.interface,
             "internal_status": self.internal_status.value,
             "producer_id": self.producer_id,
             "profile_id": self.profile_id,
             "reason_codes": list(self.reason_codes),
             "reasons": list(self.reasons),
-            "receipt_ref": (
-                None if self.receipt_ref is None else self.receipt_ref.to_dict()
-            ),
+            "receipt_ref": (None if self.receipt_ref is None else self.receipt_ref.to_dict()),
             "schema_version": self.schema_version,
             "view": None if self.view is None else self.view.to_dict(),
             "wire_status": self.wire_status.value,
@@ -913,8 +830,7 @@ def _require_explicit_bindings(envelope: Any) -> None:
     env_digest = getattr(environment, "snapshot_digest", "") or ""
     if not str(env_id).strip() and not str(env_digest).strip():
         raise AuthorizationAPIRequestError(
-            "explicit environment binding is required "
-            "(environment_id or snapshot_digest)"
+            "explicit environment binding is required (environment_id or snapshot_digest)"
         )
 
 
@@ -967,9 +883,7 @@ def _fail_closed_result(
 
     assert status is not InternalDecisionStatus.ALLOW
     wire = map_internal_to_wire(status)
-    context_view = (
-        None if context is None else BoundContextView.from_bound_context(context)
-    )
+    context_view = None if context is None else BoundContextView.from_bound_context(context)
     roots_view = None if roots is None else BoundRootsView.from_bound_roots(roots)
     view = RedactedAuthorizationView(
         wire_status=wire.value,
@@ -1007,9 +921,7 @@ def project_service_result(
     """
 
     if not isinstance(service_result, AuthorizationServiceResult):
-        raise AuthorizationAPIError(
-            "service_result must be an AuthorizationServiceResult"
-        )
+        raise AuthorizationAPIError("service_result must be an AuthorizationServiceResult")
 
     # Hard safety: never promote a capability-bearing service result through
     # the public API as if the API issued it — capability is stripped.
@@ -1079,29 +991,19 @@ class IntentAuthorizationAPI:
     issues a dispatch capability, and never consumes one.
     """
 
-    service: IntentAuthorizationService = field(
-        default_factory=IntentAuthorizationService
-    )
+    service: IntentAuthorizationService = field(default_factory=IntentAuthorizationService)
     producer_id: str = DEFAULT_API_PRODUCER_ID
     interface: str = INTENT_AUTHORIZATION_API_INTERFACE
     schema_version: str = INTENT_AUTHORIZATION_API_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "producer_id", _text(self.producer_id, "producer_id")
-        )
+        object.__setattr__(self, "producer_id", _text(self.producer_id, "producer_id"))
         if self.interface != INTENT_AUTHORIZATION_API_INTERFACE:
-            raise AuthorizationAPIError(
-                f"unsupported API interface: {self.interface!r}"
-            )
+            raise AuthorizationAPIError(f"unsupported API interface: {self.interface!r}")
         if self.schema_version != INTENT_AUTHORIZATION_API_SCHEMA_VERSION:
-            raise AuthorizationAPIError(
-                f"unsupported API schema: {self.schema_version!r}"
-            )
+            raise AuthorizationAPIError(f"unsupported API schema: {self.schema_version!r}")
         if not isinstance(self.service, IntentAuthorizationService):
-            raise AuthorizationAPIError(
-                "service must be an IntentAuthorizationService instance"
-            )
+            raise AuthorizationAPIError("service must be an IntentAuthorizationService instance")
 
     def evaluate(
         self,
@@ -1216,9 +1118,7 @@ class IntentAuthorizationAPI:
         # Backend-unavailable signals from the service itself.
         if self._looks_backend_unavailable(service_result):
             # Preserve non-allow; never promote.  Re-tag for public consumers.
-            projected = project_service_result(
-                service_result, producer_id=self.producer_id
-            )
+            projected = project_service_result(service_result, producer_id=self.producer_id)
             if projected.is_allow:
                 return _fail_closed_result(
                     status=InternalDecisionStatus.ERROR,
@@ -1230,9 +1130,7 @@ class IntentAuthorizationAPI:
                 )
             return projected
 
-        projected = project_service_result(
-            service_result, producer_id=self.producer_id
-        )
+        projected = project_service_result(service_result, producer_id=self.producer_id)
         # Defense in depth: public API never returns capability-bearing allow
         # artifacts even if the service was misconfigured.
         if service_result.capability is not None:
@@ -1433,9 +1331,7 @@ def stable_request_fingerprint(
         "arguments_digest": _digest(arguments_digest, "arguments_digest"),
         "audience_id": _identifier(audience_id, "audience_id"),
         "corpus_roots": list(_unique_sorted(corpus_roots, "corpus_roots")),
-        "environment_digest": _digest(
-            environment_digest, "environment_digest"
-        ),
+        "environment_digest": _digest(environment_digest, "environment_digest"),
         "nonce": _text(nonce, "nonce", max_chars=128),
         "policy_root": _text(policy_root, "policy_root"),
         "revocation_root": _text(revocation_root, "revocation_root"),

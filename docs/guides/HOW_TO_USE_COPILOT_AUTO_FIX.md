@@ -258,10 +258,7 @@ You can also use the auto-fixer programmatically:
 from scripts.copilot_auto_fix_all_prs import CopilotAutoFixAllPRs
 
 # Create instance
-auto_fixer = CopilotAutoFixAllPRs(
-    dry_run=False,
-    github_token="your_token"
-)
+auto_fixer = CopilotAutoFixAllPRs(dry_run=False, github_token="your_token")
 
 # Process all PRs
 auto_fixer.process_all_prs(limit=10)

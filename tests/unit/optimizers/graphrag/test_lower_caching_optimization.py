@@ -51,7 +51,7 @@ class TestLowerCachingOptimizationBasics:
         assert len(entities) > 0
 
         # Verify no stopwords appear in extracted entity texts
-        entity_texts_lower = {e['text'].lower() for e in entities}
+        entity_texts_lower = {e["text"].lower() for e in entities}
         for stopword in stopwords:
             assert stopword not in entity_texts_lower
 
@@ -59,10 +59,10 @@ class TestLowerCachingOptimizationBasics:
         """Test that mixed-case stopwords are handled correctly with caching."""
         text = "John Smith met with Alice Cooper and Bob Dylan"
         precompiled = compiler.build_precompiled_patterns("legal")
-        
+
         # Stopwords with mixed case
         stopwords = {"AND", "WITH", "MET"}  # uppercase
-        
+
         entities = compiler.extract_entities_with_precompiled(
             text=text,
             precompiled_patterns=precompiled,
@@ -73,7 +73,7 @@ class TestLowerCachingOptimizationBasics:
         )
 
         # Verify stopwords are filtered even with different casing
-        entity_texts_lower = {e['text'].lower() for e in entities}
+        entity_texts_lower = {e["text"].lower() for e in entities}
         for stopword in stopwords:
             assert stopword.lower() not in entity_texts_lower
 
@@ -98,13 +98,48 @@ class TestLowerCachingOptimizationBasics:
         """Test with large stopwords set (many items to pre-compute)."""
         text = "The quick brown fox jumps over the lazy dog"
         precompiled = compiler.build_precompiled_patterns("legal")
-        
+
         # Create a large stopwords set
         stopwords = {
-            "the", "a", "an", "and", "or", "but", "if", "in", "of", "to", "for",
-            "is", "was", "are", "been", "be", "have", "has", "had", "do", "does",
-            "did", "will", "would", "could", "should", "may", "might", "must",
-            "can", "shall", "with", "by", "from", "as", "at", "on", "over", "out",
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "if",
+            "in",
+            "of",
+            "to",
+            "for",
+            "is",
+            "was",
+            "are",
+            "been",
+            "be",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "must",
+            "can",
+            "shall",
+            "with",
+            "by",
+            "from",
+            "as",
+            "at",
+            "on",
+            "over",
+            "out",
         }
 
         entities = compiler.extract_entities_with_precompiled(
@@ -117,7 +152,7 @@ class TestLowerCachingOptimizationBasics:
         )
 
         # All stopwords should be filtered out
-        entity_texts_lower = {e['text'].lower() for e in entities}
+        entity_texts_lower = {e["text"].lower() for e in entities}
         for stopword in stopwords:
             assert stopword not in entity_texts_lower
 
@@ -141,15 +176,15 @@ class TestLowerCachingOptimizationCorrectness:
         )
 
         # Count unique lowercase text values
-        entity_texts_lower = {e['text'].lower() for e in entities}
-        
+        entity_texts_lower = {e["text"].lower() for e in entities}
+
         # Duplicates should be deduplicated (same lowercase key)
         assert len(entities) > 0, "Should find entities"
-        
+
         # The deduplication happens within extraction (seen_texts set)
         # So we should not have multiple exact matches of the same person
         for text_variant in entity_texts_lower:
-            count = sum(1 for e in entities if e['text'].lower() == text_variant)
+            count = sum(1 for e in entities if e["text"].lower() == text_variant)
             assert count == 1, f"Duplicate '{text_variant}' found {count} times"
 
     def test_stopword_filtering_respects_min_length(self, compiler):
@@ -169,7 +204,7 @@ class TestLowerCachingOptimizationCorrectness:
 
         # Verify all entities are at least 3 characters
         for entity in entities:
-            assert len(entity['text']) >= 3, f"Entity '{entity['text']}' is too short"
+            assert len(entity["text"]) >= 3, f"Entity '{entity['text']}' is too short"
 
     def test_stopword_filtering_order_independence(self, compiler):
         """Test that stopword order doesn't matter with caching."""
@@ -199,8 +234,8 @@ class TestLowerCachingOptimizationCorrectness:
         )
 
         # Results should be identical
-        texts1 = {e['text'].lower() for e in entities1}
-        texts2 = {e['text'].lower() for e in entities2}
+        texts1 = {e["text"].lower() for e in entities1}
+        texts2 = {e["text"].lower() for e in entities2}
         assert texts1 == texts2
 
 
@@ -210,12 +245,14 @@ class TestLowerCachingOptimizationPerformance:
     def test_extraction_with_many_matches(self, compiler):
         """Test extraction performance with many matches (common case for caching benefit)."""
         # Create text with many entity-like patterns that match the defined regexes
-        text = " ".join([
-            f"Dr. Person{i:03d} met with Mr. Individual{j:03d} Company{k} Inc"
-            for i in range(5)
-            for j in range(4)
-            for k in range(2)
-        ])
+        text = " ".join(
+            [
+                f"Dr. Person{i:03d} met with Mr. Individual{j:03d} Company{k} Inc"
+                for i in range(5)
+                for j in range(4)
+                for k in range(2)
+            ]
+        )
 
         precompiled = compiler.build_precompiled_patterns("legal")
         stopwords = {"with", "met"}
@@ -238,12 +275,14 @@ class TestLowerCachingOptimizationPerformance:
 
     def test_extraction_efficiency_with_caching(self, compiler):
         """Test extraction efficiency (entities per millisecond) with stopword caching."""
-        text = " ".join([
-            f"Mr. Person{i} Organization{j} Ltd on 2024-01-{(k % 28) + 1:02d}"
-            for i in range(8)
-            for j in range(8)
-            for k in range(3)
-        ])
+        text = " ".join(
+            [
+                f"Mr. Person{i} Organization{j} Ltd on 2024-01-{(k % 28) + 1:02d}"
+                for i in range(8)
+                for j in range(8)
+                for k in range(3)
+            ]
+        )
 
         precompiled = compiler.build_precompiled_patterns("legal")
         stopwords = {"organization", "mr"}
@@ -273,7 +312,7 @@ class TestLowerCachingOptimizationPerformance:
         """Conceptual test showing cache benefit (demonstrates the optimization value)."""
         text = "The quick brown fox jumps over the lazy dog repeatedly"
         precompiled = compiler.build_precompiled_patterns("legal")
-        
+
         # Large stopwords set triggers more comparisons
         stopwords = {"the", "and", "over", "a", "an"} | {f"word{i}" for i in range(50)}
 
@@ -291,7 +330,7 @@ class TestLowerCachingOptimizationPerformance:
 
         # Verify extraction still worked
         assert len(entities) > 0
-        
+
         # The optimization caches lowercase stopwords once instead of
         # recreating them on each comparison, saving ~1µs per match
         # With 2,600+ matches, this saves 2.6+ milliseconds
@@ -315,7 +354,7 @@ class TestLowerCachingOptimizationEdgeCases:
             max_confidence=1.0,
         )
 
-        entity_texts_lower = {e['text'].lower() for e in entities}
+        entity_texts_lower = {e["text"].lower() for e in entities}
         assert "if-and-only-if" not in entity_texts_lower
 
     def test_stopwords_with_unicode_characters(self, compiler):
@@ -333,7 +372,7 @@ class TestLowerCachingOptimizationEdgeCases:
             max_confidence=1.0,
         )
 
-        entity_texts_lower = {e['text'].lower() for e in entities}
+        entity_texts_lower = {e["text"].lower() for e in entities}
         for stopword in stopwords:
             assert stopword.lower() not in entity_texts_lower
 
@@ -361,7 +400,7 @@ class TestLowerCachingOptimizationEdgeCases:
         """Test with extremely long stopword list (regression test)."""
         text = "Person1 meetings with Person2 discussing items"
         precompiled = compiler.build_precompiled_patterns("legal")
-        
+
         # Create 1000 stopwords
         stopwords = {f"stopword{i}" for i in range(1000)} | {"with", "discussing"}
 
@@ -383,7 +422,7 @@ def test_optimization_preserves_all_functionality():
     """Integration test: Verify caching optimization doesn't break other features."""
     compiler = RegexPatternCompiler()
     text = "Dr. John Smith and Mrs. Jane Doe signed on 2024-01-15 for USD 50,000"
-    
+
     precompiled = compiler.build_precompiled_patterns("legal")
     stopwords = {"and", "on", "for"}
 
@@ -398,17 +437,17 @@ def test_optimization_preserves_all_functionality():
 
     # Verify all expected functionality works
     assert len(entities) > 0, "Should find entities"
-    
+
     # Verify structure of entities
     for entity in entities:
-        assert 'id' in entity
-        assert 'type' in entity
-        assert 'text' in entity
-        assert 'confidence' in entity
-        assert 'span' in entity
-        assert 'timestamp' in entity
-        
+        assert "id" in entity
+        assert "type" in entity
+        assert "text" in entity
+        assert "confidence" in entity
+        assert "span" in entity
+        assert "timestamp" in entity
+
     # Verify stopwords are filtered
-    entity_texts_lower = {e['text'].lower() for e in entities}
+    entity_texts_lower = {e["text"].lower() for e in entities}
     for stopword in stopwords:
         assert stopword not in entity_texts_lower

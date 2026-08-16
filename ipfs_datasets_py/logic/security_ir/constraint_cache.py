@@ -129,27 +129,21 @@ def _sha256_digest(data: bytes) -> str:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise SecurityConstraintCacheError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise SecurityConstraintCacheError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
 def _require_profile(value: Any) -> str:
     profile = _require_text(value, "profile")
     if not _PROFILE_RE.fullmatch(profile):
-        raise SecurityConstraintCacheError(
-            "profile must be a lowercase hyphenated identifier"
-        )
+        raise SecurityConstraintCacheError("profile must be a lowercase hyphenated identifier")
     return profile
 
 
 def _require_digest(value: Any, field_name: str) -> str:
     digest = _require_text(value, field_name)
     if not _DIGEST_RE.fullmatch(digest):
-        raise SecurityConstraintCacheError(
-            f"{field_name} must be a sha256:<hex> digest"
-        )
+        raise SecurityConstraintCacheError(f"{field_name} must be a sha256:<hex> digest")
     return digest
 
 
@@ -225,9 +219,7 @@ def validate_extensions_known(
     try:
         declaration.validate()
     except SecurityIRValidationError as exc:
-        raise SecurityConstraintCacheError(
-            f"invalid Security IR declaration: {exc}"
-        ) from exc
+        raise SecurityConstraintCacheError(f"invalid Security IR declaration: {exc}") from exc
 
     allowed = known_extension_vocabularies(known_vocabularies)
     id_allow = {
@@ -266,10 +258,7 @@ def validate_extensions_known(
                 f"{extension.vocabulary!r}; fail closed"
             )
         allowed_versions = version_allow.get(extension.vocabulary)
-        if (
-            allowed_versions is not None
-            and extension.version not in allowed_versions
-        ):
+        if allowed_versions is not None and extension.version not in allowed_versions:
             raise UnknownSecurityExtensionError(
                 "unsupported security extension version "
                 f"{extension.version!r} for vocabulary "
@@ -292,21 +281,15 @@ def _normalize_policy_decision(value: Any) -> dict[str, Any]:
     elif isinstance(value, Mapping):
         payload = dict(value)
     else:
-        raise SecurityConstraintCacheError(
-            "policy decision must be a PolicyDecision or mapping"
-        )
+        raise SecurityConstraintCacheError("policy decision must be a PolicyDecision or mapping")
 
     # Reparse through the typed contract so authority kind cannot drift.
     try:
         decision = PolicyDecision.from_dict(payload)
     except (TypeError, ValueError) as exc:
-        raise SecurityConstraintCacheError(
-            f"invalid policy decision payload: {exc}"
-        ) from exc
+        raise SecurityConstraintCacheError(f"invalid policy decision payload: {exc}") from exc
     if decision.authority.kind is not AuthorityKind.POLICY_APPROVAL:
-        raise SecurityConstraintCacheError(
-            "policy decision authority must be policy_approval"
-        )
+        raise SecurityConstraintCacheError("policy decision authority must be policy_approval")
     return decision.to_dict()
 
 
@@ -334,9 +317,7 @@ def _normalize_artifact(
         try:
             produced_artifact = FormalizationArtifact.from_dict(payload)
         except (TypeError, ValueError) as exc:
-            raise SecurityConstraintCacheError(
-                f"invalid formalization artifact: {exc}"
-            ) from exc
+            raise SecurityConstraintCacheError(f"invalid formalization artifact: {exc}") from exc
         payload = produced_artifact.to_dict()
 
     if produced_artifact.declaration_id != declaration.declaration_id:
@@ -399,19 +380,14 @@ class SecurityConstraintRecord:
         )
         object.__setattr__(self, "policy_decisions", decisions)
 
-        ext_ids = tuple(
-            _require_text(item, "extension_ids") for item in self.extension_ids
-        )
+        ext_ids = tuple(_require_text(item, "extension_ids") for item in self.extension_ids)
         ext_vocabs = tuple(
-            _require_text(item, "extension_vocabularies")
-            for item in self.extension_vocabularies
+            _require_text(item, "extension_vocabularies") for item in self.extension_vocabularies
         )
         if len(ext_ids) != len(set(ext_ids)):
             raise SecurityConstraintCacheError("extension_ids must be unique")
         if len(ext_vocabs) != len(set(ext_vocabs)):
-            raise SecurityConstraintCacheError(
-                "extension_vocabularies must be unique"
-            )
+            raise SecurityConstraintCacheError("extension_vocabularies must be unique")
         object.__setattr__(self, "extension_ids", ext_ids)
         object.__setattr__(self, "extension_vocabularies", tuple(sorted(ext_vocabs)))
 
@@ -516,12 +492,8 @@ class SecurityConstraintRecord:
             raise SecurityConstraintIntegrityError(
                 "stored declaration_cid does not match recomputed identity"
             )
-        expected_ids = tuple(
-            sorted({item.extension_id for item in declaration.extensions})
-        )
-        expected_vocabs = tuple(
-            sorted({item.vocabulary for item in declaration.extensions})
-        )
+        expected_ids = tuple(sorted({item.extension_id for item in declaration.extensions}))
+        expected_vocabs = tuple(sorted({item.vocabulary for item in declaration.extensions}))
         if tuple(sorted(self.extension_ids)) != expected_ids:
             raise SecurityConstraintIntegrityError(
                 "stored extension_ids do not match declaration extensions"
@@ -531,9 +503,7 @@ class SecurityConstraintRecord:
                 "stored extension_vocabularies do not match declaration extensions"
             )
         if check_extensions:
-            validate_extensions_known(
-                declaration, known_vocabularies=known_vocabularies
-            )
+            validate_extensions_known(declaration, known_vocabularies=known_vocabularies)
         # Artifact binding already checked at construction; re-check after reload.
         artifact = self.formalization_artifact()
         if artifact.declaration_digest != declaration.digest:
@@ -545,9 +515,7 @@ class SecurityConstraintRecord:
                 raise SecurityConstraintIntegrityError(
                     "policy decision lost policy_approval authority under reload"
                 )
-            if decision.declaration_id and (
-                decision.declaration_id != self.declaration_id
-            ):
+            if decision.declaration_id and (decision.declaration_id != self.declaration_id):
                 raise SecurityConstraintIntegrityError(
                     "policy decision declaration_id does not match constraint set"
                 )
@@ -573,9 +541,7 @@ class SecurityConstraintRecord:
             extension_vocabularies=tuple(value.get("extension_vocabularies", ())),
             content_digest=value.get("content_digest", ""),
             content_cid=value.get("content_cid", ""),
-            schema_version=value.get(
-                "schema_version", SECURITY_CONSTRAINT_RECORD_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", SECURITY_CONSTRAINT_RECORD_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -594,20 +560,14 @@ class SecurityConstraintRecord:
             security_ir = declaration
         else:
             try:
-                security_ir = SecurityIR.from_dict(
-                    _as_mapping(declaration, "declaration")
-                )
+                security_ir = SecurityIR.from_dict(_as_mapping(declaration, "declaration"))
             except (TypeError, ValueError, SecurityIRValidationError) as exc:
                 raise SecurityConstraintCacheError(
                     f"invalid Security IR declaration: {exc}"
                 ) from exc
-        validate_extensions_known(
-            security_ir, known_vocabularies=known_vocabularies
-        )
+        validate_extensions_known(security_ir, known_vocabularies=known_vocabularies)
         artifact_payload = _normalize_artifact(artifact, security_ir)
-        decision_payloads = tuple(
-            _normalize_policy_decision(item) for item in policy_decisions
-        )
+        decision_payloads = tuple(_normalize_policy_decision(item) for item in policy_decisions)
         for decision in decision_payloads:
             declaration_id = decision.get("declaration_id", "")
             if declaration_id and declaration_id != security_ir.declaration_id:
@@ -622,9 +582,7 @@ class SecurityConstraintRecord:
             declaration=security_ir.to_dict(),
             artifact=artifact_payload,
             policy_decisions=decision_payloads,
-            extension_ids=tuple(
-                sorted({item.extension_id for item in security_ir.extensions})
-            ),
+            extension_ids=tuple(sorted({item.extension_id for item in security_ir.extensions})),
             extension_vocabularies=tuple(
                 sorted({item.vocabulary for item in security_ir.extensions})
             ),
@@ -648,12 +606,8 @@ class SecurityConstraintCache:
     _records: dict[str, SecurityConstraintRecord] = field(
         default_factory=dict, init=False, repr=False
     )
-    _profile_index: dict[str, str] = field(
-        default_factory=dict, init=False, repr=False
-    )
-    _lock: threading.RLock = field(
-        default_factory=threading.RLock, init=False, repr=False
-    )
+    _profile_index: dict[str, str] = field(default_factory=dict, init=False, repr=False)
+    _lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if self.root is not None:
@@ -716,9 +670,7 @@ class SecurityConstraintCache:
 
         with self._lock:
             if isinstance(declaration, SecurityConstraintRecord):
-                if profile is not None and declaration.profile != _require_profile(
-                    profile
-                ):
+                if profile is not None and declaration.profile != _require_profile(profile):
                     raise SecurityConstraintCacheError(
                         "profile argument conflicts with the supplied record"
                     )
@@ -730,9 +682,7 @@ class SecurityConstraintCache:
                     raise SecurityConstraintCacheError(
                         "policy_decisions cannot be supplied with a finished record"
                     )
-                record = declaration.verify_integrity(
-                    known_vocabularies=self.known_vocabularies
-                )
+                record = declaration.verify_integrity(known_vocabularies=self.known_vocabularies)
             elif isinstance(declaration, FormalizationArtifact):
                 raise SecurityConstraintCacheError(
                     "put requires a SecurityIR declaration; pass artifact=..."
@@ -744,9 +694,7 @@ class SecurityConstraintCache:
                     )
                 if artifact is None and self.formalization_adapter is not None:
                     try:
-                        artifact = self.formalization_adapter.adapt_artifact(
-                            declaration
-                        )
+                        artifact = self.formalization_adapter.adapt_artifact(declaration)
                     except (
                         SecurityIRFormalizationAdapterError,
                         TypeError,
@@ -776,9 +724,7 @@ class SecurityConstraintCache:
         with self._lock:
             record = self._records.get(cid)
             if record is not None:
-                return record.verify_integrity(
-                    known_vocabularies=self.known_vocabularies
-                )
+                return record.verify_integrity(known_vocabularies=self.known_vocabularies)
             path = self._record_path(cid)
             if path is None or not path.is_file():
                 raise SecurityConstraintCacheError(
@@ -850,9 +796,7 @@ class SecurityConstraintCache:
                     "multiple constraint records for declaration_cid="
                     f"{declaration_cid!r}; specify profile (candidates: {profiles})"
                 )
-            return matches[0].verify_integrity(
-                known_vocabularies=self.known_vocabularies
-            )
+            return matches[0].verify_integrity(known_vocabularies=self.known_vocabularies)
 
     def contains(self, content_cid: str) -> bool:
         try:
@@ -885,9 +829,7 @@ class SecurityConstraintCache:
             if self.root is None:
                 # Memory-only: re-verify existing entries.
                 for cid, record in list(self._records.items()):
-                    verified = record.verify_integrity(
-                        known_vocabularies=self.known_vocabularies
-                    )
+                    verified = record.verify_integrity(known_vocabularies=self.known_vocabularies)
                     self._records[cid] = verified
                 return len(self._records)
 
@@ -909,18 +851,13 @@ class SecurityConstraintCache:
             index_path = self._index_path()
             if index_path is not None and index_path.is_file():
                 try:
-                    index_payload = json.loads(
-                        index_path.read_text(encoding="utf-8")
-                    )
+                    index_payload = json.loads(index_path.read_text(encoding="utf-8"))
                 except (OSError, UnicodeError, json.JSONDecodeError) as exc:
                     raise SecurityConstraintIntegrityError(
                         f"constraint cache index is unreadable: {exc}"
                     ) from exc
                 index_payload = _as_mapping(index_payload, "constraint cache index")
-                if (
-                    index_payload.get("schema_version")
-                    != SECURITY_CONSTRAINT_INDEX_SCHEMA_VERSION
-                ):
+                if index_payload.get("schema_version") != SECURITY_CONSTRAINT_INDEX_SCHEMA_VERSION:
                     raise SecurityConstraintIntegrityError(
                         "unsupported constraint cache index schema: "
                         f"{index_payload.get('schema_version')!r}"
@@ -967,10 +904,7 @@ class SecurityConstraintCache:
             return
         payload = {
             "interface": SECURITY_CONSTRAINT_CACHE_INTERFACE,
-            "profiles": {
-                profile: cid
-                for profile, cid in sorted(self._profile_index.items())
-            },
+            "profiles": {profile: cid for profile, cid in sorted(self._profile_index.items())},
             "record_cids": sorted(self._records),
             "schema_version": SECURITY_CONSTRAINT_INDEX_SCHEMA_VERSION,
         }
@@ -990,9 +924,7 @@ class SecurityConstraintCache:
                 f"constraint record {path.name} is not valid JSON: {exc}"
             ) from exc
         try:
-            record = SecurityConstraintRecord.from_dict(
-                _as_mapping(payload, "constraint record")
-            )
+            record = SecurityConstraintRecord.from_dict(_as_mapping(payload, "constraint record"))
         except SecurityConstraintCacheError as exc:
             raise SecurityConstraintIntegrityError(
                 f"constraint record {path.name} failed validation: {exc}"

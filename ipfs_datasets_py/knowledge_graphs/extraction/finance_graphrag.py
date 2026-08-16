@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+
 def _truthy(value: str | None) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -180,7 +181,9 @@ class GraphRAGNewsAnalyzer:
     """Finance-specific analysis built on top of core GraphRAG primitives."""
 
     def __init__(self, *, enable_graphrag: bool | None = None, min_confidence: float = 0.0) -> None:
-        self.enable_graphrag = bool(enable_graphrag) if enable_graphrag is not None else GRAPHRAG_AVAILABLE
+        self.enable_graphrag = (
+            bool(enable_graphrag) if enable_graphrag is not None else GRAPHRAG_AVAILABLE
+        )
         self.min_confidence = float(min_confidence)
         self.executives: Dict[str, ExecutiveProfile] = {}
         self.companies: Dict[str, CompanyPerformance] = {}
@@ -191,7 +194,9 @@ class GraphRAGNewsAnalyzer:
         blob = "|".join(parts).encode("utf-8")
         return hashlib.sha256(blob).hexdigest()[:16]
 
-    def extract_executive_profiles(self, news_articles: List[Dict[str, Any]]) -> List[ExecutiveProfile]:
+    def extract_executive_profiles(
+        self, news_articles: List[Dict[str, Any]]
+    ) -> List[ExecutiveProfile]:
         """Extract basic executive profiles from article metadata."""
 
         profiles: Dict[str, ExecutiveProfile] = {}
@@ -237,7 +242,9 @@ class GraphRAGNewsAnalyzer:
                     continue
 
                 rel = Relationship(
-                    relationship_id=self._hash_id(exec_profile.person_id, company.company_id, "exec_of"),
+                    relationship_id=self._hash_id(
+                        exec_profile.person_id, company.company_id, "exec_of"
+                    ),
                     relationship_type="executive_of",
                     source_entity=exec_profile.to_entity(),
                     target_entity=company.to_entity(),
@@ -449,6 +456,7 @@ def create_financial_knowledge_graph(
 
 
 # Backwards-compatible JSON-in/JSON-out wrappers (used by MCP tools)
+
 
 def analyze_executive_performance(
     news_articles_json: str,

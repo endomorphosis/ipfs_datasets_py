@@ -13,7 +13,9 @@ def _load_script_module():
         / "legal_data"
         / "run_bluebook_exact_anchor_audit.py"
     )
-    spec = importlib.util.spec_from_file_location("run_bluebook_exact_anchor_audit_under_test", module_path)
+    spec = importlib.util.spec_from_file_location(
+        "run_bluebook_exact_anchor_audit_under_test", module_path
+    )
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -83,7 +85,9 @@ def test_run_bluebook_exact_anchor_audit_script_writes_outputs(tmp_path: Path, m
     assert "non_exact_match_count: 0" in report_text
 
 
-def test_run_bluebook_exact_anchor_audit_script_returns_two_when_non_exact(tmp_path: Path, monkeypatch) -> None:
+def test_run_bluebook_exact_anchor_audit_script_returns_two_when_non_exact(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_script_module()
 
     input_path = tmp_path / "documents.json"

@@ -353,10 +353,14 @@ The new inference rules integrate seamlessly with Phase 7's natural language pro
 ```python
 from ipfs_datasets_py.logic.TDFOL.tdfol_inference_rules import (
     TemporalInductionRule,
-    WeakUntilExpansionRule
+    WeakUntilExpansionRule,
 )
 from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-    TemporalFormula, TemporalOperator, BinaryFormula, LogicOperator, Predicate
+    TemporalFormula,
+    TemporalOperator,
+    BinaryFormula,
+    LogicOperator,
+    Predicate,
 )
 
 # Temporal Induction: Prove invariant
@@ -376,10 +380,14 @@ if rule.can_apply(always_implies, P):
 ```python
 from ipfs_datasets_py.logic.TDFOL.tdfol_inference_rules import (
     ContraryToDutyRule,
-    DeonticDetachmentRule
+    DeonticDetachmentRule,
 )
 from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-    DeonticFormula, DeonticOperator, UnaryFormula, LogicOperator, Predicate
+    DeonticFormula,
+    DeonticOperator,
+    UnaryFormula,
+    LogicOperator,
+    Predicate,
 )
 
 # Contrary-to-Duty: Handle violation
@@ -397,11 +405,13 @@ if rule.can_apply(obligation, violation, reparation):
 ### Using New Combined Rules
 
 ```python
-from ipfs_datasets_py.logic.TDFOL.tdfol_inference_rules import (
-    AlwaysObligationDistributionRule
-)
+from ipfs_datasets_py.logic.TDFOL.tdfol_inference_rules import AlwaysObligationDistributionRule
 from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
-    TemporalFormula, TemporalOperator, DeonticFormula, DeonticOperator, Predicate
+    TemporalFormula,
+    TemporalOperator,
+    DeonticFormula,
+    DeonticOperator,
+    Predicate,
 )
 
 # Always-Obligation Distribution

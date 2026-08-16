@@ -61,12 +61,12 @@ The following backends are now deprecated:
 from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Using markitdown backend (now deprecated)
-converter = FileConverter(backend='markitdown')
-result = await converter.convert('document.pdf')
+converter = FileConverter(backend="markitdown")
+result = await converter.convert("document.pdf")
 
 # Using omni backend (now deprecated)
-converter = FileConverter(backend='omni')
-result = await converter.convert('document.pdf')
+converter = FileConverter(backend="omni")
+result = await converter.convert("document.pdf")
 ```
 
 **Warning Message:**
@@ -88,17 +88,18 @@ Documentation: See docs/FILE_CONVERSION_INTEGRATION_PLAN.md
 from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Use native backend (recommended)
-converter = FileConverter(backend='native')
-result = await converter.convert('document.pdf')
+converter = FileConverter(backend="native")
+result = await converter.convert("document.pdf")
 
 # Or let it auto-select (prefers native)
-converter = FileConverter(backend='auto')
-result = await converter.convert('document.pdf')
+converter = FileConverter(backend="auto")
+result = await converter.convert("document.pdf")
 
 # Or use IPFS-accelerated version (includes native)
 from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
-converter = IPFSAcceleratedConverter(backend='native')
-result = await converter.convert('document.pdf')
+
+converter = IPFSAcceleratedConverter(backend="native")
+result = await converter.convert("document.pdf")
 ```
 
 ## Why Migrate?
@@ -139,15 +140,15 @@ result = await converter.convert('document.pdf')
 from ipfs_datasets_py.processors.file_converter import (
     is_deprecated,
     get_deprecation_info,
-    DEPRECATION_TIMELINE
+    DEPRECATION_TIMELINE,
 )
 
 # Check if a backend is deprecated
-if is_deprecated('markitdown'):
+if is_deprecated("markitdown"):
     print("This backend is deprecated!")
 
 # Get deprecation details
-info = get_deprecation_info('markitdown')
+info = get_deprecation_info("markitdown")
 print(f"Deprecated in: {info['deprecated_in']}")
 print(f"Removal in: {info['removal_in']}")
 print(f"Alternative: {info['alternative']}")
@@ -166,10 +167,10 @@ import warnings
 from ipfs_datasets_py.file_converter.deprecation import DeprecationWarning
 
 # Suppress only file_converter deprecation warnings
-warnings.filterwarnings('ignore', category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # Use deprecated backend without warning
-converter = FileConverter(backend='markitdown')
+converter = FileConverter(backend="markitdown")
 ```
 
 **⚠️ Warning:** This is not recommended. The warnings exist to help you migrate before the backends are removed.
@@ -218,6 +219,7 @@ import asyncio
 
 semaphore = asyncio.Semaphore(5)
 
+
 async def process(item):
     async with semaphore:
         return await do_work(item)
@@ -228,6 +230,7 @@ async def process(item):
 import anyio
 
 limiter = anyio.CapacityLimiter(5)
+
 
 async def process(item):
     async with limiter:
@@ -262,10 +265,7 @@ async with anyio.create_task_group() as tg:
 import asyncio
 
 try:
-    result = await asyncio.wait_for(
-        long_operation(),
-        timeout=30.0
-    )
+    result = await asyncio.wait_for(long_operation(), timeout=30.0)
 except asyncio.TimeoutError:
     print("Timed out!")
 ```
@@ -336,12 +336,13 @@ pytest tests/unit/test_file_converter.py -W default::DeprecationWarning
 import pytest
 import warnings
 
+
 def test_deprecated_backend():
     """Test that deprecated backends show warnings."""
-    
+
     with pytest.warns(DeprecationWarning, match="deprecated"):
-        converter = FileConverter(backend='markitdown')
-    
+        converter = FileConverter(backend="markitdown")
+
     # Backend should still work during deprecation period
     assert converter is not None
 ```
@@ -388,10 +389,10 @@ def test_deprecated_backend():
 **Recommended Migration:**
 ```python
 # Old (deprecated)
-converter = FileConverter(backend='markitdown')
+converter = FileConverter(backend="markitdown")
 
 # New (recommended)
-converter = FileConverter(backend='native')
+converter = FileConverter(backend="native")
 ```
 
 The native backend provides better performance, zero dependencies, and full feature parity with the deprecated backends. Please migrate at your earliest convenience!

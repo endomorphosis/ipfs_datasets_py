@@ -3,6 +3,7 @@ Session Q68 — enterprise_api.py deep coverage:
   RateLimiter.check_limits, ProcessingJobManager (submit/status/user_jobs/process_job),
   EnterpriseGraphRAGAPI (create_jwt_token/validate_jwt_token), AdvancedAnalyticsDashboard
 """
+
 import sys
 import asyncio
 import time
@@ -40,6 +41,7 @@ from ipfs_datasets_py.mcp_server.exceptions import ToolExecutionError
 # ---------------------------------------------------------------------------
 # TestRateLimiter
 # ---------------------------------------------------------------------------
+
 
 class TestRateLimiter:
     """Tests for RateLimiter.check_limits()."""
@@ -102,6 +104,7 @@ class TestRateLimiter:
 # TestProcessingJobManager
 # ---------------------------------------------------------------------------
 
+
 class TestProcessingJobManager:
     """Tests for ProcessingJobManager."""
 
@@ -157,12 +160,16 @@ class TestProcessingJobManager:
         now = datetime.now()
         for uid, jid in [("alice", "j1"), ("alice", "j2"), ("bob", "j3")]:
             mgr.jobs[jid] = {
-                "job_id": jid, "user_id": uid,
+                "job_id": jid,
+                "user_id": uid,
                 "website_url": "https://x.com",
                 "processing_mode": "standard",
-                "status": "queued", "progress": 0.0,
-                "created_at": now, "started_at": None,
-                "completed_at": None, "error_message": None,
+                "status": "queued",
+                "progress": 0.0,
+                "created_at": now,
+                "started_at": None,
+                "completed_at": None,
+                "error_message": None,
             }
         alice_jobs = mgr.get_user_jobs("alice")
         assert len(alice_jobs) == 2
@@ -172,16 +179,21 @@ class TestProcessingJobManager:
     def test_get_user_jobs_sorted_descending(self):
         """get_user_jobs() is sorted by created_at descending."""
         from datetime import timedelta
+
         mgr = ProcessingJobManager()
         t0 = datetime(2026, 1, 1, 12, 0, 0)
         for i, jid in enumerate(["j_old", "j_new"]):
             mgr.jobs[jid] = {
-                "job_id": jid, "user_id": "alice",
+                "job_id": jid,
+                "user_id": "alice",
                 "website_url": "https://x.com",
                 "processing_mode": "standard",
-                "status": "queued", "progress": 0.0,
+                "status": "queued",
+                "progress": 0.0,
                 "created_at": t0 + timedelta(hours=i),
-                "started_at": None, "completed_at": None, "error_message": None,
+                "started_at": None,
+                "completed_at": None,
+                "error_message": None,
             }
         jobs = mgr.get_user_jobs("alice")
         assert jobs[0].job_id == "j_new"
@@ -193,19 +205,26 @@ class TestProcessingJobManager:
         mgr = ProcessingJobManager()
         now = datetime.now()
         mgr.jobs["jx"] = {
-            "job_id": "jx", "user_id": "u1",
+            "job_id": "jx",
+            "user_id": "u1",
             "website_url": "https://x.com",
             "processing_mode": "standard",
-            "status": "queued", "progress": 0.0,
-            "created_at": now, "started_at": None,
-            "completed_at": None, "error_message": None,
+            "status": "queued",
+            "progress": 0.0,
+            "created_at": now,
+            "started_at": None,
+            "completed_at": None,
+            "error_message": None,
         }
         req = WebsiteProcessingRequest(url="https://x.com")
         req.notify_webhook = None
         # Patch the system import to raise ToolExecutionError
-        with patch.dict(sys.modules, {
-            "ipfs_datasets_py.rag": MagicMock(),
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "ipfs_datasets_py.rag": MagicMock(),
+            },
+        ):
             with patch(
                 "ipfs_datasets_py.mcp_server.enterprise_api.CompleteGraphRAGSystem",
                 side_effect=ToolExecutionError("process", Exception("err")),
@@ -219,12 +238,16 @@ class TestProcessingJobManager:
         mgr = ProcessingJobManager()
         now = datetime.now()
         mgr.jobs["jy"] = {
-            "job_id": "jy", "user_id": "u1",
+            "job_id": "jy",
+            "user_id": "u1",
             "website_url": "https://y.com",
             "processing_mode": "standard",
-            "status": "queued", "progress": 0.0,
-            "created_at": now, "started_at": None,
-            "completed_at": None, "error_message": None,
+            "status": "queued",
+            "progress": 0.0,
+            "created_at": now,
+            "started_at": None,
+            "completed_at": None,
+            "error_message": None,
         }
         req = WebsiteProcessingRequest(url="https://y.com")
         req.notify_webhook = None
@@ -262,6 +285,7 @@ class TestProcessingJobManager:
 # ---------------------------------------------------------------------------
 # TestEnterpriseGraphRAGAPITokens
 # ---------------------------------------------------------------------------
+
 
 class TestEnterpriseGraphRAGAPITokens:
     """Tests for EnterpriseGraphRAGAPI JWT helpers."""
@@ -305,6 +329,7 @@ class TestEnterpriseGraphRAGAPITokens:
 # TestAdvancedAnalyticsDashboard
 # ---------------------------------------------------------------------------
 
+
 class TestAdvancedAnalyticsDashboard:
     """Tests for AdvancedAnalyticsDashboard."""
 
@@ -335,12 +360,16 @@ class TestAdvancedAnalyticsDashboard:
         """_get_recent_activity() entries have required keys."""
         mgr = ProcessingJobManager()
         mgr.jobs["j1"] = {
-            "job_id": "j1", "user_id": "u1",
+            "job_id": "j1",
+            "user_id": "u1",
             "website_url": "https://example.com",
             "processing_mode": "standard",
-            "status": "completed", "progress": 1.0,
+            "status": "completed",
+            "progress": 1.0,
             "created_at": datetime.now(),
-            "started_at": None, "completed_at": None, "error_message": None,
+            "started_at": None,
+            "completed_at": None,
+            "error_message": None,
         }
         dash = AdvancedAnalyticsDashboard(mgr)
         activity = dash._get_recent_activity()
@@ -357,11 +386,14 @@ class TestAdvancedAnalyticsDashboard:
         now = datetime.now()
         for jid, st in [("j1", "completed"), ("j2", "failed"), ("j3", "queued")]:
             mgr.jobs[jid] = {
-                "job_id": jid, "user_id": "u1",
+                "job_id": jid,
+                "user_id": "u1",
                 "website_url": "https://x.com",
                 "processing_mode": "standard",
-                "status": st, "progress": 0.0,
-                "created_at": now, "started_at": None,
+                "status": st,
+                "progress": 0.0,
+                "created_at": now,
+                "started_at": None,
                 "completed_at": now if st == "completed" else None,
                 "error_message": None,
             }

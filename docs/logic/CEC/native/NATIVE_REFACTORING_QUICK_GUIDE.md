@@ -119,6 +119,7 @@ def __eq__(self, other: object) -> bool:
         return False
     return self.to_string() == other.to_string()
 
+
 def __hash__(self) -> int:
     """Hash for set/dict usage."""
     return hash(self.to_string())
@@ -138,9 +139,11 @@ Remove from:
 from dataclasses import dataclass, field
 from typing import Dict
 
+
 @dataclass
 class ProofStatistics:
     """Unified proof statistics."""
+
     attempts: int = 0
     succeeded: int = 0
     failed: int = 0
@@ -148,18 +151,18 @@ class ProofStatistics:
     avg_time: float = 0.0
     cache_hits: int = 0
     rules_applied: Dict[str, int] = field(default_factory=dict)
-    
+
     def record_success(self, steps: int, time: float) -> None:
         self.attempts += 1
         self.succeeded += 1
         self.steps_taken += steps
         self._update_avg_time(time)
-    
+
     def record_failure(self, time: float) -> None:
         self.attempts += 1
         self.failed += 1
         self._update_avg_time(time)
-    
+
     def _update_avg_time(self, time: float) -> None:
         self.avg_time = (self.avg_time * (self.attempts - 1) + time) / self.attempts
 ```
@@ -179,13 +182,12 @@ import logging
 from typing import Callable, TypeVar
 from functools import wraps
 
-T = TypeVar('T')
+T = TypeVar("T")
 
-def handle_proof_error(
-    logger: logging.Logger,
-    default_result = None
-) -> Callable:
+
+def handle_proof_error(logger: logging.Logger, default_result=None) -> Callable:
     """Decorator for consistent error handling."""
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         def wrapper(*args, **kwargs) -> T:
@@ -194,11 +196,15 @@ def handle_proof_error(
             except Exception as e:
                 logger.error(f"{func.__name__} failed: {e}", exc_info=True)
                 return default_result
+
         return wrapper
+
     return decorator
+
 
 # USAGE:
 from .error_handling import handle_proof_error
+
 
 class ShadowProver:
     @handle_proof_error(logger, default_result=ProofResult.ERROR)

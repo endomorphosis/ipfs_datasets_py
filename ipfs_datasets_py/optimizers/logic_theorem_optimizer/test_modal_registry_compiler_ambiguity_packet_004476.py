@@ -61,7 +61,4 @@ def test_packet_004476_pairs_are_supported_across_compiler_policies() -> None:
 
 def test_packet_004476_self_pairs_keep_weak_typed_family_buffers() -> None:
     for family in ("deontic", "frame", "temporal"):
-        assert (
-            compiler_weak_typed_self_family_cue_margin_buffer(family, family)
-            >= 0.135
-        )
+        assert compiler_weak_typed_self_family_cue_margin_buffer(family, family) >= 0.135

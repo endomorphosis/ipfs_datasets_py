@@ -91,8 +91,7 @@ def main() -> None:
         "healthcare": {
             "domain": "medical",
             "text": (
-                "The patient reported symptoms of a disorder. "
-                "The physician prescribed 5 mg dosage."
+                "The patient reported symptoms of a disorder. The physician prescribed 5 mg dosage."
             ),
         },
         "technical": {

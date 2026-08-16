@@ -26,7 +26,7 @@ result = await validator.validate_scraper(
     scraper_func=my_scraper,
     scraper_name="my_scraper",
     domain=ScraperDomain.CASELAW,
-    test_args={'param': 'value'}
+    test_args={"param": "value"},
 )
 
 if result.is_valid():
@@ -51,54 +51,54 @@ The system validates against expected schemas for each domain:
 #### Caselaw Domain
 ```python
 {
-    "title": "string",      # Required
-    "text": "string",       # Required
+    "title": "string",  # Required
+    "text": "string",  # Required
     "citation": "string",
     "date": "string",
     "url": "string",
-    "metadata": "dict"
+    "metadata": "dict",
 }
 ```
 
 #### Finance Domain
 ```python
 {
-    "title": "string",      # Required
-    "text": "string",       # Required
+    "title": "string",  # Required
+    "text": "string",  # Required
     "ticker": "string",
     "date": "string",
     "price": "float",
     "volume": "float",
     "url": "string",
-    "metadata": "dict"
+    "metadata": "dict",
 }
 ```
 
 #### Medicine Domain
 ```python
 {
-    "title": "string",      # Required
-    "text": "string",       # Required
+    "title": "string",  # Required
+    "text": "string",  # Required
     "abstract": "string",
     "pmid": "string",
     "doi": "string",
     "date": "string",
     "authors": "list",
     "url": "string",
-    "metadata": "dict"
+    "metadata": "dict",
 }
 ```
 
 #### Software Domain
 ```python
 {
-    "name": "string",         # Required
+    "name": "string",  # Required
     "description": "string",  # Required
     "url": "string",
     "stars": "int",
     "language": "string",
     "topics": "list",
-    "metadata": "dict"
+    "metadata": "dict",
 }
 ```
 
@@ -237,15 +237,15 @@ from datasets import Dataset
 import json
 
 # Load validation results
-with open('validation_results/comprehensive_validation_report.json') as f:
+with open("validation_results/comprehensive_validation_report.json") as f:
     report = json.load(f)
 
 # Get data from a passing scraper
-for result in report['results']:
-    if result['schema_valid'] and result['hf_compatible']:
+for result in report["results"]:
+    if result["schema_valid"] and result["hf_compatible"]:
         # Create HuggingFace dataset
-        dataset = Dataset.from_list(result['sample_records'])
-        
+        dataset = Dataset.from_list(result["sample_records"])
+
         # Push to HuggingFace Hub (if authenticated)
         dataset.push_to_hub(f"my-org/{result['scraper_name']}-dataset")
 ```
@@ -258,14 +258,16 @@ The validation ensures datasets have proper features:
 from datasets import Dataset, Features, Value, ClassLabel
 
 # Example for caselaw domain
-features = Features({
-    'title': Value('string'),
-    'text': Value('string'),
-    'citation': Value('string'),
-    'date': Value('string'),
-    'url': Value('string'),
-    'metadata': Value('string')  # JSON string
-})
+features = Features(
+    {
+        "title": Value("string"),
+        "text": Value("string"),
+        "citation": Value("string"),
+        "date": Value("string"),
+        "url": Value("string"),
+        "metadata": Value("string"),  # JSON string
+    }
+)
 
 dataset = Dataset.from_list(data, features=features)
 ```
@@ -283,8 +285,8 @@ Schema Issues: Missing required field: title
 ```python
 def my_scraper():
     return {
-        'title': 'Document Title',  # Required
-        'text': 'Document content', # Required
+        "title": "Document Title",  # Required
+        "text": "Document content",  # Required
         # ... other fields
     }
 ```
@@ -297,8 +299,8 @@ Schema Issues: Field 'price' should be float, got str
 **Fix**: Convert to correct type:
 ```python
 return {
-    'price': float(price_string),  # Convert to float
-    'volume': int(volume_string),  # Convert to int
+    "price": float(price_string),  # Convert to float
+    "volume": int(volume_string),  # Convert to int
 }
 ```
 
@@ -314,11 +316,12 @@ HF Issues: Record 5 has inconsistent keys with first record
 def normalize_record(record):
     # Add missing fields with defaults
     return {
-        'title': record.get('title', ''),
-        'text': record.get('text', ''),
-        'citation': record.get('citation', ''),
+        "title": record.get("title", ""),
+        "text": record.get("text", ""),
+        "citation": record.get("citation", ""),
         # ... all expected fields
     }
+
 
 results = [normalize_record(r) for r in raw_results]
 ```
@@ -331,11 +334,11 @@ HF Issues: Record 3 has null value for field 'text'
 **Fix**: Filter or provide defaults:
 ```python
 # Option 1: Filter out records with nulls
-results = [r for r in results if r['text'] is not None]
+results = [r for r in results if r["text"] is not None]
 
 # Option 2: Provide defaults
 for r in results:
-    r['text'] = r['text'] or 'No content available'
+    r["text"] = r["text"] or "No content available"
 ```
 
 **Issue**: Unsupported data types
@@ -346,8 +349,8 @@ HF Issues: Record 1 field 'tags' uses set, should use list or dict
 **Fix**: Convert to supported types:
 ```python
 return {
-    'tags': list(tags_set),  # Convert set to list
-    'metadata': dict(metadata_tuple)  # Convert tuple to dict
+    "tags": list(tags_set),  # Convert set to list
+    "metadata": dict(metadata_tuple),  # Convert tuple to dict
 }
 ```
 
@@ -362,13 +365,13 @@ Quality Issues: DOM styling found in 3 records
 ```python
 from bs4 import BeautifulSoup
 
+
 def clean_html(text):
-    soup = BeautifulSoup(text, 'html.parser')
+    soup = BeautifulSoup(text, "html.parser")
     return soup.get_text()
 
-return {
-    'text': clean_html(raw_text)
-}
+
+return {"text": clean_html(raw_text)}
 ```
 
 **Issue**: Menu content in data
@@ -379,9 +382,9 @@ Quality Issues: Menu content found: Home | About | Contact
 **Fix**: Filter out navigation elements:
 ```python
 # Skip navigation containers
-if 'nav' in element.get('class', []):
+if "nav" in element.get("class", []):
     continue
-if element.name in ['nav', 'header', 'footer']:
+if element.name in ["nav", "header", "footer"]:
     continue
 ```
 
@@ -429,7 +432,7 @@ Before deploying, test dataset creation:
 from datasets import Dataset
 
 # Test with sample data
-test_data = [{'title': 'Test', 'text': 'Content'}]
+test_data = [{"title": "Test", "text": "Content"}]
 ds = Dataset.from_list(test_data)
 print(ds.features)
 ```

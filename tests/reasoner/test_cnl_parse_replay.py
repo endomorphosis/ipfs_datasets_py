@@ -6,7 +6,10 @@ from typing import Any, Dict
 
 import pytest
 
-from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_legal_ir import LegalIR, parse_cnl_sentence
+from ipfs_datasets_py.processors.legal_data.reasoner.hybrid_legal_ir import (
+    LegalIR,
+    parse_cnl_sentence,
+)
 
 
 def _load_corpus() -> list[dict[str, Any]]:

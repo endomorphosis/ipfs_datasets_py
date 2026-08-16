@@ -24,18 +24,19 @@ try:
 except Exception:
     nltk = None
 
+
 def main() -> int:
     """
     Main control flow for Python docstring adverb analyzer.
-    
+
     Follows the user flow defined in requirements, with proper error handling
     and exit codes for each failure condition.
-    
+
     Returns:
         int: Exit code following Unix conventions
             0 = Success
             1 = File not found
-    
+
             2 = Permission denied
             3 = Path is directory
             4 = Invalid Python syntax or encoding error
@@ -43,7 +44,7 @@ def main() -> int:
             6 = NLTK data missing
             7 = NLTK not installed
             8 = Invalid arguments
-    
+
     Raises:
         SystemExit: Always exits with appropriate code
     """
@@ -59,45 +60,45 @@ def main() -> int:
             file_path = parsed_args.get("file_path")
         else:
             file_path = parsed_args
-            
+
         # ============================================================
         # 📁 FILE VALIDATION
         # ============================================================
         _validate_file_system(file_path)
-        
+
         # ============================================================
         # 📦 DEPENDENCY VALIDATION
         # ============================================================
         _validate_dependencies()
-        
+
         # ============================================================
         # 🔍 FILE PROCESSING
         # ============================================================
         file_content = _read_file_content(file_path)
         ast_tree = _parse_python_syntax(file_content, file_path)
-        
+
         # ============================================================
         # 📝 DOCSTRING EXTRACTION
         # ============================================================
         docstring_list = _extract_docstrings(ast_tree, file_path)
-        
+
         # ============================================================
         # 🎯 ADVERB ANALYSIS
         # ============================================================
         adverb_findings = _analyze_adverbs(docstring_list)
-        
+
         # ============================================================
         # 📊 STATISTICS GENERATION
         # ============================================================
         summary_stats = _generate_statistics(adverb_findings, docstring_list)
-        
+
         # ============================================================
         # 📤 OUTPUT GENERATION
         # ============================================================
         _generate_output(file_path, adverb_findings, summary_stats)
-        
+
         sys.exit(0)  # Success
-        
+
     except SystemExit:
         raise  # Re-raise SystemExit to maintain exit codes
     except Exception as e:
@@ -109,10 +110,10 @@ def main() -> int:
 def _parse_arguments() -> Optional[Dict[str, str]]:
     """
     Parse command line arguments and handle help requests.
-    
+
     Returns:
         Optional[str]: File path if valid arguments, None if help displayed
-        
+
     Raises:
         SystemExit: Code 8 if invalid arguments
     """
@@ -165,7 +166,7 @@ def _validate_file_system(file_path: str) -> Optional[bool]:
 def _validate_dependencies() -> Optional[bool]:
     """
     Validate that required dependencies are available.
-    
+
     Raises:
         SystemExit: Codes 6, 7 for NLTK-related errors
     """
@@ -188,13 +189,13 @@ def _validate_dependencies() -> Optional[bool]:
 def _read_file_content(file_path: str) -> str:
     """
     Read and return file content with proper encoding handling.
-    
+
     Args:
         file_path (str): Path to the file to read
-        
+
     Returns:
         str: File content as string
-        
+
     Raises:
         SystemExit: Code 4 for encoding errors
     """
@@ -208,14 +209,14 @@ def _read_file_content(file_path: str) -> str:
 def _parse_python_syntax(file_content: str, file_path: str) -> ast.AST:
     """
     Parse Python file content into AST.
-    
+
     Args:
         file_content (str): Python source code content
         file_path (str): File path for error messages
-        
+
     Returns:
         ast.AST: Parsed abstract syntax tree
-        
+
     Raises:
         SystemExit: Code 4 for syntax errors
     """
@@ -228,11 +229,11 @@ def _parse_python_syntax(file_content: str, file_path: str) -> ast.AST:
 def _extract_docstrings(ast_tree: ast.AST, file_path: str = "<unknown>") -> List[Dict[str, Any]]:
     """
     Extract all docstrings from the AST with metadata.
-    
+
     Args:
         ast_tree (ast.AST): Parsed abstract syntax tree
         file_path (str): File path for context
-        
+
     Returns:
         List[Dict[str, Any]]: List of docstring information dictionaries
             Each dict contains: content, location, context, quote_style
@@ -245,14 +246,16 @@ def _extract_docstrings(ast_tree: ast.AST, file_path: str = "<unknown>") -> List
             return
         lineno = getattr(node, "lineno", None)
         location = f"{file_path}:{lineno}" if lineno else file_path
-        docstrings.append({
-            "docstring": docstring,
-            "content": docstring,
-            "type": node_type,
-            "name": name,
-            "context": context,
-            "location": location,
-        })
+        docstrings.append(
+            {
+                "docstring": docstring,
+                "content": docstring,
+                "type": node_type,
+                "name": name,
+                "context": context,
+                "location": location,
+            }
+        )
 
     def _walk(node: ast.AST, context: str) -> None:
         if isinstance(node, ast.Module):
@@ -265,7 +268,12 @@ def _extract_docstrings(ast_tree: ast.AST, file_path: str = "<unknown>") -> List
             _add_docstring(node, "async_function", node.name, f"{context}::{node.name}")
 
         for child in ast.iter_child_nodes(node):
-            _walk(child, context if not hasattr(node, "name") else f"{context}::{getattr(node, 'name', '')}".strip(":"))
+            _walk(
+                child,
+                context
+                if not hasattr(node, "name")
+                else f"{context}::{getattr(node, 'name', '')}".strip(":"),
+            )
 
     _walk(ast_tree, "module")
     return docstrings
@@ -274,10 +282,10 @@ def _extract_docstrings(ast_tree: ast.AST, file_path: str = "<unknown>") -> List
 def _analyze_adverbs(docstring_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Analyze docstrings to identify adverbs with context.
-    
+
     Args:
         docstring_list (List[Dict[str, Any]]): List of docstring information
-        
+
     Returns:
         List[Dict[str, Any]]: List of adverb findings with metadata
             Each dict contains: word, pos_tag, line, context, location_info
@@ -306,13 +314,15 @@ def _analyze_adverbs(docstring_list: List[Dict[str, Any]]) -> List[Dict[str, Any
                 start = max(0, idx - 5)
                 end = min(len(words), idx + 6)
                 context = " ".join(words[start:end])
-                findings.append({
-                    "word": words[idx],
-                    "adverb": words[idx],
-                    "pos_tag": tag,
-                    "context": context,
-                    "source": doc.get("context", {}),
-                })
+                findings.append(
+                    {
+                        "word": words[idx],
+                        "adverb": words[idx],
+                        "pos_tag": tag,
+                        "context": context,
+                        "source": doc.get("context", {}),
+                    }
+                )
 
     return findings
 
@@ -323,11 +333,11 @@ def _generate_statistics(
 ) -> Dict[str, Any]:
     """
     Generate summary statistics from adverb findings.
-    
+
     Args:
         adverb_findings (List[Dict[str, Any]]): List of adverb findings
         docstring_list (List[Dict[str, Any]]): List of processed docstrings
-        
+
     Returns:
         Dict[str, Any]: Summary statistics dictionary containing:
             total_adverbs, unique_adverbs, most_frequent, docstrings_processed
@@ -356,7 +366,7 @@ def _generate_output(
 ) -> None:
     """
     Generate and display formatted output to stdout.
-    
+
     Args:
         file_path (str): Original file path being analyzed
         adverb_findings (List[Dict[str, Any]]): List of adverb findings

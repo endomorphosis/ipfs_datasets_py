@@ -58,12 +58,8 @@ ATTESTED_PROOF_VERIFIER_SCHEMA_VERSION: Final = "attested-proof-verifier/v1"
 SELECTED_EVIDENCE_PACK_INTERFACE: Final = "SelectedEvidencePack@1"
 SELECTED_EVIDENCE_PACK_SCHEMA_VERSION: Final = "selected-evidence-pack/v1"
 SELECTED_EVIDENCE_ITEM_SCHEMA_VERSION: Final = "selected-evidence-item/v1"
-CONSUMER_VERIFICATION_RECEIPT_SCHEMA_VERSION: Final = (
-    "consumer-verification-receipt/v1"
-)
-ITEM_VERIFICATION_RESULT_SCHEMA_VERSION: Final = (
-    "item-verification-result/v1"
-)
+CONSUMER_VERIFICATION_RECEIPT_SCHEMA_VERSION: Final = "consumer-verification-receipt/v1"
+ITEM_VERIFICATION_RESULT_SCHEMA_VERSION: Final = "item-verification-result/v1"
 VERIFIER_CONTEXT_SCHEMA_VERSION: Final = "proof-verifier-context/v1"
 
 _DIGEST_RE: Final = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -227,8 +223,7 @@ def _json_ready(value: Any) -> Any:
     if callable(to_dict):
         return _json_ready(to_dict())
     raise ProofVerifierError(
-        f"value of type {type(value).__name__} is not JSON-serializable "
-        "for the proof verifier"
+        f"value of type {type(value).__name__} is not JSON-serializable for the proof verifier"
     )
 
 
@@ -240,9 +235,7 @@ def _as_mapping(value: Any, label: str) -> Mapping[str, Any]:
 
 def _require_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise ProofVerifierError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise ProofVerifierError(f"{field_name} must be a non-empty trimmed string")
     return value
 
 
@@ -257,9 +250,7 @@ def _require_digest(value: Any, field_name: str) -> str:
     if _BARE_DIGEST_RE.fullmatch(digest):
         digest = f"sha256:{digest}"
     if not _DIGEST_RE.fullmatch(digest):
-        raise ProofVerifierError(
-            f"{field_name} must be a sha256:<hex> digest"
-        )
+        raise ProofVerifierError(f"{field_name} must be a sha256:<hex> digest")
     return digest
 
 
@@ -272,9 +263,7 @@ def _optional_digest(value: Any, field_name: str) -> str:
 def _require_cid(value: Any, field_name: str) -> str:
     cid = _require_text(value, field_name)
     if not _CID_RE.fullmatch(cid):
-        raise ProofVerifierError(
-            f"{field_name} must be a CIDv1 base32 string"
-        )
+        raise ProofVerifierError(f"{field_name} must be a CIDv1 base32 string")
     return cid
 
 
@@ -288,15 +277,11 @@ def _unique_texts(values: Any, field_name: str) -> tuple[str, ...]:
     if values in (None, ()):
         return ()
     if isinstance(values, (str, bytes, bytearray)):
-        raise ProofVerifierError(
-            f"{field_name} must be a sequence of strings"
-        )
+        raise ProofVerifierError(f"{field_name} must be a sequence of strings")
     try:
         items = tuple(_require_text(item, field_name) for item in values)
     except TypeError as exc:
-        raise ProofVerifierError(
-            f"{field_name} must be a sequence of strings"
-        ) from exc
+        raise ProofVerifierError(f"{field_name} must be a sequence of strings") from exc
     if len(items) != len(set(items)):
         raise ProofVerifierError(f"{field_name} values must be unique")
     return items
@@ -310,22 +295,16 @@ def _unique_cids(values: Any, field_name: str) -> tuple[str, ...]:
     try:
         items = tuple(_require_cid(item, field_name) for item in values)
     except TypeError as exc:
-        raise ProofVerifierError(
-            f"{field_name} must be a sequence of CIDs"
-        ) from exc
+        raise ProofVerifierError(f"{field_name} must be a sequence of CIDs") from exc
     if len(items) != len(set(items)):
         raise ProofVerifierError(f"{field_name} values must be unique")
     return items
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ProofVerifierError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise ProofVerifierError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
@@ -335,9 +314,7 @@ def _parse_enum(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
         return enum_cls(value)
     except (TypeError, ValueError) as exc:
         allowed = ", ".join(item.value for item in enum_cls)
-        raise ProofVerifierError(
-            f"{field_name} must be one of: {allowed}"
-        ) from exc
+        raise ProofVerifierError(f"{field_name} must be one of: {allowed}") from exc
 
 
 def _normalize_bytes(value: Any, field_name: str) -> bytes:
@@ -354,13 +331,9 @@ def _normalize_bytes(value: Any, field_name: str) -> bytes:
             try:
                 return bytes.fromhex(text)
             except ValueError as exc:
-                raise ProofVerifierError(
-                    f"{field_name} is not valid hex"
-                ) from exc
+                raise ProofVerifierError(f"{field_name} is not valid hex") from exc
         return text.encode("utf-8")
-    raise ProofVerifierError(
-        f"{field_name} must be bytes, hex, or utf-8 text"
-    )
+    raise ProofVerifierError(f"{field_name} must be bytes, hex, or utf-8 text")
 
 
 def digest_of_bytes(data: bytes) -> str:
@@ -449,9 +422,7 @@ class VerifierContext:
     expected_tenant: str = ""
     expected_jurisdiction: str = ""
     at_time: str = ""
-    approved_proof_systems: tuple[str, ...] = tuple(
-        sorted(DEFAULT_APPROVED_PROOF_SYSTEMS)
-    )
+    approved_proof_systems: tuple[str, ...] = tuple(sorted(DEFAULT_APPROVED_PROOF_SYSTEMS))
     approved_backends: tuple[str, ...] = tuple(sorted(DEFAULT_APPROVED_BACKENDS))
     revoked_envelope_cids: tuple[str, ...] = ()
     accept_simulated: bool = False
@@ -481,15 +452,11 @@ class VerifierContext:
             "expected_jurisdiction",
             _optional_text(self.expected_jurisdiction, "expected_jurisdiction"),
         )
-        object.__setattr__(
-            self, "at_time", _optional_text(self.at_time, "at_time")
-        )
+        object.__setattr__(self, "at_time", _optional_text(self.at_time, "at_time"))
         object.__setattr__(
             self,
             "approved_proof_systems",
-            _unique_texts(
-                self.approved_proof_systems, "approved_proof_systems"
-            ),
+            _unique_texts(self.approved_proof_systems, "approved_proof_systems"),
         )
         object.__setattr__(
             self,
@@ -499,9 +466,7 @@ class VerifierContext:
         object.__setattr__(
             self,
             "revoked_envelope_cids",
-            _unique_cids(
-                self.revoked_envelope_cids, "revoked_envelope_cids"
-            ),
+            _unique_cids(self.revoked_envelope_cids, "revoked_envelope_cids"),
         )
         for flag_name in (
             "accept_simulated",
@@ -510,12 +475,8 @@ class VerifierContext:
         ):
             if not isinstance(getattr(self, flag_name), bool):
                 raise ProofVerifierError(f"{flag_name} must be a bool")
-        if self.trust_policy is not None and not isinstance(
-            self.trust_policy, ProofTrustPolicy
-        ):
-            raise ProofVerifierError(
-                "trust_policy must be a ProofTrustPolicy or None"
-            )
+        if self.trust_policy is not None and not isinstance(self.trust_policy, ProofTrustPolicy):
+            raise ProofVerifierError("trust_policy must be a ProofTrustPolicy or None")
         object.__setattr__(
             self,
             "schema_version",
@@ -576,9 +537,7 @@ class SelectedEvidenceItem:
         if isinstance(env, AttestedProofEnvelope):
             env = env.verify_integrity()
         else:
-            env = AttestedProofEnvelope.from_dict(
-                _as_mapping(env, "envelope")
-            ).verify_integrity()
+            env = AttestedProofEnvelope.from_dict(_as_mapping(env, "envelope")).verify_integrity()
         object.__setattr__(self, "envelope", env)
 
         native = self.native_proof_bytes
@@ -598,9 +557,7 @@ class SelectedEvidenceItem:
                 self,
                 "zk_attestation",
                 MappingProxyType(
-                    _json_ready(
-                        dict(_as_mapping(self.zk_attestation, "zk_attestation"))
-                    )
+                    _json_ready(dict(_as_mapping(self.zk_attestation, "zk_attestation")))
                 ),
             )
 
@@ -608,16 +565,12 @@ class SelectedEvidenceItem:
         if body is None or body == "":
             object.__setattr__(self, "body_bytes", b"")
         else:
-            object.__setattr__(
-                self, "body_bytes", _normalize_bytes(body, "body_bytes")
-            )
+            object.__setattr__(self, "body_bytes", _normalize_bytes(body, "body_bytes"))
 
         parents: list[AttestedProofEnvelope] = []
         if self.parent_envelopes not in (None, ()):
             if isinstance(self.parent_envelopes, (str, bytes, bytearray, Mapping)):
-                raise ProofVerifierError(
-                    "parent_envelopes must be a sequence of envelopes"
-                )
+                raise ProofVerifierError("parent_envelopes must be a sequence of envelopes")
             try:
                 for parent in self.parent_envelopes:
                     if isinstance(parent, AttestedProofEnvelope):
@@ -634,27 +587,21 @@ class SelectedEvidenceItem:
                 ) from exc
         object.__setattr__(self, "parent_envelopes", tuple(parents))
 
-        object.__setattr__(
-            self, "item_id", _optional_text(self.item_id, "item_id")
-        )
+        object.__setattr__(self, "item_id", _optional_text(self.item_id, "item_id"))
         if not self.item_id:
             object.__setattr__(self, "item_id", env.envelope_cid)
 
         object.__setattr__(
             self,
             "producer_claim_status",
-            _optional_text(
-                self.producer_claim_status, "producer_claim_status"
-            ),
+            _optional_text(self.producer_claim_status, "producer_claim_status"),
         )
         if not isinstance(self.cache_hit, bool):
             raise ProofVerifierError("cache_hit must be a bool")
         if not isinstance(self.fetch_complete, bool):
             raise ProofVerifierError("fetch_complete must be a bool")
         if not isinstance(self.real_to_simulation_fallback, bool):
-            raise ProofVerifierError(
-                "real_to_simulation_fallback must be a bool"
-            )
+            raise ProofVerifierError("real_to_simulation_fallback must be a bool")
         object.__setattr__(
             self,
             "claimed_tenant",
@@ -676,9 +623,7 @@ class SelectedEvidenceItem:
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != SELECTED_EVIDENCE_ITEM_SCHEMA_VERSION:
-            raise ProofVerifierError(
-                f"unsupported evidence item schema: {self.schema_version!r}"
-            )
+            raise ProofVerifierError(f"unsupported evidence item schema: {self.schema_version!r}")
 
     @property
     def has_native_proof(self) -> bool:
@@ -699,15 +644,11 @@ class SelectedEvidenceItem:
 
     def to_dict(self) -> dict[str, Any]:
         assert isinstance(self.envelope, AttestedProofEnvelope)
-        native_hex = (
-            bytes(self.native_proof_bytes).hex() if self.native_proof_bytes else ""
-        )
+        native_hex = bytes(self.native_proof_bytes).hex() if self.native_proof_bytes else ""
         body_hex = bytes(self.body_bytes).hex() if self.body_bytes else ""
         return {
             "body_bytes": body_hex,
-            "body_digest": (
-                digest_of_bytes(self.body_bytes) if self.body_bytes else ""
-            ),
+            "body_digest": (digest_of_bytes(self.body_bytes) if self.body_bytes else ""),
             "cache_hit": self.cache_hit,
             "claimed_algorithm": self.claimed_algorithm,
             "claimed_tenant": self.claimed_tenant,
@@ -718,24 +659,16 @@ class SelectedEvidenceItem:
             "item_id": self.item_id,
             "native_proof_bytes": native_hex,
             "native_proof_digest": (
-                digest_of_bytes(self.native_proof_bytes)
-                if self.native_proof_bytes
-                else ""
+                digest_of_bytes(self.native_proof_bytes) if self.native_proof_bytes else ""
             ),
-            "parent_cids": [
-                parent.envelope_cid for parent in self.parent_envelopes
-            ],
-            "parent_envelopes": [
-                parent.to_dict() for parent in self.parent_envelopes
-            ],
+            "parent_cids": [parent.envelope_cid for parent in self.parent_envelopes],
+            "parent_envelopes": [parent.to_dict() for parent in self.parent_envelopes],
             "previous_algorithm": self.previous_algorithm,
             "producer_claim_status": self.producer_claim_status,
             "real_to_simulation_fallback": self.real_to_simulation_fallback,
             "schema_version": self.schema_version,
             "zk_attestation": (
-                dict(self.zk_attestation)
-                if self.zk_attestation is not None
-                else None
+                dict(self.zk_attestation) if self.zk_attestation is not None else None
             ),
             "zk_attestation_present": self.has_zk_attestation,
         }
@@ -788,12 +721,8 @@ class SelectedEvidenceItem:
             claimed_tenant=payload.get("claimed_tenant", ""),
             claimed_algorithm=payload.get("claimed_algorithm", ""),
             previous_algorithm=payload.get("previous_algorithm", ""),
-            real_to_simulation_fallback=bool(
-                payload.get("real_to_simulation_fallback", False)
-            ),
-            schema_version=payload.get(
-                "schema_version", SELECTED_EVIDENCE_ITEM_SCHEMA_VERSION
-            ),
+            real_to_simulation_fallback=bool(payload.get("real_to_simulation_fallback", False)),
+            schema_version=payload.get("schema_version", SELECTED_EVIDENCE_ITEM_SCHEMA_VERSION),
         )
 
 
@@ -811,9 +740,7 @@ class ItemVerificationResult:
     schema_version: str = ITEM_VERIFICATION_RESULT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "item_id", _require_text(self.item_id, "item_id")
-        )
+        object.__setattr__(self, "item_id", _require_text(self.item_id, "item_id"))
         object.__setattr__(
             self,
             "envelope_cid",
@@ -824,9 +751,7 @@ class ItemVerificationResult:
             "status",
             _parse_enum(self.status, VerificationStatus, "status"),
         )
-        object.__setattr__(
-            self, "reasons", _unique_texts(self.reasons, "reasons")
-        )
+        object.__setattr__(self, "reasons", _unique_texts(self.reasons, "reasons"))
         object.__setattr__(
             self,
             "absent_bindings",
@@ -836,14 +761,11 @@ class ItemVerificationResult:
             raise ProofVerifierError("grants_authority must be a bool")
         # Fail closed: reject/fail never grant authority.
         if self.status is not VerificationStatus.PASS and self.grants_authority:
-            raise ProofVerifierError(
-                "grants_authority requires status=pass"
-            )
+            raise ProofVerifierError("grants_authority requires status=pass")
         object.__setattr__(
             self,
             "evidence_kind",
-            _optional_text(self.evidence_kind, "evidence_kind")
-            or ProofEvidenceKind.NONE.value,
+            _optional_text(self.evidence_kind, "evidence_kind") or ProofEvidenceKind.NONE.value,
         )
         object.__setattr__(
             self,
@@ -851,9 +773,7 @@ class ItemVerificationResult:
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != ITEM_VERIFICATION_RESULT_SCHEMA_VERSION:
-            raise ProofVerifierError(
-                f"unsupported item result schema: {self.schema_version!r}"
-            )
+            raise ProofVerifierError(f"unsupported item result schema: {self.schema_version!r}")
 
     @property
     def passed(self) -> bool:
@@ -897,12 +817,8 @@ class ItemVerificationResult:
             reasons=tuple(payload.get("reasons", ()) or ()),
             absent_bindings=tuple(payload.get("absent_bindings", ()) or ()),
             grants_authority=bool(payload.get("grants_authority", False)),
-            evidence_kind=payload.get(
-                "evidence_kind", ProofEvidenceKind.NONE.value
-            ),
-            schema_version=payload.get(
-                "schema_version", ITEM_VERIFICATION_RESULT_SCHEMA_VERSION
-            ),
+            evidence_kind=payload.get("evidence_kind", ProofEvidenceKind.NONE.value),
+            schema_version=payload.get("schema_version", ITEM_VERIFICATION_RESULT_SCHEMA_VERSION),
         )
 
 
@@ -936,9 +852,7 @@ class ConsumerVerificationReceipt:
         )
         results: list[ItemVerificationResult] = []
         if self.item_results not in (None, ()):
-            if isinstance(
-                self.item_results, (str, bytes, bytearray, Mapping)
-            ):
+            if isinstance(self.item_results, (str, bytes, bytearray, Mapping)):
                 raise ProofVerifierError(
                     "item_results must be a sequence of ItemVerificationResult"
                 )
@@ -970,25 +884,17 @@ class ConsumerVerificationReceipt:
             "context_digest",
             _optional_digest(self.context_digest, "context_digest"),
         )
-        object.__setattr__(
-            self, "pack_digest", _optional_digest(self.pack_digest, "pack_digest")
-        )
-        object.__setattr__(
-            self, "reasons", _unique_texts(self.reasons, "reasons")
-        )
+        object.__setattr__(self, "pack_digest", _optional_digest(self.pack_digest, "pack_digest"))
+        object.__setattr__(self, "reasons", _unique_texts(self.reasons, "reasons"))
         object.__setattr__(
             self,
             "schema_version",
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != CONSUMER_VERIFICATION_RECEIPT_SCHEMA_VERSION:
-            raise ProofVerifierError(
-                f"unsupported receipt schema: {self.schema_version!r}"
-            )
+            raise ProofVerifierError(f"unsupported receipt schema: {self.schema_version!r}")
         if self.interface != ATTESTED_PROOF_VERIFIER_INTERFACE:
-            raise ProofVerifierError(
-                f"unsupported receipt interface: {self.interface!r}"
-            )
+            raise ProofVerifierError(f"unsupported receipt interface: {self.interface!r}")
 
         # Fail-closed authority: only pass with all items granting.
         all_items_pass = bool(results) and all(
@@ -1001,9 +907,7 @@ class ConsumerVerificationReceipt:
                 )
         else:
             if self.grants_authority:
-                raise ProofVerifierError(
-                    "grants_authority is forbidden when status is not pass"
-                )
+                raise ProofVerifierError("grants_authority is forbidden when status is not pass")
 
         body = self._identity_payload()
         digest = _sha256_digest(_canonical_bytes(body))
@@ -1011,15 +915,11 @@ class ConsumerVerificationReceipt:
         if self.content_digest:
             recorded = _require_digest(self.content_digest, "content_digest")
             if recorded != digest:
-                raise ProofVerifierIntegrityError(
-                    "receipt content_digest does not match payload"
-                )
+                raise ProofVerifierIntegrityError("receipt content_digest does not match payload")
         if self.content_cid:
             recorded_cid = _require_cid(self.content_cid, "content_cid")
             if recorded_cid != cid:
-                raise ProofVerifierIntegrityError(
-                    "receipt content_cid does not match payload"
-                )
+                raise ProofVerifierIntegrityError("receipt content_cid does not match payload")
         object.__setattr__(self, "content_digest", digest)
         object.__setattr__(self, "content_cid", cid)
 
@@ -1090,9 +990,7 @@ class ConsumerVerificationReceipt:
             schema_version=payload.get(
                 "schema_version", CONSUMER_VERIFICATION_RECEIPT_SCHEMA_VERSION
             ),
-            interface=payload.get(
-                "interface", ATTESTED_PROOF_VERIFIER_INTERFACE
-            ),
+            interface=payload.get("interface", ATTESTED_PROOF_VERIFIER_INTERFACE),
         )
 
 
@@ -1125,45 +1023,28 @@ class SelectedEvidencePack:
                 corpus_root_cid=ctx_payload.get("corpus_root_cid", ""),
                 revocation_root_cid=ctx_payload.get("revocation_root_cid", ""),
                 expected_tenant=ctx_payload.get("expected_tenant", ""),
-                expected_jurisdiction=ctx_payload.get(
-                    "expected_jurisdiction", ""
-                ),
+                expected_jurisdiction=ctx_payload.get("expected_jurisdiction", ""),
                 at_time=ctx_payload.get("at_time", ""),
                 approved_proof_systems=tuple(
                     ctx_payload.get("approved_proof_systems")
                     or sorted(DEFAULT_APPROVED_PROOF_SYSTEMS)
                 ),
                 approved_backends=tuple(
-                    ctx_payload.get("approved_backends")
-                    or sorted(DEFAULT_APPROVED_BACKENDS)
+                    ctx_payload.get("approved_backends") or sorted(DEFAULT_APPROVED_BACKENDS)
                 ),
-                revoked_envelope_cids=tuple(
-                    ctx_payload.get("revoked_envelope_cids", ()) or ()
-                ),
-                accept_simulated=bool(
-                    ctx_payload.get("accept_simulated", False)
-                ),
-                require_native_or_zk=bool(
-                    ctx_payload.get("require_native_or_zk", True)
-                ),
-                require_complete_coverage=bool(
-                    ctx_payload.get("require_complete_coverage", True)
-                ),
-                schema_version=ctx_payload.get(
-                    "schema_version", VERIFIER_CONTEXT_SCHEMA_VERSION
-                ),
+                revoked_envelope_cids=tuple(ctx_payload.get("revoked_envelope_cids", ()) or ()),
+                accept_simulated=bool(ctx_payload.get("accept_simulated", False)),
+                require_native_or_zk=bool(ctx_payload.get("require_native_or_zk", True)),
+                require_complete_coverage=bool(ctx_payload.get("require_complete_coverage", True)),
+                schema_version=ctx_payload.get("schema_version", VERIFIER_CONTEXT_SCHEMA_VERSION),
             )
         object.__setattr__(self, "context", ctx)
 
         items: list[SelectedEvidenceItem] = []
         if self.items in (None, ()):
-            raise ProofVerifierError(
-                "SelectedEvidencePack requires at least one item"
-            )
+            raise ProofVerifierError("SelectedEvidencePack requires at least one item")
         if isinstance(self.items, (str, bytes, bytearray, Mapping)):
-            raise ProofVerifierError(
-                "items must be a sequence of SelectedEvidenceItem"
-            )
+            raise ProofVerifierError("items must be a sequence of SelectedEvidenceItem")
         try:
             for item in self.items:
                 if isinstance(item, SelectedEvidenceItem):
@@ -1171,9 +1052,7 @@ class SelectedEvidencePack:
                 else:
                     items.append(SelectedEvidenceItem.from_dict(item))
         except TypeError as exc:
-            raise ProofVerifierError(
-                "items must be a sequence of SelectedEvidenceItem"
-            ) from exc
+            raise ProofVerifierError("items must be a sequence of SelectedEvidenceItem") from exc
         object.__setattr__(self, "items", tuple(items))
 
         receipt = self.receipt
@@ -1190,22 +1069,16 @@ class SelectedEvidencePack:
                 ).verify_integrity(),
             )
 
-        object.__setattr__(
-            self, "pack_id", _optional_text(self.pack_id, "pack_id")
-        )
+        object.__setattr__(self, "pack_id", _optional_text(self.pack_id, "pack_id"))
         object.__setattr__(
             self,
             "schema_version",
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != SELECTED_EVIDENCE_PACK_SCHEMA_VERSION:
-            raise ProofVerifierError(
-                f"unsupported evidence pack schema: {self.schema_version!r}"
-            )
+            raise ProofVerifierError(f"unsupported evidence pack schema: {self.schema_version!r}")
         if self.interface != SELECTED_EVIDENCE_PACK_INTERFACE:
-            raise ProofVerifierError(
-                f"unsupported evidence pack interface: {self.interface!r}"
-            )
+            raise ProofVerifierError(f"unsupported evidence pack interface: {self.interface!r}")
 
         body = self._identity_payload()
         digest = _sha256_digest(_canonical_bytes(body))
@@ -1213,15 +1086,11 @@ class SelectedEvidencePack:
         if self.content_digest:
             recorded = _require_digest(self.content_digest, "content_digest")
             if recorded != digest:
-                raise ProofVerifierIntegrityError(
-                    "pack content_digest does not match payload"
-                )
+                raise ProofVerifierIntegrityError("pack content_digest does not match payload")
         if self.content_cid:
             recorded_cid = _require_cid(self.content_cid, "content_cid")
             if recorded_cid != cid:
-                raise ProofVerifierIntegrityError(
-                    "pack content_cid does not match payload"
-                )
+                raise ProofVerifierIntegrityError("pack content_cid does not match payload")
         object.__setattr__(self, "content_digest", digest)
         object.__setattr__(self, "content_cid", cid)
         if not self.pack_id:
@@ -1235,9 +1104,7 @@ class SelectedEvidencePack:
             "context": self.context.to_dict(),
             "interface": self.interface,
             "items": [item.to_dict() for item in self.items],
-            "receipt": (
-                self.receipt.to_dict() if self.receipt is not None else None
-            ),
+            "receipt": (self.receipt.to_dict() if self.receipt is not None else None),
             "schema_version": self.schema_version,
         }
 
@@ -1258,9 +1125,7 @@ class SelectedEvidencePack:
             )
         return self
 
-    def with_receipt(
-        self, receipt: ConsumerVerificationReceipt
-    ) -> "SelectedEvidencePack":
+    def with_receipt(self, receipt: ConsumerVerificationReceipt) -> "SelectedEvidencePack":
         """Return a new pack bound to *receipt* (identity rehashed)."""
 
         return SelectedEvidencePack(
@@ -1298,12 +1163,8 @@ class SelectedEvidencePack:
             pack_id=payload.get("pack_id", ""),
             content_digest=payload.get("content_digest", ""),
             content_cid=payload.get("content_cid", ""),
-            schema_version=payload.get(
-                "schema_version", SELECTED_EVIDENCE_PACK_SCHEMA_VERSION
-            ),
-            interface=payload.get(
-                "interface", SELECTED_EVIDENCE_PACK_INTERFACE
-            ),
+            schema_version=payload.get("schema_version", SELECTED_EVIDENCE_PACK_SCHEMA_VERSION),
+            interface=payload.get("interface", SELECTED_EVIDENCE_PACK_INTERFACE),
         )
 
 
@@ -1392,24 +1253,19 @@ def _verify_zk_attestation(
     # Public-input binding when present on attestation.
     att_inputs = att.get("public_inputs")
     if isinstance(att_inputs, Mapping) and att_inputs:
-        expected = dict(envelope.public_inputs) or dict(
-            envelope.circuit.public_inputs
-        )
+        expected = dict(envelope.public_inputs) or dict(envelope.circuit.public_inputs)
         if expected and dict(att_inputs) != expected:
             reasons.append(REASON_PUBLIC_INPUTS)
     # Statement digest binding when present.
     att_statement = (
-        att.get("statement_digest")
-        or (att.get("statement") or {}).get("statement_digest")
+        att.get("statement_digest") or (att.get("statement") or {}).get("statement_digest")
         if isinstance(att.get("statement"), Mapping)
         else att.get("statement_digest")
     )
     if isinstance(att.get("statement"), Mapping):
         stmt = att["statement"]
         att_statement = (
-            stmt.get("statement_digest")
-            or stmt.get("constraint_digest")
-            or att_statement
+            stmt.get("statement_digest") or stmt.get("constraint_digest") or att_statement
         )
     if att_statement and str(att_statement) not in (
         envelope.statement_digest,
@@ -1434,20 +1290,13 @@ def _check_algorithms(
 ) -> None:
     circuit = envelope.circuit
     assert isinstance(circuit, CircuitBinding)
-    proof_system = (
-        item.claimed_algorithm
-        or circuit.proof_system
-        or envelope.backend_id
-        or ""
-    )
+    proof_system = item.claimed_algorithm or circuit.proof_system or envelope.backend_id or ""
     backend = envelope.backend_id or circuit.backend_id or ""
 
     if proof_system:
         if _algorithm_is_simulated(proof_system) and not context.accept_simulated:
             reasons.append(REASON_REAL_TO_SIM)
-        if context.approved_proof_systems and proof_system not in (
-            context.approved_proof_systems
-        ):
+        if context.approved_proof_systems and proof_system not in (context.approved_proof_systems):
             # Backend-only labels may still be approved via backends.
             if proof_system not in context.approved_backends:
                 reasons.append(REASON_UNKNOWN_ALGORITHM)
@@ -1470,9 +1319,7 @@ def _check_algorithms(
     if item.previous_algorithm and proof_system:
         prev = item.previous_algorithm
         if prev != proof_system:
-            if _algorithm_is_simulated(proof_system) and not _algorithm_is_simulated(
-                prev
-            ):
+            if _algorithm_is_simulated(proof_system) and not _algorithm_is_simulated(prev):
                 reasons.append(REASON_ALGORITHM_DOWNGRADED)
                 reasons.append(REASON_REAL_TO_SIM)
             elif (
@@ -1757,17 +1604,11 @@ class AttestedProofVerifier:
             _require_text(self.schema_version, "schema_version"),
         )
         if self.schema_version != ATTESTED_PROOF_VERIFIER_SCHEMA_VERSION:
-            raise ProofVerifierError(
-                f"unsupported verifier schema: {self.schema_version!r}"
-            )
+            raise ProofVerifierError(f"unsupported verifier schema: {self.schema_version!r}")
         if self.interface != ATTESTED_PROOF_VERIFIER_INTERFACE:
-            raise ProofVerifierError(
-                f"unsupported verifier interface: {self.interface!r}"
-            )
+            raise ProofVerifierError(f"unsupported verifier interface: {self.interface!r}")
 
-    def verify_item(
-        self, item: SelectedEvidenceItem | Mapping[str, Any]
-    ) -> ItemVerificationResult:
+    def verify_item(self, item: SelectedEvidenceItem | Mapping[str, Any]) -> ItemVerificationResult:
         return verify_selected_item(item, self.context)
 
     def verify_pack(
@@ -1783,21 +1624,15 @@ class AttestedProofVerifier:
         pack_ctx = pack.context
         assert isinstance(pack_ctx, VerifierContext)
         if pack_ctx.corpus_root_cid != self.context.corpus_root_cid:
-            raise ProofVerifierError(
-                "pack corpus_root_cid does not match verifier context"
-            )
+            raise ProofVerifierError("pack corpus_root_cid does not match verifier context")
         if (
             self.context.revocation_root_cid
             and pack_ctx.revocation_root_cid
             and pack_ctx.revocation_root_cid != self.context.revocation_root_cid
         ):
-            raise ProofVerifierError(
-                "pack revocation_root_cid does not match verifier context"
-            )
+            raise ProofVerifierError("pack revocation_root_cid does not match verifier context")
 
-        item_results = tuple(
-            self.verify_item(item) for item in pack.items
-        )
+        item_results = tuple(self.verify_item(item) for item in pack.items)
         all_grant = bool(item_results) and all(
             result.grants_authority and result.passed for result in item_results
         )
@@ -1822,9 +1657,7 @@ class AttestedProofVerifier:
             if any(r.status is VerificationStatus.FAIL for r in item_results):
                 status = VerificationStatus.FAIL
 
-        context_digest = _sha256_digest(
-            _canonical_bytes(self.context.to_dict())
-        )
+        context_digest = _sha256_digest(_canonical_bytes(self.context.to_dict()))
         receipt = ConsumerVerificationReceipt(
             status=status,
             item_results=item_results,
@@ -1872,9 +1705,7 @@ def build_attested_proof_verifier(
     if context is None:
         context = VerifierContext(**context_kwargs)
     elif context_kwargs:
-        raise ProofVerifierError(
-            "pass either context or context kwargs, not both"
-        )
+        raise ProofVerifierError("pass either context or context kwargs, not both")
     return AttestedProofVerifier(context=context)
 
 

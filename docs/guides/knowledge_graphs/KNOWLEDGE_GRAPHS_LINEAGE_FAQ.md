@@ -348,6 +348,7 @@ External maintainers should migrate at their convenience within the transition p
 **A:**
 ```python
 import ipfs_datasets_py
+
 print(ipfs_datasets_py.__version__)
 ```
 
@@ -361,14 +362,11 @@ print(ipfs_datasets_py.__version__)
 # OLD ❌
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
     EnhancedLineageTracker,
-    LineageTracker
+    LineageTracker,
 )
 
 # NEW ✅
-from ipfs_datasets_py.knowledge_graphs.lineage import (
-    EnhancedLineageTracker,
-    LineageTracker
-)
+from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker, LineageTracker
 ```
 
 ### Migration Command Cheat Sheet

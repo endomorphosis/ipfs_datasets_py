@@ -102,21 +102,22 @@ python -m ipfs_datasets_py.optimizers.cli optimize \
 import argparse
 from .agentic.cli import OptimizerCLI as AgenticCLI
 
+
 class UnifiedOptimizerCLI:
     """Unified CLI for all optimizer types."""
-    
+
     def __init__(self):
         self.agentic = AgenticCLI()
         # Will add: self.logic = LogicCLI()
         # Will add: self.graphrag = GraphRAGCLI()
-    
+
     def main(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--type", choices=["agentic", "logic", "graphrag"])
         # ...
-        
+
         args = parser.parse_args()
-        
+
         if args.type == "agentic":
             return self.agentic.run(args)
         # ...
@@ -138,22 +139,25 @@ class UnifiedOptimizerCLI:
 ```python
 # tests/unit/optimizers/test_optimizer_learning_metrics.py
 
+
 def test_learning_metrics_collection():
     """Test metrics are collected correctly."""
     collector = OptimizerLearningMetricsCollector()
     collector.record_optimization(task, result)
-    
+
     metrics = collector.get_metrics()
     assert metrics.total_optimizations > 0
     assert metrics.success_rate >= 0
+
 
 def test_metrics_persistence():
     """Test metrics persist correctly."""
     collector = OptimizerLearningMetricsCollector()
     collector.save("metrics.json")
-    
+
     loaded = OptimizerLearningMetricsCollector.load("metrics.json")
     assert loaded.get_metrics() == collector.get_metrics()
+
 
 # ... 20+ more tests
 ```
@@ -162,17 +166,19 @@ def test_metrics_persistence():
 ```python
 # tests/unit/optimizers/test_optimizer_alert_system.py
 
+
 def test_alert_generation():
     """Test alerts generated for anomalies."""
     alert_system = LearningAlertSystem()
-    
+
     # Simulate anomaly
     for i in range(10):
         alert_system.check_anomaly(success_rate=0.2)  # Low
-    
+
     alerts = alert_system.get_alerts()
     assert len(alerts) > 0
     assert any(a.severity == "high" for a in alerts)
+
 
 # ... 15+ more tests
 ```
@@ -181,22 +187,25 @@ def test_alert_generation():
 ```python
 # tests/unit/optimizers/test_optimizer_visualization.py
 
+
 def test_visualization_setup():
     """Test visualization initializes correctly."""
     viz = LiveOptimizerVisualization()
     viz.setup_metrics_collector(collector)
-    
+
     assert viz.metrics_collector is not None
+
 
 def test_auto_update_loop():
     """Test auto-update loop works."""
     viz = LiveOptimizerVisualization()
     viz.start_auto_update(interval=0.1)
-    
+
     time.sleep(0.3)
     assert viz.update_count >= 2
-    
+
     viz.stop_auto_update()
+
 
 # ... 10+ more tests
 ```
@@ -274,29 +283,28 @@ python -m ipfs_datasets_py.optimizers.agentic.cli stats
 ```python
 # optimizers/cli.py
 
+
 class UnifiedOptimizerCLI:
     def __init__(self):
         self.agentic = AgenticCLI()
-    
+
     def create_parser(self):
-        parser = argparse.ArgumentParser(
-            description="Unified Optimizer CLI"
-        )
+        parser = argparse.ArgumentParser(description="Unified Optimizer CLI")
         parser.add_argument(
             "--type",
             choices=["agentic", "logic", "graphrag"],
             required=True,
-            help="Optimizer type to use"
+            help="Optimizer type to use",
         )
-        
+
         subparsers = parser.add_subparsers(dest="command")
-        
+
         # Optimize command
         opt_parser = subparsers.add_parser("optimize")
         opt_parser.add_argument("--method")
         opt_parser.add_argument("--target")
         # ...
-        
+
         return parser
 ```
 
@@ -304,19 +312,22 @@ class UnifiedOptimizerCLI:
 ```python
 # logic_theorem_optimizer/cli.py (NEW)
 
+
 class LogicOptimizerCLI:
     """CLI interface for logic theorem optimizer."""
-    
+
     def optimize(self, args):
         optimizer = LogicTheoremOptimizer()
         result = optimizer.extract_and_prove(args.input)
         return result
 
+
 # graphrag/cli.py (NEW)
+
 
 class GraphRAGOptimizerCLI:
     """CLI interface for GraphRAG optimizer."""
-    
+
     def optimize(self, args):
         optimizer = GraphRAGOptimizer()
         result = optimizer.optimize_query(args.query)
@@ -327,14 +338,15 @@ class GraphRAGOptimizerCLI:
 ```python
 # tests/unit/optimizers/test_unified_cli.py
 
+
 def test_cli_routing():
     """Test CLI routes to correct optimizer."""
     cli = UnifiedOptimizerCLI()
-    
+
     # Test agentic routing
     result = cli.run(["--type", "agentic", "optimize", ...])
     assert result.optimizer_type == "agentic"
-    
+
     # Test logic routing
     result = cli.run(["--type", "logic", "optimize", ...])
     assert result.optimizer_type == "logic"

@@ -151,11 +151,13 @@ def diff_ontologies(
             compare_confidence=compare_confidence,
             confidence_threshold=confidence_threshold,
         ):
-            entities_modified.append({
-                "id": eid,
-                "before": before_entities[eid],
-                "after": after_entities[eid],
-            })
+            entities_modified.append(
+                {
+                    "id": eid,
+                    "before": before_entities[eid],
+                    "after": after_entities[eid],
+                }
+            )
 
     # Compute relationship diffs
     rels_added = [after_rels[rid] for rid in set(after_rels) - set(before_rels)]
@@ -169,11 +171,13 @@ def diff_ontologies(
             compare_confidence=compare_confidence,
             confidence_threshold=confidence_threshold,
         ):
-            rels_modified.append({
-                "id": rid,
-                "before": before_rels[rid],
-                "after": after_rels[rid],
-            })
+            rels_modified.append(
+                {
+                    "id": rid,
+                    "before": before_rels[rid],
+                    "after": after_rels[rid],
+                }
+            )
 
     return DiffResult(
         entities_added=entities_added,
@@ -332,7 +336,14 @@ def format_diff(diff: DiffResult, verbose: bool = False) -> str:
                 before = change["before"]
                 after = change["after"]
                 lines.append(f"  ~ {rid}:")
-                for key in ["type", "source_id", "target_id", "confidence", "direction", "properties"]:
+                for key in [
+                    "type",
+                    "source_id",
+                    "target_id",
+                    "confidence",
+                    "direction",
+                    "properties",
+                ]:
                     b_val = before.get(key)
                     a_val = after.get(key)
                     if b_val != a_val:
@@ -359,7 +370,7 @@ def compute_diff_stats(diff: DiffResult) -> Dict[str, Any]:
 
     Example::
 
-        >>> stats = compute_diff_stats(diff)  
+        >>> stats = compute_diff_stats(diff)
         >>> stats["entities_net_change"]
         2  # 3 added, 1 removed -> net +2
     """

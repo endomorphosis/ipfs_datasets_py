@@ -10,7 +10,9 @@ def test_choose_symai_neurosymbolic_engine_defaults_to_codex_when_available(monk
     monkeypatch.delenv("IPFS_DATASETS_PY_DISABLE_CODEX_FOR_SYMAI", raising=False)
     monkeypatch.delenv("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", raising=False)
     monkeypatch.setenv("IPFS_DATASETS_PY_CODEX_MODEL", "gpt-5.3-codex-spark")
-    monkeypatch.setattr("shutil.which", lambda command: "/usr/local/bin/codex" if command == "codex" else None)
+    monkeypatch.setattr(
+        "shutil.which", lambda command: "/usr/local/bin/codex" if command == "codex" else None
+    )
 
     chosen = symai_config.choose_symai_neurosymbolic_engine()
 
@@ -27,12 +29,16 @@ def test_choose_symai_neurosymbolic_engine_respects_explicit_disable(monkeypatch
     monkeypatch.delenv("NEUROSYMBOLIC_ENGINE_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setenv("IPFS_DATASETS_PY_DISABLE_CODEX_FOR_SYMAI", "1")
-    monkeypatch.setattr("shutil.which", lambda command: "/usr/local/bin/codex" if command == "codex" else None)
+    monkeypatch.setattr(
+        "shutil.which", lambda command: "/usr/local/bin/codex" if command == "codex" else None
+    )
 
     assert symai_config.choose_symai_neurosymbolic_engine() is None
 
 
-def test_ensure_symai_config_keeps_explicit_neurosymbolic_model_when_router_enabled(monkeypatch, tmp_path):
+def test_ensure_symai_config_keeps_explicit_neurosymbolic_model_when_router_enabled(
+    monkeypatch, tmp_path
+):
     from ipfs_datasets_py.utils import symai_config
 
     monkeypatch.setattr(symai_config.sys, "prefix", str(tmp_path))

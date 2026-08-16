@@ -178,7 +178,9 @@ Migration: Use scripts/invoke_copilot_on_pr.py instead
 
 See: DEPRECATED_SCRIPTS.md and COPILOT_INVOCATION_GUIDE.md
 """
+
 import sys
+
 print("⚠️  ERROR: This script is deprecated!")
 print("📖 See: DEPRECATED_SCRIPTS.md")
 print("✅ Use: scripts/invoke_copilot_on_pr.py instead")

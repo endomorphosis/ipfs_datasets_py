@@ -113,12 +113,14 @@ def pytest_addoption(parser):
 
 try:
     import pytest_benchmark  # type: ignore[import-not-found]  # noqa: F401
+
     _PYTEST_BENCHMARK_AVAILABLE = True
 except Exception:
     _PYTEST_BENCHMARK_AVAILABLE = False
 
 
 if not _PYTEST_BENCHMARK_AVAILABLE:
+
     @pytest.fixture
     def benchmark():
         """Fallback `benchmark` fixture when pytest-benchmark isn't installed.
@@ -133,6 +135,7 @@ if not _PYTEST_BENCHMARK_AVAILABLE:
 
 
 # ==================== Commit-Hash Based Caching Plugin ====================
+
 
 def get_git_commit_hash() -> Optional[str]:
     """Get the current git commit hash."""
@@ -171,18 +174,18 @@ def pytest_configure(config):
     # Get current commit hash
     current_commit = get_git_commit_hash()
     has_uncommitted = get_git_uncommitted_changes()
-    
+
     # Access pytest cache
     cache = config.cache
-    
+
     # Store commit info
     if current_commit:
         last_commit = cache.get("commit_hash", None)
-        
+
         # Update stored values
         cache.set("commit_hash", current_commit)
         cache.set("uncommitted_changes", has_uncommitted)
-        
+
         # Store metadata
         cache.set("last_run_commit", current_commit)
         cache.set("last_run_uncommitted", has_uncommitted)
@@ -192,25 +195,25 @@ def show_cache_info(config):
     """Display cache information."""
     cache = config.cache
     cache_dir = Path(config.cache._cachedir)
-    
+
     print("\n" + "=" * 60)
     print("Pytest Cache Information")
     print("=" * 60)
-    
+
     # Cache directory info
     if cache_dir.exists():
-        cache_size = sum(f.stat().st_size for f in cache_dir.rglob('*') if f.is_file())
+        cache_size = sum(f.stat().st_size for f in cache_dir.rglob("*") if f.is_file())
         cache_size_mb = cache_size / (1024 * 1024)
         print(f"Cache directory: {cache_dir}")
         print(f"Cache size: {cache_size_mb:.2f} MB")
     else:
         print(f"Cache directory: {cache_dir} (does not exist)")
-    
+
     # Git commit info
     current_commit = get_git_commit_hash()
     if current_commit:
         print(f"\nCurrent commit: {current_commit[:8]}")
-        
+
         last_commit = cache.get("commit_hash", None)
         if last_commit:
             print(f"Cached commit: {last_commit[:8]}")
@@ -218,22 +221,22 @@ def show_cache_info(config):
                 print("⚠️  Commit has changed - cache may be stale")
             else:
                 print("✓ Cache is up to date with current commit")
-        
+
         if get_git_uncommitted_changes():
             print("⚠️  Uncommitted changes detected")
     else:
         print("\nNot in a git repository")
-    
+
     # Last run info
     last_run_commit = cache.get("last_run_commit", None)
     if last_run_commit:
         print(f"\nLast successful run: {last_run_commit[:8]}")
-    
+
     # Cache statistics
     lastfailed = cache.get("cache/lastfailed", {})
     if lastfailed:
         print(f"\nLast failed tests: {len(lastfailed)}")
-    
+
     print("=" * 60 + "\n")
 
 
@@ -245,10 +248,9 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         if commit:
             terminalreporter.write_sep("=", "Cache Info")
             terminalreporter.write_line(f"Commit hash: {commit[:8]}")
-            
+
             if get_git_uncommitted_changes():
                 terminalreporter.write_line("Note: Uncommitted changes present")
-
 
     def pytest_collection_modifyitems(config, items):
         """Skip LLM/network/heavy tests by default; allow opt-in via flags or env vars.
@@ -256,8 +258,12 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         This is intentionally conservative to prevent OOM/system crashes in default runs.
         """
         run_llm = bool(getattr(config.option, "run_llm", False)) or _truthy_env("RUN_LLM_TESTS")
-        run_network = bool(getattr(config.option, "run_network", False)) or _truthy_env("RUN_NETWORK_TESTS")
-        run_heavy = bool(getattr(config.option, "run_heavy", False)) or _truthy_env("RUN_HEAVY_TESTS")
+        run_network = bool(getattr(config.option, "run_network", False)) or _truthy_env(
+            "RUN_NETWORK_TESTS"
+        )
+        run_heavy = bool(getattr(config.option, "run_heavy", False)) or _truthy_env(
+            "RUN_HEAVY_TESTS"
+        )
 
         file_cache: dict[str, tuple[bool, bool, bool]] = {}
 
@@ -280,9 +286,15 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
             file_cache[path] = (is_llm, is_network, is_heavy)
             return file_cache[path]
 
-        skip_llm = pytest.mark.skip(reason="Skipped by default (LLM). Use --run-llm or RUN_LLM_TESTS=1")
-        skip_network = pytest.mark.skip(reason="Skipped by default (network). Use --run-network or RUN_NETWORK_TESTS=1")
-        skip_heavy = pytest.mark.skip(reason="Skipped by default (heavy). Use --run-heavy or RUN_HEAVY_TESTS=1")
+        skip_llm = pytest.mark.skip(
+            reason="Skipped by default (LLM). Use --run-llm or RUN_LLM_TESTS=1"
+        )
+        skip_network = pytest.mark.skip(
+            reason="Skipped by default (network). Use --run-network or RUN_NETWORK_TESTS=1"
+        )
+        skip_heavy = pytest.mark.skip(
+            reason="Skipped by default (heavy). Use --run-heavy or RUN_HEAVY_TESTS=1"
+        )
 
         for item in items:
             # Respect explicit markers first.
@@ -314,40 +326,36 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 
 
 def _ensure_test_path_entries() -> None:
-	venv_bin = Path(sys.executable).resolve().parent
-	tools_bin = Path(__file__).resolve().parent.parent / '.tools' / 'bin'
+    venv_bin = Path(sys.executable).resolve().parent
+    tools_bin = Path(__file__).resolve().parent.parent / ".tools" / "bin"
 
-	path_entries = [str(venv_bin)]
-	if tools_bin.exists():
-		path_entries.append(str(tools_bin))
+    path_entries = [str(venv_bin)]
+    if tools_bin.exists():
+        path_entries.append(str(tools_bin))
 
-	current_path = os.environ.get('PATH', '')
-	for entry in reversed(path_entries):
-		if entry and entry not in current_path.split(os.pathsep):
-			current_path = f"{entry}{os.pathsep}{current_path}"
-	os.environ['PATH'] = current_path
+    current_path = os.environ.get("PATH", "")
+    for entry in reversed(path_entries):
+        if entry and entry not in current_path.split(os.pathsep):
+            current_path = f"{entry}{os.pathsep}{current_path}"
+    os.environ["PATH"] = current_path
 
 
 def _ensure_github_token() -> None:
-	if os.environ.get('GITHUB_TOKEN'):
-		return
+    if os.environ.get("GITHUB_TOKEN"):
+        return
 
-	if shutil.which('gh') is None:
-		return
+    if shutil.which("gh") is None:
+        return
 
-	try:
-		result = subprocess.run(
-			['gh', 'auth', 'token'],
-			check=False,
-			capture_output=True,
-			text=True,
-			timeout=10
-		)
-		token = result.stdout.strip()
-		if token:
-			os.environ['GITHUB_TOKEN'] = token
-	except Exception:
-		return
+    try:
+        result = subprocess.run(
+            ["gh", "auth", "token"], check=False, capture_output=True, text=True, timeout=10
+        )
+        token = result.stdout.strip()
+        if token:
+            os.environ["GITHUB_TOKEN"] = token
+    except Exception:
+        return
 
 
 _ensure_test_path_entries()
@@ -356,74 +364,75 @@ _ensure_github_token()
 
 @pytest.fixture
 def sample_graphrag_system():
-	"""Create sample GraphRAG system for tests that need it."""
-	try:
-		from ipfs_datasets_py.content_discovery import ContentManifest
-		from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
-			KnowledgeGraph,
-			Entity,
-			Relationship,
-		)
-		from ipfs_datasets_py.processors.multimodal_processor import (
-			ProcessedContentBatch,
-			ProcessedContent,
-		)
-		from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem
-	except ModuleNotFoundError as e:
-		pytest.skip(f"Optional GraphRAG dependencies not installed: {e}")
-	except ImportError as e:
-		pytest.skip(f"GraphRAG components not available: {e}")
+    """Create sample GraphRAG system for tests that need it."""
+    try:
+        from ipfs_datasets_py.content_discovery import ContentManifest
+        from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
+            KnowledgeGraph,
+            Entity,
+            Relationship,
+        )
+        from ipfs_datasets_py.processors.multimodal_processor import (
+            ProcessedContentBatch,
+            ProcessedContent,
+        )
+        from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem
+    except ModuleNotFoundError as e:
+        pytest.skip(f"Optional GraphRAG dependencies not installed: {e}")
+    except ImportError as e:
+        pytest.skip(f"GraphRAG components not available: {e}")
 
-	html_content = ProcessedContent(
-		source_url="https://example.com/ai-intro.html",
-		content_type="html",
-		text_content="Introduction to artificial intelligence and machine learning algorithms.",
-		metadata={"title": "AI Introduction"},
-		confidence_score=0.9,
-	)
+    html_content = ProcessedContent(
+        source_url="https://example.com/ai-intro.html",
+        content_type="html",
+        text_content="Introduction to artificial intelligence and machine learning algorithms.",
+        metadata={"title": "AI Introduction"},
+        confidence_score=0.9,
+    )
 
-	pdf_content = ProcessedContent(
-		source_url="https://example.com/research.pdf",
-		content_type="pdf",
-		text_content="Research paper on deep learning neural networks and their applications.",
-		metadata={"title": "Deep Learning Research"},
-		confidence_score=0.85,
-	)
+    pdf_content = ProcessedContent(
+        source_url="https://example.com/research.pdf",
+        content_type="pdf",
+        text_content="Research paper on deep learning neural networks and their applications.",
+        metadata={"title": "Deep Learning Research"},
+        confidence_score=0.85,
+    )
 
-	processed_batch = ProcessedContentBatch(
-		base_url="https://example.com",
-		processed_items=[html_content, pdf_content],
-		processing_stats={"html": 1, "pdf": 1, "total": 2},
-	)
+    processed_batch = ProcessedContentBatch(
+        base_url="https://example.com",
+        processed_items=[html_content, pdf_content],
+        processing_stats={"html": 1, "pdf": 1, "total": 2},
+    )
 
-	ai_entity = Entity(name="Artificial Intelligence", entity_type="concept")
-	ml_entity = Entity(name="Machine Learning", entity_type="concept")
-	dl_entity = Entity(name="Deep Learning", entity_type="concept")
+    ai_entity = Entity(name="Artificial Intelligence", entity_type="concept")
+    ml_entity = Entity(name="Machine Learning", entity_type="concept")
+    dl_entity = Entity(name="Deep Learning", entity_type="concept")
 
-	kg = KnowledgeGraph()
-	kg.add_entity(ai_entity)
-	kg.add_entity(ml_entity)
-	kg.add_entity(dl_entity)
-	kg.add_relationship(Relationship(ai_entity, ml_entity, "includes"))
-	kg.add_relationship(Relationship(ml_entity, dl_entity, "includes"))
+    kg = KnowledgeGraph()
+    kg.add_entity(ai_entity)
+    kg.add_entity(ml_entity)
+    kg.add_entity(dl_entity)
+    kg.add_relationship(Relationship(ai_entity, ml_entity, "includes"))
+    kg.add_relationship(Relationship(ml_entity, dl_entity, "includes"))
 
-	manifest = ContentManifest(
-		base_url="https://example.com",
-		html_pages=[],
-		pdf_documents=[],
-		media_files=[],
-		structured_data=[],
-		total_assets=2,
-		discovery_timestamp=datetime.now(),
-	)
+    manifest = ContentManifest(
+        base_url="https://example.com",
+        html_pages=[],
+        pdf_documents=[],
+        media_files=[],
+        structured_data=[],
+        total_assets=2,
+        discovery_timestamp=datetime.now(),
+    )
 
-	return WebsiteGraphRAGSystem(
-		url="https://example.com",
-		content_manifest=manifest,
-		processed_content=processed_batch,
-		knowledge_graph=kg,
-		graphrag=None,
-	)
+    return WebsiteGraphRAGSystem(
+        url="https://example.com",
+        content_manifest=manifest,
+        processed_content=processed_batch,
+        knowledge_graph=kg,
+        graphrag=None,
+    )
+
 
 # import pytest
 # import anyio
@@ -481,7 +490,7 @@ def sample_graphrag_system():
 #                 "metadata": {"page_type": "title"}
 #             },
 #             {
-#                 "page_number": 2, 
+#                 "page_number": 2,
 #                 "text": "IPFS uses content addressing to create a permanent and decentralized method of storing and sharing files.",
 #                 "images": [],
 #                 "metadata": {"page_type": "content"}
@@ -512,7 +521,7 @@ def sample_graphrag_system():
 #                 "metadata": {"section": "introduction"}
 #             },
 #             {
-#                 "chunk_id": "chunk_002", 
+#                 "chunk_id": "chunk_002",
 #                 "text": "IPFS is a peer-to-peer protocol",
 #                 "page_number": 1,
 #                 "start_char": 21,
@@ -532,7 +541,7 @@ def sample_graphrag_system():
 #             {
 #                 "relationship_id": "rel_001",
 #                 "source": "entity_001",
-#                 "target": "entity_002", 
+#                 "target": "entity_002",
 #                 "type": "is_type_of",
 #                 "confidence": 0.9
 #             }
@@ -550,7 +559,7 @@ def sample_graphrag_system():
 #         ],
 #         "relationships": [
 #             {
-#                 "source": "IPFS", 
+#                 "source": "IPFS",
 #                 "target": "peer-to-peer",
 #                 "relation": "uses",
 #                 "confidence": 0.92
@@ -599,11 +608,11 @@ def sample_graphrag_system():
 
 # class MockLLMOptimizer:
 #     """Mock LLM optimizer for testing."""
-    
+
 #     def __init__(self):
 #         self.model_name = "mock-model"
 #         self.max_chunk_size = 2048
-    
+
 #     async def optimize_document(self, content, metadata=None):
 #         return {
 #             "optimized_chunks": [
@@ -616,11 +625,11 @@ def sample_graphrag_system():
 
 # class MockOCREngine:
 #     """Mock OCR engine for testing."""
-    
+
 #     def __init__(self):
 #         self.primary_engine = "mock-ocr"
 #         self.fallback_engines = []
-    
+
 #     async def process_image(self, image_path):
 #         return {
 #             "text": "Mock OCR extracted text",
@@ -630,10 +639,10 @@ def sample_graphrag_system():
 
 # class MockGraphRAGIntegrator:
 #     """Mock GraphRAG integrator for testing."""
-    
+
 #     def __init__(self, storage=None):
 #         self.storage = storage
-    
+
 #     async def create_knowledge_graph(self, document_data):
 #         return {
 #             "graph_id": "mock_graph_001",
@@ -647,7 +656,7 @@ def sample_graphrag_system():
 #     """Mock components for PDF processor testing."""
 #     return {
 #         "llm_optimizer": MockLLMOptimizer(),
-#         "ocr_engine": MockOCREngine(), 
+#         "ocr_engine": MockOCREngine(),
 #         "graphrag_integrator": MockGraphRAGIntegrator()
 #     }
 

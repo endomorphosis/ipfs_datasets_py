@@ -258,13 +258,13 @@ IPFS is core to this project, yet there's no dedicated IPFS processor adapter!
 class IPFSProcessorAdapter:
     """
     Process IPFS content by CID or path.
-    
+
     Handles:
     - IPFS CIDs (Qm..., b...)
     - ipfs:// URLs
     - /ipfs/ paths
     - ipns:// URLs
-    
+
     Features:
     - Content fetching via ipfs_kit_py
     - Automatic format detection
@@ -272,14 +272,13 @@ class IPFSProcessorAdapter:
     - Pinning support
     - Gateway fallback
     """
-    
+
     async def can_process(self, input_source):
         # Check for IPFS CID, ipfs://, /ipfs/, ipns://
-        return (
-            input_source.startswith(('ipfs://', '/ipfs/', 'ipns://'))
-            or self._is_cid(input_source)
+        return input_source.startswith(("ipfs://", "/ipfs/", "ipns://")) or self._is_cid(
+            input_source
         )
-    
+
     async def process(self, input_source, **options):
         # 1. Fetch content from IPFS
         # 2. Detect content type
@@ -318,7 +317,7 @@ class IPFSProcessorAdapter:
 class SpecializedScraperAdapter:
     """
     Route to specialized scrapers based on domain/type.
-    
+
     Supported:
     - Legal databases (municipal laws, court records)
     - Patent databases (USPTO, EPO)
@@ -326,15 +325,15 @@ class SpecializedScraperAdapter:
     - Academic papers
     - News articles
     """
-    
+
     def __init__(self):
         self._scrapers = {
-            'legal': LegalScrapers(),
-            'patent': PatentScraper(),
-            'wikipedia': WikipediaProcessor(),
+            "legal": LegalScrapers(),
+            "patent": PatentScraper(),
+            "wikipedia": WikipediaProcessor(),
             # ...
         }
-    
+
     async def can_process(self, input_source):
         # Check if URL matches known scraper domains
         pass
@@ -378,25 +377,30 @@ class SpecializedScraperAdapter:
 ```python
 # In universal_processor.py
 
+
 class ErrorClassification(Enum):
     """Classify errors for better handling."""
-    TRANSIENT = "transient"      # Network timeout, temporary unavailability
-    PERMANENT = "permanent"       # Invalid input, unsupported format
-    RESOURCE = "resource"         # Out of memory, disk space
-    DEPENDENCY = "dependency"     # Missing dependency, API key
+
+    TRANSIENT = "transient"  # Network timeout, temporary unavailability
+    PERMANENT = "permanent"  # Invalid input, unsupported format
+    RESOURCE = "resource"  # Out of memory, disk space
+    DEPENDENCY = "dependency"  # Missing dependency, API key
     UNKNOWN = "unknown"
+
 
 class ProcessorError(Exception):
     """Base exception with classification."""
+
     def __init__(self, message, classification=ErrorClassification.UNKNOWN):
         super().__init__(message)
         self.classification = classification
+
 
 async def _retry_with_backoff(self, func, *args, **kwargs):
     """Intelligent retry with exponential backoff."""
     max_retries = self.config.max_retries
     backoff_seconds = 1
-    
+
     for attempt in range(max_retries + 1):
         try:
             return await func(*args, **kwargs)
@@ -404,11 +408,9 @@ async def _retry_with_backoff(self, func, *args, **kwargs):
             # Don't retry permanent errors
             if e.classification == ErrorClassification.PERMANENT:
                 raise
-            
+
             if attempt < max_retries:
-                logger.warning(
-                    f"Attempt {attempt + 1} failed, retrying in {backoff_seconds}s: {e}"
-                )
+                logger.warning(f"Attempt {attempt + 1} failed, retrying in {backoff_seconds}s: {e}")
                 await asyncio.sleep(backoff_seconds)
                 backoff_seconds *= 2  # Exponential backoff
             else:
@@ -426,14 +428,17 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import sys
 
+
 @dataclass
 class CacheEntry:
     """Cache entry with metadata."""
+
     result: ProcessingResult
     created_at: datetime
     last_accessed: datetime
     access_count: int
     size_bytes: int
+
 
 class SmartCache:
     """
@@ -443,79 +448,67 @@ class SmartCache:
     - Access frequency tracking
     - Statistics
     """
-    
+
     def __init__(
-        self,
-        max_size_mb: int = 100,
-        ttl_seconds: int = 3600,
-        eviction_policy: str = "lru"
+        self, max_size_mb: int = 100, ttl_seconds: int = 3600, eviction_policy: str = "lru"
     ):
         self.max_size_bytes = max_size_mb * 1024 * 1024
         self.ttl = timedelta(seconds=ttl_seconds)
         self.eviction_policy = eviction_policy
         self._cache: dict[str, CacheEntry] = {}
         self._current_size = 0
-    
+
     def get(self, key: str) -> Optional[ProcessingResult]:
         """Get from cache if valid."""
         if key not in self._cache:
             return None
-        
+
         entry = self._cache[key]
-        
+
         # Check TTL
         if datetime.now() - entry.created_at > self.ttl:
             del self._cache[key]
             self._current_size -= entry.size_bytes
             return None
-        
+
         # Update access metadata
         entry.last_accessed = datetime.now()
         entry.access_count += 1
-        
+
         return entry.result
-    
+
     def put(self, key: str, result: ProcessingResult) -> None:
         """Add to cache with eviction if needed."""
         size = sys.getsizeof(result)
-        
+
         # Evict if needed
         while self._current_size + size > self.max_size_bytes:
             self._evict_one()
-        
+
         self._cache[key] = CacheEntry(
             result=result,
             created_at=datetime.now(),
             last_accessed=datetime.now(),
             access_count=1,
-            size_bytes=size
+            size_bytes=size,
         )
         self._current_size += size
-    
+
     def _evict_one(self) -> None:
         """Evict one entry based on policy."""
         if not self._cache:
             return
-        
+
         if self.eviction_policy == "lru":
             # Evict least recently accessed
-            key_to_evict = min(
-                self._cache.keys(),
-                key=lambda k: self._cache[k].last_accessed
-            )
+            key_to_evict = min(self._cache.keys(), key=lambda k: self._cache[k].last_accessed)
         elif self.eviction_policy == "lfu":
             # Evict least frequently accessed
-            key_to_evict = min(
-                self._cache.keys(),
-                key=lambda k: self._cache[k].access_count
-            )
+            key_to_evict = min(self._cache.keys(), key=lambda k: self._cache[k].access_count)
         else:
             # FIFO
-            key_to_evict = min(
-                self._cache.keys(),
-                key=lambda k: self._cache[k].created_at
-            )
-        
+            key_to_evict = min(self._cache.keys(), key=lambda k: self._cache[k].created_at)
+
         entry = self._cache.pop(key_to_evict)
         self._current_size -= entry.size_bytes
 ```
@@ -528,6 +521,7 @@ class SmartCache:
 @dataclass
 class ProcessorHealth:
     """Health status of a processor."""
+
     name: str
     status: Literal["healthy", "degraded", "unhealthy"]
     last_success: Optional[datetime]
@@ -537,22 +531,16 @@ class ProcessorHealth:
     error_count: int
     warning_count: int
 
+
 class HealthMonitor:
     """Monitor processor health."""
-    
-    def check_processor_health(
-        self,
-        processor_name: str
-    ) -> ProcessorHealth:
+
+    def check_processor_health(self, processor_name: str) -> ProcessorHealth:
         """Check health of specific processor."""
         stats = self.registry.get_statistics(processor_name)
-        
-        success_rate = (
-            stats["successes"] / stats["calls"]
-            if stats["calls"] > 0
-            else 0.0
-        )
-        
+
+        success_rate = stats["successes"] / stats["calls"] if stats["calls"] > 0 else 0.0
+
         # Determine status
         if success_rate >= 0.95:
             status = "healthy"
@@ -560,20 +548,17 @@ class HealthMonitor:
             status = "degraded"
         else:
             status = "unhealthy"
-        
+
         return ProcessorHealth(
             name=processor_name,
             status=status,
             success_rate=success_rate,
             # ...
         )
-    
+
     def check_system_health(self) -> dict[str, ProcessorHealth]:
         """Check health of all processors."""
-        return {
-            name: self.check_processor_health(name)
-            for name in self.registry.list_processors()
-        }
+        return {name: self.check_processor_health(name) for name in self.registry.list_processors()}
 ```
 
 ### 3.4 Configuration Validation
@@ -584,6 +569,7 @@ class HealthMonitor:
 @dataclass
 class ProcessorConfig:
     """Configuration with validation."""
+
     enable_caching: bool = True
     parallel_workers: int = 4
     timeout_seconds: int = 300
@@ -591,27 +577,27 @@ class ProcessorConfig:
     preferred_processors: dict[str, str] = field(default_factory=dict)
     max_retries: int = 2
     raise_on_error: bool = False
-    
+
     # New fields
     cache_size_mb: int = 100
     cache_ttl_seconds: int = 3600
     enable_monitoring: bool = True
     enable_telemetry: bool = False
-    
+
     def __post_init__(self):
         """Validate configuration."""
         if self.parallel_workers < 1:
             raise ValueError("parallel_workers must be >= 1")
-        
+
         if self.timeout_seconds < 1:
             raise ValueError("timeout_seconds must be >= 1")
-        
+
         if self.max_retries < 0:
             raise ValueError("max_retries must be >= 0")
-        
+
         if self.cache_size_mb < 1:
             raise ValueError("cache_size_mb must be >= 1")
-        
+
         if not 1 <= self.cache_ttl_seconds <= 86400:
             raise ValueError("cache_ttl_seconds must be 1-86400 (1 day)")
 ```
@@ -663,42 +649,44 @@ for various input types.
 import asyncio
 from ipfs_datasets_py.processors import UniversalProcessor
 
+
 async def main():
     # Create processor instance
     processor = UniversalProcessor()
-    
+
     # Process a PDF file
     print("Processing PDF...")
     pdf_result = await processor.process("document.pdf")
     print(f"Extracted {len(pdf_result.knowledge_graph.entities)} entities")
     print(f"Generated {len(pdf_result.vectors.embeddings)} embeddings")
-    
+
     # Process a URL
     print("\nProcessing URL...")
     web_result = await processor.process("https://example.com")
     print(f"Extracted {len(web_result.knowledge_graph.entities)} entities")
-    
+
     # Process a video
     print("\nProcessing video...")
     video_result = await processor.process("video.mp4")
     print(f"Transcription: {video_result.content.get('transcription', 'N/A')[:100]}...")
-    
+
     # Process IPFS content
     print("\nProcessing IPFS content...")
     ipfs_result = await processor.process("QmXXXXX...")
     print(f"Content type: {ipfs_result.metadata.input_type}")
-    
+
     # Access knowledge graph
     print("\nKnowledge Graph:")
     for entity in pdf_result.knowledge_graph.entities[:5]:
         print(f"  - {entity.label} ({entity.type})")
-    
+
     # Vector search
     query_embedding = [0.1, 0.2, ...]  # Your query embedding
     similar = pdf_result.vectors.search(query_embedding, top_k=5)
     print("\nMost similar content:")
     for content_id, score in similar:
         print(f"  - {content_id}: {score:.3f}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -971,6 +959,7 @@ class TestEdgeCases:
 import asyncio
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
+
 class OptimizedBatchProcessor:
     """
     Optimized batch processing with:
@@ -979,17 +968,17 @@ class OptimizedBatchProcessor:
     - Progress tracking
     - Failure isolation
     """
-    
+
     async def process_batch_optimized(
         self,
         inputs: list[Union[str, Path]],
         max_workers: Optional[int] = None,
         use_processes: bool = False,
-        show_progress: bool = True
+        show_progress: bool = True,
     ) -> BatchProcessingResult:
         """
         Process multiple inputs in parallel.
-        
+
         Args:
             inputs: List of inputs to process
             max_workers: Number of workers (default: CPU count)
@@ -998,33 +987,31 @@ class OptimizedBatchProcessor:
         """
         if max_workers is None:
             max_workers = os.cpu_count()
-        
+
         executor_class = ProcessPoolExecutor if use_processes else ThreadPoolExecutor
-        
+
         results = []
         errors = []
-        
+
         with executor_class(max_workers=max_workers) as executor:
             # Create tasks
-            tasks = [
-                self._process_with_executor(executor, inp, **options)
-                for inp in inputs
-            ]
-            
+            tasks = [self._process_with_executor(executor, inp, **options) for inp in inputs]
+
             # Process with progress tracking
             if show_progress:
                 from tqdm.asyncio import tqdm
+
                 completed = await tqdm.gather(*tasks, desc="Processing")
             else:
                 completed = await asyncio.gather(*tasks, return_exceptions=True)
-            
+
             # Separate results and errors
             for inp, result in zip(inputs, completed):
                 if isinstance(result, Exception):
                     errors.append((str(inp), str(result)))
                 else:
                     results.append(result)
-        
+
         return BatchProcessingResult(
             results=results,
             errors=errors,
@@ -1033,8 +1020,8 @@ class OptimizedBatchProcessor:
                 "successful": len(results),
                 "failed": len(errors),
                 "workers": max_workers,
-                "use_processes": use_processes
-            }
+                "use_processes": use_processes,
+            },
         )
 ```
 
@@ -1046,31 +1033,29 @@ class OptimizedBatchProcessor:
 class StreamingProcessor:
     """
     Process large files in streaming fashion.
-    
+
     Instead of loading entire file into memory:
     1. Process in chunks
     2. Yield intermediate results
     3. Aggregate at end
     """
-    
+
     async def process_large_file_streaming(
-        self,
-        file_path: Path,
-        chunk_size_mb: int = 10
+        self, file_path: Path, chunk_size_mb: int = 10
     ) -> AsyncIterator[ProcessingResult]:
         """
         Stream process large file.
-        
+
         Yields intermediate results as chunks are processed.
         """
         chunk_size = chunk_size_mb * 1024 * 1024
-        
-        async with aiofiles.open(file_path, 'rb') as f:
+
+        async with aiofiles.open(file_path, "rb") as f:
             while True:
                 chunk = await f.read(chunk_size)
                 if not chunk:
                     break
-                
+
                 # Process chunk
                 result = await self._process_chunk(chunk)
                 yield result
@@ -1081,14 +1066,10 @@ class StreamingProcessor:
 **Pre-warm cache for common inputs:**
 
 ```python
-async def prewarm_cache(
-    self,
-    common_inputs: list[str],
-    background: bool = True
-) -> None:
+async def prewarm_cache(self, common_inputs: list[str], background: bool = True) -> None:
     """
     Pre-warm cache with common inputs.
-    
+
     Useful for:
     - Startup optimization
     - Predictable workloads
@@ -1098,6 +1079,7 @@ async def prewarm_cache(
         asyncio.create_task(self._prewarm_cache_task(common_inputs))
     else:
         await self._prewarm_cache_task(common_inputs)
+
 
 async def _prewarm_cache_task(self, inputs: list[str]) -> None:
     """Background task to prewarm cache."""
@@ -1154,11 +1136,11 @@ async def _prewarm_cache_task(self, inputs: list[str]) -> None:
 ```python
 class ProcessorDebugger:
     """Debug processor behavior."""
-    
+
     def explain_routing(self, input_source: str) -> dict:
         """
         Explain why specific processor was selected.
-        
+
         Returns detailed decision tree:
         - Input classification
         - Available processors
@@ -1168,7 +1150,7 @@ class ProcessorDebugger:
         """
         classification = self.detector.classify_for_routing(input_source)
         processors = self.registry.find_processors(input_source)
-        
+
         return {
             "input": input_source,
             "classification": classification,
@@ -1176,12 +1158,12 @@ class ProcessorDebugger:
                 {
                     "name": p.get_name(),
                     "priority": p.get_priority(),
-                    "can_process": await p.can_process(input_source)
+                    "can_process": await p.can_process(input_source),
                 }
                 for p in processors
             ],
             "selected": self.registry.select_best_processor(processors, input_source),
-            "reason": "..."
+            "reason": "...",
         }
 ```
 
@@ -1194,19 +1176,21 @@ from contextlib import contextmanager
 import cProfile
 import pstats
 
+
 @contextmanager
 def profile_processor(processor_name: str):
     """Profile processor execution."""
     profiler = cProfile.Profile()
     profiler.enable()
-    
+
     try:
         yield profiler
     finally:
         profiler.disable()
         stats = pstats.Stats(profiler)
-        stats.sort_stats('cumulative')
+        stats.sort_stats("cumulative")
         stats.print_stats(20)
+
 
 # Usage
 with profile_processor("pdf"):
@@ -1218,28 +1202,25 @@ with profile_processor("pdf"):
 **Visualize knowledge graphs:**
 
 ```python
-def visualize_knowledge_graph(
-    kg: KnowledgeGraph,
-    output_path: Path,
-    format: str = "html"
-) -> None:
+def visualize_knowledge_graph(kg: KnowledgeGraph, output_path: Path, format: str = "html") -> None:
     """
     Visualize knowledge graph using pyvis or graphviz.
-    
+
     Creates interactive HTML visualization or static PNG.
     """
     if format == "html":
         from pyvis.network import Network
+
         net = Network(notebook=False)
-        
+
         # Add nodes
         for entity in kg.entities:
             net.add_node(entity.id, label=entity.label, title=entity.type)
-        
+
         # Add edges
         for rel in kg.relationships:
             net.add_edge(rel.source, rel.target, title=rel.type)
-        
+
         net.show(str(output_path))
 ```
 

@@ -31,9 +31,11 @@ import pytest
 # Helper to get a server module with MCP symbols mocked
 # ---------------------------------------------------------------------------
 
+
 def _load_server_mod():
     """Import (or return cached) the server module."""
     import importlib
+
     # Ensure it's importable with or without real mcp package
     if "ipfs_datasets_py.mcp_server.server" in sys.modules:
         return sys.modules["ipfs_datasets_py.mcp_server.server"]
@@ -118,21 +120,19 @@ class TestImportToolsFromDirectory:
     def test_valid_tool_imported(self, tmp_path):
         """GIVEN a valid tool file WHEN called THEN tool registered."""
         tool_file = tmp_path / "good_tool.py"
-        tool_file.write_text(
-            "def my_tool(x):\n    '''A test tool.'''\n    return x\n"
-        )
+        tool_file.write_text("def my_tool(x):\n    '''A test tool.'''\n    return x\n")
         # We need to create a fake module object for importlib to return
         fake_mod = MagicMock()
         fake_mod.__name__ = f"ipfs_datasets_py.mcp_server.tools.{tmp_path.name}.good_tool"
-        
+
         def my_tool(x):
             """A test tool."""
             return x
-        
+
         my_tool.__module__ = fake_mod.__name__
         fake_mod.my_tool = my_tool
         fake_mod.__doc__ = None
-        
+
         with patch.object(server_mod.importlib, "import_module", return_value=fake_mod):
             with patch("builtins.dir", return_value=["my_tool"]):
                 result = import_tools_from_directory(tmp_path)
@@ -149,9 +149,7 @@ def _make_server():
     """Create a server instance with all external dependencies mocked."""
     with patch.object(server_mod, "FastMCP", None):
         with patch.object(server_mod, "ERROR_REPORTING_AVAILABLE", False):
-            with patch.object(
-                IPFSDatasetsMCPServer, "_initialize_p2p_services", lambda self: None
-            ):
+            with patch.object(IPFSDatasetsMCPServer, "_initialize_p2p_services", lambda self: None):
                 srv = IPFSDatasetsMCPServer()
     return srv
 
@@ -226,7 +224,9 @@ class TestIPFSDatasetsMCPServerInit:
         """GIVEN P2PServiceManager raises WHEN _initialize_p2p_services THEN p2p=None."""
         srv = _make_server()
         mock_mgr_cls = MagicMock(side_effect=RuntimeError("p2p boom"))
-        with patch("ipfs_datasets_py.mcp_server.server.P2PServiceManager", mock_mgr_cls, create=True):
+        with patch(
+            "ipfs_datasets_py.mcp_server.server.P2PServiceManager", mock_mgr_cls, create=True
+        ):
             with patch(
                 "ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager",
                 mock_mgr_cls,
@@ -294,7 +294,11 @@ class TestValidateP2PMessage:
 
         with patch.dict(
             sys.modules,
-            {"ipfs_datasets_py.mcp_server.tools.auth_tools.auth_tools": MagicMock(_mock_auth_service=mock_auth_svc)},
+            {
+                "ipfs_datasets_py.mcp_server.tools.auth_tools.auth_tools": MagicMock(
+                    _mock_auth_service=mock_auth_svc
+                )
+            },
         ):
             result = await srv.validate_p2p_message({"token": "goodtoken"})
         assert result is True
@@ -317,11 +321,13 @@ class TestValidateP2PMessage:
     async def test_configs_raises_on_auth_mode_defaults_to_mcp_token(self):
         """GIVEN configs raises on p2p_auth_mode WHEN validate_p2p_message THEN defaults gracefully."""
         srv = self._srv()
+
         # Use a property that raises to simulate the exception path
         class BrokenConfigs:
             @property
             def p2p_auth_mode(self):
                 raise Exception("configs boom")
+
         srv.configs = BrokenConfigs()
         # Should not raise — defaults to mcp_token, but token check fails → False
         result = await srv.validate_p2p_message({})
@@ -513,7 +519,9 @@ class TestRegisterToolsFromSubdir:
             """A tool."""
             return "ok"
 
-        with patch.object(server_mod, "import_tools_from_directory", return_value={"my_func": my_func}):
+        with patch.object(
+            server_mod, "import_tools_from_directory", return_value={"my_func": my_func}
+        ):
             srv._register_tools_from_subdir(tmp_path)
 
         assert "my_func" in srv.tools

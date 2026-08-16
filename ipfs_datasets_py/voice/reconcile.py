@@ -421,7 +421,9 @@ class AudioReconciliationResult:
             "quality_report": dict(self.quality_report),
             "schema_version": self.schema_version,
         }
-        computed = f"abby-voice-audio-reconcile:sha256:{sha256(_canonical_bytes(identity)).hexdigest()}"
+        computed = (
+            f"abby-voice-audio-reconcile:sha256:{sha256(_canonical_bytes(identity)).hexdigest()}"
+        )
         if self.reconciliation_id and self.reconciliation_id != computed:
             raise ValueError("reconciliation_id does not match deterministic content")
         object.__setattr__(self, "reconciliation_id", computed)
@@ -432,7 +434,9 @@ class AudioReconciliationResult:
 
     @property
     def quarantined_count(self) -> int:
-        return sum(1 for item in self.dispositions if item.status == AudioDispositionStatus.QUARANTINED)
+        return sum(
+            1 for item in self.dispositions if item.status == AudioDispositionStatus.QUARANTINED
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -595,7 +599,11 @@ def _bind_identity(
             detail="task_id does not match the expected workset task identity",
             metrics={"expected_task_id": expected_task_id, "task_id": task_id},
         )
-    if subject.work_item_id and lineage.get("work_item_id") and lineage["work_item_id"] != subject.work_item_id:
+    if (
+        subject.work_item_id
+        and lineage.get("work_item_id")
+        and lineage["work_item_id"] != subject.work_item_id
+    ):
         return QualityGateResult(
             gate=AudioQualityGate.POLICY,
             passed=False,
@@ -606,7 +614,11 @@ def _bind_identity(
                 "work_item_id": str(lineage.get("work_item_id") or ""),
             },
         )
-    if subject.subject_id and lineage.get("subject_id") and lineage["subject_id"] != subject.subject_id:
+    if (
+        subject.subject_id
+        and lineage.get("subject_id")
+        and lineage["subject_id"] != subject.subject_id
+    ):
         return QualityGateResult(
             gate=AudioQualityGate.POLICY,
             passed=False,
@@ -628,7 +640,11 @@ def _bind_identity(
             reason=AudioQualityReason.STALE_POLICY,
             detail="subject schema version disagrees with the bound subject",
         )
-    if subject.workset_id and lineage.get("workset_id") and lineage["workset_id"] != subject.workset_id:
+    if (
+        subject.workset_id
+        and lineage.get("workset_id")
+        and lineage["workset_id"] != subject.workset_id
+    ):
         return QualityGateResult(
             gate=AudioQualityGate.POLICY,
             passed=False,
@@ -659,7 +675,12 @@ def _bind_identity(
             detail="publication / source release identity disagrees",
         )
     lineage_policy = str(lineage.get("policy_id") or "")
-    if lineage_policy and lineage_policy not in {subject.policy_id, policy.policy_id, policy.identity, expected_policy_identity}:
+    if lineage_policy and lineage_policy not in {
+        subject.policy_id,
+        policy.policy_id,
+        policy.identity,
+        expected_policy_identity,
+    }:
         return QualityGateResult(
             gate=AudioQualityGate.POLICY,
             passed=False,
@@ -741,7 +762,10 @@ def reconcile_voice_job_result(
                     passed=False,
                     reason=AudioQualityReason.STALE_POLICY,
                     detail="expected_policy_id is stale",
-                    metrics={"expected_policy_id": expected_policy_id, "policy_identity": policy_identity},
+                    metrics={
+                        "expected_policy_id": expected_policy_id,
+                        "policy_identity": policy_identity,
+                    },
                 ),
             ),
         )
@@ -780,8 +804,12 @@ def reconcile_voice_job_result(
 
     lineage = _lineage_from_result(payload)
     task_id = str(payload.get("task_id") or lineage.get("task_id") or "")
-    work_item_id = str(lineage.get("work_item_id") or (bound_subject.work_item_id if bound_subject else "") or "")
-    source_ref = _source_ref(task_id, bound_subject.subject_id if bound_subject else str(lineage.get("subject_id") or ""))
+    work_item_id = str(
+        lineage.get("work_item_id") or (bound_subject.work_item_id if bound_subject else "") or ""
+    )
+    source_ref = _source_ref(
+        task_id, bound_subject.subject_id if bound_subject else str(lineage.get("subject_id") or "")
+    )
     source_sha256 = sha256(_canonical_bytes(payload)).hexdigest()
     status = str(payload.get("status") or "")
     gates: list[QualityGateResult] = []
@@ -1116,7 +1144,9 @@ def reconcile_voice_job_result(
         transformation_name=TRANSFORMATION_NAME,
         transformation_version=AUDIO_RECONCILIATION_VERSION,
         source_uri=source_uri,
-        source_revision=bound_subject.source_manifest_id or bound_subject.source_release_id or task_id,
+        source_revision=bound_subject.source_manifest_id
+        or bound_subject.source_release_id
+        or task_id,
         source_sha256=content_sha,
         locale=bound_subject.locale,
         license_id=bound_subject.license_id,
@@ -1137,9 +1167,15 @@ def reconcile_voice_job_result(
         segment_kind=bound_subject.segment_kind,
         mime_type=str(acoustic_metrics.get("detected_media_type") or media_type),
         codec=_codec_from_media(str(acoustic_metrics.get("detected_media_type") or media_type)),
-        byte_length=int(size_bytes) if isinstance(size_bytes, int) else (len(payload_bytes) if payload_bytes else None),
-        duration_ms=float(acoustic_metrics["duration_ms"]) if "duration_ms" in acoustic_metrics else None,
-        sample_rate_hz=int(acoustic_metrics["sample_rate_hz"]) if "sample_rate_hz" in acoustic_metrics else None,
+        byte_length=int(size_bytes)
+        if isinstance(size_bytes, int)
+        else (len(payload_bytes) if payload_bytes else None),
+        duration_ms=float(acoustic_metrics["duration_ms"])
+        if "duration_ms" in acoustic_metrics
+        else None,
+        sample_rate_hz=int(acoustic_metrics["sample_rate_hz"])
+        if "sample_rate_hz" in acoustic_metrics
+        else None,
         channels=int(acoustic_metrics["channels"]) if "channels" in acoustic_metrics else None,
         provider=provider or str(provider_receipt.get("provider") or "") or None,
         model=model or str(provider_receipt.get("model") or "") or None,

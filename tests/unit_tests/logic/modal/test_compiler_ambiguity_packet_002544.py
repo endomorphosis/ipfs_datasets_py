@@ -81,16 +81,12 @@ def test_packet_002544_refined_family_cue_pairs_are_registered() -> None:
 def test_packet_002544_profile_cues_cover_study_request_and_duty_language() -> None:
     deontic_cues = {
         cue
-        for operator in DEFAULT_MODAL_REGISTRY.get_profile(
-            ModalLogicFamily.DEONTIC
-        ).operators
+        for operator in DEFAULT_MODAL_REGISTRY.get_profile(ModalLogicFamily.DEONTIC).operators
         for cue in operator.cue_terms
     }
     temporal_cues = {
         cue
-        for operator in DEFAULT_MODAL_REGISTRY.get_profile(
-            ModalLogicFamily.TEMPORAL
-        ).operators
+        for operator in DEFAULT_MODAL_REGISTRY.get_profile(ModalLogicFamily.TEMPORAL).operators
         for cue in operator.cue_terms
     }
     conditional_cues = {

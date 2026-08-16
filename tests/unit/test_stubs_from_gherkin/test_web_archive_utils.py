@@ -4,11 +4,13 @@ Test stubs for web_archive_utils module.
 Feature: Web Archive Utilities
   Utility functions for web archive operations
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_warc_file():
@@ -47,6 +49,7 @@ def multiple_warc_files():
 
 
 # Test scenarios
+
 
 def test_parse_warc_file():
     """
@@ -137,6 +140,7 @@ def test_split_large_warc_file():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a WARC file")
@@ -279,4 +283,3 @@ def the_archive_is_converted_to_target_format():
     """Step: Then the archive is converted to target format"""
     # TODO: Implement step
     pass
-

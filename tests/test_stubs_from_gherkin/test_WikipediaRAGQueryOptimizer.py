@@ -18,13 +18,19 @@ def wikipediaragqueryoptimizer_instance():
     try:
         instance = WikipediaRAGQueryOptimizer()
         if instance is None:
-            raise FixtureError("Failed to create WikipediaRAGQueryOptimizer instance: instance is None")
+            raise FixtureError(
+                "Failed to create WikipediaRAGQueryOptimizer instance: instance is None"
+            )
         return instance
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture wikipediaragqueryoptimizer_instance: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture wikipediaragqueryoptimizer_instance: {e}"
+        ) from e
 
 
-def test_initialize_with_default_parameters_relationship_calculator_is_set(wikipediaragqueryoptimizer_instance):
+def test_initialize_with_default_parameters_relationship_calculator_is_set(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with default parameters relationship_calculator is set
 
@@ -37,7 +43,9 @@ def test_initialize_with_default_parameters_relationship_calculator_is_set(wikip
     pass
 
 
-def test_initialize_with_default_parameters_category_hierarchy_is_set(wikipediaragqueryoptimizer_instance):
+def test_initialize_with_default_parameters_category_hierarchy_is_set(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with default parameters category_hierarchy is set
 
@@ -50,7 +58,9 @@ def test_initialize_with_default_parameters_category_hierarchy_is_set(wikipediar
     pass
 
 
-def test_initialize_with_default_parameters_entity_importance_is_set(wikipediaragqueryoptimizer_instance):
+def test_initialize_with_default_parameters_entity_importance_is_set(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with default parameters entity_importance is set
 
@@ -63,7 +73,9 @@ def test_initialize_with_default_parameters_entity_importance_is_set(wikipediara
     pass
 
 
-def test_initialize_with_default_parameters_query_expander_is_set(wikipediaragqueryoptimizer_instance):
+def test_initialize_with_default_parameters_query_expander_is_set(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with default parameters query_expander is set
 
@@ -76,7 +88,9 @@ def test_initialize_with_default_parameters_query_expander_is_set(wikipediaragqu
     pass
 
 
-def test_initialize_with_default_parameters_path_optimizer_is_set(wikipediaragqueryoptimizer_instance):
+def test_initialize_with_default_parameters_path_optimizer_is_set(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with default parameters path_optimizer is set
 
@@ -89,7 +103,9 @@ def test_initialize_with_default_parameters_path_optimizer_is_set(wikipediaragqu
     pass
 
 
-def test_initialize_with_default_parameters_optimization_history_is_empty(wikipediaragqueryoptimizer_instance):
+def test_initialize_with_default_parameters_optimization_history_is_empty(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with default parameters optimization_history is empty
 
@@ -144,7 +160,9 @@ def test_initialize_with_tracer_tracer_is_set_in_optimizer(wikipediaragqueryopti
     pass
 
 
-def test_initialize_with_tracer_tracer_is_set_in_query_expander(wikipediaragqueryoptimizer_instance):
+def test_initialize_with_tracer_tracer_is_set_in_query_expander(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with tracer tracer is set in query_expander
 
@@ -160,7 +178,9 @@ def test_initialize_with_tracer_tracer_is_set_in_query_expander(wikipediaragquer
     pass
 
 
-def test_optimize_query_with_basic_parameters_result_contains_query_with_vector_params(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_with_basic_parameters_result_contains_query_with_vector_params(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with basic parameters result contains query with vector_params
 
@@ -178,7 +198,9 @@ def test_optimize_query_with_basic_parameters_result_contains_query_with_vector_
     pass
 
 
-def test_optimize_query_with_basic_parameters_result_contains_query_with_traversal(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_with_basic_parameters_result_contains_query_with_traversal(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with basic parameters result contains query with traversal
 
@@ -196,7 +218,9 @@ def test_optimize_query_with_basic_parameters_result_contains_query_with_travers
     pass
 
 
-def test_optimize_query_with_basic_parameters_result_contains_weights(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_with_basic_parameters_result_contains_weights(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with basic parameters result contains weights
 
@@ -214,7 +238,9 @@ def test_optimize_query_with_basic_parameters_result_contains_weights(wikipediar
     pass
 
 
-def test_optimize_query_with_basic_parameters_query_traversal_strategy_is_wikipedia_hierarchical(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_with_basic_parameters_query_traversal_strategy_is_wikipedia_hierarchical(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with basic parameters query traversal strategy is wikipedia_hierarchical
 
@@ -232,7 +258,9 @@ def test_optimize_query_with_basic_parameters_query_traversal_strategy_is_wikipe
     pass
 
 
-def test_optimize_query_prioritizes_edge_types_query_traversal_edge_types_first_item_is_subclass_of(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_prioritizes_edge_types_query_traversal_edge_types_first_item_is_subclass_of(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query prioritizes edge types query traversal edge_types first item is subclass_of
 
@@ -249,7 +277,9 @@ def test_optimize_query_prioritizes_edge_types_query_traversal_edge_types_first_
     pass
 
 
-def test_optimize_query_prioritizes_edge_types_query_traversal_edge_types_second_item_is_instance_of(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_prioritizes_edge_types_query_traversal_edge_types_second_item_is_instance_of(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query prioritizes edge types query traversal edge_types second item is instance_of
 
@@ -266,7 +296,9 @@ def test_optimize_query_prioritizes_edge_types_query_traversal_edge_types_second
     pass
 
 
-def test_optimize_query_prioritizes_edge_types_query_traversal_edge_types_third_item_is_mentions(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_prioritizes_edge_types_query_traversal_edge_types_third_item_is_mentions(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query prioritizes edge types query traversal edge_types third item is mentions
 
@@ -283,7 +315,9 @@ def test_optimize_query_prioritizes_edge_types_query_traversal_edge_types_third_
     pass
 
 
-def test_optimize_query_with_query_text_expands_query_expansions_are_included_in_result(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_with_query_text_expands_query_expansions_are_included_in_result(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with query text expands query expansions are included in result
 
@@ -301,7 +335,9 @@ def test_optimize_query_with_query_text_expands_query_expansions_are_included_in
     pass
 
 
-def test_optimize_query_with_query_text_expands_query_expansions_contain_topics_or_categories(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_with_query_text_expands_query_expansions_contain_topics_or_categories(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with query text expands query expansions contain topics or categories
 
@@ -336,7 +372,9 @@ def test_optimize_query_without_query_text(wikipediaragqueryoptimizer_instance):
     pass
 
 
-def test_optimize_query_calculates_relationship_depths_query_traversal_relationship_depths_contains_subclass_of(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_calculates_relationship_depths_query_traversal_relationship_depths_contains_subclass_of(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query calculates relationship depths query traversal relationship_depths contains subclass_of
 
@@ -354,7 +392,9 @@ def test_optimize_query_calculates_relationship_depths_query_traversal_relations
     pass
 
 
-def test_optimize_query_calculates_relationship_depths_relationship_depths_for_subclass_of_is_3(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_calculates_relationship_depths_relationship_depths_for_subclass_of_is_3(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query calculates relationship depths relationship_depths for subclass_of is 3
 
@@ -372,7 +412,9 @@ def test_optimize_query_calculates_relationship_depths_relationship_depths_for_s
     pass
 
 
-def test_optimize_query_calculates_relationship_depths_relationship_depths_for_mentions_is_less_than_3(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_calculates_relationship_depths_relationship_depths_for_mentions_is_less_than_3(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query calculates relationship depths relationship_depths for mentions is less than 3
 
@@ -408,7 +450,9 @@ def test_optimize_query_with_trace_id_logs_optimization(wikipediaragqueryoptimiz
     pass
 
 
-def test_optimize_query_records_optimization_history_optimization_history_has_1_entry(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_records_optimization_history_optimization_history_has_1_entry(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query records optimization history optimization_history has 1 entry
 
@@ -424,7 +468,9 @@ def test_optimize_query_records_optimization_history_optimization_history_has_1_
     pass
 
 
-def test_optimize_query_records_optimization_history_history_entry_contains_timestamp(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_records_optimization_history_history_entry_contains_timestamp(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query records optimization history history entry contains timestamp
 
@@ -440,7 +486,9 @@ def test_optimize_query_records_optimization_history_history_entry_contains_time
     pass
 
 
-def test_optimize_query_records_optimization_history_history_entry_contains_input_params(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_records_optimization_history_history_entry_contains_input_params(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query records optimization history history entry contains input_params
 
@@ -456,7 +504,9 @@ def test_optimize_query_records_optimization_history_history_entry_contains_inpu
     pass
 
 
-def test_optimize_query_records_optimization_history_history_entry_contains_optimized_plan(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_records_optimization_history_history_entry_contains_optimized_plan(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query records optimization history history entry contains optimized_plan
 
@@ -472,7 +522,9 @@ def test_optimize_query_records_optimization_history_history_entry_contains_opti
     pass
 
 
-def test_optimize_query_uses_default_edge_types_query_traversal_edge_types_includes_subclass_of(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_uses_default_edge_types_query_traversal_edge_types_includes_subclass_of(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query uses default edge types query traversal edge_types includes subclass_of
 
@@ -489,7 +541,9 @@ def test_optimize_query_uses_default_edge_types_query_traversal_edge_types_inclu
     pass
 
 
-def test_optimize_query_uses_default_edge_types_query_traversal_edge_types_includes_instance_of(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_uses_default_edge_types_query_traversal_edge_types_includes_instance_of(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query uses default edge types query traversal edge_types includes instance_of
 
@@ -506,7 +560,9 @@ def test_optimize_query_uses_default_edge_types_query_traversal_edge_types_inclu
     pass
 
 
-def test_optimize_query_uses_default_edge_types_query_traversal_edge_types_includes_category_contains(wikipediaragqueryoptimizer_instance):
+def test_optimize_query_uses_default_edge_types_query_traversal_edge_types_includes_category_contains(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query uses default edge types query traversal edge_types includes category_contains
 
@@ -540,7 +596,9 @@ def test_calculate_entity_importance_for_entity(wikipediaragqueryoptimizer_insta
     pass
 
 
-def test_calculate_entity_importance_without_graph_processor_importance_score_is_between_00_and_10(wikipediaragqueryoptimizer_instance):
+def test_calculate_entity_importance_without_graph_processor_importance_score_is_between_00_and_10(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Calculate entity importance without graph processor importance score is between 0.0 and 1.0
 
@@ -557,7 +615,9 @@ def test_calculate_entity_importance_without_graph_processor_importance_score_is
     pass
 
 
-def test_calculate_entity_importance_without_graph_processor_default_entity_data_is_used(wikipediaragqueryoptimizer_instance):
+def test_calculate_entity_importance_without_graph_processor_default_entity_data_is_used(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Calculate entity importance without graph processor default entity data is used
 
@@ -574,7 +634,9 @@ def test_calculate_entity_importance_without_graph_processor_default_entity_data
     pass
 
 
-def test_learn_from_query_results_updates_weights_relationship_weights_are_adjusted(wikipediaragqueryoptimizer_instance):
+def test_learn_from_query_results_updates_weights_relationship_weights_are_adjusted(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Learn from query results updates weights relationship weights are adjusted
 
@@ -594,7 +656,9 @@ def test_learn_from_query_results_updates_weights_relationship_weights_are_adjus
     pass
 
 
-def test_learn_from_query_results_updates_weights_query_time_is_recorded(wikipediaragqueryoptimizer_instance):
+def test_learn_from_query_results_updates_weights_query_time_is_recorded(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Learn from query results updates weights query time is recorded
 
@@ -614,7 +678,9 @@ def test_learn_from_query_results_updates_weights_query_time_is_recorded(wikiped
     pass
 
 
-def test_learn_from_query_results_updates_weights_query_pattern_is_recorded(wikipediaragqueryoptimizer_instance):
+def test_learn_from_query_results_updates_weights_query_pattern_is_recorded(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Learn from query results updates weights query pattern is recorded
 
@@ -634,7 +700,9 @@ def test_learn_from_query_results_updates_weights_query_pattern_is_recorded(wiki
     pass
 
 
-def test_learn_from_query_results_analyzes_edge_effectiveness_weight_adjustment_for_subclass_of_is_positive(wikipediaragqueryoptimizer_instance):
+def test_learn_from_query_results_analyzes_edge_effectiveness_weight_adjustment_for_subclass_of_is_positive(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Learn from query results analyzes edge effectiveness weight adjustment for subclass_of is positive
 
@@ -654,7 +722,9 @@ def test_learn_from_query_results_analyzes_edge_effectiveness_weight_adjustment_
     pass
 
 
-def test_learn_from_query_results_analyzes_edge_effectiveness_weight_adjustment_for_mentions_may_be_negative(wikipediaragqueryoptimizer_instance):
+def test_learn_from_query_results_analyzes_edge_effectiveness_weight_adjustment_for_mentions_may_be_negative(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Learn from query results analyzes edge effectiveness weight adjustment for mentions may be negative
 
@@ -674,7 +744,9 @@ def test_learn_from_query_results_analyzes_edge_effectiveness_weight_adjustment_
     pass
 
 
-def test_learn_from_query_results_with_no_results_weights_are_adjusted_with_avg_score_0(wikipediaragqueryoptimizer_instance):
+def test_learn_from_query_results_with_no_results_weights_are_adjusted_with_avg_score_0(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Learn from query results with no results weights are adjusted with avg_score 0
 
@@ -693,7 +765,9 @@ def test_learn_from_query_results_with_no_results_weights_are_adjusted_with_avg_
     pass
 
 
-def test_learn_from_query_results_with_no_results_query_statistics_are_recorded(wikipediaragqueryoptimizer_instance):
+def test_learn_from_query_results_with_no_results_query_statistics_are_recorded(
+    wikipediaragqueryoptimizer_instance,
+):
     """
     Scenario: Learn from query results with no results query statistics are recorded
 
@@ -710,4 +784,3 @@ def test_learn_from_query_results_with_no_results_query_statistics_are_recorded(
         query statistics are recorded
     """
     pass
-

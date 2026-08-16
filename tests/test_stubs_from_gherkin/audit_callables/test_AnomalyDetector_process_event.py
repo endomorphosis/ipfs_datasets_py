@@ -20,16 +20,23 @@ def an_anomalydetector_instance_is_initialized():
     """
     try:
         detector = AnomalyDetector()
-        
+
         if detector is None:
-            raise FixtureError("Failed to create fixture an_anomalydetector_instance_is_initialized: AnomalyDetector instance is None") from None
-        
-        if not hasattr(detector, 'process_event'):
-            raise FixtureError("Failed to create fixture an_anomalydetector_instance_is_initialized: AnomalyDetector missing 'process_event' method") from None
-        
+            raise FixtureError(
+                "Failed to create fixture an_anomalydetector_instance_is_initialized: AnomalyDetector instance is None"
+            ) from None
+
+        if not hasattr(detector, "process_event"):
+            raise FixtureError(
+                "Failed to create fixture an_anomalydetector_instance_is_initialized: AnomalyDetector missing 'process_event' method"
+            ) from None
+
         return detector
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture an_anomalydetector_instance_is_initialized: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture an_anomalydetector_instance_is_initialized: {e}"
+        ) from e
+
 
 @pytest.fixture
 def baseline_metrics_are_established_from_1000_histori(an_anomalydetector_instance_is_initialized):
@@ -38,7 +45,7 @@ def baseline_metrics_are_established_from_1000_histori(an_anomalydetector_instan
     """
     try:
         detector = an_anomalydetector_instance_is_initialized
-        
+
         # Create 1000 historical events for baseline
         historical_events = []
         for i in range(1000):
@@ -46,23 +53,28 @@ def baseline_metrics_are_established_from_1000_histori(an_anomalydetector_instan
                 level=AuditLevel.INFO,
                 category=AuditCategory.DATA_ACCESS,
                 action=f"action_{i % 10}",
-                user=f"user_{i % 20}"
+                user=f"user_{i % 20}",
             )
             historical_events.append(event)
-        
+
         # Establish baseline from historical events
         detector.establish_baseline(historical_events)
-        
+
         # Verify baseline was established
-        if not hasattr(detector, 'baseline') or detector.baseline is None:
-            raise FixtureError("Failed to create fixture baseline_metrics_are_established_from_1000_histori: Baseline is None after establish_baseline() call") from None
-        
+        if not hasattr(detector, "baseline") or detector.baseline is None:
+            raise FixtureError(
+                "Failed to create fixture baseline_metrics_are_established_from_1000_histori: Baseline is None after establish_baseline() call"
+            ) from None
+
         # Store historical events for test access
         detector._test_historical_events = historical_events
-        
+
         return detector
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture baseline_metrics_are_established_from_1000_histori: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture baseline_metrics_are_established_from_1000_histori: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_window_size_is_100(baseline_metrics_are_established_from_1000_histori):
@@ -71,20 +83,26 @@ def the_window_size_is_100(baseline_metrics_are_established_from_1000_histori):
     """
     try:
         detector = baseline_metrics_are_established_from_1000_histori
-        
+
         # Set window size to 100
         detector.window_size = 100
-        
+
         # Verify window size is set
         if detector.window_size != 100:
-            raise FixtureError(f"Failed to create fixture the_window_size_is_100: window_size is {detector.window_size}, expected 100") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_window_size_is_100: window_size is {detector.window_size}, expected 100"
+            ) from None
+
         return detector
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_window_size_is_100: {e}") from e
 
 
-def test_process_event_returns_list_of_anomalies(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_returns_list_of_anomalies(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event returns list of anomalies
 
@@ -101,7 +119,11 @@ def test_process_event_returns_list_of_anomalies(an_anomalydetector_instance_is_
     pass
 
 
-def test_process_event_returns_empty_list_when_no_anomalies(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_returns_empty_list_when_no_anomalies(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event returns empty list when no anomalies
 
@@ -118,7 +140,11 @@ def test_process_event_returns_empty_list_when_no_anomalies(an_anomalydetector_i
     pass
 
 
-def test_process_event_adds_event_to_current_window(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_adds_event_to_current_window(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event adds event to current_window
 
@@ -135,7 +161,11 @@ def test_process_event_adds_event_to_current_window(an_anomalydetector_instance_
     pass
 
 
-def test_process_event_maintains_window_size_limit_keeps_size(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_maintains_window_size_limit_keeps_size(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event maintains window_size limit keeps size
 
@@ -152,7 +182,11 @@ def test_process_event_maintains_window_size_limit_keeps_size(an_anomalydetector
     pass
 
 
-def test_process_event_maintains_window_size_limit_removes_oldest(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_maintains_window_size_limit_removes_oldest(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event maintains window_size limit removes oldest
 
@@ -169,7 +203,11 @@ def test_process_event_maintains_window_size_limit_removes_oldest(an_anomalydete
     pass
 
 
-def test_process_event_updates_metrics(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_updates_metrics(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event updates metrics
 
@@ -186,7 +224,11 @@ def test_process_event_updates_metrics(an_anomalydetector_instance_is_initialize
     pass
 
 
-def test_process_event_detects_authentication_failure_anomaly(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_detects_authentication_failure_anomaly(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event detects authentication failure anomaly
 
@@ -203,7 +245,11 @@ def test_process_event_detects_authentication_failure_anomaly(an_anomalydetector
     pass
 
 
-def test_process_event_detects_user_activity_anomaly(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_detects_user_activity_anomaly(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event detects user activity anomaly
 
@@ -220,7 +266,11 @@ def test_process_event_detects_user_activity_anomaly(an_anomalydetector_instance
     pass
 
 
-def test_process_event_detects_category_volume_anomaly(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_detects_category_volume_anomaly(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event detects category volume anomaly
 
@@ -237,7 +287,11 @@ def test_process_event_detects_category_volume_anomaly(an_anomalydetector_instan
     pass
 
 
-def test_process_event_calculates_z_score_for_metrics(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_calculates_z_score_for_metrics(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event calculates z-score for metrics
 
@@ -254,7 +308,11 @@ def test_process_event_calculates_z_score_for_metrics(an_anomalydetector_instanc
     pass
 
 
-def test_process_event_uses_threshold_multiplier(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_uses_threshold_multiplier(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event uses threshold_multiplier
 
@@ -271,7 +329,11 @@ def test_process_event_uses_threshold_multiplier(an_anomalydetector_instance_is_
     pass
 
 
-def test_process_event_includes_deviation_percent_in_anomaly(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_includes_deviation_percent_in_anomaly(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event includes deviation_percent in anomaly
 
@@ -288,7 +350,11 @@ def test_process_event_includes_deviation_percent_in_anomaly(an_anomalydetector_
     pass
 
 
-def test_process_event_calculates_severity_based_on_z_score(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
+def test_process_event_calculates_severity_based_on_z_score(
+    an_anomalydetector_instance_is_initialized,
+    baseline_metrics_are_established_from_1000_histori,
+    the_window_size_is_100,
+):
     """
     Scenario: Process event calculates severity based on z-score
 
@@ -303,4 +369,3 @@ def test_process_event_calculates_severity_based_on_z_score(an_anomalydetector_i
     """
     # TODO: Implement test
     pass
-

@@ -8,6 +8,7 @@ Run with::
 
     pytest benchmarks/bench_schema_cache.py -v
 """
+
 from __future__ import annotations
 
 import inspect
@@ -22,6 +23,7 @@ from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import ToolCategory
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def category_with_tool() -> ToolCategory:
@@ -54,6 +56,7 @@ def category_with_tool() -> ToolCategory:
 # ---------------------------------------------------------------------------
 # Benchmarks
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.benchmark(group="schema_cache")
 def test_schema_cache_miss(benchmark, category_with_tool):

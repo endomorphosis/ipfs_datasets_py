@@ -39,9 +39,16 @@ DEFAULT_SUMMONS_PAYLOADS = [
     {
         "output_name": "ao440-hacc-draft-filled.pdf",
         "defendant_lines": ["Housing Authority of Clackamas County"],
-        "to_lines": ["Housing Authority of Clackamas County", "13930 Gain Street", "Oregon City, OR 97045"],
+        "to_lines": [
+            "Housing Authority of Clackamas County",
+            "13930 Gain Street",
+            "Oregon City, OR 97045",
+        ],
         "state_text": "Oregon",
-        "plaintiffs_lines": ["Benjamin Jay Barber, Jane Kay Cortez,", "and Julio Regal Florez-Cortez"],
+        "plaintiffs_lines": [
+            "Benjamin Jay Barber, Jane Kay Cortez,",
+            "and Julio Regal Florez-Cortez",
+        ],
         "filer_lines": ["Benjamin Jay Barber, pro se", "10043 SE 32nd Ave", "Milwaukie, OR 97222"],
     },
     {
@@ -49,7 +56,10 @@ DEFAULT_SUMMONS_PAYLOADS = [
         "defendant_lines": ["Quantum Residential"],
         "to_lines": ["Quantum Residential", "601 E 16th St", "Vancouver, WA 98663"],
         "state_text": "Oregon",
-        "plaintiffs_lines": ["Benjamin Jay Barber, Jane Kay Cortez,", "and Julio Regal Florez-Cortez"],
+        "plaintiffs_lines": [
+            "Benjamin Jay Barber, Jane Kay Cortez,",
+            "and Julio Regal Florez-Cortez",
+        ],
         "filer_lines": ["Benjamin Jay Barber, pro se", "10043 SE 32nd Ave", "Milwaukie, OR 97222"],
     },
 ]
@@ -68,7 +78,15 @@ def ensure_page_png(*, pdf: Path, stem: str, page: int, preview_dir: Path) -> Pa
     if not out.exists():
         preview_dir.mkdir(parents=True, exist_ok=True)
         subprocess.run(
-            ["pdftoppm", "-png", "-f", str(page), "-singlefile", str(pdf), str(out.with_suffix(""))],
+            [
+                "pdftoppm",
+                "-png",
+                "-f",
+                str(page),
+                "-singlefile",
+                str(pdf),
+                str(out.with_suffix("")),
+            ],
             check=True,
         )
     return out
@@ -78,7 +96,15 @@ def draw_background(c: canvas.Canvas, image_path: Path) -> None:
     c.drawImage(ImageReader(str(image_path)), 0, 0, width=612, height=792)
 
 
-def draw_multiline(c: canvas.Canvas, x: float, y: float, lines: list[str], *, font: str = "Times-Roman", size: int = 10) -> None:
+def draw_multiline(
+    c: canvas.Canvas,
+    x: float,
+    y: float,
+    lines: list[str],
+    *,
+    font: str = "Times-Roman",
+    size: int = 10,
+) -> None:
     text = c.beginText(x, y)
     text.setFont(font, size)
     for line in lines:
@@ -91,20 +117,40 @@ def draw_x(c: canvas.Canvas, x: float, y: float, *, size: int = 12) -> None:
     c.drawString(x, y, "X")
 
 
-def build_js44(*, forms_dir: Path, preview_dir: Path, out_dir: Path, payload: dict[str, Any]) -> Path:
-    page1 = ensure_page_png(pdf=forms_dir / "js44.pdf", stem="js44-page1-bg", page=1, preview_dir=preview_dir)
-    page2 = ensure_page_png(pdf=forms_dir / "js44.pdf", stem="js44-page2-bg", page=2, preview_dir=preview_dir)
+def build_js44(
+    *, forms_dir: Path, preview_dir: Path, out_dir: Path, payload: dict[str, Any]
+) -> Path:
+    page1 = ensure_page_png(
+        pdf=forms_dir / "js44.pdf", stem="js44-page1-bg", page=1, preview_dir=preview_dir
+    )
+    page2 = ensure_page_png(
+        pdf=forms_dir / "js44.pdf", stem="js44-page2-bg", page=2, preview_dir=preview_dir
+    )
     out = out_dir / str(payload.get("output_name") or "js44-draft-filled.pdf")
 
     c = canvas.Canvas(str(out), pagesize=letter)
     draw_background(c, page1)
 
-    draw_multiline(c, sx(44), sy(118), [str(item) for item in list(payload.get("plaintiffs_lines") or [])], size=10)
-    draw_multiline(c, sx(488), sy(118), [str(item) for item in list(payload.get("defendants_lines") or [])], size=10)
+    draw_multiline(
+        c,
+        sx(44),
+        sy(118),
+        [str(item) for item in list(payload.get("plaintiffs_lines") or [])],
+        size=10,
+    )
+    draw_multiline(
+        c,
+        sx(488),
+        sy(118),
+        [str(item) for item in list(payload.get("defendants_lines") or [])],
+        size=10,
+    )
     c.setFont("Times-Roman", 10)
     c.drawString(sx(92), sy(176), str(payload.get("county_left") or ""))
     c.drawString(sx(520), sy(176), str(payload.get("county_right") or ""))
-    draw_multiline(c, sx(71), sy(236), [str(item) for item in list(payload.get("filer_lines") or [])], size=10)
+    draw_multiline(
+        c, sx(71), sy(236), [str(item) for item in list(payload.get("filer_lines") or [])], size=10
+    )
 
     draw_x(c, sx(186), sy(318), size=12)
     draw_x(c, sx(182), sy(752), size=12)
@@ -126,19 +172,41 @@ def build_js44(*, forms_dir: Path, preview_dir: Path, out_dir: Path, payload: di
     return out
 
 
-def build_summons(*, forms_dir: Path, preview_dir: Path, out_dir: Path, payload: dict[str, Any]) -> Path:
-    page1 = ensure_page_png(pdf=forms_dir / "ao440.pdf", stem="ao440-page1-bg", page=1, preview_dir=preview_dir)
-    page2 = ensure_page_png(pdf=forms_dir / "ao440.pdf", stem="ao440-page2-bg", page=2, preview_dir=preview_dir)
+def build_summons(
+    *, forms_dir: Path, preview_dir: Path, out_dir: Path, payload: dict[str, Any]
+) -> Path:
+    page1 = ensure_page_png(
+        pdf=forms_dir / "ao440.pdf", stem="ao440-page1-bg", page=1, preview_dir=preview_dir
+    )
+    page2 = ensure_page_png(
+        pdf=forms_dir / "ao440.pdf", stem="ao440-page2-bg", page=2, preview_dir=preview_dir
+    )
     out = out_dir / str(payload.get("output_name") or "ao440-draft-filled.pdf")
 
     c = canvas.Canvas(str(out), pagesize=letter)
     draw_background(c, page1)
     c.setFont("Times-Roman", 12)
     c.drawString(sx(422), sy(165), str(payload.get("state_text") or ""))
-    draw_multiline(c, sx(66), sy(205), [str(item) for item in list(payload.get("plaintiffs_lines") or [])], size=10)
-    draw_multiline(c, sx(66), sy(382), [str(item) for item in list(payload.get("defendant_lines") or [])], size=10)
-    draw_multiline(c, sx(86), sy(520), [str(item) for item in list(payload.get("to_lines") or [])], size=9.5)
-    draw_multiline(c, sx(59), sy(774), [str(item) for item in list(payload.get("filer_lines") or [])], size=9.2)
+    draw_multiline(
+        c,
+        sx(66),
+        sy(205),
+        [str(item) for item in list(payload.get("plaintiffs_lines") or [])],
+        size=10,
+    )
+    draw_multiline(
+        c,
+        sx(66),
+        sy(382),
+        [str(item) for item in list(payload.get("defendant_lines") or [])],
+        size=10,
+    )
+    draw_multiline(
+        c, sx(86), sy(520), [str(item) for item in list(payload.get("to_lines") or [])], size=9.5
+    )
+    draw_multiline(
+        c, sx(59), sy(774), [str(item) for item in list(payload.get("filer_lines") or [])], size=9.2
+    )
 
     c.showPage()
     draw_background(c, page2)
@@ -159,9 +227,17 @@ def build_official_form_drafts(
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
-    outputs: list[Path] = [build_js44(forms_dir=forms_path, preview_dir=preview_path, out_dir=out_path, payload=js44_payload)]
+    outputs: list[Path] = [
+        build_js44(
+            forms_dir=forms_path, preview_dir=preview_path, out_dir=out_path, payload=js44_payload
+        )
+    ]
     for payload in summons_payloads:
-        outputs.append(build_summons(forms_dir=forms_path, preview_dir=preview_path, out_dir=out_path, payload=payload))
+        outputs.append(
+            build_summons(
+                forms_dir=forms_path, preview_dir=preview_path, out_dir=out_path, payload=payload
+            )
+        )
     return outputs
 
 
@@ -174,16 +250,28 @@ def build_official_form_drafts_from_config(path: str | Path) -> dict[str, Any]:
     preview_dir_value = str(payload.get("preview_dir") or "render-previews")
     out_dir_value = str(payload.get("out_dir") or "official-forms/draft-filled")
 
-    forms_dir = (base_dir / forms_dir_value) if not Path(forms_dir_value).is_absolute() else Path(forms_dir_value)
-    preview_dir = (base_dir / preview_dir_value) if not Path(preview_dir_value).is_absolute() else Path(preview_dir_value)
-    out_dir = (base_dir / out_dir_value) if not Path(out_dir_value).is_absolute() else Path(out_dir_value)
+    forms_dir = (
+        (base_dir / forms_dir_value)
+        if not Path(forms_dir_value).is_absolute()
+        else Path(forms_dir_value)
+    )
+    preview_dir = (
+        (base_dir / preview_dir_value)
+        if not Path(preview_dir_value).is_absolute()
+        else Path(preview_dir_value)
+    )
+    out_dir = (
+        (base_dir / out_dir_value) if not Path(out_dir_value).is_absolute() else Path(out_dir_value)
+    )
 
     outputs = build_official_form_drafts(
         forms_dir=forms_dir,
         preview_dir=preview_dir,
         out_dir=out_dir,
         js44_payload=dict(payload.get("js44") or DEFAULT_JS44_PAYLOAD),
-        summons_payloads=[dict(item) for item in list(payload.get("summons") or DEFAULT_SUMMONS_PAYLOADS)],
+        summons_payloads=[
+            dict(item) for item in list(payload.get("summons") or DEFAULT_SUMMONS_PAYLOADS)
+        ],
     )
     return {
         "config_path": str(config_path),

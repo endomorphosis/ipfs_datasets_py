@@ -20,10 +20,10 @@ import pytest
 # ---------------------------------------------------------------------------
 # File paths
 # ---------------------------------------------------------------------------
-_KG_DIR = Path(__file__).resolve().parent.parent.parent.parent / \
-    "ipfs_datasets_py" / "knowledge_graphs"
-_DOCS_KG = Path(__file__).resolve().parent.parent.parent.parent / \
-    "docs" / "knowledge_graphs"
+_KG_DIR = (
+    Path(__file__).resolve().parent.parent.parent.parent / "ipfs_datasets_py" / "knowledge_graphs"
+)
+_DOCS_KG = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "knowledge_graphs"
 _MASTER_STATUS = _DOCS_KG / "MASTER_STATUS.md"
 _ROADMAP = _DOCS_KG / "ROADMAP.md"
 _CHANGELOG = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
@@ -52,37 +52,42 @@ class TestMasterStatusCoverageSection:
     def test_coverage_heading_no_longer_says_session_26(self):
         """'measured, session 26' measurement note must be gone."""
         text = _read(_MASTER_STATUS)
-        assert "measured, session 26" not in text, \
+        assert "measured, session 26" not in text, (
             "Stale 'measured, session 26' still in MASTER_STATUS.md"
+        )
 
     def test_coverage_heading_references_session_58(self):
         """Coverage section should say it was measured in session 58."""
         text = _read(_MASTER_STATUS)
-        assert "measured, session 58" in text, \
+        assert "measured, session 58" in text, (
             "Coverage section should reference 'measured, session 58'"
+        )
 
     def test_module_table_all_modules_excellent_or_complete(self):
         """All module rows in the coverage table must not show stale percentages below 90%."""
         text = _read(_MASTER_STATUS)
         # Old entries that were stale; none should appear
         bad_snippets = [
-            "ir_executor **99%**",           # now 100%
-            "cross_document **96%**",        # now 100%
-            "visualization **94%**",         # now 100%
-            "lineage/core **97%**",          # now 100%
+            "ir_executor **99%**",  # now 100%
+            "cross_document **96%**",  # now 100%
+            "visualization **94%**",  # now 100%
+            "lineage/core **97%**",  # now 100%
         ]
         for bad in bad_snippets:
-            assert bad not in text, \
+            assert bad not in text, (
                 f"Stale coverage snippet '{bad}' still present in MASTER_STATUS.md"
+            )
 
     def test_remaining_1_missed_line_section(self):
         """MASTER_STATUS should document exactly 1 missed line (the defensive guard)."""
         text = _read(_MASTER_STATUS)
-        assert "_entity_helpers.py:117" in text, \
+        assert "_entity_helpers.py:117" in text, (
             "Should document _entity_helpers.py:117 as the 1 remaining missed line"
+        )
         # Must not claim there are still 100+ missed lines
-        assert "108 lines" not in text, \
+        assert "108 lines" not in text, (
             "Stale '108 lines' reference (spaCy paths) still in MASTER_STATUS.md coverage section"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -94,22 +99,23 @@ class TestMasterStatusTestCount:
     def test_total_tests_reflects_3725(self):
         """MASTER_STATUS should say 3,725 total passing tests."""
         text = _read(_MASTER_STATUS)
-        assert "3,725" in text, \
-            "MASTER_STATUS.md should report 3,725 total passing tests"
+        assert "3,725" in text, "MASTER_STATUS.md should report 3,725 total passing tests"
 
     def test_stale_3614_count_removed(self):
         """Old '3,614 passing' total line should be gone (replaced by 3,725)."""
         text = _read(_MASTER_STATUS)
         # The old "Total Tests: 3,614 passing" summary line should not appear
-        assert "Total Tests:** 3,614" not in text, \
+        assert "Total Tests:** 3,614" not in text, (
             "Stale 'Total Tests: 3,614' still in MASTER_STATUS.md"
+        )
 
     def test_session_54_to_59_in_session_list(self):
         """Sessions 54–59 must appear in the session log section."""
         text = _read(_MASTER_STATUS)
         for session in range(54, 60):
-            assert f"session{session}:" in text, \
+            assert f"session{session}:" in text, (
                 f"Session {session} not found in MASTER_STATUS.md session list"
+            )
 
     def test_session_60_in_session_list(self):
         """Session 60 entry must be present."""
@@ -127,32 +133,35 @@ class TestRoadmapDuplicateSection:
         """'Version 2.0.1' heading must appear exactly once in ROADMAP.md."""
         text = _read(_ROADMAP)
         count = text.count("## Version 2.0.1")
-        assert count == 1, \
-            f"Expected 1 occurrence of '## Version 2.0.1' in ROADMAP.md, got {count}"
+        assert count == 1, f"Expected 1 occurrence of '## Version 2.0.1' in ROADMAP.md, got {count}"
 
     def test_unchecked_increase_migration_item_gone(self):
         """The old unchecked '- [ ] Increase migration module test coverage' item must not exist."""
         text = _read(_ROADMAP)
-        assert "- [ ] Increase migration module test coverage" not in text, \
+        assert "- [ ] Increase migration module test coverage" not in text, (
             "Unchecked migration-coverage TODO item still present in ROADMAP.md (should be removed)"
+        )
 
     def test_unchecked_add_error_handling_tests_gone(self):
         """The old unchecked '- [ ] Add comprehensive error handling tests' item must not exist."""
         text = _read(_ROADMAP)
-        assert "- [ ] Add comprehensive error handling tests" not in text, \
+        assert "- [ ] Add comprehensive error handling tests" not in text, (
             "Unchecked error-handling TODO item still in ROADMAP.md"
+        )
 
     def test_roadmap_last_updated_2026_02_22(self):
         """The 'Last Updated' footer in ROADMAP.md must say 2026-02-22."""
         text = _read(_ROADMAP)
-        assert "**Last Updated:** 2026-02-22" in text, \
+        assert "**Last Updated:** 2026-02-22" in text, (
             "ROADMAP.md 'Last Updated' should be 2026-02-22"
+        )
 
     def test_roadmap_last_updated_not_2026_02_20(self):
         """Stale 2026-02-20 Last Updated date must be replaced."""
         text = _read(_ROADMAP)
-        assert "**Last Updated:** 2026-02-20" not in text, \
+        assert "**Last Updated:** 2026-02-20" not in text, (
             "Stale '**Last Updated:** 2026-02-20' still in ROADMAP.md"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -164,20 +173,30 @@ class TestThreeDocVersionAgreement:
     def test_master_status_version_is_3_22_15(self):
         """MASTER_STATUS.md version header must be 3.22.15 or later."""
         text = _read(_MASTER_STATUS)
-        assert any(f"**Version:** {v}" in text for v in (
-            "3.22.15", "3.22.16", "3.22.17", "3.22.18", "3.22.19", "3.22.20",
-            "3.22.21", "3.22.22", "3.22.23", "3.22.24",
-        )), \
-            "MASTER_STATUS.md **Version:** should be 3.22.15 or later"
+        assert any(
+            f"**Version:** {v}" in text
+            for v in (
+                "3.22.15",
+                "3.22.16",
+                "3.22.17",
+                "3.22.18",
+                "3.22.19",
+                "3.22.20",
+                "3.22.21",
+                "3.22.22",
+                "3.22.23",
+                "3.22.24",
+            )
+        ), "MASTER_STATUS.md **Version:** should be 3.22.15 or later"
 
     def test_roadmap_release_table_has_3_22_15(self):
         """ROADMAP.md release table should contain a 3.22.15 row."""
         text = _read(_ROADMAP)
-        assert "3.22.15" in text, \
-            "ROADMAP.md release table should have a v3.22.15 entry"
+        assert "3.22.15" in text, "ROADMAP.md release table should have a v3.22.15 entry"
 
     def test_changelog_has_3_22_15_section(self):
         """CHANGELOG should have a ## [3.22.15] section."""
         text = _read(_CHANGELOG)
-        assert "## [3.22.15]" in text, \
+        assert "## [3.22.15]" in text, (
             "CHANGELOG_KNOWLEDGE_GRAPHS.md should have a ## [3.22.15] section"
+        )

@@ -2,6 +2,7 @@
 
 Following GIVEN-WHEN-THEN format.
 """
+
 import pytest
 from ipfs_datasets_py.mcp_server.tool_metadata import (
     ToolMetadata,
@@ -18,6 +19,7 @@ from ipfs_datasets_py.mcp_server.tool_metadata import (
 # ---------------------------------------------------------------------------
 # ToolMetadata dataclass
 # ---------------------------------------------------------------------------
+
 
 class TestToolMetadataDefaults:
     """ToolMetadata default values and basic construction."""
@@ -112,6 +114,7 @@ class TestToolMetadataValidateComplete:
 # ToolMetadataRegistry
 # ---------------------------------------------------------------------------
 
+
 class TestToolMetadataRegistry:
     """ToolMetadataRegistry CRUD and queries."""
 
@@ -172,6 +175,7 @@ class TestToolMetadataRegistry:
     def test_re_registering_different_runtime_logs_warning(self, caplog):
         """GIVEN registered tool WHEN re-registered with different runtime THEN warning logged."""
         import logging
+
         self.registry.register(ToolMetadata(name="dup", runtime=RUNTIME_FASTAPI))
         with caplog.at_level(logging.WARNING):
             self.registry.register(ToolMetadata(name="dup", runtime=RUNTIME_TRIO))
@@ -182,6 +186,7 @@ class TestToolMetadataRegistry:
 # tool_metadata decorator
 # ---------------------------------------------------------------------------
 
+
 class TestToolMetadataDecorator:
     """The @tool_metadata decorator registers metadata and attaches attributes."""
 
@@ -191,6 +196,7 @@ class TestToolMetadataDecorator:
 
     def test_decorator_attaches_mcp_metadata(self):
         """GIVEN decorated function WHEN accessed THEN _mcp_metadata is a ToolMetadata."""
+
         @tool_metadata(runtime=RUNTIME_TRIO, category="test_cat", priority=7)
         def my_func():
             """My function."""
@@ -204,6 +210,7 @@ class TestToolMetadataDecorator:
 
     def test_decorator_attaches_runtime_shortcut(self):
         """GIVEN decorated function WHEN accessed THEN _mcp_runtime matches runtime arg."""
+
         @tool_metadata(runtime=RUNTIME_FASTAPI)
         def another_func():
             """A function."""
@@ -213,6 +220,7 @@ class TestToolMetadataDecorator:
 
     def test_decorator_registers_in_global_registry(self):
         """GIVEN decorated function WHEN get_registry().get() THEN metadata found."""
+
         @tool_metadata(runtime=RUNTIME_AUTO)
         def registered_func():
             """Registered."""
@@ -224,6 +232,7 @@ class TestToolMetadataDecorator:
 
     def test_decorator_uses_docstring_as_description(self):
         """GIVEN function with docstring and no mcp_description WHEN decorated THEN docstring used."""
+
         @tool_metadata()
         def doc_func():
             """This is the docstring."""
@@ -233,6 +242,7 @@ class TestToolMetadataDecorator:
 
     def test_decorator_explicit_description_overrides_docstring(self):
         """GIVEN mcp_description provided WHEN decorated THEN explicit description used."""
+
         @tool_metadata(mcp_description="Explicit description")
         def explicit_func():
             """Ignored docstring."""
@@ -242,6 +252,7 @@ class TestToolMetadataDecorator:
 
     def test_decorator_preserves_function_callable(self):
         """GIVEN decorated function WHEN called THEN original behaviour preserved."""
+
         @tool_metadata()
         def add(a, b):
             """Add two numbers."""
@@ -254,6 +265,7 @@ class TestToolMetadataDecorator:
 # get_tool_metadata helper
 # ---------------------------------------------------------------------------
 
+
 class TestGetToolMetadata:
     """get_tool_metadata() finds metadata via attribute or registry."""
 
@@ -262,6 +274,7 @@ class TestGetToolMetadata:
 
     def test_returns_metadata_from_attribute(self):
         """GIVEN function with _mcp_metadata WHEN get_tool_metadata() THEN returns it."""
+
         @tool_metadata()
         def fn_with_attr():
             """Function."""
@@ -272,6 +285,7 @@ class TestGetToolMetadata:
 
     def test_returns_none_for_undecorated_function(self):
         """GIVEN plain function with no registry entry WHEN get_tool_metadata() THEN None."""
+
         def plain():
             pass
 

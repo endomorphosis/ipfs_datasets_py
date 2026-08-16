@@ -27,18 +27,10 @@ import venv
 
 
 REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
-DEFAULT_LOCK_PATH: Final = (
-    REPOSITORY_ROOT / "benchmarks/logic_pipeline/runtime_env/spacy.lock"
-)
-LOCK_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.spacy-runtime-lock.v1"
-)
-SMOKE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.spacy-runtime-smoke.v1"
-)
-RECEIPT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.spacy-runtime-receipt.v1"
-)
+DEFAULT_LOCK_PATH: Final = REPOSITORY_ROOT / "benchmarks/logic_pipeline/runtime_env/spacy.lock"
+LOCK_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.spacy-runtime-lock.v1"
+SMOKE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.spacy-runtime-smoke.v1"
+RECEIPT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.spacy-runtime-receipt.v1"
 EVIDENCE_SYMBOL: Final = "HSSLEV1103A41"
 MAX_LOCK_BYTES: Final = 64 * 1024
 MAX_ARTIFACT_BYTES: Final = 128 * 1024 * 1024
@@ -111,9 +103,7 @@ def _strict_json(raw: str, *, source: str) -> object:
     except SpacyProvisioningError:
         raise
     except (json.JSONDecodeError, RecursionError, TypeError, ValueError) as exc:
-        raise SpacyProvisioningError(
-            f"{source} is not strict JSON: {type(exc).__name__}"
-        ) from exc
+        raise SpacyProvisioningError(f"{source} is not strict JSON: {type(exc).__name__}") from exc
 
 
 def _mapping(
@@ -128,8 +118,7 @@ def _mapping(
         missing = sorted(keys - set(value))
         unknown = sorted(set(value) - keys)
         raise SpacyProvisioningError(
-            f"{name} fields do not match the lock schema "
-            f"(missing={missing}, unknown={unknown})"
+            f"{name} fields do not match the lock schema (missing={missing}, unknown={unknown})"
         )
     return value
 
@@ -159,9 +148,7 @@ def _https_url(value: object, name: str) -> str:
         or parsed.password is not None
         or parsed.fragment
     ):
-        raise SpacyProvisioningError(
-            f"{name} must be a credential-free HTTPS artifact URL"
-        )
+        raise SpacyProvisioningError(f"{name} must be a credential-free HTTPS artifact URL")
     return value
 
 
@@ -201,14 +188,8 @@ def _validate_artifact(
     _https_url(artifact["url"], f"{name}.url")
     _sha(artifact["sha256"], f"{name}.sha256")
     size = artifact["size_bytes"]
-    if (
-        not isinstance(size, int)
-        or isinstance(size, bool)
-        or not 1 <= size <= MAX_ARTIFACT_BYTES
-    ):
-        raise SpacyProvisioningError(
-            f"{name}.size_bytes must be a positive bounded integer"
-        )
+    if not isinstance(size, int) or isinstance(size, bool) or not 1 <= size <= MAX_ARTIFACT_BYTES:
+        raise SpacyProvisioningError(f"{name}.size_bytes must be a positive bounded integer")
     if runtime:
         for key in runtime_keys:
             _string(artifact[key], f"{name}.{key}", safe=True)
@@ -268,18 +249,14 @@ def validate_lock(value: object) -> dict[str, object]:
             safe=True,
         )
         if not re.fullmatch(r"\d+\.\d+\.\d+", version):
-            raise SpacyProvisioningError(
-                f"runtime.prerequisites[{index}].version must be exact"
-            )
+            raise SpacyProvisioningError(f"runtime.prerequisites[{index}].version must be exact")
         _validate_artifact(
             prerequisite["artifact"],
             f"runtime.prerequisites[{index}].artifact",
             runtime=False,
         )
     if len(prerequisite_distributions) != len(set(prerequisite_distributions)):
-        raise SpacyProvisioningError(
-            "runtime.prerequisites contains duplicate distributions"
-        )
+        raise SpacyProvisioningError("runtime.prerequisites contains duplicate distributions")
     artifacts = runtime["artifacts"]
     if not isinstance(artifacts, list) or not artifacts:
         raise SpacyProvisioningError("runtime.artifacts must not be empty")
@@ -318,9 +295,7 @@ def validate_lock(value: object) -> dict[str, object]:
     if pipeline["package"] != "en_core_web_sm":
         raise SpacyProvisioningError("requested pipeline must be en_core_web_sm")
     if pipeline["distribution"] != "en-core-web-sm":
-        raise SpacyProvisioningError(
-            "pipeline distribution must be en-core-web-sm"
-        )
+        raise SpacyProvisioningError("pipeline distribution must be en-core-web-sm")
     for key in ("version", "language", "spacy_compatibility"):
         _string(pipeline[key], f"pipeline.{key}")
     if not re.fullmatch(r"\d+\.\d+\.\d+", str(pipeline["version"])):
@@ -457,8 +432,7 @@ def select_runtime_artifact(
     ]
     if len(matches) != 1:
         raise SpacyProvisioningError(
-            "no unique locked spaCy wheel for "
-            f"{requested_system}/{requested_machine}/{python_tag}"
+            f"no unique locked spaCy wheel for {requested_system}/{requested_machine}/{python_tag}"
         )
     return matches[0]
 
@@ -524,22 +498,14 @@ def fetch_artifact(
     expected_size = artifact.get("size_bytes")
     if destination.exists():
         if not destination.is_file():
-            raise SpacyProvisioningError(
-                f"artifact cache entry is not a file: {destination}"
-            )
+            raise SpacyProvisioningError(f"artifact cache entry is not a file: {destination}")
         if expected_size is not None and destination.stat().st_size != expected_size:
-            raise SpacyProvisioningError(
-                f"cached artifact size mismatch: {destination.name}"
-            )
+            raise SpacyProvisioningError(f"cached artifact size mismatch: {destination.name}")
         if file_sha256(destination) != expected_sha:
-            raise SpacyProvisioningError(
-                f"cached artifact SHA-256 mismatch: {destination.name}"
-            )
+            raise SpacyProvisioningError(f"cached artifact SHA-256 mismatch: {destination.name}")
         return destination
     if offline:
-        raise SpacyProvisioningError(
-            f"offline artifact is not cached: {destination.name}"
-        )
+        raise SpacyProvisioningError(f"offline artifact is not cached: {destination.name}")
 
     request = Request(
         str(artifact["url"]),
@@ -559,9 +525,7 @@ def fetch_artifact(
             with urlopen(request, timeout=60) as response:
                 final_url = urlsplit(response.geturl())
                 if final_url.scheme != "https":
-                    raise SpacyProvisioningError(
-                        "artifact download redirected away from HTTPS"
-                    )
+                    raise SpacyProvisioningError("artifact download redirected away from HTTPS")
                 while True:
                     chunk = response.read(1024 * 1024)
                     if not chunk:
@@ -571,9 +535,7 @@ def fetch_artifact(
                         raise SpacyProvisioningError("artifact exceeds download bound")
                     stream.write(chunk)
         if expected_size is not None and byte_count != expected_size:
-            raise SpacyProvisioningError(
-                f"downloaded artifact size mismatch: {destination.name}"
-            )
+            raise SpacyProvisioningError(f"downloaded artifact size mismatch: {destination.name}")
         assert partial is not None
         if file_sha256(partial) != expected_sha:
             raise SpacyProvisioningError(
@@ -606,9 +568,7 @@ def ensure_environment(environment: Path | str) -> tuple[Path, Path]:
     if target.exists():
         if not (target / "pyvenv.cfg").is_file():
             if any(target.iterdir()):
-                raise SpacyProvisioningError(
-                    "destination exists and is not a virtual environment"
-                )
+                raise SpacyProvisioningError("destination exists and is not a virtual environment")
             venv.EnvBuilder(with_pip=True).create(target)
     else:
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -864,9 +824,7 @@ def _validate_probe(
         or not isinstance(smoke.get("token_count"), int)
         or smoke["token_count"] < 1
     ):
-        raise SpacyProvisioningError(
-            "bounded smoke did not produce all full-pipeline annotations"
-        )
+        raise SpacyProvisioningError("bounded smoke did not produce all full-pipeline annotations")
     _sha(smoke.get("output_sha256"), "probe.smoke.output_sha256")
     return probe
 
@@ -1083,9 +1041,7 @@ def validate_smoke_receipt(
         for item in runtime_lock["artifacts"]
         if isinstance(item, dict)
     ]
-    locked_pipeline_artifact = _mapping(
-        pipeline_lock["artifact"], "pipeline.artifact"
-    )
+    locked_pipeline_artifact = _mapping(pipeline_lock["artifact"], "pipeline.artifact")
     expected_prerequisites = [
         {
             "distribution": item["distribution"],

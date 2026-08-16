@@ -36,21 +36,17 @@ from benchmarks.semantic_roundtrip.contracts import (
 )
 
 EVALUATION_STATUS_INTERFACE: Final = "SemanticRoundTripEvaluationStatus@1"
-EVALUATION_STATUS_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-evaluation-status.v1"
-)
+EVALUATION_STATUS_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-evaluation-status.v1"
 
 DEFAULT_DETERMINISTIC_BASELINE_ARM_ID: Final = (
     "typed_deontic__no_guidance__no_repair__not_applicable__deterministic"
 )
 
-REPLACEMENT_2026_07_27_FAILURE_REASON_COUNTS: Final[Mapping[str, int]] = (
-    MappingProxyType(
-        {
-            "post_schedule_capability_unavailable": 260,
-            "retry_exhausted": 210,
-        }
-    )
+REPLACEMENT_2026_07_27_FAILURE_REASON_COUNTS: Final[Mapping[str, int]] = MappingProxyType(
+    {
+        "post_schedule_capability_unavailable": 260,
+        "retry_exhausted": 210,
+    }
 )
 REPLACEMENT_2026_07_27_SUCCESS_COUNT: Final = 200
 REPLACEMENT_2026_07_27_SCHEDULED_COUNT: Final = 670
@@ -126,20 +122,13 @@ class EvaluationStatusRecord:
             raise ContractError("reason must be a nonblank string")
         if self.detail is not None:
             if not isinstance(self.detail, str) or not self.detail.strip():
-                raise ContractError(
-                    "detail must be a nonblank string or None"
-                )
+                raise ContractError("detail must be a nonblank string or None")
         if self.arm_id is not None:
             if not isinstance(self.arm_id, str) or not self.arm_id.strip():
                 raise ContractError("arm_id must be a nonblank string or None")
         if self.coordinate_key is not None:
-            if (
-                not isinstance(self.coordinate_key, str)
-                or not self.coordinate_key.strip()
-            ):
-                raise ContractError(
-                    "coordinate_key must be a nonblank string or None"
-                )
+            if not isinstance(self.coordinate_key, str) or not self.coordinate_key.strip():
+                raise ContractError("coordinate_key must be a nonblank string or None")
         _assert_reason_matches_status(self.status, self.reason)
 
     @property
@@ -166,39 +155,30 @@ class EvaluationStatusRecord:
             "detail": self.detail,
             "arm_id": self.arm_id,
             "coordinate_key": self.coordinate_key,
-            "include_in_default_leaderboard": (
-                self.include_in_default_leaderboard
-            ),
+            "include_in_default_leaderboard": (self.include_in_default_leaderboard),
             "include_in_paired_baseline": self.include_in_paired_baseline,
             "loss_is_semantic": self.loss_is_semantic,
         }
 
 
-def _assert_reason_matches_status(
-    status: EvaluationStatus, reason: str
-) -> None:
+def _assert_reason_matches_status(status: EvaluationStatus, reason: str) -> None:
     if status is EvaluationStatus.NOT_MEASURED:
         allowed = {item.value for item in NotMeasuredReason}
         if reason not in allowed:
             raise ContractError(
-                "not_measured reason must be one of "
-                f"{sorted(allowed)}; got {reason!r}"
+                f"not_measured reason must be one of {sorted(allowed)}; got {reason!r}"
             )
         return
     if status is EvaluationStatus.RUNTIME_FAILED:
         allowed = {item.value for item in RuntimeFailedReason}
         if reason not in allowed:
             raise ContractError(
-                "runtime_failed reason must be one of "
-                f"{sorted(allowed)}; got {reason!r}"
+                f"runtime_failed reason must be one of {sorted(allowed)}; got {reason!r}"
             )
         return
     if status is EvaluationStatus.SEMANTIC_SCORED:
         if reason != "success":
-            raise ContractError(
-                "semantic_scored reason must be 'success'; got "
-                f"{reason!r}"
-            )
+            raise ContractError(f"semantic_scored reason must be 'success'; got {reason!r}")
         return
     raise ContractError(f"unknown evaluation status: {status!r}")
 
@@ -290,16 +270,9 @@ def classify_evaluation_status(
 
     if component in {ComponentStatus.SUCCESS.value, "success"}:
         if reason_token is not None:
-            raise ContractError(
-                "success status cannot carry a failure_reason ("
-                f"{reason_token!r})"
-            )
+            raise ContractError(f"success status cannot carry a failure_reason ({reason_token!r})")
 
-    if (
-        preflight_blocked
-        or qual == PREFLIGHT_BLOCKED
-        or qual_reason == PREFLIGHT_BLOCKED
-    ):
+    if preflight_blocked or qual == PREFLIGHT_BLOCKED or qual_reason == PREFLIGHT_BLOCKED:
         return EvaluationStatusRecord(
             status=EvaluationStatus.NOT_MEASURED,
             reason=NotMeasuredReason.PREFLIGHT_BLOCKED.value,
@@ -321,8 +294,7 @@ def classify_evaluation_status(
         return EvaluationStatusRecord(
             status=EvaluationStatus.NOT_MEASURED,
             reason=NotMeasuredReason.TERMINAL_UNSUPPORTED.value,
-            detail=resolved_detail
-            or FailureReason.CAPABILITY_UNAVAILABLE.value,
+            detail=resolved_detail or FailureReason.CAPABILITY_UNAVAILABLE.value,
             arm_id=arm_id,
             coordinate_key=coordinate_key,
         )
@@ -367,8 +339,7 @@ def classify_evaluation_status(
         )
 
     raise ContractError(
-        "cannot classify evaluation status without status, failure_reason, "
-        "or qualification_status"
+        "cannot classify evaluation status without status, failure_reason, or qualification_status"
     )
 
 
@@ -393,9 +364,7 @@ def classify_coordinate_record(
         raise ContractError("failure must be an object or null")
 
     arm_id = _normalize_token(record.get("arm_id", record.get("cell_id")))
-    coordinate_key = _normalize_token(
-        record.get("coordinate_key", record.get("key"))
-    )
+    coordinate_key = _normalize_token(record.get("coordinate_key", record.get("key")))
     qual = qualification_status
     if qual is None:
         qual = record.get("qualification_status")
@@ -444,9 +413,7 @@ def is_default_leaderboard_eligible(
         return True
     # Unscored baseline coordinates must not pollute default rankings;
     # the baseline identity is the comparison anchor, not an auto-admit path.
-    if is_deterministic_baseline_arm(
-        classification.arm_id, baseline_arm_id=baseline_arm_id
-    ):
+    if is_deterministic_baseline_arm(classification.arm_id, baseline_arm_id=baseline_arm_id):
         return False
     return False
 
@@ -460,9 +427,7 @@ def filter_leaderboard_classifications(
     return tuple(
         item
         for item in classifications
-        if is_default_leaderboard_eligible(
-            item, baseline_arm_id=baseline_arm_id
-        )
+        if is_default_leaderboard_eligible(item, baseline_arm_id=baseline_arm_id)
     )
 
 
@@ -480,9 +445,7 @@ def filter_paired_baseline_classifications(
     """
     del baseline_arm_id
     return tuple(
-        item
-        for item in classifications
-        if item.status is EvaluationStatus.SEMANTIC_SCORED
+        item for item in classifications if item.status is EvaluationStatus.SEMANTIC_SCORED
     )
 
 
@@ -497,9 +460,7 @@ def classify_replacement_report_coordinates(
     for record in records:
         if not isinstance(record, Mapping):
             raise ContractError("each coordinate record must be a mapping")
-        arm_id = _normalize_token(
-            record.get("arm_id", record.get("cell_id"))
-        )
+        arm_id = _normalize_token(record.get("arm_id", record.get("cell_id")))
         qual_payload = qualifications.get(arm_id or "", {})
         classified.append(
             classify_coordinate_record(
@@ -605,9 +566,7 @@ def _realizer_mapping(arm: Mapping[str, object]) -> Mapping[str, object]:
 
 def _is_guided_arm(arm: Mapping[str, object]) -> bool:
     composition = _composition_mapping(arm)
-    guidance = _normalize_token(
-        composition.get("guidance", arm.get("guidance"))
-    )
+    guidance = _normalize_token(composition.get("guidance", arm.get("guidance")))
     if guidance == GUIDANCE_GUIDED:
         return True
     arm_id = _normalize_token(arm.get("arm_id", arm.get("cell_id"))) or ""
@@ -620,9 +579,7 @@ def _is_model_backed_arm(arm: Mapping[str, object]) -> bool:
     if arm.get("deterministic") is True:
         return False
     realizer = _realizer_mapping(arm)
-    mode = _normalize_token(
-        realizer.get("mode", arm.get("realizer_mode"))
-    )
+    mode = _normalize_token(realizer.get("mode", arm.get("realizer_mode")))
     if mode == "model":
         return True
     route = _normalize_token(realizer.get("route", arm.get("route")))
@@ -638,9 +595,7 @@ def _is_model_backed_arm(arm: Mapping[str, object]) -> bool:
 def _arm_routes(arm: Mapping[str, object]) -> tuple[str, ...]:
     routes: list[str] = []
     declared = arm.get("route_requirements")
-    if isinstance(declared, Sequence) and not isinstance(
-        declared, (str, bytes, bytearray)
-    ):
+    if isinstance(declared, Sequence) and not isinstance(declared, (str, bytes, bytearray)):
         for item in declared:
             token = _normalize_token(item)
             if token is None or token in routes:
@@ -677,9 +632,7 @@ def required_preflights_for_arm(
     guided = _is_guided_arm(arm)
     model_backed = _is_model_backed_arm(arm)
     routes = tuple(
-        route
-        for route in _arm_routes(arm)
-        if route in MODEL_ROUTES_REQUIRING_LIVE_SMOKE
+        route for route in _arm_routes(arm) if route in MODEL_ROUTES_REQUIRING_LIVE_SMOKE
     )
     requirements: list[str] = []
     if guided:
@@ -695,32 +648,25 @@ def required_preflights_for_arm(
     )
 
 
-def _smoke_passed(
-    smokes: Mapping[str, object] | None, route: str
-) -> bool:
+def _smoke_passed(smokes: Mapping[str, object] | None, route: str) -> bool:
     if smokes is None:
         return False
     records = smokes
     if isinstance(smokes, Mapping):
         nested = smokes.get("records", smokes.get("routes", smokes))
         if isinstance(nested, Mapping) or (
-            isinstance(nested, Sequence)
-            and not isinstance(nested, (str, bytes, bytearray))
+            isinstance(nested, Sequence) and not isinstance(nested, (str, bytes, bytearray))
         ):
             records = nested  # type: ignore[assignment]
     if isinstance(records, Mapping):
         payload = records.get(route)
         if isinstance(payload, Mapping):
             return _receipt_is_live_smoke_pass(payload)
-    if isinstance(records, Sequence) and not isinstance(
-        records, (str, bytes, bytearray)
-    ):
+    if isinstance(records, Sequence) and not isinstance(records, (str, bytes, bytearray)):
         for item in records:
             if not isinstance(item, Mapping):
                 continue
-            item_route = _normalize_token(
-                item.get("route", item.get("route_id"))
-            )
+            item_route = _normalize_token(item.get("route", item.get("route_id")))
             if item_route != route:
                 continue
             if _receipt_is_live_smoke_pass(item):
@@ -766,9 +712,7 @@ def _causal_qualification_passed(
     if isinstance(arms, Mapping):
         payload = arms.get(arm_id)
         if isinstance(payload, Mapping):
-            arm_status = _normalize_token(
-                payload.get("status", payload.get("disposition"))
-            )
+            arm_status = _normalize_token(payload.get("status", payload.get("disposition")))
             if arm_status == "scored_supported":
                 return True
     return False
@@ -803,26 +747,19 @@ def evaluate_matrix_launch_preflight(
 
         for kind in req.requirements:
             if kind == PREFLIGHT_CAUSAL_QUALIFICATION:
-                if _causal_qualification_passed(
-                    causal_qualification, arm_id=req.arm_id
-                ):
+                if _causal_qualification_passed(causal_qualification, arm_id=req.arm_id):
                     continue
                 missing.append(
                     {
                         "arm_id": req.arm_id,
                         "preflight": PREFLIGHT_CAUSAL_QUALIFICATION,
-                        "reason": (
-                            "guided arm lacks scored_supported "
-                            "causal qualification"
-                        ),
+                        "reason": ("guided arm lacks scored_supported causal qualification"),
                     }
                 )
                 continue
 
             if kind == PREFLIGHT_LIVE_SMOKE:
-                routes = req.routes or tuple(
-                    sorted(MODEL_ROUTES_REQUIRING_LIVE_SMOKE)
-                )
+                routes = req.routes or tuple(sorted(MODEL_ROUTES_REQUIRING_LIVE_SMOKE))
                 if not req.routes and req.model_backed:
                     arm_lower = req.arm_id.lower()
                     inferred: list[str] = []
@@ -842,8 +779,7 @@ def evaluate_matrix_launch_preflight(
                             "preflight": PREFLIGHT_LIVE_SMOKE,
                             "route": route,
                             "reason": (
-                                "model-backed arm lacks passing live smoke "
-                                f"for route {route!r}"
+                                f"model-backed arm lacks passing live smoke for route {route!r}"
                             ),
                         }
                     )

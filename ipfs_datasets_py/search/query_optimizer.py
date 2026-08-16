@@ -56,6 +56,7 @@ def _serialize_exception(e: Exception) -> Dict[str, Any]:
 @dataclass
 class QueryMetrics:
     """Metrics for a single query execution."""
+
     query_id: str
     query_type: str
     start_time: float
@@ -141,9 +142,13 @@ class QueryStatsCollector:
     def _update_averages(self) -> None:
         """Update average duration statistics for query types."""
         for query_type in self.query_types:
-            type_metrics = [m for m in self.metrics_history if m.query_type == query_type and not m.error]
+            type_metrics = [
+                m for m in self.metrics_history if m.query_type == query_type and not m.error
+            ]
             if type_metrics:
-                self.avg_duration_by_type[query_type] = sum(m.duration_ms for m in type_metrics) / len(type_metrics)
+                self.avg_duration_by_type[query_type] = sum(
+                    m.duration_ms for m in type_metrics
+                ) / len(type_metrics)
 
     def get_stats_summary(self) -> Dict[str, Any]:
         """
@@ -156,7 +161,9 @@ class QueryStatsCollector:
             if not self.total_queries:
                 return {"total_queries": 0, "message": "No queries recorded yet"}
 
-            cache_hit_rate = self.cache_hit_count / self.total_queries if self.total_queries > 0 else 0
+            cache_hit_rate = (
+                self.cache_hit_count / self.total_queries if self.total_queries > 0 else 0
+            )
             error_rate = self.error_count / self.total_queries if self.total_queries > 0 else 0
 
             # Calculate percentiles for query duration
@@ -172,14 +179,14 @@ class QueryStatsCollector:
             slowest = sorted(
                 [m for m in self.metrics_history if not m.error],
                 key=lambda m: m.duration_ms,
-                reverse=True
+                reverse=True,
             )[:5]
 
             # Most frequent query types
             query_type_counts = sorted(
                 [(qtype, count) for qtype, count in self.query_types.items()],
                 key=lambda x: x[1],
-                reverse=True
+                reverse=True,
             )
 
             return {
@@ -189,20 +196,17 @@ class QueryStatsCollector:
                 "cache_hit_rate": cache_hit_rate,
                 "error_rate": error_rate,
                 "index_usage": dict(self.index_usage),
-                "percentiles": {
-                    "p50_ms": p50,
-                    "p90_ms": p90,
-                    "p99_ms": p99
-                },
+                "percentiles": {"p50_ms": p50, "p90_ms": p90, "p99_ms": p99},
                 "slowest_queries": [
                     {
                         "query_id": q.query_id,
                         "query_type": q.query_type,
                         "duration_ms": q.duration_ms,
                         "result_count": q.result_count,
-                        "scan_count": q.scan_count
-                    } for q in slowest
-                ]
+                        "scan_count": q.scan_count,
+                    }
+                    for q in slowest
+                ],
             }
 
     def get_optimization_recommendations(self) -> List[Dict[str, Any]]:
@@ -220,18 +224,21 @@ class QueryStatsCollector:
 
             # Find queries with high scan counts relative to result counts
             high_scan_queries = [
-                m for m in self.metrics_history
+                m
+                for m in self.metrics_history
                 if m.scan_count > 100 and m.result_count > 0 and m.scan_count / m.result_count > 10
             ]
 
             if high_scan_queries:
                 rec_types = set(q.query_type for q in high_scan_queries)
-                recommendations.append({
-                    "type": "index_recommendation",
-                    "message": f"Consider adding indexes for query types: {', '.join(rec_types)}",
-                    "affected_queries": len(high_scan_queries),
-                    "query_types": list(rec_types)
-                })
+                recommendations.append(
+                    {
+                        "type": "index_recommendation",
+                        "message": f"Consider adding indexes for query types: {', '.join(rec_types)}",
+                        "affected_queries": len(high_scan_queries),
+                        "query_types": list(rec_types),
+                    }
+                )
 
             # Identify slow query types
             slow_query_types = {}
@@ -240,21 +247,25 @@ class QueryStatsCollector:
                     slow_query_types[qtype] = avg_duration
 
             if slow_query_types:
-                recommendations.append({
-                    "type": "performance_warning",
-                    "message": f"Slow query types detected",
-                    "slow_types": slow_query_types
-                })
+                recommendations.append(
+                    {
+                        "type": "performance_warning",
+                        "message": f"Slow query types detected",
+                        "slow_types": slow_query_types,
+                    }
+                )
 
             # Check cache efficiency
             if self.total_queries > 20:
                 cache_hit_rate = self.cache_hit_count / self.total_queries
                 if cache_hit_rate < 0.5:
-                    recommendations.append({
-                        "type": "cache_recommendation",
-                        "message": "Low cache hit rate. Consider reviewing cache strategy.",
-                        "current_hit_rate": cache_hit_rate
-                    })
+                    recommendations.append(
+                        {
+                            "type": "cache_recommendation",
+                            "message": "Low cache hit rate. Consider reviewing cache strategy.",
+                            "current_hit_rate": cache_hit_rate,
+                        }
+                    )
 
             return recommendations
 
@@ -383,8 +394,13 @@ class IndexRegistry:
         self.indexes: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.RLock()
 
-    def register_index(self, name: str, index_type: str, fields: List[str],
-                      metadata: Optional[Dict[str, Any]] = None) -> None:
+    def register_index(
+        self,
+        name: str,
+        index_type: str,
+        fields: List[str],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Register an index.
 
@@ -400,7 +416,7 @@ class IndexRegistry:
                 "type": index_type,
                 "fields": fields,
                 "metadata": metadata or {},
-                "created_at": time.time()
+                "created_at": time.time(),
             }
 
     def unregister_index(self, name: str) -> bool:
@@ -450,7 +466,9 @@ class IndexRegistry:
                     matching_indexes.append(index_info)
             return matching_indexes
 
-    def find_indexes_for_query(self, query_type: str, query_params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def find_indexes_for_query(
+        self, query_type: str, query_params: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """
         Find indexes suitable for a specific query.
 
@@ -507,9 +525,12 @@ class QueryOptimizer:
     - Combined/hybrid searches
     """
 
-    def __init__(self, stats_collector: Optional[QueryStatsCollector] = None,
-                query_cache: Optional[LRUQueryCache] = None,
-                index_registry: Optional[IndexRegistry] = None):
+    def __init__(
+        self,
+        stats_collector: Optional[QueryStatsCollector] = None,
+        query_cache: Optional[LRUQueryCache] = None,
+        index_registry: Optional[IndexRegistry] = None,
+    ):
         """
         Initialize the query optimizer.
 
@@ -526,7 +547,7 @@ class QueryOptimizer:
             "use_indexes": True,
             "limit_scan": True,
             "max_scan_count": 10000,
-            "adaptive_optimization": True
+            "adaptive_optimization": True,
         }
 
     def _create_query_id(self, query_type: str, query_params: Dict[str, Any]) -> str:
@@ -544,8 +565,12 @@ class QueryOptimizer:
         query_hash = hashlib.md5(f"{query_type}:{param_str}".encode()).hexdigest()
         return f"{query_type}_{query_hash[:8]}"
 
-    def optimize_query(self, query_type: str, query_params: Dict[str, Any],
-                      optimizations: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def optimize_query(
+        self,
+        query_type: str,
+        query_params: Dict[str, Any],
+        optimizations: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Optimize a query using statistics and indexes.
 
@@ -579,7 +604,7 @@ class QueryOptimizer:
             "indexes": [],
             "limit_scan": opts["limit_scan"],
             "max_scan_count": opts["max_scan_count"],
-            "optimization_time_ms": 0
+            "optimization_time_ms": 0,
         }
 
         # Find suitable indexes
@@ -607,8 +632,9 @@ class QueryOptimizer:
 
         return query_plan
 
-    def _choose_best_index(self, query_type: str, query_params: Dict[str, Any],
-                         indexes: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    def _choose_best_index(
+        self, query_type: str, query_params: Dict[str, Any], indexes: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
         """
         Choose the best index for a query based on statistics and query type.
 
@@ -630,7 +656,10 @@ class QueryOptimizer:
                 # Check if the index has the right dimension
                 if "dimension" in query_params and "metadata" in vector_indexes[0]:
                     metadata = vector_indexes[0]["metadata"]
-                    if "dimension" in metadata and metadata["dimension"] == query_params["dimension"]:
+                    if (
+                        "dimension" in metadata
+                        and metadata["dimension"] == query_params["dimension"]
+                    ):
                         return vector_indexes[0]
                 else:
                     return vector_indexes[0]
@@ -650,8 +679,13 @@ class QueryOptimizer:
         # Default to first index if no specific logic applies
         return indexes[0] if indexes else None
 
-    def execute_query(self, query_type: str, query_params: Dict[str, Any],
-                     query_func: Callable, optimizations: Optional[Dict[str, Any]] = None) -> Tuple[Any, QueryMetrics]:
+    def execute_query(
+        self,
+        query_type: str,
+        query_params: Dict[str, Any],
+        query_func: Callable,
+        optimizations: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[Any, QueryMetrics]:
         """
         Execute a query with optimization and collect metrics.
 
@@ -670,11 +704,7 @@ class QueryOptimizer:
             opts.update(optimizations)
 
         query_id = self._create_query_id(query_type, query_params)
-        metrics = QueryMetrics(
-            query_id=query_id,
-            query_type=query_type,
-            start_time=time.time()
-        )
+        metrics = QueryMetrics(query_id=query_id, query_type=query_type, start_time=time.time())
 
         # Try cache first
         if opts["use_cache"]:
@@ -682,8 +712,10 @@ class QueryOptimizer:
             if cache_hit:
                 metrics.cache_hit = True
                 metrics.complete(
-                    result_count=len(cached_result) if isinstance(cached_result, (list, tuple)) else 1,
-                    scan_count=0
+                    result_count=len(cached_result)
+                    if isinstance(cached_result, (list, tuple))
+                    else 1,
+                    scan_count=0,
                 )
                 self.stats.record_query(metrics)
                 return cached_result, metrics
@@ -712,7 +744,7 @@ class QueryOptimizer:
                 result_count=result_count,
                 scan_count=scan_count,
                 index_used=index_used,
-                index_name=index_name
+                index_name=index_name,
             )
 
             # Cache the result if enabled
@@ -722,10 +754,7 @@ class QueryOptimizer:
         except Exception as e:
             logger.error(f"Error executing query {query_id}: {str(e)}")
             metrics.complete(
-                result_count=0,
-                scan_count=0,
-                error=str(e),
-                error_details=_serialize_exception(e)
+                result_count=0, scan_count=0, error=str(e), error_details=_serialize_exception(e)
             )
             raise
         finally:
@@ -802,11 +831,12 @@ class VectorIndexOptimizer:
                 768: (160, 320, 64),
                 1024: (200, 400, 64),
                 1536: (300, 600, 96),
-            }
+            },
         }
 
-    def optimize_vector_search(self, query_params: Dict[str, Any],
-                              optimizations: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def optimize_vector_search(
+        self, query_params: Dict[str, Any], optimizations: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Optimize a vector search query.
 
@@ -818,7 +848,9 @@ class VectorIndexOptimizer:
             Optimized query plan
         """
         # Use the base optimizer first
-        base_plan = self.query_optimizer.optimize_query("vector_search", query_params, optimizations)
+        base_plan = self.query_optimizer.optimize_query(
+            "vector_search", query_params, optimizations
+        )
 
         # Add vector-specific optimizations
         dimension = query_params.get("dimension", 0)
@@ -830,7 +862,9 @@ class VectorIndexOptimizer:
 
         # Tune search parameters based on dimension
         if dimension in self.vector_index_settings["dimension_to_index_params"]:
-            ef_search, ef_construction, m = self.vector_index_settings["dimension_to_index_params"][dimension]
+            ef_search, ef_construction, m = self.vector_index_settings["dimension_to_index_params"][
+                dimension
+            ]
         else:
             ef_search = self.vector_index_settings["default_ef_search"]
             ef_construction = self.vector_index_settings["default_ef_construction"]
@@ -847,14 +881,17 @@ class VectorIndexOptimizer:
             "exact_search": exact_search,
             "ef_search": ef_search,
             "ef_construction": ef_construction,
-            "m": m
+            "m": m,
         }
 
         return base_plan
 
-    def execute_vector_search(self, query_params: Dict[str, Any],
-                             search_func: Callable,
-                             optimizations: Optional[Dict[str, Any]] = None) -> Tuple[Any, QueryMetrics]:
+    def execute_vector_search(
+        self,
+        query_params: Dict[str, Any],
+        search_func: Callable,
+        optimizations: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[Any, QueryMetrics]:
         """
         Execute an optimized vector search query.
 
@@ -874,10 +911,12 @@ class VectorIndexOptimizer:
             query_type="vector_search",
             query_params=optimized_plan["optimized_params"],
             query_func=search_func,
-            optimizations=optimizations
+            optimizations=optimizations,
         )
 
-    def tune_vector_index_params(self, dimension: int, performance_metrics: Dict[str, float]) -> Dict[str, Any]:
+    def tune_vector_index_params(
+        self, dimension: int, performance_metrics: Dict[str, float]
+    ) -> Dict[str, Any]:
         """
         Tune vector index parameters based on performance metrics.
 
@@ -890,7 +929,9 @@ class VectorIndexOptimizer:
         """
         # Get current parameters
         if dimension in self.vector_index_settings["dimension_to_index_params"]:
-            ef_search, ef_construction, m = self.vector_index_settings["dimension_to_index_params"][dimension]
+            ef_search, ef_construction, m = self.vector_index_settings["dimension_to_index_params"][
+                dimension
+            ]
         else:
             ef_search = self.vector_index_settings["default_ef_search"]
             ef_construction = self.vector_index_settings["default_ef_construction"]
@@ -909,13 +950,17 @@ class VectorIndexOptimizer:
             ef_search = min(400, ef_search + 20)
 
         # Update settings
-        self.vector_index_settings["dimension_to_index_params"][dimension] = (ef_search, ef_construction, m)
+        self.vector_index_settings["dimension_to_index_params"][dimension] = (
+            ef_search,
+            ef_construction,
+            m,
+        )
 
         return {
             "dimension": dimension,
             "ef_search": ef_search,
             "ef_construction": ef_construction,
-            "m": m
+            "m": m,
         }
 
 
@@ -946,12 +991,15 @@ class KnowledgeGraphQueryOptimizer:
             "relationship_type_costs": {},
             "default_relationship_cost": 1.0,
             "cache_entity_properties": True,
-            "batch_size_for_path_queries": 50
+            "batch_size_for_path_queries": 50,
         }
-        self.pattern_cache = LRUQueryCache(max_size=self.graph_optimization_settings["max_pattern_cache_size"])
+        self.pattern_cache = LRUQueryCache(
+            max_size=self.graph_optimization_settings["max_pattern_cache_size"]
+        )
 
-    def optimize_graph_query(self, query_params: Dict[str, Any],
-                           optimizations: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def optimize_graph_query(
+        self, query_params: Dict[str, Any], optimizations: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Optimize a knowledge graph query.
 
@@ -963,7 +1011,9 @@ class KnowledgeGraphQueryOptimizer:
             Optimized query plan
         """
         # Use the base optimizer first
-        base_plan = self.query_optimizer.optimize_query("graph_traversal", query_params, optimizations)
+        base_plan = self.query_optimizer.optimize_query(
+            "graph_traversal", query_params, optimizations
+        )
 
         # Add graph-specific optimizations
         query_type = query_params.get("query_type", "traversal")
@@ -971,7 +1021,7 @@ class KnowledgeGraphQueryOptimizer:
         relationship_types = query_params.get("relationship_types", [])
         max_depth = min(
             query_params.get("max_depth", self.graph_optimization_settings["max_traverse_depth"]),
-            self.graph_optimization_settings["max_traverse_depth"]
+            self.graph_optimization_settings["max_traverse_depth"],
         )
 
         # Plan traversal path
@@ -983,20 +1033,23 @@ class KnowledgeGraphQueryOptimizer:
         optimized_params["path_plan"] = path_plan
 
         if "batch_size" not in optimized_params:
-            optimized_params["batch_size"] = self.graph_optimization_settings["batch_size_for_path_queries"]
+            optimized_params["batch_size"] = self.graph_optimization_settings[
+                "batch_size_for_path_queries"
+            ]
 
         # Include information about the graph-specific plan
         base_plan["graph_specific"] = {
             "query_type": query_type,
             "start_entity_type": start_entity_type,
             "path_plan": path_plan,
-            "max_depth": max_depth
+            "max_depth": max_depth,
         }
 
         return base_plan
 
-    def _plan_traversal_path(self, start_entity_type: Optional[str],
-                           relationship_types: List[str], max_depth: int) -> List[Dict[str, Any]]:
+    def _plan_traversal_path(
+        self, start_entity_type: Optional[str], relationship_types: List[str], max_depth: int
+    ) -> List[Dict[str, Any]]:
         """
         Plan an optimized traversal path based on statistics and costs.
 
@@ -1013,11 +1066,14 @@ class KnowledgeGraphQueryOptimizer:
         # If no entity type, use a general traversal
         if not start_entity_type:
             for depth in range(max_depth):
-                path_plan.append({
-                    "depth": depth + 1,
-                    "relationship_types": relationship_types,
-                    "estimated_cost": len(relationship_types) * self.graph_optimization_settings["default_relationship_cost"]
-                })
+                path_plan.append(
+                    {
+                        "depth": depth + 1,
+                        "relationship_types": relationship_types,
+                        "estimated_cost": len(relationship_types)
+                        * self.graph_optimization_settings["default_relationship_cost"],
+                    }
+                )
             return path_plan
 
         # Get relationship costs
@@ -1030,17 +1086,22 @@ class KnowledgeGraphQueryOptimizer:
             for rel_type in relationship_types:
                 step_cost += rel_costs.get(rel_type, default_cost)
 
-            path_plan.append({
-                "depth": depth + 1,
-                "relationship_types": relationship_types,
-                "estimated_cost": step_cost
-            })
+            path_plan.append(
+                {
+                    "depth": depth + 1,
+                    "relationship_types": relationship_types,
+                    "estimated_cost": step_cost,
+                }
+            )
 
         return path_plan
 
-    def execute_graph_query(self, query_params: Dict[str, Any],
-                          query_func: Callable,
-                          optimizations: Optional[Dict[str, Any]] = None) -> Tuple[Any, QueryMetrics]:
+    def execute_graph_query(
+        self,
+        query_params: Dict[str, Any],
+        query_func: Callable,
+        optimizations: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[Any, QueryMetrics]:
         """
         Execute an optimized knowledge graph query.
 
@@ -1062,11 +1123,13 @@ class KnowledgeGraphQueryOptimizer:
                     query_id=query_id,
                     query_type="graph_traversal",
                     start_time=time.time(),
-                    cache_hit=True
+                    cache_hit=True,
                 )
                 metrics.complete(
-                    result_count=len(cached_result) if isinstance(cached_result, (list, tuple)) else 1,
-                    scan_count=0
+                    result_count=len(cached_result)
+                    if isinstance(cached_result, (list, tuple))
+                    else 1,
+                    scan_count=0,
                 )
                 self.query_optimizer.stats.record_query(metrics)
                 return cached_result, metrics
@@ -1079,7 +1142,7 @@ class KnowledgeGraphQueryOptimizer:
             query_type="graph_traversal",
             query_params=optimized_plan["optimized_params"],
             query_func=query_func,
-            optimizations=optimizations
+            optimizations=optimizations,
         )
 
         # Cache the pattern result if successful and pattern caching enabled
@@ -1150,8 +1213,9 @@ class HybridQueryOptimizer:
     4. Joint optimization of both components
     """
 
-    def __init__(self, vector_optimizer: VectorIndexOptimizer,
-                graph_optimizer: KnowledgeGraphQueryOptimizer):
+    def __init__(
+        self, vector_optimizer: VectorIndexOptimizer, graph_optimizer: KnowledgeGraphQueryOptimizer
+    ):
         """
         Initialize the hybrid query optimizer.
 
@@ -1169,11 +1233,12 @@ class HybridQueryOptimizer:
             "min_vector_weight": 0.3,
             "max_vector_weight": 0.8,
             "query_context_size": 10,
-            "query_history": []
+            "query_history": [],
         }
 
-    def optimize_hybrid_query(self, query_params: Dict[str, Any],
-                            optimizations: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def optimize_hybrid_query(
+        self, query_params: Dict[str, Any], optimizations: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Optimize a hybrid query that combines vector and graph operations.
 
@@ -1189,8 +1254,12 @@ class HybridQueryOptimizer:
         graph_params = query_params.get("graph_component", {})
 
         # Get weights
-        vector_weight = query_params.get("vector_weight", self.hybrid_settings["default_vector_weight"])
-        graph_weight = query_params.get("graph_weight", self.hybrid_settings["default_graph_weight"])
+        vector_weight = query_params.get(
+            "vector_weight", self.hybrid_settings["default_vector_weight"]
+        )
+        graph_weight = query_params.get(
+            "graph_weight", self.hybrid_settings["default_graph_weight"]
+        )
 
         # Use the individual optimizers
         vector_plan = self.vector_optimizer.optimize_vector_search(vector_params, optimizations)
@@ -1210,16 +1279,10 @@ class HybridQueryOptimizer:
                 "graph_component": graph_plan["optimized_params"],
                 "vector_weight": vector_weight,
                 "graph_weight": graph_weight,
-                "result_merging": "weighted_sum"
+                "result_merging": "weighted_sum",
             },
-            "component_plans": {
-                "vector": vector_plan,
-                "graph": graph_plan
-            },
-            "adaptive_weights": {
-                "vector": vector_weight,
-                "graph": graph_weight
-            }
+            "component_plans": {"vector": vector_plan, "graph": graph_plan},
+            "adaptive_weights": {"vector": vector_weight, "graph": graph_weight},
         }
 
         return hybrid_plan
@@ -1242,36 +1305,48 @@ class HybridQueryOptimizer:
 
         # Adjust weights based on past performance if we have enough history
         if "query_type_distribution" in query_stats:
-            if "vector_search" in query_stats["avg_duration_by_type"] and "graph_traversal" in query_stats["avg_duration_by_type"]:
+            if (
+                "vector_search" in query_stats["avg_duration_by_type"]
+                and "graph_traversal" in query_stats["avg_duration_by_type"]
+            ):
                 vector_time = query_stats["avg_duration_by_type"]["vector_search"]
                 graph_time = query_stats["avg_duration_by_type"]["graph_traversal"]
 
                 # If vector search is much faster, increase its weight
                 if vector_time < graph_time * 0.5:
-                    vector_weight = min(self.hybrid_settings["max_vector_weight"], vector_weight * 1.2)
+                    vector_weight = min(
+                        self.hybrid_settings["max_vector_weight"], vector_weight * 1.2
+                    )
                     graph_weight = 1.0 - vector_weight
 
                 # If graph traversal is much faster, increase its weight
                 elif graph_time < vector_time * 0.5:
-                    graph_weight = min(1.0 - self.hybrid_settings["min_vector_weight"], graph_weight * 1.2)
+                    graph_weight = min(
+                        1.0 - self.hybrid_settings["min_vector_weight"], graph_weight * 1.2
+                    )
                     vector_weight = 1.0 - graph_weight
 
         # Update history
-        self.hybrid_settings["query_history"].append({
-            "vector_weight": vector_weight,
-            "graph_weight": graph_weight,
-            "timestamp": time.time()
-        })
+        self.hybrid_settings["query_history"].append(
+            {"vector_weight": vector_weight, "graph_weight": graph_weight, "timestamp": time.time()}
+        )
 
         # Trim history if needed
         if len(self.hybrid_settings["query_history"]) > self.hybrid_settings["query_context_size"]:
-            self.hybrid_settings["query_history"] = self.hybrid_settings["query_history"][-self.hybrid_settings["query_context_size"]:]
+            self.hybrid_settings["query_history"] = self.hybrid_settings["query_history"][
+                -self.hybrid_settings["query_context_size"] :
+            ]
 
         return vector_weight, graph_weight
 
-    def execute_hybrid_query(self, query_params: Dict[str, Any],
-                           vector_func: Callable, graph_func: Callable, merge_func: Callable,
-                           optimizations: Optional[Dict[str, Any]] = None) -> Tuple[Any, QueryMetrics]:
+    def execute_hybrid_query(
+        self,
+        query_params: Dict[str, Any],
+        vector_func: Callable,
+        graph_func: Callable,
+        merge_func: Callable,
+        optimizations: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[Any, QueryMetrics]:
         """
         Execute a hybrid query with optimized components.
 
@@ -1290,11 +1365,7 @@ class HybridQueryOptimizer:
         query_id = self.query_optimizer._create_query_id("hybrid_search", query_params)
 
         # Create metrics object
-        metrics = QueryMetrics(
-            query_id=query_id,
-            query_type="hybrid_search",
-            start_time=start_time
-        )
+        metrics = QueryMetrics(query_id=query_id, query_type="hybrid_search", start_time=start_time)
 
         try:
             # Optimize the query
@@ -1329,7 +1400,7 @@ class HybridQueryOptimizer:
                 result_count=result_count,
                 scan_count=scan_count,
                 index_used=vector_metrics.index_used or graph_metrics.index_used,
-                index_name=vector_metrics.index_name or graph_metrics.index_name
+                index_name=vector_metrics.index_name or graph_metrics.index_name,
             )
 
             # Store component metrics for analysis
@@ -1337,22 +1408,18 @@ class HybridQueryOptimizer:
                 "vector": {
                     "duration_ms": vector_metrics.duration_ms,
                     "result_count": vector_metrics.result_count,
-                    "scan_count": vector_metrics.scan_count
+                    "scan_count": vector_metrics.scan_count,
                 },
                 "graph": {
                     "duration_ms": graph_metrics.duration_ms,
                     "result_count": graph_metrics.result_count,
-                    "scan_count": graph_metrics.scan_count
-                }
+                    "scan_count": graph_metrics.scan_count,
+                },
             }
 
         except Exception as e:
             logger.error(f"Error executing hybrid query {query_id}: {str(e)}")
-            metrics.complete(
-                result_count=0,
-                scan_count=0,
-                error=str(e)
-            )
+            metrics.complete(result_count=0, scan_count=0, error=str(e))
             raise
         finally:
             # Record the metrics
@@ -1362,11 +1429,13 @@ class HybridQueryOptimizer:
 
 
 # Factory function to create a complete optimizer stack
-def create_query_optimizer(max_cache_size: int = 100,
-                         collect_statistics: bool = True,
-                         optimize_vectors: bool = True,
-                         optimize_graphs: bool = True,
-                         optimize_hybrid: bool = True) -> Dict[str, Any]:
+def create_query_optimizer(
+    max_cache_size: int = 100,
+    collect_statistics: bool = True,
+    optimize_vectors: bool = True,
+    optimize_graphs: bool = True,
+    optimize_hybrid: bool = True,
+) -> Dict[str, Any]:
     """
     Create a complete set of query optimizers.
 
@@ -1387,9 +1456,7 @@ def create_query_optimizer(max_cache_size: int = 100,
 
     # Create base optimizer
     query_optimizer = QueryOptimizer(
-        stats_collector=stats_collector,
-        query_cache=query_cache,
-        index_registry=index_registry
+        stats_collector=stats_collector, query_cache=query_cache, index_registry=index_registry
     )
 
     # Create specialized optimizers

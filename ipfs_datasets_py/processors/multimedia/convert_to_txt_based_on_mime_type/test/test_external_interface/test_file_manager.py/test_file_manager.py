@@ -1,4 +1,3 @@
-
 import anyio
 from concurrent.futures import ProcessPoolExecutor
 import os
@@ -11,22 +10,30 @@ import pytest
 
 
 from pydantic_models.configs import Configs
-from external_interface.file_paths_manager.file_paths_manager import (
-    FilePathsManager
-)
+from external_interface.file_paths_manager.file_paths_manager import FilePathsManager
 from fixtures.mock_input_output_directory import mock_input_output_directory
 
 
 from utils.common.asyncio_coroutine import asyncio_coroutine
 from utils.common.anyio_queues import AnyioQueue
 from logger.logger import Logger
+
 logger = Logger(__name__)
 
 
 # 1. Test Instantiation
-@pytest.mark.parametrize("configs", [
-    Configs(batch_size=10, input_folder="input", output_folder="output", max_workers=4, max_queue_size=2048)
-])
+@pytest.mark.parametrize(
+    "configs",
+    [
+        Configs(
+            batch_size=10,
+            input_folder="input",
+            output_folder="output",
+            max_workers=4,
+            max_queue_size=2048,
+        )
+    ],
+)
 def test_file_paths_manager_initialization(configs: Configs):
     file_manager = FilePathsManager(configs)
 
@@ -50,19 +57,17 @@ def test_file_paths_manager_initialization(configs: Configs):
     # assert hasattr(file_manager.duck_db, 'fetchall')
 
     # Test asyncio queues
-    assert hasattr(file_manager.get_inputs_queue, 'put')
-    assert hasattr(file_manager.extract_metadata_queue, 'put')
-    assert hasattr(file_manager.output_queue, 'put')
+    assert hasattr(file_manager.get_inputs_queue, "put")
+    assert hasattr(file_manager.extract_metadata_queue, "put")
+    assert hasattr(file_manager.output_queue, "put")
     assert file_manager.get_inputs_queue.maxsize == 2048
     assert file_manager.extract_metadata_queue.maxsize == 2048
-    assert file_manager.output_queue.maxsize == 10 # batch size because we want to batch outputs.
-
+    assert file_manager.output_queue.maxsize == 10  # batch size because we want to batch outputs.
 
 
 # 2. Test File Detection
 # Criteria: All files in the input folder and sub-folders must be detected.
 # NOTE We assume that the input folder contains files and sub-folders.
-
 
 
 @pytest.fixture
@@ -79,6 +84,7 @@ def test_directory():
         open(os.path.join(tmpdir, "subfolder2", "subsubfolder", "file4.txt"), "w").close()
 
         yield Path(tmpdir)
+
 
 import os
 import pytest
@@ -128,7 +134,13 @@ def test_files(tmp_path: Path):
 
 
 def test_file_detection(test_directory: Path):
-    configs = Configs(batch_size=10, input_folder=test_directory, output_folder="output", max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=10,
+        input_folder=test_directory,
+        output_folder="output",
+        max_workers=4,
+        max_queue_size=2048,
+    )
     file_manager = FilePathsManager(configs)
 
     # Call the method that detects and gets files (assuming it's called scan_for_files)
@@ -141,7 +153,7 @@ def test_file_detection(test_directory: Path):
         test_directory / "file1.txt",
         test_directory / "subfolder1" / "file2.txt",
         test_directory / "subfolder2" / "file3.txt",
-        test_directory / "subfolder2" / "subsubfolder" / "file4.txt"
+        test_directory / "subfolder2" / "subsubfolder" / "file4.txt",
     }
 
     # Use a set to collect detected files
@@ -166,7 +178,13 @@ def test_empty_directory(test_directory: Path):
         for name in dirs:
             os.rmdir(os.path.join(root, name))
 
-    configs = Configs(batch_size=10, input_folder=test_directory, output_folder="output", max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=10,
+        input_folder=test_directory,
+        output_folder="output",
+        max_workers=4,
+        max_queue_size=2048,
+    )
     file_manager = FilePathsManager(configs)
 
     # Assuming scan_for_files now returns a generator
@@ -180,12 +198,19 @@ def test_empty_directory(test_directory: Path):
     # Alternatively, if you want to avoid converting to a list:
     # assert sum(1 for _ in file_generator) == 0
 
+
 def test_hidden_files(test_directory: Path):
     # Create a hidden file
     hidden_file = test_directory / ".hidden_file.txt"
     open(hidden_file, "w").close()
 
-    configs = Configs(batch_size=10, input_folder=test_directory, output_folder="output", max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=10,
+        input_folder=test_directory,
+        output_folder="output",
+        max_workers=4,
+        max_queue_size=2048,
+    )
     file_manager = FilePathsManager(configs)
 
     # Assuming scan_for_files now returns a generator
@@ -200,12 +225,19 @@ def test_hidden_files(test_directory: Path):
     # For example:
     assert len(detected_files) > 1  # Ensures other files are also detected
 
+
 # NOTE Had to turn on developer mode in windows to test this.
 def test_ignore_symlinks(test_directory: Path):
     # Create a symlink
     os.symlink(test_directory / "file1.txt", test_directory / "symlink.txt")
 
-    configs = Configs(batch_size=10, input_folder=test_directory, output_folder="output", max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=10,
+        input_folder=test_directory,
+        output_folder="output",
+        max_workers=4,
+        max_queue_size=2048,
+    )
     file_manager = FilePathsManager(configs)
 
     # Assuming scan_for_files now returns a generator
@@ -219,6 +251,7 @@ def test_ignore_symlinks(test_directory: Path):
 
     # Optional: Add an additional assertion to verify the target file IS detected
     assert test_directory / "file1.txt" in detected_files
+
 
 import pytest
 import anyio
@@ -254,12 +287,16 @@ async def test_get_inputs(monkeypatch: pytest.MonkeyPatch, test_files):
     # Mock FilePath validation
     def mock_filepath_validation(file_path):
         if "invalid" in str(file_path):
-            errors = [{'loc': ('file_path',), 'msg': r'^Invalid file path.*', 'type': 'value_error'}]
+            errors = [
+                {"loc": ("file_path",), "msg": r"^Invalid file path.*", "type": "value_error"}
+            ]
             raise ValidationError(errors, FilePath)
         return FilePath(file_path=file_path)
 
     # Patch FilePath with mock validation
-    monkeypatch.setattr("pydantic_models.file_paths_manager.file_path.FilePath", mock_filepath_validation)
+    monkeypatch.setattr(
+        "pydantic_models.file_paths_manager.file_path.FilePath", mock_filepath_validation
+    )
 
     # Run the get_inputs method
     await fpm.get_inputs()
@@ -286,6 +323,7 @@ async def test_get_inputs(monkeypatch: pytest.MonkeyPatch, test_files):
     # Check if get_inputs_queue is empty after processing
     assert fpm.extract_metadata_queue.empty()
 
+
 @pytest.mark.anyio
 async def test_get_inputs_empty_directory():
 
@@ -311,6 +349,7 @@ async def test_get_inputs_empty_directory():
     assert fpm.extract_metadata_queue.empty()
     assert fpm.get_inputs_queue.empty()
 
+
 @pytest.mark.anyio
 async def test_get_inputs_all_invalid(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
 
@@ -335,7 +374,9 @@ async def test_get_inputs_all_invalid(monkeypatch: pytest.MonkeyPatch, tmp_path:
     def mock_invalid_filepath_validation(path):
         raise ValidationError("Invalid path")
 
-    monkeypatch.setattr("pydantic_models.file_paths_manager.file_path.FilePath", mock_invalid_filepath_validation)
+    monkeypatch.setattr(
+        "pydantic_models.file_paths_manager.file_path.FilePath", mock_invalid_filepath_validation
+    )
 
     await fpm.get_inputs()
 
@@ -343,12 +384,19 @@ async def test_get_inputs_all_invalid(monkeypatch: pytest.MonkeyPatch, tmp_path:
     assert len(fpm._logger.error_messages) == 2
     assert all("Invalid file path" in msg for msg in fpm._logger.error_messages)
 
+
 from pydantic_models.file_paths_manager.file_path_and_metadata import FilePathAndMetadata
 
 
 @pytest.mark.anyio
 async def test_extract_metadata(test_directory):
-    configs = Configs(batch_size=10, input_folder=test_directory, output_folder="output", max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=10,
+        input_folder=test_directory,
+        output_folder="output",
+        max_workers=4,
+        max_queue_size=2048,
+    )
 
     fpm = FilePathsManager(configs)
 
@@ -388,7 +436,6 @@ async def test_extract_metadata(test_directory):
     assert len(check_set) == 4
 
 
-
 import pytest
 from pathlib import Path
 from pydantic_models.file_paths_manager.file_path_and_metadata import FilePathAndMetadata
@@ -398,8 +445,15 @@ from pydantic_models.configs import Configs
 
 @pytest.fixture
 def file_paths_manager_fixture():
-    configs = Configs(batch_size=10, input_folder="input", output_folder="output", max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=10,
+        input_folder="input",
+        output_folder="output",
+        max_workers=4,
+        max_queue_size=2048,
+    )
     return FilePathsManager(configs), configs
+
 
 @pytest.fixture
 def test_proc_methods_files(tmp_path: Path):
@@ -407,7 +461,9 @@ def test_proc_methods_files(tmp_path: Path):
     valid_path1 = tmp_path / "valid1.txt"
     valid_path2 = tmp_path / "valid2.txt"
     invalid_path = tmp_path / "invalid.IDENTIFIER"  # unsupported extension
-    subfolder_valid_path1 = tmp_path / "subfolder" / "valid1.txt" # Same file, different subdirectories
+    subfolder_valid_path1 = (
+        tmp_path / "subfolder" / "valid1.txt"
+    )  # Same file, different subdirectories
 
     # Create the actual files
     valid_path1.write_text("test content")
@@ -440,7 +496,7 @@ def test_proc_methods_files(tmp_path: Path):
         "invalid": invalid_path,
         "subfolder_valid_path1": subfolder_valid_path1,
         "output_folder": output_folder,
-        "output_valid1": output_valid_path1
+        "output_valid1": output_valid_path1,
     }
 
 
@@ -451,7 +507,7 @@ async def test_requires_processing_new_file(file_paths_manager_fixture, test_pro
     configs: Configs = file_paths_manager_fixture[1]
 
     # Test case for a new file that hasn't been processed
-    file_path = FilePath(file_path=Path(test_proc_methods_files['valid1']))
+    file_path = FilePath(file_path=Path(test_proc_methods_files["valid1"]))
     input_path = FilePathAndMetadata(
         max_program_memory=configs.max_program_memory,
         file_path=file_path,
@@ -460,6 +516,7 @@ async def test_requires_processing_new_file(file_paths_manager_fixture, test_pro
     result = file_paths_manager.requires_processing(input_path)
     assert result == True
 
+
 # 4. Test Repeat File Prevention
 
 
@@ -467,7 +524,13 @@ async def test_requires_processing_new_file(file_paths_manager_fixture, test_pro
 async def test_requires_processing_existing_file(mock_input_output_directory):
 
     input_dir, output_dir = mock_input_output_directory
-    configs = Configs(batch_size=10, input_folder=input_dir, output_folder=output_dir, max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=10,
+        input_folder=input_dir,
+        output_folder=output_dir,
+        max_workers=4,
+        max_queue_size=2048,
+    )
 
     file_paths_manager = FilePathsManager(configs)
     already_processed_path = input_dir / "data" / "already_processed.csv"
@@ -494,6 +557,7 @@ async def test_requires_processing_invalid_input(file_paths_manager_fixture):
     result = file_paths_manager.requires_processing(None)
     assert result == False
 
+
 import pytest
 import anyio
 from pydantic_models.file_paths_manager.file_path_and_metadata import FilePathAndMetadata
@@ -507,7 +571,13 @@ async def test_make_batch_empty_queue(mock_input_output_directory):
     """
     input_dir, output_dir = mock_input_output_directory
 
-    configs = Configs(batch_size=10, input_folder=input_dir, output_folder=output_dir, max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=10,
+        input_folder=input_dir,
+        output_folder=output_dir,
+        max_workers=4,
+        max_queue_size=2048,
+    )
     file_manager = FilePathsManager(configs)
 
     await file_manager.make_batch()
@@ -522,7 +592,13 @@ async def test_make_batch_full_batch(test_files_all_valid):
     """
     Test make_batch when a full batch can be created.
     """
-    configs = Configs(batch_size=2, input_folder="input", output_folder="output", max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=2,
+        input_folder="input",
+        output_folder="output",
+        max_workers=4,
+        max_queue_size=2048,
+    )
     file_manager = FilePathsManager(configs)
 
     # Mock the required methods
@@ -534,10 +610,7 @@ async def test_make_batch_full_batch(test_files_all_valid):
     for path in test_files_all_valid:
         file_path = FilePath(file_path=path)
         await file_manager.processing_queue.put(
-            FilePathAndMetadata(
-                max_program_memory=configs.max_program_memory,
-                file_path=file_path
-            )
+            FilePathAndMetadata(max_program_memory=configs.max_program_memory, file_path=file_path)
         )
 
     await file_manager.make_batch()
@@ -547,12 +620,19 @@ async def test_make_batch_full_batch(test_files_all_valid):
     assert len(batches[0]) == 2
     assert len(batches[1]) == 1
 
+
 @pytest.mark.anyio
 async def test_make_batch_partial_batch(test_files_all_valid):
     """
     Test make_batch when only a partial batch can be created.
     """
-    configs = Configs(batch_size=3, input_folder="input", output_folder="output", max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=3,
+        input_folder="input",
+        output_folder="output",
+        max_workers=4,
+        max_queue_size=2048,
+    )
     file_manager = FilePathsManager(configs)
 
     # Mock the required methods
@@ -564,14 +644,11 @@ async def test_make_batch_partial_batch(test_files_all_valid):
     for path in test_files_all_valid:
         file_path = FilePath(file_path=path)
         await file_manager.processing_queue.put(
-            FilePathAndMetadata(
-                max_program_memory=configs.max_program_memory,
-                file_path=file_path
-            )
+            FilePathAndMetadata(max_program_memory=configs.max_program_memory, file_path=file_path)
         )
 
     # Remove 1 of the 3 files in test_files.
-    _  = await file_manager.processing_queue.get_nowait()
+    _ = await file_manager.processing_queue.get_nowait()
     await file_manager.make_batch()
 
     batches = [batch for batch in file_manager.output_queue.get_nowait()]
@@ -579,12 +656,19 @@ async def test_make_batch_partial_batch(test_files_all_valid):
     assert len(batches) == 1
     assert len(batches[0]) == 2
 
+
 @pytest.mark.anyio
 async def test_make_batch_skip_processing(test_files_all_valid):
     """
     Test make_batch when some items don't require processing.
     """
-    configs = Configs(batch_size=2, input_folder="input", output_folder="output", max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=2,
+        input_folder="input",
+        output_folder="output",
+        max_workers=4,
+        max_queue_size=2048,
+    )
     file_manager = FilePathsManager(configs)
 
     # Mock the required methods
@@ -596,10 +680,7 @@ async def test_make_batch_skip_processing(test_files_all_valid):
     for path in test_files_all_valid:
         file_path = FilePath(file_path=path)
         await file_manager.processing_queue.put(
-            FilePathAndMetadata(
-                max_program_memory=configs.max_program_memory,
-                file_path=file_path
-            )
+            FilePathAndMetadata(max_program_memory=configs.max_program_memory, file_path=file_path)
         )
 
     await file_manager.make_batch()
@@ -609,12 +690,19 @@ async def test_make_batch_skip_processing(test_files_all_valid):
     assert len(batches[0]) == 2
     assert all(item.file_path != "valid.txt" for item in batches[0])
 
+
 @pytest.mark.anyio
 async def test_make_batch_multiple_iterations():
     """
     Test make_batch with multiple iterations of the while loop.
     """
-    configs = Configs(batch_size=2, input_folder="input", output_folder="output", max_workers=4, max_queue_size=2048)
+    configs = Configs(
+        batch_size=2,
+        input_folder="input",
+        output_folder="output",
+        max_workers=4,
+        max_queue_size=2048,
+    )
     file_manager = FilePathsManager(configs)
 
     # Mock the required methods

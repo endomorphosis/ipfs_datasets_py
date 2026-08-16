@@ -116,10 +116,7 @@
 from ipfs_datasets_py.optimizers.agentic import AdversarialOptimizer, OptimizationTask
 
 optimizer = AdversarialOptimizer(num_candidates=5)
-task = OptimizationTask(
-    target_code="def slow_function(data): ...",
-    objective="Optimize for speed"
-)
+task = OptimizationTask(target_code="def slow_function(data): ...", objective="Optimize for speed")
 result = optimizer.optimize(task)
 print(f"Performance gain: {result.metrics['speedup']}x")
 ```

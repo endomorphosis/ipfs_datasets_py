@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class TaskStatus(Enum):
     """Status of a workflow task."""
+
     PENDING = "pending"
     READY = "ready"
     RUNNING = "running"
@@ -33,6 +34,7 @@ class TaskStatus(Enum):
 
 class WorkflowStatus(Enum):
     """Status of a workflow."""
+
     CREATED = "created"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -45,7 +47,7 @@ class WorkflowStatus(Enum):
 class Task:
     """
     Represents a single task in a workflow.
-    
+
     Attributes:
         task_id: Unique identifier for the task
         name: Human-readable task name
@@ -63,6 +65,7 @@ class Task:
         timeout: Task timeout in seconds
         metadata: Additional task metadata
     """
+
     task_id: str
     name: str
     function: Any  # Callable or string reference
@@ -78,17 +81,17 @@ class Task:
     max_retries: int = 0
     timeout: float = 300.0  # 5 minutes default
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def is_ready(self, completed_tasks: Set[str]) -> bool:
         """Check if all dependencies are satisfied."""
         if self.status != TaskStatus.PENDING:
             return False
         return all(dep in completed_tasks for dep in self.dependencies)
-    
+
     def can_retry(self) -> bool:
         """Check if task can be retried."""
         return self.status == TaskStatus.FAILED and self.retry_count < self.max_retries
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert task to dictionary."""
         return {
@@ -103,7 +106,7 @@ class Task:
             "retry_count": self.retry_count,
             "max_retries": self.max_retries,
             "timeout": self.timeout,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
@@ -111,7 +114,7 @@ class Task:
 class Workflow:
     """
     Represents a workflow (DAG of tasks).
-    
+
     Attributes:
         workflow_id: Unique identifier for the workflow
         name: Human-readable workflow name
@@ -123,6 +126,7 @@ class Workflow:
         end_time: When execution finished
         metadata: Additional workflow metadata
     """
+
     workflow_id: str
     name: str
     description: str = ""
@@ -132,19 +136,20 @@ class Workflow:
     start_time: Optional[float] = None
     end_time: Optional[float] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def add_task(self, task: Task) -> None:
         """Add a task to the workflow."""
         if task.task_id in self.tasks:
             raise ValueError(f"Task {task.task_id} already exists in workflow")
         self.tasks[task.task_id] = task
-    
+
     def validate_dag(self) -> None:
         """Validate that tasks form a valid DAG (no cycles)."""
+
         def has_cycle(task_id: str, visited: Set[str], rec_stack: Set[str]) -> bool:
             visited.add(task_id)
             rec_stack.add(task_id)
-            
+
             task = self.tasks.get(task_id)
             if task:
                 for dep in task.dependencies:
@@ -153,18 +158,18 @@ class Workflow:
                             return True
                     elif dep in rec_stack:
                         return True
-            
+
             rec_stack.remove(task_id)
             return False
-        
+
         visited: Set[str] = set()
         rec_stack: Set[str] = set()
-        
+
         for task_id in self.tasks:
             if task_id not in visited:
                 if has_cycle(task_id, visited, rec_stack):
                     raise ValueError(f"Workflow contains a cycle involving task {task_id}")
-    
+
     def get_ready_tasks(self, completed_tasks: Set[str]) -> List[Task]:
         """Get all tasks that are ready to execute."""
         ready = []
@@ -172,7 +177,7 @@ class Workflow:
             if task.is_ready(completed_tasks):
                 ready.append(task)
         return ready
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert workflow to dictionary."""
         return {
@@ -184,14 +189,14 @@ class Workflow:
             "created_time": self.created_time,
             "start_time": self.start_time,
             "end_time": self.end_time,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
 class WorkflowEngine:
     """
     Engine for executing workflows with DAG-based task coordination.
-    
+
     Features:
     - DAG validation (cycle detection)
     - Parallel task execution
@@ -200,11 +205,11 @@ class WorkflowEngine:
     - Timeout handling
     - Progress tracking
     """
-    
+
     def __init__(self, max_concurrent_tasks: int = 10):
         """
         Initialize workflow engine.
-        
+
         Args:
             max_concurrent_tasks: Maximum number of tasks to run in parallel
         """
@@ -213,50 +218,47 @@ class WorkflowEngine:
         self.task_functions: Dict[str, Callable] = {}
         self._running_tasks: Set[str] = set()
         self._semaphore = anyio.Semaphore(max_concurrent_tasks)
-    
+
     def register_function(self, name: str, func: Callable) -> None:
         """Register a task function."""
         self.task_functions[name] = func
-    
+
     def create_workflow(
         self,
         workflow_id: str,
         name: str,
         description: str = "",
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Workflow:
         """
         Create a new workflow.
-        
+
         Args:
             workflow_id: Unique workflow identifier
             name: Human-readable name
             description: Workflow description
             metadata: Additional metadata
-            
+
         Returns:
             Created Workflow object
         """
         if workflow_id in self.workflows:
             raise ValueError(f"Workflow {workflow_id} already exists")
-        
+
         workflow = Workflow(
-            workflow_id=workflow_id,
-            name=name,
-            description=description,
-            metadata=metadata or {}
+            workflow_id=workflow_id, name=name, description=description, metadata=metadata or {}
         )
         self.workflows[workflow_id] = workflow
         return workflow
-    
+
     def get_workflow(self, workflow_id: str) -> Optional[Workflow]:
         """Get a workflow by ID."""
         return self.workflows.get(workflow_id)
-    
+
     async def execute_task(self, workflow: Workflow, task: Task) -> None:
         """
         Execute a single task.
-        
+
         Args:
             workflow: The workflow containing the task
             task: The task to execute
@@ -265,7 +267,7 @@ class WorkflowEngine:
             task.status = TaskStatus.RUNNING
             task.start_time = time.time()
             self._running_tasks.add(task.task_id)
-            
+
             try:
                 # Get the function to execute
                 if isinstance(task.function, str):
@@ -274,7 +276,7 @@ class WorkflowEngine:
                         raise ValueError(f"Function {task.function} not registered")
                 else:
                     func = task.function
-                
+
                 # Execute with timeout
                 try:
                     with anyio.fail_after(task.timeout):
@@ -285,56 +287,56 @@ class WorkflowEngine:
                             task.result = await anyio.to_thread.run_sync(
                                 lambda: func(*task.args, **task.kwargs)
                             )
-                    
+
                     task.status = TaskStatus.COMPLETED
                     logger.info(f"Task {task.task_id} completed successfully")
-                    
+
                 except TimeoutError:
                     task.status = TaskStatus.FAILED
                     task.error = f"Task timed out after {task.timeout}s"
                     logger.error(f"Task {task.task_id} timed out")
-                    
+
             except Exception as e:
                 task.status = TaskStatus.FAILED
                 task.error = str(e)
                 logger.error(f"Task {task.task_id} failed: {e}")
-            
+
             finally:
                 task.end_time = time.time()
                 self._running_tasks.discard(task.task_id)
-    
+
     async def execute_workflow(self, workflow_id: str) -> Dict[str, Any]:
         """
         Execute a workflow.
-        
+
         Args:
             workflow_id: ID of workflow to execute
-            
+
         Returns:
             Dictionary with execution results
         """
         workflow = self.workflows.get(workflow_id)
         if not workflow:
             raise ValueError(f"Workflow {workflow_id} not found")
-        
+
         # Validate DAG
         workflow.validate_dag()
-        
+
         # Update workflow status
         workflow.status = WorkflowStatus.RUNNING
         workflow.start_time = time.time()
-        
+
         completed_tasks: Set[str] = set()
         failed_tasks: Set[str] = set()
         try:
             while True:
                 # Get ready tasks
                 ready_tasks = workflow.get_ready_tasks(completed_tasks)
-                
+
                 # Mark ready tasks
                 for task in ready_tasks:
                     task.status = TaskStatus.READY
-                
+
                 # Launch ready tasks via anyio task group
                 if ready_tasks:
                     async with anyio.create_task_group() as tg:
@@ -350,72 +352,73 @@ class WorkflowEngine:
                             if task.can_retry():
                                 task.retry_count += 1
                                 task.status = TaskStatus.PENDING
-                                logger.info(f"Retrying task {task_id} (attempt {task.retry_count + 1})")
+                                logger.info(
+                                    f"Retrying task {task_id} (attempt {task.retry_count + 1})"
+                                )
                             else:
                                 failed_tasks.add(task_id)
                 else:
                     # No running tasks and no ready tasks
                     break
-            
+
             # Check if all tasks completed
-            all_completed = all(
-                t.status == TaskStatus.COMPLETED 
-                for t in workflow.tasks.values()
-            )
-            
+            all_completed = all(t.status == TaskStatus.COMPLETED for t in workflow.tasks.values())
+
             if all_completed:
                 workflow.status = WorkflowStatus.COMPLETED
             elif failed_tasks:
                 workflow.status = WorkflowStatus.FAILED
             else:
                 workflow.status = WorkflowStatus.COMPLETED
-                
+
         except Exception as e:
             workflow.status = WorkflowStatus.FAILED
             logger.error(f"Workflow {workflow_id} execution failed: {e}")
-        
+
         finally:
             workflow.end_time = time.time()
-        
+
         return {
             "workflow_id": workflow_id,
             "status": workflow.status.value,
             "completed_tasks": len(completed_tasks),
             "failed_tasks": len(failed_tasks),
             "total_tasks": len(workflow.tasks),
-            "execution_time": workflow.end_time - workflow.start_time if workflow.end_time and workflow.start_time else 0
+            "execution_time": workflow.end_time - workflow.start_time
+            if workflow.end_time and workflow.start_time
+            else 0,
         }
-    
+
     async def cancel_workflow(self, workflow_id: str) -> bool:
         """
         Cancel a running workflow.
-        
+
         Args:
             workflow_id: ID of workflow to cancel
-            
+
         Returns:
             True if cancelled successfully
         """
         workflow = self.workflows.get(workflow_id)
         if not workflow or workflow.status != WorkflowStatus.RUNNING:
             return False
-        
+
         workflow.status = WorkflowStatus.CANCELLED
         workflow.end_time = time.time()
-        
+
         # Mark running tasks as cancelled
         for task in workflow.tasks.values():
             if task.status == TaskStatus.RUNNING:
                 task.status = TaskStatus.CANCELLED
-        
+
         return True
-    
+
     def get_workflow_status(self, workflow_id: str) -> Optional[Dict[str, Any]]:
         """Get status of a workflow."""
         workflow = self.workflows.get(workflow_id)
         if not workflow:
             return None
-        
+
         return workflow.to_dict()
 
 

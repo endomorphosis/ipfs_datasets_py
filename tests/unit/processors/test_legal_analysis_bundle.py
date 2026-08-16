@@ -2,10 +2,15 @@ from ipfs_datasets_py.processors.legal_data import NeurosymbolicMatcher, build_l
 
 
 def test_neurosymbolic_matcher_matches_supported_claim():
-    from ipfs_datasets_py.processors.legal_data import DependencyGraphBuilder, LegalRequirementsGraphBuilder
+    from ipfs_datasets_py.processors.legal_data import (
+        DependencyGraphBuilder,
+        LegalRequirementsGraphBuilder,
+    )
     from ipfs_datasets_py.processors.legal_data.case_knowledge import build_case_knowledge_graph
 
-    dependency_graph = DependencyGraphBuilder().build_for_claim("termination", claim_id="claim_1", claim_name="Termination")
+    dependency_graph = DependencyGraphBuilder().build_for_claim(
+        "termination", claim_id="claim_1", claim_name="Termination"
+    )
     dependency_graph = DependencyGraphBuilder().apply_element_statuses(
         dependency_graph,
         claim_type="termination",
@@ -25,7 +30,13 @@ def test_neurosymbolic_matcher_matches_supported_claim():
         ],
     )
     legal_graph = LegalRequirementsGraphBuilder().build_from_statutes(
-        [{"name": "Employment Statute", "description": "Covers termination", "text": "Termination requires damages."}],
+        [
+            {
+                "name": "Employment Statute",
+                "description": "Covers termination",
+                "text": "Termination requires damages.",
+            }
+        ],
         ["termination"],
     )
 
@@ -42,7 +53,11 @@ def test_build_legal_analysis_bundle_assembles_normalized_outputs():
         claim_label="Termination",
         source_text="Employer fired plaintiff after complaints.",
         canonical_facts=[
-            {"text": "Plaintiff was fired.", "fact_type": "impact", "element_tags": ["termination_event"]},
+            {
+                "text": "Plaintiff was fired.",
+                "fact_type": "impact",
+                "element_tags": ["termination_event"],
+            },
             {"text": "Manager made the decision.", "fact_type": "responsible_party"},
         ],
         document_text=(
@@ -76,7 +91,11 @@ def test_build_legal_analysis_bundle_assembles_normalized_outputs():
             }
         ],
         statutes=[
-            {"name": "Termination Act", "description": "Termination law", "text": "Termination requires damages."}
+            {
+                "name": "Termination Act",
+                "description": "Termination law",
+                "text": "Termination requires damages.",
+            }
         ],
     )
 

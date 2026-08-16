@@ -29,9 +29,12 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_delegation(cid="cid-leaf", resource="my_tool", ability="my_tool", expiry=None,
-                     proof_cid=None):
+
+def _make_delegation(
+    cid="cid-leaf", resource="my_tool", ability="my_tool", expiry=None, proof_cid=None
+):
     from ipfs_datasets_py.mcp_server.ucan_delegation import Capability, Delegation
+
     cap = Capability(resource=resource, ability=ability)
     return Delegation(
         cid=cid,
@@ -45,6 +48,7 @@ def _make_delegation(cid="cid-leaf", resource="my_tool", ability="my_tool", expi
 
 def _fresh_revocation_list():
     from ipfs_datasets_py.mcp_server.ucan_delegation import RevocationList
+
     return RevocationList()
 
 
@@ -61,6 +65,7 @@ def _make_stub_server_for_delegation():
             from ipfs_datasets_py.mcp_server.ucan_delegation import (  # noqa
                 get_delegation_manager,
             )
+
             mgr = get_delegation_manager(path or None)
             self_._server_delegation_manager = mgr
             if path:
@@ -81,6 +86,7 @@ def _make_stub_server_for_delegation():
 # ===========================================================================
 # Phase G — DelegationManager ↔ server integration
 # ===========================================================================
+
 
 class TestPhaseGDelegationManagerServerIntegration:
     """_initialize_delegation_manager + get_server_delegation_manager."""
@@ -147,12 +153,19 @@ class TestPhaseGDelegationManagerServerIntegration:
     def test_server_module_has_initialize_delegation_manager(self):
         """server.py defines _initialize_delegation_manager method."""
         import importlib
+
         mcp_stub = MagicMock()
         mcp_stub.server.FastMCP = None
         pydantic_stub = MagicMock()
-        with patch.dict(sys.modules, {"mcp": mcp_stub, "mcp.server": mcp_stub.server,
-                                       "mcp.types": mcp_stub.types,
-                                       "pydantic": pydantic_stub}):
+        with patch.dict(
+            sys.modules,
+            {
+                "mcp": mcp_stub,
+                "mcp.server": mcp_stub.server,
+                "mcp.types": mcp_stub.types,
+                "pydantic": pydantic_stub,
+            },
+        ):
             srv_mod = importlib.import_module("ipfs_datasets_py.mcp_server.server")
             importlib.reload(srv_mod)
         assert hasattr(srv_mod.IPFSDatasetsMCPServer, "_initialize_delegation_manager")
@@ -160,12 +173,19 @@ class TestPhaseGDelegationManagerServerIntegration:
     def test_server_module_has_get_server_delegation_manager(self):
         """server.py defines get_server_delegation_manager method."""
         import importlib
+
         mcp_stub = MagicMock()
         mcp_stub.server.FastMCP = None
         pydantic_stub = MagicMock()
-        with patch.dict(sys.modules, {"mcp": mcp_stub, "mcp.server": mcp_stub.server,
-                                       "mcp.types": mcp_stub.types,
-                                       "pydantic": pydantic_stub}):
+        with patch.dict(
+            sys.modules,
+            {
+                "mcp": mcp_stub,
+                "mcp.server": mcp_stub.server,
+                "mcp.types": mcp_stub.types,
+                "pydantic": pydantic_stub,
+            },
+        ):
             srv_mod = importlib.import_module("ipfs_datasets_py.mcp_server.server")
             importlib.reload(srv_mod)
         assert hasattr(srv_mod.IPFSDatasetsMCPServer, "get_server_delegation_manager")
@@ -173,12 +193,19 @@ class TestPhaseGDelegationManagerServerIntegration:
     def test_server_source_calls_save_on_delegation_manager(self):
         """The start_stdio source calls _server_delegation_manager.save()."""
         import importlib
+
         mcp_stub = MagicMock()
         mcp_stub.server.FastMCP = None
         pydantic_stub = MagicMock()
-        with patch.dict(sys.modules, {"mcp": mcp_stub, "mcp.server": mcp_stub.server,
-                                       "mcp.types": mcp_stub.types,
-                                       "pydantic": pydantic_stub}):
+        with patch.dict(
+            sys.modules,
+            {
+                "mcp": mcp_stub,
+                "mcp.server": mcp_stub.server,
+                "mcp.types": mcp_stub.types,
+                "pydantic": pydantic_stub,
+            },
+        ):
             srv_mod = importlib.import_module("ipfs_datasets_py.mcp_server.server")
             importlib.reload(srv_mod)
         source = inspect.getsource(srv_mod.IPFSDatasetsMCPServer.start_stdio)
@@ -189,6 +216,7 @@ class TestPhaseGDelegationManagerServerIntegration:
 # ===========================================================================
 # Phase H — Encrypted RevocationList persistence
 # ===========================================================================
+
 
 class TestPhaseHEncryptedRevocationList:
     """RevocationList.save_encrypted / load_encrypted."""
@@ -260,9 +288,12 @@ class TestPhaseHEncryptedRevocationList:
         rl.revoke("cid-fallback")
         path = str(tmp_path / "r.enc")
         # Patch AESGCM import path to simulate absence
-        with patch.dict(sys.modules, {
-            "cryptography.hazmat.primitives.ciphers.aead": None,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "cryptography.hazmat.primitives.ciphers.aead": None,
+            },
+        ):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 rl.save_encrypted(path, password="pw")
@@ -276,9 +307,12 @@ class TestPhaseHEncryptedRevocationList:
         path = str(tmp_path / "plain.json")
         Path(path).write_text(json.dumps({"revoked": ["cid-plain"]}))
         rl = _fresh_revocation_list()
-        with patch.dict(sys.modules, {
-            "cryptography.hazmat.primitives.ciphers.aead": None,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "cryptography.hazmat.primitives.ciphers.aead": None,
+            },
+        ):
             with warnings.catch_warnings(record=True):
                 warnings.simplefilter("always")
                 count = rl.load_encrypted(path, password="pw")
@@ -297,11 +331,13 @@ class TestPhaseHEncryptedRevocationList:
     def test_revocation_list_has_save_encrypted(self):
         """RevocationList exposes save_encrypted method."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import RevocationList
+
         assert callable(RevocationList.save_encrypted)
 
     def test_revocation_list_has_load_encrypted(self):
         """RevocationList exposes load_encrypted method."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import RevocationList
+
         assert callable(RevocationList.load_encrypted)
 
 
@@ -309,24 +345,28 @@ class TestPhaseHEncryptedRevocationList:
 # Phase I — Monitoring loop auto-record delegation metrics
 # ===========================================================================
 
+
 class TestPhaseIMonitoringLoopAutoRecord:
     """_monitoring_loop() calls record_delegation_metrics() every 30 s."""
 
     def test_monitoring_loop_source_contains_record_delegation_metrics(self):
         """The monitoring loop body references record_delegation_metrics."""
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
+
         source = inspect.getsource(mon_mod.EnhancedMetricsCollector._monitoring_loop)
         assert "record_delegation_metrics" in source
 
     def test_monitoring_loop_source_imports_ucan_delegation(self):
         """The monitoring loop imports from .ucan_delegation."""
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
+
         source = inspect.getsource(mon_mod.EnhancedMetricsCollector._monitoring_loop)
         assert "ucan_delegation" in source
 
     def test_monitoring_loop_source_has_exception_guard(self):
         """Delegation metrics block is guarded by a try/except."""
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
+
         source = inspect.getsource(mon_mod.EnhancedMetricsCollector._monitoring_loop)
         assert "except Exception" in source or "except" in source
 
@@ -337,6 +377,7 @@ class TestPhaseIMonitoringLoopAutoRecord:
             record_delegation_metrics,
         )
         from ipfs_datasets_py.mcp_server.monitoring import EnhancedMetricsCollector
+
         mgr = DelegationManager()
         mgr.revoke("cid-r1")
         collector = EnhancedMetricsCollector(enabled=True)
@@ -350,15 +391,18 @@ class TestPhaseIMonitoringLoopAutoRecord:
             DelegationManager,
             record_delegation_metrics,
         )
+
         class BrokenCollector:
             def set_gauge(self, name, value):
                 raise RuntimeError("broken")
+
         mgr = DelegationManager()
         record_delegation_metrics(mgr, BrokenCollector())  # must not raise
 
     def test_monitoring_loop_import_is_lazy(self):
         """The ucan_delegation import inside _monitoring_loop uses noqa: PLC0415 pattern."""
         import ipfs_datasets_py.mcp_server.monitoring as mon_mod
+
         source = inspect.getsource(mon_mod.EnhancedMetricsCollector._monitoring_loop)
         # It should do a local import (inside the loop or inside try)
         assert "import" in source
@@ -369,18 +413,26 @@ class TestPhaseIMonitoringLoopAutoRecord:
 # Phase J — compliance_register_interface on server startup
 # ===========================================================================
 
+
 class TestPhaseJComplianceInterfaceOnStartup:
     """register_tools() source contains compliance_register_interface."""
 
     def test_compliance_tools_in_register_tools_source(self):
         """register_tools source references compliance_register_interface."""
         import importlib
+
         mcp_stub = MagicMock()
         mcp_stub.server.FastMCP = None
         pydantic_stub = MagicMock()
-        with patch.dict(sys.modules, {"mcp": mcp_stub, "mcp.server": mcp_stub.server,
-                                       "mcp.types": mcp_stub.types,
-                                       "pydantic": pydantic_stub}):
+        with patch.dict(
+            sys.modules,
+            {
+                "mcp": mcp_stub,
+                "mcp.server": mcp_stub.server,
+                "mcp.types": mcp_stub.types,
+                "pydantic": pydantic_stub,
+            },
+        ):
             srv_mod = importlib.import_module("ipfs_datasets_py.mcp_server.server")
             importlib.reload(srv_mod)
         source = inspect.getsource(srv_mod.IPFSDatasetsMCPServer.register_tools)
@@ -389,12 +441,19 @@ class TestPhaseJComplianceInterfaceOnStartup:
     def test_compliance_add_rule_in_register_tools_source(self):
         """register_tools source includes compliance_add_rule."""
         import importlib
+
         mcp_stub = MagicMock()
         mcp_stub.server.FastMCP = None
         pydantic_stub = MagicMock()
-        with patch.dict(sys.modules, {"mcp": mcp_stub, "mcp.server": mcp_stub.server,
-                                       "mcp.types": mcp_stub.types,
-                                       "pydantic": pydantic_stub}):
+        with patch.dict(
+            sys.modules,
+            {
+                "mcp": mcp_stub,
+                "mcp.server": mcp_stub.server,
+                "mcp.types": mcp_stub.types,
+                "pydantic": pydantic_stub,
+            },
+        ):
             srv_mod = importlib.import_module("ipfs_datasets_py.mcp_server.server")
             importlib.reload(srv_mod)
         source = inspect.getsource(srv_mod.IPFSDatasetsMCPServer.register_tools)
@@ -403,12 +462,19 @@ class TestPhaseJComplianceInterfaceOnStartup:
     def test_compliance_register_interface_awaited_in_source(self):
         """register_tools source awaits compliance_register_interface()."""
         import importlib
+
         mcp_stub = MagicMock()
         mcp_stub.server.FastMCP = None
         pydantic_stub = MagicMock()
-        with patch.dict(sys.modules, {"mcp": mcp_stub, "mcp.server": mcp_stub.server,
-                                       "mcp.types": mcp_stub.types,
-                                       "pydantic": pydantic_stub}):
+        with patch.dict(
+            sys.modules,
+            {
+                "mcp": mcp_stub,
+                "mcp.server": mcp_stub.server,
+                "mcp.types": mcp_stub.types,
+                "pydantic": pydantic_stub,
+            },
+        ):
             srv_mod = importlib.import_module("ipfs_datasets_py.mcp_server.server")
             importlib.reload(srv_mod)
         source = inspect.getsource(srv_mod.IPFSDatasetsMCPServer.register_tools)
@@ -420,6 +486,7 @@ class TestPhaseJComplianceInterfaceOnStartup:
             compliance_register_interface,
         )
         import inspect
+
         assert inspect.iscoroutinefunction(compliance_register_interface)
 
     def test_compliance_register_interface_returns_registered_status(self):
@@ -428,11 +495,13 @@ class TestPhaseJComplianceInterfaceOnStartup:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.compliance_rule_management_tool import (
             compliance_register_interface,
         )
+
         async def run():
             result = await compliance_register_interface()
             assert result["status"] == "registered"
             assert "interface_cid" in result
             assert "rule_count" in result
+
         anyio.run(run)
 
     def test_compliance_register_interface_idempotent(self):
@@ -441,10 +510,12 @@ class TestPhaseJComplianceInterfaceOnStartup:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.compliance_rule_management_tool import (
             compliance_register_interface,
         )
+
         async def run():
             r1 = await compliance_register_interface()
             r2 = await compliance_register_interface()
             assert r1["interface_cid"] == r2["interface_cid"]
+
         anyio.run(run)
 
     def test_compliance_register_interface_in_interface_list(self):
@@ -456,11 +527,13 @@ class TestPhaseJComplianceInterfaceOnStartup:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.policy_management_tool import (
             interface_list,
         )
+
         async def run():
             reg = await compliance_register_interface()
             cid = reg["interface_cid"]
             result = interface_list()
             assert cid in result["interface_cids"]
+
         anyio.run(run)
 
 
@@ -468,14 +541,18 @@ class TestPhaseJComplianceInterfaceOnStartup:
 # Phase K — E2E smoke test
 # ===========================================================================
 
+
 class TestPhaseKE2ESmoke:
     """End-to-end: startup → delegate → revoke → metric → shutdown."""
 
     def test_delegation_manager_full_lifecycle(self, tmp_path):
         """Add delegation → revoke → check → save → reload → still loaded."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Capability, Delegation,
+            DelegationManager,
+            Capability,
+            Delegation,
         )
+
         path = str(tmp_path / "delegations.json")
         mgr = DelegationManager(path)
 
@@ -506,6 +583,7 @@ class TestPhaseKE2ESmoke:
     def test_delegation_manager_metrics(self):
         """DelegationManager.get_metrics() reflects add/revoke operations."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         m0 = mgr.get_metrics()
         assert m0["delegation_count"] == 0
@@ -519,7 +597,8 @@ class TestPhaseKE2ESmoke:
     def test_record_delegation_metrics_full_lifecycle(self):
         """record_delegation_metrics() writes correct gauge values."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, record_delegation_metrics,
+            DelegationManager,
+            record_delegation_metrics,
         )
         from ipfs_datasets_py.mcp_server.monitoring import EnhancedMetricsCollector
 
@@ -536,6 +615,7 @@ class TestPhaseKE2ESmoke:
         """save_encrypted → load_encrypted → is_revoked full round-trip."""
         pytest.importorskip("cryptography")
         from ipfs_datasets_py.mcp_server.ucan_delegation import RevocationList
+
         rl = RevocationList()
         rl.revoke("e2e-enc-1")
         rl.revoke("e2e-enc-2")
@@ -556,11 +636,13 @@ class TestPhaseKE2ESmoke:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.policy_management_tool import (
             interface_list,
         )
+
         async def run():
             reg = await compliance_register_interface()
             cid = reg["interface_cid"]
             result = interface_list()
             assert cid in result["interface_cids"]
+
         anyio.run(run)
 
     def test_delegation_and_policy_stores_independent(self, tmp_path, monkeypatch):
@@ -576,12 +658,19 @@ class TestPhaseKE2ESmoke:
     def test_server_start_source_saves_delegation_manager(self):
         """Both start_stdio and start finally blocks call mgr.save()."""
         import importlib
+
         mcp_stub = MagicMock()
         mcp_stub.server.FastMCP = None
         pydantic_stub = MagicMock()
-        with patch.dict(sys.modules, {"mcp": mcp_stub, "mcp.server": mcp_stub.server,
-                                       "mcp.types": mcp_stub.types,
-                                       "pydantic": pydantic_stub}):
+        with patch.dict(
+            sys.modules,
+            {
+                "mcp": mcp_stub,
+                "mcp.server": mcp_stub.server,
+                "mcp.types": mcp_stub.types,
+                "pydantic": pydantic_stub,
+            },
+        ):
             srv_mod = importlib.import_module("ipfs_datasets_py.mcp_server.server")
             importlib.reload(srv_mod)
         start_stdio_src = inspect.getsource(srv_mod.IPFSDatasetsMCPServer.start_stdio)

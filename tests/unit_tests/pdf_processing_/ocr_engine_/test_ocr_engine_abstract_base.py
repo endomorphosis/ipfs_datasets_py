@@ -25,7 +25,7 @@ from ipfs_datasets_py.pdf_processing.ocr_engine import (
     SuryaOCR,
     TesseractOCR,
     TrOCREngine,
-    MultiEngineOCR
+    MultiEngineOCR,
 )
 
 from .concrete_ocr_engine import ConcreteOCREngine
@@ -36,7 +36,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 from tests.unit_tests.pdf_processing_.ocr_engine_ import REPO_ROOT
@@ -45,8 +45,12 @@ file_path = str(REPO_ROOT / "ipfs_datasets_py" / "pdf_processing" / "ocr_engine.
 md_path = str(REPO_ROOT / "ipfs_datasets_py" / "pdf_processing" / "ocr_engine_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.ocr_engine import (
     EasyOCR,
@@ -54,7 +58,7 @@ from ipfs_datasets_py.pdf_processing.ocr_engine import (
     OCREngine,
     SuryaOCR,
     TesseractOCR,
-    TrOCREngine
+    TrOCREngine,
 )
 
 # Check if each classes methods are accessible:
@@ -88,9 +92,6 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
-
-
 class TestOCREngineAbstractBase:
     """Test suite for OCREngine abstract base class."""
 
@@ -112,10 +113,10 @@ class TestOCREngineAbstractBase:
         """
         # Should inherit from ABC
         assert issubclass(OCREngine, ABC)
-        
+
         # Should have abstract methods
         abstract_methods = OCREngine.__abstractmethods__
-        expected_abstract = {'_initialize', 'extract_text'}
+        expected_abstract = {"_initialize", "extract_text"}
         assert expected_abstract.issubset(abstract_methods)
 
     def test_ocr_engine_init_sets_name_and_available(self):
@@ -127,17 +128,17 @@ class TestOCREngineAbstractBase:
         AND should call _initialize() method
         """
         engine = ConcreteOCREngine("test_engine")
-        
+
         assert engine.name == "test_engine"
         assert engine.available == True  # Set to True by our test _initialize
-        
+
     def test_ocr_engine_init_calls_initialize(self):
         """
         GIVEN a concrete OCREngine subclass
         WHEN initializing
         THEN should call _initialize() method during construction
         """
-        with patch.object(ConcreteOCREngine, '_initialize') as mock_init:
+        with patch.object(ConcreteOCREngine, "_initialize") as mock_init:
             ConcreteOCREngine("test")
             mock_init.assert_called_once()
 
@@ -149,7 +150,7 @@ class TestOCREngineAbstractBase:
         """
         engine = ConcreteOCREngine("")
         assert engine.name == ""
-        assert hasattr(engine, 'available')
+        assert hasattr(engine, "available")
 
     def test_ocr_engine_init_with_none_name(self):
         """
@@ -170,8 +171,8 @@ class TestOCREngineAbstractBase:
         engine = ConcreteOCREngine("test", should_fail_init=True)
         # The engine should handle the failure and set available appropriately
         # This depends on implementation - it might stay False or be set to False
-        assert hasattr(engine, 'available')
-        assert hasattr(engine, 'name')
+        assert hasattr(engine, "available")
+        assert hasattr(engine, "name")
         assert engine.name == "test"
 
     def test_is_available_returns_boolean(self):
@@ -186,7 +187,7 @@ class TestOCREngineAbstractBase:
         result = engine.is_available()
         assert isinstance(result, bool)
         assert result == engine.available
-        
+
         # Test with unavailable engine
         engine_fail = ConcreteOCREngine("test_fail", should_fail_init=True)
         result_fail = engine_fail.is_available()
@@ -201,7 +202,7 @@ class TestOCREngineAbstractBase:
         engine = ConcreteOCREngine("test")
         results = []
         exceptions = []
-        
+
         def check_availability():
             try:
                 for _ in range(100):
@@ -210,22 +211,24 @@ class TestOCREngineAbstractBase:
                     time.sleep(0.001)  # Small delay to encourage race conditions
             except Exception as e:
                 exceptions.append(e)
-        
+
         threads = [threading.Thread(target=check_availability) for _ in range(5)]
-        
+
         for thread in threads:
             thread.start()
-        
+
         for thread in threads:
             thread.join()
-        
+
         # Should have no exceptions
         assert len(exceptions) == 0, f"Thread safety test failed with exceptions: {exceptions}"
-        
+
         # All results should be consistent (same boolean value)
         assert len(results) > 0
         first_result = results[0]
-        assert all(r == first_result for r in results), "is_available() returned inconsistent results across threads"
+        assert all(r == first_result for r in results), (
+            "is_available() returned inconsistent results across threads"
+        )
 
     def test_abstract_methods_must_be_implemented(self):
         """
@@ -233,19 +236,22 @@ class TestOCREngineAbstractBase:
         WHEN the class doesn't implement abstract methods
         THEN should not be instantiable
         """
+
         class IncompleteEngine(OCREngine):
             def _initialize(self):
                 pass
+
             # Missing extract_text implementation
-        
+
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
             IncompleteEngine("incomplete")
-        
+
         class AnotherIncompleteEngine(OCREngine):
             def extract_text(self, image_data: bytes):
                 return {}
+
             # Missing _initialize implementation
-        
+
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
             AnotherIncompleteEngine("incomplete2")
 
@@ -256,17 +262,17 @@ class TestOCREngineAbstractBase:
         THEN should work correctly
         """
         engine = ConcreteOCREngine("working_engine")
-        
+
         # Should be available after successful initialization
         assert engine.is_available()
-        
+
         # Should be able to extract text
         result = engine.extract_text(b"fake_image_data")
         assert isinstance(result, dict)
-        assert 'text' in result
-        assert 'confidence' in result
-        assert 'engine' in result
-        assert result['engine'] == 'working_engine'
+        assert "text" in result
+        assert "confidence" in result
+        assert "engine" in result
+        assert result["engine"] == "working_engine"
 
     def test_engine_name_attribute_immutable_after_init(self):
         """
@@ -277,10 +283,10 @@ class TestOCREngineAbstractBase:
         """
         engine = ConcreteOCREngine("test_name")
         original_name = engine.name
-        
+
         # Name should be what we set
         assert engine.name == "test_name"
-        
+
         # Try to modify (this tests that the name stays consistent)
         # We're not testing immutability enforcement, just consistency
         assert engine.name == original_name
@@ -294,13 +300,12 @@ class TestOCREngineAbstractBase:
         # Successful initialization
         engine_success = ConcreteOCREngine("success")
         assert engine_success.available == True
-        
+
         # Failed initialization
         engine_fail = ConcreteOCREngine("fail", should_fail_init=True)
         # The available state should be False when initialization fails
         assert engine_fail.available == False
         assert isinstance(engine_fail.available, bool)
-
 
 
 if __name__ == "__main__":

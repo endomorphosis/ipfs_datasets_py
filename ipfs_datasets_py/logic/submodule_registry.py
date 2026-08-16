@@ -545,7 +545,11 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         module="ipfs_datasets_py.logic.integrations",
         description="GraphRAG, UnixFS, and phase integration adapters outside the core theorem bridge tree.",
         roles=("bridge", "graphrag", "storage", "unixfs"),
-        optimizer_components=("integrations.graphrag", "integrations.unixfs", "integrations.phase7"),
+        optimizer_components=(
+            "integrations.graphrag",
+            "integrations.unixfs",
+            "integrations.phase7",
+        ),
         target_files=("ipfs_datasets_py/logic/integrations/__init__.py",),
         ast_scope="integrations",
     ),
@@ -569,7 +573,11 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         module="ipfs_datasets_py.logic.security",
         description="Input validation, rate limiting, audit logging, and LLM circuit breaker controls.",
         roles=("security", "validation", "rate_limit", "audit", "llm_guard"),
-        optimizer_components=("security.input_validation", "security.rate_limiting", "security.llm_circuit_breaker"),
+        optimizer_components=(
+            "security.input_validation",
+            "security.rate_limiting",
+            "security.llm_circuit_breaker",
+        ),
         target_files=(
             "ipfs_datasets_py/logic/security/input_validation.py",
             "ipfs_datasets_py/logic/security/rate_limiting.py",
@@ -631,7 +639,10 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         description="Logic conversion/prover benchmarking helpers.",
         roles=("benchmark", "quality_signal"),
         optimizer_components=("benchmarks",),
-        target_files=("ipfs_datasets_py/logic/benchmarks.py", "ipfs_datasets_py/logic/phase7_4_benchmarks.py"),
+        target_files=(
+            "ipfs_datasets_py/logic/benchmarks.py",
+            "ipfs_datasets_py/logic/phase7_4_benchmarks.py",
+        ),
         ast_scope="benchmark",
         required=False,
     ),
@@ -699,11 +710,7 @@ def logic_submodule_specs() -> tuple[LogicSubmoduleSpec, ...]:
 def logic_submodule_names(*, required_only: bool = False) -> tuple[str, ...]:
     """Return all registered submodule names."""
 
-    return tuple(
-        spec.name
-        for spec in _SPECS
-        if not required_only or spec.required
-    )
+    return tuple(spec.name for spec in _SPECS if not required_only or spec.required)
 
 
 def logic_submodule_spec(name: str) -> LogicSubmoduleSpec:
@@ -727,8 +734,7 @@ def logic_integration_manifest() -> dict[str, Any]:
         "required_submodules": list(logic_submodule_names(required_only=True)),
         "roles": {role: sorted(names) for role, names in sorted(roles.items())},
         "optimizer_target_file_hints": {
-            key: list(value)
-            for key, value in sorted(logic_optimizer_target_file_hints().items())
+            key: list(value) for key, value in sorted(logic_optimizer_target_file_hints().items())
         },
     }
 

@@ -309,10 +309,7 @@ def test_no_retrieved_deny_is_not_proved_non_conflict() -> None:
     decision = policy.evaluate(bundle, results)
     assert decision.status is InternalDecisionStatus.INDETERMINATE
     assert decision.wire_status is AdmissibilityStatus.ABSTAIN
-    assert any(
-        "no_retrieved_deny_is_not_non_conflict" in item
-        for item in decision.diagnostics
-    )
+    assert any("no_retrieved_deny_is_not_non_conflict" in item for item in decision.diagnostics)
 
 
 def test_closed_policy_rejects_accept_no_retrieved_deny_flag() -> None:
@@ -366,9 +363,7 @@ def test_deny_overrides_is_order_independent() -> None:
     # Inject a deny for non-conflict.
     non_conflict = bundle.jobs_of_kind(ProofJobKind.NON_CONFLICT)[0]
     deny = _result(non_conflict, JobVerdict.DISPROVED, reason="prohibition")
-    mixed = [
-        deny if item.job_id == non_conflict.job_id else item for item in base
-    ]
+    mixed = [deny if item.job_id == non_conflict.job_id else item for item in base]
     reversed_mixed = list(reversed(mixed))
     shuffled = mixed[::2] + mixed[1::2]
     digests = {
@@ -444,9 +439,7 @@ def test_non_allow_paths_map_to_abstain_or_indeterminate(
         ("simulation", JobVerdict.SIMULATION),
     ],
 )
-def test_non_theorem_authority_paths_cannot_allow(
-    authority_path: str, verdict: JobVerdict
-) -> None:
+def test_non_theorem_authority_paths_cannot_allow(authority_path: str, verdict: JobVerdict) -> None:
     assert authority_path in NON_ALLOWING_AUTHORITY_PATHS or authority_path in {
         "sat_only",
         "model",
@@ -461,9 +454,7 @@ def test_non_theorem_authority_paths_cannot_allow(
     for job in bundle.jobs:
         if job.kind is ProofJobKind.POSITIVE_GRANT:
             # Claim "proved" under a non-theorem authority path — must not allow.
-            results.append(
-                _result(job, verdict, authority=authority_path)
-            )
+            results.append(_result(job, verdict, authority=authority_path))
         else:
             results.append(_proved(job))
     decision = policy.evaluate(bundle, results)
@@ -475,10 +466,7 @@ def test_map_internal_to_wire_contract() -> None:
     assert map_internal_to_wire(InternalDecisionStatus.ALLOW) is AdmissibilityStatus.ALLOW
     assert map_internal_to_wire(InternalDecisionStatus.DENY) is AdmissibilityStatus.REJECT
     assert map_internal_to_wire(InternalDecisionStatus.REVIEW) is AdmissibilityStatus.ABSTAIN
-    assert (
-        map_internal_to_wire(InternalDecisionStatus.INDETERMINATE)
-        is AdmissibilityStatus.ABSTAIN
-    )
+    assert map_internal_to_wire(InternalDecisionStatus.INDETERMINATE) is AdmissibilityStatus.ABSTAIN
     assert map_internal_to_wire(InternalDecisionStatus.ERROR) is AdmissibilityStatus.ABSTAIN
 
 
@@ -527,9 +515,7 @@ def test_probe_backends_order_independent() -> None:
     which = lambda name: f"/opt/{name}"
     left = probe_backends(("cvc5", "z3"), which=which)
     right = probe_backends(("z3", "cvc5"), which=which)
-    assert [item.backend_id for item in left] == [
-        item.backend_id for item in right
-    ]
+    assert [item.backend_id for item in left] == [item.backend_id for item in right]
     assert [item.digest for item in left] == [item.digest for item in right]
 
 
@@ -580,9 +566,7 @@ def test_select_job_result_solver_disagreement_fail_closed() -> None:
         _attempt(job, "z3", JobVerdict.PROVED),
         _attempt(job, "cvc5", JobVerdict.UNKNOWN),
     ]
-    result = select_job_result(
-        attempts, job, required_backends=("z3", "cvc5")
-    )
+    result = select_job_result(attempts, job, required_backends=("z3", "cvc5"))
     assert result.verdict is JobVerdict.CONTRADICTORY
     assert result.verdict is not JobVerdict.PROVED
 
@@ -775,17 +759,13 @@ def test_portfolio_run_without_solver_cannot_allow() -> None:
     assert run.decision is not None
     assert run.decision.status is not InternalDecisionStatus.ALLOW
     assert run.decision.wire_status is AdmissibilityStatus.ABSTAIN
-    assert all(
-        item.verdict is JobVerdict.UNAVAILABLE for item in run.job_results
-    )
+    assert all(item.verdict is JobVerdict.UNAVAILABLE for item in run.job_results)
 
 
 def test_portfolio_with_injected_solver_unavailable_backend() -> None:
     bundle = _compose()
 
-    def solver(
-        job: ProofJob, backend_id: str, probe: BackendProbeResult
-    ) -> PortfolioAttemptRecord:
+    def solver(job: ProofJob, backend_id: str, probe: BackendProbeResult) -> PortfolioAttemptRecord:
         return _attempt(job, backend_id, JobVerdict.PROVED)
 
     portfolio = AuthorizationPortfolio(backend_ids=("missing-solver",))
@@ -796,9 +776,7 @@ def test_portfolio_with_injected_solver_unavailable_backend() -> None:
     )
     assert run.decision is not None
     assert run.decision.wire_status is not AdmissibilityStatus.ALLOW
-    assert all(
-        attempt.status is AttemptStatus.UNAVAILABLE for attempt in run.attempts
-    )
+    assert all(attempt.status is AttemptStatus.UNAVAILABLE for attempt in run.attempts)
 
 
 def test_evaluate_authorization_decision_helper() -> None:

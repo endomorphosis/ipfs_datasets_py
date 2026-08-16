@@ -81,19 +81,20 @@ rules to maintain modularity, testability, and scalability.
 from ipfs_datasets_py.processors.core.protocol import ProcessorProtocol
 from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor
 
+
 class PDFAdapter(ProcessorProtocol):
     """Adapts PDFProcessor to ProcessorProtocol."""
-    
+
     def __init__(self):
         self.pdf_processor = PDFProcessor()
-    
+
     async def process(self, input_data):
         # Transform input/output to match protocol
         result = await self.pdf_processor.process_pdf(input_data)
         return self._to_processing_result(result)
-    
+
     def can_handle(self, input_data):
-        return input_data.endswith('.pdf')
+        return input_data.endswith(".pdf")
 ```
 
 ---
@@ -121,18 +122,19 @@ class PDFAdapter(ProcessorProtocol):
 from ipfs_datasets_py.processors.core.protocol import ProcessorProtocol
 from ipfs_datasets_py.processors.infrastructure import monitoring
 
+
 @monitoring.monitor_performance
 class PDFProcessor(ProcessorProtocol):
     """Specialized PDF processor."""
-    
+
     async def process(self, pdf_path):
         # Domain-specific logic
         text = await self.extract_text(pdf_path)
         entities = await self.extract_entities(text)
         return ProcessingResult(text=text, entities=entities)
-    
+
     def can_handle(self, input_data):
-        return input_data.endswith('.pdf')
+        return input_data.endswith(".pdf")
 ```
 
 ---
@@ -159,13 +161,14 @@ from ipfs_datasets_py.processors.core.protocol import ProcessorProtocol
 from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor
 from ipfs_datasets_py.processors.specialized.graphrag import GraphRAGProcessor
 
+
 class PatentProcessor(ProcessorProtocol):
     """Domain-specific processor for patents."""
-    
+
     def __init__(self):
         self.pdf_processor = PDFProcessor()
         self.graphrag_processor = GraphRAGProcessor()
-    
+
     async def process(self, patent_pdf):
         # Domain workflow
         text = await self.pdf_processor.process(patent_pdf)
@@ -226,11 +229,12 @@ All processors should implement `ProcessorProtocol`:
 ```python
 from ipfs_datasets_py.processors.core.protocol import ProcessorProtocol
 
+
 class MyProcessor(ProcessorProtocol):
     async def process(self, input_data):
         """Process input and return ProcessingResult."""
         pass
-    
+
     def can_handle(self, input_data):
         """Check if processor can handle this input."""
         pass
@@ -267,6 +271,7 @@ Use infrastructure monitoring:
 
 ```python
 from ipfs_datasets_py.processors.infrastructure.monitoring import monitor_performance
+
 
 @monitor_performance
 async def expensive_operation():
@@ -356,12 +361,14 @@ def test_core_no_internal_dependencies():
 **Old (deprecated):**
 ```python
 from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
+
 processor = PDFProcessor()
 ```
 
 **New (recommended):**
 ```python
 from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor
+
 processor = PDFProcessor()
 ```
 
@@ -419,30 +426,35 @@ result = await processor.process("document.pdf")  # Auto-routes to correct proce
 
 from ipfs_datasets_py.processors.core.protocol import ProcessorProtocol
 
+
 class MyFormatProcessor(ProcessorProtocol):
     async def process(self, input_data):
         # Implementation
         return ProcessingResult(...)
-    
+
     def can_handle(self, input_data):
-        return input_data.endswith('.myformat')
+        return input_data.endswith(".myformat")
+
 
 # 2. Create adapter
 # ipfs_datasets_py/processors/adapters/my_format_adapter.py
 
+
 class MyFormatAdapter(ProcessorProtocol):
     def __init__(self):
         self.processor = MyFormatProcessor()
-    
+
     async def process(self, input_data):
         return await self.processor.process(input_data)
-    
+
     def can_handle(self, input_data):
         return self.processor.can_handle(input_data)
+
 
 # 3. Register (in universal_processor.py _initialize_processors)
 try:
     from .adapters.my_format_adapter import MyFormatAdapter
+
     self.registry.register(MyFormatAdapter(), priority=10)
 except ImportError:
     pass

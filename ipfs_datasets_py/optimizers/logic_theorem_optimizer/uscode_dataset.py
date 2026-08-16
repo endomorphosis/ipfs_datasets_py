@@ -128,7 +128,9 @@ def load_uscode_embeddings_from_parquet(
     wanted = {str(cid) for cid in cids} if cids is not None else None
     embeddings: Dict[str, List[float]] = {}
     rows_seen = 0
-    for row in _iter_parquet_rows(embeddings_parquet, columns=_EMBEDDING_COLUMNS, batch_size=batch_size):
+    for row in _iter_parquet_rows(
+        embeddings_parquet, columns=_EMBEDDING_COLUMNS, batch_size=batch_size
+    ):
         rows_seen += 1
         cid = _clean(row.get("cid"))
         if not cid or cid in embeddings:
@@ -174,9 +176,7 @@ def load_uscode_samples_from_parquet(
         record.to_sample(
             embedding_vector=embeddings.get(record.ipfs_cid),
             embedding_model=(
-                f"uscode:{USCODE_EMBEDDINGS_PARQUET}"
-                if record.ipfs_cid in embeddings
-                else None
+                f"uscode:{USCODE_EMBEDDINGS_PARQUET}" if record.ipfs_cid in embeddings else None
             ),
         )
         for record in records
@@ -216,9 +216,7 @@ def load_hf_uscode_samples(
         record.to_sample(
             embedding_vector=embeddings.get(record.ipfs_cid),
             embedding_model=(
-                f"hf:{repo_id}:{embeddings_path}"
-                if record.ipfs_cid in embeddings
-                else None
+                f"hf:{repo_id}:{embeddings_path}" if record.ipfs_cid in embeddings else None
             ),
         )
         for record in records

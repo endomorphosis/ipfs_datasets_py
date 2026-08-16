@@ -17,8 +17,8 @@ class SecurityClaim(ABC):
     claim_id: str
     description: str
     required_assumptions: list[str] = field(default_factory=list)
-    severity: str = 'medium'
-    claim_version: str = '1.0'
+    severity: str = "medium"
+    claim_version: str = "1.0"
 
     @abstractmethod
     def compile_to_z3(self, model: SecurityModelIR) -> Z3Compilation:
@@ -27,14 +27,14 @@ class SecurityClaim(ABC):
     @staticmethod
     def policy_enabled(model: SecurityModelIR, name: str) -> bool:
         for policy in model.policies:
-            if policy.get('name') == name:
-                return bool(policy.get('enabled', False))
+            if policy.get("name") == name:
+                return bool(policy.get("enabled", False))
         return False
 
     @staticmethod
     def policy_record(model: SecurityModelIR, name: str) -> Mapping[str, Any] | None:
         for policy in model.policies:
-            if policy.get('name') == name:
+            if policy.get("name") == name:
                 return policy
         return None
 
@@ -48,7 +48,7 @@ class SecurityClaim(ABC):
 
     @staticmethod
     def find_events(model: SecurityModelIR, event_name: str) -> list[Mapping[str, Any]]:
-        return [event for event in model.events if event.get('event') == event_name]
+        return [event for event in model.events if event.get("event") == event_name]
 
     @staticmethod
     def evidence_refs(*records: Mapping[str, Any] | None) -> list[dict[str, Any]]:
@@ -57,7 +57,9 @@ class SecurityClaim(ABC):
     @staticmethod
     def heuristic_soundness_note(evidence_refs: list[dict[str, Any]]) -> list[str]:
         if not evidence_refs:
-            return ['No explicit evidence references were attached to the modeled facts.']
-        if all(reference.get('review_status') == 'heuristic' for reference in evidence_refs):
-            return ['All supporting facts are heuristic extractions and require review before blocking security use.']
+            return ["No explicit evidence references were attached to the modeled facts."]
+        if all(reference.get("review_status") == "heuristic" for reference in evidence_refs):
+            return [
+                "All supporting facts are heuristic extractions and require review before blocking security use."
+            ]
         return []

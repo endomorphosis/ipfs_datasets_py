@@ -6,6 +6,7 @@ modal.py NecessityDistribution/PossibilityDuality/NecessityConjunction apply() p
 (modal.py 64%→99%), resolution.py edge cases (84%→96%), and specialized.py
 ConstructiveDilemma/DestructiveDilemma apply() (79%→97%).
 """
+
 from __future__ import annotations
 
 from typing import Any, List
@@ -60,6 +61,7 @@ from ipfs_datasets_py.logic.CEC.native.inference_rules.specialized import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def atom(name: str) -> AtomicFormula:
     """Create a zero-arity atomic formula."""
     return AtomicFormula(Predicate(name, []), [])
@@ -101,6 +103,7 @@ def necessary(f: Any) -> _NecessaryFormula:
 # Propositional: ModusPonens
 # ---------------------------------------------------------------------------
 
+
 class TestModusPonens:
     def test_name(self):
         assert ModusPonens().name() == "Modus Ponens"
@@ -138,6 +141,7 @@ class TestModusPonens:
 # Propositional: Simplification
 # ---------------------------------------------------------------------------
 
+
 class TestSimplification:
     def test_name(self):
         assert Simplification().name() == "Simplification"
@@ -163,6 +167,7 @@ class TestSimplification:
 # ---------------------------------------------------------------------------
 # Propositional: ConjunctionIntroduction
 # ---------------------------------------------------------------------------
+
 
 class TestConjunctionIntroduction:
     def test_name(self):
@@ -195,6 +200,7 @@ class TestConjunctionIntroduction:
 # Propositional: Weakening
 # ---------------------------------------------------------------------------
 
+
 class TestWeakening:
     def test_name(self):
         assert Weakening().name() == "Weakening"
@@ -221,6 +227,7 @@ class TestWeakening:
 # ---------------------------------------------------------------------------
 # Propositional: DeMorgan
 # ---------------------------------------------------------------------------
+
 
 class TestDeMorgan:
     def test_name(self):
@@ -291,6 +298,7 @@ class TestDeMorgan:
 # Propositional: DoubleNegation
 # ---------------------------------------------------------------------------
 
+
 class TestDoubleNegation:
     def test_name(self):
         assert DoubleNegation().name() == "Double Negation"
@@ -319,6 +327,7 @@ class TestDoubleNegation:
 # ---------------------------------------------------------------------------
 # Propositional: DisjunctiveSyllogism
 # ---------------------------------------------------------------------------
+
 
 class TestDisjunctiveSyllogism:
     def test_name(self):
@@ -363,6 +372,7 @@ class TestDisjunctiveSyllogism:
 # Propositional: Contraposition
 # ---------------------------------------------------------------------------
 
+
 class TestContraposition:
     def test_name(self):
         assert Contraposition().name() == "Contraposition"
@@ -395,6 +405,7 @@ class TestContraposition:
 # ---------------------------------------------------------------------------
 # Propositional: HypotheticalSyllogism
 # ---------------------------------------------------------------------------
+
 
 class TestHypotheticalSyllogism:
     def test_name(self):
@@ -435,6 +446,7 @@ class TestHypotheticalSyllogism:
 # Propositional: ImplicationElimination
 # ---------------------------------------------------------------------------
 
+
 class TestImplicationElimination:
     def test_name(self):
         assert ImplicationElimination().name() == "Implication Elimination"
@@ -455,8 +467,9 @@ class TestImplicationElimination:
         assert d.connective == LogicalConnective.OR
         # One element should be ¬P
         not_p_found = any(
-            isinstance(f, ConnectiveFormula) and
-            f.connective == LogicalConnective.NOT and f.formulas[0] == p
+            isinstance(f, ConnectiveFormula)
+            and f.connective == LogicalConnective.NOT
+            and f.formulas[0] == p
             for f in d.formulas
         )
         assert not_p_found
@@ -469,6 +482,7 @@ class TestImplicationElimination:
 # ---------------------------------------------------------------------------
 # Modal: NecessityDistribution (K axiom) — apply() paths
 # ---------------------------------------------------------------------------
+
 
 class TestNecessityDistributionApply:
     """Tests for NecessityDistribution.apply() (K axiom: □(P→Q) ∧ □P ⊢ □Q/Q)."""
@@ -507,6 +521,7 @@ class TestNecessityDistributionApply:
 # ---------------------------------------------------------------------------
 # Modal: PossibilityDuality — can_apply() and apply()
 # ---------------------------------------------------------------------------
+
 
 class TestPossibilityDuality:
     """Tests for PossibilityDuality.can_apply() and .apply()."""
@@ -554,6 +569,7 @@ class TestPossibilityDuality:
 # Modal: NecessityConjunction — name + apply
 # ---------------------------------------------------------------------------
 
+
 class TestNecessityConjunctionFull:
     """Additional tests for NecessityConjunction to cover name() and edge cases."""
 
@@ -581,6 +597,7 @@ class TestNecessityConjunctionFull:
 # ---------------------------------------------------------------------------
 # Resolution: ResolutionRule edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestResolutionRuleEdgeCases:
     """Additional resolution rule tests targeting empty resolvent + negative paths."""
@@ -697,6 +714,7 @@ class TestResolutionRuleEdgeCases:
 # Specialized: ConstructiveDilemma apply()
 # ---------------------------------------------------------------------------
 
+
 class TestConstructiveDilemmaApply:
     """Tests for ConstructiveDilemma.apply()."""
 
@@ -743,6 +761,7 @@ class TestConstructiveDilemmaApply:
 # ---------------------------------------------------------------------------
 # Specialized: DestructiveDilemma apply()
 # ---------------------------------------------------------------------------
+
 
 class TestDestructiveDilemmaApply:
     """Tests for DestructiveDilemma.apply()."""
@@ -791,6 +810,7 @@ class TestDestructiveDilemmaApply:
 # Cross-module chains
 # ---------------------------------------------------------------------------
 
+
 class TestPropositionalRuleChains:
     """Tests for chaining multiple propositional rules."""
 
@@ -827,7 +847,7 @@ class TestPropositionalRuleChains:
         # But DS needs the negated formula directly in the disjunction
         # ¬P is in (¬P∨Q), and we have ¬(¬P) = not_not_p as our unit → DS gives Q
         not_p_formula = not_p_or_q.formulas[0]  # This is ¬P
-        ds_unit = neg(not_p_formula)            # This is ¬(¬P)
+        ds_unit = neg(not_p_formula)  # This is ¬(¬P)
         ds_result = DisjunctiveSyllogism().apply([ds_unit, not_p_or_q])
         assert q in ds_result
 
@@ -836,9 +856,11 @@ class TestPropositionalRuleChains:
 # Export tests
 # ---------------------------------------------------------------------------
 
+
 class TestPropositionalExports:
     def test_all_rules_importable(self):
         from ipfs_datasets_py.logic.CEC.native.inference_rules.propositional import __all__
+
         assert "ModusPonens" in __all__
         assert "Simplification" in __all__
         assert "DeMorgan" in __all__
@@ -847,18 +869,32 @@ class TestPropositionalExports:
 
     def test_rule_names_are_strings(self):
         rules = [
-            ModusPonens(), Simplification(), ConjunctionIntroduction(),
-            Weakening(), DeMorgan(), DoubleNegation(), DisjunctiveSyllogism(),
-            Contraposition(), HypotheticalSyllogism(), ImplicationElimination(),
+            ModusPonens(),
+            Simplification(),
+            ConjunctionIntroduction(),
+            Weakening(),
+            DeMorgan(),
+            DoubleNegation(),
+            DisjunctiveSyllogism(),
+            Contraposition(),
+            HypotheticalSyllogism(),
+            ImplicationElimination(),
         ]
         for rule in rules:
             assert isinstance(rule.name(), str) and len(rule.name()) > 0
 
     def test_apply_always_returns_list(self):
         rules = [
-            ModusPonens(), Simplification(), ConjunctionIntroduction(),
-            Weakening(), DeMorgan(), DoubleNegation(), DisjunctiveSyllogism(),
-            Contraposition(), HypotheticalSyllogism(), ImplicationElimination(),
+            ModusPonens(),
+            Simplification(),
+            ConjunctionIntroduction(),
+            Weakening(),
+            DeMorgan(),
+            DoubleNegation(),
+            DisjunctiveSyllogism(),
+            Contraposition(),
+            HypotheticalSyllogism(),
+            ImplicationElimination(),
         ]
         for rule in rules:
             result = rule.apply([])
@@ -868,6 +904,7 @@ class TestPropositionalExports:
 class TestResolutionExports:
     def test_all_rules_importable(self):
         from ipfs_datasets_py.logic.CEC.native.inference_rules.resolution import __all__
+
         assert "ResolutionRule" in __all__
         assert "UnitResolutionRule" in __all__
         assert "FactoringRule" in __all__
@@ -877,8 +914,12 @@ class TestResolutionExports:
 
     def test_rule_names_are_strings(self):
         rules = [
-            ResolutionRule(), UnitResolutionRule(), FactoringRule(),
-            SubsumptionRule(), CaseAnalysisRule(), ProofByContradictionRule(),
+            ResolutionRule(),
+            UnitResolutionRule(),
+            FactoringRule(),
+            SubsumptionRule(),
+            CaseAnalysisRule(),
+            ProofByContradictionRule(),
         ]
         for rule in rules:
             assert isinstance(rule.name(), str) and len(rule.name()) > 0
@@ -887,6 +928,7 @@ class TestResolutionExports:
 class TestSpecializedExports:
     def test_all_rules_importable(self):
         from ipfs_datasets_py.logic.CEC.native.inference_rules.specialized import __all__
+
         assert "ConstructiveDilemma" in __all__
         assert "DestructiveDilemma" in __all__
         assert "ExportationRule" in __all__
@@ -894,8 +936,13 @@ class TestSpecializedExports:
 
     def test_rule_names_are_strings(self):
         rules = [
-            ConstructiveDilemma(), DestructiveDilemma(), ExportationRule(),
-            AbsorptionRule(), AdditionRule(), TautologyRule(), CommutativityConjunction(),
+            ConstructiveDilemma(),
+            DestructiveDilemma(),
+            ExportationRule(),
+            AbsorptionRule(),
+            AdditionRule(),
+            TautologyRule(),
+            CommutativityConjunction(),
         ]
         for rule in rules:
             assert isinstance(rule.name(), str) and len(rule.name()) > 0

@@ -31,9 +31,7 @@ except ImportError:
 
 
 def create_workflow_scheduler(
-    peer_id: Optional[str] = None,
-    context: Optional["ServerContext"] = None,
-    **kwargs: Any
+    peer_id: Optional[str] = None, context: Optional["ServerContext"] = None, **kwargs: Any
 ) -> Optional[P2PWorkflowScheduler]:
     """Create a P2P workflow scheduler instance.
 
@@ -44,7 +42,7 @@ def create_workflow_scheduler(
 
     Returns:
         P2PWorkflowScheduler instance or None if not available
-        
+
     Note:
         If context is provided, the scheduler is stored in context.workflow_scheduler
         for lifecycle management.
@@ -53,7 +51,7 @@ def create_workflow_scheduler(
         >>> # New code (recommended):
         >>> with ServerContext() as ctx:
         ...     scheduler = create_workflow_scheduler(context=ctx)
-        
+
         >>> # Legacy code (still works):
         >>> scheduler = create_workflow_scheduler()
     """
@@ -63,11 +61,11 @@ def create_workflow_scheduler(
 
     try:
         scheduler = _get_scheduler() if _get_scheduler else None
-        
+
         # If context provided, store scheduler for lifecycle management
         if context is not None and scheduler is not None:
             context.workflow_scheduler = scheduler
-            
+
         return scheduler
     except Exception as e:
         logger.error(f"Failed to create workflow scheduler: {e}")
@@ -76,29 +74,29 @@ def create_workflow_scheduler(
 
 def get_scheduler(context: Optional["ServerContext"] = None) -> Optional[P2PWorkflowScheduler]:
     """Get or create the P2P workflow scheduler instance.
-    
+
     Args:
         context: Optional ServerContext. If provided, returns context's scheduler.
                 Otherwise, falls back to global instance for backward compatibility.
 
     Returns:
         P2PWorkflowScheduler instance or None if not available
-        
+
     Note:
         The global instance is deprecated. New code should use ServerContext.
-        
+
     Example:
         >>> # New code (recommended):
         >>> with ServerContext() as ctx:
         ...     scheduler = get_scheduler(ctx)
-        
+
         >>> # Legacy code (still works):
         >>> scheduler = get_scheduler()
     """
     # If context provided, use it (new pattern)
     if context is not None:
         return context.workflow_scheduler
-    
+
     # Fallback to global for backward compatibility (deprecated)
     if not HAVE_WORKFLOW_SCHEDULER:
         return None
@@ -126,9 +124,7 @@ def reset_scheduler() -> None:
 
 
 async def submit_workflow(
-    workflow_name: str,
-    tasks: List[Dict[str, Any]],
-    **kwargs: Any
+    workflow_name: str, tasks: List[Dict[str, Any]], **kwargs: Any
 ) -> Optional[str]:
     """Submit a workflow to the P2P network.
 

@@ -21,12 +21,14 @@ def run(coro):
 # CEC Prove Tool
 # ============================================================
 
+
 class TestCECProveTool:
     """Tests for the cec_prove MCP tool."""
 
     @pytest.fixture
     def tool(self):
         from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_prove_tool import CECProveTool
+
         return CECProveTool()
 
     def test_tool_metadata(self, tool):
@@ -67,10 +69,14 @@ class TestCECProveTool:
         WHEN cec_prove.execute is called
         THEN returns a result without raising exceptions.
         """
-        result = run(tool.execute({
-            "goal": "Q(x)",
-            "axioms": ["P(x)", "P_implies_Q"],
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "goal": "Q(x)",
+                    "axioms": ["P(x)", "P_implies_Q"],
+                }
+            )
+        )
         assert "proved" in result
 
     def test_execute_with_strategy(self, tool):
@@ -116,6 +122,7 @@ class TestCECCheckTheoremTool:
     @pytest.fixture
     def tool(self):
         from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_prove_tool import CECCheckTheoremTool
+
         return CECCheckTheoremTool()
 
     def test_tool_metadata(self, tool):
@@ -155,12 +162,14 @@ class TestCECCheckTheoremTool:
 # CEC Parse Tool
 # ============================================================
 
+
 class TestCECParseTool:
     """Tests for the cec_parse MCP tool."""
 
     @pytest.fixture
     def tool(self):
         from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_parse_tool import CECParseTool
+
         return CECParseTool()
 
     def test_tool_metadata(self, tool):
@@ -217,7 +226,10 @@ class TestCECValidateFormulaTool:
 
     @pytest.fixture
     def tool(self):
-        from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_parse_tool import CECValidateFormulaTool
+        from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_parse_tool import (
+            CECValidateFormulaTool,
+        )
+
         return CECValidateFormulaTool()
 
     def test_tool_metadata(self, tool):
@@ -260,12 +272,16 @@ class TestCECValidateFormulaTool:
 # CEC Analysis Tool
 # ============================================================
 
+
 class TestCECAnalyzeFormulaTool:
     """Tests for the cec_analyze_formula MCP tool."""
 
     @pytest.fixture
     def tool(self):
-        from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_analysis_tool import CECAnalyzeFormulaTool
+        from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_analysis_tool import (
+            CECAnalyzeFormulaTool,
+        )
+
         return CECAnalyzeFormulaTool()
 
     def test_tool_metadata(self, tool):
@@ -334,7 +350,10 @@ class TestCECFormulaComplexityTool:
 
     @pytest.fixture
     def tool(self):
-        from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_analysis_tool import CECFormulaComplexityTool
+        from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_analysis_tool import (
+            CECFormulaComplexityTool,
+        )
+
         return CECFormulaComplexityTool()
 
     def test_tool_metadata(self, tool):
@@ -385,6 +404,7 @@ class TestCECFormulaComplexityTool:
 # Logic GraphRAG Tool
 # ============================================================
 
+
 class TestLogicBuildKnowledgeGraphTool:
     """Tests for the logic_build_knowledge_graph MCP tool."""
 
@@ -393,6 +413,7 @@ class TestLogicBuildKnowledgeGraphTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.logic_graphrag_tool import (
             LogicBuildKnowledgeGraphTool,
         )
+
         return LogicBuildKnowledgeGraphTool()
 
     def test_tool_metadata(self, tool):
@@ -411,11 +432,15 @@ class TestLogicBuildKnowledgeGraphTool:
         WHEN logic_build_knowledge_graph.execute is called
         THEN returns lists for 'nodes' and 'edges'.
         """
-        result = run(tool.execute({
-            "text": "The company must file its annual report by March 31. "
+        result = run(
+            tool.execute(
+                {
+                    "text": "The company must file its annual report by March 31. "
                     "Employees must complete compliance training. "
                     "Contractors must not share confidential information.",
-        }))
+                }
+            )
+        )
         assert result["success"] is True
         assert isinstance(result["nodes"], list)
         assert isinstance(result["edges"], list)
@@ -426,9 +451,13 @@ class TestLogicBuildKnowledgeGraphTool:
         WHEN logic_build_knowledge_graph.execute is called
         THEN at least one node of type 'obligation' is extracted.
         """
-        result = run(tool.execute({
-            "text": "The agent must comply with all applicable laws.",
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "text": "The agent must comply with all applicable laws.",
+                }
+            )
+        )
         obligation_nodes = [n for n in result["nodes"] if n.get("type") == "obligation"]
         assert len(obligation_nodes) >= 1
 
@@ -438,9 +467,13 @@ class TestLogicBuildKnowledgeGraphTool:
         WHEN logic_build_knowledge_graph.execute is called
         THEN every node has id, label, type, and source_text.
         """
-        result = run(tool.execute({
-            "text": "The contractor must not share confidential data.",
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "text": "The contractor must not share confidential data.",
+                }
+            )
+        )
         for node in result["nodes"]:
             assert "id" in node
             assert "label" in node
@@ -452,10 +485,14 @@ class TestLogicBuildKnowledgeGraphTool:
         WHEN logic_build_knowledge_graph.execute is called
         THEN obligation nodes have a 'formula' annotation.
         """
-        result = run(tool.execute({
-            "text": "The party must pay taxes.",
-            "include_formulas": True,
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "text": "The party must pay taxes.",
+                    "include_formulas": True,
+                }
+            )
+        )
         obligation_nodes = [n for n in result["nodes"] if n.get("type") == "obligation"]
         if obligation_nodes:
             assert "formula" in obligation_nodes[0]
@@ -466,9 +503,7 @@ class TestLogicBuildKnowledgeGraphTool:
         WHEN logic_build_knowledge_graph.execute is called with many obligations
         THEN at most 3 nodes are returned.
         """
-        long_text = ". ".join(
-            f"The agent_{i} must perform action_{i}" for i in range(20)
-        )
+        long_text = ". ".join(f"The agent_{i} must perform action_{i}" for i in range(20))
         result = run(tool.execute({"text": long_text, "max_entities": 3}))
         assert result["success"] is True
         assert len(result["nodes"]) <= 3
@@ -499,6 +534,7 @@ class TestLogicVerifyRAGOutputTool:
         from ipfs_datasets_py.mcp_server.tools.logic_tools.logic_graphrag_tool import (
             LogicVerifyRAGOutputTool,
         )
+
         return LogicVerifyRAGOutputTool()
 
     def test_tool_metadata(self, tool):
@@ -521,18 +557,26 @@ class TestLogicVerifyRAGOutputTool:
         WHEN logic_verify_rag_output.execute is called
         THEN 'consistent' is a bool.
         """
-        result = run(tool.execute({
-            "claim": "The company filed its taxes.",
-            "constraints": ["O(file_taxes(company))", "T(deadline, April_15)"],
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "claim": "The company filed its taxes.",
+                    "constraints": ["O(file_taxes(company))", "T(deadline, April_15)"],
+                }
+            )
+        )
         assert result["success"] is True
         assert isinstance(result["consistent"], bool)
 
     def test_execute_violations_is_list(self, tool):
-        result = run(tool.execute({
-            "claim": "The company did not pay.",
-            "constraints": ["O(pay(company))"],
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "claim": "The company did not pay.",
+                    "constraints": ["O(pay(company))"],
+                }
+            )
+        )
         assert isinstance(result["violations"], list)
 
     def test_execute_verification_score_in_range(self, tool):
@@ -541,45 +585,69 @@ class TestLogicVerifyRAGOutputTool:
         WHEN logic_verify_rag_output.execute is called
         THEN verification_score is in [0.0, 1.0].
         """
-        result = run(tool.execute({
-            "claim": "The agent complied.",
-            "constraints": ["O(comply(agent))"],
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "claim": "The agent complied.",
+                    "constraints": ["O(comply(agent))"],
+                }
+            )
+        )
         assert 0.0 <= result["verification_score"] <= 1.0
 
     def test_execute_constraints_checked_count(self, tool):
         constraints = ["O(A)", "O(B)", "O(C)"]
-        result = run(tool.execute({
-            "claim": "All done.",
-            "constraints": constraints,
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "claim": "All done.",
+                    "constraints": constraints,
+                }
+            )
+        )
         assert result["constraints_checked"] == len(constraints)
 
     def test_execute_prover_used_present(self, tool):
-        result = run(tool.execute({
-            "claim": "Agent complied.",
-            "constraints": ["O(comply(agent))"],
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "claim": "Agent complied.",
+                    "constraints": ["O(comply(agent))"],
+                }
+            )
+        )
         assert "prover_used" in result
 
     def test_execute_timing_present(self, tool):
-        result = run(tool.execute({
-            "claim": "Agent acted.",
-            "constraints": ["O(act(agent))"],
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "claim": "Agent acted.",
+                    "constraints": ["O(act(agent))"],
+                }
+            )
+        )
         assert "elapsed_ms" in result
 
     def test_execute_tool_version(self, tool):
-        result = run(tool.execute({
-            "claim": "Agent acted.",
-            "constraints": ["O(act(agent))"],
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "claim": "Agent acted.",
+                    "constraints": ["O(act(agent))"],
+                }
+            )
+        )
         assert result.get("tool_version") == "1.0.0"
 
     def test_too_many_constraints_rejected(self, tool):
         constraints = [f"O(action_{i})" for i in range(60)]
-        result = run(tool.execute({
-            "claim": "Something happened.",
-            "constraints": constraints,
-        }))
+        result = run(
+            tool.execute(
+                {
+                    "claim": "Something happened.",
+                    "constraints": constraints,
+                }
+            )
+        )
         assert result["success"] is False

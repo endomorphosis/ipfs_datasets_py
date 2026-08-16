@@ -4,6 +4,7 @@ MCP tool for recording data provenance.
 
 This tool handles recording data provenance information for datasets.
 """
+
 import anyio
 from typing import Dict, Any, Optional, Union, List
 
@@ -20,7 +21,7 @@ async def record_provenance(
     description: Optional[str] = None,
     agent_id: Optional[str] = None,
     timestamp: Optional[str] = None,
-    tags: Optional[List[str]] = None
+    tags: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Record provenance information for a dataset operation.
@@ -54,7 +55,7 @@ async def record_provenance(
             tool=agent_id or "mcp-tool",
             input_ids=inputs or [],
             parameters=parameters or {},
-            metadata={"tags": tags or [], "timestamp": timestamp}
+            metadata={"tags": tags or [], "timestamp": timestamp},
         )
 
         # Get the provenance record
@@ -62,15 +63,19 @@ async def record_provenance(
 
         # Extract record info, handling both dict and object types
         if provenance_record:
-            if hasattr(provenance_record, 'timestamp'):
+            if hasattr(provenance_record, "timestamp"):
                 # It's a ProvenanceRecord object
                 record_timestamp = provenance_record.timestamp
-                record_dict = provenance_record.to_dict() if hasattr(provenance_record, 'to_dict') else {
-                    'id': getattr(provenance_record, 'id', provenance_id),
-                    'timestamp': record_timestamp,
-                    'description': getattr(provenance_record, 'description', ''),
-                    'operation': operation
-                }
+                record_dict = (
+                    provenance_record.to_dict()
+                    if hasattr(provenance_record, "to_dict")
+                    else {
+                        "id": getattr(provenance_record, "id", provenance_id),
+                        "timestamp": record_timestamp,
+                        "description": getattr(provenance_record, "description", ""),
+                        "operation": operation,
+                    }
+                )
             else:
                 # It's a dict
                 record_timestamp = provenance_record.get("timestamp")
@@ -86,7 +91,7 @@ async def record_provenance(
             "dataset_id": dataset_id,
             "operation": operation,
             "timestamp": record_timestamp,
-            "record": record_dict
+            "record": record_dict,
         }
     except Exception as e:
         logger.error(f"Error recording provenance: {e}")
@@ -94,5 +99,5 @@ async def record_provenance(
             "status": "error",
             "message": str(e),
             "dataset_id": dataset_id,
-            "operation": operation
+            "operation": operation,
         }

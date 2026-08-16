@@ -5,6 +5,7 @@ MCP tool for searching vector indexes.
 This tool handles similarity search in vector indexes
 using the VectorSimilarityCalculator from vector_tools.
 """
+
 import anyio
 import json
 from typing import Dict, Any, Optional, Union, List
@@ -38,7 +39,7 @@ async def search_vector_index(
     top_k: int = 5,
     include_metadata: bool = True,
     include_distances: bool = True,
-    filter_metadata: Optional[Dict[str, Any]] = None
+    filter_metadata: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Search a vector index for similar vectors.
@@ -55,11 +56,19 @@ async def search_vector_index(
         Dict containing search results
     """
     # MCP JSON-string entrypoint (used by unit tests)
-    if isinstance(index_id, str) and query_vector is None and top_k == 5 and include_metadata is True and include_distances is True and filter_metadata is None and (
-        not index_id.strip()
-        or index_id.lstrip().startswith("{")
-        or index_id.lstrip().startswith("[")
-        or any(ch.isspace() for ch in index_id)
+    if (
+        isinstance(index_id, str)
+        and query_vector is None
+        and top_k == 5
+        and include_metadata is True
+        and include_distances is True
+        and filter_metadata is None
+        and (
+            not index_id.strip()
+            or index_id.lstrip().startswith("{")
+            or index_id.lstrip().startswith("[")
+            or any(ch.isspace() for ch in index_id)
+        )
     ):
         data, error = parse_json_object(index_id)
         if error is not None:
@@ -67,7 +76,9 @@ async def search_vector_index(
 
         for field in ("index_id", "query_vector"):
             if field not in data:
-                return mcp_error_response(f"Missing required field: {field}", error_type="validation")
+                return mcp_error_response(
+                    f"Missing required field: {field}", error_type="validation"
+                )
 
         if ipfs_datasets is None:
             return mcp_error_response("ipfs_datasets backend is not available")
@@ -98,12 +109,12 @@ async def search_vector_index(
         manager = _get_global_manager()
 
         # Check if index exists; if not, create a simple test index
-        if not hasattr(manager, 'indexes') or index_id not in manager.indexes:
+        if not hasattr(manager, "indexes") or index_id not in manager.indexes:
             logger.warning(f"Index {index_id} not found. Creating a test index for demonstration.")
             # Create a simple test index
             test_vectors = [[0.1, 0.2, 0.3, 0.4, 0.5], [0.6, 0.7, 0.8, 0.9, 1.0]]
             test_metadata = [{"id": 0}, {"id": 1}]
-            
+
             # Create the index
             index = manager.create_index(index_id, dimension=5, metric="cosine")
             np_vectors = np.array(test_vectors)
@@ -115,9 +126,7 @@ async def search_vector_index(
         # Format results
         formatted_results = []
         for i, result in enumerate(results):
-            formatted_result = {
-                "id": result.get("id", i)
-            }
+            formatted_result = {"id": result.get("id", i)}
 
             if include_distances:
                 formatted_result["distance"] = result.get("score", 1.0)
@@ -133,12 +142,8 @@ async def search_vector_index(
             "index_id": index_id,
             "top_k": top_k,
             "num_results": len(formatted_results),
-            "results": formatted_results
+            "results": formatted_results,
         }
     except Exception as e:
         logger.error(f"Error searching vector index: {e}")
-        return {
-            "status": "error",
-            "error": str(e),
-            "index_id": index_id
-        }
+        return {"status": "error", "error": str(e), "index_id": index_id}

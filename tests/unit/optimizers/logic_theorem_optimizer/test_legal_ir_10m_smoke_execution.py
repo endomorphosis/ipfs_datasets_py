@@ -35,8 +35,7 @@ RUNNER = ROOT / "scripts/ops/legal_ir/run_legal_ir_10m_smoke.sh"
 CANONICAL_RUNNER = ROOT / "scripts/ops/legal_ir/run_hammer_leanstral_smoke.sh"
 VERIFIER = ROOT / "scripts/ops/legal_ir/verify_legal_ir_run_evidence.py"
 COMMITTED_EVIDENCE = (
-    ROOT
-    / "docs/implementation/reports/evidence/legal_ir_10_minute_integrated_smoke.json"
+    ROOT / "docs/implementation/reports/evidence/legal_ir_10_minute_integrated_smoke.json"
 )
 SHA_A = "sha256:" + "a" * 64
 SHA_B = "sha256:" + "b" * 64
@@ -362,29 +361,92 @@ def test_bounded_codex_retries_do_not_inflate_unique_todo_count() -> None:
     [
         (lambda p: p.update(dry_run=True), "authenticity:dry_run"),
         (lambda p: p["timing"].update(active_seconds=599.99), "timing:insufficient_active_seconds"),
-        (lambda p: p["progress"].update(warm_cycles_completed=1), "progress:fewer_than_two_warm_cycles"),
+        (
+            lambda p: p["progress"].update(warm_cycles_completed=1),
+            "progress:fewer_than_two_warm_cycles",
+        ),
         (lambda p: p["progress"].update(sample_count_end=100), "progress:samples_not_advanced"),
-        (lambda p: p["services"]["cuda_autoencoder"].update(cpu_fallback=True), "service:autoencoder:fallback_or_simulated"),
-        (lambda p: p["services"]["leanstral"].update(model_load_count=2), "service:leanstral:weights_reloaded"),
-        (lambda p: p["services"]["hammer"].update(reconstruction_count=0), "service:hammer:reconstruction_count"),
+        (
+            lambda p: p["services"]["cuda_autoencoder"].update(cpu_fallback=True),
+            "service:autoencoder:fallback_or_simulated",
+        ),
+        (
+            lambda p: p["services"]["leanstral"].update(model_load_count=2),
+            "service:leanstral:weights_reloaded",
+        ),
+        (
+            lambda p: p["services"]["hammer"].update(reconstruction_count=0),
+            "service:hammer:reconstruction_count",
+        ),
         (lambda p: p["services"]["hammer"].update(proved_count=0), "service:hammer:proved_count"),
-        (lambda p: p["services"]["hammer"].update(trusted_guidance_count=0), "service:hammer:trusted_guidance_count"),
-        (lambda p: p["services"]["hammer"].update(evidence_kind="legal_quality"), "service:hammer:evidence_kind"),
-        (lambda p: p["services"]["hammer"].update(winner_backends=[]), "service:hammer:winner_backend"),
-        (lambda p: p["services"]["hammer"].update(checker_routes=[]), "service:hammer:checker_route"),
-        (lambda p: p["services"]["hammer"].update(legal_obligation_count=0), "service:hammer:legal_obligation_count"),
-        (lambda p: p["services"]["hammer"].update(legal_proof_attempt_count=0), "service:hammer:legal_proof_attempt_count"),
-        (lambda p: p["services"]["contract_validation"].update(coverage=0.0), "service:contract:coverage"),
-        (lambda p: p["services"]["contract_validation"].update(failure_count=1), "service:contract:failure_count"),
-        (lambda p: p["services"]["metric_evaluation"].update(sample_timeout_count=1), "service:metrics:sample_timeout_count"),
-        (lambda p: p["services"]["codex"].update(safe_rejection_count=0), "service:codex:no_safe_terminal_path"),
-        (lambda p: p["services"]["watchdog"].update(orphaned_child_count=1), "service:watchdog:orphaned_child_count"),
-        (lambda p: p["services"]["watchdog"].update(max_progress_gap_seconds=361), "service:watchdog:progress_gap"),
-        (lambda p: p["services"]["cuda_autoencoder"].update(loss_count=3), "service:autoencoder:operation_count_mismatch"),
-        (lambda p: p["services"]["leanstral"].update(reuse_count=4), "service:leanstral:reuse_count_incoherent"),
-        (lambda p: p["services"]["hammer"].update(reconstruction_count=17), "service:hammer:counter_progression"),
-        (lambda p: p["quality_families"]["tdfol"].update(candidate_sample_count=0), "quality:tdfol:candidate_sample_coverage"),
-        (lambda p: p["quality_families"]["cec"].update(candidate_observed_metrics=[]), "quality:cec:candidate_observed_metrics"),
+        (
+            lambda p: p["services"]["hammer"].update(trusted_guidance_count=0),
+            "service:hammer:trusted_guidance_count",
+        ),
+        (
+            lambda p: p["services"]["hammer"].update(evidence_kind="legal_quality"),
+            "service:hammer:evidence_kind",
+        ),
+        (
+            lambda p: p["services"]["hammer"].update(winner_backends=[]),
+            "service:hammer:winner_backend",
+        ),
+        (
+            lambda p: p["services"]["hammer"].update(checker_routes=[]),
+            "service:hammer:checker_route",
+        ),
+        (
+            lambda p: p["services"]["hammer"].update(legal_obligation_count=0),
+            "service:hammer:legal_obligation_count",
+        ),
+        (
+            lambda p: p["services"]["hammer"].update(legal_proof_attempt_count=0),
+            "service:hammer:legal_proof_attempt_count",
+        ),
+        (
+            lambda p: p["services"]["contract_validation"].update(coverage=0.0),
+            "service:contract:coverage",
+        ),
+        (
+            lambda p: p["services"]["contract_validation"].update(failure_count=1),
+            "service:contract:failure_count",
+        ),
+        (
+            lambda p: p["services"]["metric_evaluation"].update(sample_timeout_count=1),
+            "service:metrics:sample_timeout_count",
+        ),
+        (
+            lambda p: p["services"]["codex"].update(safe_rejection_count=0),
+            "service:codex:no_safe_terminal_path",
+        ),
+        (
+            lambda p: p["services"]["watchdog"].update(orphaned_child_count=1),
+            "service:watchdog:orphaned_child_count",
+        ),
+        (
+            lambda p: p["services"]["watchdog"].update(max_progress_gap_seconds=361),
+            "service:watchdog:progress_gap",
+        ),
+        (
+            lambda p: p["services"]["cuda_autoencoder"].update(loss_count=3),
+            "service:autoencoder:operation_count_mismatch",
+        ),
+        (
+            lambda p: p["services"]["leanstral"].update(reuse_count=4),
+            "service:leanstral:reuse_count_incoherent",
+        ),
+        (
+            lambda p: p["services"]["hammer"].update(reconstruction_count=17),
+            "service:hammer:counter_progression",
+        ),
+        (
+            lambda p: p["quality_families"]["tdfol"].update(candidate_sample_count=0),
+            "quality:tdfol:candidate_sample_coverage",
+        ),
+        (
+            lambda p: p["quality_families"]["cec"].update(candidate_observed_metrics=[]),
+            "quality:cec:candidate_observed_metrics",
+        ),
     ],
 )
 def test_fail_closed_runtime_mutations(mutation, failure: str) -> None:
@@ -432,8 +494,7 @@ def test_legacy_family_builder_does_not_borrow_global_sample_coverage() -> None:
 
 def test_legacy_metric_builder_rejects_numeric_failures_and_timeouts() -> None:
     adapters = {
-        name: {"metric_failures": 0, "sample_count": 2}
-        for name in REQUIRED_METRIC_BRIDGE_ADAPTERS
+        name: {"metric_failures": 0, "sample_count": 2} for name in REQUIRED_METRIC_BRIDGE_ADAPTERS
     }
     block = {
         "evaluated_count": 2,
@@ -525,7 +586,9 @@ def test_manifest_digest_and_lineage_are_recomputed() -> None:
 def test_atomic_writer_refuses_overwrite(tmp_path: Path) -> None:
     output = tmp_path / "evidence.json"
     write_evidence(output, complete_evidence())
-    assert json.loads(output.read_text())["manifest_sha256"] == manifest_sha256(json.loads(output.read_text()))
+    assert json.loads(output.read_text())["manifest_sha256"] == manifest_sha256(
+        json.loads(output.read_text())
+    )
     with pytest.raises(FileExistsError):
         write_evidence(output, complete_evidence())
 
@@ -589,7 +652,16 @@ def test_cli_rejects_incomplete_evidence(tmp_path: Path) -> None:
     path = tmp_path / "bad.json"
     path.write_text(json.dumps({"schema_version": SCHEMA_VERSION}), encoding="utf-8")
     result = subprocess.run(
-        [sys.executable, str(VERIFIER), "--evidence", str(path), "--stage", "ten_minute_smoke", "--minimum-active-seconds", "600"],
+        [
+            sys.executable,
+            str(VERIFIER),
+            "--evidence",
+            str(path),
+            "--stage",
+            "ten_minute_smoke",
+            "--minimum-active-seconds",
+            "600",
+        ],
         cwd=ROOT,
         text=True,
         capture_output=True,
@@ -607,11 +679,19 @@ def test_runner_contract_is_real_immutable_and_non_promotable_when_dry_run(tmp_p
     assert '"${ROOT_DIR}/workspace/test-logs/${RUN_ID}"*' in runner_source
     assert '"${ROOT_DIR}/workspace/codex-work/${RUN_ID}"*' in runner_source
     env = dict(os.environ, DURATION_SECONDS="599")
-    rejected = subprocess.run([str(RUNNER), "--dry-run"], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
+    rejected = subprocess.run(
+        [str(RUNNER), "--dry-run"], cwd=ROOT, env=env, text=True, capture_output=True, check=False
+    )
     assert rejected.returncode == 2
     assert "immutable" in rejected.stderr
 
-    dry = subprocess.run([str(RUNNER), "--dry-run", "--run-id", "unit-dry-run"], cwd=ROOT, text=True, capture_output=True, check=False)
+    dry = subprocess.run(
+        [str(RUNNER), "--dry-run", "--run-id", "unit-dry-run"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
     assert dry.returncode == 0
     assert "execution=false" in dry.stdout
     assert "promotable_evidence=false" in dry.stdout
@@ -643,7 +723,9 @@ def test_canonical_runner_extracts_one_guardrail_contract_from_noisy_stdout(tmp_
 
     assert result.returncode == 0, result.stderr
     assert f"gate_metrics={EXPECTED_HARD_GUARDRAILS}" in result.stdout
-    smoke_command = next(line for line in result.stdout.splitlines() if line.startswith("smoke_command="))
+    smoke_command = next(
+        line for line in result.stdout.splitlines() if line.startswith("smoke_command=")
+    )
     assert EXPECTED_HARD_GUARDRAILS.replace(",", r"\,") in smoke_command
     assert "dependency initialization notice" not in smoke_command
     assert "service availability notice" not in smoke_command

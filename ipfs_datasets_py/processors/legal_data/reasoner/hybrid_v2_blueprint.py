@@ -246,9 +246,13 @@ def _normalize_claim_support_temporal_handoff(value: Any) -> Dict[str, Any]:
     normalized = {
         "claim_type": str(value.get("claim_type") or "").strip(),
         "claim_element_id": str(value.get("claim_element_id") or "").strip(),
-        "unresolved_temporal_issue_count": int(value.get("unresolved_temporal_issue_count", 0) or 0),
+        "unresolved_temporal_issue_count": int(
+            value.get("unresolved_temporal_issue_count", 0) or 0
+        ),
         "chronology_task_count": int(value.get("chronology_task_count", 0) or 0),
-        "unresolved_temporal_issue_ids": _normalize_text_list(value.get("unresolved_temporal_issue_ids")),
+        "unresolved_temporal_issue_ids": _normalize_text_list(
+            value.get("unresolved_temporal_issue_ids")
+        ),
         "event_ids": _normalize_text_list(value.get("event_ids")),
         "temporal_fact_ids": _normalize_text_list(value.get("temporal_fact_ids")),
         "temporal_relation_ids": _normalize_text_list(value.get("temporal_relation_ids")),
@@ -262,17 +266,21 @@ def _normalize_claim_support_temporal_handoff(value: Any) -> Dict[str, Any]:
         normalized.pop("claim_type")
     if not normalized["claim_element_id"]:
         normalized.pop("claim_element_id")
-    if not normalized.get("unresolved_temporal_issue_count") and not normalized.get("chronology_task_count") and not any(
-        normalized[key]
-        for key in (
-            "unresolved_temporal_issue_ids",
-            "event_ids",
-            "temporal_fact_ids",
-            "temporal_relation_ids",
-            "timeline_issue_ids",
-            "temporal_issue_ids",
-            "temporal_proof_bundle_ids",
-            "temporal_proof_objectives",
+    if (
+        not normalized.get("unresolved_temporal_issue_count")
+        and not normalized.get("chronology_task_count")
+        and not any(
+            normalized[key]
+            for key in (
+                "unresolved_temporal_issue_ids",
+                "event_ids",
+                "temporal_fact_ids",
+                "temporal_relation_ids",
+                "timeline_issue_ids",
+                "temporal_issue_ids",
+                "temporal_proof_bundle_ids",
+                "temporal_proof_objectives",
+            )
         )
     ):
         return {}
@@ -311,12 +319,15 @@ def _normalize_theorem_export_metadata(value: Any) -> Dict[str, Any]:
         return {}
 
     normalized = {
-        "contract_version": str(value.get("contract_version") or "").strip() or "claim_support_temporal_handoff_v1",
+        "contract_version": str(value.get("contract_version") or "").strip()
+        or "claim_support_temporal_handoff_v1",
         "claim_type": str(value.get("claim_type") or "").strip(),
         "claim_element_id": str(value.get("claim_element_id") or "").strip(),
         "chronology_blocked": bool(value.get("chronology_blocked", False)),
         "chronology_task_count": int(value.get("chronology_task_count", 0) or 0),
-        "unresolved_temporal_issue_ids": _normalize_text_list(value.get("unresolved_temporal_issue_ids")),
+        "unresolved_temporal_issue_ids": _normalize_text_list(
+            value.get("unresolved_temporal_issue_ids")
+        ),
         "event_ids": _normalize_text_list(value.get("event_ids")),
         "temporal_fact_ids": _normalize_text_list(value.get("temporal_fact_ids")),
         "temporal_relation_ids": _normalize_text_list(value.get("temporal_relation_ids")),
@@ -330,17 +341,21 @@ def _normalize_theorem_export_metadata(value: Any) -> Dict[str, Any]:
         normalized.pop("claim_type")
     if not normalized["claim_element_id"]:
         normalized.pop("claim_element_id")
-    if not normalized.get("chronology_blocked") and not normalized.get("chronology_task_count") and not any(
-        normalized[key]
-        for key in (
-            "unresolved_temporal_issue_ids",
-            "event_ids",
-            "temporal_fact_ids",
-            "temporal_relation_ids",
-            "timeline_issue_ids",
-            "temporal_issue_ids",
-            "temporal_proof_bundle_ids",
-            "temporal_proof_objectives",
+    if (
+        not normalized.get("chronology_blocked")
+        and not normalized.get("chronology_task_count")
+        and not any(
+            normalized[key]
+            for key in (
+                "unresolved_temporal_issue_ids",
+                "event_ids",
+                "temporal_fact_ids",
+                "temporal_relation_ids",
+                "timeline_issue_ids",
+                "temporal_issue_ids",
+                "temporal_proof_bundle_ids",
+                "temporal_proof_objectives",
+            )
         )
     ):
         return {}
@@ -359,15 +374,21 @@ def _resolve_temporal_proof_metadata(
 
     handoff = _normalize_claim_support_temporal_handoff(claim_support_temporal_handoff)
     if not handoff:
-        handoff = _normalize_claim_support_temporal_handoff(query.get("claim_support_temporal_handoff"))
+        handoff = _normalize_claim_support_temporal_handoff(
+            query.get("claim_support_temporal_handoff")
+        )
     if not handoff:
-        handoff = _normalize_claim_support_temporal_handoff(time_context.get("claim_support_temporal_handoff"))
+        handoff = _normalize_claim_support_temporal_handoff(
+            time_context.get("claim_support_temporal_handoff")
+        )
 
     theorem_metadata = _normalize_theorem_export_metadata(theorem_export_metadata)
     if not theorem_metadata:
         theorem_metadata = _normalize_theorem_export_metadata(query.get("theorem_export_metadata"))
     if not theorem_metadata:
-        theorem_metadata = _normalize_theorem_export_metadata(time_context.get("theorem_export_metadata"))
+        theorem_metadata = _normalize_theorem_export_metadata(
+            time_context.get("theorem_export_metadata")
+        )
     if not theorem_metadata and handoff:
         theorem_metadata = _build_theorem_export_metadata(handoff)
 
@@ -447,11 +468,7 @@ def detect_proof_conflicts(ir: "LegalIRV2") -> Dict[str, Any]:
         by_frame.setdefault(norm.target_frame_ref, []).append(norm)
 
     # Build index of frames that are themselves obligation targets
-    obligation_targets = {
-        norm.target_frame_ref
-        for norm in norms
-        if norm.op.value == "O"
-    }
+    obligation_targets = {norm.target_frame_ref for norm in norms if norm.op.value == "O"}
 
     for frame_ref, frame_norms in by_frame.items():
         for i in range(len(frame_norms)):
@@ -497,9 +514,7 @@ def detect_proof_conflicts(ir: "LegalIRV2") -> Dict[str, Any]:
     # Exception-precedence conflict: norm has exception referencing an obligation target
     # Build reverse map: frame_ref → obligation norm id
     obligation_norm_by_frame: Dict[str, str] = {
-        norm.target_frame_ref: norm.id.ref()
-        for norm in norms
-        if norm.op.value == "O"
+        norm.target_frame_ref: norm.id.ref() for norm in norms if norm.op.value == "O"
     }
     for norm in norms:
         for ex_cond in norm.exceptions:
@@ -598,22 +613,21 @@ def _id_registry_error_detail(message: str) -> Dict[str, str]:
 class OptimizerHook(Protocol):
     """Score-only optimizer hook. Must not change semantics without a drift check."""
 
-    def optimize_ir(self, ir: LegalIRV2) -> Tuple[LegalIRV2, Dict[str, Any]]:
-        ...
+    def optimize_ir(self, ir: LegalIRV2) -> Tuple[LegalIRV2, Dict[str, Any]]: ...
 
 
 class KGHook(Protocol):
     """Additive enrichment hook. Must preserve canonical IDs."""
 
-    def enrich_ir(self, ir: LegalIRV2) -> Tuple[LegalIRV2, Dict[str, Any]]:
-        ...
+    def enrich_ir(self, ir: LegalIRV2) -> Tuple[LegalIRV2, Dict[str, Any]]: ...
 
 
 class ProverHook(Protocol):
     """Backend theorem prover contract for DCEC/FOL obligations."""
 
-    def prove(self, formulas: List[str], assumptions: Optional[List[str]] = None) -> Dict[str, Any]:
-        ...
+    def prove(
+        self, formulas: List[str], assumptions: Optional[List[str]] = None
+    ) -> Dict[str, Any]: ...
 
 
 class DefaultOptimizerHookV2:
@@ -944,7 +958,9 @@ def _semantic_invariant_failures(base_ir: LegalIRV2, candidate_ir: LegalIRV2) ->
     return list(dict.fromkeys(failures))
 
 
-def _validate_normalized_prover_envelope(envelope: Dict[str, Any], *, expected_backend: str) -> List[str]:
+def _validate_normalized_prover_envelope(
+    envelope: Dict[str, Any], *, expected_backend: str
+) -> List[str]:
     errors: List[str] = []
     env = dict(envelope or {})
 
@@ -987,10 +1003,16 @@ def _validate_normalized_prover_envelope(envelope: Dict[str, Any], *, expected_b
     return list(dict.fromkeys(errors))
 
 
-def _coerce_prover_envelope(raw: Dict[str, Any], *, theorem: str, assumptions: Optional[List[str]] = None) -> Dict[str, Any]:
+def _coerce_prover_envelope(
+    raw: Dict[str, Any], *, theorem: str, assumptions: Optional[List[str]] = None
+) -> Dict[str, Any]:
     """Coerce legacy/non-normalized prover outputs into normalized envelope shape."""
     env = dict(raw or {})
-    if "schema_version" in env and "certificate" in env and isinstance(env.get("certificate"), dict):
+    if (
+        "schema_version" in env
+        and "certificate" in env
+        and isinstance(env.get("certificate"), dict)
+    ):
         return env
 
     backend = str(env.get("backend") or env.get("prover") or "custom")
@@ -1006,9 +1028,7 @@ def _coerce_prover_envelope(raw: Dict[str, Any], *, theorem: str, assumptions: O
         "assumptions": list(assumptions or []),
         "payload": payload,
     }
-    normalized_hash = hashlib.sha256(
-        str(stable_payload).encode("utf-8")
-    ).hexdigest()
+    normalized_hash = hashlib.sha256(str(stable_payload).encode("utf-8")).hexdigest()
 
     return {
         "schema_version": PROVER_ENVELOPE_SCHEMA_VERSION,
@@ -1126,9 +1146,7 @@ def validate_ir_v2_contract(ir: LegalIRV2, *, strict: bool = True) -> Dict[str, 
     warnings: List[str] = []
 
     if ir.ir_version != SUPPORTED_V2_IR_VERSION:
-        errors.append(
-            f"unsupported_ir_version:{ir.ir_version} expected:{SUPPORTED_V2_IR_VERSION}"
-        )
+        errors.append(f"unsupported_ir_version:{ir.ir_version} expected:{SUPPORTED_V2_IR_VERSION}")
     if ir.cnl_version != SUPPORTED_V2_CNL_VERSION:
         errors.append(
             f"unsupported_cnl_version:{ir.cnl_version} expected:{SUPPORTED_V2_CNL_VERSION}"
@@ -1216,7 +1234,11 @@ def validate_v2_canonical_id_registry(ir: LegalIRV2, *, strict: bool = True) -> 
         for role_name, role_ref in (frame.roles or {}).items():
             if role_name == "jurisdiction":
                 continue
-            if isinstance(role_ref, str) and role_ref.startswith("ent:") and role_ref not in ir.entities:
+            if (
+                isinstance(role_ref, str)
+                and role_ref.startswith("ent:")
+                and role_ref not in ir.entities
+            ):
                 errors.append(f"unknown_role_entity_ref:{key}:{role_name}->{role_ref}")
 
     for key, temporal in ir.temporals.items():
@@ -1312,7 +1334,9 @@ def _extract_prefix_activation_clause(text: str) -> Tuple[Optional[str], Optiona
     return marker, clause, remainder
 
 
-def _extract_suffix_clause(text: str, markers: List[str]) -> Tuple[str, Optional[str], Optional[str]]:
+def _extract_suffix_clause(
+    text: str, markers: List[str]
+) -> Tuple[str, Optional[str], Optional[str]]:
     low = text.lower()
     best_idx = None
     best_marker = None
@@ -1349,7 +1373,9 @@ def _build_parse_candidates(
     return candidates
 
 
-def _extract_temporal(text: str) -> Tuple[str, Optional[TemporalRelationV2], Optional[TemporalExprV2]]:
+def _extract_temporal(
+    text: str,
+) -> Tuple[str, Optional[TemporalRelationV2], Optional[TemporalExprV2]]:
     t = _norm_space(text)
     m = re.search(
         r"\bwithin\s+(\d+\s+(?:day|days|hour|hours|week|weeks))(?:\s+of\s+(.+))?$",
@@ -1360,7 +1386,11 @@ def _extract_temporal(text: str) -> Tuple[str, Optional[TemporalRelationV2], Opt
         head = _norm_space(t[: m.start()])
         duration = _normalize_duration(m.group(1))
         anchor = _norm_token(_norm_space(m.group(2))) if m.group(2) else None
-        return head, TemporalRelationV2.WITHIN, TemporalExprV2(kind="deadline", duration=duration, start=anchor)
+        return (
+            head,
+            TemporalRelationV2.WITHIN,
+            TemporalExprV2(kind="deadline", duration=duration, start=anchor),
+        )
 
     m = re.search(r"\bby\s+([0-9]{4}-[0-9]{2}-[0-9]{2})$", t, flags=re.IGNORECASE)
     if m:
@@ -1370,10 +1400,14 @@ def _extract_temporal(text: str) -> Tuple[str, Optional[TemporalRelationV2], Opt
     m = re.search(r"\bduring\s+(.+?)\s+to\s+(.+)$", t, flags=re.IGNORECASE)
     if m:
         head = _norm_space(t[: m.start()])
-        return head, TemporalRelationV2.DURING, TemporalExprV2(
-            kind="interval",
-            start=_norm_space(m.group(1)),
-            end=_norm_space(m.group(2)),
+        return (
+            head,
+            TemporalRelationV2.DURING,
+            TemporalExprV2(
+                kind="interval",
+                start=_norm_space(m.group(1)),
+                end=_norm_space(m.group(2)),
+            ),
         )
 
     for rel, marker in [
@@ -1423,7 +1457,11 @@ def _parse_definition_sentence(clean: str, jurisdiction: str) -> Optional[LegalI
     if includes_match:
         term = _norm_space(includes_match.group(1))
         members_raw = _norm_space(includes_match.group(2))
-        members = [_norm_space(x) for x in re.split(r",|\band\b", members_raw, flags=re.IGNORECASE) if _norm_space(x)]
+        members = [
+            _norm_space(x)
+            for x in re.split(r",|\band\b", members_raw, flags=re.IGNORECASE)
+            if _norm_space(x)
+        ]
         ir = LegalIRV2(jurisdiction=jurisdiction)
         src_id = _det_id("src", [jurisdiction, clean])
         ir.provenance[src_id.ref()] = SourceRefV2(source_id=src_id.ref(), sentence_text=clean)
@@ -1431,7 +1469,9 @@ def _parse_definition_sentence(clean: str, jurisdiction: str) -> Optional[LegalI
             rule_id = _det_id("rul", [jurisdiction, "includes", term, member])
             ir.rules[rule_id.ref()] = RuleV2(
                 id=rule_id,
-                antecedent=ConditionNodeV2(op="atom", atom=AtomV2(pred="defined_term", args=[term])),
+                antecedent=ConditionNodeV2(
+                    op="atom", atom=AtomV2(pred="defined_term", args=[term])
+                ),
                 consequent=AtomV2(pred="includes_member", args=[term, member]),
                 mode="definition",
                 source_ref=src_id.ref(),
@@ -1453,7 +1493,9 @@ def _parse_definition_sentence(clean: str, jurisdiction: str) -> Optional[LegalI
     return None
 
 
-def parse_cnl_to_ir_with_diagnostics(sentence: str, jurisdiction: str = "default") -> Tuple[LegalIRV2, Dict[str, Any]]:
+def parse_cnl_to_ir_with_diagnostics(
+    sentence: str, jurisdiction: str = "default"
+) -> Tuple[LegalIRV2, Dict[str, Any]]:
     """Parse supported CNL templates into V2 IR.
 
     Supported templates:
@@ -1534,25 +1576,43 @@ def parse_cnl_to_ir_with_diagnostics(sentence: str, jurisdiction: str = "default
     ir.provenance[src_id.ref()] = SourceRefV2(source_id=src_id.ref(), sentence_text=clean)
 
     agent_id = _det_id("ent", [jurisdiction, "agent", actor_text])
-    ir.entities[agent_id.ref()] = EntityV2(id=agent_id, type_name="Agent", attrs={"label": actor_text})
+    ir.entities[agent_id.ref()] = EntityV2(
+        id=agent_id, type_name="Agent", attrs={"label": actor_text}
+    )
 
     roles: Dict[str, str] = {"agent": agent_id.ref(), "jurisdiction": jurisdiction}
     if patient_text:
         patient_id = _det_id("ent", [jurisdiction, "patient", patient_text])
-        ir.entities[patient_id.ref()] = EntityV2(id=patient_id, type_name="Thing", attrs={"label": patient_text})
+        ir.entities[patient_id.ref()] = EntityV2(
+            id=patient_id, type_name="Thing", attrs={"label": patient_text}
+        )
         roles["patient"] = patient_id.ref()
     if recipient_text:
         recipient_id = _det_id("ent", [jurisdiction, "recipient", recipient_text])
-        ir.entities[recipient_id.ref()] = EntityV2(id=recipient_id, type_name="Party", attrs={"label": recipient_text})
+        ir.entities[recipient_id.ref()] = EntityV2(
+            id=recipient_id, type_name="Party", attrs={"label": recipient_text}
+        )
         roles["recipient"] = recipient_id.ref()
 
-    frame_id = _det_id("frm", [jurisdiction, "action", actor_text, verb, patient_text or "", recipient_text or ""])
+    frame_id = _det_id(
+        "frm", [jurisdiction, "action", actor_text, verb, patient_text or "", recipient_text or ""]
+    )
     frame = FrameV2(id=frame_id, kind=FrameKindV2.ACTION, predicate=_norm_token(verb), roles=roles)
     ir.frames[frame_id.ref()] = frame
 
     temporal_ref = None
     if rel is not None and expr is not None:
-        temporal_id = _det_id("tmp", [jurisdiction, rel.value, expr.kind, expr.start or "", expr.end or "", expr.duration or ""])
+        temporal_id = _det_id(
+            "tmp",
+            [
+                jurisdiction,
+                rel.value,
+                expr.kind,
+                expr.start or "",
+                expr.end or "",
+                expr.duration or "",
+            ],
+        )
         ir.temporals[temporal_id.ref()] = TemporalConstraintV2(
             id=temporal_id,
             relation=rel,
@@ -1560,7 +1620,9 @@ def parse_cnl_to_ir_with_diagnostics(sentence: str, jurisdiction: str = "default
         )
         temporal_ref = temporal_id.ref()
 
-    activation = _cond_from_phrase(act_marker or "active", act_tail or "") if act_tail else _cond_true()
+    activation = (
+        _cond_from_phrase(act_marker or "active", act_tail or "") if act_tail else _cond_true()
+    )
     exceptions: List[ConditionNodeV2] = []
     if ex_tail:
         exceptions.append(_cond_from_phrase(ex_marker or "except", ex_tail))
@@ -1651,7 +1713,11 @@ def compile_ir_to_dcec(ir: LegalIRV2) -> List[str]:
 
     for norm in ir.norms.values():
         activation = _render_condition(norm.activation)
-        exceptions = " and ".join(_render_condition(e) for e in norm.exceptions) if norm.exceptions else "false"
+        exceptions = (
+            " and ".join(_render_condition(e) for e in norm.exceptions)
+            if norm.exceptions
+            else "false"
+        )
         temporal_guard = _temporal_guard(norm, ir)
         formulas.append(
             "forall t ("
@@ -1674,7 +1740,11 @@ def compile_ir_to_temporal_deontic_fol(ir: LegalIRV2) -> List[str]:
     formulas: List[str] = []
     for norm in ir.norms.values():
         activation = _render_condition(norm.activation)
-        exceptions = " and ".join(_render_condition(e) for e in norm.exceptions) if norm.exceptions else "false"
+        exceptions = (
+            " and ".join(_render_condition(e) for e in norm.exceptions)
+            if norm.exceptions
+            else "false"
+        )
         temporal_guard = _temporal_guard(norm, ir)
         formulas.append(
             "forall t ("
@@ -1692,7 +1762,9 @@ def compile_ir_to_temporal_deontic_fol(ir: LegalIRV2) -> List[str]:
     return formulas
 
 
-def _extract_compiler_deontic_target(formula: str, *, temporal: bool) -> Tuple[Optional[str], Optional[str]]:
+def _extract_compiler_deontic_target(
+    formula: str, *, temporal: bool
+) -> Tuple[Optional[str], Optional[str]]:
     if temporal:
         m = re.search(r"->\s*([OPF])\(([^,\)]+),t\)", formula)
     else:
@@ -1703,7 +1775,9 @@ def _extract_compiler_deontic_target(formula: str, *, temporal: bool) -> Tuple[O
 
 
 def _extract_activation_text(formula: str) -> Optional[str]:
-    m = re.search(r"forall t \((.+?) and (?:Within\(|By\(|After\(|Before\(|During\(|true and )", formula)
+    m = re.search(
+        r"forall t \((.+?) and (?:Within\(|By\(|After\(|Before\(|During\(|true and )", formula
+    )
     if not m:
         return None
     return m.group(1).strip()
@@ -1722,7 +1796,9 @@ def build_v2_compiler_parity_report(
 ) -> Dict[str, Any]:
     """Compare DCEC and TDFOL compiler outputs for semantic parity signals."""
     dcec_all = list(dcec_formulas if dcec_formulas is not None else compile_ir_to_dcec(ir))
-    tdfol_all = list(tdfol_formulas if tdfol_formulas is not None else compile_ir_to_temporal_deontic_fol(ir))
+    tdfol_all = list(
+        tdfol_formulas if tdfol_formulas is not None else compile_ir_to_temporal_deontic_fol(ir)
+    )
     dcec = [f for f in dcec_all if str(f).startswith("forall t ")]
     tdfol = [f for f in tdfol_all if str(f).startswith("forall t ")]
     norms = list(ir.norms.values())
@@ -1876,11 +1952,28 @@ def generate_cnl_from_ir(
     frame = ir.frames[norm.target_frame_ref]
 
     agent_ref = frame.roles.get("agent", "")
-    agent_label = ir.entities.get(agent_ref, EntityV2(id=CanonicalIdV2("ent", "x"), type_name="Agent", attrs={"label": "Agent"})).attrs.get("label", "Agent")
+    agent_label = ir.entities.get(
+        agent_ref,
+        EntityV2(id=CanonicalIdV2("ent", "x"), type_name="Agent", attrs={"label": "Agent"}),
+    ).attrs.get("label", "Agent")
     patient_ref = frame.roles.get("patient")
     recipient_ref = frame.roles.get("recipient")
-    patient_label = ir.entities.get(patient_ref, EntityV2(id=CanonicalIdV2("ent", "x"), type_name="Thing", attrs={"label": ""})).attrs.get("label", "") if patient_ref else ""
-    recipient_label = ir.entities.get(recipient_ref, EntityV2(id=CanonicalIdV2("ent", "x"), type_name="Party", attrs={"label": ""})).attrs.get("label", "") if recipient_ref else ""
+    patient_label = (
+        ir.entities.get(
+            patient_ref,
+            EntityV2(id=CanonicalIdV2("ent", "x"), type_name="Thing", attrs={"label": ""}),
+        ).attrs.get("label", "")
+        if patient_ref
+        else ""
+    )
+    recipient_label = (
+        ir.entities.get(
+            recipient_ref,
+            EntityV2(id=CanonicalIdV2("ent", "x"), type_name="Party", attrs={"label": ""}),
+        ).attrs.get("label", "")
+        if recipient_ref
+        else ""
+    )
 
     agent_label = _lexicon_lookup(overrides, f"entity:{agent_ref}", agent_label)
     if patient_ref:
@@ -1914,12 +2007,22 @@ def generate_cnl_from_ir(
         elif temporal.relation == TemporalRelationV2.BY and temporal.expr.start:
             by_word = _lexicon_lookup(overrides, "temporal:by", "by")
             phrase += f" {by_word} {temporal.expr.start}"
-        elif temporal.relation == TemporalRelationV2.DURING and temporal.expr.start and temporal.expr.end:
+        elif (
+            temporal.relation == TemporalRelationV2.DURING
+            and temporal.expr.start
+            and temporal.expr.end
+        ):
             during_word = _lexicon_lookup(overrides, "temporal:during", "during")
             to_word = _lexicon_lookup(overrides, "prep:to", "to")
             phrase += f" {during_word} {temporal.expr.start} {to_word} {temporal.expr.end}"
-        elif temporal.relation in {TemporalRelationV2.AFTER, TemporalRelationV2.BEFORE, TemporalRelationV2.DURING} and temporal.expr.start:
-            rel_word = _lexicon_lookup(overrides, f"temporal:{temporal.relation.value}", temporal.relation.value)
+        elif (
+            temporal.relation
+            in {TemporalRelationV2.AFTER, TemporalRelationV2.BEFORE, TemporalRelationV2.DURING}
+            and temporal.expr.start
+        ):
+            rel_word = _lexicon_lookup(
+                overrides, f"temporal:{temporal.relation.value}", temporal.relation.value
+            )
             phrase += f" {rel_word} {temporal.expr.start}"
 
     if not _is_unconditional_activation(norm.activation):
@@ -1948,8 +2051,7 @@ def generate_cnl_from_ir(
         if exception_clause is None:
             exception_marker = "unless"
             exception_tail = " or ".join(
-                _render_condition(condition)
-                for condition in norm.exceptions
+                _render_condition(condition) for condition in norm.exceptions
             )
         else:
             exception_marker, exception_tail = exception_clause
@@ -2059,7 +2161,10 @@ def find_violations(state: dict, time_range: Tuple[str, str]) -> dict:
         raise ValueError("state['ir'] must be a LegalIRV2 instance")
     validate_ir_v2_contract(ir, strict=True)
 
-    result = check_compliance({"ir": ir, "facts": state.get("facts", {}), "events": state.get("events", [])}, {"range": time_range})
+    result = check_compliance(
+        {"ir": ir, "facts": state.get("facts", {}), "events": state.get("events", [])},
+        {"range": time_range},
+    )
     return {
         "api": "find_violations",
         "schema_version": V2_QUERY_API_SCHEMA_VERSION,
@@ -2224,7 +2329,9 @@ def run_v2_pipeline(
         kg_ok = bool(report.get("accepted", True))
         invariant_failures = _semantic_invariant_failures(ir, proposed_ir)
         invariants_ok = not invariant_failures
-        rejected_reason_codes = list(report.get("rejection_reasons") or []) + list(invariant_failures)
+        rejected_reason_codes = list(report.get("rejection_reasons") or []) + list(
+            invariant_failures
+        )
         if kg_ok and invariants_ok:
             ir = proposed_ir
             kg_report = {
@@ -2240,7 +2347,9 @@ def run_v2_pipeline(
                 **report,
                 "applied": False,
                 "rejected": True,
-                "rejected_reason_codes": list(dict.fromkeys(rejected_reason_codes + ["kg_drift_policy_rejected"])),
+                "rejected_reason_codes": list(
+                    dict.fromkeys(rejected_reason_codes + ["kg_drift_policy_rejected"])
+                ),
                 "invariant_failures": list(invariant_failures),
                 "summary": _kg_summary(report, accepted=False),
             }

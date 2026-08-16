@@ -1,6 +1,7 @@
 """
 Test suite for core/content_sanitizer/_content_sanitizer.py converted from unittest to pytest.
 """
+
 import pytest
 from unittest.mock import MagicMock, patch
 import copy
@@ -19,7 +20,7 @@ from core.content_sanitizer import ContentSanitizer, SanitizedContent
 
 
 def make_constants_resources():
-    constants_resources = { # NOTE: Since these are constants, we can directly use them without mocking.
+    constants_resources = {  # NOTE: Since these are constants, we can directly use them without mocking.
         "dangerous_patterns": Constants.ContentSanitizer.DANGEROUS_PATTERNS_REGEX,
         "executable_extensions": Constants.ContentSanitizer.EXECUTABLE_EXTENSIONS,
         "file_size_limits_in_bytes": Constants.ContentSanitizer.FILE_SIZE_LIMITS_IN_BYTES,
@@ -47,22 +48,22 @@ def temp_dir():
 def test_files(temp_dir):
     """Create test files in temporary directory."""
     test_file_path = os.path.join(temp_dir, "test_file.txt")
-    with open(test_file_path, 'w') as f:
+    with open(test_file_path, "w") as f:
         f.write("Test content")
-    
+
     large_file_path = os.path.join(temp_dir, "large_file.txt")
-    with open(large_file_path, 'w') as f:
+    with open(large_file_path, "w") as f:
         f.write("A" * (15 * 1024 * 1024))  # 15 MB file (exceeds text limit)
-    
+
     executable_file_path = os.path.join(temp_dir, "test_script.sh")
-    with open(executable_file_path, 'w') as f:
+    with open(executable_file_path, "w") as f:
         f.write("#!/bin/sh\necho 'Hello, world!'")
 
     # Make it executable
     os.chmod(executable_file_path, 0o755)
 
     # Check if the file is executable
-    if os.name == 'nt':
+    if os.name == "nt":
         pass
     else:
         # On Unix-like systems, we can check if the file is executable
@@ -70,9 +71,9 @@ def test_files(temp_dir):
             raise PermissionError(f"File {executable_file_path} is not executable")
 
     return {
-        'test_file_path': test_file_path,
-        'large_file_path': large_file_path,
-        'executable_file_path': executable_file_path
+        "test_file_path": test_file_path,
+        "large_file_path": large_file_path,
+        "executable_file_path": executable_file_path,
     }
 
 
@@ -127,16 +128,16 @@ class TestContentSanitizer:
 
     def test_sanitize_content_with_scripts(self, content_sanitizer, test_files):
         """Test sanitizing content with scripts.
-        
+
         This test validates the content sanitization functionality of the SecurityMonitor,
         specifically addressing the "Security Effectiveness" criteria for script removal.
         It verifies that:
-        
+
         1. The security manager detects and removes potentially dangerous script tags
         2. JavaScript protocol URLs are identified and removed
         3. The sanitization process maintains the integrity of the document structure
         4. The system tracks which sanitization methods were applied to the content
-        
+
         This test directly supports the 100% prevention of code execution target by
         ensuring all script content that could potentially execute is removed from
         the processed content while preserving the valuable text content for LLM training.
@@ -156,7 +157,7 @@ class TestContentSanitizer:
         </html>
         """
         # Write the HTML content to a file
-        with open(test_files['test_file_path'], 'w') as f:
+        with open(test_files["test_file_path"], "w") as f:
             f.write(html_with_scripts)
 
         mock_content = Content(
@@ -164,18 +165,18 @@ class TestContentSanitizer:
             metadata={"format": "html"},
             sections=[{"title": "Test Page", "content": "This is a test."}],
             source_format="html",
-            source_path=test_files['test_file_path']
+            source_path=test_files["test_file_path"],
         )
-        
+
         # Sanitize content
         sanitized = content_sanitizer.sanitize(mock_content)
-        
+
         # Check that scripts were removed
         assert "<script>" not in sanitized.content.text
         assert "javascript:" not in sanitized.content.text
         assert "sanitization_applied" in sanitized.to_dict()
         assert "remove_scripts" in sanitized.sanitization_applied
-    
+
     def test_sanitize_content_with_active_content(self, content_sanitizer):
         """Test sanitizing content with active content."""
         # Create content with active content
@@ -194,23 +195,19 @@ class TestContentSanitizer:
         </body>
         </html>
         """
-        
-        content = Content(
-            text=html_with_active,
-            metadata={"format": "html"},
-            source_format="html"
-        )
-        
+
+        content = Content(text=html_with_active, metadata={"format": "html"}, source_format="html")
+
         # Sanitize content
         sanitized = content_sanitizer.sanitize(content)
-        
+
         # Check that active content was removed
         assert "<iframe" not in sanitized.content.text
         assert "<object" not in sanitized.content.text
         assert "<embed" not in sanitized.content.text
         assert "<form" not in sanitized.content.text
         assert "remove_active_content" in sanitized.sanitization_applied
-    
+
     def test_sanitize_content_with_personal_data(self, content_sanitizer):
         """Test sanitizing content with personal data."""
         # Create content with personal data
@@ -220,23 +217,21 @@ class TestContentSanitizer:
         Credit card: 4111-1111-1111-1111
         Visit our website at https://example.com
         """
-        
+
         content = Content(
-            text=text_with_personal,
-            metadata={"format": "plain"},
-            source_format="plain"
+            text=text_with_personal, metadata={"format": "plain"}, source_format="plain"
         )
-        
+
         # Sanitize content
         sanitized = content_sanitizer.sanitize(content)
-        
+
         # Check that personal data was removed
         assert "user@example.com" not in sanitized.content.text
         assert "555-123-4567" not in sanitized.content.text
         assert "123-45-6789" not in sanitized.content.text
         assert "4111-1111-1111-1111" not in sanitized.content.text
         assert "remove_personal_data" in sanitized.sanitization_applied
-    
+
     def test_sanitize_content_with_metadata(self, content_sanitizer):
         """Test sanitizing content with sensitive metadata."""
         # Create content with sensitive metadata
@@ -248,17 +243,17 @@ class TestContentSanitizer:
                     "author": "John Doe",
                     "email": "john@example.com",
                     "company": "Acme Inc.",
-                    "safe_key": "safe_value"
+                    "safe_key": "safe_value",
                 },
-                source_format="plain"
+                source_format="plain",
             )
-            
+
             # Configure security manager to remove metadata
             content_sanitizer.set_sanitization_rules({"remove_metadata": True})
-            
+
             # Sanitize content
             sanitized = content_sanitizer.sanitize(content)
-            
+
             # Check that sensitive metadata was removed
             assert "author" not in sanitized.content.metadata
             assert "email" not in sanitized.content.metadata
@@ -287,17 +282,15 @@ class TestContentSanitizer:
         """
         try:
             content = Content(
-                text=html_with_scripts,
-                metadata={"format": "html"},
-                source_format="html"
+                text=html_with_scripts, metadata={"format": "html"}, source_format="html"
             )
-            
+
             # Disable sanitization
             content_sanitizer.set_sanitization_rules({"sanitize_content": False})
-            
+
             # Sanitize content
             sanitized = content_sanitizer.sanitize(content)
-            
+
             # Content should be unchanged
             assert sanitized.content.text == html_with_scripts
             assert "sanitization_applied" in sanitized.to_dict()

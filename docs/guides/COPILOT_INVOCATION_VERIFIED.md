@@ -74,10 +74,10 @@ Our `enhanced_pr_monitor.py` uses this proven method:
 def _invoke_copilot_via_comment(self, pr, analysis, assignment_info):
     """Invoke Copilot using the proven @copilot comment method."""
     comment = self.create_copilot_assignment(pr, analysis, assignment_info)
-    
-    cmd = ['gh', 'pr', 'comment', str(pr_number), '--body', comment]
+
+    cmd = ["gh", "pr", "comment", str(pr_number), "--body", comment]
     result = self.run_command(cmd)
-    return result['success']
+    return result["success"]
 ```
 
 ### 🎛️ **Workflow Integration**

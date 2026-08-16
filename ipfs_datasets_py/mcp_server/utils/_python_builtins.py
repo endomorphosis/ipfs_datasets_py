@@ -3,10 +3,13 @@ Lazy loading of dependencies to optimize performance and reduce initial load tim
 
 Tools can access these dependencies via the `dependencies` object.
 """
-from importlib import import_module as _import_module # NOTE We call this outside of the class to avoid circular imports.
+
+from importlib import (
+    import_module as _import_module,
+)  # NOTE We call this outside of the class to avoid circular imports.
+
 
 class _PythonBuiltins:
-
     def __init__(self):
         self._cache = {
             "abc": None,
@@ -99,6 +102,7 @@ class _PythonBuiltins:
 
     def startswith(self, prefix: str) -> bool:
         import traceback
+
         print(f"startswith called with prefix: {prefix}")
         print("Call stack:")
         traceback.print_stack()
@@ -106,302 +110,303 @@ class _PythonBuiltins:
 
     @property
     def abc(self):
-        return self._load_module('abc')
+        return self._load_module("abc")
 
     @property
     def argparse(self):
-        return self._load_module('argparse')
+        return self._load_module("argparse")
 
     @property
     def array(self):
-        return self._load_module('array')
+        return self._load_module("array")
 
     @property
     def ast(self):
-        return self._load_module('ast')
+        return self._load_module("ast")
 
     @property
     def atexit(self):
-        return self._load_module('atexit')
+        return self._load_module("atexit")
 
     @property
     def base64(self):
-        return self._load_module('base64')
+        return self._load_module("base64")
 
     @property
     def bisect(self):
-        return self._load_module('bisect')
+        return self._load_module("bisect")
 
     @property
     def calendar(self):
-        return self._load_module('calendar')
+        return self._load_module("calendar")
 
     @property
     def codecs(self):
-        return self._load_module('codecs')
+        return self._load_module("codecs")
 
     @property
     def collections(self):
-        return self._load_module('collections')
+        return self._load_module("collections")
 
     @property
     def configparser(self):
-        return self._load_module('configparser')
+        return self._load_module("configparser")
 
     @property
     def contextlib(self):
-        return self._load_module('contextlib')
+        return self._load_module("contextlib")
 
     @property
     def copy(self):
-        return self._load_module('copy')
+        return self._load_module("copy")
 
     @property
     def csv(self):
-        return self._load_module('csv')
+        return self._load_module("csv")
 
     @property
     def ctypes(self):
-        return self._load_module('ctypes')
+        return self._load_module("ctypes")
 
     @property
     def datetime(self):
-        return self._load_module('datetime')
+        return self._load_module("datetime")
 
     @property
     def decimal(self):
-        return self._load_module('decimal')
+        return self._load_module("decimal")
 
     @property
     def enum(self):
-        return self._load_module('enum')
+        return self._load_module("enum")
 
     @property
     def fnmatch(self):
-        return self._load_module('fnmatch')
+        return self._load_module("fnmatch")
 
     @property
     def fractions(self):
-        return self._load_module('fractions')
+        return self._load_module("fractions")
 
     @property
     def functools(self):
-        return self._load_module('functools')
+        return self._load_module("functools")
 
     @property
     def gc(self):
-        return self._load_module('gc')
+        return self._load_module("gc")
 
     @property
     def getpass(self):
-        return self._load_module('getpass')
+        return self._load_module("getpass")
 
     @property
     def glob(self):
-        return self._load_module('glob')
+        return self._load_module("glob")
 
     @property
     def gzip(self):
-        return self._load_module('gzip')
+        return self._load_module("gzip")
 
     @property
     def hashlib(self):
-        return self._load_module('hashlib')
+        return self._load_module("hashlib")
 
     @property
     def heapq(self):
-        return self._load_module('heapq')
+        return self._load_module("heapq")
 
     @property
     def html(self):
-        return self._load_module('html')
+        return self._load_module("html")
 
     @property
     def http(self):
-        return self._load_module('http')
+        return self._load_module("http")
 
     @property
     def inspect(self):
-        return self._load_module('inspect')
+        return self._load_module("inspect")
 
     @property
     def io(self):
-        return self._load_module('io')
+        return self._load_module("io")
 
     @property
     def itertools(self):
-        return self._load_module('itertools')
+        return self._load_module("itertools")
 
     @property
     def json(self):
-        return self._load_module('json')
+        return self._load_module("json")
 
     @property
     def keyword(self):
-        return self._load_module('keyword')
+        return self._load_module("keyword")
 
     @property
     def logging(self):
-        return self._load_module('logging')
+        return self._load_module("logging")
 
     @property
     def math(self):
-        return self._load_module('math')
+        return self._load_module("math")
 
     @property
     def mmap(self):
-        return self._load_module('mmap')
+        return self._load_module("mmap")
 
     @property
     def multiprocessing(self):
-        return self._load_module('multiprocessing')
+        return self._load_module("multiprocessing")
 
     @property
     def mutex(self):
-        return self._load_module('mutex')
+        return self._load_module("mutex")
 
     @property
     def operator(self):
-        return self._load_module('operator')
+        return self._load_module("operator")
 
     @property
     def os(self):
-        return self._load_module('os')
+        return self._load_module("os")
 
     @property
     def pathlib(self):
-        return self._load_module('pathlib')
+        return self._load_module("pathlib")
 
     @property
     def pickle(self):
-        return self._load_module('pickle')
+        return self._load_module("pickle")
 
     @property
     def platform(self):
-        return self._load_module('platform')
+        return self._load_module("platform")
 
     @property
     def pprint(self):
-        return self._load_module('pprint')
+        return self._load_module("pprint")
 
     @property
     def queue(self):
-        return self._load_module('queue')
+        return self._load_module("queue")
 
     @property
     def random(self):
-        return self._load_module('random')
+        return self._load_module("random")
 
     @property
     def re(self):
-        return self._load_module('re')
+        return self._load_module("re")
 
     @property
     def readline(self):
-        return self._load_module('readline')
+        return self._load_module("readline")
 
     @property
     def reprlib(self):
-        return self._load_module('reprlib')
+        return self._load_module("reprlib")
 
     @property
     def rlcompleter(self):
-        return self._load_module('rlcompleter')
+        return self._load_module("rlcompleter")
 
     @property
     def sched(self):
-        return self._load_module('sched')
+        return self._load_module("sched")
 
     @property
     def secrets(self):
-        return self._load_module('secrets')
+        return self._load_module("secrets")
 
     @property
     def shutil(self):
-        return self._load_module('shutil')
+        return self._load_module("shutil")
 
     @property
     def socket(self):
-        return self._load_module('socket')
+        return self._load_module("socket")
 
     @property
     def sqlite3(self):
-        return self._load_module('sqlite3')
+        return self._load_module("sqlite3")
 
     @property
     def statistics(self):
-        return self._load_module('statistics')
+        return self._load_module("statistics")
 
     @property
     def string(self):
-        return self._load_module('string')
+        return self._load_module("string")
 
     @property
     def struct(self):
-        return self._load_module('struct')
+        return self._load_module("struct")
 
     @property
     def subprocess(self):
-        return self._load_module('subprocess')
+        return self._load_module("subprocess")
 
     @property
     def sys(self):
-        return self._load_module('sys')
+        return self._load_module("sys")
 
     @property
     def tarfile(self):
-        return self._load_module('tarfile')
+        return self._load_module("tarfile")
 
     @property
     def tempfile(self):
-        return self._load_module('tempfile')
+        return self._load_module("tempfile")
 
     @property
     def textwrap(self):
-        return self._load_module('textwrap')
+        return self._load_module("textwrap")
 
     @property
     def threading(self):
-        return self._load_module('threading')
+        return self._load_module("threading")
 
     @property
     def time(self):
-        return self._load_module('time')
+        return self._load_module("time")
 
     @property
     def traceback(self):
-        return self._load_module('traceback')
+        return self._load_module("traceback")
 
     @property
     def types(self):
-        return self._load_module('types')
+        return self._load_module("types")
 
     @property
     def unicodedata(self):
-        return self._load_module('unicodedata')
+        return self._load_module("unicodedata")
 
     @property
     def urllib(self):
-        return self._load_module('urllib')
+        return self._load_module("urllib")
 
     @property
     def uuid(self):
-        return self._load_module('uuid')
+        return self._load_module("uuid")
 
     @property
     def warnings(self):
-        return self._load_module('warnings')
+        return self._load_module("warnings")
 
     @property
     def weakref(self):
-        return self._load_module('weakref')
+        return self._load_module("weakref")
 
     @property
     def xml(self):
-        return self._load_module('xml')
+        return self._load_module("xml")
 
     @property
     def zipfile(self):
-        return self._load_module('zipfile')
+        return self._load_module("zipfile")
+
 
 python_builtins = _PythonBuiltins()

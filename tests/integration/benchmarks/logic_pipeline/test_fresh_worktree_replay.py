@@ -93,9 +93,7 @@ import tests.integration.benchmarks.logic_pipeline.test_reviewed_control_safety 
 ENVIRONMENT_SHA256 = hashlib.sha256(b"pinned replay environment").hexdigest()
 
 
-def _git(
-    repository: Path, *arguments: str, check: bool = True
-) -> subprocess.CompletedProcess[str]:
+def _git(repository: Path, *arguments: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["git", "-C", str(repository), *arguments],
         check=check,
@@ -114,9 +112,7 @@ def _git(
 def _marker_script(path: Path, marker: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        "#!/bin/sh\n"
-        f"printf executed > {marker.as_posix()}\n"
-        "cat\n",
+        f"#!/bin/sh\nprintf executed > {marker.as_posix()}\ncat\n",
         encoding="utf-8",
     )
     path.chmod(0o755)
@@ -151,11 +147,7 @@ def repository(tmp_path: Path) -> tuple[Path, str]:
     ):
         package.joinpath("__init__.py").write_text("", encoding="utf-8")
     shutil.copy2(
-        repository_root
-        / "ipfs_datasets_py"
-        / "logic"
-        / "hammers"
-        / "process_lifecycle.py",
+        repository_root / "ipfs_datasets_py" / "logic" / "hammers" / "process_lifecycle.py",
         hammer_package / "process_lifecycle.py",
     )
     (checkout / "source.txt").write_text("pinned source\n", encoding="utf-8")
@@ -172,9 +164,7 @@ def repository(tmp_path: Path) -> tuple[Path, str]:
     _git(checkout, "add", "--all")
     _git(checkout, "commit", "--no-gpg-sign", "-m", "pinned source")
     commit = _git(checkout, "rev-parse", "HEAD").stdout.strip()
-    (checkout / "operator-notes.txt").write_text(
-        "untracked operator work\n", encoding="utf-8"
-    )
+    (checkout / "operator-notes.txt").write_text("untracked operator work\n", encoding="utf-8")
     return checkout, commit
 
 
@@ -265,27 +255,19 @@ def _execution_receipt(
         cache_namespaces=tuple(payload["cache_namespaces"]),
         executed_job_ids=tuple(payload["executed_job_ids"]),
         complete=True,
-        receipt_sha256=hashlib.sha256(
-            canonical_json(payload).encode("utf-8")
-        ).hexdigest(),
+        receipt_sha256=hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest(),
     )
 
 
-def _source_evidence(
-    checkout: Path, commit: str, tmp_path: Path
-):
+def _source_evidence(checkout: Path, commit: str, tmp_path: Path):
     source_run_id = "authorized-holdout-source"
     source_cache = (
         "hammer-symai-spacy-leanstral/protocol-v1/"
         f"run/{source_run_id}/protocol/{'6' * 64}/"
         "variant/A0/split/holdout/cache/cold"
     )
-    paths = RunPaths.for_run(
-        source_run_id, benchmark_root=tmp_path / "source-state"
-    )
-    worktree = prepare_isolated_worktree(
-        checkout, run_paths=paths, base_revision=commit
-    )
+    paths = RunPaths.for_run(source_run_id, benchmark_root=tmp_path / "source-state")
+    worktree = prepare_isolated_worktree(checkout, run_paths=paths, base_revision=commit)
     receipt = _execution_receipt(
         run_id=source_run_id,
         source_commit=commit,
@@ -302,9 +284,7 @@ def _request(
     replay_run_id: str = "detached-replay-v2",
     script: str | None = None,
 ) -> ReplayRequest:
-    replay_cache = source_cache.replace(
-        f"/run/{source_receipt.run_id}/", f"/run/{replay_run_id}/"
-    )
+    replay_cache = source_cache.replace(f"/run/{source_receipt.run_id}/", f"/run/{replay_run_id}/")
     if script is None:
         script = (
             "import json, os; from pathlib import Path; "
@@ -333,9 +313,7 @@ def _request(
 def _active_snapshot(checkout: Path) -> tuple[str, str, bytes]:
     return (
         _git(checkout, "rev-parse", "HEAD").stdout,
-        _git(
-            checkout, "status", "--porcelain=v1", "--untracked-files=all"
-        ).stdout,
+        _git(checkout, "status", "--porcelain=v1", "--untracked-files=all").stdout,
         (checkout / "operator-notes.txt").read_bytes(),
     )
 
@@ -344,9 +322,7 @@ def test_replay_runs_in_fresh_detached_worktree_and_namespaces(
     repository: tuple[Path, str], tmp_path: Path
 ) -> None:
     checkout, commit = repository
-    source, source_worktree, source_cache = _source_evidence(
-        checkout, commit, tmp_path
-    )
+    source, source_worktree, source_cache = _source_evidence(checkout, commit, tmp_path)
     request = _request(source, source_worktree, source_cache)
     before = _active_snapshot(checkout)
     benchmark_root = tmp_path / "replay-state"
@@ -383,18 +359,12 @@ def test_replay_runs_in_fresh_detached_worktree_and_namespaces(
     assert ReplayRequest.from_dict(request.to_dict()) == request
     assert ReplayReceipt.from_dict(receipt.to_dict()) == receipt
     assert (
-        benchmark_root
-        / request.replay_run_id
-        / "receipts"
-        / "detached-replay-receipt.json"
+        benchmark_root / request.replay_run_id / "receipts" / "detached-replay-receipt.json"
     ).is_file()
     evidence = json.loads(
-        (
-            benchmark_root
-            / request.replay_run_id
-            / "results"
-            / "replay-evidence.json"
-        ).read_text(encoding="utf-8")
+        (benchmark_root / request.replay_run_id / "results" / "replay-evidence.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert evidence == {
         "cache": request.replay_cache_namespace,
@@ -414,9 +384,7 @@ def test_environment_drift_fails_before_replay_state_creation(
     actual_environment: str,
 ) -> None:
     checkout, commit = repository
-    source, source_worktree, source_cache = _source_evidence(
-        checkout, commit, tmp_path
-    )
+    source, source_worktree, source_cache = _source_evidence(checkout, commit, tmp_path)
     request = _request(source, source_worktree, source_cache)
     replay_root = tmp_path / "replay-state"
     before = _active_snapshot(checkout)
@@ -439,22 +407,14 @@ def test_same_run_process_or_cache_namespace_is_rejected(
     repository: tuple[Path, str], tmp_path: Path
 ) -> None:
     checkout, commit = repository
-    source, source_worktree, source_cache = _source_evidence(
-        checkout, commit, tmp_path
-    )
+    source, source_worktree, source_cache = _source_evidence(checkout, commit, tmp_path)
     base = _request(source, source_worktree, source_cache).to_dict()
 
     same_run = dict(base)
     same_run["replay_run_id"] = source.run_id
     same_run.pop("request_sha256")
     with pytest.raises(ReplayError, match="fresh run"):
-        ReplayRequest.create(
-            **{
-                key: value
-                for key, value in same_run.items()
-                if key != "schema"
-            }
-        )
+        ReplayRequest.create(**{key: value for key, value in same_run.items() if key != "schema"})
 
     with pytest.raises(ReplayError, match="fresh process"):
         ReplayRequest.create(
@@ -493,9 +453,7 @@ def test_stale_source_worktree_and_reused_replay_run_fail_closed(
     repository: tuple[Path, str], tmp_path: Path
 ) -> None:
     checkout, commit = repository
-    source, source_worktree, source_cache = _source_evidence(
-        checkout, commit, tmp_path
-    )
+    source, source_worktree, source_cache = _source_evidence(checkout, commit, tmp_path)
     request = _request(source, source_worktree, source_cache)
     replay_root = tmp_path / "replay-state"
 
@@ -583,10 +541,7 @@ def test_replay_rejects_source_mutation_after_command(
         )
 
     assert not (
-        replay_root
-        / request.replay_run_id
-        / "receipts"
-        / "detached-replay-receipt.json"
+        replay_root / request.replay_run_id / "receipts" / "detached-replay-receipt.json"
     ).exists()
 
 
@@ -630,37 +585,39 @@ def test_replay_reaps_and_rejects_lingering_descendant(
         )
 
     evidence = json.loads(
-        (
-            replay_root
-            / request.replay_run_id
-            / "results"
-            / "replay-evidence.json"
-        ).read_text(encoding="utf-8")
+        (replay_root / request.replay_run_id / "results" / "replay-evidence.json").read_text(
+            encoding="utf-8"
+        )
     )
     child_stat = Path("/proc") / str(evidence["child_pid"]) / "stat"
     deadline = time.monotonic() + 2
     while child_stat.exists() and time.monotonic() < deadline:
         try:
-            state = child_stat.read_text(encoding="utf-8").rsplit(
-                ") ",
-                maxsplit=1,
-            )[1].split()[0]
+            state = (
+                child_stat.read_text(encoding="utf-8")
+                .rsplit(
+                    ") ",
+                    maxsplit=1,
+                )[1]
+                .split()[0]
+            )
         except (IndexError, OSError):
             break
         if state == "Z":
             break
         time.sleep(0.01)
     if child_stat.exists():
-        state = child_stat.read_text(encoding="utf-8").rsplit(
-            ") ",
-            maxsplit=1,
-        )[1].split()[0]
+        state = (
+            child_stat.read_text(encoding="utf-8")
+            .rsplit(
+                ") ",
+                maxsplit=1,
+            )[1]
+            .split()[0]
+        )
         assert state == "Z"
     assert not (
-        replay_root
-        / request.replay_run_id
-        / "receipts"
-        / "detached-replay-receipt.json"
+        replay_root / request.replay_run_id / "receipts" / "detached-replay-receipt.json"
     ).exists()
 
 
@@ -757,9 +714,7 @@ def test_submodule_materialization_disables_source_and_template_hooks(
         ).stdout.strip()
     )
     _marker_script(
-        source_submodule_git_dir
-        / "hooks"
-        / "post-checkout",
+        source_submodule_git_dir / "hooks" / "post-checkout",
         source_marker,
     )
     template_marker = tmp_path / "template-hook-marker"
@@ -789,10 +744,7 @@ def test_submodule_materialization_disables_source_and_template_hooks(
     )
 
     materialized = worktree.worktree_root / "vendor" / "dependency"
-    assert (
-        _git(materialized, "rev-parse", "HEAD").stdout.strip()
-        == pinned_dependency
-    )
+    assert _git(materialized, "rev-parse", "HEAD").stdout.strip() == pinned_dependency
     assert not source_marker.exists()
     assert not template_marker.exists()
 
@@ -835,9 +787,7 @@ def test_submodule_materialization_never_falls_back_to_remote_helper(
     helper = tmp_path / "malicious-bin" / "git-remote-adversarial"
     helper.parent.mkdir()
     helper.write_text(
-        "#!/bin/sh\n"
-        f"printf executed > {marker.as_posix()}\n"
-        "exit 1\n",
+        f"#!/bin/sh\nprintf executed > {marker.as_posix()}\nexit 1\n",
         encoding="utf-8",
     )
     helper.chmod(0o755)
@@ -858,9 +808,7 @@ def test_submodule_materialization_never_falls_back_to_remote_helper(
         )
 
     assert not marker.exists()
-    assert not (
-        worktree.worktree_root / "vendor" / "dependency" / "dependency.txt"
-    ).exists()
+    assert not (worktree.worktree_root / "vendor" / "dependency" / "dependency.txt").exists()
 
 
 def test_submodule_materialization_rejects_ext_url_rewrite(
@@ -878,10 +826,7 @@ def test_submodule_materialization_rejects_ext_url_rewrite(
     )
     gitlinks = _capture_benchmark_bounded_gitlinks(checkout, commit)
     marker = tmp_path / "remote-ext-marker"
-    rewrite = (
-        "ext::sh -c 'printf executed > "
-        f"{marker.as_posix()}'"
-    )
+    rewrite = f"ext::sh -c 'printf executed > {marker.as_posix()}'"
     _git(
         worktree.worktree_root,
         "config",
@@ -906,9 +851,7 @@ def test_submodule_materialization_rejects_ext_url_rewrite(
         )
 
     assert not marker.exists()
-    assert not (
-        worktree.worktree_root / "vendor" / "dependency" / "dependency.txt"
-    ).exists()
+    assert not (worktree.worktree_root / "vendor" / "dependency" / "dependency.txt").exists()
 
 
 def test_replay_materializes_exact_pinned_local_gitlinks(
@@ -922,9 +865,7 @@ def test_replay_materializes_exact_pinned_local_gitlinks(
         tmp_path,
     )
     source_dependency = checkout / "vendor" / "dependency"
-    replay_source_dependency = (
-        source_worktree.worktree_root / "vendor" / "dependency"
-    )
+    replay_source_dependency = source_worktree.worktree_root / "vendor" / "dependency"
     _git(
         source_worktree.worktree_root,
         "-c",
@@ -939,10 +880,7 @@ def test_replay_materializes_exact_pinned_local_gitlinks(
         "--",
         "vendor/dependency",
     )
-    assert (
-        _git(replay_source_dependency, "rev-parse", "HEAD").stdout.strip()
-        == pinned_dependency
-    )
+    assert _git(replay_source_dependency, "rev-parse", "HEAD").stdout.strip() == pinned_dependency
 
     _git(source_dependency, "config", "user.name", "Replay Tests")
     _git(
@@ -963,10 +901,7 @@ def test_replay_materializes_exact_pinned_local_gitlinks(
         "-m",
         "advance local dependency",
     )
-    assert (
-        _git(source_dependency, "rev-parse", "HEAD").stdout.strip()
-        != pinned_dependency
-    )
+    assert _git(source_dependency, "rev-parse", "HEAD").stdout.strip() != pinned_dependency
 
     request = _request(
         source,
@@ -985,19 +920,11 @@ def test_replay_materializes_exact_pinned_local_gitlinks(
 
     materialized = worktree.worktree_root / "vendor" / "dependency"
     assert receipt.replay_worktree_receipt_sha256 == worktree.sha256
-    assert materialized.joinpath("dependency.txt").read_text(
-        encoding="utf-8"
-    ) == "pinned dependency\n"
     assert (
-        stat.S_IMODE(
-            materialized.joinpath("dependency.txt").lstat().st_mode
-        )
-        & 0o022
-        == 0
+        materialized.joinpath("dependency.txt").read_text(encoding="utf-8") == "pinned dependency\n"
     )
-    assert _git(materialized, "rev-parse", "HEAD").stdout.strip() == (
-        pinned_dependency
-    )
+    assert stat.S_IMODE(materialized.joinpath("dependency.txt").lstat().st_mode) & 0o022 == 0
+    assert _git(materialized, "rev-parse", "HEAD").stdout.strip() == (pinned_dependency)
     assert (
         _git(
             materialized,
@@ -1044,10 +971,7 @@ def test_replay_materializes_exact_pinned_local_gitlinks(
             actual_environment_sha256=ENVIRONMENT_SHA256,
         )
     assert not (
-        mutating_root
-        / mutating_request.replay_run_id
-        / "receipts"
-        / "detached-replay-receipt.json"
+        mutating_root / mutating_request.replay_run_id / "receipts" / "detached-replay-receipt.json"
     ).exists()
 
 
@@ -1069,9 +993,7 @@ def _g240_verified_runtime(
         )[0]
         kernel = runtime.NativeKernelRunner(
             "/bin/true",
-            template.semantic_frontend[
-                0
-            ].provenance.environment_sha256,
+            template.semantic_frontend[0].provenance.environment_sha256,
             root / run_id / "tracked-executor-kernel",
             timeout_seconds=1.0,
         )
@@ -1153,35 +1075,19 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         seed=89,
         variant_ids=(source_result.variant_id,),
         cache_modes=(source_result.cache_mode,),
-        environment_sha256=(
-            source_result.stages[0].provenance.environment_sha256
-        ),
+        environment_sha256=(source_result.stages[0].provenance.environment_sha256),
     )
     gitlinks = _capture_benchmark_bounded_gitlinks(checkout, commit)
-    namespace_authority = cid_for_dag_json(
-        {"authority": "synthetic-g240-namespace-policy"}
-    )
-    source_executor = cid_for_dag_json(
-        {"authority": "synthetic-g240-source-executor"}
-    )
-    source_observer = cid_for_dag_json(
-        {"authority": "synthetic-g240-source-observer"}
-    )
-    replay_executor = cid_for_dag_json(
-        {"authority": "synthetic-g240-replay-executor"}
-    )
-    replay_validator = cid_for_dag_json(
-        {"authority": "synthetic-g240-replay-namespace-observer"}
-    )
+    namespace_authority = cid_for_dag_json({"authority": "synthetic-g240-namespace-policy"})
+    source_executor = cid_for_dag_json({"authority": "synthetic-g240-source-executor"})
+    source_observer = cid_for_dag_json({"authority": "synthetic-g240-source-observer"})
+    replay_executor = cid_for_dag_json({"authority": "synthetic-g240-replay-executor"})
+    replay_validator = cid_for_dag_json({"authority": "synthetic-g240-replay-namespace-observer"})
     orchestration_observer = cid_for_dag_json(
         {"authority": "synthetic-g240-orchestration-observer"}
     )
-    replay_meter = cid_for_dag_json(
-        {"authority": "synthetic-g240-replay-meter"}
-    )
-    environment_cid = cid_for_dag_json(
-        {"schema": "synthetic-g240-environment.v1"}
-    )
+    replay_meter = cid_for_dag_json({"authority": "synthetic-g240-replay-meter"})
+    environment_cid = cid_for_dag_json({"schema": "synthetic-g240-environment.v1"})
     executor_contract = build_g240_source_executor_contract_v2(
         (
             "python",
@@ -1198,9 +1104,7 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         source_commit_cid=g238_git_commit_cid(commit),
         recursive_gitlinks_cid=g240_recursive_gitlinks_cid(gitlinks),
         environment_cid=environment_cid,
-        runtime_orchestration_policy_cid=str(
-            executor_contract.contract_cid
-        ),
+        runtime_orchestration_policy_cid=str(executor_contract.contract_cid),
         namespace_authority_cid=namespace_authority,
     )
     source_namespace_receipt = G240RuntimeNamespaceReceiptV2.create(
@@ -1225,29 +1129,19 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         source_run_id=source_run_id,
         source_commit=commit,
         policy_cid=str(policy.policy_cid),
-        runtime_orchestration_policy_cid=str(
-            executor_contract.contract_cid
-        ),
+        runtime_orchestration_policy_cid=str(executor_contract.contract_cid),
         plan=plan,
         job=plan.jobs[0],
-        coordinate=policy.job_map[
-            (policy.plan_cids[0], plan.jobs[0].job_id)
-        ],
+        coordinate=policy.job_map[(policy.plan_cids[0], plan.jobs[0].job_id)],
         environment_cid=environment_cid,
         environment_sha256=str(plan.environment_sha256),
-        semantic_result=CaseResultRecord.from_stages(
-            source_runtime.semantic_frontend
-        ),
+        semantic_result=CaseResultRecord.from_stages(source_runtime.semantic_frontend),
         compiler_exposure=source_runtime.compiler_exposure,
         source_text=source_runtime.source_text,
         proof_context=source_runtime.proof_context,
         adapter_factory_id=G240_SYNTHETIC_ADAPTER_FACTORY_ID_V2,
-        adapter_configuration=(
-            build_g240_synthetic_adapter_configuration_v2()
-        ),
-        _test_only_synthetic_capability=(
-            _G240_SYNTHETIC_TEST_CAPABILITY_V2
-        ),
+        adapter_configuration=(build_g240_synthetic_adapter_configuration_v2()),
+        _test_only_synthetic_capability=(_G240_SYNTHETIC_TEST_CAPABILITY_V2),
     )
     replay_launch = g240_replay_namespace_request_v2(
         source_policy=policy,
@@ -1257,27 +1151,14 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
     replay_execution_request = G240ExecutionRequestV2.create_replay(
         source_execution_request,
         replay_run_id=replay_run_id,
-        replay_process_namespace_cid=str(
-            replay_launch["replay_process_namespace_cid"]
-        ),
-        replay_state_namespace_cid=str(
-            replay_launch["replay_state_namespace_cid"]
-        ),
-        replay_output_namespace_cid=str(
-            replay_launch["replay_output_namespace_cid"]
-        ),
-        replay_cache_namespace_cids=(
-            replay_launch["replay_cache_namespace_cids"]
-        ),
+        replay_process_namespace_cid=str(replay_launch["replay_process_namespace_cid"]),
+        replay_state_namespace_cid=str(replay_launch["replay_state_namespace_cid"]),
+        replay_output_namespace_cid=str(replay_launch["replay_output_namespace_cid"]),
+        replay_cache_namespace_cids=(replay_launch["replay_cache_namespace_cids"]),
         source_runtime_evidence=source_runtime,
-        _test_only_synthetic_capability=(
-            _G240_SYNTHETIC_TEST_CAPABILITY_V2
-        ),
+        _test_only_synthetic_capability=(_G240_SYNTHETIC_TEST_CAPABILITY_V2),
     )
-    assert (
-        replay_execution_request.source_runtime_evidence_cid
-        == source_runtime.receipt_cid
-    )
+    assert replay_execution_request.source_runtime_evidence_cid == source_runtime.receipt_cid
     source_paths = RunPaths.for_run(
         source_run_id,
         benchmark_root=tmp_path / "g240-source-worktree-state",
@@ -1310,13 +1191,9 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         replay_namespace_observer_identity_cid=replay_validator,
         orchestration_observer_identity_cid=orchestration_observer,
         timeout_seconds=20,
-        _test_only_synthetic_capability=(
-            _G240_SYNTHETIC_TEST_CAPABILITY_V2
-        ),
+        _test_only_synthetic_capability=(_G240_SYNTHETIC_TEST_CAPABILITY_V2),
     )
-    replay_payload = (
-        canonical_dag_json_bytes(restored_runtime.to_dict()) + b"\n"
-    )
+    replay_payload = canonical_dag_json_bytes(restored_runtime.to_dict()) + b"\n"
     private_sources = G240PrivateReplayValidationSourcesV2(
         source_policy=policy,
         executor_contract=executor_contract,
@@ -1337,19 +1214,12 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
     )
 
     assert restored_runtime.case_result.run_id == replay_run_id
-    assert (
-        replay_request.execution_request_cid
-        == replay_execution_request.request_cid
-    )
+    assert replay_request.execution_request_cid == replay_execution_request.request_cid
     replay_runtime = restored_runtime
     assert restored[3].receipt_cid == orchestration_receipt.receipt_cid
-    assert (
-        orchestration_receipt.runtime_orchestration_policy_cid
-        == executor_contract.contract_cid
-    )
-    assert (
-        Path(replay_receipt._process_observation.arguments[0])
-        == Path(executor_contract.interpreter_path)
+    assert orchestration_receipt.runtime_orchestration_policy_cid == executor_contract.contract_cid
+    assert Path(replay_receipt._process_observation.arguments[0]) == Path(
+        executor_contract.interpreter_path
     )
     public_replay = json.dumps(
         replay_receipt.to_dict(),
@@ -1361,14 +1231,10 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
 
     foreign_source_runtime_request = replace(
         replay_execution_request,
-        source_runtime_evidence_cid=cid_for_dag_json(
-            {"runtime": "foreign-source-evidence"}
-        ),
+        source_runtime_evidence_cid=cid_for_dag_json({"runtime": "foreign-source-evidence"}),
         request_cid=None,
     )
-    foreign_source_runtime_root = (
-        tmp_path / "g240-foreign-source-runtime-state"
-    )
+    foreign_source_runtime_root = tmp_path / "g240-foreign-source-runtime-state"
     with pytest.raises(
         ReplayError,
         match="source/replay execution request differs",
@@ -1388,13 +1254,9 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
             replay_namespace_observer_identity_cid=replay_validator,
             orchestration_observer_identity_cid=orchestration_observer,
             timeout_seconds=20,
-            _test_only_synthetic_capability=(
-                _G240_SYNTHETIC_TEST_CAPABILITY_V2
-            ),
+            _test_only_synthetic_capability=(_G240_SYNTHETIC_TEST_CAPABILITY_V2),
         )
-    assert not (
-        foreign_source_runtime_root / replay_run_id
-    ).exists()
+    assert not (foreign_source_runtime_root / replay_run_id).exists()
 
     with pytest.raises(
         RuntimeNamespaceProvenanceError,
@@ -1403,20 +1265,14 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         validate_g240_private_replay_sources_v2(
             replace(
                 private_sources,
-                replay_receipt=ReplayReceipt.from_dict(
-                    replay_receipt.to_dict()
-                ),
+                replay_receipt=ReplayReceipt.from_dict(replay_receipt.to_dict()),
             ),
             source_runtime_evidence=source_runtime,
             replay_runtime_evidence=restored_runtime,
         )
+    assert orchestration_receipt.command_cid == executor_contract.command_template_cid
     assert (
-        orchestration_receipt.command_cid
-        == executor_contract.command_template_cid
-    )
-    assert (
-        orchestration_receipt.confinement_profile_cid
-        == G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
+        orchestration_receipt.confinement_profile_cid == G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
     )
     assert orchestration_receipt.synthetic_test_only is True
     assert orchestration_receipt.runtime_preflight_cid is not None
@@ -1424,18 +1280,16 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
     assert orchestration_receipt.landlock_receipt_cid is None
     assert orchestration_receipt.landlock_receipt_payload_cid is None
     assert replay_request.command == executor_contract.command_template
-    assert replay_request.source_execution_receipt_sha256 == hashlib.sha256(
-        canonical_json(source_namespace_receipt.to_dict()).encode("utf-8")
-    ).hexdigest()
     assert (
-        replay_receipt.process_namespace
-        == replay_namespace_receipt.replay_process_namespace_cid
+        replay_request.source_execution_receipt_sha256
+        == hashlib.sha256(
+            canonical_json(source_namespace_receipt.to_dict()).encode("utf-8")
+        ).hexdigest()
     )
+    assert replay_receipt.process_namespace == replay_namespace_receipt.replay_process_namespace_cid
     assert replay_receipt.cache_namespace.endswith("/cache/warm")
     assert (
-        g240_cache_namespace_set_cid(
-            replay_namespace_receipt.replay_cache_namespace_cids
-        )
+        g240_cache_namespace_set_cid(replay_namespace_receipt.replay_cache_namespace_cids)
         in replay_receipt.cache_namespace
     )
     assert replay_worktree.detached is True
@@ -1444,9 +1298,7 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
     source_resource = _g240_resource_receipt(
         source_runtime,
         producer_identity_cid=source_executor,
-        meter_identity_cid=cid_for_dag_json(
-            {"authority": "synthetic-g240-source-meter"}
-        ),
+        meter_identity_cid=cid_for_dag_json({"authority": "synthetic-g240-source-meter"}),
         validator_identity_cid=cid_for_dag_json(
             {"authority": "synthetic-g240-source-resource-validator"}
         ),
@@ -1459,9 +1311,7 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
     )
     source_record = G238ReplaySourceRecordV2.create(
         runtime_evidence=source_runtime,
-        semantic_observation=G238SemanticObservationV2.create(
-            source_runtime
-        ),
+        semantic_observation=G238SemanticObservationV2.create(source_runtime),
         resource_receipt=source_resource,
     )
     source_index = G238ReplaySourceIndexV2.create(
@@ -1469,18 +1319,10 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         source_commit=commit,
         recursive_gitlinks_cid=policy.recursive_gitlinks_cid,
         environment_cid=policy.environment_cid,
-        route_manifest_cid=cid_for_dag_json(
-            {"schema": "synthetic-g240-routes.v1"}
-        ),
-        case_index_cid=cid_for_dag_json(
-            {"schema": "synthetic-g240-cases.v1"}
-        ),
-        run_plan_cid=cid_for_dag_json(
-            {"schema": "synthetic-g240-run-plan.v1"}
-        ),
-        source_worktree_cid=g240_worktree_safety_projection_cid(
-            source_worktree
-        ),
+        route_manifest_cid=cid_for_dag_json({"schema": "synthetic-g240-routes.v1"}),
+        case_index_cid=cid_for_dag_json({"schema": "synthetic-g240-cases.v1"}),
+        run_plan_cid=cid_for_dag_json({"schema": "synthetic-g240-run-plan.v1"}),
+        source_worktree_cid=g240_worktree_safety_projection_cid(source_worktree),
         source_executor_authority_cid=source_executor,
         records=(source_record,),
     )
@@ -1488,41 +1330,25 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         source_index=source_index,
         source_record=source_record,
         replay_run_id=replay_run_id,
-        replay_worktree_cid=(
-            replay_namespace_receipt.replay_worktree_cid
-        ),
-        source_namespace_receipt_cid=(
-            source_namespace_receipt.receipt_cid
-        ),
-        source_process_namespace_cid=(
-            source_namespace_receipt.process_namespace_cid
-        ),
-        source_state_namespace_cid=(
-            source_namespace_receipt.state_namespace_cid
-        ),
+        replay_worktree_cid=(replay_namespace_receipt.replay_worktree_cid),
+        source_namespace_receipt_cid=(source_namespace_receipt.receipt_cid),
+        source_process_namespace_cid=(source_namespace_receipt.process_namespace_cid),
+        source_state_namespace_cid=(source_namespace_receipt.state_namespace_cid),
         source_cache_namespace_cid=g240_cache_namespace_set_cid(
             source_namespace_receipt.cache_namespace_cids
         ),
-        replay_process_namespace_cid=(
-            replay_namespace_receipt.replay_process_namespace_cid
-        ),
-        replay_state_namespace_cid=(
-            replay_namespace_receipt.replay_state_namespace_cid
-        ),
+        replay_process_namespace_cid=(replay_namespace_receipt.replay_process_namespace_cid),
+        replay_state_namespace_cid=(replay_namespace_receipt.replay_state_namespace_cid),
         replay_cache_namespace_cid=g240_cache_namespace_set_cid(
             replay_namespace_receipt.replay_cache_namespace_cids
         ),
         replay_executor_authority_cid=replay_executor,
         replay_validator_authority_cid=replay_validator,
         replay_runtime_evidence=replay_runtime,
-        replay_semantic_observation=G238SemanticObservationV2.create(
-            replay_runtime
-        ),
+        replay_semantic_observation=G238SemanticObservationV2.create(replay_runtime),
         replay_resource_receipt=replay_resource,
     )
-    operational_sources = {
-        source_record.record_cid: private_sources
-    }
+    operational_sources = {source_record.record_cid: private_sources}
     gate = build_g238_detached_replay_gate_v2(
         source_index,
         (detached_receipt,),
@@ -1532,12 +1358,8 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
 
     assert gate["passed"] is True
     assert gate["failure_codes"] == []
-    assert gate["validated_namespace_receipt_cids"] == [
-        replay_namespace_receipt.receipt_cid
-    ]
-    assert gate["validated_orchestration_receipt_cids"] == [
-        orchestration_receipt.receipt_cid
-    ]
+    assert gate["validated_namespace_receipt_cids"] == [replay_namespace_receipt.receipt_cid]
+    assert gate["validated_orchestration_receipt_cids"] == [orchestration_receipt.receipt_cid]
     assert (
         validate_g238_detached_replay_gate_v2(
             gate,
@@ -1550,21 +1372,13 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
     )
 
     forged_source_namespace = detached_receipt.to_dict()
-    forged_source_namespace["source_process_namespace_cid"] = (
-        cid_for_dag_json(
-            {"namespace": "copied-source-process-claim"}
-        )
+    forged_source_namespace["source_process_namespace_cid"] = cid_for_dag_json(
+        {"namespace": "copied-source-process-claim"}
     )
     forged_source_namespace["receipt_cid"] = cid_for_dag_json(
-        {
-            key: value
-            for key, value in forged_source_namespace.items()
-            if key != "receipt_cid"
-        }
+        {key: value for key, value in forged_source_namespace.items() if key != "receipt_cid"}
     )
-    forged_source_receipt = G238DetachedReplayReceiptV2.from_dict(
-        forged_source_namespace
-    )
+    forged_source_receipt = G238DetachedReplayReceiptV2.from_dict(forged_source_namespace)
     forged_source_gate = build_g238_detached_replay_gate_v2(
         source_index,
         (forged_source_receipt,),
@@ -1572,30 +1386,18 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         operational_replay_sources=operational_sources,
     )
     assert forged_source_gate["passed"] is False
-    assert "operational_replay_not_source_recomputed" in (
-        forged_source_gate["failure_codes"]
-    )
+    assert "operational_replay_not_source_recomputed" in (forged_source_gate["failure_codes"])
 
     rebased_request = ReplayRequest.create(
         source_run_id=replay_request.source_run_id,
         replay_run_id=replay_request.replay_run_id,
         source_commit=replay_request.source_commit,
         environment_sha256=replay_request.environment_sha256,
-        source_execution_receipt_sha256=(
-            replay_request.source_execution_receipt_sha256
-        ),
-        source_worktree_receipt_sha256=(
-            replay_request.source_worktree_receipt_sha256
-        ),
-        source_process_namespace=(
-            replay_request.source_process_namespace
-        ),
-        replay_process_namespace=cid_for_dag_json(
-            {"namespace": "caller-rebased-process"}
-        ),
-        source_cache_namespaces=(
-            replay_request.source_cache_namespaces
-        ),
+        source_execution_receipt_sha256=(replay_request.source_execution_receipt_sha256),
+        source_worktree_receipt_sha256=(replay_request.source_worktree_receipt_sha256),
+        source_process_namespace=(replay_request.source_process_namespace),
+        replay_process_namespace=cid_for_dag_json({"namespace": "caller-rebased-process"}),
+        source_cache_namespaces=(replay_request.source_cache_namespaces),
         replay_cache_namespace=replay_request.replay_cache_namespace,
         command=replay_request.command,
         evidence_relative_path=replay_request.evidence_relative_path,
@@ -1609,14 +1411,10 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         source_index,
         (detached_receipt,),
         validator_authority_cid=replay_validator,
-        operational_replay_sources={
-            source_record.record_cid: rebased_sources
-        },
+        operational_replay_sources={source_record.record_cid: rebased_sources},
     )
     assert rebased_gate["passed"] is False
-    assert "operational_replay_not_source_recomputed" in (
-        rebased_gate["failure_codes"]
-    )
+    assert "operational_replay_not_source_recomputed" in (rebased_gate["failure_codes"])
     forged_source_request = ReplayRequest.create(
         source_run_id=replay_request.source_run_id,
         replay_run_id=replay_request.replay_run_id,
@@ -1625,18 +1423,10 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         source_execution_receipt_sha256=hashlib.sha256(
             b"copied source namespace claim"
         ).hexdigest(),
-        source_worktree_receipt_sha256=(
-            replay_request.source_worktree_receipt_sha256
-        ),
-        source_process_namespace=(
-            replay_request.source_process_namespace
-        ),
-        replay_process_namespace=(
-            replay_request.replay_process_namespace
-        ),
-        source_cache_namespaces=(
-            replay_request.source_cache_namespaces
-        ),
+        source_worktree_receipt_sha256=(replay_request.source_worktree_receipt_sha256),
+        source_process_namespace=(replay_request.source_process_namespace),
+        replay_process_namespace=(replay_request.replay_process_namespace),
+        source_cache_namespaces=(replay_request.source_cache_namespaces),
         replay_cache_namespace=replay_request.replay_cache_namespace,
         command=replay_request.command,
         evidence_relative_path=replay_request.evidence_relative_path,
@@ -1652,9 +1442,7 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
             replay_runtime_evidence=replay_runtime,
         )
 
-    foreign_producer = cid_for_dag_json(
-        {"authority": "synthetic-foreign-resource-producer"}
-    )
+    foreign_producer = cid_for_dag_json({"authority": "synthetic-foreign-resource-producer"})
     foreign_resource = _g240_resource_receipt(
         replay_runtime,
         producer_identity_cid=foreign_producer,
@@ -1665,36 +1453,22 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         source_index=source_index,
         source_record=source_record,
         replay_run_id=replay_run_id,
-        replay_worktree_cid=(
-            replay_namespace_receipt.replay_worktree_cid
-        ),
-        source_namespace_receipt_cid=(
-            source_namespace_receipt.receipt_cid
-        ),
-        source_process_namespace_cid=(
-            source_namespace_receipt.process_namespace_cid
-        ),
-        source_state_namespace_cid=(
-            source_namespace_receipt.state_namespace_cid
-        ),
+        replay_worktree_cid=(replay_namespace_receipt.replay_worktree_cid),
+        source_namespace_receipt_cid=(source_namespace_receipt.receipt_cid),
+        source_process_namespace_cid=(source_namespace_receipt.process_namespace_cid),
+        source_state_namespace_cid=(source_namespace_receipt.state_namespace_cid),
         source_cache_namespace_cid=g240_cache_namespace_set_cid(
             source_namespace_receipt.cache_namespace_cids
         ),
-        replay_process_namespace_cid=(
-            replay_namespace_receipt.replay_process_namespace_cid
-        ),
-        replay_state_namespace_cid=(
-            replay_namespace_receipt.replay_state_namespace_cid
-        ),
+        replay_process_namespace_cid=(replay_namespace_receipt.replay_process_namespace_cid),
+        replay_state_namespace_cid=(replay_namespace_receipt.replay_state_namespace_cid),
         replay_cache_namespace_cid=g240_cache_namespace_set_cid(
             replay_namespace_receipt.replay_cache_namespace_cids
         ),
         replay_executor_authority_cid=replay_executor,
         replay_validator_authority_cid=replay_validator,
         replay_runtime_evidence=replay_runtime,
-        replay_semantic_observation=G238SemanticObservationV2.create(
-            replay_runtime
-        ),
+        replay_semantic_observation=G238SemanticObservationV2.create(replay_runtime),
         replay_resource_receipt=foreign_resource,
     )
     authority_gate = build_g238_detached_replay_gate_v2(
@@ -1704,9 +1478,7 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
         operational_replay_sources=operational_sources,
     )
     assert authority_gate["passed"] is False
-    assert "operational_replay_not_source_recomputed" in (
-        authority_gate["failure_codes"]
-    )
+    assert "operational_replay_not_source_recomputed" in (authority_gate["failure_codes"])
 
     foreign_contract = build_g240_source_executor_contract_v2(
         ("python",),
@@ -1733,14 +1505,10 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
             benchmark_root=foreign_contract_root,
             replay_executor_identity_cid=replay_executor,
             replay_namespace_observer_identity_cid=replay_validator,
-            orchestration_observer_identity_cid=(
-                orchestration_observer
-            ),
+            orchestration_observer_identity_cid=(orchestration_observer),
             timeout_seconds=20,
         )
-    assert not (
-        foreign_contract_root / "g240-foreign-contract-replay"
-    ).exists()
+    assert not (foreign_contract_root / "g240-foreign-contract-replay").exists()
     with pytest.raises(
         RuntimeNamespaceProvenanceError,
         match="private replay sources failed typed validation",
@@ -1772,21 +1540,15 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
             benchmark_root=reserved_root,
             replay_executor_identity_cid=replay_executor,
             replay_namespace_observer_identity_cid=replay_validator,
-            orchestration_observer_identity_cid=(
-                orchestration_observer
-            ),
+            orchestration_observer_identity_cid=(orchestration_observer),
             environment={"HSSL_G240_STATE_PATH": "/caller/override"},
             timeout_seconds=20,
-            _test_only_synthetic_capability=(
-                _G240_SYNTHETIC_TEST_CAPABILITY_V2
-            ),
+            _test_only_synthetic_capability=(_G240_SYNTHETIC_TEST_CAPABILITY_V2),
         )
     assert not (reserved_root / "g240-reserved-replay").exists()
 
     for key in ("PATH", "PYTHONPATH", "PYTHONHOME"):
-        interpreter_root = (
-            tmp_path / f"g240-replay-{key.lower()}-override"
-        )
+        interpreter_root = tmp_path / f"g240-replay-{key.lower()}-override"
         with pytest.raises(
             ReplayError,
             match="cannot override G240 replay namespaces",
@@ -1804,13 +1566,9 @@ def test_g240_runner_binds_actual_detached_process_and_worktree(
                 benchmark_root=interpreter_root,
                 replay_executor_identity_cid=replay_executor,
                 replay_namespace_observer_identity_cid=replay_validator,
-                orchestration_observer_identity_cid=(
-                    orchestration_observer
-                ),
+                orchestration_observer_identity_cid=(orchestration_observer),
                 environment={key: "/caller/override"},
                 timeout_seconds=20,
-                _test_only_synthetic_capability=(
-                    _G240_SYNTHETIC_TEST_CAPABILITY_V2
-                ),
+                _test_only_synthetic_capability=(_G240_SYNTHETIC_TEST_CAPABILITY_V2),
             )
         assert not (interpreter_root / replay_run_id).exists()

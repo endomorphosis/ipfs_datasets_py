@@ -4,11 +4,13 @@ Test stubs for patent_dashboard module.
 Feature: Patent Dashboard
   Dashboard for patent data analysis
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_technology_domain():
@@ -83,6 +85,7 @@ def search_criteria():
 
 
 # Test scenarios
+
 
 def test_display_patent_statistics():
     """
@@ -173,6 +176,7 @@ def test_generate_patent_landscape_report():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a technology domain")
@@ -343,4 +347,3 @@ def related_patents_are_grouped():
     """Step: Then related patents are grouped"""
     # TODO: Implement step
     pass
-

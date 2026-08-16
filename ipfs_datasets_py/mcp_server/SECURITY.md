@@ -107,7 +107,7 @@ if not target_path.exists() or not target_path.is_file():
 
 # Validates no shell metacharacters
 for arg in cli_arguments:
-    if any(char in str(arg) for char in ['|', '&', ';', '`', '$', '(', ')', '<', '>']):
+    if any(char in str(arg) for char in ["|", "&", ";", "`", "$", "(", ")", "<", ">"]):
         raise ValueError(f"Invalid argument contains shell metacharacters: {arg}")
 
 # Explicit shell=False
@@ -141,14 +141,14 @@ def _sanitize_error_context(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
 
 **Before (INSECURE):**
 ```python
-additional_info=f"Tool arguments: {kwargs}"
+additional_info = f"Tool arguments: {kwargs}"
 # Could leak: {'api_key': 'sk-1234...', 'password': 'secret123'}
 ```
 
 **After (SECURE):**
 ```python
 safe_context = self._sanitize_error_context(kwargs)
-additional_info=f"Tool arguments: {safe_context}"
+additional_info = f"Tool arguments: {safe_context}"
 # Returns: {'api_key': '<REDACTED>', 'password': '<REDACTED>'}
 ```
 

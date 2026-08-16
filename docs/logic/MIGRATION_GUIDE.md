@@ -14,11 +14,7 @@ This guide helps you migrate to the new, more powerful API.
 ```python
 from ipfs_datasets_py.logic.fol import convert_text_to_fol
 
-result = await convert_text_to_fol(
-    "All humans are mortal",
-    use_nlp=True,
-    confidence_threshold=0.7
-)
+result = await convert_text_to_fol("All humans are mortal", use_nlp=True, confidence_threshold=0.7)
 # Returns: {"status": "success", "fol_formulas": [...], ...}
 ```
 
@@ -29,7 +25,7 @@ from ipfs_datasets_py.logic.fol import FOLConverter
 converter = FOLConverter(
     use_nlp=True,
     confidence_threshold=0.7,
-    use_cache=True  # NEW: Automatic caching
+    use_cache=True,  # NEW: Automatic caching
 )
 
 result = await converter.convert_async("All humans are mortal")
@@ -43,9 +39,7 @@ result = await converter.convert_async("All humans are mortal")
 from ipfs_datasets_py.logic.deontic import convert_legal_text_to_deontic
 
 result = await convert_legal_text_to_deontic(
-    "The tenant must pay rent",
-    jurisdiction="us",
-    document_type="statute"
+    "The tenant must pay rent", jurisdiction="us", document_type="statute"
 )
 # Returns: {"status": "success", "deontic_formulas": [...], ...}
 ```
@@ -57,7 +51,7 @@ from ipfs_datasets_py.logic.deontic import DeonticConverter
 converter = DeonticConverter(
     jurisdiction="us",
     document_type="statute",
-    use_cache=True  # NEW: Automatic caching
+    use_cache=True,  # NEW: Automatic caching
 )
 
 result = await converter.convert_async("The tenant must pay rent")
@@ -159,16 +153,9 @@ from ipfs_datasets_py.logic.deontic import DeonticConverter
 **New:**
 ```python
 # Initialize converter with configuration
-fol_converter = FOLConverter(
-    use_cache=True,
-    use_ml=True,
-    use_nlp=True
-)
+fol_converter = FOLConverter(use_cache=True, use_ml=True, use_nlp=True)
 
-deontic_converter = DeonticConverter(
-    jurisdiction="us",
-    use_cache=True
-)
+deontic_converter = DeonticConverter(jurisdiction="us", use_cache=True)
 ```
 
 ### Step 3: Update Conversion Calls
@@ -365,7 +352,7 @@ from ipfs_datasets_py.logic.fol import FOLConverter  # Recommended
 from ipfs_datasets_py.logic.tools.deontic_logic_core import (
     DeonticFormula,
     DeonticOperator,
-    LegalAgent
+    LegalAgent,
 )
 ```
 
@@ -374,8 +361,9 @@ from ipfs_datasets_py.logic.tools.deontic_logic_core import (
 from ipfs_datasets_py.logic.integration.deontic_logic_core import (
     DeonticFormula,
     DeonticOperator,
-    LegalAgent
+    LegalAgent,
 )
+
 # Or use the type definitions:
 from ipfs_datasets_py.logic.types import DeonticFormula
 ```
@@ -397,7 +385,7 @@ from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import SymbolicFOLBr
 from ipfs_datasets_py.logic.tools.symbolic_logic_primitives import (
     LogicSymbol,
     Quantifier,
-    LogicOperator
+    LogicOperator,
 )
 ```
 
@@ -406,8 +394,9 @@ from ipfs_datasets_py.logic.tools.symbolic_logic_primitives import (
 from ipfs_datasets_py.logic.integration.symbolic_logic_primitives import (
     LogicSymbol,
     Quantifier,
-    LogicOperator
+    LogicOperator,
 )
+
 # Or use type definitions:
 from ipfs_datasets_py.logic.types import LogicOperator, Quantifier
 ```
@@ -455,7 +444,7 @@ from ipfs_datasets_py.logic.tools.logic_utils import (
     fol_parser,
     deontic_parser,
     logic_formatter,
-    predicate_extractor
+    predicate_extractor,
 )
 ```
 
@@ -525,6 +514,7 @@ During the transition period, a compatibility layer is available in `logic/__ini
 # Temporary backward compatibility (will be removed in v2.0)
 import warnings
 
+
 # Redirect old imports to new locations
 def __getattr__(name):
     if name == "tools":
@@ -532,9 +522,10 @@ def __getattr__(name):
             "Importing from logic.tools is deprecated. "
             "Use integration/ or module-specific imports instead.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         from . import integration
+
         return integration
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 ```

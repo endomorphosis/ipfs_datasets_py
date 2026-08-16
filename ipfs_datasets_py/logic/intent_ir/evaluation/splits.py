@@ -86,9 +86,7 @@ def _canonical_json(value: Any) -> str:
 
 
 def _digest(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(
-        _canonical_json(value).encode("utf-8")
-    ).hexdigest()
+    return "sha256:" + hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
 
 
 def _get(value: Any, *names: str, default: Any = None) -> Any:
@@ -109,17 +107,13 @@ def _values(value: Any) -> tuple[str, ...]:
         return ()
     if isinstance(value, str):
         values = (value,)
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray)):
         values = tuple(value)
     else:
         values = (value,)
     result = tuple(sorted({_text(item) for item in values if _text(item)}))
     if len(result) > _MAX_GROUP_VALUES:
-        raise IntentSplitError(
-            f"split grouping field exceeds {_MAX_GROUP_VALUES} values"
-        )
+        raise IntentSplitError(f"split grouping field exceeds {_MAX_GROUP_VALUES} values")
     if any(len(item) > _MAX_VALUE_CHARS or "\x00" in item for item in result):
         raise IntentSplitError("split grouping values must be bounded text")
     return result
@@ -128,9 +122,7 @@ def _values(value: Any) -> tuple[str, ...]:
 def _wire_values(value: Any, field_name: str) -> tuple[str, ...]:
     if value is None:
         return ()
-    if isinstance(value, (str, bytes, bytearray)) or not isinstance(
-        value, Sequence
-    ):
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
         raise IntentSplitError(f"{field_name} must be a sequence of strings")
     if any(not isinstance(item, str) for item in value):
         raise IntentSplitError(f"{field_name} must contain only strings")
@@ -173,9 +165,7 @@ def _hashed_shingles(value: str) -> tuple[str, ...]:
         return ()
     hashes = sorted(
         {
-            hashlib.blake2s(
-                token.encode("utf-8"), digest_size=8, person=b"irfsplit"
-            ).hexdigest()
+            hashlib.blake2s(token.encode("utf-8"), digest_size=8, person=b"irfsplit").hexdigest()
             for token in tokens
         }
     )
@@ -242,9 +232,7 @@ def _sample_text(sample: Any) -> str:
     if isinstance(sample, IntentIRDocument):
         return "\n".join(
             item.normalized_text
-            for item in sorted(
-                sample.statements, key=lambda statement: statement.statement_id
-            )
+            for item in sorted(sample.statements, key=lambda statement: statement.statement_id)
         )
     return ""
 
@@ -284,37 +272,24 @@ class IntentSplitExample:
             object.__setattr__(self, field_name, _values(getattr(self, field_name)))
         digests = tuple(
             digest
-            for digest in (
-                _normalize_digest(item) for item in _values(self.content_digests)
-            )
+            for digest in (_normalize_digest(item) for item in _values(self.content_digests))
             if digest
         )
         if len(digests) != len(_values(self.content_digests)):
-            raise IntentSplitError(
-                "content_digests must contain lowercase SHA-256 values"
-            )
+            raise IntentSplitError("content_digests must contain lowercase SHA-256 values")
         object.__setattr__(self, "content_digests", tuple(sorted(set(digests))))
         object.__setattr__(
             self,
             "near_duplicate_signature",
             tuple(sorted(set(_values(self.near_duplicate_signature)))),
         )
-        if any(
-            not _SHINGLE_RE.fullmatch(item)
-            for item in self.near_duplicate_signature
-        ):
-            raise IntentSplitError(
-                "near_duplicate_signature must contain hashed token values"
-            )
-        object.__setattr__(
-            self, "generation_family_id", _text(self.generation_family_id)
-        )
+        if any(not _SHINGLE_RE.fullmatch(item) for item in self.near_duplicate_signature):
+            raise IntentSplitError("near_duplicate_signature must contain hashed token values")
+        object.__setattr__(self, "generation_family_id", _text(self.generation_family_id))
         parsed_date = _date(self.observed_date)
         if self.observed_date and parsed_date is None:
             raise IntentSplitError("observed_date must be an ISO-8601 date")
-        object.__setattr__(
-            self, "observed_date", parsed_date.isoformat() if parsed_date else ""
-        )
+        object.__setattr__(self, "observed_date", parsed_date.isoformat() if parsed_date else "")
         for field_name in ("graph_snapshot_id", "embedding_snapshot_id"):
             value = _text(getattr(self, field_name))
             if len(value) > _MAX_VALUE_CHARS or "\x00" in value:
@@ -338,8 +313,7 @@ class IntentSplitExample:
                 filter(
                     None,
                     (
-                        _repository_key(item.source_uri)
-                        or _repository_key(item.container_uri)
+                        _repository_key(item.source_uri) or _repository_key(item.container_uri)
                         for item in sources
                     ),
                 )
@@ -348,12 +322,8 @@ class IntentSplitExample:
                 filter(None, (_source_document_key(item.source_uri) for item in sources))
             )
         else:
-            sample_id = _text(
-                _get(sample, "sample_id", "example_id", "document_id", "skill_id")
-            )
-            primary_ids = _values(
-                _get(sample, "primary_source_ids", "primary_source_id")
-            )
+            sample_id = _text(_get(sample, "sample_id", "example_id", "document_id", "skill_id"))
+            primary_ids = _values(_get(sample, "primary_source_ids", "primary_source_id"))
             revisions = _values(
                 _get(
                     sample,
@@ -374,12 +344,8 @@ class IntentSplitExample:
             explicit_repositories = _values(
                 _get(sample, "repository_ids", "repository_id", "repository")
             )
-            uri = _text(
-                _get(sample, "source_uri", "source_url", "url", default="")
-            )
-            repository_ids = explicit_repositories or _values(
-                _repository_key(uri)
-            )
+            uri = _text(_get(sample, "source_uri", "source_url", "url", default=""))
+            repository_ids = explicit_repositories or _values(_repository_key(uri))
             document_ids = _values(
                 _get(
                     sample,
@@ -409,9 +375,7 @@ class IntentSplitExample:
             prompt_hash = _text(_get(sample, "prompt_hash", default=""))
             model_hash = _text(_get(sample, "model_hash", default=""))
             if prompt_hash or model_hash:
-                generation_family = _digest(
-                    {"model_hash": model_hash, "prompt_hash": prompt_hash}
-                )
+                generation_family = _digest({"model_hash": model_hash, "prompt_hash": prompt_hash})
 
         values = {
             "sample_id": sample_id,
@@ -444,12 +408,8 @@ class IntentSplitExample:
                 )
             ),
             "near_duplicate_signature": _hashed_shingles(text),
-            "graph_snapshot_id": _text(
-                _get(sample, "graph_snapshot_id", default="")
-            ),
-            "embedding_snapshot_id": _text(
-                _get(sample, "embedding_snapshot_id", default="")
-            ),
+            "graph_snapshot_id": _text(_get(sample, "graph_snapshot_id", default="")),
+            "embedding_snapshot_id": _text(_get(sample, "embedding_snapshot_id", default="")),
         }
         values.update(overrides)
         return cls(**values)
@@ -474,27 +434,19 @@ class IntentSplitExample:
         }
         unknown = sorted(set(value) - allowed)
         if unknown:
-            raise IntentSplitError(
-                "unknown Intent split example fields: " + ", ".join(unknown)
-            )
+            raise IntentSplitError("unknown Intent split example fields: " + ", ".join(unknown))
         return cls(
             sample_id=value.get("sample_id", ""),
             domain=value.get("domain", ""),
             primary_source_ids=_wire_values(
                 value.get("primary_source_ids", ()), "primary_source_ids"
             ),
-            repository_ids=_wire_values(
-                value.get("repository_ids", ()), "repository_ids"
-            ),
+            repository_ids=_wire_values(value.get("repository_ids", ()), "repository_ids"),
             source_document_ids=_wire_values(
                 value.get("source_document_ids", ()), "source_document_ids"
             ),
-            source_revisions=_wire_values(
-                value.get("source_revisions", ()), "source_revisions"
-            ),
-            content_digests=_wire_values(
-                value.get("content_digests", ()), "content_digests"
-            ),
+            source_revisions=_wire_values(value.get("source_revisions", ()), "source_revisions"),
+            content_digests=_wire_values(value.get("content_digests", ()), "content_digests"),
             duplicate_family_ids=_wire_values(
                 value.get("duplicate_family_ids", ()), "duplicate_family_ids"
             ),
@@ -506,9 +458,7 @@ class IntentSplitExample:
             ),
             graph_snapshot_id=value.get("graph_snapshot_id", ""),
             embedding_snapshot_id=value.get("embedding_snapshot_id", ""),
-            schema_version=value.get(
-                "schema_version", INTENT_SPLIT_EXAMPLE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", INTENT_SPLIT_EXAMPLE_SCHEMA_VERSION),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -557,31 +507,23 @@ class IntentSplitConfig:
             raise IntentSplitError("at least one primary split ratio must be positive")
         threshold = float(self.near_duplicate_jaccard_threshold)
         if not 0.0 < threshold <= 1.0 or not math.isfinite(threshold):
-            raise IntentSplitError(
-                "near_duplicate_jaccard_threshold must be in (0, 1]"
-            )
+            raise IntentSplitError("near_duplicate_jaccard_threshold must be in (0, 1]")
         cutoff = _date(self.temporal_holdout_after)
         if self.temporal_holdout_after and cutoff is None:
-            raise IntentSplitError(
-                "temporal_holdout_after must be an ISO-8601 date"
-            )
+            raise IntentSplitError("temporal_holdout_after must be an ISO-8601 date")
         object.__setattr__(self, "seed", _text(self.seed))
         object.__setattr__(
             self,
             "held_out_domains",
             tuple(item.casefold() for item in _values(self.held_out_domains)),
         )
-        object.__setattr__(
-            self, "held_out_revisions", _values(self.held_out_revisions)
-        )
+        object.__setattr__(self, "held_out_revisions", _values(self.held_out_revisions))
         object.__setattr__(
             self,
             "temporal_holdout_after",
             cutoff.isoformat() if cutoff else "",
         )
-        object.__setattr__(
-            self, "near_duplicate_jaccard_threshold", threshold
-        )
+        object.__setattr__(self, "near_duplicate_jaccard_threshold", threshold)
 
     @property
     def digest(self) -> str:
@@ -595,9 +537,7 @@ class IntentSplitConfig:
         return {
             "held_out_domains": list(self.held_out_domains),
             "held_out_revisions": list(self.held_out_revisions),
-            "near_duplicate_jaccard_threshold": (
-                self.near_duplicate_jaccard_threshold
-            ),
+            "near_duplicate_jaccard_threshold": (self.near_duplicate_jaccard_threshold),
             "seed": self.seed,
             "temporal_holdout_after": self.temporal_holdout_after,
             "test_ratio": self.test_ratio,
@@ -618,12 +558,7 @@ class IntentLeakageViolation:
             self,
             "sample_ids_by_partition",
             MappingProxyType(
-                {
-                    key: tuple(value)
-                    for key, value in sorted(
-                        self.sample_ids_by_partition.items()
-                    )
-                }
+                {key: tuple(value) for key, value in sorted(self.sample_ids_by_partition.items())}
             ),
         )
 
@@ -633,8 +568,7 @@ class IntentLeakageViolation:
             "kind": self.kind,
             "partitions": list(self.partitions),
             "sample_ids_by_partition": {
-                partition: list(ids)
-                for partition, ids in self.sample_ids_by_partition.items()
+                partition: list(ids) for partition, ids in self.sample_ids_by_partition.items()
             },
         }
 
@@ -660,9 +594,7 @@ class IntentSplitManifest:
     config_digest: str
     partitions: tuple[str, ...] = INTENT_PARTITIONS
     metadata: Mapping[str, Any] = field(default_factory=dict)
-    assignment_conflicts: Mapping[str, tuple[str, ...]] = field(
-        default_factory=dict
-    )
+    assignment_conflicts: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     schema_version: str = INTENT_SPLIT_MANIFEST_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -678,20 +610,16 @@ class IntentSplitManifest:
                 normalized_examples.append(IntentSplitExample.from_dict(item))
             else:
                 raise IntentSplitError(
-                    "split examples must contain IntentSplitExample records "
-                    "or mappings"
+                    "split examples must contain IntentSplitExample records or mappings"
                 )
-        examples = tuple(
-            sorted(normalized_examples, key=lambda item: item.sample_id)
-        )
+        examples = tuple(sorted(normalized_examples, key=lambda item: item.sample_id))
         sample_ids = tuple(item.sample_id for item in examples)
         if len(sample_ids) != len(set(sample_ids)):
             raise IntentSplitError("split examples must have unique sample IDs")
         if not isinstance(self.assignments, Mapping):
             raise IntentSplitError("assignments must be a mapping")
         assignments = {
-            _text(sample_id): _text(partition)
-            for sample_id, partition in self.assignments.items()
+            _text(sample_id): _text(partition) for sample_id, partition in self.assignments.items()
         }
         unknown = sorted(set(assignments.values()) - set(INTENT_PARTITIONS))
         if unknown:
@@ -700,27 +628,18 @@ class IntentSplitManifest:
         extra = sorted(set(assignments) - set(sample_ids))
         if missing or extra:
             raise IntentSplitError(
-                f"assignments must exactly cover examples; missing={missing[:5]}, "
-                f"extra={extra[:5]}"
+                f"assignments must exactly cover examples; missing={missing[:5]}, extra={extra[:5]}"
             )
         partitions = tuple(self.partitions)
         if partitions != INTENT_PARTITIONS:
-            raise IntentSplitError(
-                "partitions must exactly match the versioned Intent vocabulary"
-            )
+            raise IntentSplitError("partitions must exactly match the versioned Intent vocabulary")
         config_digest = _text(self.config_digest)
-        if (
-            not config_digest
-            or len(config_digest) > _MAX_VALUE_CHARS
-            or "\x00" in config_digest
-        ):
+        if not config_digest or len(config_digest) > _MAX_VALUE_CHARS or "\x00" in config_digest:
             raise IntentSplitError("config_digest must be bounded non-empty text")
         if not isinstance(self.assignment_conflicts, Mapping):
             raise IntentSplitError("assignment_conflicts must be a mapping")
         conflicts = {
-            _text(sample_id): tuple(
-                sorted(set(_values(candidate_partitions)))
-            )
+            _text(sample_id): tuple(sorted(set(_values(candidate_partitions))))
             for sample_id, candidate_partitions in self.assignment_conflicts.items()
             if len(set(_values(candidate_partitions))) > 1
         }
@@ -742,13 +661,10 @@ class IntentSplitManifest:
         ):
             raise IntentSplitError("split metadata must be a string-keyed mapping")
         metadata = dict(self.metadata)
-        unknown_metadata = sorted(
-            set(metadata) - {"near_duplicate_jaccard_threshold", "seed"}
-        )
+        unknown_metadata = sorted(set(metadata) - {"near_duplicate_jaccard_threshold", "seed"})
         if unknown_metadata:
             raise IntentSplitError(
-                "unknown Intent split metadata fields: "
-                + ", ".join(unknown_metadata)
+                "unknown Intent split metadata fields: " + ", ".join(unknown_metadata)
             )
         if "seed" in metadata and (
             not isinstance(metadata["seed"], str)
@@ -764,18 +680,12 @@ class IntentSplitManifest:
                 or not math.isfinite(float(threshold))
                 or not 0.0 < float(threshold) <= 1.0
             ):
-                raise IntentSplitError(
-                    "split metadata duplicate threshold must be in (0, 1]"
-                )
+                raise IntentSplitError("split metadata duplicate threshold must be in (0, 1]")
         object.__setattr__(self, "examples", examples)
-        object.__setattr__(
-            self, "assignments", MappingProxyType(dict(sorted(assignments.items())))
-        )
+        object.__setattr__(self, "assignments", MappingProxyType(dict(sorted(assignments.items()))))
         object.__setattr__(self, "config_digest", config_digest)
         object.__setattr__(self, "partitions", partitions)
-        object.__setattr__(
-            self, "metadata", MappingProxyType(dict(sorted(metadata.items())))
-        )
+        object.__setattr__(self, "metadata", MappingProxyType(dict(sorted(metadata.items()))))
         object.__setattr__(
             self,
             "assignment_conflicts",
@@ -792,10 +702,7 @@ class IntentSplitManifest:
         for sample_id, partition in self.assignments.items():
             result[partition].append(sample_id)
         return MappingProxyType(
-            {
-                partition: tuple(sorted(sample_ids))
-                for partition, sample_ids in result.items()
-            }
+            {partition: tuple(sorted(sample_ids)) for partition, sample_ids in result.items()}
         )
 
     @property
@@ -874,9 +781,7 @@ class IntentSplitManifest:
         }
         unknown = sorted(set(value) - allowed)
         if unknown:
-            raise IntentSplitError(
-                "unknown Intent split manifest fields: " + ", ".join(unknown)
-            )
+            raise IntentSplitError("unknown Intent split manifest fields: " + ", ".join(unknown))
         examples = tuple(
             IntentSplitExample.from_dict(item)
             for item in value.get("examples", ())
@@ -886,9 +791,7 @@ class IntentSplitManifest:
         conflicts: dict[str, tuple[str, ...]] = {}
         if not isinstance(assignments, Mapping):
             assignments = {}
-            grouped = value.get(
-                "samples_by_partition", value.get("samples_by_split", {})
-            )
+            grouped = value.get("samples_by_partition", value.get("samples_by_split", {}))
             seen: dict[str, list[str]] = defaultdict(list)
             if isinstance(grouped, Mapping):
                 for partition, sample_ids in grouped.items():
@@ -914,14 +817,10 @@ class IntentSplitManifest:
             config_digest=_text(value.get("config_digest")),
             partitions=tuple(value.get("partitions", INTENT_PARTITIONS)),
             metadata=(
-                value.get("metadata", {})
-                if isinstance(value.get("metadata", {}), Mapping)
-                else {}
+                value.get("metadata", {}) if isinstance(value.get("metadata", {}), Mapping) else {}
             ),
             assignment_conflicts=conflicts,
-            schema_version=value.get(
-                "schema_version", INTENT_SPLIT_MANIFEST_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", INTENT_SPLIT_MANIFEST_SCHEMA_VERSION),
         )
 
 
@@ -1027,9 +926,7 @@ def build_intent_splits(
         lambda item: item.source_document_ids,
         lambda item: item.content_digests,
         lambda item: item.duplicate_family_ids,
-        lambda item: (item.generation_family_id,)
-        if item.generation_family_id
-        else (),
+        lambda item: (item.generation_family_id,) if item.generation_family_id else (),
     ):
         _union_values(union_find, examples, values)
     for index, left in enumerate(examples):
@@ -1056,9 +953,7 @@ def build_intent_splits(
         assignments=assignments,
         config_digest=resolved.digest,
         metadata={
-            "near_duplicate_jaccard_threshold": (
-                resolved.near_duplicate_jaccard_threshold
-            ),
+            "near_duplicate_jaccard_threshold": (resolved.near_duplicate_jaccard_threshold),
             "seed": resolved.seed,
         },
     )
@@ -1096,8 +991,7 @@ def validate_intent_splits(
                 key=key,
                 partitions=tuple(sorted(by_partition)),
                 sample_ids_by_partition={
-                    partition: tuple(sorted(ids))
-                    for partition, ids in sorted(by_partition.items())
+                    partition: tuple(sorted(ids)) for partition, ids in sorted(by_partition.items())
                 },
             )
         )
@@ -1110,8 +1004,7 @@ def validate_intent_splits(
                     key=sample_id,
                     partitions=tuple(sorted(set(partitions))),
                     sample_ids_by_partition={
-                        partition: (sample_id,)
-                        for partition in sorted(set(partitions))
+                        partition: (sample_id,) for partition in sorted(set(partitions))
                     },
                 )
             )
@@ -1128,20 +1021,14 @@ def validate_intent_splits(
             for key in values:
                 indexes[(kind, key)].append(example.sample_id)
         if example.generation_family_id:
-            indexes[
-                ("generation_family", example.generation_family_id)
-            ].append(example.sample_id)
+            indexes[("generation_family", example.generation_family_id)].append(example.sample_id)
     for (kind, key), sample_ids in sorted(indexes.items()):
         add(kind, key, sample_ids)
 
-    threshold = float(
-        resolved.metadata.get("near_duplicate_jaccard_threshold", 0.80)
-    )
+    threshold = float(resolved.metadata.get("near_duplicate_jaccard_threshold", 0.80))
     for index, left in enumerate(resolved.examples):
         for right in resolved.examples[index + 1 :]:
-            similarity = _jaccard(
-                left.near_duplicate_signature, right.near_duplicate_signature
-            )
+            similarity = _jaccard(left.near_duplicate_signature, right.near_duplicate_signature)
             if (
                 similarity >= threshold
                 and assignments[left.sample_id] != assignments[right.sample_id]
@@ -1158,12 +1045,8 @@ def validate_intent_splits(
                     (left.sample_id, right.sample_id),
                 )
 
-    unique = {
-        (item.kind, item.key, item.partitions): item for item in violations
-    }
-    ordered = tuple(
-        sorted(unique.values(), key=lambda item: (item.kind, item.key))
-    )
+    unique = {(item.kind, item.key, item.partitions): item for item in violations}
+    ordered = tuple(sorted(unique.values(), key=lambda item: (item.kind, item.key)))
     return IntentSplitGuardResult(passed=not ordered, violations=ordered)
 
 
@@ -1282,9 +1165,7 @@ def validate_retrieval_partition_fence(
                 reason="query_not_in_manifest",
             )
         )
-    expected_graph = _text(graph_snapshot_id) or (
-        query.graph_snapshot_id if query else ""
-    )
+    expected_graph = _text(graph_snapshot_id) or (query.graph_snapshot_id if query else "")
     expected_embedding = _text(embedding_snapshot_id) or (
         query.embedding_snapshot_id if query else ""
     )
@@ -1339,10 +1220,7 @@ def validate_retrieval_partition_fence(
                     reason="graph_snapshot_mismatch",
                 )
             )
-        if (
-            expected_embedding
-            and candidate.embedding_snapshot_id != expected_embedding
-        ):
+        if expected_embedding and candidate.embedding_snapshot_id != expected_embedding:
             violations.append(
                 RetrievalFenceViolation(
                     candidate_sample_id=candidate_id,
@@ -1392,18 +1270,14 @@ def require_retrieval_partition_fence(
         if isinstance(manifest, IntentSplitManifest)
         else IntentSplitManifest.from_dict(manifest)
     )
-    query = {
-        item.sample_id: item for item in resolved.examples
-    }[result.query_sample_id]
+    query = {item.sample_id: item for item in resolved.examples}[result.query_sample_id]
     return IntentRetrievalPartitionFence(
         manifest_digest=resolved.digest,
         query_sample_id=result.query_sample_id,
         partition=result.query_partition,
         candidate_sample_ids=_values(candidate_sample_ids),
         graph_snapshot_id=_text(graph_snapshot_id) or query.graph_snapshot_id,
-        embedding_snapshot_id=(
-            _text(embedding_snapshot_id) or query.embedding_snapshot_id
-        ),
+        embedding_snapshot_id=(_text(embedding_snapshot_id) or query.embedding_snapshot_id),
     )
 
 

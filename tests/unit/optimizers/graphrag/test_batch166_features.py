@@ -11,15 +11,21 @@ Methods under test:
   - OntologyPipeline.best_k_scores(k)
   - OntologyPipeline.worst_k_scores(k)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -27,16 +33,19 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
 def _make_result(entities):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(
         entities=entities, relationships=[], confidence=1.0, metadata={}, errors=[]
     )
@@ -44,11 +53,13 @@ def _make_result(entities):
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -60,6 +71,7 @@ def _push_run(p, score):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -76,6 +88,7 @@ def _push_opt(o, avg):
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.history_skewness
 # ---------------------------------------------------------------------------
+
 
 class TestHistorySkewness:
     def test_empty_returns_zero(self):
@@ -112,6 +125,7 @@ class TestHistorySkewness:
 # OntologyCritic.dimension_std
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionStd:
     def test_all_equal_returns_zero(self):
         critic = _make_critic()
@@ -120,8 +134,14 @@ class TestDimensionStd:
 
     def test_all_zero_returns_zero(self):
         critic = _make_critic()
-        score = _make_score(completeness=0.0, consistency=0.0, clarity=0.0,
-                            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0)
+        score = _make_score(
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
+        )
         assert critic.dimension_std(score) == pytest.approx(0.0)
 
     def test_non_negative(self):
@@ -131,10 +151,22 @@ class TestDimensionStd:
 
     def test_higher_spread_higher_std(self):
         critic = _make_critic()
-        low_spread = _make_score(completeness=0.5, consistency=0.5, clarity=0.5,
-                                 granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
-        high_spread = _make_score(completeness=0.0, consistency=1.0, clarity=0.0,
-                                  granularity=1.0, relationship_coherence=0.0, domain_alignment=1.0)
+        low_spread = _make_score(
+            completeness=0.5,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
+        )
+        high_spread = _make_score(
+            completeness=0.0,
+            consistency=1.0,
+            clarity=0.0,
+            granularity=1.0,
+            relationship_coherence=0.0,
+            domain_alignment=1.0,
+        )
         assert critic.dimension_std(high_spread) > critic.dimension_std(low_spread)
 
 
@@ -142,19 +174,32 @@ class TestDimensionStd:
 # OntologyCritic.dimension_improvement_mask
 # ---------------------------------------------------------------------------
 
+
 class TestDimensionImprovementMask:
     def test_all_improved(self):
         critic = _make_critic()
         before = _make_score()
-        after = _make_score(completeness=0.9, consistency=0.9, clarity=0.9,
-                            granularity=0.9, relationship_coherence=0.9, domain_alignment=0.9)
+        after = _make_score(
+            completeness=0.9,
+            consistency=0.9,
+            clarity=0.9,
+            granularity=0.9,
+            relationship_coherence=0.9,
+            domain_alignment=0.9,
+        )
         mask = critic.dimension_improvement_mask(before, after)
         assert all(mask.values())
 
     def test_none_improved(self):
         critic = _make_critic()
-        before = _make_score(completeness=0.9, consistency=0.9, clarity=0.9,
-                             granularity=0.9, relationship_coherence=0.9, domain_alignment=0.9)
+        before = _make_score(
+            completeness=0.9,
+            consistency=0.9,
+            clarity=0.9,
+            granularity=0.9,
+            relationship_coherence=0.9,
+            domain_alignment=0.9,
+        )
         after = _make_score()
         mask = critic.dimension_improvement_mask(before, after)
         assert not any(mask.values())
@@ -169,6 +214,7 @@ class TestDimensionImprovementMask:
 # OntologyCritic.passing_dimensions
 # ---------------------------------------------------------------------------
 
+
 class TestPassingDimensions:
     def test_none_passing(self):
         critic = _make_critic()
@@ -178,8 +224,14 @@ class TestPassingDimensions:
 
     def test_all_passing(self):
         critic = _make_critic()
-        score = _make_score(completeness=0.9, consistency=0.9, clarity=0.9,
-                            granularity=0.9, relationship_coherence=0.9, domain_alignment=0.9)
+        score = _make_score(
+            completeness=0.9,
+            consistency=0.9,
+            clarity=0.9,
+            granularity=0.9,
+            relationship_coherence=0.9,
+            domain_alignment=0.9,
+        )
         result = critic.passing_dimensions(score, threshold=0.5)
         assert len(result) == 6
 
@@ -194,6 +246,7 @@ class TestPassingDimensions:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.max/min_confidence_entity
 # ---------------------------------------------------------------------------
+
 
 class TestMaxMinConfidenceEntity:
     def test_empty_returns_none(self):
@@ -221,6 +274,7 @@ class TestMaxMinConfidenceEntity:
 # OntologyGenerator.entity_confidence_std
 # ---------------------------------------------------------------------------
 
+
 class TestEntityConfidenceStd:
     def test_empty_returns_zero(self):
         gen = _make_generator()
@@ -241,6 +295,7 @@ class TestEntityConfidenceStd:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.best_k_scores / worst_k_scores
 # ---------------------------------------------------------------------------
+
 
 class TestBestWorstKScores:
     def test_empty(self):

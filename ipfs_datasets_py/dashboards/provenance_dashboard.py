@@ -22,18 +22,21 @@ try:
     from datetime import UTC  # Python 3.11+
 except ImportError:
     from datetime import timezone
+
     UTC = timezone.utc
 
 try:
     import numpy as np
     import pandas as pd
     import matplotlib
-    matplotlib.use('Agg')  # Non-interactive backend
+
+    matplotlib.use("Agg")  # Non-interactive backend
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
     from matplotlib.ticker import MaxNLocator
     import seaborn as sns
     import networkx as nx
+
     VISUALIZATION_LIBS_AVAILABLE = True
 except ImportError:
     VISUALIZATION_LIBS_AVAILABLE = False
@@ -42,12 +45,14 @@ try:
     import plotly.graph_objects as go
     import plotly.express as px
     from plotly.subplots import make_subplots
+
     INTERACTIVE_VISUALIZATION_AVAILABLE = True
 except ImportError:
     INTERACTIVE_VISUALIZATION_AVAILABLE = False
 
 try:
     from jinja2 import Template
+
     TEMPLATE_ENGINE_AVAILABLE = True
 except ImportError:
     TEMPLATE_ENGINE_AVAILABLE = False
@@ -71,7 +76,7 @@ class ProvenanceDashboard:
         self,
         provenance_manager: ProvenanceManager,
         lineage_tracker: Optional[EnhancedLineageTracker] = None,
-        query_visualizer: Optional[RAGQueryVisualizer] = None
+        query_visualizer: Optional[RAGQueryVisualizer] = None,
     ):
         """
         Initialize the provenance dashboard.
@@ -96,7 +101,7 @@ class ProvenanceDashboard:
         show_timestamps: bool = True,
         output_file: Optional[str] = None,
         return_base64: bool = False,
-        interactive: bool = False
+        interactive: bool = False,
     ) -> Optional[str]:
         """
         Visualize data lineage for specified data entities.
@@ -129,7 +134,7 @@ class ProvenanceDashboard:
                 include_parameters=include_parameters,
                 show_timestamps=show_timestamps,
                 file_path=output_file,
-                return_base64=return_base64
+                return_base64=return_base64,
             )
 
         # Interactive visualization using Plotly
@@ -144,10 +149,10 @@ class ProvenanceDashboard:
                     if depth > max_depth:
                         return
 
-                    if 'record_id' in lin:
-                        subgraph_nodes.add(lin['record_id'])
+                    if "record_id" in lin:
+                        subgraph_nodes.add(lin["record_id"])
 
-                    for parent in lin.get('parents', []):
+                    for parent in lin.get("parents", []):
                         extract_nodes(parent, depth + 1)
 
                 extract_nodes(lineage)
@@ -161,28 +166,28 @@ class ProvenanceDashboard:
             # Prepare node traces by type
             node_types = {}
             for node in subgraph.nodes():
-                node_type = subgraph.nodes[node].get('record_type', 'unknown')
+                node_type = subgraph.nodes[node].get("record_type", "unknown")
                 if node_type not in node_types:
                     node_types[node_type] = []
                 node_types[node_type].append(node)
 
             # Define node colors
             color_map = {
-                'source': 'lightblue',
-                'transformation': 'lightgreen',
-                'merge': 'orange',
-                'query': 'lightcoral',
-                'result': 'yellow',
-                'checkpoint': 'purple',
-                'data_entity': 'gray',
-                'unknown': 'white'
+                "source": "lightblue",
+                "transformation": "lightgreen",
+                "merge": "orange",
+                "query": "lightcoral",
+                "result": "yellow",
+                "checkpoint": "purple",
+                "data_entity": "gray",
+                "unknown": "white",
             }
 
             fig = go.Figure()
 
             # Add nodes for each type
             for node_type, nodes in node_types.items():
-                color = color_map.get(node_type, 'white')
+                color = color_map.get(node_type, "white")
 
                 # Extract position and prepare hover text
                 x = [pos[node][0] for node in nodes]
@@ -192,13 +197,15 @@ class ProvenanceDashboard:
                 for node in nodes:
                     # Get node data for hover text
                     node_data = subgraph.nodes[node]
-                    description = node_data.get('description', '')
-                    timestamp = node_data.get('timestamp', '')
+                    description = node_data.get("description", "")
+                    timestamp = node_data.get("timestamp", "")
 
                     if timestamp:
-                        timestamp_str = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                        timestamp_str = datetime.datetime.fromtimestamp(timestamp).strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        )
                     else:
-                        timestamp_str = ''
+                        timestamp_str = ""
 
                     # Build hover text
                     hover_text = f"ID: {node}<br>Type: {node_type}<br>"
@@ -210,18 +217,17 @@ class ProvenanceDashboard:
                     text.append(hover_text)
 
                 # Add node trace
-                fig.add_trace(go.Scatter(
-                    x=x, y=y,
-                    mode='markers',
-                    marker=dict(
-                        size=15,
-                        color=color,
-                        line=dict(width=1, color='black')
-                    ),
-                    text=text,
-                    hoverinfo='text',
-                    name=node_type
-                ))
+                fig.add_trace(
+                    go.Scatter(
+                        x=x,
+                        y=y,
+                        mode="markers",
+                        marker=dict(size=15, color=color, line=dict(width=1, color="black")),
+                        text=text,
+                        hoverinfo="text",
+                        name=node_type,
+                    )
+                )
 
             # Add edges
             edge_x = []
@@ -237,35 +243,32 @@ class ProvenanceDashboard:
                 edge_y.extend([y0, y1, None])
 
                 # Get edge type if available
-                edge_type = subgraph.edges[edge].get('type', 'unknown')
+                edge_type = subgraph.edges[edge].get("type", "unknown")
                 edge_text.append(f"From: {edge[0]}<br>To: {edge[1]}<br>Type: {edge_type}")
 
             # Add edge trace
-            fig.add_trace(go.Scatter(
-                x=edge_x, y=edge_y,
-                mode='lines',
-                line=dict(width=1, color='gray'),
-                hoverinfo='text',
-                text=edge_text,
-                name='connections'
-            ))
+            fig.add_trace(
+                go.Scatter(
+                    x=edge_x,
+                    y=edge_y,
+                    mode="lines",
+                    line=dict(width=1, color="gray"),
+                    hoverinfo="text",
+                    text=edge_text,
+                    name="connections",
+                )
+            )
 
             # Configure layout
             fig.update_layout(
                 title=f"Data Lineage for {', '.join(data_ids[:3])}{' and others' if len(data_ids) > 3 else ''}",
                 showlegend=True,
-                hovermode='closest',
+                hovermode="closest",
                 margin=dict(b=20, l=5, r=5, t=40),
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                 height=600,
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1
-                )
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             )
 
             # Save as HTML if output_file is provided
@@ -284,6 +287,7 @@ class ProvenanceDashboard:
         except Exception as e:
             logging.error(f"Error creating interactive lineage visualization: {str(e)}")
             import traceback
+
             logging.error(traceback.format_exc())
 
             # Fall back to static visualization
@@ -293,7 +297,7 @@ class ProvenanceDashboard:
                 include_parameters=include_parameters,
                 show_timestamps=show_timestamps,
                 file_path=output_file,
-                return_base64=return_base64
+                return_base64=return_base64,
             )
 
     def visualize_cross_document_lineage(
@@ -303,7 +307,7 @@ class ProvenanceDashboard:
         max_depth: int = 3,
         output_file: Optional[str] = None,
         return_base64: bool = False,
-        interactive: bool = False
+        interactive: bool = False,
     ) -> Optional[str]:
         """
         Visualize cross-document lineage relationships.
@@ -320,7 +324,9 @@ class ProvenanceDashboard:
             str: Base64-encoded image or None if visualization not available
         """
         if not self.lineage_tracker:
-            logging.warning("EnhancedLineageTracker not available for cross-document lineage visualization")
+            logging.warning(
+                "EnhancedLineageTracker not available for cross-document lineage visualization"
+            )
             return None
 
         if not self.visualization_available:
@@ -336,7 +342,7 @@ class ProvenanceDashboard:
             lineage_graph = self.lineage_tracker.get_lineage_subgraph(
                 document_ids=document_ids,
                 relationship_types=relationship_types,
-                max_depth=max_depth
+                max_depth=max_depth,
             )
 
             if not lineage_graph or lineage_graph.number_of_nodes() == 0:
@@ -353,85 +359,122 @@ class ProvenanceDashboard:
                 # Define node colors by type
                 node_colors = []
                 for node in lineage_graph.nodes():
-                    node_type = lineage_graph.nodes[node].get('type', 'unknown')
-                    if node_type == 'document':
-                        color = 'lightblue'
-                    elif node_type == 'source':
-                        color = 'lightgreen'
-                    elif node_type == 'dataset':
-                        color = 'orange'
-                    elif node_type == 'model':
-                        color = 'purple'
+                    node_type = lineage_graph.nodes[node].get("type", "unknown")
+                    if node_type == "document":
+                        color = "lightblue"
+                    elif node_type == "source":
+                        color = "lightgreen"
+                    elif node_type == "dataset":
+                        color = "orange"
+                    elif node_type == "model":
+                        color = "purple"
                     else:
-                        color = 'gray'
+                        color = "gray"
                     node_colors.append(color)
 
                 # Define edge colors by type
                 edge_colors = []
                 for source, target, data in lineage_graph.edges(data=True):
-                    relationship_type = data.get('type', 'unknown')
+                    relationship_type = data.get("type", "unknown")
                     match relationship_type:
-                        case 'derives_from':
-                            color = 'blue'
-                        case 'cites':
-                            color = 'green'
-                        case 'includes':
-                            color = 'orange'
-                        case 'references':
-                            color = 'red'
+                        case "derives_from":
+                            color = "blue"
+                        case "cites":
+                            color = "green"
+                        case "includes":
+                            color = "orange"
+                        case "references":
+                            color = "red"
                         case _:
-                            color = 'gray'
+                            color = "gray"
                     edge_colors.append(color)
 
                 # Draw the graph
-                nx.draw_networkx_nodes(lineage_graph, pos, node_color=node_colors,
-                                     alpha=0.8, node_size=500)
+                nx.draw_networkx_nodes(
+                    lineage_graph, pos, node_color=node_colors, alpha=0.8, node_size=500
+                )
 
                 # Draw edges with arrows
-                nx.draw_networkx_edges(lineage_graph, pos, edge_color=edge_colors,
-                                     arrows=True, width=1.5, alpha=0.7)
+                nx.draw_networkx_edges(
+                    lineage_graph, pos, edge_color=edge_colors, arrows=True, width=1.5, alpha=0.7
+                )
 
                 # Prepare and draw labels
                 node_labels = {}
                 for node in lineage_graph.nodes():
                     node_data = lineage_graph.nodes[node]
-                    node_label = node_data.get('name', str(node))
+                    node_label = node_data.get("name", str(node))
                     # Truncate long labels
                     if len(node_label) > 20:
-                        node_label = node_label[:17] + '...'
+                        node_label = node_label[:17] + "..."
                     node_labels[node] = node_label
 
                 nx.draw_networkx_labels(lineage_graph, pos, labels=node_labels, font_size=8)
 
                 # Add a legend
                 legend_elements = [
-                    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightblue',
-                             markersize=10, label='Document'),
-                    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightgreen',
-                             markersize=10, label='Source'),
-                    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='orange',
-                             markersize=10, label='Dataset'),
-                    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='purple',
-                             markersize=10, label='Model'),
-                    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='gray',
-                             markersize=10, label='Other')
+                    plt.Line2D(
+                        [0],
+                        [0],
+                        marker="o",
+                        color="w",
+                        markerfacecolor="lightblue",
+                        markersize=10,
+                        label="Document",
+                    ),
+                    plt.Line2D(
+                        [0],
+                        [0],
+                        marker="o",
+                        color="w",
+                        markerfacecolor="lightgreen",
+                        markersize=10,
+                        label="Source",
+                    ),
+                    plt.Line2D(
+                        [0],
+                        [0],
+                        marker="o",
+                        color="w",
+                        markerfacecolor="orange",
+                        markersize=10,
+                        label="Dataset",
+                    ),
+                    plt.Line2D(
+                        [0],
+                        [0],
+                        marker="o",
+                        color="w",
+                        markerfacecolor="purple",
+                        markersize=10,
+                        label="Model",
+                    ),
+                    plt.Line2D(
+                        [0],
+                        [0],
+                        marker="o",
+                        color="w",
+                        markerfacecolor="gray",
+                        markersize=10,
+                        label="Other",
+                    ),
                 ]
 
-                plt.legend(handles=legend_elements, loc='upper right')
-                plt.title('Cross-Document Lineage Graph', fontsize=14)
-                plt.axis('off')
+                plt.legend(handles=legend_elements, loc="upper right")
+                plt.title("Cross-Document Lineage Graph", fontsize=14)
+                plt.axis("off")
 
                 # Save or return the plot
                 if output_file:
-                    plt.savefig(output_file, bbox_inches='tight')
+                    plt.savefig(output_file, bbox_inches="tight")
                     plt.close()
                     return output_file
                 elif return_base64:
                     buf = io.BytesIO()
-                    plt.savefig(buf, format='png', bbox_inches='tight')
+                    plt.savefig(buf, format="png", bbox_inches="tight")
                     plt.close()
                     buf.seek(0)
-                    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+                    img_base64 = base64.b64encode(buf.read()).decode("utf-8")
                     return img_base64
                 else:
                     plt.close()
@@ -445,25 +488,25 @@ class ProvenanceDashboard:
                 # Prepare node traces by type
                 node_types = {}
                 for node in lineage_graph.nodes():
-                    node_type = lineage_graph.nodes[node].get('type', 'unknown')
+                    node_type = lineage_graph.nodes[node].get("type", "unknown")
                     if node_type not in node_types:
                         node_types[node_type] = []
                     node_types[node_type].append(node)
 
                 # Define node colors
                 color_map = {
-                    'document': 'lightblue',
-                    'source': 'lightgreen',
-                    'dataset': 'orange',
-                    'model': 'purple',
-                    'unknown': 'gray'
+                    "document": "lightblue",
+                    "source": "lightgreen",
+                    "dataset": "orange",
+                    "model": "purple",
+                    "unknown": "gray",
                 }
 
                 fig = go.Figure()
 
                 # Add nodes for each type
                 for node_type, nodes in node_types.items():
-                    color = color_map.get(node_type, 'gray')
+                    color = color_map.get(node_type, "gray")
 
                     # Extract position and prepare hover text
                     x = [pos[node][0] for node in nodes]
@@ -473,8 +516,8 @@ class ProvenanceDashboard:
                     for node in nodes:
                         # Get node data for hover text
                         node_data = lineage_graph.nodes[node]
-                        name = node_data.get('name', str(node))
-                        created = node_data.get('created_at', '')
+                        name = node_data.get("name", str(node))
+                        created = node_data.get("created_at", "")
 
                         # Build hover text
                         hover_text = f"ID: {node}<br>Type: {node_type}<br>Name: {name}<br>"
@@ -484,34 +527,33 @@ class ProvenanceDashboard:
                         text.append(hover_text)
 
                     # Add node trace
-                    fig.add_trace(go.Scatter(
-                        x=x, y=y,
-                        mode='markers',
-                        marker=dict(
-                            size=15,
-                            color=color,
-                            line=dict(width=1, color='black')
-                        ),
-                        text=text,
-                        hoverinfo='text',
-                        name=node_type
-                    ))
+                    fig.add_trace(
+                        go.Scatter(
+                            x=x,
+                            y=y,
+                            mode="markers",
+                            marker=dict(size=15, color=color, line=dict(width=1, color="black")),
+                            text=text,
+                            hoverinfo="text",
+                            name=node_type,
+                        )
+                    )
 
                 # Group edges by relationship type
                 edge_types = {}
                 for u, v, data in lineage_graph.edges(data=True):
-                    rel_type = data.get('type', 'unknown')
+                    rel_type = data.get("type", "unknown")
                     if rel_type not in edge_types:
                         edge_types[rel_type] = []
                     edge_types[rel_type].append((u, v, data))
 
                 # Define edge colors
                 edge_color_map = {
-                    'derives_from': 'blue',
-                    'cites': 'green',
-                    'includes': 'orange',
-                    'references': 'red',
-                    'unknown': 'gray'
+                    "derives_from": "blue",
+                    "cites": "green",
+                    "includes": "orange",
+                    "references": "red",
+                    "unknown": "gray",
                 }
 
                 # Add edges by type
@@ -519,7 +561,7 @@ class ProvenanceDashboard:
                     edge_x = []
                     edge_y = []
                     edge_text = []
-                    color = edge_color_map.get(edge_type, 'gray')
+                    color = edge_color_map.get(edge_type, "gray")
 
                     for u, v, data in edges:
                         x0, y0 = pos[u]
@@ -530,43 +572,42 @@ class ProvenanceDashboard:
                         edge_y.extend([y0, y1, None])
 
                         # Prepare hover text
-                        source_name = lineage_graph.nodes[u].get('name', str(u))
-                        target_name = lineage_graph.nodes[v].get('name', str(v))
+                        source_name = lineage_graph.nodes[u].get("name", str(u))
+                        target_name = lineage_graph.nodes[v].get("name", str(v))
 
-                        hover_text = f"From: {source_name}<br>To: {target_name}<br>Type: {edge_type}<br>"
+                        hover_text = (
+                            f"From: {source_name}<br>To: {target_name}<br>Type: {edge_type}<br>"
+                        )
 
-                        if 'metadata' in data:
-                            for key, value in data['metadata'].items():
+                        if "metadata" in data:
+                            for key, value in data["metadata"].items():
                                 hover_text += f"{key}: {value}<br>"
 
                         edge_text.append(hover_text)
 
                     # Add edge trace
-                    fig.add_trace(go.Scatter(
-                        x=edge_x, y=edge_y,
-                        mode='lines',
-                        line=dict(width=1.5, color=color),
-                        hoverinfo='text',
-                        text=edge_text,
-                        name=edge_type
-                    ))
+                    fig.add_trace(
+                        go.Scatter(
+                            x=edge_x,
+                            y=edge_y,
+                            mode="lines",
+                            line=dict(width=1.5, color=color),
+                            hoverinfo="text",
+                            text=edge_text,
+                            name=edge_type,
+                        )
+                    )
 
                 # Configure layout
                 fig.update_layout(
-                    title='Cross-Document Lineage Graph',
+                    title="Cross-Document Lineage Graph",
                     showlegend=True,
-                    hovermode='closest',
+                    hovermode="closest",
                     margin=dict(b=20, l=5, r=5, t=40),
                     xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                     height=600,
-                    legend=dict(
-                        orientation="h",
-                        yanchor="bottom",
-                        y=1.02,
-                        xanchor="right",
-                        x=1
-                    )
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                 )
 
                 # Save as HTML if output_file is provided
@@ -585,6 +626,7 @@ class ProvenanceDashboard:
         except Exception as e:
             logging.error(f"Error creating cross-document lineage visualization: {str(e)}")
             import traceback
+
             logging.error(traceback.format_exc())
             return None
 
@@ -595,7 +637,7 @@ class ProvenanceDashboard:
         include_lineage_graph: bool = True,
         include_audit_events: bool = True,
         include_query_metrics: bool = True,
-        output_file: Optional[str] = None
+        output_file: Optional[str] = None,
     ) -> Optional[str]:
         """
         Generate a comprehensive provenance report for specified data entities.
@@ -611,9 +653,9 @@ class ProvenanceDashboard:
         Returns:
             str: Report content or file path if output_file is specified
         """
-        if format == 'html' and not self.template_engine_available:
+        if format == "html" and not self.template_engine_available:
             logging.warning("Template engine not available, falling back to markdown")
-            format = 'md'
+            format = "md"
 
         # Get provenance data for each entity
         entity_data = {}
@@ -629,10 +671,7 @@ class ProvenanceDashboard:
         lineage_graph = None
         if include_lineage_graph and self.visualization_available:
             try:
-                lineage_graph = self.visualize_data_lineage(
-                    data_ids=data_ids,
-                    return_base64=True
-                )
+                lineage_graph = self.visualize_data_lineage(data_ids=data_ids, return_base64=True)
             except Exception as e:
                 logging.error(f"Error generating lineage graph: {str(e)}")
 
@@ -641,8 +680,7 @@ class ProvenanceDashboard:
         if self.lineage_tracker and include_lineage_graph and self.visualization_available:
             try:
                 cross_doc_lineage = self.visualize_cross_document_lineage(
-                    document_ids=data_ids,
-                    return_base64=True
+                    document_ids=data_ids, return_base64=True
                 )
             except Exception as e:
                 logging.error(f"Error generating cross-document lineage: {str(e)}")
@@ -652,9 +690,7 @@ class ProvenanceDashboard:
         if include_audit_events:
             try:
                 audit_report = self.provenance_manager.generate_audit_report(
-                    data_ids=data_ids,
-                    format=format,
-                    include_parameters=True
+                    data_ids=data_ids, format=format, include_parameters=True
                 )
             except Exception as e:
                 logging.error(f"Error generating audit report: {str(e)}")
@@ -669,25 +705,25 @@ class ProvenanceDashboard:
                 logging.error(f"Error getting query metrics: {str(e)}")
 
         # Generate report in the requested format
-        if format == 'json':
+        if format == "json":
             report = {
-                'data_ids': data_ids,
-                'entity_data': entity_data,
-                'generated_at': datetime.datetime.now(UTC).isoformat() + 'Z',
-                'lineage_graph': lineage_graph,
-                'cross_document_lineage': cross_doc_lineage,
-                'audit_report': audit_report,
-                'query_metrics': query_metrics
+                "data_ids": data_ids,
+                "entity_data": entity_data,
+                "generated_at": datetime.datetime.now(UTC).isoformat() + "Z",
+                "lineage_graph": lineage_graph,
+                "cross_document_lineage": cross_doc_lineage,
+                "audit_report": audit_report,
+                "query_metrics": query_metrics,
             }
 
             if output_file:
-                with open(output_file, 'w') as f:
+                with open(output_file, "w") as f:
                     json.dump(report, f, indent=2)
                 return output_file
             else:
                 return json.dumps(report, indent=2)
 
-        elif format == 'html':
+        elif format == "html":
             # Create HTML template
             template_string = """
             <!DOCTYPE html>
@@ -962,7 +998,7 @@ class ProvenanceDashboard:
             # Define filter functions
             def format_timestamp(timestamp):
                 if isinstance(timestamp, (int, float)):
-                    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                    return datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
                 return timestamp
 
             def format_json(data):
@@ -972,21 +1008,21 @@ class ProvenanceDashboard:
 
             # Render the template
             template = Template(template_string)
-            template.globals['format_timestamp'] = format_timestamp
-            template.globals['format_json'] = format_json
+            template.globals["format_timestamp"] = format_timestamp
+            template.globals["format_json"] = format_json
 
             html = template.render(
                 data_ids=data_ids,
                 entity_data=entity_data,
-                generated_at=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                generated_at=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 lineage_graph=lineage_graph,
                 cross_doc_lineage=cross_doc_lineage,
                 audit_report=audit_report,
-                query_metrics=query_metrics
+                query_metrics=query_metrics,
             )
 
             if output_file:
-                with open(output_file, 'w') as f:
+                with open(output_file, "w") as f:
                     f.write(html)
                 return output_file
             else:
@@ -1029,7 +1065,9 @@ class ProvenanceDashboard:
 
                 timestamp = record.get("timestamp")
                 if timestamp:
-                    time_str = datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                    time_str = datetime.datetime.fromtimestamp(timestamp).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
                     md_lines.append(f"**Time:** {time_str}")
 
                 # Parameters if available
@@ -1053,11 +1091,15 @@ class ProvenanceDashboard:
                         parent_type = parent_record.get("record_type", "Unknown").capitalize()
                         md_lines.append(f"**Record Type:** {parent_type}")
                         md_lines.append(f"**ID:** {parent.get('record_id', 'Unknown')}")
-                        md_lines.append(f"**Description:** {parent_record.get('description', 'No description')}")
+                        md_lines.append(
+                            f"**Description:** {parent_record.get('description', 'No description')}"
+                        )
 
                         parent_timestamp = parent_record.get("timestamp")
                         if parent_timestamp:
-                            parent_time_str = datetime.datetime.fromtimestamp(parent_timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                            parent_time_str = datetime.datetime.fromtimestamp(
+                                parent_timestamp
+                            ).strftime("%Y-%m-%d %H:%M:%S")
                             md_lines.append(f"**Time:** {parent_time_str}")
 
                         md_lines.append("")
@@ -1069,13 +1111,19 @@ class ProvenanceDashboard:
                 md_lines.append("## Related Query Metrics")
                 md_lines.append("")
                 md_lines.append(f"**Total Queries:** {query_metrics.get('total_queries', 0)}")
-                md_lines.append(f"**Avg Duration:** {round(query_metrics.get('avg_duration', 0), 2)}s")
-                md_lines.append(f"**Success Rate:** {round(query_metrics.get('success_rate', 0) * 100, 1)}%")
-                md_lines.append(f"**Error Rate:** {round(query_metrics.get('error_rate', 0) * 100, 1)}%")
+                md_lines.append(
+                    f"**Avg Duration:** {round(query_metrics.get('avg_duration', 0), 2)}s"
+                )
+                md_lines.append(
+                    f"**Success Rate:** {round(query_metrics.get('success_rate', 0) * 100, 1)}%"
+                )
+                md_lines.append(
+                    f"**Error Rate:** {round(query_metrics.get('error_rate', 0) * 100, 1)}%"
+                )
                 md_lines.append("")
 
                 # Add performance by query type
-                performance_by_type = query_metrics.get('performance_by_type', {})
+                performance_by_type = query_metrics.get("performance_by_type", {})
                 if performance_by_type:
                     md_lines.append("### Performance by Query Type")
                     md_lines.append("")
@@ -1083,15 +1131,17 @@ class ProvenanceDashboard:
                     md_lines.append("|------------|-------|-----------------|-------------|")
 
                     for query_type, stats in performance_by_type.items():
-                        count = stats.get('count', 0)
-                        avg_duration = round(stats.get('avg_duration', 0), 3)
-                        success_rate = round(stats.get('success_rate', 0) * 100, 1)
-                        md_lines.append(f"| {query_type} | {count} | {avg_duration} | {success_rate}% |")
+                        count = stats.get("count", 0)
+                        avg_duration = round(stats.get("avg_duration", 0), 3)
+                        success_rate = round(stats.get("success_rate", 0) * 100, 1)
+                        md_lines.append(
+                            f"| {query_type} | {count} | {avg_duration} | {success_rate}% |"
+                        )
 
                     md_lines.append("")
 
             # Add audit report if available (as is, since it's already in markdown format)
-            if audit_report and format == 'md':
+            if audit_report and format == "md":
                 md_lines.append("## Audit Trail")
                 md_lines.append("")
                 md_lines.append(audit_report)
@@ -1100,7 +1150,7 @@ class ProvenanceDashboard:
             markdown = "\n".join(md_lines)
 
             if output_file:
-                with open(output_file, 'w') as f:
+                with open(output_file, "w") as f:
                     f.write(markdown)
                 return output_file
             else:
@@ -1113,7 +1163,7 @@ class ProvenanceDashboard:
         include_audit: bool = True,
         include_query: bool = True,
         include_cross_doc: bool = True,
-        dashboard_name: str = "provenance_dashboard.html"
+        dashboard_name: str = "provenance_dashboard.html",
     ) -> str:
         """
         Create an integrated dashboard with provenance, audit, and query metrics.
@@ -1155,9 +1205,7 @@ class ProvenanceDashboard:
             try:
                 lineage_path = os.path.join(output_dir, "data_lineage.png")
                 self.visualize_data_lineage(
-                    data_ids=data_ids,
-                    max_depth=5,
-                    output_file=lineage_path
+                    data_ids=data_ids, max_depth=5, output_file=lineage_path
                 )
             except Exception as e:
                 logging.error(f"Error generating lineage visualization: {str(e)}")
@@ -1169,8 +1217,7 @@ class ProvenanceDashboard:
             try:
                 cross_doc_path = os.path.join(output_dir, "cross_doc_lineage.png")
                 self.visualize_cross_document_lineage(
-                    document_ids=data_ids,
-                    output_file=cross_doc_path
+                    document_ids=data_ids, output_file=cross_doc_path
                 )
             except Exception as e:
                 logging.error(f"Error generating cross-document lineage: {str(e)}")
@@ -1181,9 +1228,7 @@ class ProvenanceDashboard:
         if include_query and self.query_visualizer:
             try:
                 query_performance_path = os.path.join(output_dir, "query_performance.png")
-                self.query_visualizer.plot_query_performance(
-                    output_file=query_performance_path
-                )
+                self.query_visualizer.plot_query_performance(output_file=query_performance_path)
             except Exception as e:
                 logging.error(f"Error generating query performance visualization: {str(e)}")
                 query_performance_path = None
@@ -1197,14 +1242,15 @@ class ProvenanceDashboard:
                 # Get audit metrics if available
                 try:
                     from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator
-                    audit_metrics = getattr(self, 'audit_metrics', None)
+
+                    audit_metrics = getattr(self, "audit_metrics", None)
 
                     if audit_metrics and isinstance(audit_metrics, AuditMetricsAggregator):
                         timeline_path = os.path.join(output_dir, "query_audit_timeline.png")
                         create_query_audit_timeline(
                             query_metrics_collector=self.query_visualizer.metrics,
                             audit_metrics=audit_metrics,
-                            output_file=timeline_path
+                            output_file=timeline_path,
                         )
                 except ImportError:
                     logging.warning("Audit visualization components not available")
@@ -1220,12 +1266,12 @@ class ProvenanceDashboard:
                 include_lineage_graph=True,
                 include_audit_events=include_audit,
                 include_query_metrics=include_query,
-                output_file=dashboard_path
+                output_file=dashboard_path,
             )
         except Exception as e:
             logging.error(f"Error generating provenance report: {str(e)}")
             # Create a simple fallback dashboard
-            with open(dashboard_path, 'w') as f:
+            with open(dashboard_path, "w") as f:
                 f.write(f"""<!DOCTYPE html>
                 <html>
                 <head>
@@ -1235,10 +1281,10 @@ class ProvenanceDashboard:
                     <h1>Provenance Dashboard</h1>
                     <p>Error generating full report: {str(e)}</p>
 
-                    {f'<h2>Data Lineage</h2><img src="data_lineage.png" alt="Data Lineage">' if lineage_path else ''}
-                    {f'<h2>Cross-Document Lineage</h2><img src="cross_doc_lineage.png" alt="Cross-Document Lineage">' if cross_doc_path else ''}
-                    {f'<h2>Query Performance</h2><img src="query_performance.png" alt="Query Performance">' if query_performance_path else ''}
-                    {f'<h2>Query-Audit Timeline</h2><img src="query_audit_timeline.png" alt="Query-Audit Timeline">' if timeline_path else ''}
+                    {f'<h2>Data Lineage</h2><img src="data_lineage.png" alt="Data Lineage">' if lineage_path else ""}
+                    {f'<h2>Cross-Document Lineage</h2><img src="cross_doc_lineage.png" alt="Cross-Document Lineage">' if cross_doc_path else ""}
+                    {f'<h2>Query Performance</h2><img src="query_performance.png" alt="Query Performance">' if query_performance_path else ""}
+                    {f'<h2>Query-Audit Timeline</h2><img src="query_audit_timeline.png" alt="Query-Audit Timeline">' if timeline_path else ""}
                 </body>
                 </html>""")
 
@@ -1271,7 +1317,7 @@ def setup_provenance_dashboard(
     provenance_manager: Optional[ProvenanceManager] = None,
     lineage_tracker: Optional[Any] = None,
     query_metrics: Optional[Any] = None,
-    audit_metrics: Optional[Any] = None
+    audit_metrics: Optional[Any] = None,
 ) -> ProvenanceDashboard:
     """
     Set up a provenance dashboard with all available components.
@@ -1297,6 +1343,7 @@ def setup_provenance_dashboard(
     if not lineage_tracker:
         try:
             from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
+
             lineage_tracker = EnhancedLineageTracker()
         except ImportError:
             logging.warning("EnhancedLineageTracker not available")
@@ -1310,6 +1357,7 @@ def setup_provenance_dashboard(
     if query_metrics:
         try:
             from ipfs_datasets_py.dashboards.rag.query_visualization import RAGQueryVisualizer
+
             query_visualizer = RAGQueryVisualizer(query_metrics)
         except ImportError:
             logging.warning("RAGQueryVisualizer not available")
@@ -1320,7 +1368,7 @@ def setup_provenance_dashboard(
     dashboard = ProvenanceDashboard(
         provenance_manager=provenance_manager,
         lineage_tracker=lineage_tracker,
-        query_visualizer=query_visualizer
+        query_visualizer=query_visualizer,
     )
 
     # Store audit metrics if provided

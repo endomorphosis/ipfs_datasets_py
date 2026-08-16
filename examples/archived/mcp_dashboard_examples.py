@@ -4,83 +4,81 @@ MCP Dashboard Usage Examples
 This file contains practical examples of using the MCP dashboard and JavaScript SDK.
 """
 
+
 # Example 1: Basic Dashboard Setup
 def basic_dashboard_setup():
     """Example of basic dashboard setup and startup."""
     from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
-    
+
     # Create configuration
-    config = MCPDashboardConfig(
-        host="localhost",
-        port=8080,
-        enable_tool_execution=True
-    )
-    
+    config = MCPDashboardConfig(host="localhost", port=8080, enable_tool_execution=True)
+
     # Initialize and start dashboard
     dashboard = MCPDashboard()
     dashboard.configure(config)
     dashboard.start()
-    
+
     print("Dashboard running at http://localhost:8080/mcp")
     return dashboard
+
 
 # Example 2: Advanced Dashboard Configuration
 def advanced_dashboard_setup():
     """Example of advanced dashboard configuration with custom settings."""
     from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
-    
+
     config = MCPDashboardConfig(
-        host="0.0.0.0",                    # Listen on all interfaces
+        host="0.0.0.0",  # Listen on all interfaces
         port=8080,
         mcp_server_host="localhost",
         mcp_server_port=8001,
         enable_tool_execution=True,
-        tool_timeout=60.0,                 # 60 second timeout
-        max_concurrent_tools=10,           # Allow 10 concurrent executions
-        data_dir="/var/mcp_dashboard",     # Custom data directory
-        require_auth=True,                 # Enable authentication
+        tool_timeout=60.0,  # 60 second timeout
+        max_concurrent_tools=10,  # Allow 10 concurrent executions
+        data_dir="/var/mcp_dashboard",  # Custom data directory
+        require_auth=True,  # Enable authentication
         username="admin",
-        password="secure_password"
+        password="secure_password",
     )
-    
+
     dashboard = MCPDashboard()
     dashboard.configure(config)
-    
+
     # Create custom templates
     dashboard._create_mcp_templates()
-    
+
     dashboard.start()
     return dashboard
+
 
 # Example 3: Programmatic Tool Discovery and Execution
 def programmatic_tool_usage():
     """Example of discovering and executing tools programmatically."""
     from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
-    
+
     # Setup dashboard
     config = MCPDashboardConfig(enable_tool_execution=True)
     dashboard = MCPDashboard()
     dashboard.configure(config)
-    
+
     # Discover available tools
     tools_info = dashboard._discover_mcp_tools()
     print(f"Discovered {len(tools_info)} tool categories:")
-    
+
     for category, tools in tools_info.items():
         print(f"  {category}: {len(tools)} tools")
         for tool in tools[:3]:  # Show first 3 tools
             print(f"    - {tool['name']}")
-    
+
     # Execute a tool programmatically (simulation)
     try:
         result = dashboard._execute_tool_sync(
-            'dataset_tools', 
-            'load_dataset',
-            {'dataset_name': 'example', 'format': 'json'}
+            "dataset_tools", "load_dataset", {"dataset_name": "example", "format": "json"}
         )
         print(f"Tool execution result: {result}")
     except Exception as e:
         print(f"Tool execution failed: {e}")
+
 
 # Example 4: Custom Tool Execution Handler
 def custom_execution_handler():
@@ -88,20 +86,20 @@ def custom_execution_handler():
     from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
     import time
     import json
-    
+
     class MonitoredMCPDashboard(MCPDashboard):
         """Custom dashboard with execution monitoring."""
-        
+
         def _execute_tool_sync(self, category, tool_name, params):
             """Override to add custom monitoring."""
             start_time = time.time()
             print(f"Starting execution: {category}/{tool_name}")
-            
+
             try:
                 result = super()._execute_tool_sync(category, tool_name, params)
                 duration = time.time() - start_time
                 print(f"Execution completed in {duration:.2f}s")
-                
+
                 # Log to custom file
                 with open("/tmp/mcp_executions.log", "a") as f:
                     log_entry = {
@@ -110,16 +108,16 @@ def custom_execution_handler():
                         "tool": tool_name,
                         "params": params,
                         "duration": duration,
-                        "success": True
+                        "success": True,
                     }
                     f.write(json.dumps(log_entry) + "\n")
-                
+
                 return result
-                
+
             except Exception as e:
                 duration = time.time() - start_time
                 print(f"Execution failed after {duration:.2f}s: {e}")
-                
+
                 # Log failure
                 with open("/tmp/mcp_executions.log", "a") as f:
                     log_entry = {
@@ -129,53 +127,55 @@ def custom_execution_handler():
                         "params": params,
                         "duration": duration,
                         "success": False,
-                        "error": str(e)
+                        "error": str(e),
                     }
                     f.write(json.dumps(log_entry) + "\n")
-                
+
                 raise
-    
+
     # Use custom dashboard
     config = MCPDashboardConfig(port=8080)
     dashboard = MonitoredMCPDashboard()
     dashboard.configure(config)
     return dashboard
 
+
 # Example 5: Integration with Flask App
 def integrate_with_flask():
     """Example of integrating MCP dashboard with existing Flask app."""
     from flask import Flask
     from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
-    
+
     # Create main Flask app
     app = Flask(__name__)
-    
-    @app.route('/')
+
+    @app.route("/")
     def home():
         return '<h1>Main App</h1><a href="/mcp">MCP Dashboard</a>'
-    
+
     # Initialize MCP dashboard
     config = MCPDashboardConfig(port=None)  # Don't start separate server
     mcp_dashboard = MCPDashboard()
     mcp_dashboard.configure(config)
-    
+
     # Register MCP routes with main app
-    @app.route('/mcp')
+    @app.route("/mcp")
     def mcp_dashboard_view():
-        return mcp_dashboard.app.test_client().get('/mcp').data.decode()
-    
-    @app.route('/api/mcp/<path:path>', methods=['GET', 'POST'])
+        return mcp_dashboard.app.test_client().get("/mcp").data.decode()
+
+    @app.route("/api/mcp/<path:path>", methods=["GET", "POST"])
     def mcp_api(path):
         # Proxy to MCP dashboard API
         client = mcp_dashboard.app.test_client()
-        if request.method == 'GET':
-            response = client.get(f'/api/mcp/{path}')
+        if request.method == "GET":
+            response = client.get(f"/api/mcp/{path}")
         else:
-            response = client.post(f'/api/mcp/{path}', json=request.json)
-        
+            response = client.post(f"/api/mcp/{path}", json=request.json)
+
         return response.data, response.status_code
-    
+
     return app
+
 
 # JavaScript SDK Usage Examples
 
@@ -348,17 +348,19 @@ function updateStatusDisplay(status) {
 }
 """
 
+
 # Save JavaScript examples to file
 def save_js_examples():
     """Save JavaScript examples to file."""
-    with open('/tmp/mcp_sdk_examples.js', 'w') as f:
+    with open("/tmp/mcp_sdk_examples.js", "w") as f:
         f.write(js_examples)
     print("JavaScript examples saved to /tmp/mcp_sdk_examples.js")
+
 
 if __name__ == "__main__":
     print("MCP Dashboard Usage Examples")
     print("=" * 40)
-    
+
     # Run Python examples
     print("\n1. Basic Dashboard Setup:")
     try:
@@ -371,10 +373,12 @@ if __name__ == "__main__":
         print("  - integrate_with_flask()")
     except Exception as e:
         print(f"✗ Error: {e}")
-    
+
     # Save JavaScript examples
     print("\n2. JavaScript SDK Examples:")
     save_js_examples()
-    
+
     print("\nTo run the examples:")
-    print("  python -c 'from mcp_dashboard_examples import basic_dashboard_setup; basic_dashboard_setup()'")
+    print(
+        "  python -c 'from mcp_dashboard_examples import basic_dashboard_setup; basic_dashboard_setup()'"
+    )

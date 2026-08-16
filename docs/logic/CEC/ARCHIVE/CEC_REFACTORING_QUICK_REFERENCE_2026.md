@@ -139,15 +139,15 @@ pytest tests/unit_tests/logic/CEC/nl/
 # Example: native/__init__.py
 __all__ = [
     # Types
-    'Formula',
-    'AtomicFormula',
-    'ConnectiveFormula',
+    "Formula",
+    "AtomicFormula",
+    "ConnectiveFormula",
     # Operators
-    'DeonticOperator',
-    'CognitiveOperator',
+    "DeonticOperator",
+    "CognitiveOperator",
     # Provers
-    'Prover',
-    'ProofResult',
+    "Prover",
+    "ProofResult",
 ]
 
 # From sub-packages
@@ -172,24 +172,27 @@ done
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 
+
 class Stringifiable(ABC):
     """Mixin for consistent string representation."""
-    
+
     @abstractmethod
     def _to_string_parts(self) -> Dict[str, Any]:
         """Return dict of parts for string representation."""
         pass
-    
+
     def to_string(self, verbose: bool = False) -> str:
         """Generate string representation."""
         parts = self._to_string_parts()
         if verbose:
-            return f"{parts['type']}({', '.join(f'{k}={v}' for k, v in parts.items() if k != 'type')})"
+            return (
+                f"{parts['type']}({', '.join(f'{k}={v}' for k, v in parts.items() if k != 'type')})"
+            )
         return self._format_simple(parts)
-    
+
     def __str__(self) -> str:
         return self.to_string(verbose=False)
-    
+
     def __repr__(self) -> str:
         return self.to_string(verbose=True)
 ```
@@ -199,9 +202,9 @@ class Stringifiable(ABC):
 class AtomicFormula(Stringifiable):
     def _to_string_parts(self):
         return {
-            'type': 'AtomicFormula',
-            'predicate': self.predicate,
-            'terms': self.terms,
+            "type": "AtomicFormula",
+            "predicate": self.predicate,
+            "terms": self.terms,
         }
 ```
 
@@ -393,12 +396,11 @@ python -c "from ipfs_datasets_py.logic.CEC.native import Prover"
 ```python
 # Solution: Add proper type hints
 # Before:
-def process(data: Any) -> Any:
-    ...
+def process(data: Any) -> Any: ...
+
 
 # After:
-def process(data: List[Formula]) -> ProofResult:
-    ...
+def process(data: List[Formula]) -> ProofResult: ...
 ```
 
 ---

@@ -132,7 +132,9 @@ def run_benchmark(
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Benchmark Hybrid V2 parse/compile/reason stage timings.")
+    p = argparse.ArgumentParser(
+        description="Benchmark Hybrid V2 parse/compile/reason stage timings."
+    )
     p.add_argument("--input-jsonl", required=True, help="JSONL path containing sentence records.")
     p.add_argument("--sentence-field", default="sentence", help="Sentence field key in JSONL.")
     p.add_argument("--jurisdiction", default="us/federal", help="Jurisdiction label.")

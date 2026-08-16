@@ -13,17 +13,19 @@ import sys
 
 
 _SCHEMA_PATH = Path(__file__).resolve().parents[1] / "ml" / "embeddings" / "schema.py"
-_SPEC = importlib.util.spec_from_file_location("ipfs_datasets_py.ml.embeddings.schema_compat", _SCHEMA_PATH)
+_SPEC = importlib.util.spec_from_file_location(
+    "ipfs_datasets_py.ml.embeddings.schema_compat", _SCHEMA_PATH
+)
 if _SPEC is None or _SPEC.loader is None:
-	raise ImportError(f"Unable to load schema module at {_SCHEMA_PATH}")
+    raise ImportError(f"Unable to load schema module at {_SCHEMA_PATH}")
 
 _MODULE = importlib.util.module_from_spec(_SPEC)
 sys.modules[_SPEC.name] = _MODULE
 _SPEC.loader.exec_module(_MODULE)
 
 for _name in dir(_MODULE):
-	if _name.startswith("_"):
-		continue
-	globals()[_name] = getattr(_MODULE, _name)
+    if _name.startswith("_"):
+        continue
+    globals()[_name] = getattr(_MODULE, _name)
 
 __all__ = [name for name in globals() if not name.startswith("_")]

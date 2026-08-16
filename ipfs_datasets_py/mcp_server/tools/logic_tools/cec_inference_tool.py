@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.core_operations.logic_processor import LogicProcessor
+
     _PROCESSOR = LogicProcessor()
     _AVAILABLE = True
 except Exception as _e:
@@ -55,7 +56,9 @@ async def cec_list_rules(
     """
     if not _AVAILABLE:
         return _unavailable("cec_list_rules")
-    return await _PROCESSOR.list_cec_rules(category=category, include_description=include_description)
+    return await _PROCESSOR.list_cec_rules(
+        category=category, include_description=include_description
+    )
 
 
 async def cec_apply_rule(

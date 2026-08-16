@@ -19,11 +19,13 @@ from ipfs_datasets_py.logic.zkp.provekit.artifacts import (
 def _write_noir_package(root):
     root.mkdir(parents=True, exist_ok=True)
     (root / "Nargo.toml").write_text(
-        "[package]\nname = \"provekit_knowledge_of_axioms\"\ntype = \"bin\"\n",
+        '[package]\nname = "provekit_knowledge_of_axioms"\ntype = "bin"\n',
         encoding="utf-8",
     )
     (root / "src").mkdir()
-    (root / "src" / "main.nr").write_text("fn main(x: Field) -> pub Field { x }\n", encoding="utf-8")
+    (root / "src" / "main.nr").write_text(
+        "fn main(x: Field) -> pub Field { x }\n", encoding="utf-8"
+    )
     return root
 
 
@@ -53,7 +55,9 @@ def test_sha256_directory_is_deterministic_and_ignores_generated_outputs(tmp_pat
 
     assert sha256_directory(package) == baseline
 
-    (package / "src" / "main.nr").write_text("fn main(x: Field) -> pub Field { x + 1 }\n", encoding="utf-8")
+    (package / "src" / "main.nr").write_text(
+        "fn main(x: Field) -> pub Field { x + 1 }\n", encoding="utf-8"
+    )
     assert sha256_directory(package) != baseline
 
 
@@ -82,9 +86,12 @@ def test_build_manifest_records_paths_versions_and_digests(tmp_path):
     assert manifest.verifier_key_sha256 == sha256_file(pkv)
     assert manifest.noir_package_sha256 == sha256_directory(package)
     assert manifest.provekit_binary_sha256 == sha256_file(binary)
-    assert manifest.manifest_sha256() == ProveKitArtifactManifest.from_dict(
-        json.loads(manifest.canonical_json())
-    ).manifest_sha256()
+    assert (
+        manifest.manifest_sha256()
+        == ProveKitArtifactManifest.from_dict(
+            json.loads(manifest.canonical_json())
+        ).manifest_sha256()
+    )
 
 
 def test_manifest_round_trip_load_save_and_validate(tmp_path):

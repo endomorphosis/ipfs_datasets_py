@@ -9,6 +9,7 @@ Terminology:
 - python_ffmpeg_library_available: System state where python-ffmpeg library is importable
 - ffmpeg_executable_accessible: System state where FFmpeg executable is available in PATH
 """
+
 import pytest
 from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
@@ -16,7 +17,7 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class TestFFmpegWrapperIsAvailableValidInputs:
     """
     Valid scenarios for FFmpegWrapper.is_available method.
-    
+
     Tests the is_available method to ensure proper dependency checking
     and correct availability status reporting.
     """
@@ -30,15 +31,15 @@ class TestFFmpegWrapperIsAvailableValidInputs:
         # GIVEN - FFmpeg dependencies available
         try:
             wrapper = FFmpegWrapper()
-            
+
             # WHEN - is_available is called
             result = wrapper.is_available()
-            
+
             # THEN - returns availability status
             assert isinstance(result, bool)
             # If FFmpeg is actually available, it should return True
             # If not available, it should return False (graceful handling)
-            
+
         except ImportError:
             # FFmpegWrapper not available, test passes with mock validation
             mock_availability = True  # Simulate dependencies available
@@ -53,23 +54,26 @@ class TestFFmpegWrapperIsAvailableValidInputs:
         # GIVEN system environment with python-ffmpeg library available
         try:
             wrapper = FFmpegWrapper()
-            
+
             # Check if python-ffmpeg library is actually available
             try:
                 import ffmpeg
+
                 library_available = True
             except ImportError:
                 library_available = False
-            
+
             # WHEN is_available is called
             result = wrapper.is_available()
-            
+
             # THEN returns availability status consistent with library presence
             assert isinstance(result, bool)
             if library_available:
                 # If library is available, method should detect it
-                assert result is True or result is False  # Either way is valid, depends on FFmpeg executable
-            
+                assert (
+                    result is True or result is False
+                )  # Either way is valid, depends on FFmpeg executable
+
         except ImportError:
             # FFmpegWrapper not available, test passes with mock validation
             mock_library_check = True  # Simulate library available
@@ -84,18 +88,18 @@ class TestFFmpegWrapperIsAvailableValidInputs:
         # GIVEN FFmpegWrapper instance with stable dependency environment
         try:
             wrapper = FFmpegWrapper()
-            
+
             # WHEN is_available is called multiple times in succession
             first_call = wrapper.is_available()
             second_call = wrapper.is_available()
             third_call = wrapper.is_available()
-            
+
             # THEN returns identical boolean value for all calls
             assert isinstance(first_call, bool)
-            assert isinstance(second_call, bool) 
+            assert isinstance(second_call, bool)
             assert isinstance(third_call, bool)
             assert first_call == second_call == third_call  # Consistent results
-            
+
         except ImportError:
             # FFmpegWrapper not available, test passes with mock validation
             mock_first = True
@@ -114,21 +118,21 @@ class TestFFmpegWrapperIsAvailableValidInputs:
             wrapper1 = FFmpegWrapper()
             wrapper2 = FFmpegWrapper()
             wrapper3 = FFmpegWrapper()
-            
+
             # WHEN is_available is called on different wrapper instances
             result1 = wrapper1.is_available()
             result2 = wrapper2.is_available()
             result3 = wrapper3.is_available()
-            
+
             # THEN returns identical boolean value across instances
             assert isinstance(result1, bool)
             assert isinstance(result2, bool)
             assert isinstance(result3, bool)
             assert result1 == result2 == result3  # System-wide consistent results
-            
+
         except ImportError:
             # FFmpegWrapper not available, test passes with mock validation
             mock_result1 = True
-            mock_result2 = True  
+            mock_result2 = True
             mock_result3 = True
             assert mock_result1 == mock_result2 == mock_result3

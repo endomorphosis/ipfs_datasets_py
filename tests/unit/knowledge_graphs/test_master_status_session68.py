@@ -17,12 +17,12 @@ _KG = pathlib.Path(__file__).parents[3] / "ipfs_datasets_py" / "knowledge_graphs
 _DOCS = pathlib.Path(__file__).parents[3] / "docs" / "knowledge_graphs"
 
 _CYPHER_README = _KG / "cypher" / "README.md"
-_CORE_README   = _KG / "core" / "README.md"
-_MIGRATION     = _DOCS / "MIGRATION_GUIDE.md"
-_API_REF       = _DOCS / "API_REFERENCE.md"
+_CORE_README = _KG / "core" / "README.md"
+_MIGRATION = _DOCS / "MIGRATION_GUIDE.md"
+_API_REF = _DOCS / "API_REFERENCE.md"
 _MASTER_STATUS = _DOCS / "MASTER_STATUS.md"
-_CHANGELOG     = _DOCS / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
-_ROADMAP       = _DOCS / "ROADMAP.md"
+_CHANGELOG = _DOCS / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+_ROADMAP = _DOCS / "ROADMAP.md"
 
 
 def _read(p: pathlib.Path) -> str:
@@ -38,33 +38,34 @@ class TestCypherReadmeNotSupportedFixed:
     def test_not_implemented_label_removed(self):
         """No bare 'Not implemented' cells should remain in the cypher README."""
         content = _read(_CYPHER_README)
-        assert "Not implemented" not in content, \
+        assert "Not implemented" not in content, (
             "cypher/README.md still contains stale 'Not implemented' text"
+        )
 
     def test_not_operator_shown_as_implemented(self):
         """`NOT` operator row should say ✅ Implemented."""
         content = _read(_CYPHER_README)
-        assert "✅ Implemented" in content, \
+        assert "✅ Implemented" in content, (
             "cypher/README.md should contain '✅ Implemented' for NOT/CREATE/MERGE/DELETE"
+        )
 
     def test_create_relationships_shown_as_implemented(self):
         """`CREATE` relationships row should mention v2.1.0 implementation."""
         content = _read(_CYPHER_README)
-        assert "v2.1.0" in content, \
-            "cypher/README.md should reference v2.1.0 implementation"
+        assert "v2.1.0" in content, "cypher/README.md should reference v2.1.0 implementation"
 
     def test_last_updated_bumped(self):
         """Last Updated should be 2026-02-22."""
         content = _read(_CYPHER_README)
-        assert "2026-02-22" in content, \
-            "cypher/README.md Last Updated should be 2026-02-22"
+        assert "2026-02-22" in content, "cypher/README.md Last Updated should be 2026-02-22"
 
     def test_stale_date_removed(self):
         """Stale 2026-02-17 date should be gone from footer."""
         content = _read(_CYPHER_README)
         # The old Last Updated: 2026-02-17 line should be gone
-        assert "**Last Updated:** 2026-02-17" not in content, \
+        assert "**Last Updated:** 2026-02-17" not in content, (
             "cypher/README.md still has stale Last Updated: 2026-02-17"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -76,32 +77,29 @@ class TestCoreReadmeCoverageFixed:
     def test_coverage_updated_to_100(self):
         """Test Coverage should say 100%, not ~80%."""
         content = _read(_CORE_README)
-        assert "100%" in content, \
-            "core/README.md should say '100%' test coverage"
+        assert "100%" in content, "core/README.md should say '100%' test coverage"
 
     def test_stale_80_percent_removed(self):
         """Stale ~80% coverage note should be gone."""
         content = _read(_CORE_README)
-        assert "~80%" not in content, \
-            "core/README.md still shows stale '~80%' test coverage"
+        assert "~80%" not in content, "core/README.md still shows stale '~80%' test coverage"
 
     def test_phase5_not_just_planned(self):
         """Phase 5 should not say just 'Planned' — should say 'Deferred to v4.0+'."""
         content = _read(_CORE_README)
-        assert "(Planned)" not in content, \
+        assert "(Planned)" not in content, (
             "core/README.md still has stale 'Phase 5: Advanced optimization (Planned)'"
+        )
 
     def test_phase5_deferred_to_v4(self):
         """Phase 5 should reference v4.0+."""
         content = _read(_CORE_README)
-        assert "v4.0+" in content, \
-            "core/README.md should say 'Deferred to v4.0+' for Phase 5"
+        assert "v4.0+" in content, "core/README.md should say 'Deferred to v4.0+' for Phase 5"
 
     def test_version_updated(self):
         """Version header should say 3.22.22."""
         content = _read(_CORE_README)
-        assert "3.22.22" in content, \
-            "core/README.md Version should be 3.22.22"
+        assert "3.22.22" in content, "core/README.md Version should be 3.22.22"
 
 
 # ---------------------------------------------------------------------------
@@ -113,44 +111,47 @@ class TestMigrationGuideFixed:
     def test_not_implemented_workarounds_removed(self):
         """Stale 'Not implemented' workaround rows must be gone."""
         content = _read(_MIGRATION)
-        assert "Not implemented" not in content, \
+        assert "Not implemented" not in content, (
             "MIGRATION_GUIDE.md still has stale 'Not implemented' text"
+        )
 
     def test_all_features_shown_as_implemented(self):
         """The NOT/CREATE/MERGE/DELETE features should all show ✅ Implemented."""
         content = _read(_MIGRATION)
-        assert "✅ Implemented" in content, \
+        assert "✅ Implemented" in content, (
             "MIGRATION_GUIDE.md should contain '✅ Implemented' for Cypher features"
+        )
 
     def test_future_extraction_table_replaced(self):
         """'Planned' extraction enhancements should be replaced by ✅ delivered entries."""
         content = _read(_MIGRATION)
-        assert "Planned | v2.5.0" not in content, \
+        assert "Planned | v2.5.0" not in content, (
             "MIGRATION_GUIDE.md still has stale 'Planned | v2.5.0' extraction row"
+        )
 
     def test_extraction_shown_as_delivered(self):
         """Extraction features should show ✅ Implemented."""
         content = _read(_MIGRATION)
-        assert "SRL" in content and "✅ Implemented" in content, \
+        assert "SRL" in content and "✅ Implemented" in content, (
             "MIGRATION_GUIDE.md should show SRL as ✅ Implemented"
+        )
 
     def test_version_updated(self):
         """Version header should say 3.22.22."""
         content = _read(_MIGRATION)
-        assert "3.22.22" in content, \
-            "MIGRATION_GUIDE.md Version should be 3.22.22"
+        assert "3.22.22" in content, "MIGRATION_GUIDE.md Version should be 3.22.22"
 
     def test_last_updated_bumped(self):
         """Last Updated should be 2026-02-22."""
         content = _read(_MIGRATION)
-        assert "2026-02-22" in content, \
-            "MIGRATION_GUIDE.md Last Updated should be 2026-02-22"
+        assert "2026-02-22" in content, "MIGRATION_GUIDE.md Last Updated should be 2026-02-22"
 
     def test_stale_planned_versions_removed(self):
         """'Planned Q3 2026' in Version table should be gone."""
         content = _read(_MIGRATION)
-        assert "Planned Q3 2026" not in content, \
+        assert "Planned Q3 2026" not in content, (
             "MIGRATION_GUIDE.md still has stale 'Planned Q3 2026' in version table"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -163,26 +164,28 @@ class TestAPIReferenceLimitationsFixed:
         """Stale 'NOT operator — Workaround' bullet should be gone."""
         content = _read(_API_REF)
         # The specific "NOT operator in WHERE clauses - Workaround" pattern
-        assert "- `NOT` operator in WHERE clauses - **Workaround:**" not in content, \
+        assert "- `NOT` operator in WHERE clauses - **Workaround:**" not in content, (
             "API_REFERENCE.md still has stale NOT workaround bullet"
+        )
 
     def test_create_workaround_removed(self):
         """Stale CREATE workaround bullet should be gone."""
         content = _read(_API_REF)
-        assert "- `CREATE` for relationships - **Workaround:**" not in content, \
+        assert "- `CREATE` for relationships - **Workaround:**" not in content, (
             "API_REFERENCE.md still has stale CREATE workaround bullet"
+        )
 
     def test_limitations_now_mention_subqueries(self):
         """Known Limitations section should mention subqueries as the remaining limit."""
         content = _read(_API_REF)
-        assert "Subqueries" in content or "subqueries" in content, \
+        assert "Subqueries" in content or "subqueries" in content, (
             "API_REFERENCE.md Known Limitations should note remaining subquery limitation"
+        )
 
     def test_version_updated(self):
         """Version header should say 3.22.22."""
         content = _read(_API_REF)
-        assert "3.22.22" in content, \
-            "API_REFERENCE.md Version should be 3.22.22"
+        assert "3.22.22" in content, "API_REFERENCE.md Version should be 3.22.22"
 
 
 # ---------------------------------------------------------------------------
@@ -193,15 +196,12 @@ class TestVersionAgreement:
 
     def test_master_status_on_v3_22_22(self):
         content = _read(_MASTER_STATUS)
-        assert "3.22.22" in content, \
-            "MASTER_STATUS.md should contain 3.22.22"
+        assert "3.22.22" in content, "MASTER_STATUS.md should contain 3.22.22"
 
     def test_changelog_has_3_22_22(self):
         content = _read(_CHANGELOG)
-        assert "3.22.22" in content, \
-            "CHANGELOG_KNOWLEDGE_GRAPHS.md should have [3.22.22] section"
+        assert "3.22.22" in content, "CHANGELOG_KNOWLEDGE_GRAPHS.md should have [3.22.22] section"
 
     def test_roadmap_has_3_22_22(self):
         content = _read(_ROADMAP)
-        assert "3.22.22" in content, \
-            "ROADMAP.md should contain 3.22.22"
+        assert "3.22.22" in content, "ROADMAP.md should contain 3.22.22"

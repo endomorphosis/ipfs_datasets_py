@@ -195,7 +195,9 @@ def _row_text_fields(row: dict[str, Any]) -> tuple[str, str, str, str, str]:
     return sender, recipient, cc, participants, corpus
 
 
-def _row_matches_required_domains(row: dict[str, Any], required_participant_domains: Sequence[str]) -> bool:
+def _row_matches_required_domains(
+    row: dict[str, Any], required_participant_domains: Sequence[str]
+) -> bool:
     if not required_participant_domains:
         return True
     sender, recipient, cc, participants, corpus = _row_text_fields(row)
@@ -237,7 +239,11 @@ def _build_ranked_hits(
             continue
         iso_date, parsed_dt = _parse_email_datetime(row.get("date"))
         thread_subject = _normalize_subject_for_thread(str(row.get("subject") or ""))
-        total_score = float(row.get("relevance_score") or 0.0) + float(complaint_relevance["score"]) + float(seed_score)
+        total_score = (
+            float(row.get("relevance_score") or 0.0)
+            + float(complaint_relevance["score"])
+            + float(seed_score)
+        )
         ranked.append(
             {
                 **row,
@@ -286,7 +292,9 @@ def _summarize_chains(hits: Sequence[dict[str, Any]], *, chain_limit: int) -> li
         if sender:
             chain["senders"].add(sender)
         chain["matched_seed_phrases"].update(list(hit.get("matched_seed_phrases") or []))
-        chain["top_agentic_score"] = max(float(chain["top_agentic_score"] or 0.0), float(hit.get("agentic_score") or 0.0))
+        chain["top_agentic_score"] = max(
+            float(chain["top_agentic_score"] or 0.0), float(hit.get("agentic_score") or 0.0)
+        )
         if hit.get("eml_path") and len(chain["sample_eml_paths"]) < 3:
             chain["sample_eml_paths"].append(str(hit.get("eml_path")))
         hit_date = str(hit.get("email_date_iso") or "")
@@ -322,7 +330,13 @@ def _summarize_chains(hits: Sequence[dict[str, Any]], *, chain_limit: int) -> li
 
 def _build_timeline_candidates(hits: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     timeline: list[dict[str, Any]] = []
-    for hit in sorted(hits, key=lambda item: (float(item.get("email_date_sort") or 0.0), str(item.get("subject") or ""))):
+    for hit in sorted(
+        hits,
+        key=lambda item: (
+            float(item.get("email_date_sort") or 0.0),
+            str(item.get("subject") or ""),
+        ),
+    ):
         summary = (
             f"{str(hit.get('sender') or '').strip()} sent '{str(hit.get('subject') or '').strip()}' "
             f"to {str(hit.get('recipient') or '').strip()}."
@@ -384,7 +398,9 @@ def search_email_corpus_agentic(
             *list(search_plan.get("recommended_subject_terms") or [])[:12],
         ]
     )
-    candidate_rows = _load_candidate_rows(messages_parquet_path=messages_parquet_path, search_phrases=seed_phrases)
+    candidate_rows = _load_candidate_rows(
+        messages_parquet_path=messages_parquet_path, search_phrases=seed_phrases
+    )
     ranked_hits = _build_ranked_hits(
         candidate_rows=candidate_rows,
         complaint_terms=complaint_terms,
@@ -400,8 +416,12 @@ def search_email_corpus_agentic(
     chains_path = output_root / "chain_summaries.json"
     timeline_path = output_root / "timeline_candidates.json"
     hits_path.write_text(json.dumps(ranked_hits, indent=2, ensure_ascii=False), encoding="utf-8")
-    chains_path.write_text(json.dumps(chain_summaries, indent=2, ensure_ascii=False), encoding="utf-8")
-    timeline_path.write_text(json.dumps(timeline_candidates, indent=2, ensure_ascii=False), encoding="utf-8")
+    chains_path.write_text(
+        json.dumps(chain_summaries, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    timeline_path.write_text(
+        json.dumps(timeline_candidates, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
     graphrag_summary: dict[str, Any] | None = None
     focused_manifest_path: Path | None = None
@@ -430,7 +450,9 @@ def search_email_corpus_agentic(
                 for hit in ranked_hits
             ],
         }
-        focused_manifest_path.write_text(json.dumps(focused_manifest_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        focused_manifest_path.write_text(
+            json.dumps(focused_manifest_payload, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
         graphrag_summary = build_email_graphrag_artifacts(
             manifest_path=focused_manifest_path,
             output_dir=output_root / "graphrag",
@@ -455,7 +477,9 @@ def search_email_corpus_agentic(
         "matched_emails_path": str(hits_path),
         "chain_summaries_path": str(chains_path),
         "timeline_candidates_path": str(timeline_path),
-        "focused_manifest_path": str(focused_manifest_path) if focused_manifest_path is not None else "",
+        "focused_manifest_path": str(focused_manifest_path)
+        if focused_manifest_path is not None
+        else "",
         "graphrag_summary": graphrag_summary,
         "top_threads": [
             {

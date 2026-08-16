@@ -90,9 +90,7 @@ def _declared_adapter(
     return None
 
 
-def _run_extension_adapter(
-    extension: SecurityExtension, adapter: ExtensionAdapter
-) -> None:
+def _run_extension_adapter(extension: SecurityExtension, adapter: ExtensionAdapter) -> None:
     try:
         if isinstance(adapter, DeclaredExtensionAdapter):
             result = adapter.validate(extension)
@@ -132,9 +130,7 @@ def _exchange_extension(
         field_name, value = _legacy_extension_value(extension)
         if field_name in EXCHANGE_EXTENSION_FIELDS:
             if field_name in values:
-                raise ExchangeAdapterError(
-                    f"duplicate legacy extension field {field_name!r}"
-                )
+                raise ExchangeAdapterError(f"duplicate legacy extension field {field_name!r}")
             values[field_name] = value
     missing = sorted(set(EXCHANGE_EXTENSION_FIELDS) - set(values))
     if missing:
@@ -175,8 +171,7 @@ def _semantic_inputs(
     relevant_events = [
         item
         for item in events
-        if isinstance(item.get("event"), str)
-        and item["event"].startswith(prefixes)
+        if isinstance(item.get("event"), str) and item["event"].startswith(prefixes)
     ]
     relevant_policy_names: Mapping[str, frozenset[str]] = {
         "withdrawals": frozenset(
@@ -189,17 +184,14 @@ def _semantic_inputs(
         ),
         "deposits": frozenset({"credit_after_finality_required"}),
         "hsm": frozenset({"wallet_not_frozen_required"}),
-        "capabilities": frozenset(
-            {"delegation_monotonicity", "revocation_enforced"}
-        ),
+        "capabilities": frozenset({"delegation_monotonicity", "revocation_enforced"}),
         "audit": frozenset({"audit_required"}),
         "ledger": frozenset({"atomic_reservation", "audit_required"}),
     }
     policies = [
         thaw_json(item.attributes["legacy_record"])
         for item in declaration.policies
-        if item.attributes.get("legacy_record", {}).get("name")
-        in relevant_policy_names[domain]
+        if item.attributes.get("legacy_record", {}).get("name") in relevant_policy_names[domain]
     ]
     inputs: dict[str, Any] = {
         "events": relevant_events,
@@ -212,8 +204,7 @@ def _semantic_inputs(
             if item.attributes.get("legacy_collection") in {"wallets", "accounts"}
         ]
         inputs["assets"] = [
-            thaw_json(item.attributes["legacy_record"])
-            for item in declaration.assets
+            thaw_json(item.attributes["legacy_record"]) for item in declaration.assets
         ]
     if domain == "capabilities":
         inputs["capabilities"] = payload["capabilities"]
@@ -279,9 +270,7 @@ def _normalize_declaration(
                 f"claim {item.claim_id!r} is outside the exchange vocabulary: {domain!r}"
             )
         semantic_inputs = _semantic_inputs(domain, exchange_extension, interim)
-        semantic_digest = hashlib.sha256(
-            canonical_json_bytes(semantic_inputs)
-        ).hexdigest()
+        semantic_digest = hashlib.sha256(canonical_json_bytes(semantic_inputs)).hexdigest()
         claims.append(
             replace(
                 item,
@@ -307,14 +296,10 @@ def validate_exchange_security_ir(
         raise ExchangeAdapterError("declaration must be a SecurityIR")
     declaration.validate()
     exchange_extensions = [
-        item
-        for item in declaration.extensions
-        if item.vocabulary == EXCHANGE_VOCABULARY
+        item for item in declaration.extensions if item.vocabulary == EXCHANGE_VOCABULARY
     ]
     if len(exchange_extensions) != 1:
-        raise ExchangeAdapterError(
-            "exchange declarations require exactly one exchange extension"
-        )
+        raise ExchangeAdapterError("exchange declarations require exactly one exchange extension")
     try:
         validate_exchange_extension(exchange_extensions[0])
     except ExchangeVocabularyError as exc:
@@ -334,13 +319,10 @@ def validate_exchange_security_ir(
         try:
             local_kind = parse_exchange_term(resource.kind, category="resource")
         except ExchangeVocabularyError as exc:
-            raise ExchangeAdapterError(
-                f"resource {resource.resource_id!r}: {exc}"
-            ) from exc
+            raise ExchangeAdapterError(f"resource {resource.resource_id!r}: {exc}") from exc
         if local_kind not in EXCHANGE_RESOURCE_KINDS:
             raise ExchangeAdapterError(
-                f"resource {resource.resource_id!r} has unknown exchange kind "
-                f"{local_kind!r}"
+                f"resource {resource.resource_id!r} has unknown exchange kind {local_kind!r}"
             )
         if local_kind == "wallet":
             legacy_record = resource.attributes.get("legacy_record", {})
@@ -359,28 +341,19 @@ def validate_exchange_security_ir(
         try:
             local_name = parse_exchange_term(policy.name, category="policy")
         except ExchangeVocabularyError as exc:
-            raise ExchangeAdapterError(
-                f"policy {policy.policy_id!r}: {exc}"
-            ) from exc
+            raise ExchangeAdapterError(f"policy {policy.policy_id!r}: {exc}") from exc
         # Custom policies remain representable only when explicitly marked in
         # their lossless legacy record.
-        if (
-            local_name not in EXCHANGE_POLICY_NAMES
-            and not bool(policy.attributes.get("legacy_record", {}).get("custom"))
+        if local_name not in EXCHANGE_POLICY_NAMES and not bool(
+            policy.attributes.get("legacy_record", {}).get("custom")
         ):
             raise ExchangeAdapterError(
-                f"policy {policy.policy_id!r} uses unknown exchange policy "
-                f"{local_name!r}"
+                f"policy {policy.policy_id!r} uses unknown exchange policy {local_name!r}"
             )
     for assumption in declaration.assumptions:
         legacy_value = assumption.attributes.get("legacy_value")
-        is_custom = isinstance(legacy_value, Mapping) and bool(
-            legacy_value.get("custom")
-        )
-        if (
-            assumption.assumption_id not in EXCHANGE_ASSUMPTIONS
-            and not is_custom
-        ):
+        is_custom = isinstance(legacy_value, Mapping) and bool(legacy_value.get("custom"))
+        if assumption.assumption_id not in EXCHANGE_ASSUMPTIONS and not is_custom:
             raise ExchangeAdapterError(
                 f"assumption {assumption.assumption_id!r} is not declared by "
                 "the exchange vocabulary"
@@ -389,25 +362,19 @@ def validate_exchange_security_ir(
         try:
             local_domain = parse_exchange_term(claim.domain, category="domain")
         except ExchangeVocabularyError as exc:
-            raise ExchangeAdapterError(
-                f"claim {claim.claim_id!r}: {exc}"
-            ) from exc
+            raise ExchangeAdapterError(f"claim {claim.claim_id!r}: {exc}") from exc
         if local_domain not in EXCHANGE_DOMAINS:
             raise ExchangeAdapterError(
-                f"claim {claim.claim_id!r} has unknown exchange domain "
-                f"{local_domain!r}"
+                f"claim {claim.claim_id!r} has unknown exchange domain {local_domain!r}"
             )
         expected_digest = hashlib.sha256(
             canonical_json_bytes(
-                _semantic_inputs(
-                    local_domain, exchange_extensions[0], declaration
-                )
+                _semantic_inputs(local_domain, exchange_extensions[0], declaration)
             )
         ).hexdigest()
         if claim.attributes.get("semantic_input_sha256") != expected_digest:
             raise ExchangeAdapterError(
-                f"claim {claim.claim_id!r} is not bound to its current "
-                "exchange semantic inputs"
+                f"claim {claim.claim_id!r} is not bound to its current exchange semantic inputs"
             )
     return declaration
 
@@ -428,9 +395,7 @@ def adapt_exchange_security_ir(
             and _legacy_extension_value(item)[0] in EXCHANGE_EXTENSION_FIELDS
         ]
         exchange_extension = _exchange_extension(owned)
-        remaining = [
-            item for item in base.declaration.extensions if item not in owned
-        ]
+        remaining = [item for item in base.declaration.extensions if item not in owned]
         declaration = _normalize_declaration(
             replace(base.declaration, extensions=tuple(remaining)),
             exchange_extension,
@@ -439,9 +404,7 @@ def adapt_exchange_security_ir(
             declaration,
             extensions=(exchange_extension, *remaining),
         )
-        validate_exchange_security_ir(
-            declaration, extension_adapters=extension_adapters
-        )
+        validate_exchange_security_ir(declaration, extension_adapters=extension_adapters)
     except ExchangeAdapterError:
         raise
     except (LegacyAdapterError, ExchangeVocabularyError, ValueError) as exc:
@@ -470,19 +433,12 @@ def _denormalize_declaration(
     *,
     extension_adapters: ExtensionAdapters | None,
 ) -> SecurityIR:
-    validate_exchange_security_ir(
-        declaration, extension_adapters=extension_adapters
-    )
+    validate_exchange_security_ir(declaration, extension_adapters=extension_adapters)
     exchange_extension = next(
-        item
-        for item in declaration.extensions
-        if item.vocabulary == EXCHANGE_VOCABULARY
+        item for item in declaration.extensions if item.vocabulary == EXCHANGE_VOCABULARY
     )
     payload = thaw_json(exchange_extension.payload)
-    extensions = [
-        _legacy_extension(name, payload[name])
-        for name in EXCHANGE_EXTENSION_FIELDS
-    ]
+    extensions = [_legacy_extension(name, payload[name]) for name in EXCHANGE_EXTENSION_FIELDS]
     for extension in declaration.extensions:
         if extension is exchange_extension:
             continue
@@ -554,9 +510,7 @@ def to_legacy_exchange_security_ir(
         schema_version = "security-model-ir/v1"
     else:
         raise TypeError("adapted must be LegacyAdapterResult or SecurityIR")
-    denormalized = _denormalize_declaration(
-        declaration, extension_adapters=extension_adapters
-    )
+    denormalized = _denormalize_declaration(declaration, extension_adapters=extension_adapters)
     generic = LegacyAdapterResult(
         declaration=denormalized,
         verification_data=run_data,
@@ -577,12 +531,8 @@ class ExchangeSecurityAdapter:
 
     def __post_init__(self) -> None:
         if self.version != EXCHANGE_ADAPTER_VERSION:
-            raise ExchangeAdapterError(
-                f"unsupported exchange adapter version: {self.version!r}"
-            )
-        if self.extension_adapters is not None and not isinstance(
-            self.extension_adapters, Mapping
-        ):
+            raise ExchangeAdapterError(f"unsupported exchange adapter version: {self.version!r}")
+        if self.extension_adapters is not None and not isinstance(self.extension_adapters, Mapping):
             raise ExchangeAdapterError("extension_adapters must be a mapping")
         if self.extension_adapters is not None:
             object.__setattr__(
@@ -591,12 +541,8 @@ class ExchangeSecurityAdapter:
                 MappingProxyType(dict(self.extension_adapters)),
             )
 
-    def adapt(
-        self, legacy: SecurityModelIR | Mapping[str, Any]
-    ) -> LegacyAdapterResult:
-        return adapt_exchange_security_ir(
-            legacy, extension_adapters=self.extension_adapters
-        )
+    def adapt(self, legacy: SecurityModelIR | Mapping[str, Any]) -> LegacyAdapterResult:
+        return adapt_exchange_security_ir(legacy, extension_adapters=self.extension_adapters)
 
     def validate(self, declaration: SecurityIR) -> SecurityIR:
         return validate_exchange_security_ir(

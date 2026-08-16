@@ -166,7 +166,15 @@ def test_audio_quality_policy_is_versioned_and_content_addressed():
     assert policy.schema_version.startswith("abby_voice_audio_quality_policy_")
     assert "phone" in policy.critical_slot_names
     assert policy.identity == AudioQualityPolicy.from_dict(policy.to_dict()).identity
-    assert set(CRITICAL_SLOT_NAMES) >= {"phone", "address", "zip", "hours", "eligibility", "amount", "emergency"}
+    assert set(CRITICAL_SLOT_NAMES) >= {
+        "phone",
+        "address",
+        "zip",
+        "hours",
+        "eligibility",
+        "amount",
+        "emergency",
+    }
 
 
 def test_word_and_character_error_rates_are_integer_basis_points():
@@ -178,12 +186,8 @@ def test_word_and_character_error_rates_are_integer_basis_points():
 
 
 def test_validate_tts_asr_roundtrip_requires_exact_critical_slot_fidelity():
-    reference = (
-        "Call five zero three, five five five, one two one two for shelter at 123 Main St."
-    )
-    hypothesis = (
-        "Call five zero three five five five one two one two for shelter at 123 Main St."
-    )
+    reference = "Call five zero three, five five five, one two one two for shelter at 123 Main St."
+    hypothesis = "Call five zero three five five five one two one two for shelter at 123 Main St."
     gate, metrics = validate_tts_asr_roundtrip(
         reference_text=reference,
         hypothesis_text=hypothesis,

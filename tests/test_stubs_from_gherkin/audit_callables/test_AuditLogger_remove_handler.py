@@ -21,16 +21,23 @@ def an_auditlogger_instance_is_initialized():
     """
     try:
         logger = AuditLogger()
-        
+
         if logger is None:
-            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None") from None
-        
-        if not hasattr(logger, 'handlers'):
-            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing 'handlers' attribute") from None
-        
+            raise FixtureError(
+                "Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None"
+            ) from None
+
+        if not hasattr(logger, "handlers"):
+            raise FixtureError(
+                "Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing 'handlers' attribute"
+            ) from None
+
         return logger
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}"
+        ) from e
+
 
 @pytest.fixture
 def a_fileaudithandler_with_namefile_handler_is_added(an_auditlogger_instance_is_initialized):
@@ -39,57 +46,72 @@ def a_fileaudithandler_with_namefile_handler_is_added(an_auditlogger_instance_is
     """
     try:
         logger = an_auditlogger_instance_is_initialized
-        
+
         # Create a test handler with the name "file_handler"
         class TestFileHandler(AuditHandler):
             def __init__(self):
                 super().__init__(name="file_handler")
-            
+
             def _handle_event(self, event: AuditEvent) -> bool:
                 return True
-        
+
         handler = TestFileHandler()
         logger.add_handler(handler)
-        
+
         # Verify handler was added
         handler_names = [h.name for h in logger.handlers]
         if "file_handler" not in handler_names:
-            raise FixtureError("Failed to create fixture a_fileaudithandler_with_namefile_handler_is_added: Handler 'file_handler' not found in logger") from None
-        
+            raise FixtureError(
+                "Failed to create fixture a_fileaudithandler_with_namefile_handler_is_added: Handler 'file_handler' not found in logger"
+            ) from None
+
         return logger
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture a_fileaudithandler_with_namefile_handler_is_added: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture a_fileaudithandler_with_namefile_handler_is_added: {e}"
+        ) from e
+
 
 @pytest.fixture
-def a_jsonaudithandler_with_namejson_handler_is_added(a_fileaudithandler_with_namefile_handler_is_added):
+def a_jsonaudithandler_with_namejson_handler_is_added(
+    a_fileaudithandler_with_namefile_handler_is_added,
+):
     """
     Given a JSONAuditHandler with name="json_handler" is added
     """
     try:
         logger = a_fileaudithandler_with_namefile_handler_is_added
-        
+
         # Create a test handler with the name "json_handler"
         class TestJSONHandler(AuditHandler):
             def __init__(self):
                 super().__init__(name="json_handler")
-            
+
             def _handle_event(self, event: AuditEvent) -> bool:
                 return True
-        
+
         handler = TestJSONHandler()
         logger.add_handler(handler)
-        
+
         # Verify handler was added
         handler_names = [h.name for h in logger.handlers]
         if "json_handler" not in handler_names:
-            raise FixtureError("Failed to create fixture a_jsonaudithandler_with_namejson_handler_is_added: Handler 'json_handler' not found in logger") from None
-        
+            raise FixtureError(
+                "Failed to create fixture a_jsonaudithandler_with_namejson_handler_is_added: Handler 'json_handler' not found in logger"
+            ) from None
+
         return logger
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture a_jsonaudithandler_with_namejson_handler_is_added: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture a_jsonaudithandler_with_namejson_handler_is_added: {e}"
+        ) from e
 
 
-def test_remove_handler_decreases_handlers_count(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_decreases_handlers_count(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler decreases handlers count
 
@@ -103,7 +125,11 @@ def test_remove_handler_decreases_handlers_count(an_auditlogger_instance_is_init
     pass
 
 
-def test_remove_handler_removes_correct_handler_removes_fileaudithandler(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_removes_correct_handler_removes_fileaudithandler(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler removes correct handler removes FileAuditHandler
 
@@ -117,7 +143,11 @@ def test_remove_handler_removes_correct_handler_removes_fileaudithandler(an_audi
     pass
 
 
-def test_remove_handler_removes_correct_handler_keeps_jsonaudithandler(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_removes_correct_handler_keeps_jsonaudithandler(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler removes correct handler keeps JSONAuditHandler
 
@@ -131,7 +161,11 @@ def test_remove_handler_removes_correct_handler_keeps_jsonaudithandler(an_auditl
     pass
 
 
-def test_remove_handler_returns_true_when_handler_found(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_returns_true_when_handler_found(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler returns True when handler found
 
@@ -145,7 +179,11 @@ def test_remove_handler_returns_true_when_handler_found(an_auditlogger_instance_
     pass
 
 
-def test_remove_handler_returns_false_when_handler_not_found(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_returns_false_when_handler_not_found(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler returns False when handler not found
 
@@ -159,7 +197,11 @@ def test_remove_handler_returns_false_when_handler_not_found(an_auditlogger_inst
     pass
 
 
-def test_remove_handler_calls_handler_close_method(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_calls_handler_close_method(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler calls handler close method
 
@@ -176,7 +218,11 @@ def test_remove_handler_calls_handler_close_method(an_auditlogger_instance_is_in
     pass
 
 
-def test_remove_handler_is_thread_safe_removes_all_handlers(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_is_thread_safe_removes_all_handlers(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler is thread-safe removes all handlers
 
@@ -193,7 +239,11 @@ def test_remove_handler_is_thread_safe_removes_all_handlers(an_auditlogger_insta
     pass
 
 
-def test_remove_handler_is_thread_safe_leaves_empty_list(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_is_thread_safe_leaves_empty_list(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler is thread-safe leaves empty list
 
@@ -210,7 +260,11 @@ def test_remove_handler_is_thread_safe_leaves_empty_list(an_auditlogger_instance
     pass
 
 
-def test_remove_handler_handles_exceptions_from_close_method_completes_without_error(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_handles_exceptions_from_close_method_completes_without_error(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler handles exceptions from close method completes without error
 
@@ -227,7 +281,11 @@ def test_remove_handler_handles_exceptions_from_close_method_completes_without_e
     pass
 
 
-def test_remove_handler_handles_exceptions_from_close_method_returns_true(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_handles_exceptions_from_close_method_returns_true(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler handles exceptions from close method returns True
 
@@ -244,7 +302,11 @@ def test_remove_handler_handles_exceptions_from_close_method_returns_true(an_aud
     pass
 
 
-def test_remove_handler_from_empty_list(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_from_empty_list(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler from empty list
 
@@ -261,7 +323,11 @@ def test_remove_handler_from_empty_list(an_auditlogger_instance_is_initialized, 
     pass
 
 
-def test_remove_handler_twice_with_same_name(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_twice_with_same_name(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler twice with same name
 
@@ -275,7 +341,11 @@ def test_remove_handler_twice_with_same_name(an_auditlogger_instance_is_initiali
     pass
 
 
-def test_remove_handler_preserves_other_handlers_has_2_handlers(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_preserves_other_handlers_has_2_handlers(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler preserves other handlers has 2 handlers
 
@@ -292,7 +362,11 @@ def test_remove_handler_preserves_other_handlers_has_2_handlers(an_auditlogger_i
     pass
 
 
-def test_remove_handler_preserves_other_handlers_keeps_first_handler(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_preserves_other_handlers_keeps_first_handler(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler preserves other handlers keeps first handler
 
@@ -309,7 +383,11 @@ def test_remove_handler_preserves_other_handlers_keeps_first_handler(an_auditlog
     pass
 
 
-def test_remove_handler_preserves_other_handlers_keeps_third_handler(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_remove_handler_preserves_other_handlers_keeps_third_handler(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Remove handler preserves other handlers keeps third handler
 
@@ -326,7 +404,11 @@ def test_remove_handler_preserves_other_handlers_keeps_third_handler(an_auditlog
     pass
 
 
-def test_removed_handler_no_longer_receives_events_fileaudithandler_excluded(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_removed_handler_no_longer_receives_events_fileaudithandler_excluded(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Removed handler no longer receives events FileAuditHandler excluded
 
@@ -341,7 +423,11 @@ def test_removed_handler_no_longer_receives_events_fileaudithandler_excluded(an_
     pass
 
 
-def test_removed_handler_no_longer_receives_events_jsonaudithandler_still_active(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
+def test_removed_handler_no_longer_receives_events_jsonaudithandler_still_active(
+    an_auditlogger_instance_is_initialized,
+    a_fileaudithandler_with_namefile_handler_is_added,
+    a_jsonaudithandler_with_namejson_handler_is_added,
+):
     """
     Scenario: Removed handler no longer receives events JSONAuditHandler still active
 
@@ -354,4 +440,3 @@ def test_removed_handler_no_longer_receives_events_jsonaudithandler_still_active
     """
     # TODO: Implement test
     pass
-

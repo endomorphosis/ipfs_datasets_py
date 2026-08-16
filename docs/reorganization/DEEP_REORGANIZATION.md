@@ -284,7 +284,10 @@ from ipfs_datasets_py.cross_document_lineage import LineageTracker
 from ipfs_datasets_py.cross_document_reasoning import CrossDocReasoner
 
 # New
-from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraphExtractor, Entity
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
+    KnowledgeGraphExtractor,
+    Entity,
+)
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import LineageTracker
 from ipfs_datasets_py.knowledge_graphs.cross_document_reasoning import CrossDocReasoner
 ```

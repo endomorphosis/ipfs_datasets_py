@@ -24,9 +24,7 @@ using yt-dlp. All tools are thin wrappers around `ipfs_datasets_py.data_transfor
 ```python
 from ipfs_datasets_py.mcp_server.tools.media_tools import ffmpeg_info
 
-info = await ffmpeg_info(
-    input_path="/data/video.mp4"
-)
+info = await ffmpeg_info(input_path="/data/video.mp4")
 # Returns: {"status": "success", "format": "mp4", "duration": 120.5, "streams": [...]}
 ```
 
@@ -40,7 +38,7 @@ result = await ffmpeg_convert(
     output_path="/data/video.webm",
     video_codec="libvpx-vp9",
     audio_codec="libopus",
-    video_bitrate="2M"
+    video_bitrate="2M",
 )
 ```
 
@@ -52,8 +50,8 @@ from ipfs_datasets_py.mcp_server.tools.media_tools import ffmpeg_trim
 result = await ffmpeg_trim(
     input_path="/data/video.mp4",
     output_path="/data/clip.mp4",
-    start_time="00:01:30",     # HH:MM:SS or seconds
-    end_time="00:02:45"
+    start_time="00:01:30",  # HH:MM:SS or seconds
+    end_time="00:02:45",
 )
 ```
 
@@ -66,7 +64,7 @@ result = await ffmpeg_extract_audio(
     input_path="/data/video.mp4",
     output_path="/data/audio.mp3",
     audio_codec="libmp3lame",
-    audio_bitrate="192k"
+    audio_bitrate="192k",
 )
 ```
 
@@ -78,9 +76,9 @@ from ipfs_datasets_py.mcp_server.tools.media_tools import ytdlp_download
 result = await ytdlp_download(
     url="https://www.youtube.com/watch?v=...",
     output_path="/data/downloads/",
-    format="bestvideo+bestaudio",    # yt-dlp format selector
+    format="bestvideo+bestaudio",  # yt-dlp format selector
     audio_only=False,
-    extract_info=True                # Also return video metadata
+    extract_info=True,  # Also return video metadata
 )
 ```
 
@@ -93,7 +91,7 @@ result = await ytdlp_playlist(
     url="https://www.youtube.com/playlist?list=...",
     output_path="/data/playlist/",
     max_downloads=20,
-    audio_only=True
+    audio_only=True,
 )
 ```
 
@@ -107,7 +105,7 @@ result = await ffmpeg_batch_convert(
     output_dir="/data/processed/",
     input_pattern="*.avi",
     output_format="mp4",
-    parallel_jobs=4
+    parallel_jobs=4,
 )
 ```
 

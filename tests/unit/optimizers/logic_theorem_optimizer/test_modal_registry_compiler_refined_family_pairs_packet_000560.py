@@ -32,10 +32,7 @@ _PACKET_000560_FAMILY_PAIRS = (
 
 
 def test_packet_000560_pairs_are_pinned_in_packet_pair_table() -> None:
-    assert (
-        tuple(COMPILER_AMBIGUITY_PACKET_000560_FAMILY_PAIRS)
-        == _PACKET_000560_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_000560_FAMILY_PAIRS) == _PACKET_000560_FAMILY_PAIRS
 
 
 def test_packet_000560_pairs_are_supported_across_compiler_ambiguity_policies() -> None:
@@ -69,11 +66,7 @@ def test_packet_000560_pairs_are_supported_across_compiler_ambiguity_policies() 
 
 def test_deontic_profile_covers_program_establishment_and_guideline_duties() -> None:
     profile = DEFAULT_MODAL_REGISTRY.get_profile(ModalLogicFamily.DEONTIC)
-    cue_terms = {
-        cue
-        for operator in profile.operators
-        for cue in operator.cue_terms
-    }
+    cue_terms = {cue for operator in profile.operators for cue in operator.cue_terms}
 
     assert "shall establish" in cue_terms
     assert "shall establish a program" in cue_terms
@@ -96,12 +89,10 @@ def test_program_establishment_text_ranks_deontic_over_frame_context() -> None:
 
     assert ranking[0]["family"] == ModalLogicFamily.DEONTIC.value
     assert any(
-        cue.family == ModalLogicFamily.DEONTIC.value
-        and cue.cue.lower() == "shall establish"
+        cue.family == ModalLogicFamily.DEONTIC.value and cue.cue.lower() == "shall establish"
         for cue in encoding.cues
     )
     assert any(
-        cue.family == ModalLogicFamily.DEONTIC.value
-        and cue.cue.lower() == "shall issue guidelines"
+        cue.family == ModalLogicFamily.DEONTIC.value and cue.cue.lower() == "shall issue guidelines"
         for cue in encoding.cues
     )

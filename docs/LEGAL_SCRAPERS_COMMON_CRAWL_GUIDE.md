@@ -31,10 +31,7 @@ Phase 11 implements comprehensive legal scraping with Common Crawl + HuggingFace
 ### Quick Start
 
 ```python
-from ipfs_datasets_py.processors.legal_scrapers import (
-    CommonCrawlLegalScraper,
-    get_registry
-)
+from ipfs_datasets_py.processors.legal_scrapers import CommonCrawlLegalScraper, get_registry
 
 # Method 1: Direct scraping
 scraper = CommonCrawlLegalScraper()
@@ -148,25 +145,24 @@ Extended base class with Common Crawl methods.
 ```python
 from ipfs_datasets_py.processors.legal_scrapers import CommonCrawlLegalScraper
 
+
 async def scrape_congress():
     scraper = CommonCrawlLegalScraper()
-    
+
     # Load URL sources
     await scraper.load_jsonl_sources()
     print(f"Loaded {len(scraper.sources)} sources")
-    
+
     # Scrape specific URL
     result = await scraper.scrape_url(
-        "https://congress.gov/",
-        extract_rules=True,
-        feed_to_logic=True
+        "https://congress.gov/", extract_rules=True, feed_to_logic=True
     )
-    
+
     if result.success:
         print(f"Content: {len(result.content)} bytes")
         print(f"Method: {result.method_used}")
         print(f"Rules: {len(result.extracted_rules)}")
-    
+
     return result
 ```
 
@@ -176,17 +172,15 @@ async def scrape_congress():
 async def scrape_federal_sources():
     scraper = CommonCrawlLegalScraper()
     await scraper.load_jsonl_sources()
-    
+
     # Scrape all federal sources (limit 100)
     results = await scraper.scrape_all_sources(
-        source_types=[SourceType.FEDERAL],
-        max_sources=100,
-        extract_rules=True
+        source_types=[SourceType.FEDERAL], max_sources=100, extract_rules=True
     )
-    
+
     successful = [r for r in results if r.success]
     print(f"Scraped {len(successful)}/{len(results)} successfully")
-    
+
     return results
 ```
 
@@ -195,21 +189,22 @@ async def scrape_federal_sources():
 ```python
 from ipfs_datasets_py.processors.legal_scrapers.registry import get_registry
 
+
 async def scrape_with_registry():
     # Get registry (auto-discovers scrapers)
     registry = get_registry()
-    
+
     # List all scrapers
     print(registry.list_scrapers())
-    
+
     # Get best scraper for source
     scraper_class = registry.get_scraper_for_source("congress.gov")
-    
+
     if scraper_class:
         scraper = scraper_class()
         result = await scraper.scrape("congress.gov")
         return result
-    
+
     # Create fallback chain
     chain = registry.create_fallback_chain("congress.gov", max_fallbacks=3)
     print(f"Fallback chain: {[sc.__name__ for sc in chain]}")
@@ -220,21 +215,20 @@ async def scrape_with_registry():
 ```python
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import MyStateScraper
 
+
 async def scrape_with_fallbacks():
     scraper = MyStateScraper("CA", "California")
-    
+
     # Scrape with automatic fallbacks
     statute = await scraper.scrape_with_fallbacks(
-        url="https://leginfo.legislature.ca.gov/code.html",
-        use_common_crawl=True,
-        use_graphrag=True
+        url="https://leginfo.legislature.ca.gov/code.html", use_common_crawl=True, use_graphrag=True
     )
-    
+
     if statute:
         print(f"Statute: {statute.statute_id}")
         print(f"Title: {statute.short_title}")
         print(f"Legal Area: {statute.legal_area}")
-    
+
     return statute
 ```
 
@@ -243,23 +237,18 @@ async def scrape_with_fallbacks():
 ```python
 async def query_warc():
     scraper = MyStateScraper("NY", "New York")
-    
+
     # Query specific WARC file
     content = await scraper.query_warc_file(
-        warc_url="s3://commoncrawl/crawl-data/...",
-        offset=123456,
-        length=5000
+        warc_url="s3://commoncrawl/crawl-data/...", offset=123456, length=5000
     )
-    
+
     if content:
         # Extract with GraphRAG
-        results = await scraper.extract_with_graphrag(
-            content,
-            extract_rules=True
-        )
+        results = await scraper.extract_with_graphrag(content, extract_rules=True)
         print(f"Entities: {len(results['entities'])}")
         print(f"Rules: {len(results['rules'])}")
-    
+
     return results
 ```
 
@@ -281,10 +270,7 @@ playwright install chromium
 # No authentication needed for public datasets
 from datasets import load_dataset
 
-federal_index = load_dataset(
-    "endomorphosis/common_crawl_federal_index",
-    split="train"
-)
+federal_index = load_dataset("endomorphosis/common_crawl_federal_index", split="train")
 ```
 
 ### Step 3: Create Custom Scraper
@@ -293,29 +279,28 @@ federal_index = load_dataset(
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import BaseStateScraper
 from ipfs_datasets_py.processors.legal_scrapers.registry import get_registry
 
+
 class MyCustomScraper(BaseStateScraper):
     def __init__(self):
         super().__init__("XX", "My State")
-    
+
     def get_base_url(self) -> str:
         return "https://legislature.example.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
-        return [
-            {"name": "Penal Code", "url": "..."},
-            {"name": "Civil Code", "url": "..."}
-        ]
-    
+        return [{"name": "Penal Code", "url": "..."}, {"name": "Civil Code", "url": "..."}]
+
     async def scrape_code(self, code_name: str, code_url: str):
         # Use Common Crawl fallback
         content = await self.scrape_from_common_crawl(code_url)
-        
+
         if not content:
             # Fallback to direct HTTP
             content = await self.scrape_with_fallbacks(code_url)
-        
+
         # Parse and return statutes
         return self.parse_statutes(content)
+
 
 # Register custom scraper
 registry = get_registry()
@@ -324,7 +309,7 @@ registry.register(
     scraper_class=MyCustomScraper,
     scraper_type=ScraperType.STATE,
     priority=20,
-    supports_sources=["example.gov"]
+    supports_sources=["example.gov"],
 )
 ```
 
@@ -334,7 +319,7 @@ registry.register(
 # Monitoring is automatic via @monitor decorator
 from ipfs_datasets_py.processors.infrastructure.monitoring import (
     get_processor_metrics,
-    get_monitoring_summary
+    get_monitoring_summary,
 )
 
 # After scraping, view metrics
@@ -384,25 +369,18 @@ from scripts.monitoring import processor_dashboard
 ```python
 async def scrape_url(url):
     errors = []
-    
+
     for method in FALLBACK_METHODS:
         try:
             content = await fetch_with_method(url, method)
             if content:
-                return ScrapedLegalContent(
-                    success=True,
-                    content=content,
-                    method_used=method.name
-                )
+                return ScrapedLegalContent(success=True, content=content, method_used=method.name)
         except Exception as e:
             errors.append(f"{method.name}: {e}")
             continue  # Try next method
-    
+
     # All methods failed
-    return ScrapedLegalContent(
-        success=False,
-        errors=errors
-    )
+    return ScrapedLegalContent(success=False, errors=errors)
 ```
 
 ---
@@ -413,10 +391,7 @@ async def scrape_url(url):
 
 ```python
 # Automatic with extract_rules=True
-result = await scraper.scrape_url(
-    url,
-    extract_rules=True
-)
+result = await scraper.scrape_url(url, extract_rules=True)
 
 for rule in result.extracted_rules:
     print(f"Rule: {rule['text']}")
@@ -428,14 +403,12 @@ for rule in result.extracted_rules:
 
 ```python
 # Automatic with feed_to_logic=True
-result = await scraper.scrape_url(
-    url,
-    feed_to_logic=True
-)
+result = await scraper.scrape_url(url, feed_to_logic=True)
 
 # Rules are automatically fed to logic module
 # Check logic module for ingested rules
 from ipfs_datasets_py.logic_integration import LogicProcessor
+
 logic = LogicProcessor()
 rules = logic.get_rules_by_source("federal_register")
 ```
@@ -451,6 +424,7 @@ rules = await graphrag.extract_legal_rules(content)
 
 # Feed to logic manually
 from ipfs_datasets_py.logic_integration import LogicProcessor
+
 logic = LogicProcessor()
 await logic.ingest_rules(rules, source="my_source")
 ```
@@ -465,15 +439,15 @@ await logic.ingest_rules(rules, source="my_source")
 import pytest
 from ipfs_datasets_py.processors.legal_scrapers import CommonCrawlLegalScraper
 
+
 @pytest.mark.asyncio
 async def test_scrape_url():
     scraper = CommonCrawlLegalScraper()
     result = await scraper.scrape_url(
-        "https://example.gov/",
-        extract_rules=False,
-        feed_to_logic=False
+        "https://example.gov/", extract_rules=False, feed_to_logic=False
     )
     assert result.success or len(result.errors) > 0
+
 
 @pytest.mark.asyncio
 async def test_fallback_chain():
@@ -492,13 +466,10 @@ async def test_fallback_chain():
 async def test_common_crawl_integration():
     scraper = CommonCrawlLegalScraper()
     await scraper.load_jsonl_sources()
-    
+
     # Scrape a known federal source
-    result = await scraper.scrape_url(
-        "https://www.govinfo.gov/",
-        extract_rules=True
-    )
-    
+    result = await scraper.scrape_url("https://www.govinfo.gov/", extract_rules=True)
+
     assert result.success
     assert len(result.content) > 0
     assert result.method_used in ["common_crawl", "brave_search", "wayback"]
@@ -553,7 +524,7 @@ if not result.success:
 # Disable GraphRAG if causing issues
 result = await scraper.scrape_url(
     url,
-    extract_rules=False  # Disable GraphRAG
+    extract_rules=False,  # Disable GraphRAG
 )
 ```
 
@@ -561,6 +532,7 @@ result = await scraper.scrape_url(
 ```python
 # Add delays between requests
 import asyncio
+
 for url in urls:
     result = await scraper.scrape_url(url)
     await asyncio.sleep(2.0)  # 2 second delay
@@ -588,7 +560,7 @@ results = await asyncio.gather(*tasks)
 result = await scraper.scrape_url(
     url,
     extract_rules=False,  # Skip GraphRAG
-    feed_to_logic=False   # Skip logic module
+    feed_to_logic=False,  # Skip logic module
 )
 ```
 
@@ -603,7 +575,7 @@ result = await scraper.scrape_url(
 # Only load needed sources
 results = await scraper.scrape_all_sources(
     source_types=[SourceType.FEDERAL],  # Only federal
-    max_sources=10  # Limit count
+    max_sources=10,  # Limit count
 )
 ```
 

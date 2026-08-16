@@ -23,9 +23,7 @@ from ipfs_datasets_py.logic.security_ir.xaman.config import (
 )
 
 
-FIXTURE = (
-    Path(__file__).parents[4] / "fixtures/security_ir/v1/xaman_model.json"
-)
+FIXTURE = Path(__file__).parents[4] / "fixtures/security_ir/v1/xaman_model.json"
 
 
 def _payload() -> dict:
@@ -35,9 +33,7 @@ def _payload() -> dict:
 def _config(
     *,
     task_id: str = "PORTAL-CXTP-074",
-    artifact_path: str = (
-        "security_ir_artifacts/corpora/xaman-app/source-manifest.json"
-    ),
+    artifact_path: str = ("security_ir_artifacts/corpora/xaman-app/source-manifest.json"),
 ) -> XamanAdapterConfig:
     corpus = _payload()["metadata"]["corpus"]
     return XamanAdapterConfig(
@@ -60,8 +56,8 @@ def test_golden_xaman_declaration_has_explicit_source_and_config_bindings() -> N
     assert isinstance(result.declaration, SecurityIR)
     assert result.declaration.declaration_id == payload["model_id"]
     assert result.declaration.sources[0].source_id == "source:xaman-app"
-    assert result.declaration.sources[0].revision == (
-        payload["metadata"]["corpus"]["pinned_commit"]
+    assert (
+        result.declaration.sources[0].revision == (payload["metadata"]["corpus"]["pinned_commit"])
     )
     assert all(
         "source:xaman-app" in record.source_ids
@@ -77,18 +73,11 @@ def test_golden_xaman_declaration_has_explicit_source_and_config_bindings() -> N
     extension = result.declaration.extensions[0]
     assert extension.vocabulary == "security.xaman"
     assert extension.required is True
-    assert extension.payload["config_binding"] == {
-        "config_id": "config:xaman-golden"
-    }
-    assert extension.payload["source_binding"] == {
-        "source_id": "source:xaman-app"
-    }
+    assert extension.payload["config_binding"] == {"config_id": "config:xaman-golden"}
+    assert extension.payload["source_binding"] == {"source_id": "source:xaman-app"}
     assert to_legacy_xaman_security_ir(result) == payload
     assert validate_xaman_security_ir(result.declaration) is result.declaration
-    assert (
-        to_legacy_xaman_security_ir(result, as_model=True).to_dict()
-        == payload
-    )
+    assert to_legacy_xaman_security_ir(result, as_model=True).to_dict() == payload
 
 
 def test_blocking_assumptions_are_evidence_requirements_not_proofs() -> None:
@@ -104,9 +93,7 @@ def test_blocking_assumptions_are_evidence_requirements_not_proofs() -> None:
         "A6",
     }
     assert all(
-        isinstance(item, XamanEvidenceRequirement)
-        and item.required_evidence
-        and item.claim_ids
+        isinstance(item, XamanEvidenceRequirement) and item.required_evidence and item.claim_ids
         for item in result.evidence_requirements
     )
     declaration = result.declaration.to_dict()
@@ -140,9 +127,7 @@ def test_source_revision_changes_identity_but_verification_does_not() -> None:
     baseline_payload = _payload()
     verification_changed = copy.deepcopy(baseline_payload)
     verification_changed["proof_obligations"][0]["status"] = "UNKNOWN"
-    verification_changed["runtime_traces"][0]["conformance_status"] = (
-        "violated"
-    )
+    verification_changed["runtime_traces"][0]["conformance_status"] = "violated"
     source_changed = copy.deepcopy(baseline_payload)
     source_changed["metadata"]["corpus"]["pinned_commit"] = "new-revision"
     source_config = XamanAdapterConfig(
@@ -155,14 +140,10 @@ def test_source_revision_changes_identity_but_verification_does_not() -> None:
 
     baseline = adapt_xaman_security_ir(baseline_payload, _config())
     run_changed = adapt_xaman_security_ir(verification_changed, _config())
-    revision_changed = adapt_xaman_security_ir(
-        source_changed, source_config
-    )
+    revision_changed = adapt_xaman_security_ir(source_changed, source_config)
 
     assert baseline.declaration.cid == run_changed.declaration.cid
-    assert baseline.verification_data.to_dict() != (
-        run_changed.verification_data.to_dict()
-    )
+    assert baseline.verification_data.to_dict() != (run_changed.verification_data.to_dict())
     assert baseline.declaration.cid != revision_changed.declaration.cid
 
 
@@ -206,9 +187,7 @@ def test_adapter_defensively_copies_input_and_configuration_is_immutable() -> No
     payload["runtime_traces"][0]["conformance_status"] = "violated"
 
     assert result.declaration.to_dict() == declaration
-    assert to_legacy_xaman_security_ir(result)["claims"][0]["description"] != (
-        "mutated"
-    )
+    assert to_legacy_xaman_security_ir(result)["claims"][0]["description"] != ("mutated")
     with pytest.raises(TypeError):
         config.task_ids["runtime_trace"] = "PORTAL-CXTP-999"
     with pytest.raises(FrozenInstanceError):

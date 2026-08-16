@@ -32,24 +32,15 @@ from .content_addressing import cid_for_dag_json, validate_cid
 
 CASE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.case.v1"
 REVIEW_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.review.v1"
-CORPUS_MANIFEST_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.corpus-manifest.v1"
-)
-SPLIT_MANIFEST_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.split-manifest.v1"
-)
-SPLIT_INTEGRITY_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.split-integrity.v1"
-)
-HOLDOUT_ACCESS_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.holdout-access.v1"
-)
+CORPUS_MANIFEST_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.corpus-manifest.v1"
+SPLIT_MANIFEST_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.split-manifest.v1"
+SPLIT_INTEGRITY_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.split-integrity.v1"
+HOLDOUT_ACCESS_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.holdout-access.v1"
 REPLACEMENT_HOLDOUT_SEAL_SCHEMA: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.replacement-holdout-seal.v2"
 )
 REPLACEMENT_HOLDOUT_LEDGER_AUTHORITY_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "replacement-holdout-ledger-authority.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.replacement-holdout-ledger-authority.v1"
 )
 REPLACEMENT_HOLDOUT_PROTOCOL_KEYS: Final = frozenset(
     {
@@ -73,25 +64,16 @@ FROZEN_CORPUS_MANIFEST_SHA256: Final = (
 # canonical split records below and deliberately do not depend on runtime I/O.
 FROZEN_SPLIT_SHA256: Final[Mapping[Split, str]] = MappingProxyType(
     {
-        Split.PILOT: (
-            "a050371dae1248deecfb17f2d9e610124c6e493a1a227ec3c161008891ce1881"
-        ),
-        Split.DEVELOPMENT: (
-            "530860019b164c9750083ec5affd6ae71202b695c8c8042400d0f02488436b74"
-        ),
-        Split.HOLDOUT: (
-            "c7b969ed19a1248143740068e2853ca6132ba3d65dfeec4133e37fad55dbab4a"
-        ),
+        Split.PILOT: ("a050371dae1248deecfb17f2d9e610124c6e493a1a227ec3c161008891ce1881"),
+        Split.DEVELOPMENT: ("530860019b164c9750083ec5affd6ae71202b695c8c8042400d0f02488436b74"),
+        Split.HOLDOUT: ("c7b969ed19a1248143740068e2853ca6132ba3d65dfeec4133e37fad55dbab4a"),
     }
 )
 FROZEN_SPLIT_INTEGRITY_SHA256: Final = (
     "dd68177636a3db87752de54399ed8f066d5fdefe568649d9551bb29a0fb529d0"
 )
 DEFAULT_FIXTURE_DIRECTORY: Final = (
-    Path(__file__).parents[2]
-    / "tests"
-    / "fixtures"
-    / "logic_pipeline_benchmark"
+    Path(__file__).parents[2] / "tests" / "fixtures" / "logic_pipeline_benchmark"
 )
 DEFAULT_CORPUS_PATH: Final = DEFAULT_FIXTURE_DIRECTORY / "corpus.jsonl"
 DEFAULT_MANIFEST_PATH: Final = DEFAULT_FIXTURE_DIRECTORY / "manifest.json"
@@ -156,8 +138,7 @@ def normalize_source_text(value: str) -> str:
     text = value.strip()
     normalized = unicodedata.normalize("NFKC", text).casefold()
     result = " ".join(
-        "".join(character if character.isalnum() else " " for character in normalized)
-        .split()
+        "".join(character if character.isalnum() else " " for character in normalized).split()
     )
     if not result:
         raise CorpusContractError(
@@ -176,8 +157,7 @@ def _source_shingles(value: str) -> frozenset[tuple[str, ...]]:
     tokens = normalize_source_text(value).split()
     width = min(3, len(tokens))
     return frozenset(
-        tuple(tokens[index:index + width])
-        for index in range(len(tokens) - width + 1)
+        tuple(tokens[index : index + width]) for index in range(len(tokens) - width + 1)
     )
 
 
@@ -209,9 +189,7 @@ def _decode_json(text: str, context: str) -> object:
 
 
 def _mapping(value: object, field_name: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise CorpusContractError(f"{field_name} must be a JSON object")
     return value
 
@@ -234,9 +212,7 @@ def _exact_keys(
 
 def _nonempty(value: object, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
-        raise CorpusContractError(
-            f"{field_name} must be a nonempty string without edge whitespace"
-        )
+        raise CorpusContractError(f"{field_name} must be a nonempty string without edge whitespace")
     return value
 
 
@@ -253,9 +229,7 @@ def _safe_id(value: object, field_name: str) -> str:
 def _protocol_safe_id(value: object, field_name: str) -> str:
     result = _nonempty(value, field_name)
     if not _PROTOCOL_SAFE_ID.fullmatch(result):
-        raise CorpusContractError(
-            f"{field_name} must be a safe protocol identifier"
-        )
+        raise CorpusContractError(f"{field_name} must be a safe protocol identifier")
     return result
 
 
@@ -283,10 +257,7 @@ def _enum(enum_type: type[Enum], value: object, field_name: str) -> Enum:
 def _string_tuple(value: object, field_name: str) -> tuple[str, ...]:
     if not isinstance(value, list):
         raise CorpusContractError(f"{field_name} must be an array")
-    result = tuple(
-        _nonempty(item, f"{field_name}[]")
-        for item in value
-    )
+    result = tuple(_nonempty(item, f"{field_name}[]") for item in value)
     if len(set(result)) != len(result):
         raise CorpusContractError(f"{field_name} must not contain duplicates")
     return result
@@ -303,16 +274,10 @@ def _freeze_json(value: object, field_name: str) -> object:
         if not all(isinstance(key, str) for key in value):
             raise CorpusContractError(f"{field_name} contains a non-string key")
         return MappingProxyType(
-            {
-                key: _freeze_json(value[key], f"{field_name}.{key}")
-                for key in sorted(value)
-            }
+            {key: _freeze_json(value[key], f"{field_name}.{key}") for key in sorted(value)}
         )
     if isinstance(value, (list, tuple)):
-        return tuple(
-            _freeze_json(item, f"{field_name}[]")
-            for item in value
-        )
+        return tuple(_freeze_json(item, f"{field_name}[]") for item in value)
     raise CorpusContractError(f"{field_name} is not canonical JSON data")
 
 
@@ -352,13 +317,10 @@ class ReviewAttestation:
         if self.status != "approved":
             raise CorpusContractError("review status must be approved")
         reviewer_ids = tuple(
-            _safe_id(value, "review.reviewer_ids[]")
-            for value in self.reviewer_ids
+            _safe_id(value, "review.reviewer_ids[]") for value in self.reviewer_ids
         )
         if len(reviewer_ids) < 2 or len(set(reviewer_ids)) != len(reviewer_ids):
-            raise CorpusContractError(
-                "review requires at least two distinct reviewer roles"
-            )
+            raise CorpusContractError("review requires at least two distinct reviewer roles")
         object.__setattr__(self, "reviewer_ids", reviewer_ids)
         if _nonempty(self.review_method, "review.review_method") not in {
             "manual_deductive_review",
@@ -369,9 +331,7 @@ class ReviewAttestation:
         if self.semantic_target_approved is not True:
             raise CorpusContractError("review must approve the semantic target")
         if not isinstance(self.proof_obligation_approved, bool):
-            raise CorpusContractError(
-                "review.proof_obligation_approved must be boolean"
-            )
+            raise CorpusContractError("review.proof_obligation_approved must be boolean")
         if self.model_output_used is not False:
             raise CorpusContractError(
                 "model output may not be used to establish corpus ground truth"
@@ -440,26 +400,17 @@ class BenchmarkCase:
         if _digest(self.source_sha256, "source_sha256") != source_digest:
             raise CorpusContractError("source_sha256 does not match source_text")
         if not isinstance(self.expected_class, ExpectedClass):
-            raise CorpusContractError(
-                "expected_class must be an ExpectedClass value"
-            )
+            raise CorpusContractError("expected_class must be an ExpectedClass value")
         object.__setattr__(
             self,
             "expected_ir",
             _nonempty_frozen_mapping(self.expected_ir, "expected_ir"),
         )
         predicates = tuple(
-            _safe_id(value, "required_predicates[]")
-            for value in self.required_predicates
+            _safe_id(value, "required_predicates[]") for value in self.required_predicates
         )
-        entities = tuple(
-            _safe_id(value, "required_entities[]")
-            for value in self.required_entities
-        )
-        controls = tuple(
-            _safe_id(value, "negative_controls[]")
-            for value in self.negative_controls
-        )
+        entities = tuple(_safe_id(value, "required_entities[]") for value in self.required_entities)
+        controls = tuple(_safe_id(value, "negative_controls[]") for value in self.negative_controls)
         for field_name, values in (
             ("required_predicates", predicates),
             ("required_entities", entities),
@@ -477,9 +428,7 @@ class BenchmarkCase:
             ExpectedClass.DISPROVED,
         }
         if proof_required and proof is None:
-            raise CorpusContractError(
-                "proved and disproved cases require a proof_obligation"
-            )
+            raise CorpusContractError("proved and disproved cases require a proof_obligation")
         if proof is not None:
             object.__setattr__(
                 self,
@@ -502,15 +451,11 @@ class BenchmarkCase:
         }
         missing = required_provenance - set(provenance)
         if missing:
-            raise CorpusContractError(
-                f"provenance missing required fields: {sorted(missing)!r}"
-            )
+            raise CorpusContractError(f"provenance missing required fields: {sorted(missing)!r}")
         for name in required_provenance - {"model_generated_ground_truth"}:
             _nonempty(provenance[name], f"provenance.{name}")
         if provenance["model_generated_ground_truth"] is not False:
-            raise CorpusContractError(
-                "provenance may not identify model-generated ground truth"
-            )
+            raise CorpusContractError("provenance may not identify model-generated ground truth")
         object.__setattr__(self, "provenance", provenance)
 
     def to_dict(self) -> dict[str, object]:
@@ -527,9 +472,7 @@ class BenchmarkCase:
             "required_predicates": list(self.required_predicates),
             "required_entities": list(self.required_entities),
             "proof_obligation": (
-                None
-                if self.proof_obligation is None
-                else _thaw_json(self.proof_obligation)
+                None if self.proof_obligation is None else _thaw_json(self.proof_obligation)
             ),
             "negative_controls": list(self.negative_controls),
             "provenance": _thaw_json(self.provenance),
@@ -555,20 +498,10 @@ class BenchmarkCase:
                 ExpectedClass, data["expected_class"], "expected_class"
             ),
             expected_ir=_mapping(data["expected_ir"], "expected_ir"),
-            required_predicates=_string_tuple(
-                data["required_predicates"], "required_predicates"
-            ),
-            required_entities=_string_tuple(
-                data["required_entities"], "required_entities"
-            ),
-            proof_obligation=(
-                None
-                if proof is None
-                else _mapping(proof, "proof_obligation")
-            ),
-            negative_controls=_string_tuple(
-                data["negative_controls"], "negative_controls"
-            ),
+            required_predicates=_string_tuple(data["required_predicates"], "required_predicates"),
+            required_entities=_string_tuple(data["required_entities"], "required_entities"),
+            proof_obligation=(None if proof is None else _mapping(proof, "proof_obligation")),
+            negative_controls=_string_tuple(data["negative_controls"], "negative_controls"),
             provenance=_mapping(data["provenance"], "provenance"),
             review=ReviewAttestation.from_dict(data["review"]),
         )
@@ -611,9 +544,7 @@ class ManifestCase:
         data = _mapping(value, "manifest.cases[]")
         _exact_keys(data, set(cls.__dataclass_fields__), "manifest.cases[]")
         return cls(
-            ordinal=_positive_int(
-                data["ordinal"], "ordinal", allow_zero=True
-            ),
+            ordinal=_positive_int(data["ordinal"], "ordinal", allow_zero=True),
             case_id=_safe_id(data["case_id"], "case_id"),
             split=_enum(Split, data["split"], "split"),  # type: ignore[arg-type]
             stratum=_safe_id(data["stratum"], "stratum"),
@@ -643,8 +574,7 @@ def _cid(
         return validate_cid(value, codecs=codecs)
     except (TypeError, ValueError) as exc:
         raise CorpusContractError(
-            f"{field_name} must be a canonical CIDv1/base32/sha2-256 "
-            f"using one of {codecs!r}"
+            f"{field_name} must be a canonical CIDv1/base32/sha2-256 using one of {codecs!r}"
         ) from exc
 
 
@@ -668,27 +598,18 @@ def replacement_holdout_ledger_authority_cid(
     try:
         raw_path = os.fspath(ledger_path)
     except TypeError as exc:
-        raise CorpusContractError(
-            "replacement access ledger path must be path-like"
-        ) from exc
+        raise CorpusContractError("replacement access ledger path must be path-like") from exc
     if not isinstance(raw_path, str) or not raw_path:
-        raise CorpusContractError(
-            "replacement access ledger path must be a nonempty string"
-        )
+        raise CorpusContractError("replacement access ledger path must be a nonempty string")
     path = Path(raw_path)
     if not path.is_absolute():
-        raise CorpusContractError(
-            "replacement access ledger path must be absolute"
-        )
+        raise CorpusContractError("replacement access ledger path must be absolute")
     if ".." in path.parts:
-        raise CorpusContractError(
-            "replacement access ledger path must not contain '..'"
-        )
+        raise CorpusContractError("replacement access ledger path must not contain '..'")
     canonical_path = Path(os.path.normpath(str(path)))
     if str(path) != str(canonical_path):
         raise CorpusContractError(
-            "replacement access ledger path must use canonical absolute "
-            "spelling"
+            "replacement access ledger path must use canonical absolute spelling"
         )
     return cid_for_dag_json(
         {
@@ -723,9 +644,7 @@ class ReplacementHoldoutSeal:
 
     def __post_init__(self) -> None:
         if self.schema != REPLACEMENT_HOLDOUT_SEAL_SCHEMA:
-            raise CorpusContractError(
-                "unsupported replacement-holdout seal schema"
-            )
+            raise CorpusContractError("unsupported replacement-holdout seal schema")
         object.__setattr__(
             self,
             "sealed_manifest_cid",
@@ -738,9 +657,7 @@ class ReplacementHoldoutSeal:
         case_count = _positive_int(self.case_count, "case_count")
         strata_counts = _count_mapping(self.strata_counts, "strata_counts")
         if sum(strata_counts.values()) != case_count:
-            raise CorpusContractError(
-                "replacement-holdout strata counts must sum to case_count"
-            )
+            raise CorpusContractError("replacement-holdout strata counts must sum to case_count")
         object.__setattr__(self, "case_count", case_count)
         object.__setattr__(self, "strata_counts", strata_counts)
 
@@ -781,12 +698,9 @@ class ReplacementHoldoutSeal:
                 codecs=("dag-json",),
             ),
         )
-        if self.seal_contract_cid != cid_for_dag_json(
-            self.identity_payload()
-        ):
+        if self.seal_contract_cid != cid_for_dag_json(self.identity_payload()):
             raise CorpusContractError(
-                "seal_contract_cid does not match public replacement seal "
-                "metadata"
+                "seal_contract_cid does not match public replacement seal metadata"
             )
 
     def identity_payload(self) -> dict[str, object]:
@@ -798,9 +712,7 @@ class ReplacementHoldoutSeal:
             "case_count": self.case_count,
             "strata_counts": dict(self.strata_counts),
             "protocol_cids": dict(self.protocol_cids),
-            "access_ledger_authority_cid": (
-                self.access_ledger_authority_cid
-            ),
+            "access_ledger_authority_cid": (self.access_ledger_authority_cid),
         }
 
     def to_dict(self) -> dict[str, object]:
@@ -821,15 +733,9 @@ class ReplacementHoldoutSeal:
             schema=data["schema"],  # type: ignore[arg-type]
             sealed_manifest_cid=data["sealed_manifest_cid"],  # type: ignore[arg-type]
             case_count=data["case_count"],  # type: ignore[arg-type]
-            strata_counts=_mapping(
-                data["strata_counts"], "strata_counts"
-            ),  # type: ignore[arg-type]
-            protocol_cids=_mapping(
-                data["protocol_cids"], "protocol_cids"
-            ),  # type: ignore[arg-type]
-            access_ledger_authority_cid=data[
-                "access_ledger_authority_cid"
-            ],  # type: ignore[arg-type]
+            strata_counts=_mapping(data["strata_counts"], "strata_counts"),  # type: ignore[arg-type]
+            protocol_cids=_mapping(data["protocol_cids"], "protocol_cids"),  # type: ignore[arg-type]
+            access_ledger_authority_cid=data["access_ledger_authority_cid"],  # type: ignore[arg-type]
             seal_contract_cid=data["seal_contract_cid"],  # type: ignore[arg-type]
         )
 
@@ -850,59 +756,40 @@ def validate_replacement_holdout_external_path(
     path = Path(sealed_manifest_path)
     worktree = Path(tuning_worktree)
     if not path.is_absolute() or not worktree.is_absolute():
-        raise CorpusContractError(
-            "replacement holdout and tuning worktree paths must be absolute"
-        )
+        raise CorpusContractError("replacement holdout and tuning worktree paths must be absolute")
     if path.is_symlink():
-        raise CorpusContractError(
-            "replacement holdout path must not be a symbolic link"
-        )
+        raise CorpusContractError("replacement holdout path must not be a symbolic link")
     try:
         path.relative_to(worktree)
     except ValueError:
         pass
     else:
         raise CorpusContractError(
-            "replacement holdout path must not be addressable inside the "
-            "tuning worktree"
+            "replacement holdout path must not be addressable inside the tuning worktree"
         )
     if any(parent.is_symlink() for parent in path.parents):
-        raise CorpusContractError(
-            "replacement holdout path must not traverse symbolic links"
-        )
+        raise CorpusContractError("replacement holdout path must not traverse symbolic links")
     try:
         resolved_path = path.resolve(strict=True)
         resolved_worktree = worktree.resolve(strict=True)
     except OSError as exc:
-        raise CorpusContractError(
-            "replacement holdout path boundary cannot be resolved"
-        ) from exc
+        raise CorpusContractError("replacement holdout path boundary cannot be resolved") from exc
     try:
         resolved_path.relative_to(resolved_worktree)
     except ValueError:
         pass
     else:
-        raise CorpusContractError(
-            "replacement holdout must remain outside the tuning worktree"
-        )
+        raise CorpusContractError("replacement holdout must remain outside the tuning worktree")
     if not resolved_path.is_file():
-        raise CorpusContractError(
-            "replacement holdout path must identify a regular file"
-        )
+        raise CorpusContractError("replacement holdout path must identify a regular file")
     try:
         metadata = resolved_path.stat()
     except OSError as exc:
-        raise CorpusContractError(
-            "replacement holdout path metadata is inaccessible"
-        ) from exc
+        raise CorpusContractError("replacement holdout path metadata is inaccessible") from exc
     if metadata.st_nlink != 1:
-        raise CorpusContractError(
-            "replacement holdout file must not have hard-link aliases"
-        )
+        raise CorpusContractError("replacement holdout file must not have hard-link aliases")
     if metadata.st_mode & 0o077:
-        raise CorpusContractError(
-            "replacement holdout file must deny group and other access"
-        )
+        raise CorpusContractError("replacement holdout file must deny group and other access")
     return resolved_path
 
 
@@ -940,9 +827,7 @@ class CorpusManifest:
         _digest(self.corpus_sha256, "corpus_sha256")
         _digest(self.semantic_sha256, "semantic_sha256")
         _positive_int(self.case_count, "case_count")
-        object.__setattr__(
-            self, "split_counts", _count_mapping(self.split_counts, "split_counts")
-        )
+        object.__setattr__(self, "split_counts", _count_mapping(self.split_counts, "split_counts"))
         object.__setattr__(
             self,
             "stratum_counts",
@@ -964,21 +849,18 @@ class CorpusManifest:
             raise CorpusContractError("manifest contains duplicate case ids")
         entry_split_counts = _counts(tuple(entry.split.value for entry in cases))
         if entry_split_counts != dict(self.split_counts):
-            raise CorpusContractError(
-                "manifest split counts do not match manifest entries"
-            )
+            raise CorpusContractError("manifest split counts do not match manifest entries")
         if set(entry_split_counts) != {split.value for split in Split}:
             raise CorpusContractError(
                 "manifest must contain pilot, development, and holdout entries"
             )
         entry_stratum_counts = _counts(tuple(entry.stratum for entry in cases))
         if entry_stratum_counts != dict(self.stratum_counts):
-            raise CorpusContractError(
-                "manifest stratum counts do not match manifest entries"
-            )
-        if set(self.expected_class_counts) != {
-            expected.value for expected in ExpectedClass
-        } or sum(self.expected_class_counts.values()) != self.case_count:
+            raise CorpusContractError("manifest stratum counts do not match manifest entries")
+        if (
+            set(self.expected_class_counts) != {expected.value for expected in ExpectedClass}
+            or sum(self.expected_class_counts.values()) != self.case_count
+        ):
             raise CorpusContractError(
                 "manifest expected-class counts must cover every class and case"
             )
@@ -1030,9 +912,7 @@ class CorpusManifest:
             ),
             cases=tuple(ManifestCase.from_dict(item) for item in raw_cases),
             frozen=data["frozen"],  # type: ignore[arg-type]
-            ground_truth_policy=_nonempty(
-                data["ground_truth_policy"], "ground_truth_policy"
-            ),
+            ground_truth_policy=_nonempty(data["ground_truth_policy"], "ground_truth_policy"),
         )
 
 
@@ -1041,9 +921,7 @@ def corpus_manifest_sha256(manifest: CorpusManifest) -> str:
 
     if not isinstance(manifest, CorpusManifest):
         raise CorpusContractError("manifest must be a CorpusManifest")
-    return hashlib.sha256(
-        canonical_json(manifest.to_dict()).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(canonical_json(manifest.to_dict()).encode("utf-8")).hexdigest()
 
 
 def _split_manifest_payload(
@@ -1087,14 +965,9 @@ class SplitManifest:
         if not isinstance(self.split, Split):
             raise CorpusContractError("split manifest split must be a Split value")
 
-        case_ids = tuple(
-            _safe_id(value, "split_manifest.case_ids[]")
-            for value in self.case_ids
-        )
+        case_ids = tuple(_safe_id(value, "split_manifest.case_ids[]") for value in self.case_ids)
         if not case_ids or len(set(case_ids)) != len(case_ids):
-            raise CorpusContractError(
-                "split manifest requires distinct ordered case ids"
-            )
+            raise CorpusContractError("split manifest requires distinct ordered case ids")
         object.__setattr__(self, "case_ids", case_ids)
 
         digest_fields = (
@@ -1112,25 +985,19 @@ class SplitManifest:
                     f"split manifest {field_name} length does not match case ids"
                 )
             if len(set(values)) != len(values):
-                raise CorpusContractError(
-                    f"split manifest {field_name} contains duplicates"
-                )
+                raise CorpusContractError(f"split manifest {field_name} contains duplicates")
             object.__setattr__(self, field_name, values)
 
         expected = hashlib.sha256(
             canonical_json(self.identity_payload()).encode("utf-8")
         ).hexdigest()
         if _digest(self.split_sha256, "split_sha256") != expected:
-            raise CorpusContractError(
-                "split_sha256 does not match split manifest content"
-            )
+            raise CorpusContractError("split_sha256 does not match split manifest content")
         if (
             self.corpus_manifest_sha256 == FROZEN_CORPUS_MANIFEST_SHA256
             and self.split_sha256 != FROZEN_SPLIT_SHA256[self.split]
         ):
-            raise CorpusContractError(
-                f"{self.split.value} split identity is not frozen revision 1"
-            )
+            raise CorpusContractError(f"{self.split.value} split identity is not frozen revision 1")
 
     def identity_payload(self) -> dict[str, object]:
         return _split_manifest_payload(
@@ -1169,9 +1036,7 @@ class SplitManifest:
             split=_enum(  # type: ignore[arg-type]
                 Split, data["split"], "split_manifest.split"
             ),
-            split_sha256=_digest(
-                data["split_sha256"], "split_manifest.split_sha256"
-            ),
+            split_sha256=_digest(data["split_sha256"], "split_manifest.split_sha256"),
             **tuple_fields,  # type: ignore[arg-type]
         )
 
@@ -1217,12 +1082,8 @@ class SplitIntegrityManifest:
             or not math.isfinite(float(threshold))
             or float(threshold) != NEAR_DUPLICATE_JACCARD_THRESHOLD
         ):
-            raise CorpusContractError(
-                "near-duplicate threshold must match the frozen policy"
-            )
-        object.__setattr__(
-            self, "near_duplicate_jaccard_threshold", float(threshold)
-        )
+            raise CorpusContractError("near-duplicate threshold must match the frozen policy")
+        object.__setattr__(self, "near_duplicate_jaccard_threshold", float(threshold))
 
         splits = tuple(self.splits)
         object.__setattr__(self, "splits", splits)
@@ -1231,25 +1092,14 @@ class SplitIntegrityManifest:
                 "split integrity manifest must contain pilot, development, "
                 "and holdout in frozen order"
             )
-        if any(
-            item.corpus_manifest_sha256 != self.corpus_manifest_sha256
-            for item in splits
-        ):
-            raise CorpusContractError(
-                "split manifest corpus identities do not match"
-            )
-        case_ids = tuple(
-            case_id for split in splits for case_id in split.case_ids
-        )
+        if any(item.corpus_manifest_sha256 != self.corpus_manifest_sha256 for item in splits):
+            raise CorpusContractError("split manifest corpus identities do not match")
+        case_ids = tuple(case_id for split in splits for case_id in split.case_ids)
         if len(set(case_ids)) != len(case_ids):
             raise CorpusContractError("case ids overlap between split manifests")
-        source_digests = tuple(
-            digest for split in splits for digest in split.source_sha256s
-        )
+        source_digests = tuple(digest for split in splits for digest in split.source_sha256s)
         normalized_digests = tuple(
-            digest
-            for split in splits
-            for digest in split.normalized_source_sha256s
+            digest for split in splits for digest in split.normalized_source_sha256s
         )
         if len(set(source_digests)) != len(source_digests):
             raise CorpusContractError("exact source content overlaps splits")
@@ -1260,16 +1110,12 @@ class SplitIntegrityManifest:
             canonical_json(self.identity_payload()).encode("utf-8")
         ).hexdigest()
         if _digest(self.integrity_sha256, "integrity_sha256") != expected:
-            raise CorpusContractError(
-                "integrity_sha256 does not match split integrity content"
-            )
+            raise CorpusContractError("integrity_sha256 does not match split integrity content")
         if (
             self.corpus_manifest_sha256 == FROZEN_CORPUS_MANIFEST_SHA256
             and self.integrity_sha256 != FROZEN_SPLIT_INTEGRITY_SHA256
         ):
-            raise CorpusContractError(
-                "split-integrity identity is not frozen revision 1"
-            )
+            raise CorpusContractError("split-integrity identity is not frozen revision 1")
 
     @property
     def holdout(self) -> SplitManifest:
@@ -1284,9 +1130,7 @@ class SplitIntegrityManifest:
             schema=self.schema,
             corpus_manifest_sha256_value=self.corpus_manifest_sha256,
             normalization_version=self.normalization_version,
-            near_duplicate_jaccard_threshold=(
-                self.near_duplicate_jaccard_threshold
-            ),
+            near_duplicate_jaccard_threshold=(self.near_duplicate_jaccard_threshold),
             splits=self.splits,
         )
 
@@ -1306,18 +1150,12 @@ class SplitIntegrityManifest:
         )
         raw_splits = data["splits"]
         if not isinstance(raw_splits, list):
-            raise CorpusContractError(
-                "split_integrity_manifest.splits must be an array"
-            )
+            raise CorpusContractError("split_integrity_manifest.splits must be an array")
         threshold = data["near_duplicate_jaccard_threshold"]
         if isinstance(threshold, bool) or not isinstance(threshold, (int, float)):
-            raise CorpusContractError(
-                "near_duplicate_jaccard_threshold must be numeric"
-            )
+            raise CorpusContractError("near_duplicate_jaccard_threshold must be numeric")
         return cls(
-            schema=_nonempty(
-                data["schema"], "split_integrity_manifest.schema"
-            ),
+            schema=_nonempty(data["schema"], "split_integrity_manifest.schema"),
             corpus_manifest_sha256=_digest(
                 data["corpus_manifest_sha256"],
                 "split_integrity_manifest.corpus_manifest_sha256",
@@ -1351,9 +1189,7 @@ def _make_split_manifest(
             normalized_source_sha256(case.source_text) for case in split_cases
         ),
     )
-    split_digest = hashlib.sha256(
-        canonical_json(payload).encode("utf-8")
-    ).hexdigest()
+    split_digest = hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
     return SplitManifest(
         schema=SPLIT_MANIFEST_SCHEMA,
         corpus_manifest_sha256=corpus_manifest_digest,
@@ -1394,9 +1230,7 @@ def _make_split_integrity_manifest(
         normalization_version=SOURCE_NORMALIZATION_VERSION,
         near_duplicate_jaccard_threshold=NEAR_DUPLICATE_JACCARD_THRESHOLD,
         splits=splits,
-        integrity_sha256=hashlib.sha256(
-            canonical_json(payload).encode("utf-8")
-        ).hexdigest(),
+        integrity_sha256=hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest(),
     )
 
 
@@ -1413,9 +1247,7 @@ class ReviewedCorpus:
         cases = tuple(self.cases)
         object.__setattr__(self, "cases", cases)
         if len(cases) != self.manifest.case_count:
-            raise CorpusContractError(
-                "reviewed corpus case count does not match manifest"
-            )
+            raise CorpusContractError("reviewed corpus case count does not match manifest")
         ids = tuple(case.case_id for case in cases)
         if len(set(ids)) != len(ids):
             raise CorpusContractError("reviewed corpus contains duplicate case ids")
@@ -1429,8 +1261,7 @@ class ReviewedCorpus:
                 or entry.source_sha256 != case.source_sha256
             ):
                 raise CorpusContractError(
-                    "reviewed corpus order or content does not match manifest "
-                    f"at ordinal {ordinal}"
+                    f"reviewed corpus order or content does not match manifest at ordinal {ordinal}"
                 )
         split_counts = _counts(tuple(case.split.value for case in cases))
         if split_counts != dict(self.manifest.split_counts):
@@ -1438,39 +1269,22 @@ class ReviewedCorpus:
         stratum_counts = _counts(tuple(case.stratum for case in cases))
         if stratum_counts != dict(self.manifest.stratum_counts):
             raise CorpusContractError("reviewed corpus stratum counts do not match")
-        class_counts = _counts(
-            tuple(case.expected_class.value for case in cases)
-        )
+        class_counts = _counts(tuple(case.expected_class.value for case in cases))
         if class_counts != dict(self.manifest.expected_class_counts):
-            raise CorpusContractError(
-                "reviewed corpus expected-class counts do not match"
-            )
+            raise CorpusContractError("reviewed corpus expected-class counts do not match")
         if len(stratum_counts) < 8:
-            raise CorpusContractError(
-                "reviewed corpus is not representative across strata"
-            )
+            raise CorpusContractError("reviewed corpus is not representative across strata")
         if _semantic_sha256(cases) != self.manifest.semantic_sha256:
-            raise CorpusContractError(
-                "reviewed corpus semantic target digest does not match"
-            )
+            raise CorpusContractError("reviewed corpus semantic target digest does not match")
         validate_split_integrity(cases)
         split_integrity = _make_split_integrity_manifest(self.manifest, cases)
         if self.manifest_sha256 != FROZEN_CORPUS_MANIFEST_SHA256:
-            raise CorpusContractError(
-                "reviewed corpus manifest identity is not frozen revision 1"
-            )
+            raise CorpusContractError("reviewed corpus manifest identity is not frozen revision 1")
         for split, expected in FROZEN_SPLIT_SHA256.items():
             if split_integrity.by_split[split].split_sha256 != expected:
-                raise CorpusContractError(
-                    f"{split.value} split identity is not frozen revision 1"
-                )
-        if (
-            split_integrity.integrity_sha256
-            != FROZEN_SPLIT_INTEGRITY_SHA256
-        ):
-            raise CorpusContractError(
-                "split-integrity identity is not frozen revision 1"
-            )
+                raise CorpusContractError(f"{split.value} split identity is not frozen revision 1")
+        if split_integrity.integrity_sha256 != FROZEN_SPLIT_INTEGRITY_SHA256:
+            raise CorpusContractError("split-integrity identity is not frozen revision 1")
         object.__setattr__(self, "split_integrity", split_integrity)
         object.__setattr__(
             self,
@@ -1492,51 +1306,34 @@ def validate_split_integrity(
 
     records = cases.cases if isinstance(cases, ReviewedCorpus) else tuple(cases)
     if not records or any(not isinstance(case, BenchmarkCase) for case in records):
-        raise CorpusContractError(
-            "split integrity requires BenchmarkCase records"
-        )
+        raise CorpusContractError("split integrity requires BenchmarkCase records")
     case_ids = tuple(case.case_id for case in records)
     if len(set(case_ids)) != len(case_ids):
         raise CorpusContractError("split integrity found duplicate case ids")
     if {case.split for case in records} != set(Split):
-        raise CorpusContractError(
-            "split integrity requires pilot, development, and holdout cases"
-        )
+        raise CorpusContractError("split integrity requires pilot, development, and holdout cases")
     for case in records:
-        if (
-            case.split is Split.HOLDOUT
-            and case.provenance["prompt_exposure"] != "none"
-        ):
+        if case.split is Split.HOLDOUT and case.provenance["prompt_exposure"] != "none":
             raise CorpusContractError(
                 f"holdout prompt leakage for case {case.case_id}: "
                 "provenance.prompt_exposure must be 'none'"
             )
 
     for left_index, left in enumerate(records):
-        for right in records[left_index + 1:]:
+        for right in records[left_index + 1 :]:
             if left.split is right.split:
                 continue
-            pair = (
-                f"{left.case_id} ({left.split.value}) and "
-                f"{right.case_id} ({right.split.value})"
-            )
+            pair = f"{left.case_id} ({left.split.value}) and {right.case_id} ({right.split.value})"
             if left.source_sha256 == right.source_sha256:
-                raise CorpusContractError(
-                    f"exact source duplicate across splits: {pair}"
-                )
-            if (
-                normalized_source_sha256(left.source_text)
-                == normalized_source_sha256(right.source_text)
+                raise CorpusContractError(f"exact source duplicate across splits: {pair}")
+            if normalized_source_sha256(left.source_text) == normalized_source_sha256(
+                right.source_text
             ):
-                raise CorpusContractError(
-                    f"normalized source duplicate across splits: {pair}"
-                )
+                raise CorpusContractError(f"normalized source duplicate across splits: {pair}")
             left_ref = left.provenance["source_ref"]
             right_ref = right.provenance["source_ref"]
             if left_ref == right_ref:
-                raise CorpusContractError(
-                    f"source provenance reused across splits: {pair}"
-                )
+                raise CorpusContractError(f"source provenance reused across splits: {pair}")
             similarity = source_similarity(left.source_text, right.source_text)
             if similarity >= NEAR_DUPLICATE_JACCARD_THRESHOLD:
                 raise CorpusContractError(
@@ -1580,9 +1377,7 @@ def validate_holdout_prompt_isolation(
     if not isinstance(corpus, ReviewedCorpus):
         raise CorpusContractError("corpus must be a ReviewedCorpus")
     examples = _mapping(prompt_examples, "prompt_examples")
-    holdout_cases = tuple(
-        case for case in corpus.cases if case.split is Split.HOLDOUT
-    )
+    holdout_cases = tuple(case for case in corpus.cases if case.split is Split.HOLDOUT)
     digests: list[str] = []
     for example_id in sorted(examples):
         _safe_id(example_id, "prompt_examples key")
@@ -1592,9 +1387,7 @@ def validate_holdout_prompt_isolation(
                 raise CorpusContractError(
                     f"holdout case id exposed as prompt example: {case.case_id}"
                 )
-            if normalized_source_sha256(prompt) == normalized_source_sha256(
-                case.source_text
-            ):
+            if normalized_source_sha256(prompt) == normalized_source_sha256(case.source_text):
                 raise CorpusContractError(
                     f"holdout source exposed as prompt example: {case.case_id}"
                 )
@@ -1707,9 +1500,7 @@ class HoldoutAccessAudit:
         _protocol_safe_id(self.audit_id, "audit_id")
         _positive_int(self.sequence, "sequence", allow_zero=True)
         if self.purpose not in {"evaluation", "replay"}:
-            raise CorpusContractError(
-                "holdout access purpose must be evaluation or replay"
-            )
+            raise CorpusContractError("holdout access purpose must be evaluation or replay")
         _protocol_safe_id(self.run_id, "run_id")
         _protocol_safe_id(self.variant_id, "variant_id")
         for field_name in (
@@ -1733,31 +1524,20 @@ class HoldoutAccessAudit:
             or not self.cache_namespace.endswith(f"/cache/{self.cache_mode}")
         ):
             raise CorpusContractError(
-                "holdout cache namespace must bind run, variant, holdout "
-                "split, and cache mode"
+                "holdout cache namespace must bind run, variant, holdout split, and cache mode"
             )
         if self.cache_mode not in {"cold", "warm"}:
             raise CorpusContractError("unsupported holdout cache mode")
-        case_ids = tuple(
-            _safe_id(value, "accessed_case_ids[]")
-            for value in self.accessed_case_ids
-        )
+        case_ids = tuple(_safe_id(value, "accessed_case_ids[]") for value in self.accessed_case_ids)
         if not case_ids or len(case_ids) != len(set(case_ids)):
-            raise CorpusContractError(
-                "holdout access requires distinct accessed case ids"
-            )
+            raise CorpusContractError("holdout access requires distinct accessed case ids")
         object.__setattr__(self, "accessed_case_ids", case_ids)
         prompt_digests = tuple(
-            _digest(value, "prompt_example_sha256s[]")
-            for value in self.prompt_example_sha256s
+            _digest(value, "prompt_example_sha256s[]") for value in self.prompt_example_sha256s
         )
         if len(prompt_digests) != len(set(prompt_digests)):
-            raise CorpusContractError(
-                "prompt example fingerprints must be distinct"
-            )
-        object.__setattr__(
-            self, "prompt_example_sha256s", prompt_digests
-        )
+            raise CorpusContractError("prompt example fingerprints must be distinct")
+        object.__setattr__(self, "prompt_example_sha256s", prompt_digests)
         if not all(
             (
                 self.prompts_frozen is True,
@@ -1766,18 +1546,14 @@ class HoldoutAccessAudit:
                 self.thresholds_frozen is True,
             )
         ):
-            raise CorpusContractError(
-                "all selection inputs must be frozen before holdout access"
-            )
+            raise CorpusContractError("all selection inputs must be frozen before holdout access")
         if self.tuning_permitted is not False:
             raise CorpusContractError("tuning is forbidden for holdout access")
         expected = hashlib.sha256(
             canonical_json(self.identity_payload()).encode("utf-8")
         ).hexdigest()
         if self.audit_sha256 != expected:
-            raise CorpusContractError(
-                "audit_sha256 does not match holdout access content"
-            )
+            raise CorpusContractError("audit_sha256 does not match holdout access content")
 
     def identity_payload(self) -> dict[str, object]:
         return _holdout_access_payload(
@@ -1813,25 +1589,16 @@ class HoldoutAccessAudit:
     def validate_against(self, corpus: ReviewedCorpus) -> None:
         integrity = build_split_integrity_manifest(corpus)
         if self.corpus_manifest_sha256 != corpus.manifest_sha256:
-            raise CorpusContractError(
-                "holdout audit corpus manifest does not match corpus"
-            )
+            raise CorpusContractError("holdout audit corpus manifest does not match corpus")
         if self.holdout_split_sha256 != integrity.holdout.split_sha256:
-            raise CorpusContractError(
-                "holdout audit split identity does not match corpus"
-            )
-        positions = {
-            case_id: index
-            for index, case_id in enumerate(integrity.holdout.case_ids)
-        }
+            raise CorpusContractError("holdout audit split identity does not match corpus")
+        positions = {case_id: index for index, case_id in enumerate(integrity.holdout.case_ids)}
         if any(case_id not in positions for case_id in self.accessed_case_ids):
             raise CorpusContractError("audit includes a non-holdout case id")
         if tuple(positions[item] for item in self.accessed_case_ids) != tuple(
             sorted(positions[item] for item in self.accessed_case_ids)
         ):
-            raise CorpusContractError(
-                "holdout access case ids are not in frozen manifest order"
-            )
+            raise CorpusContractError("holdout access case ids are not in frozen manifest order")
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
@@ -1857,16 +1624,11 @@ class HoldoutAccessAudit:
             "audit_sha256",
         )
         values = {
-            field_name: _nonempty(data[field_name], field_name)
-            for field_name in string_fields
+            field_name: _nonempty(data[field_name], field_name) for field_name in string_fields
         }
         return cls(
-            sequence=_positive_int(
-                data["sequence"], "sequence", allow_zero=True
-            ),
-            accessed_case_ids=_string_tuple(
-                data["accessed_case_ids"], "accessed_case_ids"
-            ),
+            sequence=_positive_int(data["sequence"], "sequence", allow_zero=True),
+            accessed_case_ids=_string_tuple(data["accessed_case_ids"], "accessed_case_ids"),
             prompt_example_sha256s=_string_tuple(
                 data["prompt_example_sha256s"],
                 "prompt_example_sha256s",
@@ -1903,26 +1665,16 @@ class HoldoutAccessAudit:
         if run_contract.schema != RUN_CONTRACT_SCHEMA:
             raise CorpusContractError("unsupported run contract")
         if run_contract.split is not Split.HOLDOUT:
-            raise CorpusContractError(
-                "a holdout audit requires a holdout run contract"
-            )
+            raise CorpusContractError("a holdout audit requires a holdout run contract")
         if run_contract.case_manifest_sha256 != corpus.manifest_sha256:
-            raise CorpusContractError(
-                "run contract does not bind the reviewed corpus manifest"
-            )
+            raise CorpusContractError("run contract does not bind the reviewed corpus manifest")
         integrity = build_split_integrity_manifest(corpus)
         selected = (
-            integrity.holdout.case_ids
-            if accessed_case_ids is None
-            else tuple(accessed_case_ids)
+            integrity.holdout.case_ids if accessed_case_ids is None else tuple(accessed_case_ids)
         )
-        prompt_digests = validate_holdout_prompt_isolation(
-            corpus, prompt_examples
-        )
+        prompt_digests = validate_holdout_prompt_isolation(corpus, prompt_examples)
         run_payload = run_contract.to_dict()
-        run_digest = hashlib.sha256(
-            canonical_json(run_payload).encode("utf-8")
-        ).hexdigest()
+        run_digest = hashlib.sha256(canonical_json(run_payload).encode("utf-8")).hexdigest()
         payload = _holdout_access_payload(
             schema=HOLDOUT_ACCESS_SCHEMA,
             audit_id=run_contract.holdout_access_log_id or "",
@@ -1940,12 +1692,8 @@ class HoldoutAccessAudit:
             configuration_sha256=run_contract.configuration_sha256,
             prompts_sha256=_digest(prompts_sha256, "prompts_sha256"),
             policy_sha256=_digest(policy_sha256, "policy_sha256"),
-            model_identities_sha256=_digest(
-                model_identities_sha256, "model_identities_sha256"
-            ),
-            thresholds_sha256=_digest(
-                thresholds_sha256, "thresholds_sha256"
-            ),
+            model_identities_sha256=_digest(model_identities_sha256, "model_identities_sha256"),
+            thresholds_sha256=_digest(thresholds_sha256, "thresholds_sha256"),
             prompt_example_sha256s=prompt_digests,
             prompts_frozen=run_contract.prompts_frozen,
             policy_frozen=run_contract.policy_frozen,
@@ -1955,9 +1703,7 @@ class HoldoutAccessAudit:
         )
         result = cls(
             **payload,  # type: ignore[arg-type]
-            audit_sha256=hashlib.sha256(
-                canonical_json(payload).encode("utf-8")
-            ).hexdigest(),
+            audit_sha256=hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest(),
         )
         result.validate_against(corpus)
         return result
@@ -1970,16 +1716,10 @@ def validate_holdout_access_log(
     """Validate a complete ordered log of immutable holdout accesses."""
 
     audits = tuple(records)
-    if not audits or any(
-        not isinstance(record, HoldoutAccessAudit) for record in audits
-    ):
-        raise CorpusContractError(
-            "holdout access log requires HoldoutAccessAudit records"
-        )
+    if not audits or any(not isinstance(record, HoldoutAccessAudit) for record in audits):
+        raise CorpusContractError("holdout access log requires HoldoutAccessAudit records")
     if tuple(record.sequence for record in audits) != tuple(range(len(audits))):
-        raise CorpusContractError(
-            "holdout access sequences must be contiguous and ordered"
-        )
+        raise CorpusContractError("holdout access sequences must be contiguous and ordered")
     audit_ids = tuple(record.audit_id for record in audits)
     if len(set(audit_ids)) != len(audit_ids):
         raise CorpusContractError("holdout access log contains duplicate audit ids")
@@ -1994,9 +1734,7 @@ def _semantic_sha256(cases: tuple[BenchmarkCase, ...]) -> str:
             "expected_class": case.expected_class.value,
             "expected_ir": _thaw_json(case.expected_ir),
             "proof_obligation": (
-                None
-                if case.proof_obligation is None
-                else _thaw_json(case.proof_obligation)
+                None if case.proof_obligation is None else _thaw_json(case.proof_obligation)
             ),
             "review": case.review.to_dict(),
         }
@@ -2030,9 +1768,7 @@ def load_corpus(path: str | Path = DEFAULT_CORPUS_PATH) -> tuple[BenchmarkCase, 
         value = _decode_json(line, f"corpus line {ordinal + 1}")
         case = BenchmarkCase.from_dict(value)
         if canonical_json(case.to_dict()) != line:
-            raise CorpusContractError(
-                f"corpus line {ordinal + 1} is not canonical JSON"
-            )
+            raise CorpusContractError(f"corpus line {ordinal + 1} is not canonical JSON")
         cases.append(case)
     ids = [case.case_id for case in cases]
     if len(set(ids)) != len(ids):
@@ -2091,14 +1827,11 @@ def load_unsealed_pilot_development(
     expected_entries = manifest.cases[:selected_count]
     sealed_entries = manifest.cases[selected_count:]
     if (
-        tuple(entry.ordinal for entry in expected_entries)
-        != tuple(range(selected_count))
+        tuple(entry.ordinal for entry in expected_entries) != tuple(range(selected_count))
         or tuple(entry.ordinal for entry in sealed_entries)
         != tuple(range(selected_count, manifest.case_count))
-        or sum(entry.split is Split.PILOT for entry in expected_entries)
-        != pilot_count
-        or sum(entry.split is Split.DEVELOPMENT for entry in expected_entries)
-        != development_count
+        or sum(entry.split is Split.PILOT for entry in expected_entries) != pilot_count
+        or sum(entry.split is Split.DEVELOPMENT for entry in expected_entries) != development_count
         or any(entry.split is Split.HOLDOUT for entry in expected_entries)
         or len(sealed_entries) != holdout_count
         or any(entry.split is not Split.HOLDOUT for entry in sealed_entries)
@@ -2114,9 +1847,7 @@ def load_unsealed_pilot_development(
             for ordinal, entry in enumerate(expected_entries):
                 raw = handle.readline()
                 if not raw.endswith(b"\n") or not raw.strip():
-                    raise CorpusContractError(
-                        f"unsealed corpus line {ordinal + 1} is incomplete"
-                    )
+                    raise CorpusContractError(f"unsealed corpus line {ordinal + 1} is incomplete")
                 try:
                     text = raw[:-1].decode("utf-8")
                     case = BenchmarkCase.from_dict(
@@ -2137,9 +1868,7 @@ def load_unsealed_pilot_development(
                     or case.source_sha256 != entry.source_sha256
                     or case_sha256(case) != entry.case_sha256
                 ):
-                    raise CorpusContractError(
-                        f"unsealed corpus line {ordinal + 1} drifted"
-                    )
+                    raise CorpusContractError(f"unsealed corpus line {ordinal + 1} drifted")
                 cases.append(case)
     except CorpusContractError:
         raise
@@ -2149,10 +1878,7 @@ def load_unsealed_pilot_development(
 
 
 def _counts(values: tuple[str, ...]) -> dict[str, int]:
-    return {
-        value: values.count(value)
-        for value in sorted(set(values))
-    }
+    return {value: values.count(value) for value in sorted(set(values))}
 
 
 def load_reviewed_corpus(

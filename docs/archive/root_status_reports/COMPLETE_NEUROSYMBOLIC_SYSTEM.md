@@ -267,18 +267,10 @@ for s in strategies:
 ```python
 from ipfs_datasets_py.logic.external_provers import ProverRouter, ProverStrategy
 
-router = ProverRouter(
-    enable_z3=True,
-    enable_native=True,
-    enable_symbolicai=True
-)
+router = ProverRouter(enable_z3=True, enable_native=True, enable_symbolicai=True)
 
 # Try all provers in parallel
-result = router.prove(
-    formula,
-    strategy=ProverStrategy.PARALLEL,
-    timeout=10.0
-)
+result = router.prove(formula, strategy=ProverStrategy.PARALLEL, timeout=10.0)
 
 print(f"Proved by: {result.prover_used}")
 print(f"All results: {list(result.all_results.keys())}")

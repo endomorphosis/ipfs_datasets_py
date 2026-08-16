@@ -154,46 +154,54 @@ async def ffmpeg_probe(
             for stream in probe_data["streams"]:
                 ctype = stream.get("codec_type", "").lower()
                 if ctype == "video":
-                    sa["video_streams"].append({
-                        "index": stream.get("index"),
-                        "codec": stream.get("codec_name"),
-                        "profile": stream.get("profile"),
-                        "width": stream.get("width"),
-                        "height": stream.get("height"),
-                        "aspect_ratio": stream.get("display_aspect_ratio"),
-                        "pixel_format": stream.get("pix_fmt"),
-                        "frame_rate": stream.get("avg_frame_rate"),
-                        "bitrate": stream.get("bit_rate"),
-                        "duration": stream.get("duration"),
-                        "frame_count": stream.get("nb_frames"),
-                        "color_space": stream.get("color_space"),
-                        "color_range": stream.get("color_range"),
-                    })
+                    sa["video_streams"].append(
+                        {
+                            "index": stream.get("index"),
+                            "codec": stream.get("codec_name"),
+                            "profile": stream.get("profile"),
+                            "width": stream.get("width"),
+                            "height": stream.get("height"),
+                            "aspect_ratio": stream.get("display_aspect_ratio"),
+                            "pixel_format": stream.get("pix_fmt"),
+                            "frame_rate": stream.get("avg_frame_rate"),
+                            "bitrate": stream.get("bit_rate"),
+                            "duration": stream.get("duration"),
+                            "frame_count": stream.get("nb_frames"),
+                            "color_space": stream.get("color_space"),
+                            "color_range": stream.get("color_range"),
+                        }
+                    )
                 elif ctype == "audio":
-                    sa["audio_streams"].append({
-                        "index": stream.get("index"),
-                        "codec": stream.get("codec_name"),
-                        "sample_rate": stream.get("sample_rate"),
-                        "channels": stream.get("channels"),
-                        "channel_layout": stream.get("channel_layout"),
-                        "sample_format": stream.get("sample_fmt"),
-                        "bitrate": stream.get("bit_rate"),
-                        "duration": stream.get("duration"),
-                        "language": stream.get("tags", {}).get("language"),
-                    })
+                    sa["audio_streams"].append(
+                        {
+                            "index": stream.get("index"),
+                            "codec": stream.get("codec_name"),
+                            "sample_rate": stream.get("sample_rate"),
+                            "channels": stream.get("channels"),
+                            "channel_layout": stream.get("channel_layout"),
+                            "sample_format": stream.get("sample_fmt"),
+                            "bitrate": stream.get("bit_rate"),
+                            "duration": stream.get("duration"),
+                            "language": stream.get("tags", {}).get("language"),
+                        }
+                    )
                 elif ctype == "subtitle":
-                    sa["subtitle_streams"].append({
-                        "index": stream.get("index"),
-                        "codec": stream.get("codec_name"),
-                        "language": stream.get("tags", {}).get("language"),
-                        "title": stream.get("tags", {}).get("title"),
-                    })
+                    sa["subtitle_streams"].append(
+                        {
+                            "index": stream.get("index"),
+                            "codec": stream.get("codec_name"),
+                            "language": stream.get("tags", {}).get("language"),
+                            "title": stream.get("tags", {}).get("title"),
+                        }
+                    )
                 else:
-                    sa["data_streams"].append({
-                        "index": stream.get("index"),
-                        "codec_type": ctype,
-                        "codec": stream.get("codec_name"),
-                    })
+                    sa["data_streams"].append(
+                        {
+                            "index": stream.get("index"),
+                            "codec_type": ctype,
+                            "codec": stream.get("codec_name"),
+                        }
+                    )
             analysis["stream_analysis"] = sa
 
         if "chapters" in probe_data:
@@ -280,9 +288,13 @@ async def ffmpeg_analyze(
 
         if analysis_type in ("comprehensive", "quality") and quality_metrics:
             if video_analysis and analysis.get("stream_analysis", {}).get("video_streams"):
-                analysis["video_quality"] = await _analyze_video_quality(input_path, sample_duration)
+                analysis["video_quality"] = await _analyze_video_quality(
+                    input_path, sample_duration
+                )
             if audio_analysis and analysis.get("stream_analysis", {}).get("audio_streams"):
-                analysis["audio_quality"] = await _analyze_audio_quality(input_path, sample_duration)
+                analysis["audio_quality"] = await _analyze_audio_quality(
+                    input_path, sample_duration
+                )
 
         if analysis_type in ("comprehensive", "performance") and performance_metrics:
             analysis["performance_metrics"] = await _analyze_performance(input_path)

@@ -46,9 +46,16 @@ def sharded_car_backend_from_manifest_cid(
     - "auto": try cat, then block_get, then dag_export
     """
 
-    from ..backends.sharded_car import CARBytesShardLoader, IPFSBytesFetcher, IPFSCarFetcher, ShardedCARBackend
+    from ..backends.sharded_car import (
+        CARBytesShardLoader,
+        IPFSBytesFetcher,
+        IPFSCarFetcher,
+        ShardedCARBackend,
+    )
 
-    manifest = load_manifest_from_ipfs(manifest_cid, backend=backend, backend_instance=backend_instance)
+    manifest = load_manifest_from_ipfs(
+        manifest_cid, backend=backend, backend_instance=backend_instance
+    )
     fetcher = IPFSCarFetcher(
         backend=backend,
         backend_instance=backend_instance,
@@ -60,4 +67,6 @@ def sharded_car_backend_from_manifest_cid(
         mode="auto",
     )
     loader = CARBytesShardLoader(fetcher=fetcher)
-    return ShardedCARBackend(manifest, loader=loader, index_fetcher=index_fetcher, cache_size=cache_size)
+    return ShardedCARBackend(
+        manifest, loader=loader, index_fetcher=index_fetcher, cache_size=cache_size
+    )

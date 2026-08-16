@@ -20,16 +20,23 @@ def an_auditreportgenerator_instance_is_initialized():
     """
     try:
         generator = AuditReportGenerator()
-        
+
         if generator is None:
-            raise FixtureError("Failed to create fixture an_auditreportgenerator_instance_is_initialized: AuditReportGenerator instance is None") from None
-        
-        if not hasattr(generator, 'generate_security_report'):
-            raise FixtureError("Failed to create fixture an_auditreportgenerator_instance_is_initialized: AuditReportGenerator missing 'generate_security_report' method") from None
-        
+            raise FixtureError(
+                "Failed to create fixture an_auditreportgenerator_instance_is_initialized: AuditReportGenerator instance is None"
+            ) from None
+
+        if not hasattr(generator, "generate_security_report"):
+            raise FixtureError(
+                "Failed to create fixture an_auditreportgenerator_instance_is_initialized: AuditReportGenerator missing 'generate_security_report' method"
+            ) from None
+
         return generator
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture an_auditreportgenerator_instance_is_initialized: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture an_auditreportgenerator_instance_is_initialized: {e}"
+        ) from e
+
 
 @pytest.fixture
 def metrics_aggregator_has_audit_data(an_auditreportgenerator_instance_is_initialized):
@@ -38,7 +45,7 @@ def metrics_aggregator_has_audit_data(an_auditreportgenerator_instance_is_initia
     """
     try:
         generator = an_auditreportgenerator_instance_is_initialized
-        
+
         # Create test audit data for metrics aggregator
         audit_data = []
         for i in range(100):
@@ -46,26 +53,33 @@ def metrics_aggregator_has_audit_data(an_auditreportgenerator_instance_is_initia
                 level=AuditLevel.INFO if i % 2 == 0 else AuditLevel.WARNING,
                 category=AuditCategory.SECURITY if i % 3 == 0 else AuditCategory.DATA_ACCESS,
                 action=f"action_{i % 10}",
-                user=f"user_{i % 5}"
+                user=f"user_{i % 5}",
             )
             audit_data.append(event)
-        
+
         # Set audit data on metrics aggregator
-        if not hasattr(generator, 'metrics_aggregator'):
-            generator.metrics_aggregator = type('MetricsAggregator', (), {})()
-        
+        if not hasattr(generator, "metrics_aggregator"):
+            generator.metrics_aggregator = type("MetricsAggregator", (), {})()
+
         generator.metrics_aggregator.audit_data = audit_data
-        
+
         # Verify audit data was set
-        if not hasattr(generator.metrics_aggregator, 'audit_data'):
-            raise FixtureError("Failed to create fixture metrics_aggregator_has_audit_data: metrics_aggregator missing 'audit_data' attribute") from None
-        
+        if not hasattr(generator.metrics_aggregator, "audit_data"):
+            raise FixtureError(
+                "Failed to create fixture metrics_aggregator_has_audit_data: metrics_aggregator missing 'audit_data' attribute"
+            ) from None
+
         if len(generator.metrics_aggregator.audit_data) == 0:
-            raise FixtureError("Failed to create fixture metrics_aggregator_has_audit_data: metrics_aggregator has 0 audit data entries") from None
-        
+            raise FixtureError(
+                "Failed to create fixture metrics_aggregator_has_audit_data: metrics_aggregator has 0 audit data entries"
+            ) from None
+
         return generator
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture metrics_aggregator_has_audit_data: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture metrics_aggregator_has_audit_data: {e}"
+        ) from e
+
 
 @pytest.fixture
 def pattern_detector_is_configured(metrics_aggregator_has_audit_data):
@@ -74,27 +88,35 @@ def pattern_detector_is_configured(metrics_aggregator_has_audit_data):
     """
     try:
         generator = metrics_aggregator_has_audit_data
-        
+
         # Configure pattern detector
-        if not hasattr(generator, 'pattern_detector'):
-            generator.pattern_detector = type('PatternDetector', (), {})()
-        
+        if not hasattr(generator, "pattern_detector"):
+            generator.pattern_detector = type("PatternDetector", (), {})()
+
         generator.pattern_detector.configured = True
         generator.pattern_detector.patterns = ["pattern1", "pattern2", "pattern3"]
-        
+
         # Verify pattern detector is configured
-        if not hasattr(generator.pattern_detector, 'configured'):
-            raise FixtureError("Failed to create fixture pattern_detector_is_configured: pattern_detector missing 'configured' attribute") from None
-        
+        if not hasattr(generator.pattern_detector, "configured"):
+            raise FixtureError(
+                "Failed to create fixture pattern_detector_is_configured: pattern_detector missing 'configured' attribute"
+            ) from None
+
         if not generator.pattern_detector.configured:
-            raise FixtureError("Failed to create fixture pattern_detector_is_configured: pattern_detector is not configured") from None
-        
+            raise FixtureError(
+                "Failed to create fixture pattern_detector_is_configured: pattern_detector is not configured"
+            ) from None
+
         return generator
     except Exception as e:
         raise FixtureError(f"Failed to create fixture pattern_detector_is_configured: {e}") from e
 
 
-def test_generate_security_report_returns_dictionary(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_returns_dictionary(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report returns dictionary
 
@@ -108,7 +130,11 @@ def test_generate_security_report_returns_dictionary(an_auditreportgenerator_ins
     pass
 
 
-def test_generate_security_report_sets_report_type(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_sets_report_type(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report sets report_type
 
@@ -122,7 +148,11 @@ def test_generate_security_report_sets_report_type(an_auditreportgenerator_insta
     pass
 
 
-def test_generate_security_report_includes_timestamp_key(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_includes_timestamp_key(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report includes timestamp key
 
@@ -136,7 +166,11 @@ def test_generate_security_report_includes_timestamp_key(an_auditreportgenerator
     pass
 
 
-def test_generate_security_report_timestamp_is_iso_format(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_timestamp_is_iso_format(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report timestamp is ISO format
 
@@ -150,7 +184,11 @@ def test_generate_security_report_timestamp_is_iso_format(an_auditreportgenerato
     pass
 
 
-def test_generate_security_report_includes_report_id_key(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_includes_report_id_key(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report includes report_id key
 
@@ -164,7 +202,11 @@ def test_generate_security_report_includes_report_id_key(an_auditreportgenerator
     pass
 
 
-def test_generate_security_report_report_id_is_a_uuid(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_report_id_is_a_uuid(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report report_id is a UUID
 
@@ -178,7 +220,11 @@ def test_generate_security_report_report_id_is_a_uuid(an_auditreportgenerator_in
     pass
 
 
-def test_generate_security_report_calculates_risk_scores_contains_summary(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_calculates_risk_scores_contains_summary(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report calculates risk scores contains summary
 
@@ -192,7 +238,11 @@ def test_generate_security_report_calculates_risk_scores_contains_summary(an_aud
     pass
 
 
-def test_generate_security_report_calculates_risk_scores_includes_overall_risk_score(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_calculates_risk_scores_includes_overall_risk_score(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report calculates risk scores includes overall_risk_score
 
@@ -206,7 +256,11 @@ def test_generate_security_report_calculates_risk_scores_includes_overall_risk_s
     pass
 
 
-def test_generate_security_report_calculates_risk_scores_within_valid_range(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_calculates_risk_scores_within_valid_range(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report calculates risk scores within valid range
 
@@ -220,7 +274,11 @@ def test_generate_security_report_calculates_risk_scores_within_valid_range(an_a
     pass
 
 
-def test_generate_security_report_includes_risk_assessment_key(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_includes_risk_assessment_key(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report includes risk assessment key
 
@@ -234,7 +292,11 @@ def test_generate_security_report_includes_risk_assessment_key(an_auditreportgen
     pass
 
 
-def test_generate_security_report_risk_assessment_contains_scores_dictionary(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_risk_assessment_contains_scores_dictionary(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report risk assessment contains scores dictionary
 
@@ -248,7 +310,11 @@ def test_generate_security_report_risk_assessment_contains_scores_dictionary(an_
     pass
 
 
-def test_generate_security_report_scores_contains_authentication(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_scores_contains_authentication(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report scores contains authentication
 
@@ -262,7 +328,11 @@ def test_generate_security_report_scores_contains_authentication(an_auditreportg
     pass
 
 
-def test_generate_security_report_scores_contains_access_control(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_scores_contains_access_control(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report scores contains access_control
 
@@ -276,7 +346,11 @@ def test_generate_security_report_scores_contains_access_control(an_auditreportg
     pass
 
 
-def test_generate_security_report_scores_contains_system_integrity(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_scores_contains_system_integrity(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report scores contains system_integrity
 
@@ -290,7 +364,11 @@ def test_generate_security_report_scores_contains_system_integrity(an_auditrepor
     pass
 
 
-def test_generate_security_report_scores_contains_compliance(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_scores_contains_compliance(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report scores contains compliance
 
@@ -304,7 +382,11 @@ def test_generate_security_report_scores_contains_compliance(an_auditreportgener
     pass
 
 
-def test_generate_security_report_detects_anomalies_count(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_detects_anomalies_count(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report detects anomalies count
 
@@ -321,7 +403,11 @@ def test_generate_security_report_detects_anomalies_count(an_auditreportgenerato
     pass
 
 
-def test_generate_security_report_detects_anomalies_list(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_detects_anomalies_list(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report detects anomalies list
 
@@ -338,7 +424,11 @@ def test_generate_security_report_detects_anomalies_list(an_auditreportgenerator
     pass
 
 
-def test_generate_security_report_includes_security_events_count(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_includes_security_events_count(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report includes security events count
 
@@ -355,7 +445,11 @@ def test_generate_security_report_includes_security_events_count(an_auditreportg
     pass
 
 
-def test_generate_security_report_includes_authentication_metrics_events(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_includes_authentication_metrics_events(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report includes authentication metrics events
 
@@ -373,7 +467,11 @@ def test_generate_security_report_includes_authentication_metrics_events(an_audi
     pass
 
 
-def test_generate_security_report_includes_authentication_metrics_failures(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_includes_authentication_metrics_failures(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report includes authentication metrics failures
 
@@ -391,7 +489,11 @@ def test_generate_security_report_includes_authentication_metrics_failures(an_au
     pass
 
 
-def test_generate_security_report_includes_top_security_events_list(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_includes_top_security_events_list(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report includes top security events list
 
@@ -405,7 +507,11 @@ def test_generate_security_report_includes_top_security_events_list(an_auditrepo
     pass
 
 
-def test_generate_security_report_top_security_events_limited_to_5(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_top_security_events_limited_to_5(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report top security events limited to 5
 
@@ -419,7 +525,11 @@ def test_generate_security_report_top_security_events_limited_to_5(an_auditrepor
     pass
 
 
-def test_generate_security_report_generates_recommendations_list(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_generates_recommendations_list(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report generates recommendations list
 
@@ -436,7 +546,11 @@ def test_generate_security_report_generates_recommendations_list(an_auditreportg
     pass
 
 
-def test_generate_security_report_recommendations_not_empty(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_recommendations_not_empty(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report recommendations not empty
 
@@ -453,7 +567,11 @@ def test_generate_security_report_recommendations_not_empty(an_auditreportgenera
     pass
 
 
-def test_generate_security_report_recommendations_includes_authentication_advice(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_recommendations_includes_authentication_advice(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report recommendations includes authentication advice
 
@@ -470,7 +588,11 @@ def test_generate_security_report_recommendations_includes_authentication_advice
     pass
 
 
-def test_generate_security_report_includes_critical_events(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):
+def test_generate_security_report_includes_critical_events(
+    an_auditreportgenerator_instance_is_initialized,
+    metrics_aggregator_has_audit_data,
+    pattern_detector_is_configured,
+):
     """
     Scenario: Generate security report includes critical events
 
@@ -485,4 +607,3 @@ def test_generate_security_report_includes_critical_events(an_auditreportgenerat
     """
     # TODO: Implement test
     pass
-

@@ -18,7 +18,7 @@ Usage:
     ...     PipelineJSONLogger,
     ...     start_pipeline_run,
     ... )
-    >>> 
+    >>>
     >>> logger = PipelineJSONLogger(domain="legal")
     >>> with start_pipeline_run(logger, data_source="test"):
     ...     # Run pipeline stages
@@ -47,12 +47,13 @@ from ipfs_datasets_py.optimizers.common.structured_logging import (
 
 class PipelineErrorDict(TypedDict, total=False):
     """Structure for pipeline error entries.
-    
+
     Fields:
         stage: Pipeline stage where error occurred
         type: Error type (exception class name)
         message: Human-readable error message
     """
+
     stage: str
     type: str
     message: str
@@ -60,12 +61,13 @@ class PipelineErrorDict(TypedDict, total=False):
 
 class PipelineMetricsDict(TypedDict, total=False):
     """Structure for pipeline execution metrics.
-    
+
     Fields:
         entity_count: Number of entities extracted
         relationship_count: Number of relationships extracted
         overall_score: Overall quality/confidence score (0-1)
     """
+
     entity_count: int
     relationship_count: int
     overall_score: float
@@ -73,7 +75,7 @@ class PipelineMetricsDict(TypedDict, total=False):
 
 class PipelineStage(Enum):
     """Distinct stages of ontology pipeline execution."""
-    
+
     EXTRACTION = "extraction"
     EVALUATION = "evaluation"
     REFINEMENT = "refinement"
@@ -84,7 +86,7 @@ class PipelineStage(Enum):
 @dataclass
 class LogContext:
     """Context for a pipeline run session."""
-    
+
     run_id: str
     domain: str
     data_source: str
@@ -96,21 +98,21 @@ class LogContext:
     stage_timings: Dict[str, float] = field(default_factory=dict)
     metrics: PipelineMetricsDict = field(default_factory=lambda: cast(PipelineMetricsDict, {}))
     errors: List[PipelineErrorDict] = field(default_factory=list)
-    
+
     def elapsed_ms(self) -> float:
         """Get elapsed time since run start in milliseconds."""
         return (time.time() - self.timestamp_started) * 1000.0
-    
+
     def mark_stage_start(self, stage: str) -> None:
         """Mark the start of a pipeline stage."""
         self.stages[stage] = time.time()
-    
+
     def mark_stage_end(self, stage: str) -> None:
         """Mark the end of a pipeline stage and record timing."""
         if stage in self.stages:
             duration_ms = (time.time() - self.stages[stage]) * 1000.0
             self.stage_timings[stage] = duration_ms
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert context to dict for logging."""
         return {
@@ -129,11 +131,11 @@ class LogContext:
 
 class PipelineJSONLogger:
     """Structured JSON logger for ontology pipeline runs.
-    
+
     Tracks all stages of a pipeline execution and emits JSON-formatted logs
     suitable for log aggregation systems.
     """
-    
+
     def __init__(
         self,
         domain: str,
@@ -142,7 +144,7 @@ class PipelineJSONLogger:
         include_timestamp: bool = True,
     ):
         """Initialize the pipeline JSON logger.
-        
+
         Args:
             domain: Ontology domain (e.g., "legal", "medical")
             logger: Python logger instance (default: module logger)
@@ -154,7 +156,7 @@ class PipelineJSONLogger:
         self.include_schema = include_schema
         self.include_timestamp = include_timestamp
         self._context: Optional[LogContext] = None
-    
+
     def _emit_log(
         self,
         event_type: str,
@@ -162,7 +164,7 @@ class PipelineJSONLogger:
         level: int = logging.INFO,
     ) -> None:
         """Emit a structured JSON log entry.
-        
+
         Args:
             event_type: Event type string
             data: Event data
@@ -192,23 +194,23 @@ class PipelineJSONLogger:
             "status": status,
             **data,
         }
-        
+
         if self._context:
             payload["run_id"] = self._context.run_id
 
         payload = redact_payload(payload)
-        
+
         if self.include_timestamp:
             payload = enrich_with_timestamp(payload)
-        
+
         if self.include_schema:
             payload = with_schema(payload)
-        
+
         try:
             self.logger.log(level, json.dumps(payload, default=str))
         except (TypeError, ValueError, RuntimeError, OSError) as exc:
             self.logger.debug(f"JSON logging failed: {exc}")
-    
+
     def start_run(
         self,
         run_id: str,
@@ -218,14 +220,14 @@ class PipelineJSONLogger:
         max_workers: int = 1,
     ) -> LogContext:
         """Start a new pipeline run and return context.
-        
+
         Args:
             run_id: Unique identifier for this run
             data_source: Source of the input data
             data_type: Type of data ("text", "json", etc.)
             refine: Whether refinement will be performed
             max_workers: Number of parallel workers
-            
+
         Returns:
             LogContext for the run
         """
@@ -256,7 +258,7 @@ class PipelineJSONLogger:
             refine=refine,
             max_workers=max_workers,
         )
-        
+
         self._emit_log(
             "pipeline.run.started",
             {
@@ -267,47 +269,47 @@ class PipelineJSONLogger:
                 "max_workers": max_workers,
             },
         )
-        
+
         return self._context
-    
+
     def end_run(self, success: bool = True, error: Optional[str] = None) -> Dict[str, Any]:
         """End the current pipeline run.
-        
+
         Args:
             success: Whether the run completed successfully
             error: Error message if failed
-            
+
         Returns:
             Summary dict of the run
         """
         if not self._context:
             return {}
-        
+
         context = self._context
         summary = context.to_dict()
-        
+
         event_type = "pipeline.run.completed" if success else "pipeline.run.failed"
         data = {
             "run_id": context.run_id,
             "success": success,
             **summary,
         }
-        
+
         if error:
             data["error"] = error
-        
+
         self._emit_log(event_type, data)
         self._context = None
-        
+
         return summary
-    
+
     def log_extraction_started(
         self,
         data_length: int,
         strategy: str = "rule_based",
     ) -> None:
         """Log the start of entity/relationship extraction.
-        
+
         Args:
             data_length: Length of input data in characters
             strategy: Extraction strategy being used
@@ -323,7 +325,7 @@ class PipelineJSONLogger:
 
         if self._context:
             self._context.mark_stage_start("extraction")
-        
+
         self._emit_log(
             "extraction.started",
             {
@@ -331,7 +333,7 @@ class PipelineJSONLogger:
                 "strategy": strategy,
             },
         )
-    
+
     def log_extraction_completed(
         self,
         entity_count: int,
@@ -339,7 +341,7 @@ class PipelineJSONLogger:
         entity_types: Optional[Dict[str, int]] = None,
     ) -> None:
         """Log the completion of extraction.
-        
+
         Args:
             entity_count: Number of entities extracted
             relationship_count: Number of relationships extracted
@@ -367,24 +369,24 @@ class PipelineJSONLogger:
             self._context.mark_stage_end("extraction")
             self._context.metrics["entity_count"] = entity_count
             self._context.metrics["relationship_count"] = relationship_count
-        
+
         data: Dict[str, Any] = {
             "entity_count": entity_count,
             "relationship_count": relationship_count,
         }
-        
+
         if entity_types:
             data["entity_types"] = entity_types
-        
+
         self._emit_log("extraction.completed", data)
-    
+
     def log_evaluation_started(
         self,
         parallel: bool = False,
         batch_size: int = 1,
     ) -> None:
         """Log the start of ontology evaluation.
-        
+
         Args:
             parallel: Whether parallel evaluation is being used
             batch_size: Size of batch being evaluated
@@ -398,7 +400,7 @@ class PipelineJSONLogger:
 
         if self._context:
             self._context.mark_stage_start("evaluation")
-        
+
         self._emit_log(
             "evaluation.started",
             {
@@ -406,7 +408,7 @@ class PipelineJSONLogger:
                 "batch_size": batch_size,
             },
         )
-    
+
     def log_evaluation_completed(
         self,
         score: float,
@@ -415,7 +417,7 @@ class PipelineJSONLogger:
         cache_size: int = 0,
     ) -> None:
         """Log the completion of evaluation.
-        
+
         Args:
             score: Overall ontology score
             dimensions: Individual dimension scores
@@ -429,7 +431,10 @@ class PipelineJSONLogger:
                 raise TypeError("dimensions must be a dict")
             if not all(isinstance(k, str) for k in dimensions):
                 raise TypeError("dimensions keys must be strings")
-            if not all((not isinstance(v, bool)) and isinstance(v, (int, float)) for v in dimensions.values()):
+            if not all(
+                (not isinstance(v, bool)) and isinstance(v, (int, float))
+                for v in dimensions.values()
+            ):
                 raise TypeError("dimensions values must be numbers")
         if not isinstance(cache_hit, bool):
             raise TypeError("cache_hit must be a bool")
@@ -441,18 +446,18 @@ class PipelineJSONLogger:
         if self._context:
             self._context.mark_stage_end("evaluation")
             self._context.metrics["overall_score"] = score
-        
+
         data: Dict[str, Any] = {
             "score": score,
             "cache_hit": cache_hit,
             "cache_size": cache_size,
         }
-        
+
         if dimensions:
             data["dimensions"] = dimensions
-        
+
         self._emit_log("evaluation.completed", data)
-    
+
     def log_refinement_started(
         self,
         mode: str = "rule_based",
@@ -460,7 +465,7 @@ class PipelineJSONLogger:
         current_score: float = 0.0,
     ) -> None:
         """Log the start of refinement cycle.
-        
+
         Args:
             mode: Refinement mode (rule_based, llm, agentic)
             max_rounds: Maximum refinement rounds
@@ -479,7 +484,7 @@ class PipelineJSONLogger:
 
         if self._context:
             self._context.mark_stage_start("refinement")
-        
+
         self._emit_log(
             "refinement.started",
             {
@@ -488,7 +493,7 @@ class PipelineJSONLogger:
                 "current_score": current_score,
             },
         )
-    
+
     def log_refinement_round(
         self,
         round_num: int,
@@ -498,7 +503,7 @@ class PipelineJSONLogger:
         actions_applied: List[str],
     ) -> None:
         """Log a single refinement round.
-        
+
         Args:
             round_num: Current round number (1-indexed)
             max_rounds: Total rounds planned
@@ -526,7 +531,7 @@ class PipelineJSONLogger:
             raise TypeError("actions_applied must contain only strings")
 
         improvement = score_after - score_before
-        
+
         self._emit_log(
             "refinement.round.completed",
             {
@@ -539,7 +544,7 @@ class PipelineJSONLogger:
                 "action_count": len(actions_applied),
             },
         )
-    
+
     def log_refinement_completed(
         self,
         final_score: float,
@@ -548,7 +553,7 @@ class PipelineJSONLogger:
         total_actions: int,
     ) -> None:
         """Log the completion of refinement.
-        
+
         Args:
             final_score: Final ontology score
             initial_score: Initial ontology score
@@ -570,9 +575,9 @@ class PipelineJSONLogger:
 
         if self._context:
             self._context.mark_stage_end("refinement")
-        
+
         improvement = final_score - initial_score
-        
+
         self._emit_log(
             "refinement.completed",
             {
@@ -583,7 +588,7 @@ class PipelineJSONLogger:
                 "total_actions": total_actions,
             },
         )
-    
+
     def log_error(
         self,
         stage: str,
@@ -592,7 +597,7 @@ class PipelineJSONLogger:
         traceback: Optional[str] = None,
     ) -> None:
         """Log an error during pipeline execution.
-        
+
         Args:
             stage: Stage where error occurred
             error_type: Type of error (e.g., exception class name)
@@ -600,23 +605,25 @@ class PipelineJSONLogger:
             traceback: Optional stack trace
         """
         if self._context:
-            self._context.errors.append({
-                "stage": stage,
-                "type": error_type,
-                "message": error_message,
-            })
-        
+            self._context.errors.append(
+                {
+                    "stage": stage,
+                    "type": error_type,
+                    "message": error_message,
+                }
+            )
+
         data = {
             "stage": stage,
             "error_type": error_type,
             "error_message": error_message,
         }
-        
+
         if traceback:
             data["traceback"] = traceback
-        
+
         self._emit_log("pipeline.error", data, level=logging.ERROR)
-    
+
     def log_cache_statistics(
         self,
         cache_type: str,
@@ -626,7 +633,7 @@ class PipelineJSONLogger:
         eviction_count: int = 0,
     ) -> None:
         """Log cache statistics.
-        
+
         Args:
             cache_type: Type of cache (shared_eval, local_eval, etc.)
             size: Current cache size
@@ -656,7 +663,7 @@ class PipelineJSONLogger:
             raise ValueError("eviction_count must be greater than or equal to 0")
 
         hit_rate = hit_count / (hit_count + miss_count) if (hit_count + miss_count) > 0 else 0.0
-        
+
         self._emit_log(
             "cache.statistics",
             {
@@ -668,7 +675,7 @@ class PipelineJSONLogger:
                 "eviction_count": eviction_count,
             },
         )
-    
+
     def log_batch_progress(
         self,
         batch_index: int,
@@ -678,7 +685,7 @@ class PipelineJSONLogger:
         current_score: float,
     ) -> None:
         """Log progress on batch processing.
-        
+
         Args:
             batch_index: Current batch index (0-indexed)
             batch_total: Total number of batches
@@ -708,7 +715,7 @@ class PipelineJSONLogger:
             raise ValueError("items_failed must be greater than or equal to 0")
 
         progress_pct = (batch_index / batch_total * 100) if batch_total > 0 else 0.0
-        
+
         self._emit_log(
             "batch.progress",
             {
@@ -731,17 +738,17 @@ def start_pipeline_run(
     refine: bool = True,
 ) -> Any:
     """Context manager for a complete pipeline run.
-    
+
     Args:
         logger: PipelineJSONLogger instance
         run_id: Unique run identifier
         data_source: Source of input data
         data_type: Type of data
         refine: Whether refinement will run
-        
+
     Yields:
         LogContext for the run
-        
+
     Example:
         >>> logger = PipelineJSONLogger(domain="legal")
         >>> with start_pipeline_run(logger, "run_123") as ctx:
@@ -755,7 +762,7 @@ def start_pipeline_run(
         data_type=data_type,
         refine=refine,
     )
-    
+
     try:
         yield context
         logger.end_run(success=True)

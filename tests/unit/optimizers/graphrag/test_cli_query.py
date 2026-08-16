@@ -24,7 +24,9 @@ def test_cli_query_writes_plan_output(tmp_path):
     ontology_path = tmp_path / "ontology.json"
     output_path = tmp_path / "query-plan.json"
     ontology_path.write_text(
-        json.dumps({"entities": [{"id": "e1", "type": "Thing", "text": "Alice"}], "relationships": []}),
+        json.dumps(
+            {"entities": [{"id": "e1", "type": "Thing", "text": "Alice"}], "relationships": []}
+        ),
         encoding="utf-8",
     )
 

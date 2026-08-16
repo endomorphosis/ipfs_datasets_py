@@ -12,6 +12,7 @@ Usage::
     def test_something(config):
         ...
 """
+
 from __future__ import annotations
 
 from hypothesis import strategies as st
@@ -45,13 +46,15 @@ def valid_extraction_config(draw) -> "ExtractionConfig":  # type: ignore[return]
 
     _word = st.text(
         alphabet=st.characters(whitelist_categories=("Ll",)),
-        min_size=2, max_size=12,
+        min_size=2,
+        max_size=12,
     )
     stopwords = draw(st.lists(_word, min_size=0, max_size=10))
     allowed_entity_types = draw(
         st.lists(
             st.sampled_from(["Person", "Organization", "Location", "Event", "Concept"]),
-            min_size=0, max_size=5,
+            min_size=0,
+            max_size=5,
             unique=True,
         )
     )
@@ -59,7 +62,8 @@ def valid_extraction_config(draw) -> "ExtractionConfig":  # type: ignore[return]
         st.dictionaries(
             keys=_word,
             values=st.lists(_word, min_size=0, max_size=5),
-            min_size=0, max_size=3,
+            min_size=0,
+            max_size=3,
         )
     )
     # custom_rules: list of (pattern_str, entity_type) tuples
@@ -67,7 +71,8 @@ def valid_extraction_config(draw) -> "ExtractionConfig":  # type: ignore[return]
     custom_rules = draw(
         st.lists(
             st.tuples(_word, _ent_types),
-            min_size=0, max_size=3,
+            min_size=0,
+            max_size=3,
         )
     )
 
@@ -103,36 +108,60 @@ def valid_entity(draw) -> "Entity":  # type: ignore[return]
     """
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
 
-    entity_id = draw(st.text(
-        alphabet=st.characters(whitelist_categories=("L", "Nd", "Pc")),
-        min_size=1, max_size=20,
-    ))
-    entity_type = draw(st.sampled_from([
-        "Person", "Organization", "Location", "Event", "Concept",
-        "Obligation", "Date", "Legal", "Medical", "Technical"
-    ]))
-    text = draw(st.text(
-        alphabet=st.characters(whitelist_categories=("L", "Nd", "P", "Zs")),
-        min_size=1, max_size=100,
-    ))
-    confidence = draw(st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False))
-    
+    entity_id = draw(
+        st.text(
+            alphabet=st.characters(whitelist_categories=("L", "Nd", "Pc")),
+            min_size=1,
+            max_size=20,
+        )
+    )
+    entity_type = draw(
+        st.sampled_from(
+            [
+                "Person",
+                "Organization",
+                "Location",
+                "Event",
+                "Concept",
+                "Obligation",
+                "Date",
+                "Legal",
+                "Medical",
+                "Technical",
+            ]
+        )
+    )
+    text = draw(
+        st.text(
+            alphabet=st.characters(whitelist_categories=("L", "Nd", "P", "Zs")),
+            min_size=1,
+            max_size=100,
+        )
+    )
+    confidence = draw(
+        st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False)
+    )
+
     # Properties: dict with string keys and various JSON-compatible values
-    properties = draw(st.dictionaries(
-        keys=st.text(
-            alphabet=st.characters(whitelist_categories=("L", "Nd")),
-            min_size=1, max_size=20,
-        ),
-        values=st.one_of(
-            st.none(),
-            st.booleans(),
-            st.integers(min_value=-1000000, max_value=1000000),
-            st.floats(min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False),
-            st.text(max_size=50),
-        ),
-        min_size=0, max_size=5,
-    ))
-    
+    properties = draw(
+        st.dictionaries(
+            keys=st.text(
+                alphabet=st.characters(whitelist_categories=("L", "Nd")),
+                min_size=1,
+                max_size=20,
+            ),
+            values=st.one_of(
+                st.none(),
+                st.booleans(),
+                st.integers(min_value=-1000000, max_value=1000000),
+                st.floats(min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False),
+                st.text(max_size=50),
+            ),
+            min_size=0,
+            max_size=5,
+        )
+    )
+
     # source_span: either None or (start, end) with start < end
     has_span = draw(st.booleans())
     if has_span:

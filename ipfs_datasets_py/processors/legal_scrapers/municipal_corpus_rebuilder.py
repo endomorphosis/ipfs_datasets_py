@@ -196,7 +196,9 @@ def _municipal_text(citation_row: Mapping[str, Any], html_row: Mapping[str, Any]
     )
 
 
-def _build_jsonld_payload(citation_row: Mapping[str, Any], html_row: Mapping[str, Any], *, ipfs_cid: str) -> Dict[str, Any]:
+def _build_jsonld_payload(
+    citation_row: Mapping[str, Any], html_row: Mapping[str, Any], *, ipfs_cid: str
+) -> Dict[str, Any]:
     state_code = _normalize_state_code(_first_text(citation_row, ("state_code",)))
     identifier = _municipal_identifier(citation_row, html_row)
     name = _municipal_name(citation_row, html_row)
@@ -219,7 +221,9 @@ def _build_jsonld_payload(citation_row: Mapping[str, Any], html_row: Mapping[str
         "isPartOf": {
             "@type": "CreativeWork",
             "name": chapter,
-        } if chapter else None,
+        }
+        if chapter
+        else None,
         "legislationType": "municipal_code",
         "url": source_url,
         "sameAs": source_url,
@@ -228,7 +232,9 @@ def _build_jsonld_payload(citation_row: Mapping[str, Any], html_row: Mapping[str
             "@type": "Place",
             "identifier": gnis,
             "addressRegion": state_code,
-        } if gnis or state_code else None,
+        }
+        if gnis or state_code
+        else None,
         "raw_source": {
             "citation": dict(citation_row),
             "html": dict(html_row),
@@ -282,11 +288,11 @@ def _group_raw_dataset_files(input_root: Path) -> Dict[str, Dict[str, Path]]:
     for path in input_root.rglob("*.parquet"):
         name = path.name
         if name.endswith("_citation.parquet"):
-            grouped[name[:-len("_citation.parquet")]]["citation"] = path
+            grouped[name[: -len("_citation.parquet")]]["citation"] = path
         elif name.endswith("_html.parquet"):
-            grouped[name[:-len("_html.parquet")]]["html"] = path
+            grouped[name[: -len("_html.parquet")]]["html"] = path
         elif name.endswith("_embeddings.parquet"):
-            grouped[name[:-len("_embeddings.parquet")]]["embeddings"] = path
+            grouped[name[: -len("_embeddings.parquet")]]["embeddings"] = path
     return dict(grouped)
 
 
@@ -297,7 +303,9 @@ def load_municipal_canonical_rows(
 ) -> List[Dict[str, Any]]:
     root = Path(input_root).expanduser().resolve()
     grouped = _group_raw_dataset_files(root)
-    selected_states = {_normalize_state_code(item) for item in list(states or []) if _normalize_state_code(item)}
+    selected_states = {
+        _normalize_state_code(item) for item in list(states or []) if _normalize_state_code(item)
+    }
     rows: List[Dict[str, Any]] = []
 
     for file_set in grouped.values():
@@ -351,7 +359,9 @@ def _coerce_embedding_vector(value: Any) -> List[float]:
     return []
 
 
-def _metadata_rows_for_embeddings(rows: Sequence[Mapping[str, Any]], *, vector_id_start: int) -> List[Dict[str, Any]]:
+def _metadata_rows_for_embeddings(
+    rows: Sequence[Mapping[str, Any]], *, vector_id_start: int
+) -> List[Dict[str, Any]]:
     metadata_rows: List[Dict[str, Any]] = []
     for offset, row in enumerate(rows):
         metadata_row = {
@@ -406,13 +416,17 @@ def _combine_state_semantic_artifacts(
             faiss = None  # type: ignore[assignment]
         import numpy as np
 
-        for semantic_index in sorted(semantic_indexes, key=lambda item: str(item.get("state_code") or "")):
+        for semantic_index in sorted(
+            semantic_indexes, key=lambda item: str(item.get("state_code") or "")
+        ):
             embeddings_path = Path(str(semantic_index.get("embeddings_parquet_path") or ""))
             if not embeddings_path.exists():
                 continue
             embeddings_table = pq.read_table(embeddings_path)
             if embeddings_writer is None:
-                embeddings_writer = pq.ParquetWriter(embeddings_output, embeddings_table.schema, compression="snappy")
+                embeddings_writer = pq.ParquetWriter(
+                    embeddings_output, embeddings_table.schema, compression="snappy"
+                )
             embeddings_writer.write_table(embeddings_table)
 
             if not backend:
@@ -433,7 +447,9 @@ def _combine_state_semantic_artifacts(
                     elif hasattr(faiss, "IndexFlatL2"):
                         faiss_index = faiss.IndexFlatL2(len(vectors[0]))
                     else:
-                        faiss_index = faiss.index_factory(len(vectors[0]), "Flat", getattr(faiss, "METRIC_INNER_PRODUCT", 0))
+                        faiss_index = faiss.index_factory(
+                            len(vectors[0]), "Flat", getattr(faiss, "METRIC_INNER_PRODUCT", 0)
+                        )
                 faiss_index.add(np.asarray(vectors, dtype="float32"))
 
             metadata_path = Path(str(semantic_index.get("faiss_metadata_path") or ""))
@@ -442,11 +458,15 @@ def _combine_state_semantic_artifacts(
                 for offset, row in enumerate(metadata_rows):
                     row["vector_id"] = row_count + offset
             else:
-                metadata_rows = _metadata_rows_for_embeddings(embedding_rows, vector_id_start=row_count)
+                metadata_rows = _metadata_rows_for_embeddings(
+                    embedding_rows, vector_id_start=row_count
+                )
             metadata_rows = _normalize_rows_for_parquet(metadata_rows)
             metadata_table = pa.Table.from_pylist(metadata_rows)
             if metadata_writer is None:
-                metadata_writer = pq.ParquetWriter(faiss_metadata_output, metadata_table.schema, compression="snappy")
+                metadata_writer = pq.ParquetWriter(
+                    faiss_metadata_output, metadata_table.schema, compression="snappy"
+                )
             else:
                 metadata_table = metadata_table.cast(metadata_writer.schema)
             metadata_writer.write_table(metadata_table)
@@ -535,9 +555,11 @@ def rebuild_municipal_laws_corpus(
         else _CORPUS.default_local_root()
     )
     rows = load_municipal_canonical_rows(source_root, states=states)
-    state_paths, combined_path, state_counts, canonical_row_count = write_municipal_canonical_parquets(
-        rows,
-        output_root=target_root,
+    state_paths, combined_path, state_counts, canonical_row_count = (
+        write_municipal_canonical_parquets(
+            rows,
+            output_root=target_root,
+        )
     )
 
     artifact_results: List[Dict[str, Any]] = []

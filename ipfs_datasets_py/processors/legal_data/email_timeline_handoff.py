@@ -50,7 +50,9 @@ def _topic_label(item: dict[str, Any]) -> str:
 def _normalize_candidates(candidates: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     normalized: list[dict[str, Any]] = []
     for item in candidates:
-        iso_value, day_value, parsed = _parse_email_datetime(item.get("email_date_iso") or item.get("email_date"))
+        iso_value, day_value, parsed = _parse_email_datetime(
+            item.get("email_date_iso") or item.get("email_date")
+        )
         normalized.append(
             {
                 **dict(item),
@@ -60,7 +62,12 @@ def _normalize_candidates(candidates: Sequence[dict[str, Any]]) -> list[dict[str
                 "_topic": _topic_label(dict(item)),
             }
         )
-    normalized.sort(key=lambda item: ((item.get("_parsed_dt").timestamp() if item.get("_parsed_dt") else 0.0), str(item.get("subject") or "")))
+    normalized.sort(
+        key=lambda item: (
+            (item.get("_parsed_dt").timestamp() if item.get("_parsed_dt") else 0.0),
+            str(item.get("subject") or ""),
+        )
+    )
     return normalized
 
 
@@ -71,7 +78,9 @@ def build_email_timeline_handoff(
     claim_element_id: str = "causation",
     temporal_proof_objective: str = "establish_clackamas_email_sequence",
 ) -> dict[str, Any]:
-    items = _normalize_candidates([dict(item) for item in timeline_candidates if isinstance(item, dict)])
+    items = _normalize_candidates(
+        [dict(item) for item in timeline_candidates if isinstance(item, dict)]
+    )
     canonical_facts: list[dict[str, Any]] = []
     timeline_anchors: list[dict[str, Any]] = []
     temporal_fact_registry: list[dict[str, Any]] = []
@@ -83,7 +92,9 @@ def build_email_timeline_handoff(
     for index, item in enumerate(items, start=1):
         fact_id = f"email_fact_{index:03d}"
         anchor_id = f"timeline_anchor_{index:03d}"
-        event_label = str(item.get("thread_subject") or item.get("subject") or "Email event").strip()
+        event_label = str(
+            item.get("thread_subject") or item.get("subject") or "Email event"
+        ).strip()
         event_text = str(item.get("summary") or item.get("subject") or event_label).strip()
         day_value = str(item.get("email_date_day") or "").strip()
         iso_value = str(item.get("email_date_iso") or "").strip()
@@ -158,7 +169,9 @@ def build_email_timeline_handoff(
             "event_support_refs": [f"email:{fact_id}"],
         }
         temporal_fact_registry.append(temporal_fact)
-        event_ledger.append({**temporal_fact, "event_id": fact_id, "ledger_version": "event_ledger.v1"})
+        event_ledger.append(
+            {**temporal_fact, "event_id": fact_id, "ledger_version": "event_ledger.v1"}
+        )
 
     for index, (left, right) in enumerate(zip(canonical_facts, canonical_facts[1:]), start=1):
         relation_id = f"timeline_relation_{index:03d}"
@@ -189,8 +202,22 @@ def build_email_timeline_handoff(
     topic_summary = {
         topic: {
             "count": count,
-            "first_fact_id": next((fact["fact_id"] for fact in canonical_facts if fact.get("predicate_family") == topic), ""),
-            "last_fact_id": next((fact["fact_id"] for fact in reversed(canonical_facts) if fact.get("predicate_family") == topic), ""),
+            "first_fact_id": next(
+                (
+                    fact["fact_id"]
+                    for fact in canonical_facts
+                    if fact.get("predicate_family") == topic
+                ),
+                "",
+            ),
+            "last_fact_id": next(
+                (
+                    fact["fact_id"]
+                    for fact in reversed(canonical_facts)
+                    if fact.get("predicate_family") == topic
+                ),
+                "",
+            ),
         }
         for topic, count in topic_counts.items()
     }
@@ -233,7 +260,9 @@ def build_email_timeline_handoff(
             "approximate_fact_count": 0,
             "range_fact_count": 0,
             "relation_count": len(timeline_relations),
-            "relation_type_counts": {"before": len(timeline_relations)} if timeline_relations else {},
+            "relation_type_counts": {"before": len(timeline_relations)}
+            if timeline_relations
+            else {},
             "missing_temporal_fact_ids": [],
             "relative_only_fact_ids": [],
             "warnings": [],

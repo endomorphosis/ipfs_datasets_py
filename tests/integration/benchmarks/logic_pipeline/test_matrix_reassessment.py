@@ -83,9 +83,7 @@ class _DeterministicSymaiEngine:
                 "backend": "llm_router",
                 "effective_provider_name": self.config.provider,
                 "effective_model_name": self.config.model,
-                "resolved_provider_name": (
-                    self.config.expected_inner_provider
-                ),
+                "resolved_provider_name": (self.config.expected_inner_provider),
                 "resolved_model_name": self.config.expected_inner_model,
                 "service_endpoint": self.config.expected_inner_endpoint,
                 "routing_backend": self.config.expected_inner_backend,
@@ -137,9 +135,7 @@ def _fresh_test_reprobe(
                 "requested_identity",
                 "effective_identity",
             ):
-                receipt[identity_field]["routing_backend"] = (
-                    "existing_leanstral_service"
-                )
+                receipt[identity_field]["routing_backend"] = "existing_leanstral_service"
         receipt.pop("receipt_sha256")
         receipt["receipt_sha256"] = _canonical_sha256(receipt)
         receipts[component] = receipt
@@ -148,9 +144,7 @@ def _fresh_test_reprobe(
         identity = dict(record.identity)
         component = str(identity["live_receipt_component"])
         if component == "leanstral_service":
-            identity["routing_backend"] = (
-                "existing_leanstral_service"
-            )
+            identity["routing_backend"] = "existing_leanstral_service"
         identity["live_receipt_sha256"] = receipts[component]["receipt_sha256"]
         records.append(
             capabilities.CapabilityRecord(
@@ -227,9 +221,7 @@ class _DeterministicHandlers:
                     "stage": stage.value,
                     "proof_success": stage is StageName.HAMMER,
                     "proof_text": (
-                        "exact deterministic proof candidate"
-                        if stage is StageName.HAMMER
-                        else None
+                        "exact deterministic proof candidate" if stage is StageName.HAMMER else None
                     ),
                 },
                 effective_identity=dict(
@@ -311,18 +303,12 @@ class _DeterministicHandlers:
             }
             receipt.update(
                 {
-                    "compiled_obligation_sha256": hashlib.sha256(
-                        b"compiled"
-                    ).hexdigest(),
-                    "obligation_sha256": hashlib.sha256(
-                        b"obligation"
-                    ).hexdigest(),
+                    "compiled_obligation_sha256": hashlib.sha256(b"compiled").hexdigest(),
+                    "obligation_sha256": hashlib.sha256(b"obligation").hexdigest(),
                     "candidate_source": attempt["candidate_source"],
                     "candidate_artifact_sha256": candidate_sha256,
                     "source_sha256": attempt["source_sha256"],
-                    "semantic_context_sha256": hashlib.sha256(
-                        b"semantic-context"
-                    ).hexdigest(),
+                    "semantic_context_sha256": hashlib.sha256(b"semantic-context").hexdigest(),
                     "semantic_artifact_sha256s": [
                         artifact.digest
                         for artifact in request.upstream_artifacts  # type: ignore[attr-defined]
@@ -335,13 +321,9 @@ class _DeterministicHandlers:
                     "cancelled": attempt["cancelled"],
                     "resource_exhausted": attempt["resource_exhausted"],
                     "termination_reason": attempt["termination_reason"],
-                    "process_group_reaped": attempt[
-                        "process_group_reaped"
-                    ],
+                    "process_group_reaped": attempt["process_group_reaped"],
                     "candidate_attempts": [attempt],
-                    "candidate_attempts_sha256": _canonical_sha256(
-                        [attempt]
-                    ),
+                    "candidate_attempts_sha256": _canonical_sha256([attempt]),
                     "selected_attempt": {
                         key: attempt[key]
                         for key in (
@@ -356,9 +338,7 @@ class _DeterministicHandlers:
             )
         else:
             receipt["reason"] = (
-                "invalid_control"
-                if invalid_control
-                else "injected_test_kernel_non_authoritative"
+                "invalid_control" if invalid_control else "injected_test_kernel_non_authoritative"
             )
         digest = _canonical_sha256(receipt)
         return StageOutput(
@@ -430,6 +410,7 @@ def _cache_isolation_run(tmp_path: Path) -> ablation.AblationRunResult:
     )
     adapters: dict[StageName, StageAdapter] = {}
     for stage in StageName:
+
         def handler(request: object, current: StageName = stage) -> StageOutput:
             mode = request.cache_mode.value  # type: ignore[attr-defined]
             identity = dict(
@@ -442,12 +423,8 @@ def _cache_isolation_run(tmp_path: Path) -> ablation.AblationRunResult:
                     "solver": "pinned-solver",
                     "backend_revision": "pinned",
                     "cache_mode": mode,
-                    "cache_namespace": (
-                        f"matrix-cache-isolation/{current.value}/{mode}"
-                    ),
-                    "cache_key": (
-                        f"matrix-cache-case/{current.value}/{mode}"
-                    ),
+                    "cache_namespace": (f"matrix-cache-isolation/{current.value}/{mode}"),
+                    "cache_key": (f"matrix-cache-case/{current.value}/{mode}"),
                     "cache_hit": (
                         request.cache_mode is CacheMode.WARM  # type: ignore[attr-defined]
                     ),
@@ -458,8 +435,7 @@ def _cache_isolation_run(tmp_path: Path) -> ablation.AblationRunResult:
                 }
             )
             if (
-                current is StageName.SYMAI
-                and request.cache_mode is CacheMode.WARM  # type: ignore[attr-defined]
+                current is StageName.SYMAI and request.cache_mode is CacheMode.WARM  # type: ignore[attr-defined]
             ):
                 prime_receipt = {
                     "schema": "test-symai-cache-prime.v1",
@@ -469,9 +445,7 @@ def _cache_isolation_run(tmp_path: Path) -> ablation.AblationRunResult:
                     {
                         "cache_prime": True,
                         "cache_prime_receipt": prime_receipt,
-                        "cache_prime_receipt_sha256": _canonical_sha256(
-                            prime_receipt
-                        ),
+                        "cache_prime_receipt_sha256": _canonical_sha256(prime_receipt),
                         "cache_prime_setup_attempts": 1,
                         "cache_prime_setup_model_calls": 1,
                         "cache_prime_setup_wall_time_ms": 0.25,
@@ -488,9 +462,7 @@ def _cache_isolation_run(tmp_path: Path) -> ablation.AblationRunResult:
 
         adapters[stage] = StageAdapter(stage, handler)
     adapters[StageName.SPACY] = SpacyAdapter(
-        config=SpacyAdapterConfig(
-            mode=SpacyAdapterMode.REGEX_LEGAL
-        )
+        config=SpacyAdapterConfig(mode=SpacyAdapterMode.REGEX_LEGAL)
     )
     adapters[StageName.SYMAI] = SymaiAdapter(
         config=SymaiAdapterConfig(
@@ -499,9 +471,7 @@ def _cache_isolation_run(tmp_path: Path) -> ablation.AblationRunResult:
             max_retries=0,
             cache_enabled=True,
         ),
-        engine_factory=lambda config, _namespace: (
-            _DeterministicSymaiEngine(config)
-        ),
+        engine_factory=lambda config, _namespace: _DeterministicSymaiEngine(config),
         trace_getter=lambda: {},
         cache={},
     )
@@ -520,10 +490,7 @@ def _replace_warm_result(
     return replace(
         run,
         results=tuple(
-            replacement
-            if result.cache_mode is CacheMode.WARM
-            else result
-            for result in run.results
+            replacement if result.cache_mode is CacheMode.WARM else result for result in run.results
         ),
     )
 
@@ -533,14 +500,8 @@ def _warm_stage_identity_drift(
     *,
     identity: str,
 ) -> ablation.AblationRunResult:
-    warm = next(
-        result
-        for result in run.results
-        if result.cache_mode is CacheMode.WARM
-    )
-    symai = next(
-        stage for stage in warm.stages if stage.stage is StageName.SYMAI
-    )
+    warm = next(result for result in run.results if result.cache_mode is CacheMode.WARM)
+    symai = next(stage for stage in warm.stages if stage.stage is StageName.SYMAI)
     provenance = symai.provenance
     if identity == "requested":
         provenance = replace(
@@ -560,10 +521,7 @@ def _warm_stage_identity_drift(
         )
     replacement_stage = replace(symai, provenance=provenance)
     replacement = CaseResultRecord.from_stages(
-        tuple(
-            replacement_stage if stage is symai else stage
-            for stage in warm.stages
-        )
+        tuple(replacement_stage if stage is symai else stage for stage in warm.stages)
     )
     return _replace_warm_result(run, replacement)
 
@@ -580,13 +538,9 @@ def test_matrix_cache_isolation_accepts_canonical_warm_symai_prime_receipt(
         if stage.stage is StageName.SYMAI
     )
 
-    receipt = cache_measurement.validate_symai_warm_cache_measurement(
-        warm_symai
-    )
+    receipt = cache_measurement.validate_symai_warm_cache_measurement(warm_symai)
     assert (
-        warm_symai.provenance.effective_identity[
-            "cache_prime_receipt_sha256"
-        ]
+        warm_symai.provenance.effective_identity["cache_prime_receipt_sha256"]
         == receipt.receipt_sha256
     )
     reassessment._validate_split_cache_isolation(run)
@@ -594,27 +548,16 @@ def test_matrix_cache_isolation_accepts_canonical_warm_symai_prime_receipt(
 
 def test_matrix_cache_isolation_rejects_route_drift(tmp_path: Path) -> None:
     run = _cache_isolation_run(tmp_path)
-    warm = next(
-        result
-        for result in run.results
-        if result.cache_mode is CacheMode.WARM
-    )
+    warm = next(result for result in run.results if result.cache_mode is CacheMode.WARM)
     replacement = CaseResultRecord.from_stages(
-        tuple(
-            stage
-            for stage in warm.stages
-            if stage.stage is not StageName.SPACY
-        )
+        tuple(stage for stage in warm.stages if stage.stage is not StageName.SPACY)
     )
 
     with pytest.raises(
         reassessment.MatrixReassessmentError,
-        match="cache isolation failed: cold and warm results executed "
-        "different routes",
+        match="cache isolation failed: cold and warm results executed different routes",
     ):
-        reassessment._validate_split_cache_isolation(
-            _replace_warm_result(run, replacement)
-        )
+        reassessment._validate_split_cache_isolation(_replace_warm_result(run, replacement))
 
 
 def test_resource_ledger_rejects_a_receipt_for_forged_suppression(
@@ -622,9 +565,7 @@ def test_resource_ledger_rejects_a_receipt_for_forged_suppression(
 ) -> None:
     run = _cache_isolation_run(tmp_path)
     first = run.results[0]
-    symai = next(
-        stage for stage in first.stages if stage.stage is StageName.SYMAI
-    )
+    symai = next(stage for stage in first.stages if stage.stage is StageName.SYMAI)
     forged_stage = replace(
         symai,
         provenance=replace(
@@ -637,10 +578,7 @@ def test_resource_ledger_rejects_a_receipt_for_forged_suppression(
         ),
     )
     forged_result = CaseResultRecord.from_stages(
-        tuple(
-            forged_stage if stage is symai else stage
-            for stage in first.stages
-        )
+        tuple(forged_stage if stage is symai else stage for stage in first.stages)
     )
     forged_run = replace(
         run,
@@ -663,8 +601,7 @@ def test_matrix_cache_isolation_rejects_backend_identity_drift(
 
     with pytest.raises(
         reassessment.MatrixReassessmentError,
-        match="cache isolation failed: backend, model, or solver identity "
-        "drifted across modes",
+        match="cache isolation failed: backend, model, or solver identity drifted across modes",
     ):
         reassessment._validate_split_cache_isolation(
             _warm_stage_identity_drift(run, identity=identity)
@@ -682,10 +619,7 @@ def test_evidence_symbol_is_ast_visible_and_describes_exact_scope() -> None:
 
     assert "HSSLEV1305A27" in names
     assert callable(reassessment.HSSLEV1305A27)
-    assert all(
-        term in evidence.lower()
-        for term in ("pilot", "development", "cold", "warm")
-    )
+    assert all(term in evidence.lower() for term in ("pilot", "development", "cold", "warm"))
 
 
 def test_builder_freezes_exact_560_coordinate_non_holdout_matrix(
@@ -700,10 +634,7 @@ def test_builder_freezes_exact_560_coordinate_non_holdout_matrix(
     assert sum(len(plan.jobs) for plan in plans) == 560
     assert all(len(plan.case_ids) == 10 for plan in plans)
     assert all(plan.variant_ids == tuple(ALL_VARIANT_IDS) for plan in plans)
-    assert all(
-        plan.cache_modes == (CacheMode.COLD, CacheMode.WARM)
-        for plan in plans
-    )
+    assert all(plan.cache_modes == (CacheMode.COLD, CacheMode.WARM) for plan in plans)
     assert all(plan.split is not Split.HOLDOUT for plan in plans)
     assert all(
         plan.protocol_sha256 == DEFAULT_PROTOCOL_SHA256
@@ -721,11 +652,7 @@ def test_builder_freezes_exact_560_coordinate_non_holdout_matrix(
         for plan in plans
         for contract in plan.run_contracts
     )
-    assert all(
-        job.case.split is not Split.HOLDOUT
-        for plan in plans
-        for job in plan.jobs
-    )
+    assert all(job.case.split is not Split.HOLDOUT for plan in plans for job in plan.jobs)
     assert {
         (
             plan.split,
@@ -747,10 +674,7 @@ def test_builder_freezes_exact_560_coordinate_non_holdout_matrix(
     # one when the ten blocks cannot divide evenly across fourteen positions).
     for plan in plans:
         position_counts = {
-            mode: {
-                variant_id: [0] * len(ALL_VARIANT_IDS)
-                for variant_id in ALL_VARIANT_IDS
-            }
+            mode: {variant_id: [0] * len(ALL_VARIANT_IDS) for variant_id in ALL_VARIANT_IDS}
             for mode in (CacheMode.COLD, CacheMode.WARM)
         }
         for block in plan.blocks:
@@ -760,10 +684,7 @@ def test_builder_freezes_exact_560_coordinate_non_holdout_matrix(
             for position, job in enumerate(block):
                 position_counts[job.cache_mode][job.variant_id][position] += 1
         for counts_by_variant in position_counts.values():
-            assert all(
-                max(counts) - min(counts) <= 1
-                for counts in counts_by_variant.values()
-            )
+            assert all(max(counts) - min(counts) <= 1 for counts in counts_by_variant.values())
 
 
 def test_published_snapshot_retains_exact_legacy_date_and_path() -> None:
@@ -778,9 +699,7 @@ def test_published_snapshot_retains_exact_legacy_date_and_path() -> None:
 
     assert expected == _load(ROOT / reassessment.DEFAULT_MATRIX_SNAPSHOT)
     assert expected["captured_on"] == "2026-07-24"
-    assert expected["results"]["artifact"]["path"] == (
-        reassessment.DEFAULT_MATRIX_INDEX.as_posix()
-    )
+    assert expected["results"]["artifact"]["path"] == (reassessment.DEFAULT_MATRIX_INDEX.as_posix())
 
 
 def test_matrix_passes_frozen_case_limit_to_leanstral_runtime(
@@ -816,20 +735,14 @@ def test_matrix_passes_frozen_case_limit_to_leanstral_runtime(
             resume=False,
         )
 
-    assert captured["leanstral_timeout_seconds"] == (
-        ablation.ResourceLimits().case_timeout_seconds
-    )
-    assert captured["leanstral_max_new_tokens"] == (
-        runtime.LEANSTRAL_MEASURED_MAX_NEW_TOKENS
-    )
+    assert captured["leanstral_timeout_seconds"] == (ablation.ResourceLimits().case_timeout_seconds)
+    assert captured["leanstral_max_new_tokens"] == (runtime.LEANSTRAL_MEASURED_MAX_NEW_TOKENS)
 
 
 def test_non_holdout_reader_never_deserializes_the_sealed_tail(
     tmp_path: Path,
 ) -> None:
-    source_lines = (ROOT / DEFAULT_CORPUS_PATH).read_bytes().splitlines(
-        keepends=True
-    )
+    source_lines = (ROOT / DEFAULT_CORPUS_PATH).read_bytes().splitlines(keepends=True)
     assert len(source_lines) == 30
     poisoned = tmp_path / "sealed-corpus.jsonl"
     poisoned.write_bytes(b"".join(source_lines[:20]) + b"{not-json}\n" * 10)
@@ -895,9 +808,7 @@ def test_full_matrix_execution_is_terminal_receipted_and_resumable(
     snapshot = _load(snapshot_path)
     captured = date.fromisoformat(str(snapshot["captured_on"]))
     assert captured <= datetime.now(timezone.utc).date()
-    assert snapshot["results"]["artifact"]["path"] == (
-        "results/matrix-execution-v2.json"
-    )
+    assert snapshot["results"]["artifact"]["path"] == ("results/matrix-execution-v2.json")
     assert first["artifact_sha256"]
     assert first["totals"]["invalid_control_coordinate_count"] == 56
     assert first["totals"]["invalid_control_verified_count"] == 0
@@ -909,15 +820,9 @@ def test_full_matrix_execution_is_terminal_receipted_and_resumable(
         "bytes_sha256": reassessment.FROZEN_SELECTION_BYTES_SHA256,
         "semantic_sha256": reassessment.FROZEN_SELECTION_SHA256S["freeze"],
     }
-    assert selection["prompts_sha256"] == (
-        reassessment.FROZEN_SELECTION_SHA256S["prompts"]
-    )
-    assert selection["policies_sha256"] == (
-        reassessment.FROZEN_SELECTION_SHA256S["policies"]
-    )
-    assert selection["thresholds_sha256"] == (
-        reassessment.FROZEN_SELECTION_SHA256S["thresholds"]
-    )
+    assert selection["prompts_sha256"] == (reassessment.FROZEN_SELECTION_SHA256S["prompts"])
+    assert selection["policies_sha256"] == (reassessment.FROZEN_SELECTION_SHA256S["policies"])
+    assert selection["thresholds_sha256"] == (reassessment.FROZEN_SELECTION_SHA256S["thresholds"])
     split_runs = first["split_runs"]
     assert isinstance(split_runs, list)
     for split_run in split_runs:
@@ -931,30 +836,28 @@ def test_full_matrix_execution_is_terminal_receipted_and_resumable(
         assert int(ledger["receipt_count"]) > 0
 
     envelopes = _case_result_envelopes(output_root)
-    records = tuple(
-        CaseResultRecord.from_dict(envelope["case_result"])
-        for envelope in envelopes
-    )
+    records = tuple(CaseResultRecord.from_dict(envelope["case_result"]) for envelope in envelopes)
     assert len(records) == 560
-    assert len(
-        {
-            (
-                record.split,
-                record.case_id,
-                record.variant_id,
-                record.cache_mode,
-            )
-            for record in records
-        }
-    ) == 560
+    assert (
+        len(
+            {
+                (
+                    record.split,
+                    record.case_id,
+                    record.variant_id,
+                    record.cache_mode,
+                )
+                for record in records
+            }
+        )
+        == 560
+    )
     assert {record.split for record in records} == {
         Split.PILOT,
         Split.DEVELOPMENT,
     }
     assert all(record.status in TERMINAL_OUTCOMES for record in records)
-    assert any(
-        record.status is OutcomeStatus.UNAVAILABLE for record in records
-    )
+    assert any(record.status is OutcomeStatus.UNAVAILABLE for record in records)
     assert all(record.validate_provenance() is None for record in records)
     assert all(
         all(
@@ -965,8 +868,7 @@ def test_full_matrix_execution_is_terminal_receipted_and_resumable(
         for stage in record.stages
     )
     assert all(
-        stage.telemetry.wall_time_ms >= 0
-        and stage.telemetry.cpu_time_ms >= 0
+        stage.telemetry.wall_time_ms >= 0 and stage.telemetry.cpu_time_ms >= 0
         for record in records
         for stage in record.stages
     )
@@ -1106,9 +1008,7 @@ def test_execute_cli_forwards_complete_scope_and_resume(
             "artifact_sha256": "a" * 64,
         }
 
-    monkeypatch.setattr(
-        reassessment, "execute_reassessment_matrix", fake_execute
-    )
+    monkeypatch.setattr(reassessment, "execute_reassessment_matrix", fake_execute)
     output_root = tmp_path / "matrix"
     snapshot_path = tmp_path / "snapshot.json"
     exit_code = runtime.main(

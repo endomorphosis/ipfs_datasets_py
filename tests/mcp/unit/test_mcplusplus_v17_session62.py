@@ -8,6 +8,7 @@ Implements all 5 next steps from MASTER_IMPROVEMENT_PLAN_2026_v17.md:
 4. FilePolicyStore.save_encrypted / load_encrypted
 5. Session 62 E2E scenario
 """
+
 from __future__ import annotations
 
 import inspect
@@ -32,41 +33,51 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 # 1.  DelegationManager.get_metrics() — max_chain_depth gauge
 # ===========================================================================
 
+
 class TestDelegationManagerGetMetrics:
     """DelegationManager.get_metrics() now includes max_chain_depth (Session 62)."""
 
     def test_get_metrics_includes_max_chain_depth_key(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         m = mgr.get_metrics()
         assert "max_chain_depth" in m
 
     def test_get_metrics_default_max_chain_depth_is_zero(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         assert mgr.get_metrics()["max_chain_depth"] == 0
 
     def test_get_metrics_max_chain_depth_reflects_init_param(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager(max_chain_depth=5)
         assert mgr.get_metrics()["max_chain_depth"] == 5
 
     def test_get_metrics_returns_all_three_keys(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         m = mgr.get_metrics()
         assert {"delegation_count", "revoked_cid_count", "max_chain_depth"} <= m.keys()
 
     def test_get_metrics_delegation_count_reflects_store(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, Delegation, Capability
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            Delegation,
+            Capability,
+        )
+
         mgr = DelegationManager()
-        d = Delegation("cid1", "alice", "bob",
-                       [Capability("*", "*")], 9999999999.0, None, "sig")
+        d = Delegation("cid1", "alice", "bob", [Capability("*", "*")], 9999999999.0, None, "sig")
         mgr.add(d)
         assert mgr.get_metrics()["delegation_count"] == 1
 
     def test_get_metrics_max_chain_depth_zero_by_default_singleton(self):
         from ipfs_datasets_py.mcp_server import ucan_delegation
+
         # Reset singleton
         orig = ucan_delegation._default_delegation_manager
         ucan_delegation._default_delegation_manager = None
@@ -81,11 +92,16 @@ class TestDelegationManagerGetMetrics:
 # 2.  record_delegation_metrics — mcp_delegation_max_chain_depth gauge
 # ===========================================================================
 
+
 class TestRecordDelegationMetricsMaxChainDepth:
     """record_delegation_metrics now emits mcp_delegation_max_chain_depth gauge."""
 
     def test_emits_max_chain_depth_gauge(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, record_delegation_metrics
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            record_delegation_metrics,
+        )
+
         mgr = DelegationManager(max_chain_depth=7)
         collector = MagicMock()
         record_delegation_metrics(mgr, collector)
@@ -93,7 +109,11 @@ class TestRecordDelegationMetricsMaxChainDepth:
         assert "mcp_delegation_max_chain_depth" in calls
 
     def test_max_chain_depth_gauge_value(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, record_delegation_metrics
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            record_delegation_metrics,
+        )
+
         mgr = DelegationManager(max_chain_depth=3)
         collector = MagicMock()
         record_delegation_metrics(mgr, collector)
@@ -101,7 +121,11 @@ class TestRecordDelegationMetricsMaxChainDepth:
         assert kw["mcp_delegation_max_chain_depth"] == pytest.approx(3.0)
 
     def test_max_chain_depth_unlimited_emits_zero(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, record_delegation_metrics
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            record_delegation_metrics,
+        )
+
         mgr = DelegationManager(max_chain_depth=0)
         collector = MagicMock()
         record_delegation_metrics(mgr, collector)
@@ -109,14 +133,22 @@ class TestRecordDelegationMetricsMaxChainDepth:
         assert kw["mcp_delegation_max_chain_depth"] == pytest.approx(0.0)
 
     def test_three_gauges_emitted(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, record_delegation_metrics
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            record_delegation_metrics,
+        )
+
         mgr = DelegationManager()
         collector = MagicMock()
         record_delegation_metrics(mgr, collector)
         assert collector.set_gauge.call_count == 3
 
     def test_collector_exception_swallowed(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, record_delegation_metrics
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            record_delegation_metrics,
+        )
+
         mgr = DelegationManager()
         collector = MagicMock()
         collector.set_gauge.side_effect = RuntimeError("boom")
@@ -125,6 +157,7 @@ class TestRecordDelegationMetricsMaxChainDepth:
 
     def test_docstring_mentions_max_chain_depth(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import record_delegation_metrics
+
         doc = inspect.getdoc(record_delegation_metrics) or ""
         assert "mcp_delegation_max_chain_depth" in doc
 
@@ -138,15 +171,21 @@ class TestRecordDelegationMetricsMaxChainDepth:
 # 3.  Compliance rule version control
 # ===========================================================================
 
+
 class TestComplianceRuleVersionControl:
     """_COMPLIANCE_RULE_VERSION constant + save/load version field."""
 
     def test_constant_is_defined(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import _COMPLIANCE_RULE_VERSION
+
         assert _COMPLIANCE_RULE_VERSION == "1"
 
     def test_save_includes_version_field(self, tmp_path):
-        from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker, _COMPLIANCE_RULE_VERSION
+        from ipfs_datasets_py.mcp_server.compliance_checker import (
+            ComplianceChecker,
+            _COMPLIANCE_RULE_VERSION,
+        )
+
         checker = ComplianceChecker()
         path = str(tmp_path / "rules.json")
         checker.save(path)
@@ -157,6 +196,7 @@ class TestComplianceRuleVersionControl:
 
     def test_load_same_version_no_warning(self, tmp_path):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         path = str(tmp_path / "rules.json")
         checker.save(path)
@@ -169,6 +209,7 @@ class TestComplianceRuleVersionControl:
 
     def test_load_different_version_emits_warning(self, tmp_path):
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         path = str(tmp_path / "rules_old.json")
         data = {"version": "99", "rule_order": [], "deny_list": []}
         with open(path, "w") as f:
@@ -183,6 +224,7 @@ class TestComplianceRuleVersionControl:
     def test_load_missing_version_no_warning(self, tmp_path):
         """Files without a version field (old format) should not warn."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         path = str(tmp_path / "rules_noversion.json")
         data = {"rule_order": [], "deny_list": []}
         with open(path, "w") as f:
@@ -195,7 +237,11 @@ class TestComplianceRuleVersionControl:
         assert len(version_warnings) == 0
 
     def test_version_warning_message_contains_both_versions(self, tmp_path):
-        from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker, _COMPLIANCE_RULE_VERSION
+        from ipfs_datasets_py.mcp_server.compliance_checker import (
+            ComplianceChecker,
+            _COMPLIANCE_RULE_VERSION,
+        )
+
         path = str(tmp_path / "rules_old.json")
         data = {"version": "old-version", "rule_order": [], "deny_list": []}
         with open(path, "w") as f:
@@ -215,11 +261,13 @@ class TestComplianceRuleVersionControl:
 
     def test_constant_in_all(self):
         from ipfs_datasets_py.mcp_server import compliance_checker
+
         assert "_COMPLIANCE_RULE_VERSION" in compliance_checker.__all__
 
     def test_reload_uses_load_not_old_state(self, tmp_path):
         """reload() preserves version check path."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         checker = ComplianceChecker()
         path = str(tmp_path / "rules.json")
         checker.save(path)
@@ -232,6 +280,7 @@ class TestComplianceRuleVersionControl:
 # ===========================================================================
 # 4.  Enterprise API — delegation routes (source inspection + mock)
 # ===========================================================================
+
 
 class TestEnterpriseAPIDelegationRoutesIntegration:
     """Enterprise API delegation route correctness (source inspection + mock)."""
@@ -266,7 +315,11 @@ class TestEnterpriseAPIDelegationRoutesIntegration:
 
     def test_metrics_route_returns_zeros_on_exception(self):
         src = self._enterprise_src()
-        assert '"delegation_count": 0' in src or "delegation_count.*0" in src or "delegation_count" in src
+        assert (
+            '"delegation_count": 0' in src
+            or "delegation_count.*0" in src
+            or "delegation_count" in src
+        )
 
     def test_setup_delegation_routes_called_in_setup_routes(self):
         src = self._enterprise_src()
@@ -275,6 +328,7 @@ class TestEnterpriseAPIDelegationRoutesIntegration:
     def test_delegation_revoke_request_model_exists(self):
         pytest.importorskip("anyio", reason="anyio required for enterprise_api")
         from ipfs_datasets_py.mcp_server.enterprise_api import DelegationRevokeRequest
+
         req = DelegationRevokeRequest(root_cid="test-cid")
         assert req.root_cid == "test-cid"
 
@@ -285,7 +339,9 @@ class TestEnterpriseAPIDelegationRoutesIntegration:
         mock_mgr = MagicMock()
         mock_mgr.revoke_chain.return_value = 3
         mock_mgr.get_metrics.return_value = {
-            "delegation_count": 5, "revoked_cid_count": 3, "max_chain_depth": 0
+            "delegation_count": 5,
+            "revoked_cid_count": 3,
+            "max_chain_depth": 0,
         }
 
         with patch.object(ucan_delegation, "_default_delegation_manager", mock_mgr):
@@ -300,7 +356,9 @@ class TestEnterpriseAPIDelegationRoutesIntegration:
 
         mock_mgr = MagicMock()
         mock_mgr.get_metrics.return_value = {
-            "delegation_count": 10, "revoked_cid_count": 2, "max_chain_depth": 5
+            "delegation_count": 10,
+            "revoked_cid_count": 2,
+            "max_chain_depth": 5,
         }
 
         with patch.object(ucan_delegation, "_default_delegation_manager", mock_mgr):
@@ -313,22 +371,27 @@ class TestEnterpriseAPIDelegationRoutesIntegration:
 # 5.  FilePolicyStore.save_encrypted / load_encrypted
 # ===========================================================================
 
+
 class TestFilePolicyStoreSaveLoadEncrypted:
     """FilePolicyStore.save_encrypted / load_encrypted (Session 62)."""
 
     def _make_store(self, path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import (
-            FilePolicyStore, PolicyRegistry,
+            FilePolicyStore,
+            PolicyRegistry,
         )
+
         reg = PolicyRegistry()
         return FilePolicyStore(path, reg), reg
 
     def test_save_encrypted_method_exists(self):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         assert hasattr(FilePolicyStore, "save_encrypted")
 
     def test_load_encrypted_method_exists(self):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore
+
         assert hasattr(FilePolicyStore, "load_encrypted")
 
     def test_save_creates_enc_file(self, tmp_path):
@@ -364,8 +427,10 @@ class TestFilePolicyStoreSaveLoadEncrypted:
         except ImportError:
             pytest.skip("cryptography not installed")
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import (
-            FilePolicyStore, PolicyRegistry,
+            FilePolicyStore,
+            PolicyRegistry,
         )
+
         reg1 = PolicyRegistry()
         store1 = FilePolicyStore(str(tmp_path / "p.json"), reg1)
         reg1.register("policy_a", "Only admin may call admin_tools.")
@@ -383,8 +448,10 @@ class TestFilePolicyStoreSaveLoadEncrypted:
         except ImportError:
             pytest.skip("cryptography not installed")
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import (
-            FilePolicyStore, PolicyRegistry,
+            FilePolicyStore,
+            PolicyRegistry,
         )
+
         reg = PolicyRegistry()
         store = FilePolicyStore(str(tmp_path / "p.json"), reg)
         reg.register("policy_b", "All users may call tools.")
@@ -397,15 +464,22 @@ class TestFilePolicyStoreSaveLoadEncrypted:
 
     def test_fallback_to_plain_save_when_cryptography_absent(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import (
-            FilePolicyStore, PolicyRegistry,
+            FilePolicyStore,
+            PolicyRegistry,
         )
+
         reg = PolicyRegistry()
         store = FilePolicyStore(str(tmp_path / "p.json"), reg)
-        with patch.dict("sys.modules", {"cryptography": None,
-                                         "cryptography.hazmat": None,
-                                         "cryptography.hazmat.primitives": None,
-                                         "cryptography.hazmat.primitives.ciphers": None,
-                                         "cryptography.hazmat.primitives.ciphers.aead": None}):
+        with patch.dict(
+            "sys.modules",
+            {
+                "cryptography": None,
+                "cryptography.hazmat": None,
+                "cryptography.hazmat.primitives": None,
+                "cryptography.hazmat.primitives.ciphers": None,
+                "cryptography.hazmat.primitives.ciphers.aead": None,
+            },
+        ):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 store.save_encrypted("pw")
@@ -414,16 +488,23 @@ class TestFilePolicyStoreSaveLoadEncrypted:
 
     def test_fallback_to_plain_load_when_cryptography_absent(self, tmp_path):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import (
-            FilePolicyStore, PolicyRegistry,
+            FilePolicyStore,
+            PolicyRegistry,
         )
+
         reg = PolicyRegistry()
         store = FilePolicyStore(str(tmp_path / "p.json"), reg)
-        with patch.dict("sys.modules", {"cryptography": None,
-                                         "cryptography.hazmat": None,
-                                         "cryptography.hazmat.primitives": None,
-                                         "cryptography.hazmat.primitives.ciphers": None,
-                                         "cryptography.hazmat.primitives.ciphers.aead": None,
-                                         "cryptography.exceptions": None}):
+        with patch.dict(
+            "sys.modules",
+            {
+                "cryptography": None,
+                "cryptography.hazmat": None,
+                "cryptography.hazmat.primitives": None,
+                "cryptography.hazmat.primitives.ciphers": None,
+                "cryptography.hazmat.primitives.ciphers.aead": None,
+                "cryptography.exceptions": None,
+            },
+        ):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 store.load_encrypted("pw")
@@ -447,14 +528,18 @@ class TestFilePolicyStoreSaveLoadEncrypted:
 # 6.  Session 62 E2E scenario
 # ===========================================================================
 
+
 class TestSession62E2E:
     """End-to-end: policy store → compliance (encrypted) → delegation (depth)
     → pipeline check → enterprise API revoke → monitoring gauge read."""
 
     def test_compliance_version_survives_round_trip(self, tmp_path):
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, _COMPLIANCE_RULE_VERSION, make_default_compliance_checker,
+            ComplianceChecker,
+            _COMPLIANCE_RULE_VERSION,
+            make_default_compliance_checker,
         )
+
         checker = make_default_compliance_checker()
         path = str(tmp_path / "rules.json")
         checker.save(path)
@@ -468,7 +553,11 @@ class TestSession62E2E:
         assert len(version_warnings) == 0, "No warning on same-version load"
 
     def test_delegation_metrics_include_max_chain_depth(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, record_delegation_metrics
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            record_delegation_metrics,
+        )
+
         mgr = DelegationManager(max_chain_depth=10)
         collector = MagicMock()
         record_delegation_metrics(mgr, collector)
@@ -477,8 +566,11 @@ class TestSession62E2E:
 
     def test_delegation_chain_depth_rejection(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationEvaluator, Delegation, Capability,
+            DelegationEvaluator,
+            Delegation,
+            Capability,
         )
+
         eval_ = DelegationEvaluator(max_chain_depth=1)
         t = 9999999999.0
         d1 = Delegation("cid1", "alice", "bob", [Capability("*", "*")], t, None, "s1")
@@ -490,6 +582,7 @@ class TestSession62E2E:
 
     def test_file_policy_store_enc_suffix(self):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore, PolicyRegistry
+
         store = FilePolicyStore("/tmp/foo.json", PolicyRegistry())
         # The enc path should be /tmp/foo.json.enc
         assert store.path + ".enc" == "/tmp/foo.json.enc"
@@ -500,8 +593,10 @@ class TestSession62E2E:
         except ImportError:
             pytest.skip("cryptography not installed")
         from ipfs_datasets_py.mcp_server.compliance_checker import (
-            ComplianceChecker, make_default_compliance_checker,
+            ComplianceChecker,
+            make_default_compliance_checker,
         )
+
         checker = make_default_compliance_checker(deny_list={"blocked_enc_tool"})
         path = str(tmp_path / "rules.enc")
         checker.save_encrypted(path, "session62pw")
@@ -513,6 +608,7 @@ class TestSession62E2E:
 
     def test_revocation_list_plain_persistence(self, tmp_path):
         from ipfs_datasets_py.mcp_server.ucan_delegation import RevocationList
+
         rl = RevocationList()
         rl.revoke("cid-a")
         rl.revoke("cid-b")
@@ -527,11 +623,15 @@ class TestSession62E2E:
 
     def test_delegation_manager_metrics_after_adding_delegation(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationManager, Delegation, Capability,
+            DelegationManager,
+            Delegation,
+            Capability,
         )
+
         mgr = DelegationManager(max_chain_depth=3)
-        d = Delegation("cid-x", "alice", "bob", [Capability("tools", "read")],
-                       9999999999.0, None, "sig")
+        d = Delegation(
+            "cid-x", "alice", "bob", [Capability("tools", "read")], 9999999999.0, None, "sig"
+        )
         mgr.add(d)
         m = mgr.get_metrics()
         assert m["delegation_count"] == 1

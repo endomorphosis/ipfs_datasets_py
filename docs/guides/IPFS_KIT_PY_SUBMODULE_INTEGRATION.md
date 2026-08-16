@@ -24,9 +24,9 @@ Added local submodule installation:
 #### setup.py
 Updated to use local submodule version:
 ```python
-install_requires=[
+install_requires = [
     # Using local submodule for ipfs_kit_py from known_good branch
-    'ipfs_kit_py @ file:./ipfs_kit_py',
+    "ipfs_kit_py @ file:./ipfs_kit_py",
     # ... other dependencies
 ]
 ```

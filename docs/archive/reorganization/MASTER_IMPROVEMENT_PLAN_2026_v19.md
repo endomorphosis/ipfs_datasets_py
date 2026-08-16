@@ -154,7 +154,8 @@ Behaviour:
 
 ```python
 from ipfs_datasets_py.mcp_server.compliance_checker import (
-    ComplianceChecker, make_default_compliance_checker,
+    ComplianceChecker,
+    make_default_compliance_checker,
 )
 
 security = ComplianceChecker(deny_list={"exploit_tool"})
@@ -165,7 +166,7 @@ audit.add_rule("audit_required", ...)
 
 combined = ComplianceChecker()
 combined.merge(security)  # → 1
-combined.merge(audit)     # → 1
+combined.merge(audit)  # → 1
 # combined now has both rules + both deny-list entries
 ```
 

@@ -48,13 +48,29 @@ _ERROR_NUMBERS = {
 }
 
 PROFILE_G_METHODS = (
-    "mcp++/risk/profile", "mcp++/goals/create", "mcp++/goals/get", "mcp++/goals/list",
-    "mcp++/goals/decompose", "mcp++/goals/select", "mcp++/tasks/create", "mcp++/tasks/get",
-    "mcp++/tasks/list", "mcp++/tasks/ready", "mcp++/risk/assess", "mcp++/risk/evidence",
-    "mcp++/risk/history", "mcp++/neighborhood/query", "mcp++/neighborhood/attest",
-    "mcp++/schedule/frontier", "mcp++/schedule/status", "mcp++/schedule/propose",
-    "mcp++/schedule/claim", "mcp++/schedule/renew", "mcp++/schedule/release",
-    "mcp++/schedule/resolve", "mcp++/schedule/reconcile",
+    "mcp++/risk/profile",
+    "mcp++/goals/create",
+    "mcp++/goals/get",
+    "mcp++/goals/list",
+    "mcp++/goals/decompose",
+    "mcp++/goals/select",
+    "mcp++/tasks/create",
+    "mcp++/tasks/get",
+    "mcp++/tasks/list",
+    "mcp++/tasks/ready",
+    "mcp++/risk/assess",
+    "mcp++/risk/evidence",
+    "mcp++/risk/history",
+    "mcp++/neighborhood/query",
+    "mcp++/neighborhood/attest",
+    "mcp++/schedule/frontier",
+    "mcp++/schedule/status",
+    "mcp++/schedule/propose",
+    "mcp++/schedule/claim",
+    "mcp++/schedule/renew",
+    "mcp++/schedule/release",
+    "mcp++/schedule/resolve",
+    "mcp++/schedule/reconcile",
 )
 PROFILE_G_REST_BINDINGS = {
     "mcp++/risk/profile": ("GET", "/mcp/risk/profile"),
@@ -142,8 +158,11 @@ class ProfileGService:
             "schema": "mcp++/profile-g/interface@1",
             "profile": "mcp++/risk-scheduling",
             "methods": [
-                {"name": method, "http_method": PROFILE_G_REST_BINDINGS[method][0],
-                 "rest_path": PROFILE_G_REST_BINDINGS[method][1]}
+                {
+                    "name": method,
+                    "http_method": PROFILE_G_REST_BINDINGS[method][0],
+                    "rest_path": PROFILE_G_REST_BINDINGS[method][1],
+                }
                 for method in PROFILE_G_METHODS
             ],
         }

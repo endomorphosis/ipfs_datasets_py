@@ -104,8 +104,8 @@
 **2. Extract to Utils (if needed)**
 ```python
 # Create new utils module if significant reusable logic
-utils/workflows/validator.py  # For validation
-utils/workflows/applier.py    # For fix application
+utils / workflows / validator.py  # For validation
+utils / workflows / applier.py  # For fix application
 ```
 
 **3. Create Thin Wrapper**

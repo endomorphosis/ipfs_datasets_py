@@ -5,6 +5,7 @@ Simple MCP Server Structure Check
 This script checks the MCP server structure and lists all available tools
 without trying to import modules, which might be causing issues.
 """
+
 import os
 import sys
 import json
@@ -15,6 +16,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 LIB_ROOT = PROJECT_ROOT / "ipfs_datasets_py"
 MCP_SERVER_PATH = LIB_ROOT / "mcp_server"
 MCP_TOOLS_PATH = MCP_SERVER_PATH / "tools"
+
 
 def check_tool_coverage():
     """Check the MCP server implementation for tool coverage."""
@@ -73,7 +75,7 @@ def check_tool_coverage():
         "data provenance": "provenance_tools",
         "security": "security_tools",
         "audit logging": "audit_tools",
-        "web archive": "web_archive_tools"
+        "web archive": "web_archive_tools",
     }
 
     print("\nChecking for expected feature coverage:")
@@ -90,7 +92,7 @@ def check_tool_coverage():
     results = {
         "tool_categories": tool_categories,
         "tools_by_category": tool_coverage,
-        "missing_features": missing_features
+        "missing_features": missing_features,
     }
 
     with open("mcp_tool_coverage_simple.json", "w") as f:
@@ -99,6 +101,7 @@ def check_tool_coverage():
     print(f"\nResults saved to: mcp_tool_coverage_simple.json")
 
     return len(missing_features) == 0
+
 
 if __name__ == "__main__":
     success = check_tool_coverage()

@@ -139,9 +139,7 @@ def _allow_receipt(**overrides: Any) -> DecisionReceipt:
         "outcome": InternalDecisionStatus.ALLOW,
         "reasons": ("positive grant proved", "non-conflict proved"),
         "reason_codes": ("allow.positive_grant", "allow.non_conflict"),
-        "selected_evidence_cids": (
-            "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
-        ),
+        "selected_evidence_cids": ("bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",),
         "obligation_ids": ("obl:pre-check",),
         "residual_duties": ("duty:post-audit",),
         "attempt_digests": (_DIGEST_1,),
@@ -158,9 +156,7 @@ def _allow_receipt(**overrides: Any) -> DecisionReceipt:
     return build_decision_receipt(**kwargs)
 
 
-def _receipt_for_status(
-    status: InternalDecisionStatus, **overrides: Any
-) -> DecisionReceipt:
+def _receipt_for_status(status: InternalDecisionStatus, **overrides: Any) -> DecisionReceipt:
     wire = {
         InternalDecisionStatus.ALLOW: AdmissibilityStatus.ALLOW,
         InternalDecisionStatus.DENY: AdmissibilityStatus.REJECT,
@@ -330,9 +326,7 @@ class TestSuccessfulDispatch:
         assert result.observation.schema_version
         # Observation is separate from the receipt identity.
         assert result.observation.receipt_id == receipt.receipt_id
-        assert "post_dispatch" in result.observation.metadata.to_dict().get(
-            "observation_kind", ""
-        )
+        assert "post_dispatch" in result.observation.metadata.to_dict().get("observation_kind", "")
 
     def test_enforce_without_dispatch_still_consumes(self) -> None:
         receipt = _allow_receipt()
@@ -577,10 +571,7 @@ class TestImmediateRevalidation:
         )
         assert result.allowed is False
         assert dispatcher.call_count == 0
-        assert (
-            result.reason_code
-            == EnforcementReasonCode.ENVIRONMENT_MISMATCH.value
-        )
+        assert result.reason_code == EnforcementReasonCode.ENVIRONMENT_MISMATCH.value
 
     def test_environment_id_toctou_rejects(self) -> None:
         receipt = _allow_receipt()
@@ -644,9 +635,7 @@ class TestAtomicConsumption:
     def test_compare_and_consume_records_once(self) -> None:
         store = InMemoryCapabilityConsumptionStore()
         cap = _capability()
-        record = store.compare_and_consume(
-            cap, tenant_id=_TENANT_A, now=_NOW_OK
-        )
+        record = store.compare_and_consume(cap, tenant_id=_TENANT_A, now=_NOW_OK)
         assert isinstance(record, CapabilityConsumptionRecord)
         assert store.is_consumed(cap.capability_id, tenant_id=_TENANT_A)
         with pytest.raises(ConsumptionRaceError):
@@ -669,9 +658,7 @@ class TestAtomicConsumption:
         assert store.is_consumed(cap.capability_id, tenant_id=_TENANT_A)
         assert not store.is_consumed(cap.capability_id, tenant_id=_TENANT_B)
         # Different tenant may consume the same capability id (isolated).
-        record_b = store.compare_and_consume(
-            cap, tenant_id=_TENANT_B, now=_NOW_OK
-        )
+        record_b = store.compare_and_consume(cap, tenant_id=_TENANT_B, now=_NOW_OK)
         assert record_b.tenant_id == _TENANT_B
 
     def test_concurrent_consumption_allows_exactly_one(self) -> None:
@@ -682,9 +669,7 @@ class TestAtomicConsumption:
 
         def attempt() -> None:
             try:
-                record = store.compare_and_consume(
-                    cap, tenant_id=_TENANT_A, now=_NOW_OK
-                )
+                record = store.compare_and_consume(cap, tenant_id=_TENANT_A, now=_NOW_OK)
                 successes.append(record)
             except ConsumptionRaceError:
                 failures.append("race")
@@ -726,9 +711,7 @@ class TestAtomicConsumption:
     def test_consume_dispatch_capability_helper(self) -> None:
         store = InMemoryCapabilityConsumptionStore()
         cap = _capability()
-        record = consume_dispatch_capability(
-            store, cap, tenant_id=_TENANT_A, now=_NOW_OK
-        )
+        record = consume_dispatch_capability(store, cap, tenant_id=_TENANT_A, now=_NOW_OK)
         assert record.capability_id == cap.capability_id
         assert store.interface == CAPABILITY_CONSUMPTION_STORE_INTERFACE
 
@@ -979,9 +962,7 @@ class TestAuthorizationRuntime:
     def test_interfaces_are_stable(self) -> None:
         assert PRE_INVOCATION_ENFORCEMENT_INTERFACE == "PreInvocationEnforcement@1"
         assert DECISION_CACHE_KEY_INTERFACE == "DecisionCacheKey@1"
-        assert CAPABILITY_CONSUMPTION_STORE_INTERFACE == (
-            "CapabilityConsumptionStore@1"
-        )
+        assert CAPABILITY_CONSUMPTION_STORE_INTERFACE == ("CapabilityConsumptionStore@1")
         enforcer, _, _ = _enforcer()
         assert enforcer.interface == PRE_INVOCATION_ENFORCEMENT_INTERFACE
         result = enforcer.enforce(
@@ -1039,6 +1020,4 @@ class TestObservationSeparation:
         assert result.observation is not None
         assert result.observation.dispatch_status == "error"
         assert "boom" in result.observation.error_message
-        assert (
-            result.reason_code == EnforcementReasonCode.DISPATCH_ERROR.value
-        )
+        assert result.reason_code == EnforcementReasonCode.DISPATCH_ERROR.value

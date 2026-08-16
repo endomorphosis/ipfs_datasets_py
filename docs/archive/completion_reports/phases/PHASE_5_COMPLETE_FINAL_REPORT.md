@@ -85,8 +85,8 @@ from ipfs_datasets_py.utils.workflows import WorkflowAnalyzer
 
 analyzer = WorkflowAnalyzer()
 result = analyzer.analyze_failure(
-    workflow_file=Path('.github/workflows/ci.yml'),
-    error_log='ModuleNotFoundError: No module named "numpy"'
+    workflow_file=Path(".github/workflows/ci.yml"),
+    error_log='ModuleNotFoundError: No module named "numpy"',
 )
 # Returns: {
 #   'root_cause': 'Missing dependency: numpy',
@@ -112,7 +112,7 @@ result = analyzer.analyze_failure(
 ```python
 from ipfs_datasets_py.utils.workflows import WorkflowFixer
 
-fixer = WorkflowFixer(analysis, workflow_name='CI Tests')
+fixer = WorkflowFixer(analysis, workflow_name="CI Tests")
 proposal = fixer.generate_fix_proposal()
 # Returns: {
 #   'branch_name': 'autofix/ci-tests/add-dependency/20260214-123456',
@@ -141,11 +141,11 @@ proposal = fixer.generate_fix_proposal()
 ```python
 from ipfs_datasets_py.utils.workflows import DashboardGenerator
 
-generator = DashboardGenerator(repo='owner/repo')
-generator.load_all_metrics(metrics_dir=Path('/tmp/metrics'))
+generator = DashboardGenerator(repo="owner/repo")
+generator.load_all_metrics(metrics_dir=Path("/tmp/metrics"))
 aggregated = generator.aggregate_metrics()
-report = generator.generate_report(format='html', aggregated=aggregated)
-generator.save_report(report, Path('dashboard.html'))
+report = generator.generate_report(format="html", aggregated=aggregated)
+generator.save_report(report, Path("dashboard.html"))
 ```
 
 ---
@@ -185,17 +185,13 @@ generator.save_report(report, Path('dashboard.html'))
 ### Integration Example
 
 ```python
-from ipfs_datasets_py.utils.workflows import (
-    WorkflowAnalyzer,
-    WorkflowFixer,
-    DashboardGenerator
-)
+from ipfs_datasets_py.utils.workflows import WorkflowAnalyzer, WorkflowFixer, DashboardGenerator
 
 # Complete pipeline in 6 lines
 analyzer = WorkflowAnalyzer()
 analysis = analyzer.analyze_failure(workflow_file, error_log)
 
-fixer = WorkflowFixer(analysis, workflow_name='CI Tests')
+fixer = WorkflowFixer(analysis, workflow_name="CI Tests")
 proposal = fixer.generate_fix_proposal()
 
 # Use proposal to create PR, apply fix, monitor with dashboard
@@ -224,12 +220,14 @@ class WorkflowFailureAnalyzer:
     def detect_permission_error(self, log): ...
     def generate_suggestions(self, error_type): ...
     def analyze(self, workflow_file, error_log): ...
+
     # 400+ lines of embedded logic
 ```
 
 **After** (120 lines):
 ```python
 from ipfs_datasets_py.utils.workflows import WorkflowAnalyzer
+
 
 # Thin wrapper - only CLI and workflow-specific code
 def main():

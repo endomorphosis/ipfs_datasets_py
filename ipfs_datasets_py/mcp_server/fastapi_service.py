@@ -35,21 +35,25 @@ from .exceptions import (
     ValidationError as MCPValidationError,
     ConfigurationError,
     ServerStartupError,
-    ServerShutdownError
+    ServerShutdownError,
 )
+
 try:
     from passlib.context import CryptContext
 except ImportError:  # pragma: no cover - optional dependency
     CryptContext = None
 from pydantic import BaseModel, Field
+
 try:
     from hypercorn.config import Config as HypercornConfig
     from hypercorn.trio import serve as hypercorn_serve
+
     HAVE_HYPERCORN = True
 except ImportError:  # pragma: no cover - optional dependency
     HAVE_HYPERCORN = False
 try:
     import uvicorn
+
     HAVE_UVICORN = True
 except ImportError:  # pragma: no cover - optional dependency
     uvicorn = None  # type: ignore[assignment]
@@ -71,12 +75,13 @@ except ImportError:
     # Fallback imports for development
     import sys
     import os
+
     sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     try:
         from embeddings.core import IPFSEmbeddings
         from embeddings.schema import EmbeddingRequest, EmbeddingResponse
         from vector_stores.base import BaseVectorStore
-        from vector_stores.qdrant_store import QdrantVectorStore 
+        from vector_stores.qdrant_store import QdrantVectorStore
         from vector_stores.faiss_store import FAISSVectorStore
         from mcp_server.server import IPFSDatasetsMCPServer
         from fastapi_config import FastAPISettings
@@ -125,6 +130,7 @@ except ImportError:
                 # CRITICAL: SECRET_KEY must be set via environment variable
                 # Fail fast if not set rather than using insecure default
                 import os
+
                 if not os.environ.get("SECRET_KEY"):
                     raise ValueError(
                         "SECRET_KEY environment variable is required for security. "
@@ -133,6 +139,7 @@ except ImportError:
                 self.secret_key = os.environ["SECRET_KEY"]
                 self.algorithm = "HS256"
                 self.access_token_expire_minutes = 30
+
 
 try:
     from ..wallet.api import router as wallet_router
@@ -162,6 +169,7 @@ try:
     ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 except ValueError as _cfg_err:
     import os as _os
+
     _env = _os.environ.get("ENVIRONMENT", "development")
     SECRET_KEY = _os.environ.get("SECRET_KEY", "")
     if not SECRET_KEY:
@@ -173,11 +181,13 @@ except ValueError as _cfg_err:
         SECRET_KEY = "dev-fallback-key-NOT-for-production"
         logger.warning(
             "FastAPISettings could not be initialised: %s. "
-            "Using INSECURE fallback SECRET_KEY — set SECRET_KEY env var for production.", _cfg_err
+            "Using INSECURE fallback SECRET_KEY — set SECRET_KEY env var for production.",
+            _cfg_err,
         )
     settings = None
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
 
 class _FallbackPasswordContext:
     """Fallback password hashing when passlib is unavailable."""
@@ -201,8 +211,8 @@ security = HTTPBearer(auto_error=False)
 # Rate limiting configuration
 RATE_LIMITS = {
     "/embeddings/generate": {"requests": 100, "window": 3600},  # 100 requests per hour
-    "/search/semantic": {"requests": 1000, "window": 3600},     # 1000 searches per hour
-    "/admin/*": {"requests": 50, "window": 3600},               # 50 admin requests per hour
+    "/search/semantic": {"requests": 1000, "window": 3600},  # 1000 searches per hour
+    "/admin/*": {"requests": 50, "window": 3600},  # 50 admin requests per hour
 }
 
 # Global rate limiting storage (in production, use Redis)
@@ -211,6 +221,7 @@ _rate_limit_last_cleanup: float = time.time()
 _RATE_LIMIT_MAX_ENTRIES = 50000
 _rate_limit_lock = None
 _rate_limit_lock_init = threading.Lock()
+
 
 def _get_rate_limit_lock():
     """Lazy init of rate limit lock (double-checked locking for thread safety)."""
@@ -221,80 +232,103 @@ def _get_rate_limit_lock():
                 _rate_limit_lock = anyio.Lock()
     return _rate_limit_lock
 
+
 # Pydantic models for API
 class TokenResponse(BaseModel):
     """Response body returned by authentication endpoints."""
+
     access_token: str
     token_type: str = "bearer"
     expires_in: int
 
+
 class UserCredentials(BaseModel):
     """Credentials submitted by the client to obtain a JWT token."""
+
     username: str
     password: str
 
+
 class EmbeddingGenerationRequest(BaseModel):
     """Request body for the /embeddings/generate endpoint."""
+
     text: Union[str, List[str]]
     model: str = "sentence-transformers/all-MiniLM-L6-v2"
     normalize: bool = True
     batch_size: Optional[int] = 32
-    
+
+
 class VectorSearchRequest(BaseModel):
     """Request body for the /search/vector endpoint."""
+
     query: Union[str, List[float]]
     top_k: int = Field(default=10, ge=1, le=100)
     collection_name: str
     filter_criteria: Optional[Dict[str, Any]] = None
     include_metadata: bool = True
-    
+
+
 class AnalysisRequest(BaseModel):
     """Request body for vector analysis endpoints (clustering, quality, etc.)."""
+
     vectors: List[List[float]]
     analysis_type: str = Field(..., pattern="^(clustering|quality|similarity|drift)$")
     parameters: Optional[Dict[str, Any]] = None
 
+
 # Additional Pydantic models
 class DatasetLoadRequest(BaseModel):
     """Request body for loading a dataset from a source."""
+
     source: str
     format: Optional[str] = None
     options: Optional[Dict[str, Any]] = None
 
+
 class DatasetProcessRequest(BaseModel):
     """Request body for applying transformation operations to a dataset."""
+
     dataset_source: Union[str, Dict[str, Any]]
     operations: List[Dict[str, Any]]
     output_id: Optional[str] = None
 
+
 class DatasetSaveRequest(BaseModel):
     """Request body for persisting a dataset to a destination."""
+
     dataset_data: Union[str, Dict[str, Any]]
     destination: str
     format: Optional[str] = "json"
     options: Optional[Dict[str, Any]] = None
 
+
 class IPFSPinRequest(BaseModel):
     """Request body for pinning content to IPFS."""
+
     content_source: Union[str, Dict[str, Any]]
     recursive: bool = True
     wrap_with_directory: bool = False
     hash_algo: str = "sha2-256"
 
+
 class WorkflowRequest(BaseModel):
     """Request body for submitting a multi-step workflow."""
+
     workflow_name: str
     steps: List[Dict[str, Any]]
     parameters: Optional[Dict[str, Any]] = None
 
+
 class VectorIndexRequest(BaseModel):
     """Request body for creating or updating a vector index."""
+
     vectors: List[List[float]]
     dimension: Optional[int] = None
     metric: str = "cosine"
     metadata: Optional[List[Dict[str, Any]]] = None
     index_id: Optional[str] = None
     index_name: Optional[str] = None
+
 
 # FastAPI app initialization
 # Phase C2: track server start time for uptime reporting in health endpoints.
@@ -372,6 +406,7 @@ def _hierarchical_flat_descriptors() -> List[Dict[str, Any]]:
     index: set = set()
     try:
         from .hierarchical_tool_manager import get_tool_manager
+
         manager = get_tool_manager()
         if not getattr(manager, "_discovered_categories", False):
             manager.discover_categories()
@@ -397,13 +432,15 @@ def _hierarchical_flat_descriptors() -> List[Dict[str, Any]]:
                     if flat in index:
                         continue
                     index.add(flat)
-                    descriptors.append({
-                        "name": flat,
-                        "description": f"{stem} (category: {cat_name})",
-                        # Lazy: full schema is served by tools_get_schema / dispatch
-                        # so we don't import the tool module at list time.
-                        "inputSchema": {"type": "object"},
-                    })
+                    descriptors.append(
+                        {
+                            "name": flat,
+                            "description": f"{stem} (category: {cat_name})",
+                            # Lazy: full schema is served by tools_get_schema / dispatch
+                            # so we don't import the tool module at list time.
+                            "inputSchema": {"type": "object"},
+                        }
+                    )
             except Exception:
                 continue
     except Exception as exc:  # pragma: no cover - defensive
@@ -432,6 +469,7 @@ async def _dispatch_hierarchical_flat_tool(tool_name: str, arguments: Dict[str, 
     if not category or not tool:
         return False, None
     from .hierarchical_tool_manager import tools_dispatch
+
     result = await tools_dispatch(category=category, tool=tool, params=arguments or {})
     return True, result
 
@@ -448,11 +486,13 @@ def _mcp_tool_descriptors(mcp_server) -> List[Dict[str, Any]]:
     for name, fn in tools.items():
         doc = (getattr(fn, "__doc__", None) or "").strip()
         description = doc.split("\n", 1)[0].strip() if doc else name
-        descriptors.append({
-            "name": name,
-            "description": description,
-            "inputSchema": _callable_input_schema(fn),
-        })
+        descriptors.append(
+            {
+                "name": name,
+                "description": description,
+                "inputSchema": _callable_input_schema(fn),
+            }
+        )
     descriptors.extend(_hierarchical_flat_descriptors())
     return descriptors
 
@@ -460,6 +500,7 @@ def _mcp_tool_descriptors(mcp_server) -> List[Dict[str, Any]]:
 def _mcp_tool_result(result) -> Dict[str, Any]:
     """Wrap a raw tool return value in the MCP ``tools/call`` content shape."""
     import json as _json
+
     if isinstance(result, dict):
         structured = result
         text = _json.dumps(result, default=str)
@@ -517,7 +558,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     logger.info("🚀 Starting IPFS Datasets FastAPI Service...")
-    
+
     # Initialize MCP server
     app.state.mcp_server = IPFSDatasetsMCPServer()
 
@@ -530,15 +571,15 @@ async def lifespan(app: FastAPI):
     except Exception as _reg_exc:
         logger.warning("register_tools() unavailable, using meta-tool fallback: %s", _reg_exc)
     _ensure_dataset_meta_tools(app.state.mcp_server)
-    
+
     # Initialize vector stores
     app.state.vector_stores = {}
-    
+
     # Initialize embedding core
     app.state.embedding_core = IPFSEmbeddings()
-    
+
     logger.info("✅ FastAPI service initialized successfully")
-    
+
     yield
 
     # Shutdown — persist state and clean up resources
@@ -546,10 +587,12 @@ async def lifespan(app: FastAPI):
     try:
         # Persist EventDAG state
         from .event_dag import get_event_dag
+
         dag = get_event_dag()
         dag_state = dag.to_dict(include_events=True)
         if dag_state.get("total_events", 0) > 0:
             import json as _json
+
             state_dir = os.path.join(
                 os.environ.get("MCPPP_STORAGE_DIR", os.path.expanduser("~/.ipfs_datasets/state"))
             )
@@ -564,11 +607,13 @@ async def lifespan(app: FastAPI):
     try:
         # Persist P2P peer state
         from .p2p_libp2p_transport import get_p2p_node
+
         node = get_p2p_node()
         if node._started:
             await node.stop()
     except Exception as e:
         logger.debug("P2P shutdown: %s", e)
+
 
 app = FastAPI(
     title="IPFS Datasets API",
@@ -576,7 +621,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 if wallet_router is not None:
@@ -595,13 +640,14 @@ app.add_middleware(
 
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=os.environ.get("MCP_ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0").split(",")
+    allowed_hosts=os.environ.get("MCP_ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0").split(","),
 )
 
 # Request body size limit middleware
 _MAX_BODY_BYTES = int(os.environ.get("MCPPP_MAX_BODY_BYTES", str(10 * 1024 * 1024)))
 
 from starlette.middleware.base import BaseHTTPMiddleware
+
 
 class _BodySizeLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
@@ -613,16 +659,20 @@ class _BodySizeLimitMiddleware(BaseHTTPMiddleware):
             )
         return await call_next(request)
 
+
 app.add_middleware(_BodySizeLimitMiddleware)
+
 
 # Authentication functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_password_hash(password: str) -> str:
     """Generate password hash."""
     return pwd_context.hash(password)
+
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT access token."""
@@ -636,6 +686,7 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
 async def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> Dict[str, Any]:
@@ -645,7 +696,7 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
     if credentials is None:
         raise credentials_exception
 
@@ -668,17 +719,18 @@ async def get_current_user(
     username: str = payload.get("sub")
     if username is None:
         raise credentials_exception
-    
+
     # In production, fetch user from database
     user = {"username": username, "user_id": payload.get("user_id")}
     return user
+
 
 # Rate limiting
 async def check_rate_limit(request: Request, endpoint: str) -> None:
     """Check if request exceeds rate limit."""
     client_ip = request.client.host
     current_time = int(time.time())
-    
+
     # Get rate limit config for endpoint
     rate_config = None
     for pattern, config in RATE_LIMITS.items():
@@ -689,44 +741,50 @@ async def check_rate_limit(request: Request, endpoint: str) -> None:
         elif pattern == endpoint:
             rate_config = config
             break
-    
+
     if not rate_config:
         return  # No rate limit configured
-    
+
     # Check rate limit
     key = f"{client_ip}:{endpoint}"
-    
+
     # Periodic cleanup to prevent unbounded memory growth
     global _rate_limit_last_cleanup
     lock = _get_rate_limit_lock()
-    if len(rate_limit_storage) > _RATE_LIMIT_MAX_ENTRIES or (current_time - _rate_limit_last_cleanup > 300):
+    if len(rate_limit_storage) > _RATE_LIMIT_MAX_ENTRIES or (
+        current_time - _rate_limit_last_cleanup > 300
+    ):
         async with lock:
-            stale = [k for k, v in rate_limit_storage.items()
-                     if current_time - v.get("window_start", 0) > 7200]
+            stale = [
+                k
+                for k, v in rate_limit_storage.items()
+                if current_time - v.get("window_start", 0) > 7200
+            ]
             for k in stale:
                 del rate_limit_storage[k]
             if len(rate_limit_storage) > _RATE_LIMIT_MAX_ENTRIES:
                 rate_limit_storage.clear()
             _rate_limit_last_cleanup = current_time
-    
+
     if key not in rate_limit_storage:
         rate_limit_storage[key] = {"requests": 0, "window_start": current_time}
-    
+
     rate_data = rate_limit_storage[key]
-    
+
     # Reset window if expired
     if current_time - rate_data["window_start"] >= rate_config["window"]:
         rate_data["requests"] = 0
         rate_data["window_start"] = current_time
-    
+
     # Check limit
     if rate_data["requests"] >= rate_config["requests"]:
         raise HTTPException(
             status_code=429,
-            detail=f"Rate limit exceeded. Max {rate_config['requests']} requests per {rate_config['window']} seconds"
+            detail=f"Rate limit exceeded. Max {rate_config['requests']} requests per {rate_config['window']} seconds",
         )
-    
+
     rate_data["requests"] += 1
+
 
 # Health check endpoint
 @app.get("/health")
@@ -753,10 +811,14 @@ async def readiness_check():
     # Check 1: monitoring metrics collector is alive
     try:
         from .monitoring import get_metrics_collector
+
         collector = get_metrics_collector()
-        checks["metrics_collector"] = {"status": "ok", "uptime_seconds": round(
-            getattr(collector, "_uptime_seconds", time.time() - _SERVER_START_TIME), 1
-        )}
+        checks["metrics_collector"] = {
+            "status": "ok",
+            "uptime_seconds": round(
+                getattr(collector, "_uptime_seconds", time.time() - _SERVER_START_TIME), 1
+            ),
+        }
     except Exception as exc:  # pragma: no cover
         checks["metrics_collector"] = {"status": "error", "error": str(exc)}
         all_ok = False
@@ -764,6 +826,7 @@ async def readiness_check():
     # Check 2: tool manager has at least one category loaded
     try:
         from .hierarchical_tool_manager import get_tool_manager
+
         mgr = get_tool_manager()
         mgr.discover_categories()
         n_cats = len(mgr.categories)
@@ -782,6 +845,7 @@ async def readiness_check():
         "checks": checks,
     }
     from fastapi.responses import JSONResponse
+
     return JSONResponse(content=body, status_code=status_code)
 
 
@@ -795,6 +859,7 @@ async def prometheus_metrics():
     """
     try:
         from .monitoring import get_metrics_collector
+
         collector = get_metrics_collector()
         summary = collector.get_metrics_summary()
     except Exception:  # pragma: no cover
@@ -822,7 +887,9 @@ async def prometheus_metrics():
     ]
 
     from fastapi.responses import PlainTextResponse
+
     return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain; version=0.0.4")
+
 
 # Authentication endpoints
 @app.post("/auth/login", response_model=TokenResponse)
@@ -832,18 +899,16 @@ async def login(credentials: UserCredentials):
     # For demo purposes, accept any credentials
     if not credentials.username or not credentials.password:
         raise HTTPException(status_code=400, detail="Username and password required")
-    
+
     # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": credentials.username, "user_id": str(uuid.uuid4())},
-        expires_delta=access_token_expires
+        expires_delta=access_token_expires,
     )
-    
-    return TokenResponse(
-        access_token=access_token,
-        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60
-    )
+
+    return TokenResponse(access_token=access_token, expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+
 
 @app.post("/auth/refresh")
 async def refresh_token(current_user: Dict[str, Any] = Depends(get_current_user)):
@@ -851,15 +916,14 @@ async def refresh_token(current_user: Dict[str, Any] = Depends(get_current_user)
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": current_user["username"], "user_id": current_user["user_id"]},
-        expires_delta=access_token_expires
-    )
-    
-    return TokenResponse(
-        access_token=access_token,
-        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        expires_delta=access_token_expires,
     )
 
+    return TokenResponse(access_token=access_token, expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+
+
 # Main API endpoints will be added in the next part...
+
 
 # Embedding endpoints
 @app.post("/embeddings/generate")
@@ -867,40 +931,42 @@ async def generate_embeddings_api(
     request: EmbeddingGenerationRequest,
     background_tasks: BackgroundTasks,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    http_request: Request = None
+    http_request: Request = None,
 ):
     """Generate embeddings for text input."""
     await check_rate_limit(http_request, "/embeddings/generate")
-    
+
     try:
         # Use our embedding generation tool
         embedding_request = EmbeddingRequest(
-            text=request.text,
-            model=request.model,
-            normalize=request.normalize
+            text=request.text, model=request.model, normalize=request.normalize
         )
-        
+
         # Generate embeddings using the migrated tools
-        from .mcp_server.tools.embedding_tools.embedding_generation import generate_embeddings as mcp_generate
-        
-        result = await mcp_generate({
-            "text": request.text,
-            "model": request.model,
-            "normalize": request.normalize,
-            "batch_size": request.batch_size
-        })
-        
+        from .mcp_server.tools.embedding_tools.embedding_generation import (
+            generate_embeddings as mcp_generate,
+        )
+
+        result = await mcp_generate(
+            {
+                "text": request.text,
+                "model": request.model,
+                "normalize": request.normalize,
+                "batch_size": request.batch_size,
+            }
+        )
+
         # Log the request
         background_tasks.add_task(
             log_api_request,
             user_id=current_user["user_id"],
             endpoint="/embeddings/generate",
             input_size=len(request.text) if isinstance(request.text, str) else len(request.text),
-            status="success"
+            status="success",
         )
-        
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Embedding tool not found: {e}")
         background_tasks.add_task(
@@ -908,7 +974,7 @@ async def generate_embeddings_api(
             user_id=current_user["user_id"],
             endpoint="/embeddings/generate",
             status="error",
-            error=str(e)
+            error=str(e),
         )
         raise HTTPException(status_code=404, detail=str(e))
     except ToolExecutionError as e:
@@ -918,7 +984,7 @@ async def generate_embeddings_api(
             user_id=current_user["user_id"],
             endpoint="/embeddings/generate",
             status="error",
-            error=str(e)
+            error=str(e),
         )
         raise HTTPException(status_code=500, detail=f"Embedding generation failed: {str(e)}")
     except MCPValidationError as e:
@@ -931,9 +997,10 @@ async def generate_embeddings_api(
             user_id=current_user["user_id"],
             endpoint="/embeddings/generate",
             status="error",
-            error=str(e)
+            error=str(e),
         )
         raise HTTPException(status_code=500, detail=f"Embedding generation failed: {str(e)}")
+
 
 @app.post("/embeddings/batch")
 async def batch_generate_embeddings(
@@ -941,23 +1008,22 @@ async def batch_generate_embeddings(
     model: str = "sentence-transformers/all-MiniLM-L6-v2",
     normalize: bool = True,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    http_request: Request = None
+    http_request: Request = None,
 ):
     """Generate embeddings for multiple texts in batch."""
     await check_rate_limit(http_request, "/embeddings/generate")
-    
+
     try:
-        from .mcp_server.tools.embedding_tools.advanced_embedding_generation import batch_generate_embeddings as mcp_batch
-        
-        result = await mcp_batch({
-            "texts": texts,
-            "model": model,
-            "normalize": normalize,
-            "batch_size": 32
-        })
-        
+        from .mcp_server.tools.embedding_tools.advanced_embedding_generation import (
+            batch_generate_embeddings as mcp_batch,
+        )
+
+        result = await mcp_batch(
+            {"texts": texts, "model": model, "normalize": normalize, "batch_size": 32}
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Batch embedding tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -971,29 +1037,32 @@ async def batch_generate_embeddings(
         logger.error(f"Unexpected error in batch embedding generation: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Batch embedding generation failed: {str(e)}")
 
+
 # Vector search endpoints
 @app.post("/search/semantic")
 async def semantic_search(
     request: VectorSearchRequest,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    http_request: Request = None
+    http_request: Request = None,
 ):
     """Perform semantic vector search."""
     await check_rate_limit(http_request, "/search/semantic")
-    
+
     try:
         from .mcp_server.tools.embedding_tools.advanced_search import semantic_search as mcp_search
-        
-        result = await mcp_search({
-            "query": request.query,
-            "top_k": request.top_k,
-            "collection_name": request.collection_name,
-            "filter_criteria": request.filter_criteria,
-            "include_metadata": request.include_metadata
-        })
-        
+
+        result = await mcp_search(
+            {
+                "query": request.query,
+                "top_k": request.top_k,
+                "collection_name": request.collection_name,
+                "filter_criteria": request.filter_criteria,
+                "include_metadata": request.include_metadata,
+            }
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Semantic search tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1007,6 +1076,7 @@ async def semantic_search(
         logger.error(f"Unexpected error in semantic search: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Semantic search failed: {str(e)}")
 
+
 @app.post("/search/hybrid")
 async def hybrid_search(
     query: str,
@@ -1015,24 +1085,26 @@ async def hybrid_search(
     vector_weight: float = 0.7,
     text_weight: float = 0.3,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    http_request: Request = None
+    http_request: Request = None,
 ):
     """Perform hybrid vector + text search."""
     await check_rate_limit(http_request, "/search/semantic")
-    
+
     try:
         from .mcp_server.tools.embedding_tools.advanced_search import hybrid_search as mcp_hybrid
-        
-        result = await mcp_hybrid({
-            "query": query,
-            "collection_name": collection_name,
-            "top_k": top_k,
-            "vector_weight": vector_weight,
-            "text_weight": text_weight
-        })
-        
+
+        result = await mcp_hybrid(
+            {
+                "query": query,
+                "collection_name": collection_name,
+                "top_k": top_k,
+                "vector_weight": vector_weight,
+                "text_weight": text_weight,
+            }
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Hybrid search tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1046,24 +1118,30 @@ async def hybrid_search(
         logger.error(f"Unexpected error in hybrid search: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Hybrid search failed: {str(e)}")
 
+
 # Analysis endpoints
 @app.post("/analysis/clustering")
 async def clustering_analysis(
-    request: AnalysisRequest,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    request: AnalysisRequest, current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Perform clustering analysis on vectors."""
     try:
-        from .mcp_server.tools.analysis_tools.analysis_tools import clustering_analysis as mcp_clustering
-        
-        result = await mcp_clustering({
-            "vectors": request.vectors,
-            "algorithm": request.parameters.get("algorithm", "kmeans") if request.parameters else "kmeans",
-            "n_clusters": request.parameters.get("n_clusters", 5) if request.parameters else 5
-        })
-        
+        from .mcp_server.tools.analysis_tools.analysis_tools import (
+            clustering_analysis as mcp_clustering,
+        )
+
+        result = await mcp_clustering(
+            {
+                "vectors": request.vectors,
+                "algorithm": request.parameters.get("algorithm", "kmeans")
+                if request.parameters
+                else "kmeans",
+                "n_clusters": request.parameters.get("n_clusters", 5) if request.parameters else 5,
+            }
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Clustering tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1077,23 +1155,23 @@ async def clustering_analysis(
         logger.error(f"Unexpected error in clustering analysis: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Clustering analysis failed: {str(e)}")
 
+
 @app.post("/analysis/quality")
 async def quality_assessment(
     vectors: List[List[float]],
     metadata: Optional[Dict[str, Any]] = None,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Assess embedding quality."""
     try:
-        from .mcp_server.tools.analysis_tools.analysis_tools import quality_assessment as mcp_quality
-        
-        result = await mcp_quality({
-            "vectors": vectors,
-            "metadata": metadata
-        })
-        
+        from .mcp_server.tools.analysis_tools.analysis_tools import (
+            quality_assessment as mcp_quality,
+        )
+
+        result = await mcp_quality({"vectors": vectors, "metadata": metadata})
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Quality assessment tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1107,21 +1185,23 @@ async def quality_assessment(
         logger.error(f"Unexpected error in quality assessment: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Quality assessment failed: {str(e)}")
 
+
 # Admin endpoints
 @app.get("/admin/stats")
 async def get_system_stats(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    http_request: Request = None
+    current_user: Dict[str, Any] = Depends(get_current_user), http_request: Request = None
 ):
     """Get system statistics."""
     await check_rate_limit(http_request, "/admin/stats")
-    
+
     try:
-        from .mcp_server.tools.monitoring_tools.monitoring_tools import get_system_stats as mcp_stats
-        
+        from .mcp_server.tools.monitoring_tools.monitoring_tools import (
+            get_system_stats as mcp_stats,
+        )
+
         result = await mcp_stats({})
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"System stats tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1132,20 +1212,20 @@ async def get_system_stats(
         logger.error(f"Unexpected error getting system stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get system stats: {str(e)}")
 
+
 @app.get("/admin/health")
 async def detailed_health_check(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    http_request: Request = None
+    current_user: Dict[str, Any] = Depends(get_current_user), http_request: Request = None
 ):
     """Get detailed health information."""
     await check_rate_limit(http_request, "/admin/health")
-    
+
     try:
         from .mcp_server.tools.monitoring_tools.monitoring_tools import health_check as mcp_health
-        
+
         result = await mcp_health({})
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Health check tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1156,33 +1236,41 @@ async def detailed_health_check(
         logger.error(f"Unexpected error in health check: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
 
+
 # MCP Tools endpoint
 @app.get("/tools/list")
-async def list_available_tools(
-    current_user: Dict[str, Any] = Depends(get_current_user)
-):
+async def list_available_tools(current_user: Dict[str, Any] = Depends(get_current_user)):
     """List all available MCP tools."""
     try:
         # Get tools from MCP server
         mcp_server = app.state.mcp_server
-        tools = list(mcp_server.tools.keys()) if hasattr(mcp_server, 'tools') else []
+        tools = list(mcp_server.tools.keys()) if hasattr(mcp_server, "tools") else []
         # Include the full flat hierarchical surface so the reported count reflects
         # every dispatchable tool, not just the 4 hierarchical meta-tools.
         tools = tools + [d["name"] for d in _hierarchical_flat_descriptors()]
-        
+
         return {
             "tools": tools,
             "count": len(tools),
             "categories": [
-                "embedding_tools", "analysis_tools", "workflow_tools",
-                "admin_tools", "cache_tools", "monitoring_tools",
-                "sparse_embedding_tools", "background_task_tools",
-                "auth_tools", "session_tools", "rate_limiting_tools",
-                "data_processing_tools", "index_management_tools",
-                "vector_store_tools", "storage_tools"
-            ]
+                "embedding_tools",
+                "analysis_tools",
+                "workflow_tools",
+                "admin_tools",
+                "cache_tools",
+                "monitoring_tools",
+                "sparse_embedding_tools",
+                "background_task_tools",
+                "auth_tools",
+                "session_tools",
+                "rate_limiting_tools",
+                "data_processing_tools",
+                "index_management_tools",
+                "vector_store_tools",
+                "storage_tools",
+            ],
         }
-        
+
     except ConfigurationError as e:
         logger.error(f"MCP server configuration error: {e}")
         raise HTTPException(status_code=500, detail=f"Server configuration error: {str(e)}")
@@ -1190,33 +1278,32 @@ async def list_available_tools(
         logger.error(f"Unexpected error listing tools: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to list tools: {str(e)}")
 
+
 @app.post("/tools/execute/{tool_name}")
 async def execute_tool(
     tool_name: str,
     parameters: Dict[str, Any],
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Execute a specific MCP tool."""
     try:
         mcp_server = app.state.mcp_server
-        
-        if not hasattr(mcp_server, 'tools') or tool_name not in mcp_server.tools:
+
+        if not hasattr(mcp_server, "tools") or tool_name not in mcp_server.tools:
             # Fall back to the hierarchical surface for flat <category>.<tool> names.
-            handled, dispatch_result = await _dispatch_hierarchical_flat_tool(tool_name, parameters or {})
+            handled, dispatch_result = await _dispatch_hierarchical_flat_tool(
+                tool_name, parameters or {}
+            )
             if handled:
                 return {"tool": tool_name, "status": "success", "result": dispatch_result}
             raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
-        
+
         # Execute the tool
         tool_func = mcp_server.tools[tool_name]
         result = await tool_func(parameters)
-        
-        return {
-            "tool": tool_name,
-            "status": "success",
-            "result": result
-        }
-        
+
+        return {"tool": tool_name, "status": "success", "result": result}
+
     except ToolNotFoundError as e:
         logger.error(f"Tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1227,79 +1314,75 @@ async def execute_tool(
         logger.error(f"Unexpected error executing tool: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Tool execution failed: {str(e)}")
 
+
 # Background task functions
 async def run_workflow_background(
     task_id: str,
     workflow_name: str,
     steps: List[Dict[str, Any]],
     parameters: Optional[Dict[str, Any]],
-    user_id: str
+    user_id: str,
 ):
     """Run workflow in background."""
     try:
         from .mcp_server.tools.workflow_tools.workflow_tools import execute_workflow as mcp_workflow
-        
-        result = await mcp_workflow({
-            "workflow_name": workflow_name,
-            "steps": steps,
-            "parameters": parameters,
-            "task_id": task_id
-        })
-        
-        # Log completion
-        await log_api_request(
-            user_id=user_id,
-            endpoint="/workflows/execute",
-            status="completed"
+
+        result = await mcp_workflow(
+            {
+                "workflow_name": workflow_name,
+                "steps": steps,
+                "parameters": parameters,
+                "task_id": task_id,
+            }
         )
-        
+
+        # Log completion
+        await log_api_request(user_id=user_id, endpoint="/workflows/execute", status="completed")
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Workflow tool not found: {e}")
         await log_api_request(
-            user_id=user_id,
-            endpoint="/workflows/execute",
-            status="error",
-            error=str(e)
+            user_id=user_id, endpoint="/workflows/execute", status="error", error=str(e)
         )
     except ToolExecutionError as e:
         logger.error(f"Background workflow execution failed: {e}", exc_info=e.original_error)
         await log_api_request(
-            user_id=user_id,
-            endpoint="/workflows/execute",
-            status="error",
-            error=str(e)
+            user_id=user_id, endpoint="/workflows/execute", status="error", error=str(e)
         )
     except Exception as e:
         logger.error(f"Unexpected error in background workflow: {e}", exc_info=True)
         await log_api_request(
-            user_id=user_id,
-            endpoint="/workflows/execute",
-            status="error",
-            error=str(e)
+            user_id=user_id, endpoint="/workflows/execute", status="error", error=str(e)
         )
 
+
 # Utility functions
-async def log_api_request(user_id: str, endpoint: str, input_size: int = None, status: str = "success", error: str = None):
+async def log_api_request(
+    user_id: str, endpoint: str, input_size: int = None, status: str = "success", error: str = None
+):
     """Log API request for analytics."""
     try:
         from .mcp_server.tools.audit_tools.audit_tools import record_audit_event
-        
-        await record_audit_event({
-            "action": f"api.{endpoint.replace('/', '.')}",
-            "user_id": user_id,
-            "resource_type": "api_endpoint",
-            "details": {
-                "endpoint": endpoint,
-                "input_size": input_size,
-                "status": status,
-                "error": error,
-                "timestamp": datetime.utcnow().isoformat()
+
+        await record_audit_event(
+            {
+                "action": f"api.{endpoint.replace('/', '.')}",
+                "user_id": user_id,
+                "resource_type": "api_endpoint",
+                "details": {
+                    "endpoint": endpoint,
+                    "input_size": input_size,
+                    "status": status,
+                    "error": error,
+                    "timestamp": datetime.utcnow().isoformat(),
+                },
             }
-        })
+        )
     except Exception as e:
         logger.warning(f"Failed to log API request: {e}")
+
 
 # Error handlers
 @app.exception_handler(HTTPException)
@@ -1310,9 +1393,10 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         content={
             "error": exc.detail,
             "status_code": exc.status_code,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+            "timestamp": datetime.utcnow().isoformat(),
+        },
     )
+
 
 @app.exception_handler(MCPServerError)
 async def mcp_server_error_handler(request: Request, exc: MCPServerError):
@@ -1322,7 +1406,7 @@ async def mcp_server_error_handler(request: Request, exc: MCPServerError):
         status_code = 404
     elif isinstance(exc, (MCPValidationError, ConfigurationError)):
         status_code = 400
-    
+
     logger.error(f"MCP server error: {exc}", exc_info=True)
     return JSONResponse(
         status_code=status_code,
@@ -1330,9 +1414,10 @@ async def mcp_server_error_handler(request: Request, exc: MCPServerError):
             "error": str(exc),
             "error_type": type(exc).__name__,
             "status_code": status_code,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+            "timestamp": datetime.utcnow().isoformat(),
+        },
     )
+
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
@@ -1343,23 +1428,24 @@ async def general_exception_handler(request: Request, exc: Exception):
         content={
             "error": "Internal server error",
             "status_code": 500,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+            "timestamp": datetime.utcnow().isoformat(),
+        },
     )
+
 
 # Custom OpenAPI schema
 def custom_openapi():
     """Generate custom OpenAPI schema."""
     if app.openapi_schema:
         return app.openapi_schema
-    
+
     openapi_schema = get_openapi(
         title="IPFS Datasets API",
         version="1.0.0",
         description="REST API for IPFS Datasets with advanced embedding and vector search capabilities",
         routes=app.routes,
     )
-    
+
     # Add authentication to schema
     openapi_schema["components"]["securitySchemes"] = {
         "bearerAuth": {
@@ -1368,18 +1454,20 @@ def custom_openapi():
             "bearerFormat": "JWT",
         }
     }
-    
+
     # Add security requirement to all endpoints except auth
     for path, methods in openapi_schema["paths"].items():
         if not path.startswith("/auth/") and path != "/health":
             for method in methods:
                 if method != "options":
                     methods[method]["security"] = [{"bearerAuth": []}]
-    
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
+
 app.openapi = custom_openapi
+
 
 # Development server with configuration
 def run_development_server():
@@ -1389,7 +1477,7 @@ def run_development_server():
     # Configure logging
     logging.basicConfig(
         level=logging.INFO if not settings.debug else logging.DEBUG,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version}")
@@ -1412,10 +1500,11 @@ def run_development_server():
             port=settings.port,
             reload=settings.reload and settings.debug,
             log_level="debug" if settings.debug else "info",
-            access_log=True
+            access_log=True,
         )
     else:
         raise RuntimeError("No ASGI server available. Install hypercorn[trio] or uvicorn.")
+
 
 def run_production_server():
     """Run production server with Hypercorn+Trio."""
@@ -1423,8 +1512,7 @@ def run_production_server():
 
     # Configure production logging
     logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     logger.info(f"🚀 Starting {settings.app_name} v{settings.app_version} (Production)")
@@ -1451,24 +1539,22 @@ def run_production_server():
     else:
         raise RuntimeError("No ASGI server available. Install hypercorn[trio] or uvicorn.")
 
+
 # Dataset Management Endpoints
 @app.post("/datasets/load")
 async def load_dataset(
-    request: DatasetLoadRequest,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    request: DatasetLoadRequest, current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Load a dataset from various sources."""
     try:
         from .mcp_server.tools.dataset_tools.load_dataset import load_dataset as mcp_load
-        
-        result = await mcp_load({
-            "source": request.source,
-            "format": request.format,
-            "options": request.options
-        })
-        
+
+        result = await mcp_load(
+            {"source": request.source, "format": request.format, "options": request.options}
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Dataset loading tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1482,23 +1568,25 @@ async def load_dataset(
         logger.error(f"Unexpected error in dataset loading: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Dataset loading failed: {str(e)}")
 
+
 @app.post("/datasets/process")
 async def process_dataset(
-    request: DatasetProcessRequest,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    request: DatasetProcessRequest, current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Process a dataset with a series of operations."""
     try:
         from .mcp_server.tools.dataset_tools.process_dataset import process_dataset as mcp_process
-        
-        result = await mcp_process({
-            "dataset_source": request.dataset_source,
-            "operations": request.operations,
-            "output_id": request.output_id
-        })
-        
+
+        result = await mcp_process(
+            {
+                "dataset_source": request.dataset_source,
+                "operations": request.operations,
+                "output_id": request.output_id,
+            }
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Dataset processing tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1512,24 +1600,26 @@ async def process_dataset(
         logger.error(f"Unexpected error in dataset processing: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Dataset processing failed: {str(e)}")
 
+
 @app.post("/datasets/save")
 async def save_dataset(
-    request: DatasetSaveRequest,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    request: DatasetSaveRequest, current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Save a dataset to a destination."""
     try:
         from .mcp_server.tools.dataset_tools.save_dataset import save_dataset as mcp_save
-        
-        result = await mcp_save({
-            "dataset_data": request.dataset_data,
-            "destination": request.destination,
-            "format": request.format,
-            "options": request.options
-        })
-        
+
+        result = await mcp_save(
+            {
+                "dataset_data": request.dataset_data,
+                "destination": request.destination,
+                "format": request.format,
+                "options": request.options,
+            }
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Dataset saving tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1543,27 +1633,32 @@ async def save_dataset(
         logger.error(f"Unexpected error in dataset saving: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Dataset saving failed: {str(e)}")
 
+
 @app.post("/datasets/convert")
 async def convert_dataset_format(
     dataset_id: str,
     target_format: str,
     output_path: Optional[str] = None,
     options: Optional[Dict[str, Any]] = None,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Convert a dataset to a different format."""
     try:
-        from .mcp_server.tools.dataset_tools.convert_dataset_format import convert_dataset_format as mcp_convert
-        
-        result = await mcp_convert({
-            "dataset_id": dataset_id,
-            "target_format": target_format,
-            "output_path": output_path,
-            "options": options
-        })
-        
+        from .mcp_server.tools.dataset_tools.convert_dataset_format import (
+            convert_dataset_format as mcp_convert,
+        )
+
+        result = await mcp_convert(
+            {
+                "dataset_id": dataset_id,
+                "target_format": target_format,
+                "output_path": output_path,
+                "options": options,
+            }
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Dataset conversion tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1577,25 +1672,27 @@ async def convert_dataset_format(
         logger.error(f"Unexpected error in dataset conversion: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Dataset conversion failed: {str(e)}")
 
+
 # IPFS Endpoints
 @app.post("/ipfs/pin")
 async def pin_to_ipfs(
-    request: IPFSPinRequest,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    request: IPFSPinRequest, current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Pin content to IPFS."""
     try:
         from .mcp_server.tools.ipfs_tools.pin_to_ipfs import pin_to_ipfs as mcp_pin
-        
-        result = await mcp_pin({
-            "content_source": request.content_source,
-            "recursive": request.recursive,
-            "wrap_with_directory": request.wrap_with_directory,
-            "hash_algo": request.hash_algo
-        })
-        
+
+        result = await mcp_pin(
+            {
+                "content_source": request.content_source,
+                "recursive": request.recursive,
+                "wrap_with_directory": request.wrap_with_directory,
+                "hash_algo": request.hash_algo,
+            }
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"IPFS pinning tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1609,25 +1706,24 @@ async def pin_to_ipfs(
         logger.error(f"Unexpected error in IPFS pinning: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"IPFS pinning failed: {str(e)}")
 
+
 @app.get("/ipfs/get/{cid}")
 async def get_from_ipfs(
     cid: str,
     output_path: Optional[str] = None,
     timeout_seconds: int = 60,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Get content from IPFS by CID."""
     try:
         from .mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs as mcp_get
-        
-        result = await mcp_get({
-            "cid": cid,
-            "output_path": output_path,
-            "timeout_seconds": timeout_seconds
-        })
-        
+
+        result = await mcp_get(
+            {"cid": cid, "output_path": output_path, "timeout_seconds": timeout_seconds}
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"IPFS retrieval tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1641,27 +1737,31 @@ async def get_from_ipfs(
         logger.error(f"Unexpected error in IPFS retrieval: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"IPFS retrieval failed: {str(e)}")
 
+
 # Vector Store Endpoints
 @app.post("/vectors/create-index")
 async def create_vector_index(
-    request: VectorIndexRequest,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    request: VectorIndexRequest, current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Create a vector index for similarity search."""
     try:
-        from .mcp_server.tools.vector_tools.create_vector_index import create_vector_index as mcp_create_index
-        
-        result = await mcp_create_index({
-            "vectors": request.vectors,
-            "dimension": request.dimension,
-            "metric": request.metric,
-            "metadata": request.metadata,
-            "index_id": request.index_id,
-            "index_name": request.index_name
-        })
-        
+        from .mcp_server.tools.vector_tools.create_vector_index import (
+            create_vector_index as mcp_create_index,
+        )
+
+        result = await mcp_create_index(
+            {
+                "vectors": request.vectors,
+                "dimension": request.dimension,
+                "metric": request.metric,
+                "metadata": request.metadata,
+                "index_id": request.index_id,
+                "index_name": request.index_name,
+            }
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Vector index creation tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1675,6 +1775,7 @@ async def create_vector_index(
         logger.error(f"Unexpected error in vector index creation: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Vector index creation failed: {str(e)}")
 
+
 @app.post("/vectors/search")
 async def search_vector_index(
     index_id: str,
@@ -1683,23 +1784,27 @@ async def search_vector_index(
     include_metadata: bool = True,
     include_distances: bool = True,
     filter_metadata: Optional[Dict[str, Any]] = None,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Search a vector index for similar vectors."""
     try:
-        from .mcp_server.tools.vector_tools.search_vector_index import search_vector_index as mcp_search_index
-        
-        result = await mcp_search_index({
-            "index_id": index_id,
-            "query_vector": query_vector,
-            "top_k": top_k,
-            "include_metadata": include_metadata,
-            "include_distances": include_distances,
-            "filter_metadata": filter_metadata
-        })
-        
+        from .mcp_server.tools.vector_tools.search_vector_index import (
+            search_vector_index as mcp_search_index,
+        )
+
+        result = await mcp_search_index(
+            {
+                "index_id": index_id,
+                "query_vector": query_vector,
+                "top_k": top_k,
+                "include_metadata": include_metadata,
+                "include_distances": include_distances,
+                "filter_metadata": filter_metadata,
+            }
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Vector index search tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1713,36 +1818,37 @@ async def search_vector_index(
         logger.error(f"Unexpected error in vector index search: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Vector index search failed: {str(e)}")
 
+
 # Workflow Endpoints
 @app.post("/workflows/execute")
 async def execute_workflow(
     request: WorkflowRequest,
     background_tasks: BackgroundTasks,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Execute a workflow with multiple steps."""
     try:
         from .mcp_server.tools.workflow_tools.workflow_tools import execute_workflow as mcp_workflow
-        
+
         # Execute workflow in background if it's long-running
         task_id = str(uuid.uuid4())
-        
+
         background_tasks.add_task(
             run_workflow_background,
             task_id,
             request.workflow_name,
             request.steps,
             request.parameters,
-            current_user["user_id"]
+            current_user["user_id"],
         )
-        
+
         return {
             "task_id": task_id,
             "status": "started",
             "workflow_name": request.workflow_name,
-            "steps_count": len(request.steps)
+            "steps_count": len(request.steps),
         }
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Workflow execution tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1756,18 +1862,20 @@ async def execute_workflow(
         logger.error(f"Unexpected error in workflow execution: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Workflow execution failed: {str(e)}")
 
+
 @app.get("/workflows/status/{task_id}")
 async def get_workflow_status(
-    task_id: str,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    task_id: str, current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Get the status of a running workflow."""
     try:
-        from .mcp_server.tools.workflow_tools.workflow_tools import get_workflow_status as mcp_status
-        
+        from .mcp_server.tools.workflow_tools.workflow_tools import (
+            get_workflow_status as mcp_status,
+        )
+
         result = await mcp_status({"task_id": task_id})
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Workflow status tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1781,6 +1889,7 @@ async def get_workflow_status(
         logger.error(f"Unexpected error getting workflow status: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get workflow status: {str(e)}")
 
+
 # Audit and Monitoring Endpoints
 @app.post("/audit/record")
 async def record_audit_event(
@@ -1790,24 +1899,26 @@ async def record_audit_event(
     details: Optional[Dict[str, Any]] = None,
     severity: str = "info",
     tags: Optional[List[str]] = None,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Record an audit event."""
     try:
         from .mcp_server.tools.audit_tools.audit_tools import record_audit_event as mcp_audit
-        
-        result = await mcp_audit({
-            "action": action,
-            "resource_id": resource_id,
-            "resource_type": resource_type,
-            "user_id": current_user["user_id"],
-            "details": details,
-            "severity": severity,
-            "tags": tags
-        })
-        
+
+        result = await mcp_audit(
+            {
+                "action": action,
+                "resource_id": resource_id,
+                "resource_type": resource_type,
+                "user_id": current_user["user_id"],
+                "details": details,
+                "severity": severity,
+                "tags": tags,
+            }
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Audit event tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1821,27 +1932,30 @@ async def record_audit_event(
         logger.error(f"Unexpected error recording audit event: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to record audit event: {str(e)}")
 
+
 @app.get("/audit/report")
 async def generate_audit_report(
     report_type: str = "comprehensive",
     start_time: Optional[str] = None,
     end_time: Optional[str] = None,
     output_format: str = "json",
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Generate an audit report."""
     try:
         from .mcp_server.tools.audit_tools.audit_tools import generate_audit_report as mcp_report
-        
-        result = await mcp_report({
-            "report_type": report_type,
-            "start_time": start_time,
-            "end_time": end_time,
-            "output_format": output_format
-        })
-        
+
+        result = await mcp_report(
+            {
+                "report_type": report_type,
+                "start_time": start_time,
+                "end_time": end_time,
+                "output_format": output_format,
+            }
+        )
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Audit report tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1855,18 +1969,17 @@ async def generate_audit_report(
         logger.error(f"Unexpected error generating audit report: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to generate audit report: {str(e)}")
 
+
 # Cache Management Endpoints
 @app.get("/cache/stats")
-async def get_cache_stats(
-    current_user: Dict[str, Any] = Depends(get_current_user)
-):
+async def get_cache_stats(current_user: Dict[str, Any] = Depends(get_current_user)):
     """Get cache statistics."""
     try:
         from .mcp_server.tools.cache_tools.cache_tools import get_cache_stats as mcp_cache_stats
-        
+
         result = await mcp_cache_stats({})
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Cache stats tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1877,23 +1990,21 @@ async def get_cache_stats(
         logger.error(f"Unexpected error getting cache stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get cache stats: {str(e)}")
 
+
 @app.post("/cache/clear")
 async def clear_cache(
     cache_type: Optional[str] = None,
     pattern: Optional[str] = None,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Clear cache entries."""
     try:
         from .mcp_server.tools.cache_tools.cache_tools import clear_cache as mcp_clear_cache
-        
-        result = await mcp_clear_cache({
-            "cache_type": cache_type,
-            "pattern": pattern
-        })
-        
+
+        result = await mcp_clear_cache({"cache_type": cache_type, "pattern": pattern})
+
         return result
-        
+
     except ToolNotFoundError as e:
         logger.error(f"Clear cache tool not found: {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -1914,11 +2025,13 @@ async def clear_cache(
 
 # --- Profile A: MCP-IDL Interface Discovery ---
 
+
 @app.get("/mcp/interfaces")
 async def list_mcp_interfaces():
     """List all registered MCP++ interface descriptors (Profile A)."""
     try:
         from .interface_descriptor import get_interface_repository
+
         repo = get_interface_repository()
         descriptors = repo.list()
         return {
@@ -1927,9 +2040,16 @@ async def list_mcp_interfaces():
                     "name": d.name,
                     "namespace": d.namespace,
                     "version": d.version,
-                    "interface_cid": str(d.interface_cid) if hasattr(d, 'interface_cid') else "",
-                    "methods": [{"name": m.name, "input_schema_cid": str(getattr(m, 'input_schema_cid', '')), "output_schema_cid": str(getattr(m, 'output_schema_cid', ''))} for m in (d.methods if hasattr(d, 'methods') else [])],
-                    "semantic_tags": list(d.semantic_tags) if hasattr(d, 'semantic_tags') else [],
+                    "interface_cid": str(d.interface_cid) if hasattr(d, "interface_cid") else "",
+                    "methods": [
+                        {
+                            "name": m.name,
+                            "input_schema_cid": str(getattr(m, "input_schema_cid", "")),
+                            "output_schema_cid": str(getattr(m, "output_schema_cid", "")),
+                        }
+                        for m in (d.methods if hasattr(d, "methods") else [])
+                    ],
+                    "semantic_tags": list(d.semantic_tags) if hasattr(d, "semantic_tags") else [],
                 }
                 for d in descriptors
             ],
@@ -1947,6 +2067,7 @@ async def get_mcp_interface(interface_cid: str):
     """Get a specific interface descriptor by CID (Profile A)."""
     try:
         from .interface_descriptor import get_interface_repository
+
         repo = get_interface_repository()
         descriptor = repo.get(interface_cid)
         if descriptor is None:
@@ -1955,8 +2076,13 @@ async def get_mcp_interface(interface_cid: str):
             "name": descriptor.name,
             "namespace": descriptor.namespace,
             "version": descriptor.version,
-            "interface_cid": str(descriptor.interface_cid) if hasattr(descriptor, 'interface_cid') else interface_cid,
-            "methods": [{"name": m.name} for m in (descriptor.methods if hasattr(descriptor, 'methods') else [])],
+            "interface_cid": str(descriptor.interface_cid)
+            if hasattr(descriptor, "interface_cid")
+            else interface_cid,
+            "methods": [
+                {"name": m.name}
+                for m in (descriptor.methods if hasattr(descriptor, "methods") else [])
+            ],
         }
     except HTTPException:
         raise
@@ -1967,11 +2093,13 @@ async def get_mcp_interface(interface_cid: str):
 
 # --- Profile B: CID-Native Execution with Envelope ---
 
+
 @app.post("/mcp/execute")
 async def mcp_execute_with_envelope(request: Request):
     """Execute a tool call with CID-native envelope (Profile B)."""
     try:
         from .cid_artifacts import IntentObject, artifact_cid, EventNode
+
         body = await request.json()
         # Accept both naming conventions for frontend compatibility:
         # ipfs_accelerate style: {"method": "...", "params": {...}}
@@ -1995,9 +2123,14 @@ async def mcp_execute_with_envelope(request: Request):
         if policy_cid:
             try:
                 from .temporal_policy import get_policy_evaluator
+
                 evaluator = get_policy_evaluator()
                 decision_obj = evaluator.evaluate(intent, policy_cid)
-                decision = decision_obj.decision if hasattr(decision_obj, 'decision') else decision_obj.get("decision", "deny")
+                decision = (
+                    decision_obj.decision
+                    if hasattr(decision_obj, "decision")
+                    else decision_obj.get("decision", "deny")
+                )
             except ImportError as e:
                 logger.warning(f"Policy module unavailable (fail-closed): {e}")
                 decision = "deny"
@@ -2014,17 +2147,19 @@ async def mcp_execute_with_envelope(request: Request):
 
         # Execute the tool with timeout (anyio-compatible for Trio/asyncio)
         import time as _time
+
         start = _time.time()
         output = None
         error_msg = None
         exec_timeout = float(os.environ.get("MCPPP_EXEC_TIMEOUT_S", "30"))
         try:
-            mcp_server = app.state.mcp_server if hasattr(app.state, 'mcp_server') else None
-            if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
+            mcp_server = app.state.mcp_server if hasattr(app.state, "mcp_server") else None
+            if mcp_server and hasattr(mcp_server, "tools") and tool_name in mcp_server.tools:
                 tool_fn = mcp_server.tools[tool_name]
                 if callable(tool_fn):
                     try:
                         import inspect
+
                         async with anyio.fail_after(exec_timeout):
                             if inspect.iscoroutinefunction(tool_fn):
                                 output = await tool_fn(**arguments)
@@ -2047,19 +2182,24 @@ async def mcp_execute_with_envelope(request: Request):
 
         # Build envelope
         output_cid = str(artifact_cid(output or {}))
-        receipt_cid = str(artifact_cid({"intent": intent_cid, "output": output_cid, "duration": duration_ms}))
+        receipt_cid = str(
+            artifact_cid({"intent": intent_cid, "output": output_cid, "duration": duration_ms})
+        )
         event_cid = str(artifact_cid({"intent": intent_cid, "receipt": receipt_cid}))
-        envelope_cid = str(artifact_cid({"intent": intent_cid, "receipt": receipt_cid, "event": event_cid}))
+        envelope_cid = str(
+            artifact_cid({"intent": intent_cid, "receipt": receipt_cid, "event": event_cid})
+        )
 
         # Append to Event DAG
         try:
             from .event_dag import EventDAG
-            dag = getattr(app.state, '_event_dag', None)
+
+            dag = getattr(app.state, "_event_dag", None)
             if dag is None:
                 dag = EventDAG(strict=False)
                 app.state._event_dag = dag
             node = EventNode(
-                parents=[n.event_cid for n in dag.frontier()] if hasattr(dag, 'frontier') else [],
+                parents=[n.event_cid for n in dag.frontier()] if hasattr(dag, "frontier") else [],
                 intent_cid=intent_cid,
                 decision_cid=str(artifact_cid({"decision": decision})),
                 receipt_cid=receipt_cid,
@@ -2090,16 +2230,22 @@ async def mcp_execute_with_envelope(request: Request):
 
 # --- Event DAG Endpoints ---
 
+
 @app.get("/mcp/dag/frontier")
 async def get_dag_frontier():
     """Get the current Event DAG frontier (leaf nodes)."""
     try:
         from .event_dag import EventDAG
-        dag = getattr(app.state, '_event_dag', None)
+
+        dag = getattr(app.state, "_event_dag", None)
         if dag is None:
             return {"frontier": []}
         frontier_nodes = dag.frontier()
-        return {"frontier": [str(n.event_cid) if hasattr(n, 'event_cid') else str(n) for n in frontier_nodes]}
+        return {
+            "frontier": [
+                str(n.event_cid) if hasattr(n, "event_cid") else str(n) for n in frontier_nodes
+            ]
+        }
     except Exception as e:
         logger.error(f"DAG frontier error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -2110,11 +2256,12 @@ async def get_dag_history(limit: int = 50):
     """Get Event DAG history (most recent events)."""
     try:
         from .event_dag import EventDAG
-        dag = getattr(app.state, '_event_dag', None)
+
+        dag = getattr(app.state, "_event_dag", None)
         if dag is None:
             return {"events": [], "count": 0}
         # Walk the DAG
-        all_nodes = list(dag._nodes.values()) if hasattr(dag, '_nodes') else []
+        all_nodes = list(dag._nodes.values()) if hasattr(dag, "_nodes") else []
         recent = all_nodes[-limit:] if len(all_nodes) > limit else all_nodes
         return {
             "events": [
@@ -2124,13 +2271,13 @@ async def get_dag_history(limit: int = 50):
                     "parents": [str(p) for p in (n.parents or [])],
                     "timestamp": getattr(n, "timestamp_created", ""),
                     "payload": {
-                        "intent_cid": str(getattr(n, 'intent_cid', '')),
-                        "decision_cid": str(getattr(n, 'decision_cid', '')),
-                        "output_cid": str(getattr(n, 'output_cid', '')),
-                        "receipt_cid": str(getattr(n, 'receipt_cid', '')),
+                        "intent_cid": str(getattr(n, "intent_cid", "")),
+                        "decision_cid": str(getattr(n, "decision_cid", "")),
+                        "output_cid": str(getattr(n, "output_cid", "")),
+                        "receipt_cid": str(getattr(n, "receipt_cid", "")),
                     },
-                    "intent_cid": str(getattr(n, 'intent_cid', '')),
-                    "receipt_cid": str(getattr(n, 'receipt_cid', '')),
+                    "intent_cid": str(getattr(n, "intent_cid", "")),
+                    "receipt_cid": str(getattr(n, "receipt_cid", "")),
                 }
                 for n in recent
             ],
@@ -2146,10 +2293,11 @@ async def trace_dag_provenance(event_cid: str):
     """Trace provenance chain from an event CID back to roots."""
     try:
         from .event_dag import EventDAG
-        dag = getattr(app.state, '_event_dag', None)
+
+        dag = getattr(app.state, "_event_dag", None)
         if dag is None:
             return {"chain": []}
-        chain = dag.walk(event_cid) if hasattr(dag, 'walk') else []
+        chain = dag.walk(event_cid) if hasattr(dag, "walk") else []
         return {
             "chain": [
                 {"event_cid": str(n.event_cid), "parents": [str(p) for p in (n.parents or [])]}
@@ -2163,11 +2311,13 @@ async def trace_dag_provenance(event_cid: str):
 
 # --- Profile C: UCAN Delegation Endpoints ---
 
+
 @app.post("/mcp/ucan/delegate")
 async def create_ucan_delegation(request: Request):
     """Create a UCAN capability delegation (Profile C)."""
     try:
         from .ucan_delegation import Capability, Delegation, add_delegation
+
         body = await request.json()
         audience = body.get("audience", "")
         capabilities = body.get("capabilities", [])
@@ -2183,15 +2333,20 @@ async def create_ucan_delegation(request: Request):
 
         import time as _time
         from .cid_artifacts import artifact_cid
+
         now = int(_time.time())
 
         # Compute CID for the delegation first
-        proof_cid = str(artifact_cid({
-            "issuer": "did:key:z6MkIPFSDatasetsMCPServer",
-            "audience": audience,
-            "capabilities": [{"resource": c.resource, "ability": c.ability} for c in caps],
-            "expiry": now + (expiration_hours * 3600),
-        }))
+        proof_cid = str(
+            artifact_cid(
+                {
+                    "issuer": "did:key:z6MkIPFSDatasetsMCPServer",
+                    "audience": audience,
+                    "capabilities": [{"resource": c.resource, "ability": c.ability} for c in caps],
+                    "expiry": now + (expiration_hours * 3600),
+                }
+            )
+        )
 
         delegation = Delegation(
             cid=proof_cid,
@@ -2225,6 +2380,7 @@ async def validate_ucan_delegation(request: Request):
     """Validate a UCAN proof chain (Profile C)."""
     try:
         from .ucan_delegation import get_delegation, DelegationEvaluator, get_delegation_evaluator
+
         body = await request.json()
         proof_cid = body.get("proof_cid", "")
 
@@ -2237,25 +2393,28 @@ async def validate_ucan_delegation(request: Request):
 
         # Validate time bounds
         import time as _time
+
         now = int(_time.time())
         valid = True
         reasons = []
 
-        if hasattr(delegation, 'expiry') and delegation.expiry < now:
+        if hasattr(delegation, "expiry") and delegation.expiry < now:
             valid = False
             reasons.append("expired")
-        if hasattr(delegation, 'not_before') and delegation.not_before > now:
+        if hasattr(delegation, "not_before") and delegation.not_before > now:
             valid = False
             reasons.append("not yet valid")
 
         return {
             "valid": valid,
             "reasons": reasons,
-            "chain": [{
-                "issuer": getattr(delegation, 'issuer', ''),
-                "audience": getattr(delegation, 'audience', ''),
-                "expiry": getattr(delegation, 'expiry', 0),
-            }],
+            "chain": [
+                {
+                    "issuer": getattr(delegation, "issuer", ""),
+                    "audience": getattr(delegation, "audience", ""),
+                    "expiry": getattr(delegation, "expiry", 0),
+                }
+            ],
         }
     except HTTPException:
         raise
@@ -2265,6 +2424,7 @@ async def validate_ucan_delegation(request: Request):
 
 
 # --- Profile D: Policy Evaluation ---
+
 
 def _evaluate_profile_d_request(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Use the canonical, fail-closed Profile D logic package export."""
@@ -2281,6 +2441,7 @@ def _evaluate_profile_d_request(payload: Dict[str, Any]) -> Dict[str, Any]:
         intent_cid=payload.get("intent_cid"),
         request_zkp_certificate=bool(payload.get("request_zkp_certificate", False)),
     )
+
 
 @app.post("/mcp/policy/evaluate")
 async def evaluate_deontic_policy(request: Request):
@@ -2299,22 +2460,26 @@ async def evaluate_deontic_policy(request: Request):
 
 # --- Profile E: P2P Peer Discovery ---
 
+
 @app.get("/mcp/p2p/peers")
 async def discover_p2p_peers():
     """Discover available P2P peers (Profile E) — filtered for security."""
     try:
         from .p2p_libp2p_transport import get_p2p_node, MCP_P2P_PROTOCOL
+
         node = get_p2p_node()
         full = node.to_dict()
         # Filter sensitive multiaddrs (contain internal IPs)
         safe_peers = []
         for peer in full.get("peers", []):
-            safe_peers.append({
-                "peer_id": peer.get("peer_id", ""),
-                "protocols": peer.get("protocols", []),
-                "last_seen": peer.get("last_seen", 0),
-                "latency_ms": peer.get("latency_ms", 0),
-            })
+            safe_peers.append(
+                {
+                    "peer_id": peer.get("peer_id", ""),
+                    "protocols": peer.get("protocols", []),
+                    "last_seen": peer.get("last_seen", 0),
+                    "latency_ms": peer.get("latency_ms", 0),
+                }
+            )
         full["peers"] = safe_peers
         return full
     except ImportError:
@@ -2329,6 +2494,7 @@ async def p2p_call_remote_tool(request: Request):
     """Call a tool on a remote peer via libp2p /mcp+p2p/1.0.0 (Profile E)."""
     try:
         from .p2p_libp2p_transport import get_p2p_node
+
         body = await request.json()
         node = get_p2p_node()
         if not node._started:
@@ -2338,7 +2504,7 @@ async def p2p_call_remote_tool(request: Request):
         if peer_id not in node._peers:
             raise HTTPException(
                 status_code=400,
-                detail=f"Unknown peer: {peer_id[:16]}... Use /mcp/p2p/peers to discover available peers"
+                detail=f"Unknown peer: {peer_id[:16]}... Use /mcp/p2p/peers to discover available peers",
             )
         result = await node.call_tool(
             peer_id=peer_id,
@@ -2355,6 +2521,7 @@ async def p2p_call_remote_tool(request: Request):
 
 # --- MCP++ Capability Negotiation (JSON-RPC) ---
 
+
 @app.get("/mcp/discover")
 async def mcp_discover():
     """Discovery endpoint: returns server capabilities, version, available tools.
@@ -2366,6 +2533,7 @@ async def mcp_discover():
     tools = []
     try:
         from .dispatch_pipeline import _TOOL_REGISTRY
+
         tools = list(_TOOL_REGISTRY.keys()) if _TOOL_REGISTRY else []
     except Exception:
         pass
@@ -2382,6 +2550,7 @@ async def mcp_discover():
     peer_id = None
     try:
         from .p2p_libp2p_transport import get_p2p_node
+
         node = get_p2p_node()
         if node._started:
             p2p_status = "active"
@@ -2419,6 +2588,7 @@ _sse_connections = 0
 _sse_lock = __import__("threading").Lock()
 _MAX_SSE_CONNECTIONS = int(os.environ.get("MCPPP_MAX_SSE_CONNECTIONS", "50"))
 
+
 @app.get("/mcp/events/stream")
 async def mcp_event_stream(request: Request):
     """SSE endpoint: streams EventDAG changes and server events in real-time.
@@ -2441,6 +2611,7 @@ async def mcp_event_stream(request: Request):
 
     try:
         from .event_dag import get_event_dag
+
         dag = get_event_dag()
     except Exception:
         dag = None
@@ -2449,7 +2620,7 @@ async def mcp_event_stream(request: Request):
         global _sse_connections
         try:
             last_count = len(dag._events) if dag else 0
-            yield f"event: connected\ndata: {{\"server\": \"ipfs-datasets-mcp\", \"events\": {last_count}}}\n\n"
+            yield f'event: connected\ndata: {{"server": "ipfs-datasets-mcp", "events": {last_count}}}\n\n'
 
             while True:
                 await anyio.sleep(1.0)
@@ -2462,12 +2633,14 @@ async def mcp_event_stream(request: Request):
                 if current_count > last_count:
                     new_events = list(dag._events.values())[last_count:current_count]
                     for event in new_events:
-                        event_data = _json.dumps({
-                            "cid": event.cid,
-                            "type": event.event_type,
-                            "timestamp": event.timestamp,
-                            "parents": event.parent_cids,
-                        })
+                        event_data = _json.dumps(
+                            {
+                                "cid": event.cid,
+                                "type": event.event_type,
+                                "timestamp": event.timestamp,
+                                "parents": event.parent_cids,
+                            }
+                        )
                         yield f"event: dag_event\ndata: {event_data}\n\n"
                     last_count = current_count
                 else:
@@ -2498,14 +2671,21 @@ def _profile_g_rest_result(method: str, params: Dict[str, Any]):
         return get_profile_g_service().dispatch(method, params)
     except ProfileGError as error:
         status = {
-            "G_INVALID_ARTIFACT": 400, "G_CID_MISMATCH": 422,
-            "G_AUTHORITY_DENIED": 403, "G_POLICY_DENIED": 403,
-            "G_NOT_READY": 409, "G_IDEMPOTENCY_CONFLICT": 409,
-            "G_CLAIM_CONFLICT": 409, "G_LEASE_EXPIRED": 409,
-            "G_LIMIT_EXCEEDED": 413, "G_EVIDENCE_INVALID": 422,
+            "G_INVALID_ARTIFACT": 400,
+            "G_CID_MISMATCH": 422,
+            "G_AUTHORITY_DENIED": 403,
+            "G_POLICY_DENIED": 403,
+            "G_NOT_READY": 409,
+            "G_IDEMPOTENCY_CONFLICT": 409,
+            "G_CLAIM_CONFLICT": 409,
+            "G_LEASE_EXPIRED": 409,
+            "G_LIMIT_EXCEEDED": 413,
+            "G_EVIDENCE_INVALID": 422,
             "G_REDACTED": 403,
         }.get(error.code, 503)
-        return JSONResponse(status_code=status, content=profile_g_jsonrpc_error(None, error)["error"])
+        return JSONResponse(
+            status_code=status, content=profile_g_jsonrpc_error(None, error)["error"]
+        )
 
 
 async def _profile_g_request_params(request: Request) -> Dict[str, Any]:
@@ -2580,22 +2760,30 @@ async def profile_g_assess_risk(request: Request):
 
 @app.get("/mcp/risk/evidence")
 async def profile_g_evidence(subject_cid: str, limit: int = 100):
-    return _profile_g_rest_result("mcp++/risk/evidence", {"subject_cid": subject_cid, "limit": limit})
+    return _profile_g_rest_result(
+        "mcp++/risk/evidence", {"subject_cid": subject_cid, "limit": limit}
+    )
 
 
 @app.get("/mcp/risk/history")
 async def profile_g_history(subject_cid: str, limit: int = 100):
-    return _profile_g_rest_result("mcp++/risk/history", {"subject_cid": subject_cid, "limit": limit})
+    return _profile_g_rest_result(
+        "mcp++/risk/history", {"subject_cid": subject_cid, "limit": limit}
+    )
 
 
 @app.post("/mcp/neighborhood/query")
 async def profile_g_query_neighborhood(request: Request):
-    return _profile_g_rest_result("mcp++/neighborhood/query", await _profile_g_request_params(request))
+    return _profile_g_rest_result(
+        "mcp++/neighborhood/query", await _profile_g_request_params(request)
+    )
 
 
 @app.post("/mcp/neighborhood/attest")
 async def profile_g_attest_neighborhood(request: Request):
-    return _profile_g_rest_result("mcp++/neighborhood/attest", await _profile_g_request_params(request))
+    return _profile_g_rest_result(
+        "mcp++/neighborhood/attest", await _profile_g_request_params(request)
+    )
 
 
 @app.get("/mcp/schedule/frontier")
@@ -2610,7 +2798,9 @@ async def profile_g_schedule_status(task_cid: str):
 
 @app.post("/mcp/schedule/proposals")
 async def profile_g_schedule_propose(request: Request):
-    return _profile_g_rest_result("mcp++/schedule/propose", await _profile_g_request_params(request))
+    return _profile_g_rest_result(
+        "mcp++/schedule/propose", await _profile_g_request_params(request)
+    )
 
 
 @app.post("/mcp/schedule/claims")
@@ -2629,12 +2819,16 @@ async def profile_g_schedule_claim_operation(claim_cid: str, operation: str, req
 
 @app.post("/mcp/schedule/resolutions")
 async def profile_g_schedule_resolve(request: Request):
-    return _profile_g_rest_result("mcp++/schedule/resolve", await _profile_g_request_params(request))
+    return _profile_g_rest_result(
+        "mcp++/schedule/resolve", await _profile_g_request_params(request)
+    )
 
 
 @app.post("/mcp/schedule/reconcile")
 async def profile_g_schedule_reconcile(request: Request):
-    return _profile_g_rest_result("mcp++/schedule/reconcile", await _profile_g_request_params(request))
+    return _profile_g_rest_result(
+        "mcp++/schedule/reconcile", await _profile_g_request_params(request)
+    )
 
 
 @app.post("/mcp")
@@ -2644,15 +2838,23 @@ async def mcp_jsonrpc_handler(request: Request):
         try:
             body = await request.json()
         except Exception:
-            return JSONResponse(status_code=400, content={
-                "jsonrpc": "2.0", "id": None,
-                "error": {"code": -32700, "message": "Parse error"},
-            })
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "jsonrpc": "2.0",
+                    "id": None,
+                    "error": {"code": -32700, "message": "Parse error"},
+                },
+            )
         if not isinstance(body, dict):
-            return JSONResponse(status_code=400, content={
-                "jsonrpc": "2.0", "id": None,
-                "error": {"code": -32600, "message": "Invalid Request"},
-            })
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "jsonrpc": "2.0",
+                    "id": None,
+                    "error": {"code": -32600, "message": "Invalid Request"},
+                },
+            )
         method = body.get("method", "")
         params = body.get("params", {})
         req_id = body.get("id", 1)
@@ -2661,8 +2863,14 @@ async def mcp_jsonrpc_handler(request: Request):
         if req_id is not None and not isinstance(req_id, (str, int, float)):
             return JSONResponse(
                 status_code=400,
-                content={"jsonrpc": "2.0", "id": None,
-                         "error": {"code": -32600, "message": "Invalid request: id must be string, number, or null"}}
+                content={
+                    "jsonrpc": "2.0",
+                    "id": None,
+                    "error": {
+                        "code": -32600,
+                        "message": "Invalid request: id must be string, number, or null",
+                    },
+                },
             )
 
         if method == "initialize":
@@ -2682,6 +2890,7 @@ async def mcp_jsonrpc_handler(request: Request):
                 server_caps["mcp++/p2p-transport"] = True
             if client_caps.get("mcp++/risk-scheduling"):
                 from .profile_g_service import get_profile_g_service
+
                 server_caps["mcp++/risk-scheduling"] = get_profile_g_service().profile
 
             return {
@@ -2692,9 +2901,13 @@ async def mcp_jsonrpc_handler(request: Request):
                     "capabilities": {
                         "tools": {"listChanged": True},
                         "mcpPlusPlusProfiles": [
-                            "mcp++/mcp-idl", "mcp++/cid-envelope", "mcp++/ucan",
-                            "mcp++/deontic-policy", "mcp++/event-dag",
-                            "mcp++/p2p-transport", "mcp++/risk-scheduling",
+                            "mcp++/mcp-idl",
+                            "mcp++/cid-envelope",
+                            "mcp++/ucan",
+                            "mcp++/deontic-policy",
+                            "mcp++/event-dag",
+                            "mcp++/p2p-transport",
+                            "mcp++/risk-scheduling",
                         ],
                         "experimental": server_caps,
                     },
@@ -2707,15 +2920,18 @@ async def mcp_jsonrpc_handler(request: Request):
 
         elif method == "notifications/initialized" or method.startswith("notifications/"):
             # JSON-RPC notification: the client expects no result payload.
-            return JSONResponse(status_code=202, content={"jsonrpc": "2.0", "result": None, "id": req_id})
+            return JSONResponse(
+                status_code=202, content={"jsonrpc": "2.0", "result": None, "id": req_id}
+            )
 
         elif method == "tools/call":
             tool_name = params.get("name", "")
             arguments = params.get("arguments", {}) or {}
-            mcp_server = getattr(app.state, 'mcp_server', None)
-            if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
+            mcp_server = getattr(app.state, "mcp_server", None)
+            if mcp_server and hasattr(mcp_server, "tools") and tool_name in mcp_server.tools:
                 tool_fn = mcp_server.tools[tool_name]
                 import inspect
+
                 exec_timeout = float(os.environ.get("MCPPP_EXEC_TIMEOUT_S", "30"))
                 if callable(tool_fn):
                     try:
@@ -2727,32 +2943,52 @@ async def mcp_jsonrpc_handler(request: Request):
                                     lambda: tool_fn(**arguments), cancellable=True
                                 )
                     except TimeoutError:
-                        return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32000, "message": f"Execution timeout after {exec_timeout}s"}}
+                        return {
+                            "jsonrpc": "2.0",
+                            "id": req_id,
+                            "error": {
+                                "code": -32000,
+                                "message": f"Execution timeout after {exec_timeout}s",
+                            },
+                        }
                 else:
                     result = None
                 return {"jsonrpc": "2.0", "id": req_id, "result": _mcp_tool_result(result)}
             handled, result = await _dispatch_hierarchical_flat_tool(tool_name, arguments)
             if handled:
                 return {"jsonrpc": "2.0", "id": req_id, "result": _mcp_tool_result(result)}
-            return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Tool not found: {tool_name}"}}
+            return {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "error": {"code": -32601, "message": f"Tool not found: {tool_name}"},
+            }
 
         elif method == "tools/list":
-            mcp_server = getattr(app.state, 'mcp_server', None)
-            return {"jsonrpc": "2.0", "id": req_id, "result": {"tools": _mcp_tool_descriptors(mcp_server)}}
+            mcp_server = getattr(app.state, "mcp_server", None)
+            return {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": {"tools": _mcp_tool_descriptors(mcp_server)},
+            }
 
         elif method == "mcp++/execute":
             # Delegate to the envelope execution endpoint
             from starlette.testclient import TestClient
+
             # Inline call
             return await mcp_execute_with_envelope(request)
 
         elif method == "mcp++/ucan/validate":
             proof_cid = params.get("proof_cid", "")
             from .ucan_delegation import get_delegation
+
             delegation = get_delegation(proof_cid)
             import time as _time
+
             now = int(_time.time())
-            valid = delegation is not None and (not hasattr(delegation, 'expiry') or delegation.expiry >= now)
+            valid = delegation is not None and (
+                not hasattr(delegation, "expiry") or delegation.expiry >= now
+            )
             return {"jsonrpc": "2.0", "id": req_id, "result": {"valid": valid, "chain": []}}
 
         elif method == "mcp++/policy/evaluate":
@@ -2769,9 +3005,18 @@ async def mcp_jsonrpc_handler(request: Request):
                     "error": {"code": -32602, "message": str(error)},
                 }
 
-        elif method.startswith(("mcp++/goals/", "mcp++/tasks/", "mcp++/risk/", "mcp++/neighborhood/", "mcp++/schedule/")):
+        elif method.startswith(
+            (
+                "mcp++/goals/",
+                "mcp++/tasks/",
+                "mcp++/risk/",
+                "mcp++/neighborhood/",
+                "mcp++/schedule/",
+            )
+        ):
             from ipfs_datasets_py.logic.profile_g import ProfileGError
             from .profile_g_service import get_profile_g_service, profile_g_jsonrpc_error
+
             try:
                 result = get_profile_g_service().dispatch(method, params)
                 return {"jsonrpc": "2.0", "id": req_id, "result": result}
@@ -2780,45 +3025,78 @@ async def mcp_jsonrpc_handler(request: Request):
 
         elif method == "mcp++/dag/zk/status":
             from .event_dag_zkp import availability
+
             return {"jsonrpc": "2.0", "id": req_id, "result": availability()}
 
         elif method == "mcp++/dag/zk/prove":
             from .event_dag_zkp import prove_event_dag_compaction
+
             event_cids = params.get("event_cids", [])
             if not isinstance(event_cids, list):
-                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "event_cids must be an array"}}
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "error": {"code": -32602, "message": "event_cids must be an array"},
+                }
             certificate = await anyio.to_thread.run_sync(prove_event_dag_compaction, event_cids)
             return {"jsonrpc": "2.0", "id": req_id, "result": {"certificate": certificate}}
 
         elif method == "mcp++/dag/zk/verify":
             from .event_dag_zkp import verify_event_dag_compaction
+
             certificate = params.get("certificate")
             if not isinstance(certificate, dict):
-                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "certificate must be an object"}}
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "error": {"code": -32602, "message": "certificate must be an object"},
+                }
             event_cids = params.get("event_cids")
             if event_cids is not None and not isinstance(event_cids, list):
-                return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "event_cids must be an array when supplied"}}
-            result = await anyio.to_thread.run_sync(verify_event_dag_compaction, certificate, event_cids)
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "error": {
+                        "code": -32602,
+                        "message": "event_cids must be an array when supplied",
+                    },
+                }
+            result = await anyio.to_thread.run_sync(
+                verify_event_dag_compaction, certificate, event_cids
+            )
             return {"jsonrpc": "2.0", "id": req_id, "result": result}
 
         elif method == "mcp++/p2p/peers":
-            return {"jsonrpc": "2.0", "id": req_id, "result": {"peers": [], "protocol": "/mcp+p2p/1.0.0"}}
+            return {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": {"peers": [], "protocol": "/mcp+p2p/1.0.0"},
+            }
 
         elif method == "shutdown":
             return {"jsonrpc": "2.0", "id": req_id, "result": None}
 
         else:
-            return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Method not found: {method}"}}
+            return {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "error": {"code": -32601, "message": f"Method not found: {method}"},
+            }
 
     except Exception as e:
         logger.error(f"MCP JSON-RPC error: {e}", exc_info=True)
-        return {"jsonrpc": "2.0", "id": body.get("id", 1) if 'body' in dir() else 1, "error": {"code": -32603, "message": str(e)}}
+        return {
+            "jsonrpc": "2.0",
+            "id": body.get("id", 1) if "body" in dir() else 1,
+            "error": {"code": -32603, "message": str(e)},
+        }
 
 
 @app.get("/mcp/dag/zk/status")
 async def event_dag_zk_status():
     """Advertise the local verifier-backed Profile F proving capability."""
     from .event_dag_zkp import availability
+
     return availability()
 
 
@@ -2830,6 +3108,7 @@ async def event_dag_zk_prove(request: Request):
     if not isinstance(event_cids, list):
         raise HTTPException(status_code=422, detail="event_cids must be an array")
     from .event_dag_zkp import prove_event_dag_compaction
+
     return {"certificate": await anyio.to_thread.run_sync(prove_event_dag_compaction, event_cids)}
 
 
@@ -2844,6 +3123,7 @@ async def event_dag_zk_verify(request: Request):
     if event_cids is not None and not isinstance(event_cids, list):
         raise HTTPException(status_code=422, detail="event_cids must be an array when supplied")
     from .event_dag_zkp import verify_event_dag_compaction
+
     return await anyio.to_thread.run_sync(verify_event_dag_compaction, certificate, event_cids)
 
 
@@ -2857,7 +3137,7 @@ async def mcp_tools_list_rest():
     /mcp``. Serve the same descriptor list in the same ``{jsonrpc, result:
     {tools}}`` envelope the JSON-RPC path and ipfs-kit return.
     """
-    mcp_server = getattr(app.state, 'mcp_server', None)
+    mcp_server = getattr(app.state, "mcp_server", None)
     return {"jsonrpc": "2.0", "result": {"tools": _mcp_tool_descriptors(mcp_server)}}
 
 
@@ -2879,10 +3159,11 @@ async def mcp_tools_call_rest(request: Request):
             status_code=400,
             content={"jsonrpc": "2.0", "error": {"code": -32602, "message": "Missing tool name"}},
         )
-    mcp_server = getattr(app.state, 'mcp_server', None)
-    if mcp_server and hasattr(mcp_server, 'tools') and tool_name in mcp_server.tools:
+    mcp_server = getattr(app.state, "mcp_server", None)
+    if mcp_server and hasattr(mcp_server, "tools") and tool_name in mcp_server.tools:
         tool_fn = mcp_server.tools[tool_name]
         import inspect
+
         exec_timeout = float(os.environ.get("MCPPP_EXEC_TIMEOUT_S", "30"))
         if callable(tool_fn):
             try:
@@ -2894,7 +3175,13 @@ async def mcp_tools_call_rest(request: Request):
                             lambda: tool_fn(**arguments), cancellable=True
                         )
             except TimeoutError:
-                return {"jsonrpc": "2.0", "error": {"code": -32000, "message": f"Execution timeout after {exec_timeout}s"}}
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32000,
+                        "message": f"Execution timeout after {exec_timeout}s",
+                    },
+                }
         else:
             result = None
         return {"jsonrpc": "2.0", "result": _mcp_tool_result(result)}
@@ -2903,5 +3190,8 @@ async def mcp_tools_call_rest(request: Request):
         return {"jsonrpc": "2.0", "result": _mcp_tool_result(result)}
     return JSONResponse(
         status_code=404,
-        content={"jsonrpc": "2.0", "error": {"code": -32601, "message": f"Tool not found: {tool_name}"}},
+        content={
+            "jsonrpc": "2.0",
+            "error": {"code": -32601, "message": f"Tool not found: {tool_name}"},
+        },
     )

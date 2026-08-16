@@ -66,7 +66,10 @@ async def pdf_generate_zkp_certificate(
             pdf_path = str(pdf_source)
 
         if not pdf_path:
-            return {"status": "error", "message": "pdf_source must be a file path or dict with 'path' key"}
+            return {
+                "status": "error",
+                "message": "pdf_source must be a file path or dict with 'path' key",
+            }
         if not field_values:
             return {"status": "error", "message": "field_values must be a non-empty dict"}
 
@@ -123,7 +126,11 @@ async def pdf_generate_zkp_certificate(
             "public_inputs": certificate.public_inputs,
             "message": (
                 f"ZKP certificate generated for form {kg.form_id}. "
-                + ("⚠️  SIMULATED proof — not cryptographically secure." if certificate.is_simulated else "✅ Groth16 proof.")
+                + (
+                    "⚠️  SIMULATED proof — not cryptographically secure."
+                    if certificate.is_simulated
+                    else "✅ Groth16 proof."
+                )
             ),
         }
 

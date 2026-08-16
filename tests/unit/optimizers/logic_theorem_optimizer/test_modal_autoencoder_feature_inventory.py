@@ -292,10 +292,9 @@ def test_inventory_reconciles_dispositions_and_signed_signal() -> None:
     assert omitted["absolute_signal_mass"] == 4.0
     assert omitted["activation_frequency"] == 1.0
     assert omitted["value_activation_frequency"] == 0.5
-    assert sum(
-        value["row_count"]
-        for value in inventory["omitted_by_semantic_family"].values()
-    ) == 1
+    assert (
+        sum(value["row_count"] for value in inventory["omitted_by_semantic_family"].values()) == 1
+    )
 
 
 def test_inventory_covers_every_capacity_field_exactly_once() -> None:
@@ -313,11 +312,7 @@ def test_inventory_covers_every_capacity_field_exactly_once() -> None:
             overridden_rows=0,
         ),
     )
-    observed = [
-        field["field"]
-        for group in inventory["groups"]
-        for field in group["fields"]
-    ]
+    observed = [field["field"] for group in inventory["groups"] for field in group["fields"]]
     expected = [
         field
         for fields in MODAL_AUTOENCODER_GENERALIZABLE_CAPACITY_GROUPS.values()
@@ -360,12 +355,8 @@ def test_inventory_fails_closed_on_incompatible_dimensions_and_nonfinite_values(
     )
     with pytest.raises(LegacyFeatureInventoryError, match="incompatible"):
         build_legacy_feature_inventory(
-            ModalAutoencoderTrainingState(
-                feature_embedding_weights={"shared": [1.0, 2.0]}
-            ),
-            ModalAutoencoderTrainingState(
-                feature_embedding_weights={"shared": [1.0]}
-            ),
+            ModalAutoencoderTrainingState(feature_embedding_weights={"shared": [1.0, 2.0]}),
+            ModalAutoencoderTrainingState(feature_embedding_weights={"shared": [1.0]}),
             report,
             canary,
             artifact_bindings=_HASHES,

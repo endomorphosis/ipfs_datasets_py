@@ -4,11 +4,13 @@ Test stubs for data_provenance_enhanced module.
 Feature: Data Provenance Enhanced
   Enhanced data provenance tracking capabilities
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_provenance_record():
@@ -74,6 +76,7 @@ def provenance_records():
 
 
 # Test scenarios
+
 
 def test_track_finegrained_provenance():
     """
@@ -164,6 +167,7 @@ def test_track_provenance_permissions():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a provenance record")
@@ -327,4 +331,3 @@ def provenance_is_linked_across_systems():
     """Step: Then provenance is linked across systems"""
     # TODO: Implement step
     pass
-

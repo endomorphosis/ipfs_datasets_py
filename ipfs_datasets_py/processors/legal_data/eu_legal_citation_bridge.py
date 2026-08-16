@@ -116,7 +116,17 @@ EU_MULTILINGUAL_LEGAL_SYNONYMS: Dict[str, str] = {
 _DEONTIC_KEYWORDS: Dict[str, Sequence[str]] = {
     "obligation": ("must", "shall", "required", "moet", "dient", "doit", "muss", "debe", "deve"),
     "permission": ("may", "allowed", "mag", "peut", "darf", "puede", "pode"),
-    "prohibition": ("forbidden", "prohibited", "shall not", "must not", "verboden", "interdit", "verboten", "prohibido", "proibido"),
+    "prohibition": (
+        "forbidden",
+        "prohibited",
+        "shall not",
+        "must not",
+        "verboden",
+        "interdit",
+        "verboten",
+        "prohibido",
+        "proibido",
+    ),
 }
 
 
@@ -276,7 +286,9 @@ EU_JURISDICTION_PROFILES: Dict[str, EUJurisdictionProfile] = {
             "permission": ["mag"],
             "prohibition": ["verboden", "mag niet"],
         },
-        notes=["Dutch legislation is best anchored through BWBR/BWB identifiers and artikelen in the BW."],
+        notes=[
+            "Dutch legislation is best anchored through BWBR/BWB identifiers and artikelen in the BW."
+        ],
     ),
     "DE": EUJurisdictionProfile(
         code="DE",
@@ -352,7 +364,9 @@ def _profiles_for_citations(citations: Sequence[EULegalCitation]) -> List[EUJuri
             codes.add(citation.member_state)
         elif citation.jurisdiction in EU_JURISDICTION_PROFILES:
             codes.add(citation.jurisdiction)
-    return [EU_JURISDICTION_PROFILES[code] for code in sorted(codes) if code in EU_JURISDICTION_PROFILES]
+    return [
+        EU_JURISDICTION_PROFILES[code] for code in sorted(codes) if code in EU_JURISDICTION_PROFILES
+    ]
 
 
 def build_eu_lookup_action_for_citation(
@@ -532,7 +546,9 @@ async def build_eu_legal_resolution_bundle(
     lookup_result: Optional[EULegalCitationLookupResult] = None
     if execute_lookup:
         handlers = lookup_handlers or build_default_eu_lookup_handlers(tool_version=tool_version)
-        lookup_result = await execute_eu_legal_citation_lookup_plan(lookup_plan, lookup_handlers=handlers)
+        lookup_result = await execute_eu_legal_citation_lookup_plan(
+            lookup_plan, lookup_handlers=handlers
+        )
     return EULegalResolutionBundle(
         reasoning_bundle=reasoning_bundle,
         lookup_plan=lookup_plan,
@@ -557,7 +573,9 @@ def _fetch_url_metadata(url: str, *, timeout: float = 10.0, label: str = "http")
         return {"resolved": False, "url": url, "error": "requests_unavailable", "handler": label}
 
     try:
-        response = requests.get(url, timeout=timeout, headers={"User-Agent": "ipfs-datasets-eu-bridge/1.0"})
+        response = requests.get(
+            url, timeout=timeout, headers={"User-Agent": "ipfs-datasets-eu-bridge/1.0"}
+        )
         status = response.status_code
         title = ""
         if response.text:
@@ -639,12 +657,23 @@ def _fetch_rechtspraak_ecli_metadata(ecli: str, *, timeout: float = 10.0) -> Dic
     params = {"id": ecli}
     params["return"] = "META"
     try:
-        response = requests.get(base_url, params=params, timeout=timeout, headers={"User-Agent": "ipfs-datasets-eu-bridge/1.0"})
+        response = requests.get(
+            base_url,
+            params=params,
+            timeout=timeout,
+            headers={"User-Agent": "ipfs-datasets-eu-bridge/1.0"},
+        )
         status = response.status_code
         text = response.text or ""
-        title_match = re.search(r"<dcterms:title[^>]*>(.*?)</dcterms:title>", text, re.IGNORECASE | re.DOTALL)
-        issued_match = re.search(r"<dcterms:issued[^>]*>(.*?)</dcterms:issued>", text, re.IGNORECASE | re.DOTALL)
-        creator_match = re.search(r"<dcterms:creator[^>]*>(.*?)</dcterms:creator>", text, re.IGNORECASE | re.DOTALL)
+        title_match = re.search(
+            r"<dcterms:title[^>]*>(.*?)</dcterms:title>", text, re.IGNORECASE | re.DOTALL
+        )
+        issued_match = re.search(
+            r"<dcterms:issued[^>]*>(.*?)</dcterms:issued>", text, re.IGNORECASE | re.DOTALL
+        )
+        creator_match = re.search(
+            r"<dcterms:creator[^>]*>(.*?)</dcterms:creator>", text, re.IGNORECASE | re.DOTALL
+        )
         title = _normalize_space(title_match.group(1)) if title_match else ""
         issued = _normalize_space(issued_match.group(1)) if issued_match else ""
         creator = _normalize_space(creator_match.group(1)) if creator_match else ""
@@ -726,7 +755,11 @@ def register_fr_judilibre_ecli_resolver(
     resolved_key_id = str(key_id or os.getenv("JUDILIBRE_KEY_ID") or "").strip()
     if not resolved_key_id:
         return
-    resolved_base = base_url or os.getenv("JUDILIBRE_BASE_URL") or "https://sandbox-api.piste.gouv.fr/cassation/judilibre/v1.0"
+    resolved_base = (
+        base_url
+        or os.getenv("JUDILIBRE_BASE_URL")
+        or "https://sandbox-api.piste.gouv.fr/cassation/judilibre/v1.0"
+    )
 
     def _resolver(ecli: str) -> Dict[str, Any]:
         return _fetch_judilibre_ecli_metadata(
@@ -789,7 +822,9 @@ def register_de_openlegaldata_ecli_resolver(
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
 ) -> None:
-    resolved_base = base_url or os.getenv("OPENLEGALDATA_API_BASE_URL") or "https://de.openlegaldata.io/api"
+    resolved_base = (
+        base_url or os.getenv("OPENLEGALDATA_API_BASE_URL") or "https://de.openlegaldata.io/api"
+    )
     resolved_key = api_key or os.getenv("OPENLEGALDATA_API_KEY") or os.getenv("OLDP_API_KEY")
 
     def _resolver(ecli: str) -> Dict[str, Any]:
@@ -822,7 +857,12 @@ def _fetch_ecli_http_metadata(
         }
 
     try:
-        response = requests.get(base_url, params=params, timeout=timeout, headers={"User-Agent": "ipfs-datasets-eu-bridge/1.0"})
+        response = requests.get(
+            base_url,
+            params=params,
+            timeout=timeout,
+            headers={"User-Agent": "ipfs-datasets-eu-bridge/1.0"},
+        )
         status = response.status_code
         text = response.text or ""
 
@@ -907,7 +947,9 @@ def build_default_eu_lookup_handlers(
             "language": action.parameters.get("language"),
             "member_state": action.parameters.get("member_state"),
         }
-        return await search_netherlands_law_corpus_from_parameters(params, tool_version=tool_version)
+        return await search_netherlands_law_corpus_from_parameters(
+            params, tool_version=tool_version
+        )
 
     async def _eurlex_handler(action: EULegalCitationLookupAction) -> Dict[str, Any]:
         url = action.query_text or action.citation.canonical_uri
@@ -958,7 +1000,10 @@ def build_default_eu_lookup_handlers(
 
     async def _canonical_corpus_handler(action: EULegalCitationLookupAction) -> Dict[str, Any]:
         try:
-            from .justicedao_dataset_inventory import canonical_corpus_query_result_to_dict, query_canonical_legal_corpus
+            from .justicedao_dataset_inventory import (
+                canonical_corpus_query_result_to_dict,
+                query_canonical_legal_corpus,
+            )
         except Exception:
             return {
                 "resolved": False,
@@ -1031,10 +1076,14 @@ def _canonicalize_eu_identifier(
     normalized_value = _normalize_space(value)
     scheme_upper = str(scheme or "").upper()
     if scheme_upper == "CELEX":
-        canonical_uri = f"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:{normalized_value}"
+        canonical_uri = (
+            f"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:{normalized_value}"
+        )
         jurisdiction = "EU"
     elif scheme_upper == "ELI":
-        canonical_uri = normalized_value if normalized_value.startswith("http") else f"eli:{normalized_value}"
+        canonical_uri = (
+            normalized_value if normalized_value.startswith("http") else f"eli:{normalized_value}"
+        )
         jurisdiction = "EU"
     elif scheme_upper == "ECLI":
         canonical_uri = f"ecli:{normalized_value}"
@@ -1044,11 +1093,15 @@ def _canonicalize_eu_identifier(
         jurisdiction = "NL"
         member_state = "NL"
     elif scheme_upper == "NL_BW_ARTICLE":
-        canonical_uri = f"https://wetten.overheid.nl/jci1.3:c:BWBR0005289&artikel={normalized_value}"
+        canonical_uri = (
+            f"https://wetten.overheid.nl/jci1.3:c:BWBR0005289&artikel={normalized_value}"
+        )
         jurisdiction = "NL"
         member_state = "NL"
     elif scheme_upper == "DE_GG_ARTICLE":
-        canonical_uri = f"https://www.gesetze-im-internet.de/gg/art_{normalized_value.split()[0]}.html"
+        canonical_uri = (
+            f"https://www.gesetze-im-internet.de/gg/art_{normalized_value.split()[0]}.html"
+        )
         jurisdiction = "DE"
         member_state = "DE"
     elif scheme_upper == "FR_CC_ARTICLE":
@@ -1056,7 +1109,9 @@ def _canonicalize_eu_identifier(
         jurisdiction = "FR"
         member_state = "FR"
     elif scheme_upper == "ES_CC_ARTICLE":
-        canonical_uri = f"https://www.boe.es/buscar/act.php?id=BOE-A-1889-4763#art{normalized_value.split()[0]}"
+        canonical_uri = (
+            f"https://www.boe.es/buscar/act.php?id=BOE-A-1889-4763#art{normalized_value.split()[0]}"
+        )
         jurisdiction = "ES"
         member_state = "ES"
     else:
@@ -1072,7 +1127,9 @@ def _canonicalize_eu_identifier(
     )
 
 
-def extract_eu_legal_citations(text: str, *, language: Optional[str] = None) -> List[EULegalCitation]:
+def extract_eu_legal_citations(
+    text: str, *, language: Optional[str] = None
+) -> List[EULegalCitation]:
     content = str(text or "")
     citations: List[EULegalCitation] = []
     seen: set[tuple[str, str]] = set()
@@ -1113,16 +1170,35 @@ def extract_eu_legal_citations(text: str, *, language: Optional[str] = None) -> 
         )
 
     for match in _CELEX_RE.finditer(content):
-        _append(match.group("value"), scheme="CELEX", citation_type="eu_legislation", jurisdiction="EU")
+        _append(
+            match.group("value"), scheme="CELEX", citation_type="eu_legislation", jurisdiction="EU"
+        )
     for match in _ELI_URL_RE.finditer(content):
-        _append(match.group("value"), scheme="ELI", citation_type="eu_or_member_state_legislation", jurisdiction="EU")
+        _append(
+            match.group("value"),
+            scheme="ELI",
+            citation_type="eu_or_member_state_legislation",
+            jurisdiction="EU",
+        )
     for match in _ECLI_RE.finditer(content):
         raw = match.group("value")
         parts = raw.split(":")
         member_state = parts[1] if len(parts) > 1 else None
-        _append(raw, scheme="ECLI", citation_type="case_law", jurisdiction=member_state or "EU", member_state=member_state)
+        _append(
+            raw,
+            scheme="ECLI",
+            citation_type="case_law",
+            jurisdiction=member_state or "EU",
+            member_state=member_state,
+        )
     for match in _BWB_RE.finditer(content):
-        _append(match.group("value").upper(), scheme="BWB", citation_type="member_state_legislation", jurisdiction="NL", member_state="NL")
+        _append(
+            match.group("value").upper(),
+            scheme="BWB",
+            citation_type="member_state_legislation",
+            jurisdiction="NL",
+            member_state="NL",
+        )
     for match in _DUTCH_BW_ARTICLE_RE.finditer(content):
         article = match.group("article")
         code = match.group("code").upper()
@@ -1136,7 +1212,9 @@ def extract_eu_legal_citations(text: str, *, language: Optional[str] = None) -> 
         )
     for match in _GERMAN_GG_ARTICLE_RE.finditer(content):
         article = match.group("article")
-        paragraph = _normalize_german_paragraph_token(match.group("paragraph") or match.group("paragraph_roman"))
+        paragraph = _normalize_german_paragraph_token(
+            match.group("paragraph") or match.group("paragraph_roman")
+        )
         code = "GG"
         normalized = f"{article} abs {paragraph} {code}" if paragraph else f"{article} {code}"
         _append(
@@ -1149,7 +1227,9 @@ def extract_eu_legal_citations(text: str, *, language: Optional[str] = None) -> 
         )
     for match in _GERMAN_GG_ARTICLE_REVERSED_RE.finditer(content):
         article = match.group("article")
-        paragraph = _normalize_german_paragraph_token(match.group("paragraph") or match.group("paragraph_roman"))
+        paragraph = _normalize_german_paragraph_token(
+            match.group("paragraph") or match.group("paragraph_roman")
+        )
         code = "GG"
         normalized = f"{article} abs {paragraph} {code}" if paragraph else f"{article} {code}"
         _append(
@@ -1238,7 +1318,10 @@ def _first_keyword_from_map(
 
 
 def _canonicalize_phrase(phrase: str, normalizer: SemanticNormalizer) -> str:
-    tokens = [normalizer.normalize_term(token) for token in re.findall(r"[A-Za-zÀ-ÿ0-9:_-]+", phrase.lower())]
+    tokens = [
+        normalizer.normalize_term(token)
+        for token in re.findall(r"[A-Za-zÀ-ÿ0-9:_-]+", phrase.lower())
+    ]
     return "_".join(token for token in tokens if token) or "unspecified"
 
 
@@ -1251,7 +1334,9 @@ def extract_eu_deontic_norms(
     extra_synonyms: Optional[Dict[str, str]] = None,
 ) -> List[EULegalNorm]:
     synonym_map = dict(EU_MULTILINGUAL_LEGAL_SYNONYMS)
-    keyword_map: Dict[str, List[str]] = {key: list(values) for key, values in _DEONTIC_KEYWORDS.items()}
+    keyword_map: Dict[str, List[str]] = {
+        key: list(values) for key, values in _DEONTIC_KEYWORDS.items()
+    }
     for code in list(profile_codes or []):
         profile = EU_JURISDICTION_PROFILES.get(str(code))
         if profile is not None:
@@ -1274,7 +1359,11 @@ def extract_eu_deontic_norms(
         if modality is None:
             continue
         keyword = _first_keyword_from_map(modality, clean, keyword_map)
-        parts = re.split(re.escape(keyword), clean, maxsplit=1, flags=re.IGNORECASE) if keyword else [clean]
+        parts = (
+            re.split(re.escape(keyword), clean, maxsplit=1, flags=re.IGNORECASE)
+            if keyword
+            else [clean]
+        )
         actor_text = _normalize_space(parts[0]) or "unspecified_actor"
         action_text = _normalize_space(parts[1]) if len(parts) > 1 else clean
         norms.append(
@@ -1337,7 +1426,9 @@ def build_eu_deontic_cognitive_event_calculus(
     assertions: List[str] = []
     for norm in norms:
         event = f"norm_event({norm.id})"
-        assertions.append(f"Initiates({event}, {norm.modality}({norm.actor_canonical}, {norm.action_canonical}), t_document)")
+        assertions.append(
+            f"Initiates({event}, {norm.modality}({norm.actor_canonical}, {norm.action_canonical}), t_document)"
+        )
         assertions.append(f"HoldsAt(authority_basis({norm.id}), t_document)")
     return assertions
 
@@ -1402,7 +1493,10 @@ def build_eu_deontic_graph(
                 predicate=norm.action_canonical,
                 active=True,
                 confidence=0.8,
-                authority_ids=[f"authority_{_slug(citation.scheme)}_{_slug(citation.normalized_text)}" for citation in citations],
+                authority_ids=[
+                    f"authority_{_slug(citation.scheme)}_{_slug(citation.normalized_text)}"
+                    for citation in citations
+                ],
                 evidence_ids=[citation.canonical_uri for citation in citations],
                 attributes={
                     "sentence_text": norm.sentence_text,
@@ -1439,9 +1533,24 @@ def build_eu_knowledge_graph(
         action_node_id = f"action_{norm.action_canonical}"
         nodes.extend(
             [
-                {"id": norm_node_id, "type": "norm", "label": norm.sentence_text, "modality": norm.modality},
-                {"id": actor_node_id, "type": "actor", "label": norm.actor_text, "canonical": norm.actor_canonical},
-                {"id": action_node_id, "type": "action", "label": norm.action_text, "canonical": norm.action_canonical},
+                {
+                    "id": norm_node_id,
+                    "type": "norm",
+                    "label": norm.sentence_text,
+                    "modality": norm.modality,
+                },
+                {
+                    "id": actor_node_id,
+                    "type": "actor",
+                    "label": norm.actor_text,
+                    "canonical": norm.actor_canonical,
+                },
+                {
+                    "id": action_node_id,
+                    "type": "action",
+                    "label": norm.action_text,
+                    "canonical": norm.action_canonical,
+                },
             ]
         )
         edges.extend(
@@ -1451,8 +1560,12 @@ def build_eu_knowledge_graph(
             ]
         )
         for citation in citations:
-            citation_node_id = f"citation_{_slug(citation.scheme)}_{_slug(citation.normalized_text)}"
-            edges.append({"source": citation_node_id, "target": norm_node_id, "predicate": "authorizes"})
+            citation_node_id = (
+                f"citation_{_slug(citation.scheme)}_{_slug(citation.normalized_text)}"
+            )
+            edges.append(
+                {"source": citation_node_id, "target": norm_node_id, "predicate": "authorizes"}
+            )
     return {
         "nodes": nodes,
         "edges": edges,

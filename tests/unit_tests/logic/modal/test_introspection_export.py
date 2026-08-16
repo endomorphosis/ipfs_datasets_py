@@ -162,7 +162,9 @@ def test_export_introspection_packet_is_compact_deterministic_and_complete():
     assert payload["versions"]["config_version"]
     assert payload["sample_hashes"]["sample_id"] == sample.sample_id
     assert payload["sample_hashes"]["source_span_hashes"]
-    assert payload["legal_ir_views"]["canonical"]["modal_ir_hash"] == sample.modal_ir.canonical_hash()
+    assert (
+        payload["legal_ir_views"]["canonical"]["modal_ir_hash"] == sample.modal_ir.canonical_hash()
+    )
     assert payload["legal_ir_views"]["predicted"]["predicted_family"] == "temporal"
     assert payload["per_family_gaps"][0]["family"] in {"deontic", "temporal"}
     assert payload["compiler_round_trip_gaps"]["source_decompiled_text_token_loss"] == 0.44
@@ -243,9 +245,7 @@ def test_export_packet_accepts_production_context_and_appends_jsonl(tmp_path):
         introspection,
         compiler_guidance={
             "legal_ir_view_gap_distribution": {"deontic.ir": 0.4},
-            "ranked_guidance_features": [
-                {"feature": "compiler-contract:notice", "score": 0.7}
-            ],
+            "ranked_guidance_features": [{"feature": "compiler-contract:notice", "score": 0.7}],
         },
         compiler_metrics={
             "compiler_guidance_applied": True,
@@ -366,15 +366,17 @@ def test_export_packet_includes_compact_causal_feature_attribution():
     assert validate_disagreement_packet(packet) == []
     assert payload["evidence_hashes"]["causal_feature_attribution_hash"]
     assert attribution["sample_memory_used"] is False
-    assert attribution["feature_group_ablations"]["compiler-contract"][
-        "removed_feature_count"
-    ] == 3
-    assert attribution["feature_group_ablations"]["compiler-contract"][
-        "metric_delta"
-    ]["compiler_ir_cross_entropy_loss"] == 0.31
-    assert attribution["legal_minimal_pair_probes"]["compiler-contract"][
-        "pair_sample_hash"
-    ] == "pair-hash"
+    assert attribution["feature_group_ablations"]["compiler-contract"]["removed_feature_count"] == 3
+    assert (
+        attribution["feature_group_ablations"]["compiler-contract"]["metric_delta"][
+            "compiler_ir_cross_entropy_loss"
+        ]
+        == 0.31
+    )
+    assert (
+        attribution["legal_minimal_pair_probes"]["compiler-contract"]["pair_sample_hash"]
+        == "pair-hash"
+    )
     encoded = packet_to_json(packet)
     assert "ablated_metrics" not in encoded
     assert "decoded_embedding" not in encoded

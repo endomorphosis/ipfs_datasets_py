@@ -4,6 +4,7 @@ Tests for security_tools tool category.
 Tests cover:
 - check_access_permission: verify user permission for a resource
 """
+
 import pytest
 
 from ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission import (

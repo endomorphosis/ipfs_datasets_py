@@ -49,18 +49,21 @@ def test_python_migration_dry_run(sample_file):
     """Test Python migration script in dry-run mode."""
     # GIVEN a file with old imports
     assert "cross_document_lineage" in sample_file.read_text()
-    
+
     # WHEN running migration in dry-run mode
-    script = Path(__file__).parent.parent.parent.parent / "scripts" / "migration" / "migrate_lineage_imports.py"
-    result = subprocess.run(
-        [sys.executable, str(script), "--dry-run", str(sample_file)],
-        capture_output=True,
-        text=True
+    script = (
+        Path(__file__).parent.parent.parent.parent
+        / "scripts"
+        / "migration"
+        / "migrate_lineage_imports.py"
     )
-    
+    result = subprocess.run(
+        [sys.executable, str(script), "--dry-run", str(sample_file)], capture_output=True, text=True
+    )
+
     # THEN it should succeed
     assert result.returncode == 0
-    
+
     # THEN file should not be modified
     assert "cross_document_lineage" in sample_file.read_text()
 
@@ -70,22 +73,25 @@ def test_python_migration_single_file(sample_file):
     # GIVEN a file with old imports
     original_content = sample_file.read_text()
     assert "cross_document_lineage" in original_content
-    
+
     # WHEN running migration
-    script = Path(__file__).parent.parent.parent.parent / "scripts" / "migration" / "migrate_lineage_imports.py"
-    result = subprocess.run(
-        [sys.executable, str(script), "--verbose", str(sample_file)],
-        capture_output=True,
-        text=True
+    script = (
+        Path(__file__).parent.parent.parent.parent
+        / "scripts"
+        / "migration"
+        / "migrate_lineage_imports.py"
     )
-    
+    result = subprocess.run(
+        [sys.executable, str(script), "--verbose", str(sample_file)], capture_output=True, text=True
+    )
+
     # THEN it should succeed
     assert result.returncode == 0
-    
+
     # THEN file should be modified
     new_content = sample_file.read_text()
     assert "from ipfs_datasets_py.knowledge_graphs.lineage import" in new_content
-    
+
     # THEN backup should exist
     backup_file = Path(str(sample_file) + ".backup")
     assert backup_file.exists()

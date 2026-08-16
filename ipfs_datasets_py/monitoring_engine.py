@@ -17,6 +17,7 @@ from enum import Enum
 
 try:
     import psutil
+
     HAVE_PSUTIL = True
 except ImportError:
     psutil = None  # type: ignore[assignment]
@@ -89,7 +90,7 @@ class Alert:
 
 class SystemHealthDict(TypedDict, total=False):
     """System health check result (uptime, process count)."""
-    
+
     status: str
     uptime_hours: float
     boot_time: str
@@ -100,7 +101,7 @@ class SystemHealthDict(TypedDict, total=False):
 
 class MemoryHealthDict(TypedDict, total=False):
     """Memory health check result (usage %, available GB, total GB)."""
-    
+
     status: str
     usage_percent: float
     available_gb: float
@@ -111,7 +112,7 @@ class MemoryHealthDict(TypedDict, total=False):
 
 class CPUHealthDict(TypedDict, total=False):
     """CPU health check result (usage %, count, load average)."""
-    
+
     status: str
     usage_percent: float
     count: int
@@ -122,7 +123,7 @@ class CPUHealthDict(TypedDict, total=False):
 
 class DiskHealthDict(TypedDict, total=False):
     """Disk health check result (usage %, free GB, total GB)."""
-    
+
     status: str
     usage_percent: float
     free_gb: float
@@ -133,7 +134,7 @@ class DiskHealthDict(TypedDict, total=False):
 
 class NetworkHealthDict(TypedDict, total=False):
     """Network I/O counters.
-    
+
     Fields:
         status: Health status (healthy/warning/critical)
         bytes_sent: Bytes sent over network
@@ -143,7 +144,7 @@ class NetworkHealthDict(TypedDict, total=False):
         note: Optional note when unavailable
         error: Error message if check failed
     """
-    
+
     status: str
     bytes_sent: int
     bytes_recv: int
@@ -155,7 +156,7 @@ class NetworkHealthDict(TypedDict, total=False):
 
 class ServicesHealthDict(TypedDict, total=False):
     """Services health aggregation result.
-    
+
     Fields:
         status: Overall health status
         services: Dict mapping service names to health status
@@ -163,7 +164,7 @@ class ServicesHealthDict(TypedDict, total=False):
         total_services: Total service count
         error: Error message if check failed
     """
-    
+
     status: str
     services: Dict[str, str]
     healthy_services: int
@@ -173,7 +174,7 @@ class ServicesHealthDict(TypedDict, total=False):
 
 class EmbeddingsHealthDict(TypedDict, total=False):
     """Embeddings service health status.
-    
+
     Fields:
         status: Health status
         active_models: Number of active embedding models
@@ -182,7 +183,7 @@ class EmbeddingsHealthDict(TypedDict, total=False):
         cache_hit_rate: Cache hit rate percentage
         error: Error message if check failed
     """
-    
+
     status: str
     active_models: int
     endpoints_available: int
@@ -193,7 +194,7 @@ class EmbeddingsHealthDict(TypedDict, total=False):
 
 class VectorStoresHealthDict(TypedDict, total=False):
     """Vector store health status.
-    
+
     Fields:
         status: Overall health status
         stores: Dict of vector store health info
@@ -201,7 +202,7 @@ class VectorStoresHealthDict(TypedDict, total=False):
         healthy_stores: Count of healthy stores
         error: Error message if check failed
     """
-    
+
     status: str
     stores: Dict[str, Any]
     total_stores: int
@@ -211,7 +212,7 @@ class VectorStoresHealthDict(TypedDict, total=False):
 
 class ServiceStatusDict(TypedDict, total=False):
     """Individual service status check result.
-    
+
     Fields:
         status: Service health status
         response_time: Response time in milliseconds
@@ -219,7 +220,7 @@ class ServiceStatusDict(TypedDict, total=False):
         last_check: ISO timestamp of last check
         error: Error message if check failed
     """
-    
+
     status: str
     response_time: float
     message: str
@@ -229,7 +230,7 @@ class ServiceStatusDict(TypedDict, total=False):
 
 class PerformanceMetricsDict(TypedDict, total=False):
     """Current performance metrics snapshot.
-    
+
     Fields:
         cpu_usage: CPU usage percentage
         memory_usage: Memory usage percentage
@@ -239,7 +240,7 @@ class PerformanceMetricsDict(TypedDict, total=False):
         note: Note when unavailable
         error: Error message if retrieval failed
     """
-    
+
     cpu_usage: float
     memory_usage: float
     disk_usage: float
@@ -251,7 +252,7 @@ class PerformanceMetricsDict(TypedDict, total=False):
 
 class HealthCheckResultDict(TypedDict, total=False):
     """Comprehensive health check result.
-    
+
     Fields:
         overall_status: Overall system health status
         timestamp: Check timestamp in ISO format
@@ -260,7 +261,7 @@ class HealthCheckResultDict(TypedDict, total=False):
         checks_performed: List of checks that were performed
         service_health: List of service health dicts
     """
-    
+
     overall_status: str
     timestamp: str
     system_metrics: Dict[str, Any]
@@ -298,10 +299,14 @@ class MockMonitoringService:
         if not HAVE_PSUTIL:
             return SystemMetrics(
                 timestamp=datetime.now(),
-                cpu_usage_percent=0.0, memory_usage_percent=0.0,
-                disk_usage_percent=0.0, network_io_bytes_sent=0,
-                network_io_bytes_recv=0, disk_io_read_bytes=0,
-                disk_io_write_bytes=0, load_average=[0.0, 0.0, 0.0],
+                cpu_usage_percent=0.0,
+                memory_usage_percent=0.0,
+                disk_usage_percent=0.0,
+                network_io_bytes_sent=0,
+                network_io_bytes_recv=0,
+                disk_io_read_bytes=0,
+                disk_io_write_bytes=0,
+                load_average=[0.0, 0.0, 0.0],
                 uptime_seconds=0.0,
             )
         return SystemMetrics(
@@ -317,9 +322,7 @@ class MockMonitoringService:
             uptime_seconds=time.time() - psutil.boot_time(),
         )
 
-    async def get_service_metrics(
-        self, service_name: Optional[str] = None
-    ) -> List[ServiceMetrics]:
+    async def get_service_metrics(self, service_name: Optional[str] = None) -> List[ServiceMetrics]:
         """Get service-specific metrics."""
         if service_name and service_name not in self.services:
             raise ValueError(f"Unknown service: {service_name}")
@@ -360,9 +363,7 @@ class MockMonitoringService:
 
         if system_metrics.memory_usage_percent > self.thresholds["memory_usage_critical"]:
             health_status = HealthStatus.CRITICAL
-            issues.append(
-                f"Memory usage critical: {system_metrics.memory_usage_percent:.1f}%"
-            )
+            issues.append(f"Memory usage critical: {system_metrics.memory_usage_percent:.1f}%")
         elif system_metrics.memory_usage_percent > self.thresholds["memory_usage_warning"]:
             if health_status == HealthStatus.HEALTHY:
                 health_status = HealthStatus.WARNING
@@ -399,9 +400,7 @@ class MockMonitoringService:
                     )
                 elif svc_metrics.response_time_ms > self.thresholds["response_time_warning"]:
                     svc_status = HealthStatus.WARNING
-                    svc_issues.append(
-                        f"Response time high: {svc_metrics.response_time_ms:.1f}ms"
-                    )
+                    svc_issues.append(f"Response time high: {svc_metrics.response_time_ms:.1f}ms")
 
                 service_health.append(
                     {
@@ -530,6 +529,7 @@ class MockMonitoringService:
 # Psutil-based health-check helpers — shared with monitoring_tools.py
 # ---------------------------------------------------------------------------
 
+
 async def _check_system_health() -> SystemHealthDict:
     """Return overall system health (uptime, process count)."""
     if not HAVE_PSUTIL:
@@ -562,8 +562,8 @@ async def _check_memory_health() -> MemoryHealthDict:
         return {
             "status": status,
             "usage_percent": mem.percent,
-            "available_gb": round(mem.available / (1024 ** 3), 2),
-            "total_gb": round(mem.total / (1024 ** 3), 2),
+            "available_gb": round(mem.available / (1024**3), 2),
+            "total_gb": round(mem.total / (1024**3), 2),
         }
     except Exception as exc:
         return {"status": "error", "error": str(exc)}
@@ -607,8 +607,8 @@ async def _check_disk_health() -> DiskHealthDict:
         return {
             "status": status,
             "usage_percent": round(pct, 2),
-            "free_gb": round(disk.free / (1024 ** 3), 2),
-            "total_gb": round(disk.total / (1024 ** 3), 2),
+            "free_gb": round(disk.free / (1024**3), 2),
+            "total_gb": round(disk.total / (1024**3), 2),
         }
     except Exception as exc:
         return {"status": "error", "error": str(exc)}
@@ -695,6 +695,7 @@ async def _check_service_status(service_name: str) -> ServiceStatusDict:
     try:
         import anyio
         import time as _time
+
         start = _time.time()
         await anyio.sleep(0.01)  # Simulate network delay
         response_ms = (_time.time() - start) * 1000
@@ -755,9 +756,7 @@ async def _generate_health_recommendations(health_results: Dict[str, Any]) -> Li
                 if component == "memory" and pct > 80:
                     recommendations.append("Warning: Memory usage above 80%. Monitor closely.")
                 elif component == "cpu" and pct > 85:
-                    recommendations.append(
-                        "Warning: CPU usage above 85%. Consider load balancing."
-                    )
+                    recommendations.append("Warning: CPU usage above 85%. Consider load balancing.")
 
         if health_results.get("health_score", 100) < 80:
             recommendations.append(
@@ -813,8 +812,18 @@ async def health_check(
 ) -> Dict[str, Any]:
     """Perform system health checks and return consolidated status."""
     from datetime import datetime as _dt
+
     timestamp = _dt.now()
-    all_components = ["system", "memory", "cpu", "disk", "network", "services", "embeddings", "vector_stores"]
+    all_components = [
+        "system",
+        "memory",
+        "cpu",
+        "disk",
+        "network",
+        "services",
+        "embeddings",
+        "vector_stores",
+    ]
     if check_type == "basic":
         components_to_check = ["system", "memory", "cpu", "services"]
     elif check_type == "all":
@@ -855,13 +864,18 @@ async def health_check(
     if include_metrics:
         health_results["metrics_summary"] = await _get_performance_metrics()
     # Persist to shared store
-    METRICS_STORAGE["system_metrics"].append({
-        "timestamp": timestamp.isoformat(),
-        "overall_status": health_results["overall_status"],
-        "health_score": 1.0 if health_results["overall_status"] == "healthy" else 0.5,
-    })
-    return {"success": True, "health_check": health_results,
-            "recommendations": await _generate_health_recommendations(health_results)}
+    METRICS_STORAGE["system_metrics"].append(
+        {
+            "timestamp": timestamp.isoformat(),
+            "overall_status": health_results["overall_status"],
+            "health_score": 1.0 if health_results["overall_status"] == "healthy" else 0.5,
+        }
+    )
+    return {
+        "success": True,
+        "health_check": health_results,
+        "recommendations": await _generate_health_recommendations(health_results),
+    }
 
 
 async def get_performance_metrics(
@@ -871,6 +885,7 @@ async def get_performance_metrics(
 ) -> Dict[str, Any]:
     """Get current system performance metrics."""
     from datetime import datetime as _dt
+
     timestamp = _dt.now()
     if not metric_types:
         metric_types = ["cpu", "memory", "disk", "network", "system"]
@@ -881,10 +896,12 @@ async def get_performance_metrics(
         "current_metrics": {mt: raw.get(mt, {"status": "unavailable"}) for mt in metric_types},
         "summary": raw.get("summary", {}),
     }
-    METRICS_STORAGE["performance_metrics"].append({
-        "timestamp": timestamp.isoformat(),
-        "metrics": metrics["current_metrics"],
-    })
+    METRICS_STORAGE["performance_metrics"].append(
+        {
+            "timestamp": timestamp.isoformat(),
+            "metrics": metrics["current_metrics"],
+        }
+    )
     return {"success": True, "performance_metrics": metrics}
 
 
@@ -894,8 +911,15 @@ async def monitor_services(
 ) -> Dict[str, Any]:
     """Monitor specific services and return health status."""
     from datetime import datetime as _dt
+
     timestamp = _dt.now()
-    default_services = ["embedding_service", "vector_store", "ipfs_node", "mcp_server", "cache_service"]
+    default_services = [
+        "embedding_service",
+        "vector_store",
+        "ipfs_node",
+        "mcp_server",
+        "cache_service",
+    ]
     services = services or default_services
     service_statuses: Dict[str, Any] = {}
     for service in services:
@@ -927,6 +951,7 @@ async def generate_monitoring_report(
 ) -> Dict[str, Any]:
     """Generate a consolidated monitoring report from in-process metrics store."""
     from datetime import datetime as _dt, timedelta as _td
+
     timestamp = _dt.now()
     _period_map = {"1h": _td(hours=1), "6h": _td(hours=6), "24h": _td(hours=24), "7d": _td(days=7)}
     start_time = timestamp - _period_map.get(time_period, _td(hours=24))
@@ -938,30 +963,43 @@ async def generate_monitoring_report(
         "end_time": timestamp.isoformat(),
     }
     if report_type in ("summary", "detailed"):
-        recent = [m for m in METRICS_STORAGE["system_metrics"]
-                  if _dt.fromisoformat(m["timestamp"]) >= start_time]
+        recent = [
+            m
+            for m in METRICS_STORAGE["system_metrics"]
+            if _dt.fromisoformat(m["timestamp"]) >= start_time
+        ]
         if recent:
             report["health_summary"] = {
-                "average_health_score": round(sum(m["health_score"] for m in recent) / len(recent), 2),
+                "average_health_score": round(
+                    sum(m["health_score"] for m in recent) / len(recent), 2
+                ),
                 "total_checks": len(recent),
                 "current_status": recent[-1]["overall_status"],
             }
         else:
             report["health_summary"] = {"message": "No health metrics for this period"}
     if report_type in ("performance", "detailed"):
-        recent_perf = [m for m in METRICS_STORAGE["performance_metrics"]
-                       if _dt.fromisoformat(m["timestamp"]) >= start_time]
+        recent_perf = [
+            m
+            for m in METRICS_STORAGE["performance_metrics"]
+            if _dt.fromisoformat(m["timestamp"]) >= start_time
+        ]
         if recent_perf:
             report["performance_summary"] = {
                 "metrics_collected": len(recent_perf),
                 "latest_cpu": recent_perf[-1]["metrics"].get("cpu", {}).get("usage_percent", 0),
-                "latest_memory": recent_perf[-1]["metrics"].get("memory", {}).get("usage_percent", 0),
+                "latest_memory": recent_perf[-1]["metrics"]
+                .get("memory", {})
+                .get("usage_percent", 0),
             }
         else:
             report["performance_summary"] = {"message": "No performance metrics for this period"}
     if report_type in ("alerts", "detailed"):
-        recent_alerts = [a for a in METRICS_STORAGE["alerts"]
-                         if _dt.fromisoformat(a.get("timestamp", timestamp.isoformat())) >= start_time]
+        recent_alerts = [
+            a
+            for a in METRICS_STORAGE["alerts"]
+            if _dt.fromisoformat(a.get("timestamp", timestamp.isoformat())) >= start_time
+        ]
         report["alerts_summary"] = {
             "total_alerts": len(recent_alerts),
             "critical_alerts": sum(1 for a in recent_alerts if a.get("severity") == "critical"),
@@ -970,8 +1008,9 @@ async def generate_monitoring_report(
         }
     report["service_health_summary"] = {
         "services_monitored": len(METRICS_STORAGE["service_health"]),
-        "healthy_services": sum(1 for s in METRICS_STORAGE["service_health"].values()
-                                if s.get("status") == "healthy"),
+        "healthy_services": sum(
+            1 for s in METRICS_STORAGE["service_health"].values() if s.get("status") == "healthy"
+        ),
         "service_details": METRICS_STORAGE["service_health"],
     }
     return {"success": True, "monitoring_report": report}

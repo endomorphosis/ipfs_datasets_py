@@ -94,6 +94,7 @@ async def pdf_verify_zkp_certificate(
                 else:
                     pdf_path = str(pdf_source)
                 from ipfs_datasets_py.processors.pdf_form_ir import pdf_to_legal_ir
+
                 _, rule_set = pdf_to_legal_ir(pdf_path, jurisdiction=jurisdiction)
             except Exception as exc:
                 logger.warning("Could not re-derive rule_set from pdf_source: %s", exc)

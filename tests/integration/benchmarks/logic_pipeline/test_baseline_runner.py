@@ -58,9 +58,7 @@ class _FakeCodec:
 
 
 def _manifest() -> runner.FrozenBaselineManifest:
-    return runner.load_baseline_manifest(
-        ROOT / runner.DEFAULT_BASELINE_MANIFEST_PATH
-    )
+    return runner.load_baseline_manifest(ROOT / runner.DEFAULT_BASELINE_MANIFEST_PATH)
 
 
 def test_frozen_manifest_binds_evidence_route_cases_and_source() -> None:
@@ -72,21 +70,15 @@ def test_frozen_manifest_binds_evidence_route_cases_and_source() -> None:
     assert manifest.digest == runner.FROZEN_BASELINE_MANIFEST_SHA256
     assert payload["configuration"]["requested_variant_id"] == "A0"
     assert payload["configuration"]["effective_variant_id"] == "A0"
-    assert payload["configuration"]["route"]["entrypoints"] == list(
-        runner.CURRENT_ROUTE
-    )
+    assert payload["configuration"]["route"]["entrypoints"] == list(runner.CURRENT_ROUTE)
     assert payload["configuration"]["route"]["components_not_invoked"] == [
         "symai",
         "hammer",
         "leanstral",
     ]
-    assert payload["source"]["repository_commit"] == (
-        "2a1be00b1b76e6652c25d418752affbf0f85d176"
-    )
+    assert payload["source"]["repository_commit"] == ("2a1be00b1b76e6652c25d418752affbf0f85d176")
     assert len(payload["source"]["submodules"]) == 10
-    assert manifest.pilot_case_ids == tuple(
-        f"pilot-p{index:02d}" for index in range(1, 11)
-    )
+    assert manifest.pilot_case_ids == tuple(f"pilot-p{index:02d}" for index in range(1, 11))
 
 
 def test_requested_and_effective_spacy_fallback_are_both_explicit() -> None:
@@ -121,10 +113,7 @@ def test_cold_and_warm_contracts_are_distinct_and_frozen() -> None:
 
 def test_validate_only_cli_is_read_only_and_dependency_free() -> None:
     baseline_root = ROOT / runner.FROZEN_BASELINE_ROOT
-    before = sorted(
-        path.relative_to(baseline_root).as_posix()
-        for path in baseline_root.rglob("*")
-    )
+    before = sorted(path.relative_to(baseline_root).as_posix() for path in baseline_root.rglob("*"))
     process = subprocess.run(
         [
             sys.executable,
@@ -140,10 +129,7 @@ def test_validate_only_cli_is_read_only_and_dependency_free() -> None:
         capture_output=True,
         text=True,
     )
-    after = sorted(
-        path.relative_to(baseline_root).as_posix()
-        for path in baseline_root.rglob("*")
-    )
+    after = sorted(path.relative_to(baseline_root).as_posix() for path in baseline_root.rglob("*"))
 
     assert process.returncode == 0, process.stderr
     assert json.loads(process.stdout) == {
@@ -166,9 +152,7 @@ def test_validate_only_cli_is_read_only_and_dependency_free() -> None:
         ("A0", "development", "only the pilot split"),
     ],
 )
-def test_cli_rejects_nonbaseline_scope(
-    variant: str, split: str, message: str
-) -> None:
+def test_cli_rejects_nonbaseline_scope(variant: str, split: str, message: str) -> None:
     process = subprocess.run(
         [
             sys.executable,
@@ -224,25 +208,17 @@ def test_execution_emits_one_strict_result_per_case_and_cache_mode(
 
     assert len(records) == 20
     assert len({(record.case_id, record.cache_mode) for record in records}) == 20
-    assert tuple(record.case_id for record in records[:10]) == (
-        _manifest().pilot_case_ids
-    )
-    assert tuple(record.case_id for record in records[10:]) == (
-        _manifest().pilot_case_ids
-    )
+    assert tuple(record.case_id for record in records[:10]) == (_manifest().pilot_case_ids)
+    assert tuple(record.case_id for record in records[10:]) == (_manifest().pilot_case_ids)
     assert all(record.status is OutcomeStatus.NOT_VERIFIED for record in records)
     assert all(len(record.stages) == 1 for record in records)
     assert all(record.stages[0].stage.value == "compiler" for record in records)
     assert all(
         record.stages[0].telemetry.schema == TELEMETRY_SCHEMA
-        and set(record.stages[0].telemetry.to_dict())
-        == set(runner.TELEMETRY_FIELDS)
+        and set(record.stages[0].telemetry.to_dict()) == set(runner.TELEMETRY_FIELDS)
         for record in records
     )
-    assert all(
-        record.stages[0].data["spacy_used_fallback_model"] is True
-        for record in records
-    )
+    assert all(record.stages[0].data["spacy_used_fallback_model"] is True for record in records)
     assert summary["components_not_invoked"] == ["symai", "hammer", "leanstral"]
     assert codec.calls == [
         *list(_manifest().pilot_case_ids),
@@ -267,15 +243,11 @@ def test_backend_failure_is_retained_as_a_case_result(tmp_path: Path) -> None:
     )
     records = [
         CaseResultRecord.from_dict(json.loads(line))
-        for line in Path(str(summary["case_results_path"]))
-        .read_text(encoding="utf-8")
-        .splitlines()
+        for line in Path(str(summary["case_results_path"])).read_text(encoding="utf-8").splitlines()
     ]
 
     assert len(records) == 10
     failed = next(record for record in records if record.case_id == "pilot-p03")
     assert failed.status is OutcomeStatus.INFRASTRUCTURE_FAILURE
     assert failed.failure_detail == "compiler adapter raised RuntimeError"
-    assert {record.case_id for record in records} == set(
-        _manifest().pilot_case_ids
-    )
+    assert {record.case_id for record in records} == set(_manifest().pilot_case_ids)

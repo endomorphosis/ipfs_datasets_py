@@ -307,24 +307,16 @@ class LegalIRUncertaintyReport:
     @property
     def failed_families(self) -> tuple[str, ...]:
         return tuple(
-            family
-            for family, result in self.family_results.items()
-            if not result.promotion_allowed
+            family for family, result in self.family_results.items() if not result.promotion_allowed
         )
 
     @property
     def audit_count(self) -> int:
-        return sum(
-            result.hammer_leanstral_audit_count
-            for result in self.family_results.values()
-        )
+        return sum(result.hammer_leanstral_audit_count for result in self.family_results.values())
 
     @property
     def codex_todo_generation_count(self) -> int:
-        return sum(
-            result.codex_todo_generation_count
-            for result in self.family_results.values()
-        )
+        return sum(result.codex_todo_generation_count for result in self.family_results.values())
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -337,8 +329,7 @@ class LegalIRUncertaintyReport:
             "failed_families": list(self.failed_families),
             "families": list(self.family_results),
             "family_results": {
-                family: result.to_dict()
-                for family, result in self.family_results.items()
+                family: result.to_dict() for family, result in self.family_results.items()
             },
             "gate_id": self.gate_id,
             "hard_promotion_gate": True,
@@ -467,30 +458,19 @@ def _family_result(
 ) -> LegalIRFamilyUncertaintyResult:
     count = len(rows)
     raw_confidence = _mean([float(row["raw_confidence"]) for row in rows])
-    calibrated_confidence = _mean(
-        [float(row["calibrated_confidence"]) for row in rows]
-    )
+    calibrated_confidence = _mean([float(row["calibrated_confidence"]) for row in rows])
     normalized_entropy = _mean([float(row["normalized_entropy"]) for row in rows])
     calibration_error = _mean([float(row["calibration_error"]) for row in rows])
     abstention_rate = _mean([1.0 if row.get("abstained") else 0.0 for row in rows])
     ood_rate = _mean([1.0 if row.get("ood") else 0.0 for row in rows])
-    unsupported_family_rate = _mean(
-        [1.0 if row.get("unsupported_family") else 0.0 for row in rows]
-    )
+    unsupported_family_rate = _mean([1.0 if row.get("unsupported_family") else 0.0 for row in rows])
     unsupported_abstention_rate = _mean(
-        [
-            1.0
-            if row.get("unsupported_family") and row.get("abstained")
-            else 0.0
-            for row in rows
-        ]
+        [1.0 if row.get("unsupported_family") and row.get("abstained") else 0.0 for row in rows]
     )
     codex_count = sum(1 for row in rows if row.get("route") == ROUTE_CODEX_TODO)
     audit_count = sum(1 for row in rows if row.get("route") != ROUTE_CODEX_TODO)
     evidence_sources = _unique(
-        str(source)
-        for row in rows
-        for source in _sequence(row.get("evidence_sources"))
+        str(source) for row in rows for source in _sequence(row.get("evidence_sources"))
     )
 
     block_reasons: list[str] = []
@@ -512,9 +492,7 @@ def _family_result(
         if ood_rate > max_ood:
             block_reasons.append(f"{family}:out_of_distribution_above_threshold")
         if unsupported_abstention_rate > max_unsupported:
-            block_reasons.append(
-                f"{family}:unsupported_abstention_above_threshold"
-            )
+            block_reasons.append(f"{family}:unsupported_abstention_above_threshold")
 
     return LegalIRFamilyUncertaintyResult(
         family=family,
@@ -612,13 +590,7 @@ def _observation_from_item(
     else:
         below_confidence = True
         high_entropy = False
-    abstained = bool(
-        explicit_abstain
-        or unsupported
-        or ood
-        or below_confidence
-        or high_entropy
-    )
+    abstained = bool(explicit_abstain or unsupported or ood or below_confidence or high_entropy)
     route = ROUTE_HAMMER_LEANSTRAL_AUDIT if abstained else ROUTE_CODEX_TODO
     evidence_sources = _unique(
         [
@@ -797,11 +769,7 @@ def _calibration_error_from_item(
             min(
                 1.0,
                 sum(
-                    (
-                        float(distribution.get(label, 0.0))
-                        - float(target.get(label, 0.0))
-                    )
-                    ** 2
+                    (float(distribution.get(label, 0.0)) - float(target.get(label, 0.0))) ** 2
                     for label in labels
                 )
                 / max(1, len(labels)),
@@ -920,9 +888,7 @@ def _ambiguity_observation_from_item(
     index: int,
 ) -> dict[str, Any]:
     family, unsupported = _canonical_family(
-        _first_string(item, _FAMILY_KEYS)
-        or _ambiguity_target_view(item)
-        or "deontic"
+        _first_string(item, _FAMILY_KEYS) or _ambiguity_target_view(item) or "deontic"
     )
     raw_confidence = max(0.0, min(1.0, _finite_float(item.get("confidence"), 0.0)))
     return {
@@ -936,9 +902,9 @@ def _ambiguity_observation_from_item(
         "ood": True,
         "raw_confidence": raw_confidence,
         "route": ROUTE_HAMMER_LEANSTRAL_AUDIT,
-        "unsupported_family": True if unsupported else bool(
-            item.get("learned_label") or item.get("arbitrary_learned_label")
-        ),
+        "unsupported_family": True
+        if unsupported
+        else bool(item.get("learned_label") or item.get("arbitrary_learned_label")),
     }
 
 

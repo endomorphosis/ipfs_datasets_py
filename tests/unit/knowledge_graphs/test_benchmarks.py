@@ -26,7 +26,10 @@ from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor
 from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
 from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
 from ipfs_datasets_py.knowledge_graphs.migration.formats import (
-    GraphData, NodeData, RelationshipData, MigrationFormat,
+    GraphData,
+    NodeData,
+    RelationshipData,
+    MigrationFormat,
 )
 
 
@@ -68,6 +71,7 @@ def _build_graph_data(n_nodes: int = 100) -> GraphData:
 # B1. Extraction benchmarks
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.slow
 class TestExtractionBenchmarks:
     """Benchmark entity/relationship extraction performance."""
@@ -87,9 +91,7 @@ class TestExtractionBenchmarks:
         elapsed = time.perf_counter() - start
 
         avg_ms = (elapsed / iterations) * 1000
-        assert avg_ms < 5.0, (
-            f"Rule-based extraction too slow: {avg_ms:.2f} ms/doc (target < 5 ms)"
-        )
+        assert avg_ms < 5.0, f"Rule-based extraction too slow: {avg_ms:.2f} ms/doc (target < 5 ms)"
 
     def test_extraction_returns_entities(self):
         """
@@ -108,6 +110,7 @@ class TestExtractionBenchmarks:
 # ---------------------------------------------------------------------------
 # B2. Cypher parse + compile benchmarks
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.slow
 class TestCypherBenchmarks:
@@ -132,9 +135,7 @@ class TestCypherBenchmarks:
             total += time.perf_counter() - start
 
         avg_ms = (total / (len(CYPHER_QUERIES) * iterations)) * 1000
-        assert avg_ms < 1.0, (
-            f"Cypher parse+compile too slow: {avg_ms:.3f} ms/query (target < 1 ms)"
-        )
+        assert avg_ms < 1.0, f"Cypher parse+compile too slow: {avg_ms:.3f} ms/query (target < 1 ms)"
 
     def test_parse_produces_ir(self):
         """
@@ -153,6 +154,7 @@ class TestCypherBenchmarks:
 # B3. GraphEngine CRUD benchmarks
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.slow
 class TestGraphEngineBenchmarks:
     """Benchmark GraphEngine create/read operations."""
@@ -169,15 +171,12 @@ class TestGraphEngineBenchmarks:
         start = time.perf_counter()
         for i in range(iterations):
             engine.create_node(
-                labels=["Person"],
-                properties={"name": f"person_{i}", "age": i % 100}
+                labels=["Person"], properties={"name": f"person_{i}", "age": i % 100}
             )
         elapsed = time.perf_counter() - start
 
         avg_ms = (elapsed / iterations) * 1000
-        assert avg_ms < 0.5, (
-            f"Node creation too slow: {avg_ms:.3f} ms/node (target < 0.5 ms)"
-        )
+        assert avg_ms < 0.5, f"Node creation too slow: {avg_ms:.3f} ms/node (target < 0.5 ms)"
 
     def test_relationship_creation_speed(self):
         """
@@ -187,10 +186,7 @@ class TestGraphEngineBenchmarks:
         """
         engine = GraphEngine()
         # Create a pool of nodes
-        nodes = [
-            engine.create_node(labels=["X"], properties={"id": i})
-            for i in range(20)
-        ]
+        nodes = [engine.create_node(labels=["X"], properties={"id": i}) for i in range(20)]
         iterations = 200
 
         start = time.perf_counter()
@@ -236,6 +232,7 @@ class TestGraphEngineBenchmarks:
 # B4. Migration format benchmarks
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.slow
 class TestMigrationBenchmarks:
     """Benchmark import/export roundtrip performance."""
@@ -247,6 +244,7 @@ class TestMigrationBenchmarks:
         THEN: Roundtrip completes in < 50 ms
         """
         import os
+
         graph = _build_graph_data(100)
         filepath = str(tmp_path / "bench.json")
 
@@ -294,9 +292,7 @@ class TestMigrationBenchmarks:
         elapsed = time.perf_counter() - start
 
         avg_ms = (elapsed / iterations) * 1000
-        assert avg_ms < 1.0, (
-            f"to_dict() too slow: {avg_ms:.3f} ms/call (target < 1 ms)"
-        )
+        assert avg_ms < 1.0, f"to_dict() too slow: {avg_ms:.3f} ms/call (target < 1 ms)"
 
 
 # ---------------------------------------------------------------------------
@@ -312,19 +308,24 @@ if __name__ == "__main__":
 
     # Quick inline timing (no pytest required)
     benchmarks = [
-        ("Cypher parse+compile (100 iterations)", lambda: [
-            CypherCompiler().compile(CypherParser().parse(q))
-            for q in CYPHER_QUERIES
-            for _ in range(100)
-        ]),
-        ("GraphEngine: 200 node creates", lambda: [
-            GraphEngine().create_node(labels=["P"], properties={"i": i})
-            for i in range(200)
-        ]),
-        ("GraphData.to_dict() (50 nodes, 100 calls)", lambda: [
-            _build_graph_data(50).to_dict()
-            for _ in range(100)
-        ]),
+        (
+            "Cypher parse+compile (100 iterations)",
+            lambda: [
+                CypherCompiler().compile(CypherParser().parse(q))
+                for q in CYPHER_QUERIES
+                for _ in range(100)
+            ],
+        ),
+        (
+            "GraphEngine: 200 node creates",
+            lambda: [
+                GraphEngine().create_node(labels=["P"], properties={"i": i}) for i in range(200)
+            ],
+        ),
+        (
+            "GraphData.to_dict() (50 nodes, 100 calls)",
+            lambda: [_build_graph_data(50).to_dict() for _ in range(100)],
+        ),
     ]
 
     for name, fn in benchmarks:

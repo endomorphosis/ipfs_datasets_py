@@ -132,8 +132,7 @@ def residual_signature_for_hint(hint: ModalProgramSynthesisHint) -> str:
     evidence = dict(hint.evidence or {})
     payload = {
         "action": hint.action,
-        "bridge_failure_name": evidence.get("bridge_failure_name")
-        or evidence.get("loss_name"),
+        "bridge_failure_name": evidence.get("bridge_failure_name") or evidence.get("loss_name"),
         "component_gap": evidence.get("primary_legal_ir_component_gap"),
         "family_pair": [
             evidence.get("predicted_family"),
@@ -141,9 +140,9 @@ def residual_signature_for_hint(hint: ModalProgramSynthesisHint) -> str:
         ],
         "frame_features": sorted(map(str, evidence.get("frame_features", []) or []))[:8],
         "pipeline_stage": evidence.get("primary_pipeline_stage"),
-        "pipeline_stage_focus": sorted(
-            map(str, evidence.get("pipeline_stage_focus", []) or [])
-        )[:8],
+        "pipeline_stage_focus": sorted(map(str, evidence.get("pipeline_stage_focus", []) or []))[
+            :8
+        ],
         "target_file_lane": evidence.get("target_file_lane")
         or _target_file_lane(hint.target_component, hint.action),
         "target_component": hint.target_component,
@@ -158,12 +157,8 @@ def residual_signature_for_hint(hint: ModalProgramSynthesisHint) -> str:
         "top_embedding_features": sorted(
             map(str, evidence.get("top_embedding_features", []) or [])
         )[:8],
-        "top_family_features": sorted(
-            map(str, evidence.get("top_family_features", []) or [])
-        )[:8],
-        "top_predicted_views": sorted(
-            map(str, evidence.get("top_predicted_views", []) or [])
-        )[:8],
+        "top_family_features": sorted(map(str, evidence.get("top_family_features", []) or []))[:8],
+        "top_predicted_views": sorted(map(str, evidence.get("top_predicted_views", []) or []))[:8],
         "top_target_views": sorted(map(str, evidence.get("top_target_views", []) or []))[:8],
     }
     digest = hashlib.sha256(
@@ -198,9 +193,8 @@ def synthesis_hints_from_autoencoder_introspection(
             value = legal_ir_losses.get(loss_name)
         if value in (None, "", 0, 0.0):
             continue
-        if (
-            loss_name == "legal_ir_view_cross_entropy_loss"
-            and _legal_ir_specific_focus_items(focus)
+        if loss_name == "legal_ir_view_cross_entropy_loss" and _legal_ir_specific_focus_items(
+            focus
         ):
             continue
         route = route_autoencoder_residual(loss_name, focus=focus)
@@ -318,9 +312,7 @@ def synthesis_hints_from_autoencoder_introspection(
             )
         )
 
-    top_embedding_features = _feature_names(
-        introspection.get("top_embedding_contributions", [])
-    )
+    top_embedding_features = _feature_names(introspection.get("top_embedding_contributions", []))
     if "refine_typed_ir_or_decompiler_slots" in focus or top_embedding_features:
         hints.append(
             _hint(
@@ -355,9 +347,7 @@ def synthesis_hints_from_autoencoder_introspection(
         )
 
     if "repair_multiview_legal_ir_loss" in focus:
-        target_distribution = dict(
-            introspection.get("legal_ir_view_distribution") or {}
-        )
+        target_distribution = dict(introspection.get("legal_ir_view_distribution") or {})
         predicted_distribution = dict(
             introspection.get("legal_ir_predicted_view_distribution") or {}
         )
@@ -577,12 +567,9 @@ def synthesis_hints_from_leanstral_rule_gaps(
         if not isinstance(target_surface, Mapping):
             target_surface = {}
         target_component = str(
-            gap_data.get("target_component")
-            or target_surface.get("component", "")
+            gap_data.get("target_component") or target_surface.get("component", "")
         ).strip()
-        action = str(
-            gap_data.get("action") or target_surface.get("action", "")
-        ).strip()
+        action = str(gap_data.get("action") or target_surface.get("action", "")).strip()
         if not action or not target_component:
             continue
         validation_set = dict(gap_data.get("validation_set") or {})
@@ -602,14 +589,10 @@ def synthesis_hints_from_leanstral_rule_gaps(
             ]
         )
         theorem_templates = _dedupe_string_values(
-            surface.get("theorem_templates")
-            or validation_set.get("formal_validity_checks")
-            or ()
+            surface.get("theorem_templates") or validation_set.get("formal_validity_checks") or ()
         )
         allowed_paths = _dedupe_string_values(
-            surface.get("allowed_paths")
-            or validation_set.get("allowed_paths")
-            or ()
+            surface.get("allowed_paths") or validation_set.get("allowed_paths") or ()
         )
         target_metrics = _dedupe_string_values(
             surface.get("target_metrics")
@@ -623,9 +606,7 @@ def synthesis_hints_from_leanstral_rule_gaps(
             validation_set=validation_set,
         )
         drafted_logic_candidates = _rule_gap_drafted_logic_candidates(support)
-        evidence_ids = _dedupe_string_values(
-            evidence.get("evidence_id") for evidence in support
-        )
+        evidence_ids = _dedupe_string_values(evidence.get("evidence_id") for evidence in support)
         audit_request_ids = _dedupe_string_values(
             evidence.get("request_id") for evidence in support
         )
@@ -636,9 +617,7 @@ def synthesis_hints_from_leanstral_rule_gaps(
             evidence.get("verification_outcome") for evidence in support
         )
         supporting_verified_by = _dedupe_string_values(
-            checker
-            for evidence in support
-            for checker in list(evidence.get("verified_by") or [])
+            checker for evidence in support for checker in list(evidence.get("verified_by") or [])
         )
         conflicting_evidence_ids = _dedupe_string_values(
             evidence.get("evidence_id") for evidence in conflicts
@@ -686,9 +665,7 @@ def synthesis_hints_from_leanstral_rule_gaps(
             "supporting_verification_outcomes": supporting_verification_outcomes,
             "validation_set": validation_set,
             "mutation_cases": _dedupe_string_values(
-                surface.get("mutation_cases")
-                or validation_set.get("mutation_cases")
-                or ()
+                surface.get("mutation_cases") or validation_set.get("mutation_cases") or ()
             ),
             "target_file_lane": surface.get("target_file_lane")
             or validation_set.get("target_file_lane")
@@ -728,14 +705,10 @@ def synthesis_hints_from_leanstral_guidance(
         dedupe_key = guidance_id or (
             "leanstral-guidance:"
             + hashlib.sha256(
-                json.dumps(item, ensure_ascii=True, sort_keys=True, default=str).encode(
-                    "utf-8"
-                )
+                json.dumps(item, ensure_ascii=True, sort_keys=True, default=str).encode("utf-8")
             ).hexdigest()[:20]
         )
-        proof_obligation_ids = _dedupe_string_values(
-            item.get("proof_obligation_ids") or ()
-        )
+        proof_obligation_ids = _dedupe_string_values(item.get("proof_obligation_ids") or ())
         theorem_templates = _dedupe_string_values(item.get("theorem_templates") or ())
         target_metrics = _dedupe_string_values(item.get("target_metrics") or ())
         drafted_logic_candidates = _rule_gap_drafted_logic_candidates(
@@ -774,9 +747,7 @@ def synthesis_hints_from_leanstral_guidance(
             "normalized_rule_key": dedupe_key,
             "post_patch_metrics": {},
             "pre_patch_metrics": dict(metric_attribution["pre_patch_metrics"]),
-            "proof_ids": _dedupe_string_values(
-                [*proof_obligation_ids, *theorem_templates]
-            ),
+            "proof_ids": _dedupe_string_values([*proof_obligation_ids, *theorem_templates]),
             "proof_obligation_ids": proof_obligation_ids,
             "sample_id": str(item.get("sample_id") or ""),
             "spec_id": guidance_id,
@@ -902,7 +873,10 @@ def _leanstral_guidance_items(value: Any) -> List[Dict[str, Any]]:
             raw_items = value.get("items")
         if isinstance(raw_items, Sequence) and not isinstance(raw_items, (str, bytes)):
             return _leanstral_guidance_items(raw_items)
-        if value.get("guidance_id") or value.get("schema_version") == "legal-ir-leanstral-draft-guidance-v1":
+        if (
+            value.get("guidance_id")
+            or value.get("schema_version") == "legal-ir-leanstral-draft-guidance-v1"
+        ):
             return [dict(value)]
         return []
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
@@ -993,9 +967,7 @@ def _logic_view_hint(
     rationale: str,
 ) -> ModalProgramSynthesisHint:
     target_distribution = dict(introspection.get("legal_ir_view_distribution") or {})
-    predicted_distribution = dict(
-        introspection.get("legal_ir_predicted_view_distribution") or {}
-    )
+    predicted_distribution = dict(introspection.get("legal_ir_predicted_view_distribution") or {})
     component_gaps = dict(introspection.get("legal_ir_component_gaps") or {})
     target_view = _primary_view_for_component(
         target_component,
@@ -1017,21 +989,15 @@ def _logic_view_hint(
                 action,
                 target_component,
             ),
-            "legal_ir_component_gaps": dict(
-                component_gaps
-            ),
-            "legal_ir_predicted_view_distribution": dict(
-                predicted_distribution
-            ),
+            "legal_ir_component_gaps": dict(component_gaps),
+            "legal_ir_predicted_view_distribution": dict(predicted_distribution),
             "legal_ir_underrepresented_components": list(
                 introspection.get("legal_ir_underrepresented_components") or []
             ),
             "legal_ir_view_cross_entropy_loss": introspection.get(
                 "legal_ir_view_cross_entropy_loss"
             ),
-            "legal_ir_view_distribution": dict(
-                target_distribution
-            ),
+            "legal_ir_view_distribution": dict(target_distribution),
             "predicted_view": _primary_view_for_component(
                 target_component,
                 predicted_distribution,
@@ -1076,17 +1042,14 @@ def _pipeline_evidence(introspection: Mapping[str, Any]) -> Dict[str, Any]:
 
     diagnostics = dict(introspection.get("pipeline_stage_diagnostics") or {})
     focus = [
-        str(value)
-        for value in introspection.get("pipeline_stage_focus", []) or []
-        if str(value)
+        str(value) for value in introspection.get("pipeline_stage_focus", []) or [] if str(value)
     ]
     if not focus and diagnostics:
         focus = _pipeline_focus_from_diagnostics(diagnostics)
     evidence: Dict[str, Any] = {}
     if diagnostics:
         evidence["pipeline_stage_diagnostics"] = {
-            str(key): value
-            for key, value in sorted(diagnostics.items())
+            str(key): value for key, value in sorted(diagnostics.items())
         }
     if focus:
         evidence["pipeline_stage_focus"] = focus
@@ -1101,19 +1064,17 @@ def _pipeline_focus_from_diagnostics(diagnostics: Mapping[str, Any]) -> List[str
     focus: List[str] = []
     if bool(diagnostics.get("spacy_parser_missing_formula")):
         focus.append("spacy_parser")
-    if bool(diagnostics.get("modal_family_cue_mismatch")) or _float_value(
-        diagnostics.get("modal_family_target_probability_gap")
-    ) > 0.0:
+    if (
+        bool(diagnostics.get("modal_family_cue_mismatch"))
+        or _float_value(diagnostics.get("modal_family_target_probability_gap")) > 0.0
+    ):
         focus.append("modal_family_registry")
     if _float_value(diagnostics.get("autoencoder_embedding_cosine_gap")) > 0.20:
         focus.append("autoencoder_embedding_head")
     if _float_value(diagnostics.get("ir_decoder_reconstruction_loss")) > 0.05:
         focus.append("typed_ir_decoder")
     if (
-        _float_value(
-            diagnostics.get("source_decompiled_text_embedding_cosine_loss")
-        )
-        > 0.25
+        _float_value(diagnostics.get("source_decompiled_text_embedding_cosine_loss")) > 0.25
         or _float_value(diagnostics.get("source_decompiled_text_token_loss")) > 0.25
     ):
         focus.append("semantic_decompiler")
@@ -1151,10 +1112,7 @@ def _top_distribution_names(distribution: Mapping[str, Any], *, limit: int = 5) 
             scored.append((float(value), str(name)))
         except (TypeError, ValueError):
             continue
-    return [
-        name
-        for _value, name in sorted(scored, key=lambda item: (-item[0], item[1]))[:limit]
-    ]
+    return [name for _value, name in sorted(scored, key=lambda item: (-item[0], item[1]))[:limit]]
 
 
 def _top_component_gap_items(value: Any, *, limit: int = 8) -> List[List[Any]]:
@@ -1213,23 +1171,19 @@ def _primary_view_for_component(
     for name, raw_value in dict(distribution or {}).items():
         component = str(name)
         if prefixes and not any(
-            component == prefix or component.startswith(prefix)
-            for prefix in prefixes
+            component == prefix or component.startswith(prefix) for prefix in prefixes
         ):
             continue
         try:
             value = float(raw_value)
         except (TypeError, ValueError):
             value = 0.0
-        candidates.append(
-            (_component_gap_value(component, component_gaps), value, component)
-        )
+        candidates.append((_component_gap_value(component, component_gaps), value, component))
     if not candidates:
         for component, raw_gap in dict(component_gaps or {}).items():
             component_name = str(component)
             if prefixes and not any(
-                component_name == prefix or component_name.startswith(prefix)
-                for prefix in prefixes
+                component_name == prefix or component_name.startswith(prefix) for prefix in prefixes
             ):
                 continue
             try:

@@ -36,18 +36,19 @@ Increase feature parity from 81% to 95% through temporal reasoning, enhanced pro
 **Operators:**
 ```python
 class TemporalOperator(Enum):
-    ALWAYS = "□"      # It is always the case that φ
+    ALWAYS = "□"  # It is always the case that φ
     EVENTUALLY = "◇"  # It will eventually be the case that φ
-    NEXT = "X"        # In the next time point, φ holds
-    UNTIL = "U"       # φ holds until ψ becomes true
-    SINCE = "S"       # φ has been true since ψ was true
-    YESTERDAY = "Y"   # In the previous time point, φ held
+    NEXT = "X"  # In the next time point, φ holds
+    UNTIL = "U"  # φ holds until ψ becomes true
+    SINCE = "S"  # φ has been true since ψ was true
+    YESTERDAY = "Y"  # In the previous time point, φ held
+
 
 class TemporalFormula:
     def __init__(self, operator: TemporalOperator, formula: Formula):
         self.operator = operator
         self.formula = formula
-    
+
     def evaluate(self, time_sequence: List[State]) -> bool:
         """Evaluate formula over time sequence"""
         pass
@@ -104,19 +105,20 @@ class Fluent:
         self.name = name
         self.type = fluent_type
         self.persistence_rule = None
-    
+
     def persists(self, from_time: TimePoint, to_time: TimePoint) -> bool:
         """Check if fluent persists across time interval"""
         pass
 
+
 class FluentManager:
     def add_fluent(self, fluent: Fluent) -> None:
         pass
-    
+
     def get_state(self, time: TimePoint) -> Dict[Fluent, bool]:
         """Get all fluent values at time"""
         pass
-    
+
     def apply_transition(self, event: Event, time: TimePoint) -> None:
         """Apply state transition from event"""
         pass
@@ -320,15 +322,18 @@ from fastapi import FastAPI
 
 app = FastAPI(title="CEC API", version="1.0.0")
 
+
 @app.post("/parse")
 async def parse_formula(text: str, language: str = "en") -> FormulaResponse:
     """Parse natural language to DCEC formula"""
     pass
 
+
 @app.post("/prove")
 async def prove_theorem(goal: Formula, axioms: List[Formula]) -> ProofResult:
     """Prove theorem"""
     pass
+
 
 @app.post("/convert")
 async def convert_formula(formula: Formula, target_format: str) -> ConversionResult:

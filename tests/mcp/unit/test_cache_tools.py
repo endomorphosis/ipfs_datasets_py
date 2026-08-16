@@ -161,8 +161,11 @@ class TestCacheEmbeddings:
                 cache_embeddings,
                 get_cached_embeddings,
             )
+
             emb = [0.1, 0.2, 0.3, 0.4, 0.5]
-            store_result = await cache_embeddings(text="hello world", embeddings=emb, model="test-model")
+            store_result = await cache_embeddings(
+                text="hello world", embeddings=emb, model="test-model"
+            )
             assert store_result is not None
 
             get_result = await get_cached_embeddings(text="hello world", model="test-model")

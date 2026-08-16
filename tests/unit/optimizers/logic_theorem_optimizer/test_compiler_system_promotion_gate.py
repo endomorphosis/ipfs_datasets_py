@@ -149,8 +149,7 @@ def _complete_evidence() -> dict[str, Any]:
                     "capabilities": capabilities,
                     "conformance_suite_passed": True,
                     "report_path": (
-                        "docs/implementation/reports/"
-                        "LEGAL_IR_COMPILER_CONFORMANCE_REPORT.md"
+                        "docs/implementation/reports/LEGAL_IR_COMPILER_CONFORMANCE_REPORT.md"
                     ),
                 }
             ),

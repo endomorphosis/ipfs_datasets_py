@@ -10,19 +10,21 @@ from .registry import StateScraperRegistry
 
 class ConnecticutScraper(BaseStateScraper):
     """Scraper for Connecticut state laws from https://www.cga.ct.gov"""
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Connecticut's legislative website."""
         return "https://www.cga.ct.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Connecticut."""
-        return [{
-            "name": "Connecticut General Statutes",
-            "url": f"{self.get_base_url()}/current/pub/titles.htm",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Connecticut General Statutes",
+                "url": f"{self.get_base_url()}/current/pub/titles.htm",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -30,11 +32,11 @@ class ConnecticutScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Connecticut's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -45,16 +47,12 @@ class ConnecticutScraper(BaseStateScraper):
             "Conn. Gen. Stat.",
             max_sections=limit if limit is not None else 1000000,
         )
-    
+
     async def _custom_scrape_connecticut(
-        self,
-        code_name: str,
-        code_url: str,
-        citation_format: str,
-        max_sections: int = 100
+        self, code_name: str, code_url: str, citation_format: str, max_sections: int = 100
     ) -> List[NormalizedStatute]:
         """Custom scraper for Connecticut's legislative website.
-        
+
         Connecticut organizes statutes by titles with chapters underneath.
         """
         try:
@@ -63,49 +61,61 @@ class ConnecticutScraper(BaseStateScraper):
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
             return []
-        
+
         statutes = []
-        
+
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(
                 code_url,
                 timeout_seconds=30,
             )
             if not page_bytes:
-                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+                return await self._generic_scrape(
+                    code_name, code_url, citation_format, max_sections
+                )
 
-            soup = BeautifulSoup(page_bytes, 'html.parser')
-            
+            soup = BeautifulSoup(page_bytes, "html.parser")
+
             # Find all links to titles/chapters
-            links = soup.find_all('a', href=True)
-            
+            links = soup.find_all("a", href=True)
+
             section_count = 0
             for link in links:
                 if section_count >= max_sections:
                     break
-                
+
                 link_text = link.get_text(strip=True)
-                link_href = link.get('href', '')
-                
+                link_href = link.get("href", "")
+
                 # Look for title or chapter patterns in Connecticut's format
                 if not link_text or len(link_text) < 5:
                     continue
-                
+
                 # Connecticut - very permissive matching to catch statute links
                 # Accept links with numbers or common statute terms
                 if not any(char.isdigit() for char in link_text):
-                    keywords_ct = ['title', 'chapter', 'sec', '§', 'part', 'article', 'statute', 'cgs', 'law']
+                    keywords_ct = [
+                        "title",
+                        "chapter",
+                        "sec",
+                        "§",
+                        "part",
+                        "article",
+                        "statute",
+                        "cgs",
+                        "law",
+                    ]
                     if not any(keyword in link_text.lower() for keyword in keywords_ct):
                         continue
-                
+
                 full_url = urljoin(code_url, link_href)
-                
+
                 section_number = self._extract_section_number(link_text)
                 if not section_number:
                     section_number = f"Section-{section_count + 1}"
-                
+
                 legal_area = self._identify_legal_area(link_text)
-                
+
                 statute = NormalizedStatute(
                     state_code=self.state_code,
                     state_name=self.state_name,
@@ -117,23 +127,27 @@ class ConnecticutScraper(BaseStateScraper):
                     legal_area=legal_area,
                     source_url=full_url,
                     official_cite=f"{citation_format} § {section_number}",
-                    metadata=StatuteMetadata()
+                    metadata=StatuteMetadata(),
                 )
-                
+
                 statutes.append(statute)
                 section_count += 1
-            
+
             self.logger.info(f"Connecticut custom scraper: Scraped {len(statutes)} sections")
-            
+
             # Fallback to generic scraper if no data found
             if not statutes:
-                self.logger.info("Connecticut custom scraper found no data, falling back to generic scraper")
-                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
-            
+                self.logger.info(
+                    "Connecticut custom scraper found no data, falling back to generic scraper"
+                )
+                return await self._generic_scrape(
+                    code_name, code_url, citation_format, max_sections
+                )
+
         except Exception as e:
             self.logger.error(f"Connecticut custom scraper failed: {e}")
             return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
-        
+
         return statutes
 
 

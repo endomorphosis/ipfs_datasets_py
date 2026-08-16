@@ -166,10 +166,7 @@ def _restore_module_family(
             setattr(parent, child_name, expected)
             continue
         observed = after.get(module_name, sentinel)
-        if (
-            observed is not sentinel
-            and getattr(parent, child_name, sentinel) is observed
-        ):
+        if observed is not sentinel and getattr(parent, child_name, sentinel) is observed:
             delattr(parent, child_name)
 
 
@@ -315,7 +312,9 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> LeanstralRuntimeLock:
         "identity",
         {"endpoint", "provider", "model", "service", "server_build"},
     )
-    normalized_identity = {key: _nonempty(value, f"identity.{key}") for key, value in identity.items()}
+    normalized_identity = {
+        key: _nonempty(value, f"identity.{key}") for key, value in identity.items()
+    }
     raw_endpoint = normalized_identity["endpoint"]
     normalized_identity["endpoint"] = sanitize_endpoint(raw_endpoint)
     if raw_endpoint != normalized_identity["endpoint"]:
@@ -371,7 +370,9 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> LeanstralRuntimeLock:
     if p2p["enabled"] is not True:
         raise LeanstralProvisioningError("p2p.enabled must be true")
     if _nonempty(p2p["required_provider"], "p2p.required_provider") != PINNED_IDENTITY["provider"]:
-        raise LeanstralProvisioningError("p2p.required_provider may not substitute another provider")
+        raise LeanstralProvisioningError(
+            "p2p.required_provider may not substitute another provider"
+        )
     port = p2p["custom_port"]
     if isinstance(port, bool) or not isinstance(port, int) or port != PINNED_P2P_PORT:
         raise LeanstralProvisioningError("p2p.custom_port differs from the configured pin")
@@ -408,9 +409,7 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> LeanstralRuntimeLock:
         if policy[key] is not True:
             raise LeanstralProvisioningError(f"p2p.advertise_policy.{key} must be true")
     if tuple(p2p["bootstrap_peers"]) != PINNED_P2P_BOOTSTRAP_PEERS:
-        raise LeanstralProvisioningError(
-            "p2p bootstrap peer identities differ from the pin"
-        )
+        raise LeanstralProvisioningError("p2p bootstrap peer identities differ from the pin")
     rendezvous = _mapping(
         p2p["rendezvous"],
         "p2p.rendezvous",
@@ -434,17 +433,11 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> LeanstralRuntimeLock:
         "p2p.probe_timeout_seconds",
     )
     if probe_timeout > 10:
-        raise LeanstralProvisioningError(
-            "p2p.probe_timeout_seconds exceeds the 10 second bound"
-        )
+        raise LeanstralProvisioningError("p2p.probe_timeout_seconds exceeds the 10 second bound")
     if p2p["server_instance_count"] != 1:
-        raise LeanstralProvisioningError(
-            "p2p.server_instance_count must pin one attached server"
-        )
+        raise LeanstralProvisioningError("p2p.server_instance_count must pin one attached server")
     if p2p["inference_allowed"] is not False:
-        raise LeanstralProvisioningError(
-            "p2p.inference_allowed must remain false"
-        )
+        raise LeanstralProvisioningError("p2p.inference_allowed must remain false")
 
     smoke = _mapping(
         root["smoke"],
@@ -457,10 +450,18 @@ def load_lock(path: Path | str = DEFAULT_LOCK_PATH) -> LeanstralRuntimeLock:
     if smoke["uses_benchmark_inputs"] is not False:
         raise LeanstralProvisioningError("smoke probe must not use benchmark inputs")
     max_tokens = smoke["max_tokens"]
-    if isinstance(max_tokens, bool) or not isinstance(max_tokens, int) or not 1 <= max_tokens <= 128:
+    if (
+        isinstance(max_tokens, bool)
+        or not isinstance(max_tokens, int)
+        or not 1 <= max_tokens <= 128
+    ):
         raise LeanstralProvisioningError("smoke.max_tokens must be between 1 and 128")
     temperature = smoke["temperature"]
-    if isinstance(temperature, bool) or not isinstance(temperature, (int, float)) or not 0 <= temperature <= 1:
+    if (
+        isinstance(temperature, bool)
+        or not isinstance(temperature, (int, float))
+        or not 0 <= temperature <= 1
+    ):
         raise LeanstralProvisioningError("smoke.temperature must be between 0 and 1")
 
     canonical_document = json.loads(_json_bytes(root))
@@ -491,7 +492,9 @@ def _endpoint_url(endpoint: str, path: str) -> str:
 
 def _bounded_read(response: Any, limit: int) -> bytes:
     try:
-        content_length = response.headers.get("Content-Length") if hasattr(response, "headers") else None
+        content_length = (
+            response.headers.get("Content-Length") if hasattr(response, "headers") else None
+        )
         if content_length is not None and int(content_length) > limit:
             raise LeanstralProvisioningError("HTTP response exceeds configured byte bound")
     except (TypeError, ValueError):
@@ -535,7 +538,9 @@ def _http_json(
     except LeanstralProvisioningError:
         raise
     except (OSError, TimeoutError, urllib.error.URLError) as exc:
-        raise LeanstralProvisioningError(f"bounded request failed for {sanitize_endpoint(url)}: {exc}") from exc
+        raise LeanstralProvisioningError(
+            f"bounded request failed for {sanitize_endpoint(url)}: {exc}"
+        ) from exc
     try:
         value = json.loads(body.decode("utf-8"), object_pairs_hook=_reject_duplicate_keys)
     except (UnicodeError, json.JSONDecodeError) as exc:
@@ -564,7 +569,9 @@ def _identity_token(value: object) -> str:
     return re.sub(r"[^a-z0-9]", "", str(value).casefold())
 
 
-def _assert_model_identity(lock: LeanstralRuntimeLock, record: Mapping[str, Any], surface: str) -> dict[str, Any]:
+def _assert_model_identity(
+    lock: LeanstralRuntimeLock, record: Mapping[str, Any], surface: str
+) -> dict[str, Any]:
     """Bind one discovery record to the locked logical and transport identity.
 
     llama.cpp's native model list reports ``owned_by=llamacpp`` and does not
@@ -602,11 +609,7 @@ def _assert_model_identity(lock: LeanstralRuntimeLock, record: Mapping[str, Any]
         mismatches.append("provider")
     if service and service != expected["service"]:
         mismatches.append("service")
-    if (
-        server_build
-        and _identity_token(server_build)
-        != _identity_token(expected["server_build"])
-    ):
+    if server_build and _identity_token(server_build) != _identity_token(expected["server_build"]):
         mismatches.append("server_build")
     if endpoint is not None and sanitize_endpoint(str(endpoint)) != expected["endpoint"]:
         mismatches.append("endpoint")
@@ -665,9 +668,7 @@ def verify_p2p_evidence(
     if not isinstance(evidence, Mapping):
         raise LeanstralProvisioningError("configured P2P provider requires transport evidence")
     if any(not isinstance(field, str) for field in evidence):
-        raise LeanstralProvisioningError(
-            "P2P topology evidence field names must be strings"
-        )
+        raise LeanstralProvisioningError("P2P topology evidence field names must be strings")
 
     receipt_fields = {
         "address_selection",
@@ -685,14 +686,11 @@ def verify_p2p_evidence(
         unknown = sorted(evidence_fields - receipt_fields)
         if missing or unknown:
             raise LeanstralProvisioningError(
-                "P2P topology receipt fields differ "
-                f"(missing={missing}, unknown={unknown})"
+                f"P2P topology receipt fields differ (missing={missing}, unknown={unknown})"
             )
         candidate_observation = evidence.get("observation")
         if not isinstance(candidate_observation, Mapping):
-            raise LeanstralProvisioningError(
-                "P2P topology receipt observation must be an object"
-            )
+            raise LeanstralProvisioningError("P2P topology receipt observation must be an object")
         topology_observation = candidate_observation
 
     with _preserve_import_path():
@@ -721,13 +719,9 @@ def verify_p2p_evidence(
                 "Leanstral P2P topology validator is unavailable"
             ) from exc
         try:
-            validation = validate_leanstral_topology_mapping(
-                topology_observation
-            )
+            validation = validate_leanstral_topology_mapping(topology_observation)
         except (TypeError, ValueError, RuntimeError) as exc:
-            raise LeanstralProvisioningError(
-                f"P2P topology evidence is malformed: {exc}"
-            ) from exc
+            raise LeanstralProvisioningError(f"P2P topology evidence is malformed: {exc}") from exc
     if not validation.valid:
         raise LeanstralProvisioningError(
             "P2P topology evidence failed: " + ", ".join(validation.errors)
@@ -738,9 +732,7 @@ def verify_p2p_evidence(
         try:
             recomputed_cid = canonical_json_cid(supplied_receipt)
         except (TypeError, ValueError) as exc:
-            raise LeanstralProvisioningError(
-                "P2P topology receipt is not canonical JSON"
-            ) from exc
+            raise LeanstralProvisioningError("P2P topology receipt is not canonical JSON") from exc
         if (
             type(supplied_cid) is not str
             or supplied_cid != recomputed_cid
@@ -768,21 +760,14 @@ def verify_p2p_evidence(
 
     bootstrap_exercises = observation["bootstrap_exercises"]
     pinned_bootstraps = set(lock.p2p["bootstrap_peers"])
-    public_exercises = [
-        item for item in bootstrap_exercises
-        if item["target"] in pinned_bootstraps
-    ]
+    public_exercises = [item for item in bootstrap_exercises if item["target"] in pinned_bootstraps]
     public_targets = {item["target"] for item in public_exercises}
-    if (
-        public_targets != pinned_bootstraps
-        or len(public_exercises) != len(pinned_bootstraps)
-    ):
+    if public_targets != pinned_bootstraps or len(public_exercises) != len(pinned_bootstraps):
         raise LeanstralProvisioningError(
             "P2P bootstrap exercises did not match every frozen public peer"
         )
     if any(
-        item["observer_peer_id"] != observation["peer_id"]
-        or item["attempted"] is not True
+        item["observer_peer_id"] != observation["peer_id"] or item["attempted"] is not True
         for item in public_exercises
     ):
         raise LeanstralProvisioningError(
@@ -794,10 +779,7 @@ def verify_p2p_evidence(
         )
     if any(
         (item["success"] is True and item["error"] is not None)
-        or (
-            item["success"] is False
-            and item["error"] not in {"connect_failed", "timeout"}
-        )
+        or (item["success"] is False and item["error"] not in {"connect_failed", "timeout"})
         for item in public_exercises
     ):
         raise LeanstralProvisioningError(
@@ -811,16 +793,12 @@ def verify_p2p_evidence(
             "P2P independent client bootstrap target was not advertised"
         )
     independent_exercises = [
-        item for item in bootstrap_exercises
-        if item["target"] not in pinned_bootstraps
+        item for item in bootstrap_exercises if item["target"] not in pinned_bootstraps
     ]
     if any(
-        item["target"] not in observation["advertised_multiaddrs"]
-        for item in independent_exercises
+        item["target"] not in observation["advertised_multiaddrs"] for item in independent_exercises
     ):
-        raise LeanstralProvisioningError(
-            "P2P bootstrap exercise used an unpinned peer identity"
-        )
+        raise LeanstralProvisioningError("P2P bootstrap exercise used an unpinned peer identity")
     if len(independent_exercises) != 1:
         raise LeanstralProvisioningError(
             "P2P evidence requires exactly one independent client service bootstrap"
@@ -831,8 +809,7 @@ def verify_p2p_evidence(
             "P2P independent service bootstrap did not match the direct-dial target"
         )
     if (
-        independent_exercise["observer_peer_id"]
-        != independent_dial["dialer_peer_id"]
+        independent_exercise["observer_peer_id"] != independent_dial["dialer_peer_id"]
         or independent_exercise["attempted"] is not True
         or independent_exercise["success"] is not True
         or independent_exercise["error"] is not None
@@ -843,9 +820,7 @@ def verify_p2p_evidence(
 
     for item in observation["rendezvous_exercises"]:
         if item["namespace"] != lock.p2p["rendezvous"]["namespace"]:
-            raise LeanstralProvisioningError(
-                "P2P rendezvous exercise changed the frozen namespace"
-            )
+            raise LeanstralProvisioningError("P2P rendezvous exercise changed the frozen namespace")
     expected_model = {
         "id": lock.identity["provider"],
         "model_id": lock.identity["provider"],
@@ -866,9 +841,7 @@ def verify_p2p_evidence(
         observation["server_instance_count"] != lock.p2p["server_instance_count"]
         or observation["inference_attempted"] is not lock.p2p["inference_allowed"]
     ):
-        raise LeanstralProvisioningError(
-            "P2P evidence violated the single-server/no-inference pin"
-        )
+        raise LeanstralProvisioningError("P2P evidence violated the single-server/no-inference pin")
 
     return {
         "enabled": True,
@@ -882,19 +855,13 @@ def verify_p2p_evidence(
 def _default_model_manager_probe(lock: LeanstralRuntimeLock) -> list[dict[str, Any]]:
     with _preserve_import_path():
         try:
-            manager_module = import_source_bound_ipfs_accelerate(
-                "ipfs_accelerate_py.model_manager"
-            )
+            manager_module = import_source_bound_ipfs_accelerate("ipfs_accelerate_py.model_manager")
             ModelManager = getattr(manager_module, "ModelManager")
             if not callable(ModelManager):
                 raise AttributeError("ModelManager is not callable")
         except (SourceBoundImportError, AttributeError) as exc:
-            raise LeanstralProvisioningError(
-                "model-manager discovery is unavailable"
-            ) from exc
-        with tempfile.TemporaryDirectory(
-            prefix="hssl-leanstral-model-manager-"
-        ) as state_dir:
+            raise LeanstralProvisioningError("model-manager discovery is unavailable") from exc
+        with tempfile.TemporaryDirectory(prefix="hssl-leanstral-model-manager-") as state_dir:
             manager = ModelManager(
                 storage_path=str(Path(state_dir) / "models.json"),
                 use_database=False,
@@ -916,9 +883,7 @@ def _default_mcp_probe(lock: LeanstralRuntimeLock) -> list[dict[str, Any]]:
         try:
             import anyio
 
-            manager_module = import_source_bound_ipfs_accelerate(
-                "ipfs_accelerate_py.model_manager"
-            )
+            manager_module = import_source_bound_ipfs_accelerate("ipfs_accelerate_py.model_manager")
             tools_module = import_source_bound_ipfs_accelerate(
                 "ipfs_accelerate_py.mcp_server.tools.model_tools.native_model_tools"
             )
@@ -936,13 +901,9 @@ def _default_mcp_probe(lock: LeanstralRuntimeLock) -> list[dict[str, Any]]:
                     get_default_model_manager,
                 )
             ):
-                raise AttributeError(
-                    "MCP model discovery callables are unavailable"
-                )
+                raise AttributeError("MCP model discovery callables are unavailable")
         except (ImportError, SourceBoundImportError, AttributeError) as exc:
-            raise LeanstralProvisioningError(
-                "MCP model discovery is unavailable"
-            ) from exc
+            raise LeanstralProvisioningError("MCP model discovery is unavailable") from exc
 
         async def call() -> dict[str, Any]:
             return await model_list_served(
@@ -950,9 +911,7 @@ def _default_mcp_probe(lock: LeanstralRuntimeLock) -> list[dict[str, Any]]:
                 timeout=float(lock.http["timeout_seconds"]),
             )
 
-        with tempfile.TemporaryDirectory(
-            prefix="hssl-leanstral-mcp-manager-"
-        ) as state_dir:
+        with tempfile.TemporaryDirectory(prefix="hssl-leanstral-mcp-manager-") as state_dir:
             manager = ModelManager(
                 storage_path=str(Path(state_dir) / "models.json"),
                 use_database=False,
@@ -967,9 +926,7 @@ def _default_mcp_probe(lock: LeanstralRuntimeLock) -> list[dict[str, Any]]:
                 close = getattr(manager, "close", None)
                 if callable(close):
                     close()
-        if result.get("status") != "success" or not isinstance(
-            result.get("models"), list
-        ):
+        if result.get("status") != "success" or not isinstance(result.get("models"), list):
             raise LeanstralProvisioningError("MCP model discovery failed")
         return result["models"]
 
@@ -995,13 +952,8 @@ def provision_shared_leanstral(
     """Verify all shared-service discovery surfaces and return a safe receipt."""
 
     timeout = float(lock.http["timeout_seconds"])
-    if (
-        isinstance(draft_timeout_seconds, bool)
-        or not 1.0 <= float(draft_timeout_seconds) <= 60.0
-    ):
-        raise LeanstralProvisioningError(
-            "draft timeout must be between one and sixty seconds"
-        )
+    if isinstance(draft_timeout_seconds, bool) or not 1.0 <= float(draft_timeout_seconds) <= 60.0:
+        raise LeanstralProvisioningError("draft timeout must be between one and sixty seconds")
     response_limit = int(lock.http["max_response_bytes"])
     health, health_headers = _http_json(
         _endpoint_url(lock.identity["endpoint"], str(lock.http["health_path"])),
@@ -1067,7 +1019,11 @@ def provision_shared_leanstral(
             opener=opener,
         )
         choices = completion.get("choices")
-        message = choices[0].get("message") if isinstance(choices, list) and choices and isinstance(choices[0], dict) else None
+        message = (
+            choices[0].get("message")
+            if isinstance(choices, list) and choices and isinstance(choices[0], dict)
+            else None
+        )
         text = message.get("content") if isinstance(message, dict) else None
         completion_model = str(completion.get("model") or lock.identity["model"])
         draft_receipt = verify_proof_draft(
@@ -1106,11 +1062,7 @@ def provision_shared_leanstral(
         },
         "health": {
             "status": str(health["status"]).lower(),
-            "server_build": str(
-                health.get("server_build")
-                or health_headers.get("server")
-                or ""
-            ),
+            "server_build": str(health.get("server_build") or health_headers.get("server") or ""),
         },
         "http_model_list": matching[0],
         "model_manager": one(manager_records, "model manager"),
@@ -1160,9 +1112,7 @@ def validate_receipt(lock: LeanstralRuntimeLock, receipt: Mapping[str, Any]) -> 
             "receipt lock binding policy does not identify lock_cid as authoritative"
         )
     if receipt.get("lock_sha256") != lock.lock_sha256:
-        raise LeanstralProvisioningError(
-            "receipt legacy compatibility lock_sha256 mismatch"
-        )
+        raise LeanstralProvisioningError("receipt legacy compatibility lock_sha256 mismatch")
     if receipt.get("identity") != dict(lock.identity):
         raise LeanstralProvisioningError("receipt identity mismatch")
     if receipt.get("receipt_binding") != _receipt_binding_policy():
@@ -1185,41 +1135,34 @@ def validate_receipt(lock: LeanstralRuntimeLock, receipt: Mapping[str, Any]) -> 
         ) from exc
     if canonical_receipt_cid != cid_for_dag_json(unsigned):
         raise LeanstralProvisioningError("receipt authoritative CID mismatch")
-    if (
-        not isinstance(supplied_sha256, str)
-        or not _SHA256_RE.fullmatch(supplied_sha256)
-    ):
+    if not isinstance(supplied_sha256, str) or not _SHA256_RE.fullmatch(supplied_sha256):
         raise LeanstralProvisioningError(
             "receipt legacy compatibility SHA-256 is missing or malformed"
         )
     if semantic_sha256(unsigned) != supplied_sha256:
-        raise LeanstralProvisioningError(
-            "receipt legacy compatibility SHA-256 mismatch"
-        )
+        raise LeanstralProvisioningError("receipt legacy compatibility SHA-256 mismatch")
     serialized = json.dumps(receipt, sort_keys=True).lower()
     if any(f'"{key}"' in serialized for key in _SECRET_KEYS):
         raise LeanstralProvisioningError("receipt contains a secret-bearing field")
-    if receipt.get("attach_only") is not True or receipt.get("duplicate_server_started") is not False:
+    if (
+        receipt.get("attach_only") is not True
+        or receipt.get("duplicate_server_started") is not False
+    ):
         raise LeanstralProvisioningError("receipt does not prove attach-only provisioning")
-    if receipt.get("uses_benchmark_inputs") is not False or receipt.get("secrets_serialized") is not False:
+    if (
+        receipt.get("uses_benchmark_inputs") is not False
+        or receipt.get("secrets_serialized") is not False
+    ):
         raise LeanstralProvisioningError("receipt violates input/secret safety")
     p2p = receipt.get("p2p")
-    topology_receipt = (
-        p2p.get("topology_receipt")
-        if isinstance(p2p, Mapping)
-        else None
-    )
+    topology_receipt = p2p.get("topology_receipt") if isinstance(p2p, Mapping) else None
     revalidated_p2p = verify_p2p_evidence(lock, topology_receipt)
     if (
         not isinstance(p2p, Mapping)
-        or p2p.get("topology_receipt_cid")
-        != revalidated_p2p["topology_receipt_cid"]
-        or topology_receipt.get("receipt_cid")
-        != revalidated_p2p["topology_receipt_cid"]
+        or p2p.get("topology_receipt_cid") != revalidated_p2p["topology_receipt_cid"]
+        or topology_receipt.get("receipt_cid") != revalidated_p2p["topology_receipt_cid"]
     ):
-        raise LeanstralProvisioningError(
-            "receipt P2P topology CID does not match its observation"
-        )
+        raise LeanstralProvisioningError("receipt P2P topology CID does not match its observation")
     draft = receipt.get("proof_draft")
     if (
         not isinstance(draft, Mapping)
@@ -1235,7 +1178,9 @@ def validate_receipt(lock: LeanstralRuntimeLock, receipt: Mapping[str, Any]) -> 
 
 def _read_json(path: Path) -> dict[str, Any]:
     try:
-        value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+        value = json.loads(
+            path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys
+        )
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise LeanstralProvisioningError(f"cannot load JSON evidence: {exc}") from exc
     if not isinstance(value, dict):

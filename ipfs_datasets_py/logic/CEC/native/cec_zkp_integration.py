@@ -20,13 +20,13 @@ Security Note:
 Example:
     >>> from ipfs_datasets_py.logic.CEC.native import cec_zkp_integration
     >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import parse_dcec
-    >>> 
+    >>>
     >>> # Create knowledge base (axioms)
     >>> axioms = [
     ...     parse_dcec("p"),
     ...     parse_dcec("p -> q"),
     ... ]
-    >>> 
+    >>>
     >>> # Create hybrid prover (ZKP + standard)
     >>> prover = cec_zkp_integration.ZKPCECProver(
     ...     enable_zkp=True,
@@ -34,7 +34,7 @@ Example:
     ...     zkp_fallback="standard",
     ...     enable_caching=True
     ... )
-    >>> 
+    >>>
     >>> # Prove with privacy (ZKP hides axioms)
     >>> goal = parse_dcec("q")
     >>> result = prover.prove_theorem(
@@ -43,7 +43,7 @@ Example:
     ...     prefer_zkp=True,
     ...     private_axioms=True
     ... )
-    >>> 
+    >>>
     >>> print(f"Proved: {result.is_proved}")
     >>> print(f"Method: {result.method}")  # "cec_zkp" or "cec_standard"
     >>> print(f"Private: {result.is_private}")  # True if ZKP used
@@ -70,6 +70,7 @@ from .cec_proof_cache import CachedTheoremProver, HAVE_CACHE
 # import time (the zkp package warns on attribute access).
 try:
     from ... import zkp as _zkp  # type: ignore
+
     HAVE_ZKP = True
 except ImportError:
     _zkp = None  # type: ignore
@@ -80,6 +81,7 @@ logger = logging.getLogger(__name__)
 
 class ProvingMethod(Enum):
     """Method used to prove a theorem."""
+
     CEC_STANDARD = "cec_standard"  # Standard CEC theorem proving
     CEC_ZKP = "cec_zkp"  # Zero-knowledge proof
     CEC_HYBRID = "cec_hybrid"  # Hybrid (tried both)
@@ -90,67 +92,65 @@ class ProvingMethod(Enum):
 class UnifiedCECProofResult:
     """
     Unified proof result supporting both standard and ZKP proofs.
-    
+
     This class provides a common interface for proof results from both
     standard DCEC theorem proving and zero-knowledge proofs, enabling
     seamless integration in hybrid proving modes.
-    
+
     Attributes:
         is_proved: Whether the formula was successfully proved
         formula: The formula that was proved
         axioms: Axioms used (may be hidden if private)
         method: Proving method used
         proof_time: Time taken to generate proof (seconds)
-        
+
         # Standard DCEC proof fields
         base_result: Base ProofResult enum
         proof_steps: Number of proof steps (None for ZKP)
         inference_rules: Inference rules used (None for ZKP)
-        
+
         # ZKP proof fields
         zkp_proof: ZKP proof object (None for standard)
         is_private: True if axioms are hidden via ZKP
         zkp_backend: ZKP backend used (if applicable)
-        
+
         # Cache fields
         from_cache: True if result came from cache
         cache_hit_time: Time saved by cache hit
     """
+
     is_proved: bool
     formula: Formula
     axioms: List[Formula]
     method: ProvingMethod
     proof_time: float
-    
+
     # Standard fields
     base_result: BaseProofResult = BaseProofResult.UNKNOWN
     proof_steps: Optional[int] = None
     inference_rules: Optional[List[str]] = None
     error_message: Optional[str] = None
-    
+
     # ZKP fields
     zkp_proof: Optional[Any] = None  # ZKPProof type
     is_private: bool = False
     zkp_backend: Optional[str] = None
-    
+
     # Cache fields
     from_cache: bool = False
     cache_hit_time: Optional[float] = None
-    
+
     # Metadata
     timestamp: float = field(default_factory=time.time)
-    
+
     @classmethod
     def from_standard_proof(
-        cls,
-        attempt: ProofAttempt,
-        from_cache: bool = False,
-        cache_hit_time: Optional[float] = None
+        cls, attempt: ProofAttempt, from_cache: bool = False, cache_hit_time: Optional[float] = None
     ) -> UnifiedCECProofResult:
         """Create unified result from standard ProofAttempt."""
         proof_steps = 0
         inference_rules = []
-        
+
         if attempt.proof_tree:
             proof_tree = attempt.proof_tree
 
@@ -190,9 +190,9 @@ class UnifiedCECProofResult:
                 rules_set = set()
                 extract_rules(proof_tree, rules_set)
                 inference_rules = list(rules_set)
-        
+
         method = ProvingMethod.CEC_CACHED if from_cache else ProvingMethod.CEC_STANDARD
-        
+
         return cls(
             is_proved=(attempt.result == BaseProofResult.PROVED),
             formula=attempt.goal,
@@ -206,7 +206,7 @@ class UnifiedCECProofResult:
             from_cache=from_cache,
             cache_hit_time=cache_hit_time,
         )
-    
+
     @classmethod
     def from_zkp_proof(
         cls,
@@ -216,16 +216,16 @@ class UnifiedCECProofResult:
         is_proved: bool,
         proof_time: float,
         zkp_backend: str,
-        is_private: bool = True
+        is_private: bool = True,
     ) -> UnifiedCECProofResult:
         """Create unified result from ZKP proof.
-        
+
         When is_private=True, axioms are replaced with a placeholder to prevent
         direct access to private witness data.
         """
         # For private proofs, replace axioms with a placeholder
         visible_axioms = [] if is_private else axioms
-        
+
         return cls(
             is_proved=is_proved,
             formula=formula,
@@ -237,48 +237,50 @@ class UnifiedCECProofResult:
             is_private=is_private,
             zkp_backend=zkp_backend,
         )
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            'is_proved': self.is_proved,
-            'formula': self.formula.to_string(),
-            'axioms': [a.to_string() for a in self.axioms] if not self.is_private else ['<private>'],
-            'method': self.method.value,
-            'proof_time': self.proof_time,
-            'base_result': self.base_result.value,
-            'proof_steps': self.proof_steps,
-            'is_private': self.is_private,
-            'from_cache': self.from_cache,
-            'timestamp': self.timestamp,
+            "is_proved": self.is_proved,
+            "formula": self.formula.to_string(),
+            "axioms": [a.to_string() for a in self.axioms]
+            if not self.is_private
+            else ["<private>"],
+            "method": self.method.value,
+            "proof_time": self.proof_time,
+            "base_result": self.base_result.value,
+            "proof_steps": self.proof_steps,
+            "is_private": self.is_private,
+            "from_cache": self.from_cache,
+            "timestamp": self.timestamp,
         }
 
 
 class ZKPCECProver:
     """
     Hybrid CEC theorem prover with ZKP and caching support.
-    
+
     This prover integrates three proving strategies:
     1. Cache lookup (fastest - O(1), microseconds)
     2. ZKP proving (medium - privacy-preserving)
     3. Standard proving (fallback - full details)
-    
+
     The prover automatically selects the best strategy based on:
     - Cache availability and hit
     - ZKP backend availability
     - Privacy requirements
     - Fallback preferences
-    
+
     Example:
         >>> prover = ZKPCECProver(
         ...     enable_zkp=True,
         ...     enable_caching=True,
         ...     zkp_backend="simulated"
         ... )
-        >>> 
+        >>>
         >>> # Prove with all optimizations
         >>> result = prover.prove_theorem(goal, axioms)
-        >>> 
+        >>>
         >>> # Force ZKP (privacy-preserving)
         >>> result = prover.prove_theorem(
         ...     goal, axioms,
@@ -286,7 +288,7 @@ class ZKPCECProver:
         ...     private_axioms=True
         ... )
     """
-    
+
     def __init__(
         self,
         enable_zkp: bool = True,
@@ -295,11 +297,11 @@ class ZKPCECProver:
         zkp_fallback: str = "standard",
         cache_size: int = 1000,
         cache_ttl: int = 3600,
-        use_global_cache: bool = True
+        use_global_cache: bool = True,
     ):
         """
         Initialize hybrid ZKP+cached CEC prover.
-        
+
         Args:
             enable_zkp: Enable ZKP proving
             enable_caching: Enable proof caching
@@ -314,14 +316,14 @@ class ZKPCECProver:
             cache_size=cache_size,
             cache_ttl=cache_ttl,
             use_global_cache=use_global_cache,
-            enable_caching=enable_caching
+            enable_caching=enable_caching,
         )
-        
+
         # ZKP configuration
         self.enable_zkp = enable_zkp and HAVE_ZKP
         self.zkp_backend = zkp_backend
         self.zkp_fallback = zkp_fallback
-        
+
         # Initialize ZKP components if enabled
         if self.enable_zkp:
             try:
@@ -342,7 +344,7 @@ class ZKPCECProver:
                 logger.info("ZKP not available - zkp module not found")
             else:
                 logger.info("ZKP disabled by configuration")
-        
+
         # Statistics
         self._zkp_attempts = 0
         self._zkp_successes = 0
@@ -352,12 +354,14 @@ class ZKPCECProver:
     def initialize(self) -> None:
         """No-op initializer for API compatibility (all init done in __init__)."""
         # Ensure kb is set for backward compat
-        if not hasattr(self, 'kb'):
+        if not hasattr(self, "kb"):
             try:
                 from .prover_core import ProofSearchEngine
+
                 self.kb = ProofSearchEngine()
             except Exception:
                 from types import SimpleNamespace
+
                 self.kb = SimpleNamespace(axioms=[], rules=[])
 
     def prove_theorem(
@@ -372,12 +376,12 @@ class ZKPCECProver:
     ) -> UnifiedCECProofResult:
         """
         Prove a theorem using hybrid strategy.
-        
+
         Strategy:
         1. If use_cache: Check cache first (O(1))
         2. If prefer_zkp and ZKP enabled: Try ZKP proof
         3. If ZKP fails or not preferred: Use standard proving
-        
+
         Args:
             goal: Formula to prove
             axioms: Axioms to use
@@ -385,7 +389,7 @@ class ZKPCECProver:
             prefer_zkp: Prefer ZKP over standard
             private_axioms: Hide axioms in proof (requires ZKP)
             use_cache: Use proof cache
-            
+
         Returns:
             UnifiedCECProofResult with proof details
         """
@@ -397,7 +401,7 @@ class ZKPCECProver:
             prefer_zkp = False
             private_axioms = False
             use_cache = False
-        
+
         # Strategy 1: Try cache first (if enabled)
         if use_cache and self.cached_prover.enable_caching:
             # Capture cache statistics before the lookup, if available
@@ -422,7 +426,7 @@ class ZKPCECProver:
                     from_cache=True,
                     cache_hit_time=cache_time,
                 )
-        
+
         # Strategy 2: Try ZKP (if preferred and enabled)
         if prefer_zkp and self.enable_zkp and self.zkp_prover:
             try:
@@ -437,60 +441,55 @@ class ZKPCECProver:
                 logger.warning(f"ZKP proof error: {e}")
                 if self.zkp_fallback not in ("standard", "simulated"):
                     raise
-        
+
         # Strategy 3: Standard proving (fallback or primary)
         self._standard_proofs += 1
         attempt = self.cached_prover.prove_theorem(goal, axioms, timeout, use_cache=False)
         return UnifiedCECProofResult.from_standard_proof(attempt, from_cache=False)
-    
+
     def _prove_with_zkp(
-        self,
-        goal: Formula,
-        axioms: List[Formula],
-        timeout: Optional[float],
-        private_axioms: bool
+        self, goal: Formula, axioms: List[Formula], timeout: Optional[float], private_axioms: bool
     ) -> UnifiedCECProofResult:
         """
         Prove using ZKP backend.
-        
+
         This creates a privacy-preserving proof that hides the axioms
         while still proving that the goal follows from them.
-        
+
         Note: This is a simplified implementation. Real ZKP for
         first-order logic is complex and may require circuit encoding.
         """
         import hashlib
+
         start_time = time.time()
-        
+
         # Convert formula and axioms to ZKP-compatible format
         # (In real implementation, this would involve circuit encoding)
         # Use deterministic cryptographic hash (SHA-256) instead of Python's hash()
         axioms_sorted = sorted(a.to_string() for a in axioms)
         axioms_str = "\n".join(axioms_sorted)
         axioms_hash = hashlib.sha256(axioms_str.encode()).hexdigest()
-        
-        statement = {
-            'goal': goal.to_string(),
-            'axioms_hash': axioms_hash
-        }
-        
+
+        statement = {"goal": goal.to_string(), "axioms_hash": axioms_hash}
+
         # Create witness (private inputs)
-        witness = {
-            'axioms': [a.to_string() for a in axioms]
-        }
-        
+        witness = {"axioms": [a.to_string() for a in axioms]}
+
         try:
             # Generate ZKP proof
             # Convert statement dict to string for ZKPProver.prove() which expects str
-            statement_str = (statement if isinstance(statement, str)
-                             else f"{statement.get('goal', '')}#{statement.get('axioms_hash', '')}")
+            statement_str = (
+                statement
+                if isinstance(statement, str)
+                else f"{statement.get('goal', '')}#{statement.get('axioms_hash', '')}"
+            )
             zkp_proof = self.zkp_prover.prove(statement_str, witness)
-            
+
             # Verify proof
             is_valid = self.zkp_verifier.verify_proof(zkp_proof)
-            
+
             proof_time = time.time() - start_time
-            
+
             return UnifiedCECProofResult.from_zkp_proof(
                 formula=goal,
                 axioms=axioms,
@@ -498,36 +497,37 @@ class ZKPCECProver:
                 is_proved=is_valid,
                 proof_time=proof_time,
                 zkp_backend=self.zkp_backend,
-                is_private=private_axioms
+                is_private=private_axioms,
             )
-        
+
         except Exception as e:
             logger.error(f"ZKP proving failed: {e}")
             raise
-    
+
     def get_statistics(self) -> Dict[str, Any]:
         """Get comprehensive statistics."""
         stats = self.cached_prover.get_statistics()
-        
+
         # Add ZKP statistics
-        stats.update({
-            'zkp_enabled': self.enable_zkp,
-            'zkp_attempts': self._zkp_attempts,
-            'zkp_successes': self._zkp_successes,
-            'zkp_success_rate': (
-                self._zkp_successes / self._zkp_attempts
-                if self._zkp_attempts > 0 else 0.0
-            ),
-            'standard_proofs': self._standard_proofs,
-            'cache_hits_zkp': self._cache_hits,
-        })
-        
+        stats.update(
+            {
+                "zkp_enabled": self.enable_zkp,
+                "zkp_attempts": self._zkp_attempts,
+                "zkp_successes": self._zkp_successes,
+                "zkp_success_rate": (
+                    self._zkp_successes / self._zkp_attempts if self._zkp_attempts > 0 else 0.0
+                ),
+                "standard_proofs": self._standard_proofs,
+                "cache_hits_zkp": self._cache_hits,
+            }
+        )
+
         return stats
-    
+
     def clear_cache(self) -> None:
         """Clear proof cache."""
         self.cached_prover.clear_cache()
-    
+
     def clear_statistics(self) -> None:
         """Clear all statistics."""
         self._zkp_attempts = 0
@@ -540,35 +540,29 @@ class ZKPCECProver:
 
 # Convenience function
 def create_hybrid_prover(
-    enable_zkp: bool = True,
-    enable_caching: bool = True,
-    **kwargs
+    enable_zkp: bool = True, enable_caching: bool = True, **kwargs
 ) -> ZKPCECProver:
     """
     Create a hybrid CEC prover with ZKP and caching.
-    
+
     This is a convenience function for quick setup.
-    
+
     Args:
         enable_zkp: Enable ZKP support
         enable_caching: Enable proof caching
         **kwargs: Additional arguments for ZKPCECProver
-        
+
     Returns:
         Configured ZKPCECProver instance
     """
-    return ZKPCECProver(
-        enable_zkp=enable_zkp,
-        enable_caching=enable_caching,
-        **kwargs
-    )
+    return ZKPCECProver(enable_zkp=enable_zkp, enable_caching=enable_caching, **kwargs)
 
 
 __all__ = [
-    'ProvingMethod',
-    'UnifiedCECProofResult',
-    'ZKPCECProver',
-    'create_hybrid_prover',
-    'HAVE_ZKP',
-    'HAVE_CACHE',
+    "ProvingMethod",
+    "UnifiedCECProofResult",
+    "ZKPCECProver",
+    "create_hybrid_prover",
+    "HAVE_ZKP",
+    "HAVE_CACHE",
 ]

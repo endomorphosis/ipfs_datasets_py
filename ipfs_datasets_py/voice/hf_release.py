@@ -83,15 +83,9 @@ G018_REQUIRED_EVIDENCE_TERMS: Final[tuple[str, ...]] = (
     "byte-identical rebuild",
     f"authoritative evidence map: {G018_AUTHORITATIVE_EVIDENCE_MAP}",
 )
-DETERMINISTIC_RELEASE_CONSTRUCTION_EVIDENCE_TERM: Final = (
-    "deterministic release construction"
-)
-FIVE_FLAT_CONFIGS_EVIDENCE_TERM: Final = (
-    "five flat Abby configs including evaluation"
-)
-SHARDED_ZSTD_PARQUET_DESCRIPTORS_EVIDENCE_TERM: Final = (
-    "sharded ZSTD Parquet descriptors"
-)
+DETERMINISTIC_RELEASE_CONSTRUCTION_EVIDENCE_TERM: Final = "deterministic release construction"
+FIVE_FLAT_CONFIGS_EVIDENCE_TERM: Final = "five flat Abby configs including evaluation"
+SHARDED_ZSTD_PARQUET_DESCRIPTORS_EVIDENCE_TERM: Final = "sharded ZSTD Parquet descriptors"
 BYTE_IDENTICAL_REBUILD_EVIDENCE_TERM: Final = "byte-identical rebuild"
 
 FIVE_FLAT_ABBY_CONFIGS: Final[tuple[str, ...]] = (
@@ -163,9 +157,7 @@ class AbbyVoiceHFReleaseResult:
             "policy_digest": self.policy_digest,
             "release_cid": self.release_cid,
             "release_id": self.release_id,
-            "row_counts": {
-                config: dict(splits) for config, splits in self.row_counts.items()
-            },
+            "row_counts": {config: dict(splits) for config, splits in self.row_counts.items()},
         }
 
 
@@ -192,9 +184,7 @@ class AbbyVoiceHFReleasePolicy:
             raise AbbyVoiceHFReleaseError("shard_rows must be a positive integer")
         repo = str(self.dataset_repo_id or "").strip()
         if "/" not in repo or repo.startswith("/") or repo.endswith("/"):
-            raise AbbyVoiceHFReleaseError(
-                "dataset_repo_id must have the form namespace/repository"
-            )
+            raise AbbyVoiceHFReleaseError("dataset_repo_id must have the form namespace/repository")
         object.__setattr__(self, "dataset_repo_id", repo)
 
     def to_dict(self) -> dict[str, Any]:
@@ -304,8 +294,7 @@ class AbbyVoiceHFReleaseBuilder:
             directory = _CONFIG_DIRECTORY[config_name]
             by_split = config_rows[config_name]
             row_counts[config_name] = {
-                split: len(by_split.get(split, ()))
-                for split in _CONFIG_SPLITS[config_name]
+                split: len(by_split.get(split, ())) for split in _CONFIG_SPLITS[config_name]
             }
             schema = (
                 get_evaluation_pyarrow_schema()
@@ -320,18 +309,19 @@ class AbbyVoiceHFReleaseBuilder:
                 # has zero rows total so Dataset Viewer can load the schema.
                 if not rows and any(by_split.values()):
                     continue
-                if not rows and not any(by_split.values()) and split != _CONFIG_SPLITS[config_name][0]:
+                if (
+                    not rows
+                    and not any(by_split.values())
+                    and split != _CONFIG_SPLITS[config_name][0]
+                ):
                     continue
                 for shard_id, shard_rows in enumerate(shards):
                     relative = (
-                        f"{directory}/{split}/"
-                        f"{split}-{shard_id:05d}-of-{len(shards):05d}.parquet"
+                        f"{directory}/{split}/{split}-{shard_id:05d}-of-{len(shards):05d}.parquet"
                     )
                     path = root / relative
                     table = _rows_to_table(shard_rows, schema=schema)
-                    write_zstd_parquet(
-                        path, table, max_rows=self.policy.shard_rows
-                    )
+                    write_zstd_parquet(path, table, max_rows=self.policy.shard_rows)
                     validate_zstd_parquet(
                         path,
                         max_rows=self.policy.shard_rows,
@@ -421,9 +411,7 @@ class AbbyVoiceHFReleaseBuilder:
         )
         descriptors.append(readme_descriptor)
 
-        descriptors = tuple(
-            sorted(descriptors, key=lambda item: item.relative_path)
-        )
+        descriptors = tuple(sorted(descriptors, key=lambda item: item.relative_path))
         release_body = {
             "configs": list(FIVE_FLAT_ABBY_CONFIGS),
             "dataset_repo_id": self.policy.dataset_repo_id,
@@ -447,9 +435,7 @@ class AbbyVoiceHFReleaseBuilder:
             ],
         }
         reject_identity_contamination(release_body, label="release_manifest")
-        release_cid = cid_v1_from_digest(
-            sha256(canonical_json_bytes(release_body)).digest()
-        )
+        release_cid = cid_v1_from_digest(sha256(canonical_json_bytes(release_body)).digest())
         release_body["release_cid"] = release_cid
 
         artifact_manifest = self._artifact_manifest(
@@ -488,9 +474,7 @@ class AbbyVoiceHFReleaseBuilder:
         ]
         release_body.pop("release_cid", None)
         reject_identity_contamination(release_body, label="release_manifest")
-        release_cid = cid_v1_from_digest(
-            sha256(canonical_json_bytes(release_body)).digest()
-        )
+        release_cid = cid_v1_from_digest(sha256(canonical_json_bytes(release_body)).digest())
         release_body["release_cid"] = release_cid
 
         manifest_path = root / "release-manifest.json"
@@ -506,9 +490,7 @@ class AbbyVoiceHFReleaseBuilder:
             release_cid=release_cid,
             configs=FIVE_FLAT_ABBY_CONFIGS,
             descriptors=descriptors,
-            row_counts={
-                config: dict(splits) for config, splits in row_counts.items()
-            },
+            row_counts={config: dict(splits) for config, splits in row_counts.items()},
             graph_cid=index.graph_cid,
             index_cid=index.index_cid,
             artifact_manifest=artifact_manifest,
@@ -572,10 +554,7 @@ class AbbyVoiceHFReleaseBuilder:
                         salt=self.policy.split_salt,
                     )
                 buckets[split].append(dict(row))
-            return {
-                split: tuple(buckets.get(split, ()))
-                for split in _CONFIG_SPLITS[config_name]
-            }
+            return {split: tuple(buckets.get(split, ())) for split in _CONFIG_SPLITS[config_name]}
 
         return {
             ABBY_VOICE_RESPONSE_V2: assign(
@@ -647,14 +626,11 @@ class AbbyVoiceHFReleaseBuilder:
                 if descriptor.relative_path.endswith(".parquet")
                 else ArtifactRole.DIAGNOSTIC
             )
-            path_identity = sha256(
-                descriptor.relative_path.encode("utf-8")
-            ).hexdigest()[:16]
+            path_identity = sha256(descriptor.relative_path.encode("utf-8")).hexdigest()[:16]
             artifacts.append(
                 Artifact(
                     artifact_id=(
-                        f"artifact:abby-voice-release:{path_identity}:"
-                        f"{descriptor.sha256}"
+                        f"artifact:abby-voice-release:{path_identity}:{descriptor.sha256}"
                     ),
                     role=role,
                     content_sha256=descriptor.sha256,
@@ -697,16 +673,12 @@ class AbbyVoiceHFReleaseBuilder:
                     metadata=self.policy.to_dict(),
                 ),
             ),
-            schema_versions={
-                name: name for name in FIVE_FLAT_ABBY_CONFIGS
-            },
+            schema_versions={name: name for name in FIVE_FLAT_ABBY_CONFIGS},
             tool_versions={"abby-voice-hf-release": "1.0.0"},
             deterministic_metadata={
                 "byte_identical_rebuild": True,
                 "deterministic_release_construction": True,
-                "five_flat_abby_configs_including_evaluation": list(
-                    FIVE_FLAT_ABBY_CONFIGS
-                ),
+                "five_flat_abby_configs_including_evaluation": list(FIVE_FLAT_ABBY_CONFIGS),
                 "graph_cid": graph_cid,
                 "index_cid": index_cid,
                 "release_cid": release_cid,
@@ -727,9 +699,7 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
     root = Path(release_dir).expanduser().resolve()
     manifest_path = root / "release-manifest.json"
     if not manifest_path.is_file():
-        raise AbbyVoiceHFReleaseError(
-            f"release-manifest.json is missing under {root}"
-        )
+        raise AbbyVoiceHFReleaseError(f"release-manifest.json is missing under {root}")
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
@@ -755,22 +725,17 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
     for descriptor in descriptors:
         verify_file_descriptor(root, descriptor)
 
-    config_rows: dict[str, list[dict[str, Any]]] = {
-        name: [] for name in FIVE_FLAT_ABBY_CONFIGS
-    }
+    config_rows: dict[str, list[dict[str, Any]]] = {name: [] for name in FIVE_FLAT_ABBY_CONFIGS}
     for descriptor in descriptors:
         if not descriptor.relative_path.endswith(".parquet"):
             continue
         if descriptor.config_name not in FIVE_FLAT_ABBY_CONFIGS:
-            raise AbbyVoiceHFReleaseError(
-                f"unknown parquet config {descriptor.config_name!r}"
-            )
+            raise AbbyVoiceHFReleaseError(f"unknown parquet config {descriptor.config_name!r}")
         # Support artifacts must not live under config directories.
         directory = _CONFIG_DIRECTORY[descriptor.config_name]
         if not descriptor.relative_path.startswith(f"{directory}/"):
             raise AbbyVoiceHFReleaseError(
-                f"parquet descriptor path not under config directory: "
-                f"{descriptor.relative_path}"
+                f"parquet descriptor path not under config directory: {descriptor.relative_path}"
             )
         schema = (
             get_evaluation_pyarrow_schema()
@@ -798,22 +763,21 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
         for row in rows:
             identity = str(row.get(id_field) or "")
             if not identity:
-                raise AbbyVoiceHFReleaseError(
-                    f"{config_name} row missing {id_field}"
-                )
+                raise AbbyVoiceHFReleaseError(f"{config_name} row missing {id_field}")
             if identity in seen:
-                raise AbbyVoiceHFReleaseError(
-                    f"duplicate {id_field} in {config_name}: {identity}"
-                )
+                raise AbbyVoiceHFReleaseError(f"duplicate {id_field} in {config_name}: {identity}")
             seen.add(identity)
 
     # Exact bundle references among the four voice configs.
-    if any(config_rows[name] for name in (
-        ABBY_VOICE_RESPONSE_V2,
-        ABBY_VOICE_TEMPLATE_V2,
-        ABBY_VOICE_AUDIO_V2,
-        ABBY_VOICE_PROVENANCE_V2,
-    )):
+    if any(
+        config_rows[name]
+        for name in (
+            ABBY_VOICE_RESPONSE_V2,
+            ABBY_VOICE_TEMPLATE_V2,
+            ABBY_VOICE_AUDIO_V2,
+            ABBY_VOICE_PROVENANCE_V2,
+        )
+    ):
         validate_bundle(
             responses=config_rows[ABBY_VOICE_RESPONSE_V2],
             templates=config_rows[ABBY_VOICE_TEMPLATE_V2],
@@ -849,9 +813,7 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
             continue
         relative = path.relative_to(root).as_posix()
         parts = relative.split("/")
-        if parts[0] in set(_CONFIG_DIRECTORY.values()) and not relative.endswith(
-            ".parquet"
-        ):
+        if parts[0] in set(_CONFIG_DIRECTORY.values()) and not relative.endswith(".parquet"):
             raise AbbyVoiceHFReleaseError(
                 f"non-parquet artifact inside config directory: {relative}"
             )
@@ -863,9 +825,7 @@ def validate_abby_voice_hf_release(release_dir: str | Path) -> dict[str, Any]:
         "index_cid": index.index_cid,
         "release_cid": manifest.get("release_cid"),
         "release_id": manifest.get("release_id"),
-        "row_counts": {
-            name: len(rows) for name, rows in config_rows.items()
-        },
+        "row_counts": {name: len(rows) for name, rows in config_rows.items()},
         "valid": True,
     }
 
@@ -885,9 +845,7 @@ def build_abby_voice_hf_release(
 ) -> AbbyVoiceHFReleaseResult:
     """Module-level convenience wrapper around the release builder."""
 
-    builder = AbbyVoiceHFReleaseBuilder(
-        policy=policy, repository_commit=repository_commit
-    )
+    builder = AbbyVoiceHFReleaseBuilder(policy=policy, repository_commit=repository_commit)
     return builder.build(
         output_dir=output_dir,
         release_id=release_id,
@@ -916,9 +874,7 @@ def _read_parquet_rows(path: Path) -> list[dict[str, Any]]:
     try:
         import pyarrow.parquet as pq
     except ImportError as exc:  # pragma: no cover
-        raise ImportError(
-            "_read_parquet_rows requires the optional 'pyarrow' package"
-        ) from exc
+        raise ImportError("_read_parquet_rows requires the optional 'pyarrow' package") from exc
     table = pq.read_table(path)
     rows: list[dict[str, Any]] = []
     for batch in table.to_pylist():
@@ -950,9 +906,7 @@ def _release_readme(
         lines.append("  data_files:")
         for split in _CONFIG_SPLITS[config_name]:
             lines.append(f"  - split: {split}")
-            lines.append(
-                f"    path: {directory}/{split}/{split}-*.parquet"
-            )
+            lines.append(f"    path: {directory}/{split}/{split}-*.parquet")
     lines.extend(
         [
             "---",

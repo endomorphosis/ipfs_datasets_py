@@ -206,12 +206,8 @@ def scrape_github_repository(
                     result["commits"] = [
                         {
                             "sha": commit.get("sha", "")[:7],
-                            "message": commit.get("commit", {})
-                            .get("message", "")
-                            .split("\n")[0],
-                            "author": commit.get("commit", {})
-                            .get("author", {})
-                            .get("name", ""),
+                            "message": commit.get("commit", {}).get("message", "").split("\n")[0],
+                            "author": commit.get("commit", {}).get("author", {}).get("name", ""),
                             "date": commit.get("commit", {}).get("author", {}).get("date", ""),
                         }
                         for commit in commits_response.json()[:max_items]
@@ -263,9 +259,7 @@ def analyze_repository_health(repository_data: Dict[str, Any]) -> Dict[str, Any]
         stats = repository_data.get("statistics", {})
 
         activity_score = min(100, stats.get("total_commits", 0) * 2)
-        community_score = min(
-            100, (stats.get("stars", 0) / 10) + (stats.get("forks", 0) * 2)
-        )
+        community_score = min(100, (stats.get("stars", 0) / 10) + (stats.get("forks", 0) * 2))
         maintenance_score = 75 if stats.get("total_prs", 0) > 0 else 50
 
         overall_score = (activity_score + community_score + maintenance_score) / 3
@@ -274,9 +268,7 @@ def analyze_repository_health(repository_data: Dict[str, Any]) -> Dict[str, Any]
         if activity_score < 50:
             recommendations.append("Low commit activity — consider more regular updates")
         if community_score < 30:
-            recommendations.append(
-                "Low community engagement — improve documentation and examples"
-            )
+            recommendations.append("Low community engagement — improve documentation and examples")
         if stats.get("total_workflows", 0) == 0:
             recommendations.append(
                 "No CI/CD workflows detected — consider adding automated testing"

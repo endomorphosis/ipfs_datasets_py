@@ -172,7 +172,11 @@ def _footer(c: canvas.Canvas, doc: SimpleDocTemplate) -> None:
     c.restoreState()
 
 
-def _load_body_lines(*, complaint_md_path: Path = COMPLAINT_MD, body_start_marker: str = "Plaintiffs allege as follows:") -> list[str]:
+def _load_body_lines(
+    *,
+    complaint_md_path: Path = COMPLAINT_MD,
+    body_start_marker: str = "Plaintiffs allege as follows:",
+) -> list[str]:
     lines = complaint_md_path.read_text(encoding="utf-8").splitlines()
     body: list[str] = []
     skip = True
@@ -208,7 +212,9 @@ def build_courtstyle_complaint(
     caption_defendants = summary.get("defendants", meta.get("caption_defendants", ""))
     address = meta.get("mailing_address", "")
     sig_name = meta.get("signature_plaintiff", "Benjamin Jay Barber")
-    body_lines = _load_body_lines(complaint_md_path=complaint_md_path, body_start_marker=body_start_marker)
+    body_lines = _load_body_lines(
+        complaint_md_path=complaint_md_path, body_start_marker=body_start_marker
+    )
 
     styles = getSampleStyleSheet()
     base = ParagraphStyle(
@@ -220,7 +226,9 @@ def build_courtstyle_complaint(
         spaceAfter=0,
     )
     small = ParagraphStyle("small", parent=base, fontSize=10, leading=12)
-    center = ParagraphStyle("center", parent=base, alignment=1, fontSize=11.5, leading=13.5, spaceAfter=2)
+    center = ParagraphStyle(
+        "center", parent=base, alignment=1, fontSize=11.5, leading=13.5, spaceAfter=2
+    )
     heading = ParagraphStyle(
         "heading",
         parent=base,
@@ -232,10 +240,14 @@ def build_courtstyle_complaint(
         spaceAfter=3,
         keepWithNext=True,
     )
-    sub = ParagraphStyle("sub", parent=base, fontName="Times-Bold", leading=16, spaceBefore=4, spaceAfter=4)
+    sub = ParagraphStyle(
+        "sub", parent=base, fontName="Times-Bold", leading=16, spaceBefore=4, spaceAfter=4
+    )
     cap = ParagraphStyle("cap", parent=base, fontSize=11, leading=12)
     case_box = ParagraphStyle("case_box", parent=cap, fontName="Times-Roman", leading=13)
-    title = ParagraphStyle("title", parent=base, fontName="Times-Bold", fontSize=12.4, leading=14.2, alignment=1)
+    title = ParagraphStyle(
+        "title", parent=base, fontName="Times-Bold", fontSize=12.4, leading=14.2, alignment=1
+    )
 
     story = []
     contact = [f"{sig_name}, pro se"]
@@ -302,7 +314,18 @@ def build_courtstyle_complaint(
         if re.fullmatch(r"[A-Z][A-Z\s&\-]+", line):
             story.append(Paragraph(line, heading))
             continue
-        if line in {"COUNT I", "COUNT II", "COUNT III", "COUNT IV", "COUNT V", "COUNT VI", "COUNT VII", "PRAYER FOR RELIEF", "JURY DEMAND", "SIGNATURE BLOCK"}:
+        if line in {
+            "COUNT I",
+            "COUNT II",
+            "COUNT III",
+            "COUNT IV",
+            "COUNT V",
+            "COUNT VI",
+            "COUNT VII",
+            "PRAYER FOR RELIEF",
+            "JURY DEMAND",
+            "SIGNATURE BLOCK",
+        }:
             story.append(Paragraph(line, heading))
             continue
         if line.startswith("Against "):
@@ -390,7 +413,9 @@ def make_exhibit_index_pdf(path: Path, entries: list[tuple[str, str, int, int]])
         c.setFont("Times-Bold", 16)
         c.drawString(left, height - 50, "Exhibit Index")
         c.setFont("Times-Roman", 11)
-        c.drawString(left, height - 68, "Curated filing packet exhibit order and starting page references.")
+        c.drawString(
+            left, height - 68, "Curated filing packet exhibit order and starting page references."
+        )
         c.setFont("Times-Bold", 11)
         c.drawString(left, height - 92, "Exhibit")
         c.drawString(left + 72, height - 92, "Description")
@@ -417,7 +442,9 @@ def make_exhibit_index_pdf(path: Path, entries: list[tuple[str, str, int, int]])
     c.save()
 
 
-def make_filing_cover_pdf(path: Path, plaintiffs: str, defendants: str, filer: str, address: str, page_count: int) -> None:
+def make_filing_cover_pdf(
+    path: Path, plaintiffs: str, defendants: str, filer: str, address: str, page_count: int
+) -> None:
     c = canvas.Canvas(str(path), pagesize=letter)
     width, height = letter
     left = 72
@@ -428,13 +455,17 @@ def make_filing_cover_pdf(path: Path, plaintiffs: str, defendants: str, filer: s
     c.drawCentredString(width / 2, y, "PRO SE FILING COVER SHEET")
     y -= 28
     c.setFont("Times-Roman", 11)
-    c.drawCentredString(width / 2, y, "For hand-filing or print assembly with the complaint packet below.")
+    c.drawCentredString(
+        width / 2, y, "For hand-filing or print assembly with the complaint packet below."
+    )
     y -= 34
 
     c.setFont("Times-Bold", 12)
     c.drawString(left, y, "Court")
     c.setFont("Times-Roman", 11)
-    c.drawString(left + 90, y, "United States District Court for the District of Oregon, Portland Division")
+    c.drawString(
+        left + 90, y, "United States District Court for the District of Oregon, Portland Division"
+    )
     y -= 22
 
     c.setFont("Times-Bold", 12)
@@ -568,7 +599,9 @@ def _eml_lines(path: Path) -> list[str]:
     body = ""
     if msg.is_multipart():
         for part in msg.walk():
-            if part.get_content_type() == "text/plain" and "attachment" not in (part.get("Content-Disposition", "") or ""):
+            if part.get_content_type() == "text/plain" and "attachment" not in (
+                part.get("Content-Disposition", "") or ""
+            ):
                 try:
                     body = part.get_content()
                     break
@@ -638,7 +671,9 @@ def _render_folder_exhibit(exhibit_dir: Path, out_pdf: Path, title: str) -> None
             continue
         if suffix in {".txt", ".md", ".json"}:
             rendered = component_dir / f"{safe_name}.pdf"
-            make_document_pdf(rendered, str(rel), _text_file_lines(source), mono=(suffix in {".txt", ".json"}))
+            make_document_pdf(
+                rendered, str(rel), _text_file_lines(source), mono=(suffix in {".txt", ".json"})
+            )
             merge_inputs.append(rendered)
             continue
 
@@ -647,7 +682,9 @@ def _render_folder_exhibit(exhibit_dir: Path, out_pdf: Path, title: str) -> None
     _merge_pdfs(out_pdf, [index_pdf, *merge_inputs])
 
 
-def _render_selected_sources(exhibit_dir: Path, out_pdf: Path, title: str, selected_relpaths: list[str]) -> None:
+def _render_selected_sources(
+    exhibit_dir: Path, out_pdf: Path, title: str, selected_relpaths: list[str]
+) -> None:
     component_dir = out_pdf.with_suffix("")
     component_dir.mkdir(parents=True, exist_ok=True)
     merge_inputs: list[Path] = []
@@ -675,7 +712,9 @@ def _render_selected_sources(exhibit_dir: Path, out_pdf: Path, title: str, selec
             continue
         if suffix in {".txt", ".md", ".json"}:
             rendered = component_dir / f"{safe_name}.pdf"
-            make_document_pdf(rendered, relpath, _text_file_lines(source), mono=(suffix in {".txt", ".json"}))
+            make_document_pdf(
+                rendered, relpath, _text_file_lines(source), mono=(suffix in {".txt", ".json"})
+            )
             merge_inputs.append(rendered)
             continue
 
@@ -709,11 +748,29 @@ def prepare_exhibit_support(
     support_config: dict[str, Any] | None = None,
 ) -> None:
     config = support_config or {}
-    curated_sources = dict(config.get("curated_sources") or DEFAULT_COURTSTYLE_PACKET_CONFIG["curated_sources"])
-    summary_sections_config = dict(config.get("summary_sections") or DEFAULT_COURTSTYLE_PACKET_CONFIG["summary_sections"])
-    snippet_ids = [str(item) for item in list(config.get("r_snippet_ids") or DEFAULT_COURTSTYLE_PACKET_CONFIG["r_snippet_ids"])]
-    r_intro = [str(item) for item in list(config.get("r_summary_intro_lines") or DEFAULT_COURTSTYLE_PACKET_CONFIG["r_summary_intro_lines"])]
-    static_images = list(config.get("static_image_exhibits") or DEFAULT_COURTSTYLE_PACKET_CONFIG["static_image_exhibits"])
+    curated_sources = dict(
+        config.get("curated_sources") or DEFAULT_COURTSTYLE_PACKET_CONFIG["curated_sources"]
+    )
+    summary_sections_config = dict(
+        config.get("summary_sections") or DEFAULT_COURTSTYLE_PACKET_CONFIG["summary_sections"]
+    )
+    snippet_ids = [
+        str(item)
+        for item in list(
+            config.get("r_snippet_ids") or DEFAULT_COURTSTYLE_PACKET_CONFIG["r_snippet_ids"]
+        )
+    ]
+    r_intro = [
+        str(item)
+        for item in list(
+            config.get("r_summary_intro_lines")
+            or DEFAULT_COURTSTYLE_PACKET_CONFIG["r_summary_intro_lines"]
+        )
+    ]
+    static_images = list(
+        config.get("static_image_exhibits")
+        or DEFAULT_COURTSTYLE_PACKET_CONFIG["static_image_exhibits"]
+    )
 
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     exhibits = {str(item["label"]): Path(item["path"]) for item in summary["recommended_exhibits"]}
@@ -746,8 +803,14 @@ def prepare_exhibit_support(
                 [str(item) for item in list(curated_sources.get(exhibit_label) or [])],
             )
 
-    j_sections = [(str(item.get("heading") or ""), [str(line) for line in list(item.get("lines") or [])]) for item in list(summary_sections_config.get("Exhibit J") or [])]
-    m_sections = [(str(item.get("heading") or ""), [str(line) for line in list(item.get("lines") or [])]) for item in list(summary_sections_config.get("Exhibit M") or [])]
+    j_sections = [
+        (str(item.get("heading") or ""), [str(line) for line in list(item.get("lines") or [])])
+        for item in list(summary_sections_config.get("Exhibit J") or [])
+    ]
+    m_sections = [
+        (str(item.get("heading") or ""), [str(line) for line in list(item.get("lines") or [])])
+        for item in list(summary_sections_config.get("Exhibit M") or [])
+    ]
     if exhibits.get("Exhibit J"):
         j_sections.append(("Source path", [str(exhibits["Exhibit J"])]))
     if exhibits.get("Exhibit M"):
@@ -759,16 +822,26 @@ def prepare_exhibit_support(
         for seq_id in snippet_ids:
             header_path = exhibit_r / seq_id / "headers.txt"
             if header_path.exists():
-                first_lines = [line.strip() for line in header_path.read_text(encoding="utf-8").splitlines() if line.strip()][:5]
+                first_lines = [
+                    line.strip()
+                    for line in header_path.read_text(encoding="utf-8").splitlines()
+                    if line.strip()
+                ][:5]
                 r_lines.append(" | ".join(first_lines))
     r_sections = [("Summary", r_lines)]
     if exhibit_r:
         r_sections.append(("Source path", [str(exhibit_r)]))
 
     for packet_dir in packet_dirs:
-        make_summary_exhibit_pdf(packet_dir / "rendered" / "Exhibit_J_summary.pdf", "Exhibit J Summary", j_sections)
-        make_summary_exhibit_pdf(packet_dir / "rendered" / "Exhibit_M_summary.pdf", "Exhibit M Summary", m_sections)
-        make_summary_exhibit_pdf(packet_dir / "rendered" / "Exhibit_R_summary.pdf", "Exhibit R Summary", r_sections)
+        make_summary_exhibit_pdf(
+            packet_dir / "rendered" / "Exhibit_J_summary.pdf", "Exhibit J Summary", j_sections
+        )
+        make_summary_exhibit_pdf(
+            packet_dir / "rendered" / "Exhibit_M_summary.pdf", "Exhibit M Summary", m_sections
+        )
+        make_summary_exhibit_pdf(
+            packet_dir / "rendered" / "Exhibit_R_summary.pdf", "Exhibit R Summary", r_sections
+        )
         for image_entry in static_images:
             source = _resolve_path(root_dir, str(image_entry.get("source") or ""))
             if not source.exists():
@@ -789,12 +862,33 @@ def build_courtstyle_packet_from_config(path: str | Path) -> dict[str, Any]:
     config = _deep_update(deepcopy(DEFAULT_COURTSTYLE_PACKET_CONFIG), dict(payload))
     base_dir = config_path.parent
 
-    root_dir = _resolve_path(base_dir, str(config.get("root_dir") or DEFAULT_COURTSTYLE_PACKET_CONFIG["root_dir"]))
-    summary_path = _resolve_path(base_dir, str(config.get("summary_path") or DEFAULT_COURTSTYLE_PACKET_CONFIG["summary_path"]))
-    complaint_md_path = _resolve_path(base_dir, str(config.get("complaint_md_path") or DEFAULT_COURTSTYLE_PACKET_CONFIG["complaint_md_path"]))
-    full_packet_dir = _resolve_path(base_dir, str(config.get("full_packet_dir") or DEFAULT_COURTSTYLE_PACKET_CONFIG["full_packet_dir"]))
-    reduced_packet_dir = _resolve_path(base_dir, str(config.get("reduced_packet_dir") or DEFAULT_COURTSTYLE_PACKET_CONFIG["reduced_packet_dir"]))
-    complaint_output = full_packet_dir / str(config.get("complaint_output_relative") or "rendered/0001_complaint_courtstyle_v2.pdf")
+    root_dir = _resolve_path(
+        base_dir, str(config.get("root_dir") or DEFAULT_COURTSTYLE_PACKET_CONFIG["root_dir"])
+    )
+    summary_path = _resolve_path(
+        base_dir,
+        str(config.get("summary_path") or DEFAULT_COURTSTYLE_PACKET_CONFIG["summary_path"]),
+    )
+    complaint_md_path = _resolve_path(
+        base_dir,
+        str(
+            config.get("complaint_md_path") or DEFAULT_COURTSTYLE_PACKET_CONFIG["complaint_md_path"]
+        ),
+    )
+    full_packet_dir = _resolve_path(
+        base_dir,
+        str(config.get("full_packet_dir") or DEFAULT_COURTSTYLE_PACKET_CONFIG["full_packet_dir"]),
+    )
+    reduced_packet_dir = _resolve_path(
+        base_dir,
+        str(
+            config.get("reduced_packet_dir")
+            or DEFAULT_COURTSTYLE_PACKET_CONFIG["reduced_packet_dir"]
+        ),
+    )
+    complaint_output = full_packet_dir / str(
+        config.get("complaint_output_relative") or "rendered/0001_complaint_courtstyle_v2.pdf"
+    )
 
     build_courtstyle_complaint(
         complaint_output,

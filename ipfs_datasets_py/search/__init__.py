@@ -5,10 +5,12 @@ logger = logging.getLogger(__name__)
 
 try:
     from .search_embeddings import search_embeddings
-    __all__ = ['search_embeddings']
+
+    __all__ = ["search_embeddings"]
 except ImportError as e:
     from .search_embeddings_mock import search_embeddings
-    __all__ = ['search_embeddings']
+
+    __all__ = ["search_embeddings"]
     logger.warning("search_embeddings using mock implementation due to missing dependencies: %s", e)
 
 # Also make the module available for patching
@@ -29,20 +31,23 @@ try:
         LogicAwareKnowledgeGraph,
         LogicNode,
         LogicEdge,
-        TheoremAugmentedRAG
+        TheoremAugmentedRAG,
     )
-    __all__.extend([
-        'LogicEnhancedRAG',
-        'RAGQueryResult',
-        'LogicAwareEntityExtractor',
-        'LogicalEntity',
-        'LogicalRelationship',
-        'LogicalEntityType',
-        'LogicAwareKnowledgeGraph',
-        'LogicNode',
-        'LogicEdge',
-        'TheoremAugmentedRAG'
-    ])
+
+    __all__.extend(
+        [
+            "LogicEnhancedRAG",
+            "RAGQueryResult",
+            "LogicAwareEntityExtractor",
+            "LogicalEntity",
+            "LogicalRelationship",
+            "LogicalEntityType",
+            "LogicAwareKnowledgeGraph",
+            "LogicNode",
+            "LogicEdge",
+            "TheoremAugmentedRAG",
+        ]
+    )
 except ImportError:
     pass
 
@@ -55,12 +60,15 @@ try:
         GraphRAGQueryEngine,
         GraphRAGFactory,
     )
-    __all__.extend([
-        'GraphRAGIntegration',
-        'HybridVectorGraphSearch',
-        'CrossDocumentReasoner',
-        'GraphRAGQueryEngine',
-        'GraphRAGFactory',
-    ])
+
+    __all__.extend(
+        [
+            "GraphRAGIntegration",
+            "HybridVectorGraphSearch",
+            "CrossDocumentReasoner",
+            "GraphRAGQueryEngine",
+            "GraphRAGFactory",
+        ]
+    )
 except ImportError:
     pass

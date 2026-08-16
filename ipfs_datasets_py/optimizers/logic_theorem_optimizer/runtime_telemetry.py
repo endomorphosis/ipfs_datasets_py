@@ -168,12 +168,7 @@ def _safe_identifier(value: Any) -> str:
     text = str(value or "").strip()
     if not text:
         return ""
-    if (
-        len(text) <= 256
-        and "\n" not in text
-        and "\r" not in text
-        and len(text.split()) <= 4
-    ):
+    if len(text) <= 256 and "\n" not in text and "\r" not in text and len(text.split()) <= 4:
         return text
     return f"sha256:{hashlib.sha256(text.encode('utf-8')).hexdigest()}"
 
@@ -707,9 +702,7 @@ def _gpu_snapshot(
         status = f"{status},gpu_unavailable" if status else "gpu_unavailable"
     return {
         "gpu_utilization_percent": (
-            round(sum(gpu_utilization) / len(gpu_utilization), 3)
-            if gpu_utilization
-            else None
+            round(sum(gpu_utilization) / len(gpu_utilization), 3) if gpu_utilization else None
         ),
         "gpu_memory_used_bytes": gpu_memory_used,
         "gpu_memory_total_bytes": gpu_memory_total,
@@ -868,9 +861,7 @@ class RuntimeTelemetry:
         self.run_id = _safe_identifier(run_id)
         self.max_spans = max(1, int(max_spans))
         self._resource_sampler = resource_sampler or collect_resource_snapshot
-        self._resource_sample_interval_seconds = max(
-            0.0, float(resource_sample_interval_seconds)
-        )
+        self._resource_sample_interval_seconds = max(0.0, float(resource_sample_interval_seconds))
         self._clock = clock
         self._lock = threading.RLock()
         self._spans: list[dict[str, Any]] = []
@@ -1170,13 +1161,17 @@ class RuntimeTelemetry:
                     attributes=attributes,
                     parent_span_id=self._cycle_span.span_id if self._cycle_span else "",
                 )
-        elif stage in {
-            "sample_done",
-            "sample_cache_hit",
-            "sample_failed",
-            "sample_skipped",
-            "sample_timeout",
-        } and sample_id:
+        elif (
+            stage
+            in {
+                "sample_done",
+                "sample_cache_hit",
+                "sample_failed",
+                "sample_skipped",
+                "sample_timeout",
+            }
+            and sample_id
+        ):
             key = (dataset, sample_id)
             with self._lock:
                 active = self._active_sample_spans.pop(key, None)
@@ -1247,7 +1242,9 @@ class RuntimeTelemetry:
         spans = (
             matching_spans
             if retained_limit is None
-            else matching_spans[-retained_limit:] if retained_limit else []
+            else matching_spans[-retained_limit:]
+            if retained_limit
+            else []
         )
 
         phase_metrics: dict[str, Any] = {}
@@ -1371,9 +1368,7 @@ def attach_runtime_telemetry(
     # multi-gigabyte write amplification on short smoke runs.
     block = telemetry.to_dict(latest_cycle=cycle, max_spans=64)
     summary["runtime_telemetry_schema_version"] = RUNTIME_TELEMETRY_SCHEMA_VERSION
-    summary["runtime_resource_telemetry_schema_version"] = (
-        RUNTIME_RESOURCE_TELEMETRY_SCHEMA_VERSION
-    )
+    summary["runtime_resource_telemetry_schema_version"] = RUNTIME_RESOURCE_TELEMETRY_SCHEMA_VERSION
     summary["runtime_phase_catalog"] = list(RUNTIME_PHASES)
     summary["runtime_telemetry"] = block
     latest_block = dict(block)

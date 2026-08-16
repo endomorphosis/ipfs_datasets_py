@@ -197,7 +197,7 @@ class TestEntityLoading:
         """Test loading a single entity as a node."""
         entity_id = loader.load_entity(sample_entity, "ontology_001")
         assert entity_id == "e1"
-        
+
         # Verify query was executed
         session = loader.driver._sessions[0]
         assert len(session.executed_queries) == 1
@@ -207,20 +207,24 @@ class TestEntityLoading:
         assert params["properties"]["text"] == "Alice"
         assert params["properties"]["confidence"] == 0.95
 
-    def test_load_entity_with_metadata(self, loader: Neo4jGraphLoader, sample_entity: Dict[str, Any]):
+    def test_load_entity_with_metadata(
+        self, loader: Neo4jGraphLoader, sample_entity: Dict[str, Any]
+    ):
         """Test loading entity with metadata."""
         metadata = {"domain": "legal", "source": "contract.pdf"}
         entity_id = loader.load_entity(sample_entity, "ontology_001", metadata)
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert params["properties"]["meta_domain"] == "legal"
         assert params["properties"]["meta_source"] == "contract.pdf"
 
-    def test_load_entity_properties_prefixed(self, loader: Neo4jGraphLoader, sample_entity: Dict[str, Any]):
+    def test_load_entity_properties_prefixed(
+        self, loader: Neo4jGraphLoader, sample_entity: Dict[str, Any]
+    ):
         """Test entity properties are prefixed with prop_."""
         loader.load_entity(sample_entity, "ontology_001")
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert params["properties"]["prop_age"] == 30
@@ -230,7 +234,7 @@ class TestEntityLoading:
         """Test node label construction from entity type."""
         entity = {"id": "e1", "text": "Test", "type": "Organization", "confidence": 0.8}
         loader.load_entity(entity, "ontology_001")
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert ":Entity:Organization" in query
@@ -248,7 +252,7 @@ class TestEntityLoading:
             {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.85},
             {"id": "e3", "text": "TechCorp", "type": "Organization", "confidence": 0.90},
         ]
-        
+
         stats = loader.load_entities_bulk(entities, "ontology_001")
         assert stats["nodes_created"] == 3
 
@@ -258,7 +262,7 @@ class TestEntityLoading:
             {"id": f"e{i}", "text": f"Entity{i}", "type": "Thing", "confidence": 0.5}
             for i in range(10)
         ]
-        
+
         stats = loader.load_entities_bulk(entities, "ontology_001", batch_size=3)
         assert stats["nodes_created"] == 10
 
@@ -276,11 +280,13 @@ class TestEntityLoading:
 class TestRelationshipLoading:
     """Test relationship loading (relationships → edges)."""
 
-    def test_load_single_relationship(self, loader: Neo4jGraphLoader, sample_relationship: Dict[str, Any]):
+    def test_load_single_relationship(
+        self, loader: Neo4jGraphLoader, sample_relationship: Dict[str, Any]
+    ):
         """Test loading a single relationship as an edge."""
         rel_id = loader.load_relationship(sample_relationship, "ontology_001")
         assert rel_id == "r1"
-        
+
         # Verify Cypher query
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
@@ -300,7 +306,7 @@ class TestRelationshipLoading:
             "confidence": 0.8,
         }
         loader.load_relationship(rel, "ontology_001")
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert "WORKS_AT" in query
@@ -310,27 +316,31 @@ class TestRelationshipLoading:
         config = Neo4jConfig(relationship_type_prefix="REL_")
         driver = MockNeo4jDriver(uri="bolt://localhost:7687")
         loader = Neo4jGraphLoader(config=config, driver=driver)
-        
+
         rel = {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows", "confidence": 0.9}
         loader.load_relationship(rel, "ontology_001")
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert "REL_KNOWS" in query
 
-    def test_load_relationship_with_metadata(self, loader: Neo4jGraphLoader, sample_relationship: Dict[str, Any]):
+    def test_load_relationship_with_metadata(
+        self, loader: Neo4jGraphLoader, sample_relationship: Dict[str, Any]
+    ):
         """Test loading relationship with metadata."""
         metadata = {"domain": "social"}
         loader.load_relationship(sample_relationship, "ontology_001", metadata)
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert params["properties"]["meta_domain"] == "social"
 
-    def test_load_relationship_properties_prefixed(self, loader: Neo4jGraphLoader, sample_relationship: Dict[str, Any]):
+    def test_load_relationship_properties_prefixed(
+        self, loader: Neo4jGraphLoader, sample_relationship: Dict[str, Any]
+    ):
         """Test relationship properties are prefixed."""
         loader.load_relationship(sample_relationship, "ontology_001")
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert params["properties"]["prop_since"] == "2020"
@@ -339,10 +349,22 @@ class TestRelationshipLoading:
         """Test bulk loading multiple relationships."""
         relationships = [
             {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows", "confidence": 0.9},
-            {"id": "r2", "source_id": "e2", "target_id": "e3", "type": "works_with", "confidence": 0.85},
-            {"id": "r3", "source_id": "e1", "target_id": "e3", "type": "manages", "confidence": 0.80},
+            {
+                "id": "r2",
+                "source_id": "e2",
+                "target_id": "e3",
+                "type": "works_with",
+                "confidence": 0.85,
+            },
+            {
+                "id": "r3",
+                "source_id": "e1",
+                "target_id": "e3",
+                "type": "manages",
+                "confidence": 0.80,
+            },
         ]
-        
+
         stats = loader.load_relationships_bulk(relationships, "ontology_001")
         assert stats["edges_created"] == 3
 
@@ -352,7 +374,7 @@ class TestRelationshipLoading:
             {"id": f"r{i}", "source_id": "e1", "target_id": "e2", "type": "test", "confidence": 0.5}
             for i in range(10)
         ]
-        
+
         stats = loader.load_relationships_bulk(relationships, "ontology_001", batch_size=3)
         assert stats["edges_created"] == 10
 
@@ -375,7 +397,7 @@ class TestExtractionResultLoading:
     ):
         """Test loading complete extraction result with entities and relationships."""
         stats = loader.load_extraction_result("ontology_001", sample_extraction_result)
-        
+
         assert stats["ontology_id"] == "ontology_001"
         assert stats["nodes_created"] == 3  # 3 entities
         assert stats["edges_created"] == 3  # 3 relationships
@@ -386,7 +408,7 @@ class TestExtractionResultLoading:
         """Test loading extraction result with metadata."""
         metadata = {"domain": "employment", "source": "hr_system"}
         stats = loader.load_extraction_result("ontology_001", sample_extraction_result, metadata)
-        
+
         assert stats["metadata"] == metadata
 
     def test_load_extraction_result_entities_only(self, loader: Neo4jGraphLoader):
@@ -400,7 +422,7 @@ class TestExtractionResultLoading:
                 "relationships": [],
             }
         }
-        
+
         stats = loader.load_extraction_result("ontology_001", result)
         assert stats["nodes_created"] == 2
         assert stats["edges_created"] == 0
@@ -413,7 +435,7 @@ class TestExtractionResultLoading:
                 "relationships": [],
             }
         }
-        
+
         stats = loader.load_extraction_result("ontology_001", result)
         assert stats["nodes_created"] == 0
         assert stats["edges_created"] == 0
@@ -422,7 +444,9 @@ class TestExtractionResultLoading:
         self, loader: Neo4jGraphLoader, sample_extraction_result: Dict[str, Any]
     ):
         """Test loading with custom batch size."""
-        stats = loader.load_extraction_result("ontology_001", sample_extraction_result, batch_size=2)
+        stats = loader.load_extraction_result(
+            "ontology_001", sample_extraction_result, batch_size=2
+        )
         assert stats["nodes_created"] == 3
         assert stats["edges_created"] == 3
 
@@ -447,7 +471,7 @@ class TestQueryHelpers:
     def test_get_entity_neighborhood_basic(self, loader: Neo4jGraphLoader):
         """Test getting entity neighborhood subgraph."""
         subgraph = loader.get_entity_neighborhood("e1", max_depth=1)
-        
+
         assert subgraph["center"] == "e1"
         assert subgraph["depth"] == 1
         assert "nodes" in subgraph
@@ -460,8 +484,10 @@ class TestQueryHelpers:
 
     def test_get_entity_neighborhood_with_relationship_filter(self, loader: Neo4jGraphLoader):
         """Test neighborhood query with relationship type filter."""
-        subgraph = loader.get_entity_neighborhood("e1", max_depth=2, relationship_types=["WORKS_AT", "KNOWS"])
-        
+        subgraph = loader.get_entity_neighborhood(
+            "e1", max_depth=2, relationship_types=["WORKS_AT", "KNOWS"]
+        )
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert "WORKS_AT|KNOWS" in query
@@ -469,7 +495,7 @@ class TestQueryHelpers:
     def test_delete_ontology(self, loader: Neo4jGraphLoader):
         """Test deleting all nodes/edges for an ontology."""
         deleted_count = loader.delete_ontology("ontology_001")
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert "MATCH (n {ontology_id: $ontology_id})" in query
@@ -507,7 +533,7 @@ class TestEdgeCases:
         """Test entity with Unicode text."""
         entity = {"id": "e1", "text": "北京市", "type": "Location", "confidence": 0.9}
         loader.load_entity(entity, "ontology_001")
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert params["properties"]["text"] == "北京市"
@@ -516,7 +542,7 @@ class TestEdgeCases:
         """Test entity with zero confidence."""
         entity = {"id": "e1", "text": "Uncertain", "type": "Thing", "confidence": 0.0}
         loader.load_entity(entity, "ontology_001")
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert params["properties"]["confidence"] == 0.0
@@ -525,7 +551,7 @@ class TestEdgeCases:
         """Test entity with maximum confidence."""
         entity = {"id": "e1", "text": "Certain", "type": "Thing", "confidence": 1.0}
         loader.load_entity(entity, "ontology_001")
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert params["properties"]["confidence"] == 1.0
@@ -535,10 +561,10 @@ class TestEdgeCases:
         config = Neo4jConfig(merge_strategy="CREATE")
         driver = MockNeo4jDriver(uri="bolt://localhost:7687")
         loader = Neo4jGraphLoader(config=config, driver=driver)
-        
+
         entity = {"id": "e1", "text": "Test", "type": "Thing", "confidence": 0.5}
         loader.load_entity(entity, "ontology_001")
-        
+
         session = loader.driver._sessions[0]
         query, params = session.executed_queries[0]
         assert "CREATE (n:Entity:Thing" in query
@@ -563,12 +589,24 @@ class TestIntegration:
                     {"id": "l1", "text": "New York", "type": "Location", "confidence": 0.88},
                 ],
                 "relationships": [
-                    {"id": "r1", "source_id": "p1", "target_id": "o1", "type": "works_at", "confidence": 0.85},
-                    {"id": "r2", "source_id": "o1", "target_id": "l1", "type": "located_in", "confidence": 0.80},
+                    {
+                        "id": "r1",
+                        "source_id": "p1",
+                        "target_id": "o1",
+                        "type": "works_at",
+                        "confidence": 0.85,
+                    },
+                    {
+                        "id": "r2",
+                        "source_id": "o1",
+                        "target_id": "l1",
+                        "type": "located_in",
+                        "confidence": 0.80,
+                    },
                 ],
             }
         }
-        
+
         stats = loader.load_extraction_result("ontology_multi", result)
         assert stats["nodes_created"] == 3
         assert stats["edges_created"] == 2
@@ -576,17 +614,28 @@ class TestIntegration:
     def test_load_large_graph(self, loader: Neo4jGraphLoader):
         """Test loading large graph (100+ entities)."""
         entities = [
-            {"id": f"e{i}", "text": f"Entity{i}", "type": "Thing", "confidence": 0.5 + (i % 50) * 0.01}
+            {
+                "id": f"e{i}",
+                "text": f"Entity{i}",
+                "type": "Thing",
+                "confidence": 0.5 + (i % 50) * 0.01,
+            }
             for i in range(100)
         ]
         relationships = [
-            {"id": f"r{i}", "source_id": f"e{i}", "target_id": f"e{(i+1) % 100}", "type": "links_to", "confidence": 0.7}
+            {
+                "id": f"r{i}",
+                "source_id": f"e{i}",
+                "target_id": f"e{(i + 1) % 100}",
+                "type": "links_to",
+                "confidence": 0.7,
+            }
             for i in range(100)
         ]
-        
+
         result = {"ontology": {"entities": entities, "relationships": relationships}}
         stats = loader.load_extraction_result("large_graph", result, batch_size=20)
-        
+
         assert stats["nodes_created"] == 100
         assert stats["edges_created"] == 100
 
@@ -599,7 +648,7 @@ class TestIntegration:
         ]
         entity_stats = loader.load_entities_bulk(entities, "ontology_inc")
         assert entity_stats["nodes_created"] == 2
-        
+
         # Load relationships later
         relationships = [
             {"id": "r1", "source_id": "e1", "target_id": "e2", "type": "knows", "confidence": 0.9},

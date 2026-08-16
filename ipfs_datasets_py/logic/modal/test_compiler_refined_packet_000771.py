@@ -48,9 +48,7 @@ def test_modal_registry_packet_000771_family_pairs_are_refined() -> None:
             target_family,
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
         assert (
             compiler_refined_modal_family_cue_margin_buffer(
                 predicted_family,

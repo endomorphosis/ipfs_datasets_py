@@ -178,8 +178,15 @@ class AudioQualityPolicy:
             "clipping_peak_threshold_bp",
         ):
             value = getattr(self, name)
-            if isinstance(value, bool) or not isinstance(value, int) or value < 0 or value > _BASIS_POINT_SCALE:
-                raise ValueError(f"{name} must be an integer basis-point value in 0..{_BASIS_POINT_SCALE}")
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or value < 0
+                or value > _BASIS_POINT_SCALE
+            ):
+                raise ValueError(
+                    f"{name} must be an integer basis-point value in 0..{_BASIS_POINT_SCALE}"
+                )
         if (
             isinstance(self.min_duration_ms, bool)
             or not isinstance(self.min_duration_ms, int)
@@ -204,13 +211,31 @@ class AudioQualityPolicy:
             or self.required_channels <= 0
         ):
             raise ValueError("required_channels must be a positive integer or None")
-        media = tuple(sorted({str(item).casefold() for item in self.allowed_media_types if str(item).strip()}))
+        media = tuple(
+            sorted({str(item).casefold() for item in self.allowed_media_types if str(item).strip()})
+        )
         if not media or any(not item.startswith("audio/") for item in media):
             raise ValueError("allowed_media_types must contain audio/* MIME types")
-        slots = tuple(sorted({str(item).strip().casefold() for item in self.critical_slot_names if str(item).strip()}))
+        slots = tuple(
+            sorted(
+                {
+                    str(item).strip().casefold()
+                    for item in self.critical_slot_names
+                    if str(item).strip()
+                }
+            )
+        )
         if not slots:
             raise ValueError("critical_slot_names must not be empty")
-        consent = tuple(sorted({str(item).strip().casefold() for item in self.publishable_consent if str(item).strip()}))
+        consent = tuple(
+            sorted(
+                {
+                    str(item).strip().casefold()
+                    for item in self.publishable_consent
+                    if str(item).strip()
+                }
+            )
+        )
         if not consent:
             raise ValueError("publishable_consent must not be empty")
         object.__setattr__(self, "allowed_media_types", media)
@@ -260,7 +285,9 @@ class AudioQualityPolicy:
         return cls(
             policy_id=str(payload.get("policy_id") or AUDIO_QUALITY_POLICY_ID),
             policy_version=str(payload.get("policy_version") or AUDIO_QUALITY_POLICY_VERSION),
-            schema_version=str(payload.get("schema_version") or AUDIO_QUALITY_POLICY_SCHEMA_VERSION),
+            schema_version=str(
+                payload.get("schema_version") or AUDIO_QUALITY_POLICY_SCHEMA_VERSION
+            ),
             max_wer_bp=int(payload.get("max_wer_bp", 1_500)),
             max_cer_bp=int(payload.get("max_cer_bp", 1_000)),
             max_silence_ratio_bp=int(payload.get("max_silence_ratio_bp", 6_000)),
@@ -273,11 +300,15 @@ class AudioQualityPolicy:
                 else int(payload["required_sample_rate_hz"])
             ),
             required_channels=(
-                None if payload.get("required_channels") is None else int(payload["required_channels"])
+                None
+                if payload.get("required_channels") is None
+                else int(payload["required_channels"])
             ),
             allowed_media_types=tuple(payload.get("allowed_media_types") or ()),
             critical_slot_names=tuple(payload.get("critical_slot_names") or CRITICAL_SLOT_NAMES),
-            publishable_consent=tuple(payload.get("publishable_consent") or ("granted", "not_required")),
+            publishable_consent=tuple(
+                payload.get("publishable_consent") or ("granted", "not_required")
+            ),
             silence_peak_threshold_bp=int(payload.get("silence_peak_threshold_bp", 100)),
             clipping_peak_threshold_bp=int(payload.get("clipping_peak_threshold_bp", 9_900)),
         )
@@ -511,7 +542,11 @@ def slot_present_in_text(name: str, value: str, text: str) -> bool:
         spoken_digits = _spoken_words_to_digits(haystack)
         return expected in spoken_digits
     if slot in {"zip", "zip_code", "postal_code", "amount"}:
-        compact = _PHONE_DIGITS_RE.sub("", haystack) if slot != "amount" else haystack.replace(",", "").replace(" ", "")
+        compact = (
+            _PHONE_DIGITS_RE.sub("", haystack)
+            if slot != "amount"
+            else haystack.replace(",", "").replace(" ", "")
+        )
         if expected in compact or expected in haystack:
             return True
         spoken_digits = _spoken_words_to_digits(haystack)
@@ -697,7 +732,9 @@ def validate_decode_and_acoustic(
                 detail="audio bytes and precomputed metrics are both absent",
                 retryable=True,
             )
-        metrics = {key: int(value) for key, value in precomputed_metrics.items() if isinstance(value, int)}
+        metrics = {
+            key: int(value) for key, value in precomputed_metrics.items() if isinstance(value, int)
+        }
         sample_rate = int(metrics.get("sample_rate_hz") or declared_sample_rate_hz or 0)
         channels = int(metrics.get("channels") or declared_channels or 0)
         duration_ms = int(metrics.get("duration_ms") or declared_duration_ms or 0)
@@ -705,7 +742,11 @@ def validate_decode_and_acoustic(
         clipping_bp = int(metrics.get("clipping_ratio_bp") or 0)
         detected_media = media
 
-    if declared_sample_rate_hz is not None and sample_rate and declared_sample_rate_hz != sample_rate:
+    if (
+        declared_sample_rate_hz is not None
+        and sample_rate
+        and declared_sample_rate_hz != sample_rate
+    ):
         return QualityGateResult(
             gate=AudioQualityGate.DECODE,
             passed=False,
@@ -721,7 +762,11 @@ def validate_decode_and_acoustic(
             detail="declared channels do not match decoded audio",
             metrics=metrics,
         )
-    if declared_duration_ms is not None and duration_ms and abs(declared_duration_ms - duration_ms) > 50:
+    if (
+        declared_duration_ms is not None
+        and duration_ms
+        and abs(declared_duration_ms - duration_ms) > 50
+    ):
         return QualityGateResult(
             gate=AudioQualityGate.DECODE,
             passed=False,
@@ -729,7 +774,11 @@ def validate_decode_and_acoustic(
             detail="declared duration_ms does not match decoded audio",
             metrics=metrics,
         )
-    if selected.required_sample_rate_hz is not None and sample_rate and sample_rate != selected.required_sample_rate_hz:
+    if (
+        selected.required_sample_rate_hz is not None
+        and sample_rate
+        and sample_rate != selected.required_sample_rate_hz
+    ):
         return QualityGateResult(
             gate=AudioQualityGate.DECODE,
             passed=False,
@@ -737,7 +786,11 @@ def validate_decode_and_acoustic(
             detail="sample_rate_hz is outside the policy requirement",
             metrics=metrics,
         )
-    if selected.required_channels is not None and channels and channels != selected.required_channels:
+    if (
+        selected.required_channels is not None
+        and channels
+        and channels != selected.required_channels
+    ):
         return QualityGateResult(
             gate=AudioQualityGate.DECODE,
             passed=False,
@@ -964,7 +1017,10 @@ def validate_integrity(
             passed=False,
             reason=AudioQualityReason.SIZE_MISMATCH,
             detail="artifact byte length does not match the stored descriptor size",
-            metrics={"actual_byte_length": len(payload), "expected_byte_length": expected_byte_length},
+            metrics={
+                "actual_byte_length": len(payload),
+                "expected_byte_length": expected_byte_length,
+            },
         )
     detected = detect_media_type(payload)
     if detected is None:

@@ -32,7 +32,12 @@ def compile_prohibition_polarity(text: str, *, provenance_id: str = "") -> dict[
         action = _atom(match.group("action"))
         obj = _phrase(match.group("object"))
         cue = _atom(match.group("modal") or match.group("word"))
-        identity = {"action": action, "actor": actor, "object": obj, "provenance_ids": provenance_ids}
+        identity = {
+            "action": action,
+            "actor": actor,
+            "object": obj,
+            "provenance_ids": provenance_ids,
+        }
         norms.append(
             {
                 "action": action,
@@ -65,7 +70,9 @@ def _phrase(value: Any) -> str:
 
 
 def _digest(value: Any) -> str:
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+    ).hexdigest()
 
 
 __all__ = ["DEONTIC_COMPILER_REPAIR_SCHEMA_VERSION", "compile_prohibition_polarity"]

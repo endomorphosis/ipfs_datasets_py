@@ -10,18 +10,18 @@ from ipfs_datasets_py.search.logic_integration.logic_aware_entity_extractor impo
     LogicAwareEntityExtractor,
     LogicalEntity,
     LogicalEntityType,
-    LogicalRelationship
+    LogicalRelationship,
 )
 
 
 class TestLogicAwareEntityExtractor:
     """Test logic-aware entity extraction."""
-    
+
     @pytest.fixture
     def extractor(self):
         """Create entity extractor instance."""
         return LogicAwareEntityExtractor(use_neural=False)
-    
+
     def test_extract_agents(self, extractor):
         """GIVEN: Text with agent names
         WHEN: Extracting entities
@@ -29,14 +29,14 @@ class TestLogicAwareEntityExtractor:
         """
         text = "Alice must pay Bob within 30 days. Company X shall deliver to Organization Y."
         entities = extractor.extract_entities(text)
-        
+
         agents = [e for e in entities if e.entity_type == LogicalEntityType.AGENT]
         agent_names = [a.text for a in agents]
-        
+
         assert len(agents) >= 2
         assert "Alice" in agent_names
         assert "Bob" in agent_names
-    
+
     def test_extract_obligations(self, extractor):
         """GIVEN: Text with obligations
         WHEN: Extracting entities
@@ -44,15 +44,15 @@ class TestLogicAwareEntityExtractor:
         """
         text = "Alice must pay the fee. Bob shall deliver goods. Carol is required to notify."
         entities = extractor.extract_entities(text)
-        
+
         obligations = [e for e in entities if e.entity_type == LogicalEntityType.OBLIGATION]
-        
+
         assert len(obligations) >= 3
         assert any("must pay" in o.text.lower() for o in obligations)
         assert any("shall deliver" in o.text.lower() for o in obligations)
         assert any("required to" in o.text.lower() for o in obligations)
         assert all(o.confidence >= 0.75 for o in obligations)
-    
+
     def test_extract_permissions(self, extractor):
         """GIVEN: Text with permissions
         WHEN: Extracting entities
@@ -60,14 +60,14 @@ class TestLogicAwareEntityExtractor:
         """
         text = "Users may access the system. Members can modify settings. Staff are allowed to view reports."
         entities = extractor.extract_entities(text)
-        
+
         permissions = [e for e in entities if e.entity_type == LogicalEntityType.PERMISSION]
-        
+
         assert len(permissions) >= 3
         assert any("may access" in p.text.lower() for p in permissions)
         assert any("can modify" in p.text.lower() for p in permissions)
         assert any("allowed to" in p.text.lower() for p in permissions)
-    
+
     def test_extract_prohibitions(self, extractor):
         """GIVEN: Text with prohibitions
         WHEN: Extracting entities
@@ -75,15 +75,15 @@ class TestLogicAwareEntityExtractor:
         """
         text = "Users must not share credentials. Staff shall not disclose information. Forbidden to access."
         entities = extractor.extract_entities(text)
-        
+
         prohibitions = [e for e in entities if e.entity_type == LogicalEntityType.PROHIBITION]
-        
+
         assert len(prohibitions) >= 3
         assert any("must not" in p.text.lower() for p in prohibitions)
         assert any("shall not" in p.text.lower() for p in prohibitions)
         assert any("forbidden" in p.text.lower() for p in prohibitions)
         assert all(p.confidence >= 0.75 for p in prohibitions)
-    
+
     def test_extract_temporal_constraints(self, extractor):
         """GIVEN: Text with temporal constraints
         WHEN: Extracting entities
@@ -91,15 +91,15 @@ class TestLogicAwareEntityExtractor:
         """
         text = "Payment must be made within 30 days. Delivery is required after 7 days. Always verify. Never delay."
         entities = extractor.extract_entities(text)
-        
+
         temporal = [e for e in entities if e.entity_type == LogicalEntityType.TEMPORAL_CONSTRAINT]
-        
+
         assert len(temporal) >= 4
         assert any("within" in t.text.lower() for t in temporal)
         assert any("after" in t.text.lower() for t in temporal)
         assert any("always" in t.text.lower() for t in temporal)
         assert any("never" in t.text.lower() for t in temporal)
-    
+
     def test_extract_conditionals(self, extractor):
         """GIVEN: Text with conditional statements
         WHEN: Extracting entities
@@ -107,12 +107,12 @@ class TestLogicAwareEntityExtractor:
         """
         text = "If payment is received then goods will be shipped. When contract expires, terminate service."
         entities = extractor.extract_entities(text)
-        
+
         conditionals = [e for e in entities if e.entity_type == LogicalEntityType.CONDITIONAL]
-        
+
         assert len(conditionals) >= 1
         assert any("if" in c.text.lower() and "then" in c.text.lower() for c in conditionals)
-    
+
     def test_extract_relationships(self, extractor):
         """GIVEN: Text with related entities
         WHEN: Extracting relationships
@@ -121,13 +121,13 @@ class TestLogicAwareEntityExtractor:
         text = "Alice must pay Bob within 30 days."
         entities = extractor.extract_entities(text)
         relationships = extractor.extract_relationships(text, entities)
-        
+
         assert len(relationships) >= 1
-        
+
         # Check relationship types
         rel_types = [r.relation_type for r in relationships]
-        assert any(rt in ['must_do', 'interacts_with', 'constrained_by'] for rt in rel_types)
-    
+        assert any(rt in ["must_do", "interacts_with", "constrained_by"] for rt in rel_types)
+
     def test_confidence_scores(self, extractor):
         """GIVEN: Extracted entities
         WHEN: Checking confidence scores
@@ -135,10 +135,10 @@ class TestLogicAwareEntityExtractor:
         """
         text = "Alice must pay Bob. Carol may access the system."
         entities = extractor.extract_entities(text)
-        
+
         for entity in entities:
             assert 0.0 <= entity.confidence <= 1.0
-    
+
     def test_metadata_positions(self, extractor):
         """GIVEN: Extracted entities
         WHEN: Checking metadata
@@ -146,14 +146,14 @@ class TestLogicAwareEntityExtractor:
         """
         text = "Alice must pay Bob"
         entities = extractor.extract_entities(text)
-        
+
         for entity in entities:
-            assert 'position' in entity.metadata
-            pos = entity.metadata['position']
+            assert "position" in entity.metadata
+            pos = entity.metadata["position"]
             assert isinstance(pos, tuple)
             assert len(pos) == 2
             assert pos[0] <= pos[1]
-    
+
     def test_empty_text(self, extractor):
         """GIVEN: Empty text
         WHEN: Extracting entities
@@ -161,7 +161,7 @@ class TestLogicAwareEntityExtractor:
         """
         entities = extractor.extract_entities("")
         assert entities == []
-    
+
     def test_complex_legal_text(self, extractor):
         """GIVEN: Complex legal text with multiple entity types
         WHEN: Extracting entities
@@ -177,18 +177,21 @@ class TestLogicAwareEntityExtractor:
         If payment is late, then interest accrues immediately.
         Services shall always meet quality standards.
         """
-        
+
         entities = extractor.extract_entities(text)
-        
+
         # Should have multiple types
         entity_types = {e.entity_type for e in entities}
         assert LogicalEntityType.AGENT in entity_types
         assert LogicalEntityType.OBLIGATION in entity_types
-        assert LogicalEntityType.PERMISSION in entity_types or LogicalEntityType.PROHIBITION in entity_types
-        
+        assert (
+            LogicalEntityType.PERMISSION in entity_types
+            or LogicalEntityType.PROHIBITION in entity_types
+        )
+
         # Should have reasonable number of entities
         assert len(entities) >= 5
-    
+
     def test_infer_relationship_types(self, extractor):
         """GIVEN: Different entity type combinations
         WHEN: Inferring relationships
@@ -198,19 +201,19 @@ class TestLogicAwareEntityExtractor:
         agent2 = LogicalEntity("Bob", LogicalEntityType.AGENT, 0.9)
         obligation = LogicalEntity("must pay", LogicalEntityType.OBLIGATION, 0.85)
         temporal = LogicalEntity("within 30 days", LogicalEntityType.TEMPORAL_CONSTRAINT, 0.85)
-        
+
         # Agent + Obligation = must_do
         rel_type = extractor._infer_relationship_type(agent1, obligation)
         assert rel_type == "must_do"
-        
+
         # Obligation + Temporal = constrained_by
         rel_type = extractor._infer_relationship_type(obligation, temporal)
         assert rel_type == "constrained_by"
-        
+
         # Agent + Agent = interacts_with
         rel_type = extractor._infer_relationship_type(agent1, agent2)
         assert rel_type == "interacts_with"
-    
+
     def test_entity_validation(self):
         """GIVEN: Entity with invalid confidence
         WHEN: Creating entity
@@ -218,10 +221,10 @@ class TestLogicAwareEntityExtractor:
         """
         with pytest.raises(ValueError):
             LogicalEntity("Test", LogicalEntityType.AGENT, 1.5)
-        
+
         with pytest.raises(ValueError):
             LogicalEntity("Test", LogicalEntityType.AGENT, -0.1)
-    
+
     def test_relationship_validation(self):
         """GIVEN: Relationship with invalid confidence
         WHEN: Creating relationship
@@ -229,30 +232,35 @@ class TestLogicAwareEntityExtractor:
         """
         entity1 = LogicalEntity("Alice", LogicalEntityType.AGENT, 0.9)
         entity2 = LogicalEntity("Bob", LogicalEntityType.AGENT, 0.9)
-        
+
         with pytest.raises(ValueError):
             LogicalRelationship(entity1, entity2, "test", 1.5)
-        
+
         with pytest.raises(ValueError):
             LogicalRelationship(entity1, entity2, "test", -0.1)
 
 
 class TestLogicalEntityTypes:
     """Test logical entity type enumeration."""
-    
+
     def test_all_entity_types_defined(self):
         """GIVEN: LogicalEntityType enum
         WHEN: Checking available types
         THEN: Should have all 7 types defined
         """
         expected_types = {
-            'AGENT', 'PREDICATE', 'OBLIGATION', 'PERMISSION',
-            'PROHIBITION', 'TEMPORAL_CONSTRAINT', 'CONDITIONAL'
+            "AGENT",
+            "PREDICATE",
+            "OBLIGATION",
+            "PERMISSION",
+            "PROHIBITION",
+            "TEMPORAL_CONSTRAINT",
+            "CONDITIONAL",
         }
-        
+
         actual_types = {t.name for t in LogicalEntityType}
         assert expected_types == actual_types
-    
+
     def test_entity_type_values(self):
         """GIVEN: LogicalEntityType enum
         WHEN: Checking values

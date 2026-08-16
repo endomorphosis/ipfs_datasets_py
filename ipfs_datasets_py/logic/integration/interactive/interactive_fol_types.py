@@ -20,11 +20,11 @@ from ..bridges.symbolic_fol_bridge import LogicalComponents
 class StatementRecord:
     """
     Record of a single statement in the interactive session.
-    
+
     This dataclass stores all information about a statement added to
     the FOL construction session, including its text, logical analysis,
     and metadata.
-    
+
     Attributes:
         id: Unique identifier for the statement
         text: Original natural language text
@@ -35,7 +35,7 @@ class StatementRecord:
         is_consistent: Whether the statement is consistent with the session
         dependencies: List of statement IDs this depends on
         tags: Categorization tags for the statement
-    
+
     Example:
         >>> record = StatementRecord(
         ...     id="stmt-123",
@@ -45,6 +45,7 @@ class StatementRecord:
         ...     confidence=0.95
         ... )
     """
+
     id: str
     text: str
     timestamp: datetime
@@ -60,11 +61,11 @@ class StatementRecord:
 class SessionMetadata:
     """
     Metadata for an interactive FOL construction session.
-    
+
     This dataclass tracks overall session statistics and metadata,
     providing insights into the quality and state of the logic being
     constructed.
-    
+
     Attributes:
         session_id: Unique identifier for the session
         created_at: Timestamp of session creation
@@ -76,7 +77,7 @@ class SessionMetadata:
         domain: Knowledge domain (e.g., "mathematics", "legal", "general")
         description: Optional human-readable description
         tags: Categorization tags for the session
-    
+
     Example:
         >>> metadata = SessionMetadata(
         ...     session_id="session-abc",
@@ -89,6 +90,7 @@ class SessionMetadata:
         ...     domain="animals"
         ... )
     """
+
     session_id: str
     created_at: datetime
     last_modified: datetime

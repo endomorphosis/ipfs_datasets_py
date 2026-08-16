@@ -4,11 +4,13 @@ Test stubs for auto_installer module.
 Feature: Dependency Installation
   Cross-platform automated dependency installation
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def autoinstall_is_disabled():
@@ -74,6 +76,7 @@ def the_dependency_installer_is_initialized_with_autoinstall():
 
 
 # Test scenarios
+
 
 def test_initialize_installer_with_autoinstall_enabled():
     """
@@ -193,6 +196,7 @@ def test_verify_package_availability():
 
 
 # Step definitions
+
 
 # Given steps
 @given("auto-install is disabled")

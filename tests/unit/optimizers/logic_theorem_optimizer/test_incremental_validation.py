@@ -49,38 +49,37 @@ def test_changed_file_and_typed_ast_scope_map_every_validation_dimension() -> No
     assert "tdfol_temporal" in plan.matched_rules
     assert "exception" in plan.matched_rules
     assert "tests/unit_tests/logic/modal/test_leanstral_validation.py" in plan.focused_tests
-    assert {"deontic", "temporal", "tdfol", "external_provers"}.issubset(
-        plan.legal_ir_families
-    )
+    assert {"deontic", "temporal", "tdfol", "external_provers"}.issubset(plan.legal_ir_families)
     assert {"accepted-candidate", "hammer-unproved", "backend-unavailable"}.issubset(
         plan.replay_samples
     )
-    assert {"invert_modality", "remove_exception", "alter_deadline"}.issubset(
-        plan.mutation_cases
-    )
+    assert {"invert_modality", "remove_exception", "alter_deadline"}.issubset(plan.mutation_cases)
     assert {
         "modal_operator_preserved",
         "exception_scope_preserved",
         "source_provenance_preserved",
         "proof-custom-deadline",
     }.issubset(plan.proof_obligations)
-    assert plan.plan_id == plan_incremental_validation(
-        ("ipfs_datasets_py/logic/modal/codec.py",),
-        typed_ast_scopes=(
-            {
-                "path": "ipfs_datasets_py/logic/modal/codec.py",
-                "kind": "FunctionDef",
-                "qualname": "compile_temporal_deadline",
-                "symbols": ["exception_scope"],
-                "semantic_family": "external_provers",
-                "replay_case_ids": ["backend-unavailable"],
-                "mutation_cases": ["unsupported_modal_system"],
-                "proof_obligation_ids": ["proof-custom-deadline"],
-                "lineno": 40,
-                "end_lineno": 72,
-            },
-        ),
-    ).plan_id
+    assert (
+        plan.plan_id
+        == plan_incremental_validation(
+            ("ipfs_datasets_py/logic/modal/codec.py",),
+            typed_ast_scopes=(
+                {
+                    "path": "ipfs_datasets_py/logic/modal/codec.py",
+                    "kind": "FunctionDef",
+                    "qualname": "compile_temporal_deadline",
+                    "symbols": ["exception_scope"],
+                    "semantic_family": "external_provers",
+                    "replay_case_ids": ["backend-unavailable"],
+                    "mutation_cases": ["unsupported_modal_system"],
+                    "proof_obligation_ids": ["proof-custom-deadline"],
+                    "lineno": 40,
+                    "end_lineno": 72,
+                },
+            ),
+        ).plan_id
+    )
 
 
 def test_changed_test_file_is_itself_focused_and_unknown_code_fails_closed_to_full_scope() -> None:
@@ -131,12 +130,15 @@ def test_frozen_baseline_is_content_addressed_deeply_immutable_and_shared() -> N
     assert baseline.payload["metrics"]["deontic"] == (0.7, 0.8)
     with pytest.raises(TypeError):
         baseline.payload["new"] = True
-    assert baseline.evidence_id == FrozenBaselineEvidence(
-        version="compiler-a/holdout-v1",
-        payload={"metrics": {"deontic": [0.7, 0.8]}},
-        frozen_canary_ids=("canary-1", "canary-2"),
-        promotion_proof_ids=("proof-1",),
-    ).evidence_id
+    assert (
+        baseline.evidence_id
+        == FrozenBaselineEvidence(
+            version="compiler-a/holdout-v1",
+            payload={"metrics": {"deontic": [0.7, 0.8]}},
+            frozen_canary_ids=("canary-1", "canary-2"),
+            promotion_proof_ids=("proof-1",),
+        ).evidence_id
+    )
 
 
 def _small_candidate_plan() -> ChangedScopeValidationPlan:

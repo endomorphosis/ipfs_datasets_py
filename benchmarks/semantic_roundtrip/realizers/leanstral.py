@@ -34,9 +34,7 @@ LEANSTRAL_CANONICAL_REALIZER_INTERFACE: Final = "LeanstralCanonicalRealizer@1"
 REALIZER_MAX_TOKENS: Final = 1536
 REALIZATION_MAX_LENGTH: Final = min(12_000, MAX_TEXT_LENGTH)
 STANDARD_REALIZATION_SCHEMA_NAME: Final = "semantic_roundtrip_realization_v1"
-SINGLE_RULE_RESEARCH_REALIZATION_SCHEMA_NAME: Final = (
-    "research_single_rule_realization_v1"
-)
+SINGLE_RULE_RESEARCH_REALIZATION_SCHEMA_NAME: Final = "research_single_rule_realization_v1"
 
 REALIZATION_JSON_SCHEMA: Final[dict[str, object]] = {
     "type": "object",
@@ -168,15 +166,11 @@ class LeanstralCanonicalRealizer:
             self._client.endpoint.rstrip("/") != LEANSTRAL_ENDPOINT
             or self._client.model != LEANSTRAL_MODEL
         ):
-            raise ValueError(
-                "client must bind the exact frozen Leanstral endpoint/model"
-            )
+            raise ValueError("client must bind the exact frozen Leanstral endpoint/model")
         try:
             self._schema_path = LeanstralSchemaPath(schema_path)
         except ValueError as exc:
-            raise ValueError(
-                f"unsupported Leanstral schema path: {schema_path}"
-            ) from exc
+            raise ValueError(f"unsupported Leanstral schema path: {schema_path}") from exc
         self._last_call: LeanstralModelCallDiagnostic | None = None
 
     @property
@@ -213,9 +207,7 @@ class LeanstralCanonicalRealizer:
                 self._schema_path is LeanstralSchemaPath.SINGLE_RULE_RESEARCH
                 and len(request.canonical_ir.rules) != 1
             ):
-                detail = (
-                    "single-rule research path requires exactly one input rule"
-                )
+                detail = "single-rule research path requires exactly one input rule"
                 self._last_call = LeanstralModelCallDiagnostic(
                     outcome="rejected",
                     rejection_reason=ModelRejectionReason.SCHEMA.value,
@@ -242,9 +234,7 @@ class LeanstralCanonicalRealizer:
                 )
             text = candidate["text"]
             if not isinstance(text, str):
-                raise LeanstralMalformedResponseError(
-                    "realization text must be a string"
-                )
+                raise LeanstralMalformedResponseError("realization text must be a string")
             text = " ".join(text.strip().split())
             if not text:
                 detail = "Leanstral returned a blank realization"

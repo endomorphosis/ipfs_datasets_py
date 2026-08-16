@@ -219,9 +219,7 @@ class ModalAutoencoderLoopResult:
             if self.llm_patch_validation
             else None,
             "llm_response": self.llm_response,
-            "leanstral_shadow": self.leanstral_shadow.to_dict()
-            if self.leanstral_shadow
-            else None,
+            "leanstral_shadow": self.leanstral_shadow.to_dict() if self.leanstral_shadow else None,
             "introspection": self.introspection,
             "introspection_summary": self.introspection_summary.to_dict(),
             "cache_counters": dict(sorted(self.cache_counters.items())),
@@ -230,9 +228,7 @@ class ModalAutoencoderLoopResult:
             "prover_signal": self.prover_signal.to_dict() if self.prover_signal else None,
             "sample": self.sample.to_dict(),
             "source_text": self.source_text,
-            "state_to_compiler_patch_lag": dict(
-                sorted(self.state_to_compiler_patch_lag.items())
-            ),
+            "state_to_compiler_patch_lag": dict(sorted(self.state_to_compiler_patch_lag.items())),
         }
 
 
@@ -329,9 +325,7 @@ class LegalModalAutoencoderLoop:
         leanstral_shadow: Optional[LeanstralShadowResult] = None
         leanstral_shadow_error = ""
         should_call_llm = (
-            self.config.allow_llm_repair
-            if allow_llm_repair is None
-            else bool(allow_llm_repair)
+            self.config.allow_llm_repair if allow_llm_repair is None else bool(allow_llm_repair)
         )
 
         if decision.should_call_codex and should_call_llm:
@@ -732,15 +726,9 @@ def _sample_from_codec_result(
 
 def _codex_cache_from_mapping(data: Mapping[str, Any]) -> CodexCallCache:
     return CodexCallCache(
-        codex_text_hashes={
-            str(value)
-            for value in data.get("codex_text_hashes", [])
-            if str(value)
-        },
+        codex_text_hashes={str(value) for value in data.get("codex_text_hashes", []) if str(value)},
         codex_feature_signature_hashes={
-            str(value)
-            for value in data.get("codex_feature_signature_hashes", [])
-            if str(value)
+            str(value) for value in data.get("codex_feature_signature_hashes", []) if str(value)
         },
         local_success_feature_signature_hashes={
             str(value)
@@ -976,9 +964,7 @@ def _apply_frame_logic_patch(
         selected_frame=modal_ir.frame_logic.selected_frame,
         graph_id=graph_data.metadata.get("graph_id"),
         neo4j_node_labels=graph_schema.node_labels if graph_schema else [],
-        neo4j_relationship_types=graph_schema.relationship_types
-        if graph_schema
-        else [],
+        neo4j_relationship_types=graph_schema.relationship_types if graph_schema else [],
         metadata={
             **modal_ir.frame_logic.metadata,
             "llm_patch_applied": True,

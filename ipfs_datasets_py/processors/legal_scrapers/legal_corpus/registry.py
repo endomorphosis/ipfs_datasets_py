@@ -78,4 +78,9 @@ def registry_snapshot() -> dict[str, Any]:
     }
 
 
-__all__ = ["available_jurisdictions", "get_jurisdiction", "register_jurisdiction", "registry_snapshot"]
+__all__ = [
+    "available_jurisdictions",
+    "get_jurisdiction",
+    "register_jurisdiction",
+    "registry_snapshot",
+]

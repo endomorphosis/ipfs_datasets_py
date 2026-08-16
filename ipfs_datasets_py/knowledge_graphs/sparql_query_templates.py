@@ -5,7 +5,9 @@
     ``ipfs_datasets_py.knowledge_graphs.query.sparql_templates``.
     Update your imports accordingly.
 """
+
 import warnings
+
 warnings.warn(
     "ipfs_datasets_py.knowledge_graphs.sparql_query_templates is deprecated. "
     "Use ipfs_datasets_py.knowledge_graphs.query.sparql_templates instead.",

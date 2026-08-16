@@ -136,10 +136,14 @@ class LegalIRGrammarValidation:
 
     @property
     def source_copy_placeholder_penalty(self) -> float:
-        return 1.0 if any(
-            reason.reason in {"source_copy_placeholder", "raw_source_copy_field"}
-            for reason in self.rejection_reasons
-        ) else 0.0
+        return (
+            1.0
+            if any(
+                reason.reason in {"source_copy_placeholder", "raw_source_copy_field"}
+                for reason in self.rejection_reasons
+            )
+            else 0.0
+        )
 
     def metrics(self) -> dict[str, float]:
         rejection_count = float(len(self.rejection_reasons))
@@ -167,9 +171,7 @@ class LegalIRGrammarValidation:
             "family": self.family,
             "masked_productions": list(self.masked_productions),
             "metrics": self.metrics(),
-            "rejection_reasons": [
-                reason.to_dict() for reason in self.rejection_reasons
-            ],
+            "rejection_reasons": [reason.to_dict() for reason in self.rejection_reasons],
             "schema_version": self.schema_version,
             "selected_productions": list(self.selected_productions),
         }
@@ -191,9 +193,7 @@ class ConstrainedLegalIRDecode:
             accepted=False,
             family="unscoped",
             candidate_ir=None,
-            rejection_reasons=(
-                LegalIRGrammarRejection(reason="no_candidate", family="unscoped"),
-            ),
+            rejection_reasons=(LegalIRGrammarRejection(reason="no_candidate", family="unscoped"),),
         )
     )
     schema_version: str = LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION
@@ -211,9 +211,7 @@ class ConstrainedLegalIRDecode:
                 str(name): round(float(score), 12)
                 for name, score in sorted(self.masked_scores.items())
             },
-            "rejection_reasons": [
-                reason.to_dict() for reason in self.rejection_reasons
-            ],
+            "rejection_reasons": [reason.to_dict() for reason in self.rejection_reasons],
             "schema_version": self.schema_version,
             "selected_production": self.selected_production,
             "selected_score": round(float(self.selected_score), 12),
@@ -383,9 +381,7 @@ def canonical_legal_ir_grammar_family(family: str) -> str:
     """Normalize grammar families, including view-name aliases."""
 
     normalized = str(family or "").strip().lower().replace("-", "_").replace("/", ".")
-    normalized = normalized.removeprefix("legal_ir_view.").removeprefix(
-        "legal-ir-view."
-    )
+    normalized = normalized.removeprefix("legal_ir_view.").removeprefix("legal-ir-view.")
     canonical = _FAMILY_ALIASES.get(normalized)
     if canonical:
         return canonical
@@ -648,7 +644,9 @@ def _validate_frame_logic(
             for relation in _items_from(_object_to_mapping(frame), "triples", "relations")
         ]
     if not triples:
-        return (_family_rejection("missing_frame_logic_triple", family=family, production=production),)
+        return (
+            _family_rejection("missing_frame_logic_triple", family=family, production=production),
+        )
     return tuple(
         rejection
         for index, triple in enumerate(triples)
@@ -723,9 +721,13 @@ def _validate_kg(
     edges = _sequence(graph.get("edges"))
     rejections: list[LegalIRGrammarRejection] = []
     if not nodes:
-        rejections.append(_family_rejection("missing_kg_nodes", family=family, production=production))
+        rejections.append(
+            _family_rejection("missing_kg_nodes", family=family, production=production)
+        )
     if not edges:
-        rejections.append(_family_rejection("missing_kg_edges", family=family, production=production))
+        rejections.append(
+            _family_rejection("missing_kg_edges", family=family, production=production)
+        )
     node_ids = {
         str(_object_to_mapping(node).get("id") or "").strip()
         for node in nodes
@@ -779,9 +781,13 @@ def _validate_cec(
     counterexamples = _items_from(source, "counterexamples", "counterexample")
     rejections: list[LegalIRGrammarRejection] = []
     if not events:
-        rejections.append(_family_rejection("missing_cec_events", family=family, production=production))
+        rejections.append(
+            _family_rejection("missing_cec_events", family=family, production=production)
+        )
     if not counterexamples:
-        rejections.append(_family_rejection("missing_cec_counterexample", family=family, production=production))
+        rejections.append(
+            _family_rejection("missing_cec_counterexample", family=family, production=production)
+        )
     for index, event in enumerate(events):
         rejections.extend(
             _required_mapping_fields(
@@ -806,9 +812,17 @@ def _validate_external_provers(
     obligations = _items_from(source, "obligations", "proof_obligations", "goals")
     rejections: list[LegalIRGrammarRejection] = []
     if not backend:
-        rejections.append(_family_rejection("missing_external_prover_backend", family=family, production=production))
+        rejections.append(
+            _family_rejection(
+                "missing_external_prover_backend", family=family, production=production
+            )
+        )
     if not obligations:
-        rejections.append(_family_rejection("missing_external_prover_obligation", family=family, production=production))
+        rejections.append(
+            _family_rejection(
+                "missing_external_prover_obligation", family=family, production=production
+            )
+        )
     return tuple(rejections)
 
 
@@ -822,12 +836,19 @@ def _validate_temporal(
     relations = _items_from(source, "relations", "temporal_relations")
     rejections: list[LegalIRGrammarRejection] = []
     if not intervals:
-        rejections.append(_family_rejection("missing_temporal_interval", family=family, production=production))
+        rejections.append(
+            _family_rejection("missing_temporal_interval", family=family, production=production)
+        )
     if not relations:
-        rejections.append(_family_rejection("missing_temporal_relation", family=family, production=production))
+        rejections.append(
+            _family_rejection("missing_temporal_relation", family=family, production=production)
+        )
     for index, interval in enumerate(intervals):
         entry = _object_to_mapping(interval)
-        if not any(_nonempty_text(entry.get(key)) for key in ("start", "end", "duration", "date", "deadline")):
+        if not any(
+            _nonempty_text(entry.get(key))
+            for key in ("start", "end", "duration", "date", "deadline")
+        ):
             rejections.append(
                 _family_rejection(
                     "missing_temporal_bound",
@@ -849,12 +870,19 @@ def _validate_provenance(
     evidence = _items_from(source, "evidence", "receipts", "proof_evidence")
     rejections: list[LegalIRGrammarRejection] = []
     if not refs:
-        rejections.append(_family_rejection("missing_provenance_source_ref", family=family, production=production))
+        rejections.append(
+            _family_rejection("missing_provenance_source_ref", family=family, production=production)
+        )
     if not evidence:
-        rejections.append(_family_rejection("missing_provenance_evidence", family=family, production=production))
+        rejections.append(
+            _family_rejection("missing_provenance_evidence", family=family, production=production)
+        )
     for index, ref in enumerate(refs):
         entry = _object_to_mapping(ref)
-        if not any(_nonempty_text(entry.get(key)) for key in ("citation", "document_id", "span_hash", "source_hash")):
+        if not any(
+            _nonempty_text(entry.get(key))
+            for key in ("citation", "document_id", "span_hash", "source_hash")
+        ):
             rejections.append(
                 _family_rejection(
                     "missing_provenance_reference_identifier",
@@ -872,14 +900,24 @@ def _validate_decompiler(
     production: str,
 ) -> tuple[LegalIRGrammarRejection, ...]:
     source = _object_to_mapping(candidate)
-    plan = _object_to_mapping(source.get("plan")) if isinstance(source.get("plan"), Mapping) else source
+    plan = (
+        _object_to_mapping(source.get("plan"))
+        if isinstance(source.get("plan"), Mapping)
+        else source
+    )
     steps = _items_from(plan, "steps", "operations")
     target_view = str(plan.get("target_view") or plan.get("legal_ir_view") or "").strip()
     rejections: list[LegalIRGrammarRejection] = []
     if not steps:
-        rejections.append(_family_rejection("missing_decompiler_steps", family=family, production=production))
+        rejections.append(
+            _family_rejection("missing_decompiler_steps", family=family, production=production)
+        )
     if not target_view:
-        rejections.append(_family_rejection("missing_decompiler_target_view", family=family, production=production))
+        rejections.append(
+            _family_rejection(
+                "missing_decompiler_target_view", family=family, production=production
+            )
+        )
     policy = str(plan.get("source_copy_policy") or "").strip().lower()
     if policy and policy not in {"hash_only", "span_hash_only", "citation_only", "no_source_text"}:
         rejections.append(

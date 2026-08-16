@@ -191,19 +191,20 @@ Every README includes complete, runnable examples:
 from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine
 import asyncio
 
+
 async def find_people():
     engine = UnifiedQueryEngine(cypher_backend=cypher_engine)
-    
+
     result = await engine.execute_query(
-        query="MATCH (p:Person) WHERE p.age > 30 RETURN p.name, p.age",
-        query_type="cypher"
+        query="MATCH (p:Person) WHERE p.age > 30 RETURN p.name, p.age", query_type="cypher"
     )
-    
+
     if result.success:
         for record in result.records:
             print(f"{record['p.name']}: {record['p.age']}")
     else:
         print(f"Query failed: {result.error}")
+
 
 asyncio.run(find_people())
 ```

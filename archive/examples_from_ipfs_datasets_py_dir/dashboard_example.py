@@ -15,8 +15,9 @@ import threading
 from pathlib import Path
 
 # Configure logging
-logging.basicConfig(level=logging.INFO,
-                  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 # Add parent directory to import path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -28,9 +29,13 @@ from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
 # Try to import audit components
 try:
     from ipfs_datasets_py.audit.audit_logger import (
-        AuditLogger, AuditEvent, AuditLevel, AuditCategory
+        AuditLogger,
+        AuditEvent,
+        AuditLevel,
+        AuditCategory,
     )
     from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator
+
     AUDIT_COMPONENTS_AVAILABLE = True
 except ImportError:
     AUDIT_COMPONENTS_AVAILABLE = False
@@ -58,14 +63,14 @@ def generate_sample_metrics():
             duration_ms=duration,
             result_count=random.randint(1, 20),
             status=status,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
     # Create sample audit metrics if available
     if AUDIT_COMPONENTS_AVAILABLE:
         audit_metrics = AuditMetricsAggregator(
             window_size=30 * 86400,  # 30 days
-            bucket_size=3600  # 1 hour buckets
+            bucket_size=3600,  # 1 hour buckets
         )
 
         # Generate sample audit events
@@ -104,7 +109,7 @@ def generate_sample_metrics():
                     duration_ms=random.uniform(200, 1000),  # Slower than average
                     result_count=random.randint(0, 5),  # Fewer results
                     status=random.choices(["success", "failure"], weights=[0.6, 0.4])[0],
-                    timestamp=query_time
+                    timestamp=query_time,
                 )
 
             # Create the event
@@ -114,7 +119,7 @@ def generate_sample_metrics():
                 action=action,
                 status=random.choices(["success", "failure"], weights=[0.9, 0.1])[0],
                 user=user,
-                timestamp=event_datetime.isoformat()
+                timestamp=event_datetime.isoformat(),
             )
 
             # Log the event
@@ -154,7 +159,7 @@ def generate_continuous_data(query_metrics, audit_metrics, interval=5, runtime=3
                     query_type=query_type,
                     duration_ms=duration,
                     result_count=random.randint(1, 20),
-                    status=status
+                    status=status,
                 )
 
             # Add new audit events if available
@@ -162,7 +167,9 @@ def generate_continuous_data(query_metrics, audit_metrics, interval=5, runtime=3
                 for i in range(random.randint(1, 10)):
                     category = random.choice([c.name for c in AuditCategory])
                     level = random.choice([l.name for l in AuditLevel])
-                    action = random.choice(["login", "logout", "create", "read", "update", "delete", "query"])
+                    action = random.choice(
+                        ["login", "logout", "create", "read", "update", "delete", "query"]
+                    )
                     user = random.choice(["user1", "user2", "admin1", "admin2"])
 
                     # Create the event
@@ -172,7 +179,7 @@ def generate_continuous_data(query_metrics, audit_metrics, interval=5, runtime=3
                         action=action,
                         status=random.choices(["success", "failure"], weights=[0.9, 0.1])[0],
                         user=user,
-                        timestamp=datetime.datetime.now().isoformat()
+                        timestamp=datetime.datetime.now().isoformat(),
                     )
 
                     # Add security event spike occasionally
@@ -185,7 +192,7 @@ def generate_continuous_data(query_metrics, audit_metrics, interval=5, runtime=3
                                 status="success",
                                 user="admin2",
                                 resource_id=f"resource_{j}",
-                                timestamp=datetime.datetime.now().isoformat()
+                                timestamp=datetime.datetime.now().isoformat(),
                             )
                             audit_metrics.process_event(security_event)
 
@@ -215,11 +222,7 @@ def main():
 
     # Create dashboard
     print("\nCreating unified dashboard...")
-    dashboard = UnifiedDashboard(
-        dashboard_dir=dashboard_dir,
-        enable_realtime=True,
-        port=8888
-    )
+    dashboard = UnifiedDashboard(dashboard_dir=dashboard_dir, enable_realtime=True, port=8888)
 
     # Register metrics with dashboard
     dashboard.register_metrics_collector(query_metrics)
@@ -229,8 +232,7 @@ def main():
     # Create a thread to generate continuous data
     if audit_metrics:
         data_thread = threading.Thread(
-            target=generate_continuous_data,
-            args=(query_metrics, audit_metrics, 5, None)
+            target=generate_continuous_data, args=(query_metrics, audit_metrics, 5, None)
         )
         data_thread.daemon = True
 
@@ -240,7 +242,7 @@ def main():
         audit_metrics_aggregator=audit_metrics,
         title="Unified RAG & Audit Dashboard Demo",
         theme="light",
-        include_interactive=True
+        include_interactive=True,
     )
 
     print("\nDashboard generated!")

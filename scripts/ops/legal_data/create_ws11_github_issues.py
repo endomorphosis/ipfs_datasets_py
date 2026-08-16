@@ -48,7 +48,9 @@ def parse_ws11_issues(markdown_text: str) -> list[dict[str, str]]:
         title_match = re.search(r"Title:\s*\n\s*`([^`]+)`", section_text)
         title = title_match.group(1).strip() if title_match else ticket_header
 
-        body_match = re.search(r"Body:\s*\n\s*```markdown\n(.*?)\n```", section_text, flags=re.DOTALL)
+        body_match = re.search(
+            r"Body:\s*\n\s*```markdown\n(.*?)\n```", section_text, flags=re.DOTALL
+        )
         if body_match:
             body = body_match.group(1).strip()
         else:
@@ -119,7 +121,9 @@ def create_issue(repo: str, title: str, body: str, labels: list[str]) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Create WS11 GitHub issues from template markdown files.")
+    parser = argparse.ArgumentParser(
+        description="Create WS11 GitHub issues from template markdown files."
+    )
     parser.add_argument("--repo", default=DEFAULT_REPO, help="GitHub repo in owner/name format")
     parser.add_argument(
         "--templates",
@@ -158,11 +162,16 @@ def main() -> int:
         gh_available = False
 
     if not gh_available and args.create:
-        print("`gh` CLI is required for --create mode. Install/authenticate `gh` first.", file=sys.stderr)
+        print(
+            "`gh` CLI is required for --create mode. Install/authenticate `gh` first.",
+            file=sys.stderr,
+        )
         return 2
 
     if gh_available and args.create and not gh_auth_ok():
-        print("`gh` is installed but not authenticated. Run `gh auth login` first.", file=sys.stderr)
+        print(
+            "`gh` is installed but not authenticated. Run `gh auth login` first.", file=sys.stderr
+        )
         return 2
 
     if gh_available:
@@ -220,7 +229,10 @@ def main() -> int:
             failed += 1
             print(f"[error] {ticket_id}: {exc}", file=sys.stderr)
             if "HTTP 401" in str(exc) or "HTTP 403" in str(exc):
-                print("[error] stopping early due to authentication/permission failure", file=sys.stderr)
+                print(
+                    "[error] stopping early due to authentication/permission failure",
+                    file=sys.stderr,
+                )
                 break
 
     print(f"Summary: created={created} skipped={skipped} failed={failed} parsed={len(issues)}")

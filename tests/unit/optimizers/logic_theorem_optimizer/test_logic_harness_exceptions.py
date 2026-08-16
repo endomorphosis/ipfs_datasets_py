@@ -18,7 +18,9 @@ def test_run_single_session_with_retry_handles_typed_value_error() -> None:
         def run(self, data, context):
             raise ValueError("bad data")
 
-    result = harness._run_single_session_with_retry(BrokenSession(), data="x", context=None, session_id=1)
+    result = harness._run_single_session_with_retry(
+        BrokenSession(), data="x", context=None, session_id=1
+    )
     assert result.success is False
 
 
@@ -34,4 +36,6 @@ def test_run_single_session_with_retry_does_not_swallow_keyboard_interrupt() -> 
             raise KeyboardInterrupt()
 
     with pytest.raises(KeyboardInterrupt):
-        harness._run_single_session_with_retry(BrokenSession(), data="x", context=None, session_id=2)
+        harness._run_single_session_with_retry(
+            BrokenSession(), data="x", context=None, session_id=2
+        )

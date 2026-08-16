@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
+
     class OptimizerError(Exception):
         pass
 
@@ -43,7 +44,7 @@ class OntologyExtractionError(ExtractionError):
 
 class OntologyValidationError(ValidationError, ValueError):
     """Raised when ontology validation detects structural or semantic issues.
-    
+
     Examples:
         - Dangling entity references in relationships
         - Missing required fields (id, type, description)
@@ -53,7 +54,7 @@ class OntologyValidationError(ValidationError, ValueError):
 
 class LogicProvingError(ProvingError):
     """Raised when logic prover detects contradictions or errors.
-    
+
     Examples:
         - Z3 returns UNSAT for ontology axioms
         - Reasoner detects inconsistent entity types
@@ -62,7 +63,7 @@ class LogicProvingError(ProvingError):
 
 class PathResolutionError(ConfigurationError):
     """Raised when file path resolution or validation fails.
-    
+
     Examples:
         - Path resolves outside allowed boundaries
         - Required file does not exist
@@ -72,7 +73,7 @@ class PathResolutionError(ConfigurationError):
 
 class QueryCacheError(OptimizerError):
     """Raised when query cache operations fail.
-    
+
     Examples:
         - Cache entry expired or missing
         - Invalid cache format
@@ -82,7 +83,7 @@ class QueryCacheError(OptimizerError):
 
 class SessionError(RefinementError):
     """Raised when optimization session state is invalid.
-    
+
     Examples:
         - Session not initialized before use
         - Invalid round number or state transition

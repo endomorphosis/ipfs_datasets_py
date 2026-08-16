@@ -1,11 +1,12 @@
 from datetime import datetime
 from pathlib import Path
 
+
 def generate_validation_report(
-    error_summary: dict[str, int], 
+    error_summary: dict[str, int],
     accuracy_stats: dict[str, float],
     estimates: dict[str, float],
-    error_report_db
+    error_report_db,
 ) -> Path:
     """
     Generate a comprehensive validation report for municipal bluebook citations.
@@ -21,7 +22,11 @@ def generate_validation_report(
     """
 
     # Validate input types
-    if not isinstance(error_summary, dict) or not isinstance(accuracy_stats, dict) or not isinstance(estimates, dict):
+    if (
+        not isinstance(error_summary, dict)
+        or not isinstance(accuracy_stats, dict)
+        or not isinstance(estimates, dict)
+    ):
         raise ValueError("Input arguments must be dictionaries.")
 
     report_dir = Path("validation_reports")
@@ -67,13 +72,7 @@ def generate_validation_report(
         """)
         error_report_db.execute(
             "INSERT INTO validation_reports VALUES (?, ?, ?, ?, ?)",
-            [
-                timestamp,
-                str(report_path),
-                str(error_summary),
-                str(accuracy_stats),
-                str(estimates)
-            ]
+            [timestamp, str(report_path), str(error_summary), str(accuracy_stats), str(estimates)],
         )
     except Exception as e:
         raise RuntimeError(f"Failed to save report to database: {e}") from e

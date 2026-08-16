@@ -10,25 +10,30 @@ from pydantic import BaseModel
 from pydantic_models.resource.resource import Resource
 from utils.common.anyio_queues import AnyioQueue
 
+
 class Pipeline(BaseModel):
     pass
+
 
 # Wrapper classes for function overloading.
 class ProcessInput(BaseModel):
     resource: Resource
     prefer: str = "processor"
 
+
 class ThreadInput(BaseModel):
     resource: Resource
     prefer: str = "thread"
 
 
-async def optimize(resources: Iterable[Resource], *, batch_size=1024, max_concurrency=5) -> AsyncGenerator:
+async def optimize(
+    resources: Iterable[Resource], *, batch_size=1024, max_concurrency=5
+) -> AsyncGenerator:
 
     input_queue: AnyioQueue = AnyioQueue()
 
     for resource in resources:
-        if getattr(resource, 'prefer', 'processor') == "thread":
+        if getattr(resource, "prefer", "processor") == "thread":
             inp = ThreadInput(resource=resource)
         else:
             inp = ProcessInput(resource=resource)
@@ -38,6 +43,7 @@ async def optimize(resources: Iterable[Resource], *, batch_size=1024, max_concur
     while not input_queue.empty():
         async for inp, output in concurrently(input_queue, batch_size, max_concurrency):
             yield output
+
 
 @singledispatch
 async def concurrently(input_queue: AnyioQueue, batch_size: int, max_concurrency: int = 5):
@@ -49,10 +55,10 @@ async def concurrently(input_queue: AnyioQueue, batch_size: int, max_concurrency
 
 
 async def concurrently_process(
-        inputs: Iterable[ProcessInput] = None,
-        *,
-        max_concurrency: int = 5,
-        ) -> AsyncGenerator:
+    inputs: Iterable[ProcessInput] = None,
+    *,
+    max_concurrency: int = 5,
+) -> AsyncGenerator:
     """
     Calls the pipeline on the values ``inputs`` using a process pool.
     Generates (input, output) tuples as the calls complete.
@@ -80,10 +86,10 @@ async def concurrently_process(
 
 
 async def concurrently_thread(
-        inputs: Iterable[ThreadInput],
-        *,
-        max_concurrency=5,
-        ) -> AsyncGenerator:
+    inputs: Iterable[ThreadInput],
+    *,
+    max_concurrency=5,
+) -> AsyncGenerator:
     """
     Calls the pipeline on the values ``inputs`` using a thread pool.
     Generates (input, output) tuples as the calls complete.
@@ -110,12 +116,14 @@ async def concurrently_thread(
                 futures[fut] = inp
 
 
-async def concurrently_handler(handler: Callable | Coroutine, inputs: Iterable, *, max_concurrency=5) -> AsyncGenerator:
+async def concurrently_handler(
+    handler: Callable | Coroutine, inputs: Iterable, *, max_concurrency=5
+) -> AsyncGenerator:
 
     thread_handler_queue: AnyioQueue = AnyioQueue()
     process_handler_queue: AnyioQueue = AnyioQueue()
 
-    prefer = getattr(inputs, 'prefer', 'thread')
+    prefer = getattr(inputs, "prefer", "thread")
 
     if prefer == "thread":
         await thread_handler_queue.put(inputs)

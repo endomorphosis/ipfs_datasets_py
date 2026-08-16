@@ -116,7 +116,11 @@ class AudioArtifactDescriptor:
         _require_identity("audio_id", self.audio_id)
         if not _SHA256_RE.fullmatch(self.content_sha256):
             raise ValueError("content_sha256 must be a full lowercase SHA-256")
-        if isinstance(self.byte_length, bool) or not isinstance(self.byte_length, int) or self.byte_length < 0:
+        if (
+            isinstance(self.byte_length, bool)
+            or not isinstance(self.byte_length, int)
+            or self.byte_length < 0
+        ):
             raise ValueError("byte_length must be a non-negative integer")
         if not isinstance(self.media_type, str) or not self.media_type.startswith("audio/"):
             raise ValueError("media_type must be audio/*")
@@ -169,7 +173,13 @@ class AudioWorkItem:
     def __post_init__(self) -> None:
         operation = AudioWorkOperation(self.operation)
         reason = AudioWorkReason(self.reason)
-        for name in ("subject_id", "subject_schema_version", "locale", "source_manifest_id", "policy_id"):
+        for name in (
+            "subject_id",
+            "subject_schema_version",
+            "locale",
+            "source_manifest_id",
+            "policy_id",
+        ):
             _require_identity(name, getattr(self, name))
         if not isinstance(self.spoken_text, str) or not self.spoken_text.strip():
             raise ValueError("spoken_text must not be empty")
@@ -277,8 +287,7 @@ class VoiceAudioWorkset:
             *self.validation_manifest.items,
         )
         if any(
-            item.source_manifest_id != self.source_manifest_id
-            or item.policy_id != self.policy_id
+            item.source_manifest_id != self.source_manifest_id or item.policy_id != self.policy_id
             for item in items
         ):
             raise ValueError("work item lineage does not match workset envelope")
@@ -301,10 +310,7 @@ class VoiceAudioWorkset:
                 parent = tts_by_id.get(item.depends_on[0])
                 if parent is None or parent.subject_id != item.subject_id:
                     raise ValueError("ASR work has an invalid TTS dependency")
-            elif (
-                item.reason is not AudioWorkReason.EXPLICIT_REVALIDATION
-                or item.audio is None
-            ):
+            elif item.reason is not AudioWorkReason.EXPLICIT_REVALIDATION or item.audio is None:
                 raise ValueError("ASR work without TTS requires existing revalidation audio")
         for item in self.validation_manifest.items:
             if len(item.depends_on) != 1:
@@ -334,10 +340,14 @@ class VoiceAudioWorkset:
         intentionally_text_only_subject_ids: Iterable[str] = (),
     ) -> VoiceAudioWorkset:
         subjects = [
-            (row.response_id, row.schema_version, row.spoken_text, row.locale)
-            for row in responses
+            (row.response_id, row.schema_version, row.spoken_text, row.locale) for row in responses
         ] + [
-            (row.template_id, row.schema_version, row.spoken_template or row.template_text, row.locale)
+            (
+                row.template_id,
+                row.schema_version,
+                row.spoken_template or row.template_text,
+                row.locale,
+            )
             for row in templates
         ]
         subjects.sort(key=lambda item: (item[1], item[0]))
@@ -373,9 +383,7 @@ class VoiceAudioWorkset:
             existing = sorted(by_subject.get(subject_id, ()), key=lambda row: row.audio_id)
             text_digest = sha256_text(spoken_text)
             matching = [
-                row
-                for row in existing
-                if row.text_sha256 == text_digest and row.locale == locale
+                row for row in existing if row.text_sha256 == text_digest and row.locale == locale
             ]
             descriptor: AudioArtifactDescriptor | None = None
             for row in matching:
@@ -400,26 +408,54 @@ class VoiceAudioWorkset:
 
             if reason is AudioWorkReason.EXPLICIT_REVALIDATION:
                 asr_item = AudioWorkItem(
-                    AudioWorkOperation.ASR, reason, subject_id, schema_version,
-                    spoken_text, text_digest, locale, source_manifest_id, policy_id,
+                    AudioWorkOperation.ASR,
+                    reason,
+                    subject_id,
+                    schema_version,
+                    spoken_text,
+                    text_digest,
+                    locale,
+                    source_manifest_id,
+                    policy_id,
                     audio=descriptor,
                 )
             else:
                 tts_item = AudioWorkItem(
-                    AudioWorkOperation.TTS, reason, subject_id, schema_version,
-                    spoken_text, text_digest, locale, source_manifest_id, policy_id,
+                    AudioWorkOperation.TTS,
+                    reason,
+                    subject_id,
+                    schema_version,
+                    spoken_text,
+                    text_digest,
+                    locale,
+                    source_manifest_id,
+                    policy_id,
                 )
                 tts.append(tts_item)
                 asr_item = AudioWorkItem(
-                    AudioWorkOperation.ASR, reason, subject_id, schema_version,
-                    spoken_text, text_digest, locale, source_manifest_id, policy_id,
+                    AudioWorkOperation.ASR,
+                    reason,
+                    subject_id,
+                    schema_version,
+                    spoken_text,
+                    text_digest,
+                    locale,
+                    source_manifest_id,
+                    policy_id,
                     depends_on=(tts_item.work_id,),
                 )
             asr.append(asr_item)
             validation.append(
                 AudioWorkItem(
-                    AudioWorkOperation.VALIDATE, reason, subject_id, schema_version,
-                    spoken_text, text_digest, locale, source_manifest_id, policy_id,
+                    AudioWorkOperation.VALIDATE,
+                    reason,
+                    subject_id,
+                    schema_version,
+                    spoken_text,
+                    text_digest,
+                    locale,
+                    source_manifest_id,
+                    policy_id,
                     audio=descriptor if reason is AudioWorkReason.EXPLICIT_REVALIDATION else None,
                     depends_on=(asr_item.work_id,),
                 )
@@ -447,9 +483,7 @@ class VoiceAudioWorkset:
             "policy_id": self.policy_id,
             "schema_version": self.schema_version,
             "source_manifest_id": self.source_manifest_id,
-            "intentionally_text_only_subject_ids": list(
-                self.intentionally_text_only_subject_ids
-            ),
+            "intentionally_text_only_subject_ids": list(self.intentionally_text_only_subject_ids),
             "tts_manifest": self.tts_manifest.to_dict(),
             "validation_manifest": self.validation_manifest.to_dict(),
         }

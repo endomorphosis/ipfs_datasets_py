@@ -112,11 +112,11 @@ config = SecurityConfig(
 **Detection Method:**
 ```python
 forbidden_patterns = [
-    r'rm\s+-rf',
-    r'eval\s*\(',
-    r'exec\s*\(',
-    r'subprocess\.call\(.*shell=True',
-    r'os\.system\(',
+    r"rm\s+-rf",
+    r"eval\s*\(",
+    r"exec\s*\(",
+    r"subprocess\.call\(.*shell=True",
+    r"os\.system\(",
 ]
 
 for pattern in forbidden_patterns:
@@ -213,7 +213,7 @@ with monitor.monitor():
     expensive_operation()
 
 stats = monitor.get_stats()
-if stats['peak_memory_mb'] > 1000:
+if stats["peak_memory_mb"] > 1000:
     log.warning("High memory usage detected")
 ```
 

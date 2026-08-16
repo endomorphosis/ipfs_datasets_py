@@ -34,7 +34,7 @@ def _build_text(n: int) -> str:
     """Generate n-1 relationship sentences for n entities."""
     sentences = []
     for i in range(n - 1):
-        sentences.append(f"Entity{i} works for Entity{i+1}.")
+        sentences.append(f"Entity{i} works for Entity{i + 1}.")
     return " ".join(sentences)
 
 
@@ -67,7 +67,7 @@ def context():
 def test_infer_relationships_scaling(benchmark, generator, context, size, prefilter):
     """
     Benchmark infer_relationships() across different entity count scales.
-    
+
     Tests scaling from 10 to 100 entities to measure algorithm complexity
     and compare pre-filtered vs unfiltered type-pair evaluation.
     """
@@ -82,7 +82,7 @@ def test_infer_relationships_scaling(benchmark, generator, context, size, prefil
     finally:
         if not prefilter:
             generator._is_impossible_type_pair = original
-    
+
     # Basic sanity check: should succeed
     assert result is not None
     assert isinstance(result, list)

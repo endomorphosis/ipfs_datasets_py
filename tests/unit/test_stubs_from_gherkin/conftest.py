@@ -3,6 +3,7 @@ Pytest configuration for test stubs directory.
 
 Provides shared fixtures and the FixtureError exception for all test modules.
 """
+
 import pytest
 import glob
 import os
@@ -27,7 +28,7 @@ collect_ignore = [] if _RUN_STUBS else [f for f in _all_py_files if f != _confte
 def pytest_collection_modifyitems(config, items):
     """
     Skip all test collection in this directory.
-    
+
     These files are stubs/templates for implementing tests with pytest-bdd.
     They are not meant to be run directly.
     """
@@ -40,10 +41,7 @@ def pytest_collection_modifyitems(config, items):
     stubs_root = Path(__file__).resolve().parent
 
     skip_marker = pytest.mark.skip(
-        reason=(
-            "Stub/template test file. Enable execution with "
-            "IPFS_DATASETS_PY_RUN_TEST_STUBS=1."
-        )
+        reason=("Stub/template test file. Enable execution with IPFS_DATASETS_PY_RUN_TEST_STUBS=1.")
     )
 
     for item in items:
@@ -58,18 +56,17 @@ def pytest_collection_modifyitems(config, items):
 
 def pytest_configure(config):
     """Configure pytest to skip this directory."""
-    config.addinivalue_line(
-        "markers", "stub: mark test as a stub/template (not to be run)"
-    )
+    config.addinivalue_line("markers", "stub: mark test as a stub/template (not to be run)")
 
 
 class FixtureError(Exception):
     """
     Custom exception for fixture initialization failures.
-    
+
     Provides standardized error reporting for fixture setup issues,
     including resource availability checks and initialization failures.
     """
+
     pass
 
 
@@ -77,11 +74,12 @@ class FixtureError(Exception):
 # Shared Fixtures - Used across multiple test modules
 # =============================================================================
 
+
 @pytest.fixture
 def summary_counters_zeroed() -> Dict[str, int]:
     """
     Given the summary counters are set to total=0, passed=0, failed=0, warnings=0
-    
+
     Returns a dictionary with zeroed summary counters for test result tracking.
     """
     raise NotImplementedError
@@ -91,7 +89,7 @@ def summary_counters_zeroed() -> Dict[str, int]:
 def dashboard_url_configured() -> str:
     """
     Given the dashboard URL is http://localhost:8899/mcp
-    
+
     Returns the configured dashboard URL. Checks if the URL is accessible.
     """
     raise NotImplementedError
@@ -101,7 +99,7 @@ def dashboard_url_configured() -> str:
 def screenshot_directory_exists() -> Path:
     """
     Given the screenshot directory exists at test_screenshots
-    
+
     Returns the Path to the screenshot directory, creating it if needed.
     Raises FixtureError if the directory cannot be created or accessed.
     """

@@ -120,10 +120,12 @@ DeonticOp = Literal["O", "P", "F"]
 FrameKind = Literal["action", "event", "state"]
 TemporalRel = Literal["before", "after", "by", "within", "during"]
 
+
 class ProofStatus(str, Enum):
     PROVED = "proved"
     REFUTED = "refuted"
     UNKNOWN = "unknown"
+
 
 @dataclass(frozen=True)
 class SourceRef:
@@ -132,6 +134,7 @@ class SourceRef:
     uri: str | None = None
     span: tuple[int, int] | None = None
 
+
 @dataclass(frozen=True)
 class Entity:
     id: str
@@ -139,11 +142,13 @@ class Entity:
     label: str
     attrs: dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass(frozen=True)
 class FrameContext:
     jurisdiction: str | None = None
     modality_context: str | None = None
     time_anchor: str | None = None
+
 
 @dataclass(frozen=True)
 class Frame:
@@ -154,6 +159,7 @@ class Frame:
     context: FrameContext = field(default_factory=FrameContext)
     attrs: dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass(frozen=True)
 class TemporalConstraint:
     id: str
@@ -163,10 +169,12 @@ class TemporalConstraint:
     value: int | None = None
     unit: str | None = None
 
+
 @dataclass(frozen=True)
 class Atom:
     pred: str
     args: tuple[str, ...] = ()
+
 
 @dataclass(frozen=True)
 class ConditionNode:
@@ -176,12 +184,14 @@ class ConditionNode:
     var: str | None = None
     var_type: str | None = None
 
+
 @dataclass(frozen=True)
 class DefinitionRule:
     id: str
     kind: Literal["means", "includes"]
     lhs_frame_ref: str
     rhs_formula: str
+
 
 @dataclass(frozen=True)
 class Norm:
@@ -193,6 +203,7 @@ class Norm:
     temporal_refs: tuple[str, ...] = ()
     priority: int = 0
     source_ref: str | None = None
+
 
 @dataclass(frozen=True)
 class LegalIR:
@@ -339,7 +350,9 @@ def parse_nl_to_ir(sentence: str, jurisdiction: str, lexicon: dict) -> LegalIR:
 ```python
 def normalize_ir(ir: LegalIR) -> LegalIR:
     entities = canonicalize_entities(ir.entities)
-    frames = canonicalize_frame_slots(ir.frames, role_aliases={"subject": "agent", "object": "patient"})
+    frames = canonicalize_frame_slots(
+        ir.frames, role_aliases={"subject": "agent", "object": "patient"}
+    )
     temporals = canonicalize_temporal_values(ir.temporals)  # e.g., 30 days -> P30D
     norms = canonicalize_norms(ir.norms)
 

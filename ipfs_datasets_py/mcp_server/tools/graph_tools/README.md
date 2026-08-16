@@ -34,13 +34,16 @@ The underlying graph engine supports Neo4j, in-memory, and IPLD-backed backends.
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.graph_tools import (
-    graph_create, graph_add_entity, graph_add_relationship, graph_query_cypher
+    graph_create,
+    graph_add_entity,
+    graph_add_relationship,
+    graph_query_cypher,
 )
 
 # 1. Create graph
 graph = await graph_create(
     graph_name="legal_corpus",
-    backend="memory"    # "memory" | "neo4j" | "ipld"
+    backend="memory",  # "memory" | "neo4j" | "ipld"
 )
 
 # 2. Add entities
@@ -48,7 +51,7 @@ alice = await graph_add_entity(
     graph_name="legal_corpus",
     entity_type="Person",
     properties={"name": "Alice", "role": "attorney"},
-    entity_id="alice_1"   # Optional; auto-generated if omitted
+    entity_id="alice_1",  # Optional; auto-generated if omitted
 )
 
 # 3. Add relationship
@@ -57,13 +60,13 @@ await graph_add_relationship(
     relationship_type="REPRESENTS",
     start_entity_id="alice_1",
     end_entity_id="case_42",
-    properties={"since": "2024-01-01"}
+    properties={"since": "2024-01-01"},
 )
 
 # 4. Query with Cypher
 result = await graph_query_cypher(
     graph_name="legal_corpus",
-    query="MATCH (p:Person)-[:REPRESENTS]->(c:Case) RETURN p.name, c.id LIMIT 10"
+    query="MATCH (p:Person)-[:REPRESENTS]->(c:Case) RETURN p.name, c.id LIMIT 10",
 )
 ```
 
@@ -75,7 +78,7 @@ from ipfs_datasets_py.mcp_server.tools.graph_tools import query_knowledge_graph
 result = await query_knowledge_graph(
     graph_name="legal_corpus",
     query="Who are the attorneys involved in environmental cases?",
-    max_results=20
+    max_results=20,
 )
 ```
 
@@ -87,8 +90,8 @@ from ipfs_datasets_py.mcp_server.tools.graph_tools import graph_search_hybrid
 result = await graph_search_hybrid(
     graph_name="legal_corpus",
     query="climate change litigation",
-    vector_weight=0.6,   # Balance between vector and graph traversal
-    max_results=10
+    vector_weight=0.6,  # Balance between vector and graph traversal
+    max_results=10,
 )
 ```
 

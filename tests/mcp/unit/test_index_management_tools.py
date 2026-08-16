@@ -7,6 +7,7 @@ Tests cover:
 - monitor_index_status: index health monitoring
 - manage_index_configuration: index configuration management
 """
+
 from __future__ import annotations
 
 import pytest
@@ -25,6 +26,7 @@ class TestLoadIndex:
         from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import (
             load_index,
         )
+
         result = await load_index(action="load", dataset="test_dataset")
         assert isinstance(result, dict)
 
@@ -38,6 +40,7 @@ class TestLoadIndex:
         from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import (
             load_index,
         )
+
         result = await load_index(action="status")
         assert isinstance(result, dict)
 
@@ -51,6 +54,7 @@ class TestLoadIndex:
         from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import (
             load_index,
         )
+
         result = await load_index(action="create", dataset="new_dataset")
         assert isinstance(result, dict)
 
@@ -68,6 +72,7 @@ class TestManageShards:
         from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import (
             manage_shards,
         )
+
         result = await manage_shards(action="create", dataset="test_dataset", num_shards=4)
         assert isinstance(result, dict)
 
@@ -81,6 +86,7 @@ class TestManageShards:
         from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import (
             manage_shards,
         )
+
         result = await manage_shards(action="list")
         assert isinstance(result, dict)
 
@@ -98,6 +104,7 @@ class TestMonitorIndexStatus:
         from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import (
             monitor_index_status,
         )
+
         result = await monitor_index_status()
         assert isinstance(result, dict)
 
@@ -111,6 +118,7 @@ class TestMonitorIndexStatus:
         from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import (
             monitor_index_status,
         )
+
         result = await monitor_index_status(index_id="my_index")
         assert isinstance(result, dict)
 
@@ -128,6 +136,7 @@ class TestManageIndexConfiguration:
         from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import (
             manage_index_configuration,
         )
+
         result = await manage_index_configuration(action="get")
         assert isinstance(result, dict)
 
@@ -141,6 +150,7 @@ class TestManageIndexConfiguration:
         from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import (
             manage_index_configuration,
         )
+
         result = await manage_index_configuration(
             action="get_config",
             index_id="test_index",

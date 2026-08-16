@@ -205,13 +205,14 @@ import sys
 import subprocess
 import time
 
+
 def test_nvidia_smi():
     """Test nvidia-smi availability."""
     try:
-        result = subprocess.run(['nvidia-smi'], capture_output=True, text=True)
+        result = subprocess.run(["nvidia-smi"], capture_output=True, text=True)
         if result.returncode == 0:
             print("✅ nvidia-smi working")
-            print(result.stdout.split('\n')[8])  # GPU info line
+            print(result.stdout.split("\n")[8])  # GPU info line
             return True
         else:
             print("❌ nvidia-smi failed")
@@ -220,12 +221,13 @@ def test_nvidia_smi():
         print("❌ nvidia-smi not found")
         return False
 
+
 def test_cuda_toolkit():
     """Test CUDA toolkit."""
     try:
-        result = subprocess.run(['nvcc', '--version'], capture_output=True, text=True)
+        result = subprocess.run(["nvcc", "--version"], capture_output=True, text=True)
         if result.returncode == 0:
-            version_line = [line for line in result.stdout.split('\n') if 'release' in line][0]
+            version_line = [line for line in result.stdout.split("\n") if "release" in line][0]
             print(f"✅ CUDA toolkit: {version_line.strip()}")
             return True
         else:
@@ -235,16 +237,29 @@ def test_cuda_toolkit():
         print("❌ nvcc not found")
         return False
 
+
 def test_docker_gpu():
     """Test Docker GPU access."""
     try:
-        result = subprocess.run([
-            'docker', 'run', '--rm', '--gpus', 'all',
-            'nvidia/cuda:12.0-base-ubuntu20.04', 'nvidia-smi', '--query-gpu=name', '--format=csv,noheader'
-        ], capture_output=True, text=True, timeout=30)
-        
+        result = subprocess.run(
+            [
+                "docker",
+                "run",
+                "--rm",
+                "--gpus",
+                "all",
+                "nvidia/cuda:12.0-base-ubuntu20.04",
+                "nvidia-smi",
+                "--query-gpu=name",
+                "--format=csv,noheader",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
         if result.returncode == 0:
-            gpus = result.stdout.strip().split('\n')
+            gpus = result.stdout.strip().split("\n")
             print(f"✅ Docker GPU access: {len(gpus)} GPU(s)")
             for i, gpu in enumerate(gpus):
                 print(f"  GPU {i}: {gpu}")
@@ -257,28 +272,29 @@ def test_docker_gpu():
         print(f"❌ Docker GPU test error: {e}")
         return False
 
+
 def test_pytorch_gpu():
     """Test PyTorch GPU access."""
     try:
         import torch
-        
+
         if torch.cuda.is_available():
             device_count = torch.cuda.device_count()
             print(f"✅ PyTorch GPU access: {device_count} device(s)")
-            
+
             for i in range(device_count):
                 name = torch.cuda.get_device_name(i)
                 memory = torch.cuda.get_device_properties(i).total_memory / 1024**3
                 print(f"  GPU {i}: {name} ({memory:.1f}GB)")
-            
+
             # Test tensor operations
-            x = torch.randn(1000, 1000, device='cuda')
-            y = torch.randn(1000, 1000, device='cuda')
+            x = torch.randn(1000, 1000, device="cuda")
+            y = torch.randn(1000, 1000, device="cuda")
             start_time = time.time()
             z = torch.matmul(x, y)
             end_time = time.time()
             print(f"  Matrix multiplication test: {end_time - start_time:.3f}s")
-            
+
             return True
         else:
             print("❌ PyTorch: CUDA not available")
@@ -290,24 +306,25 @@ def test_pytorch_gpu():
         print(f"❌ PyTorch GPU test error: {e}")
         return False
 
+
 def main():
     """Run all GPU tests."""
     print("🧪 GPU Runner Setup Validation")
     print("=" * 40)
-    
+
     tests = [
         ("NVIDIA SMI", test_nvidia_smi),
         ("CUDA Toolkit", test_cuda_toolkit),
         ("Docker GPU", test_docker_gpu),
         ("PyTorch GPU", test_pytorch_gpu),
     ]
-    
+
     results = []
     for name, test_func in tests:
         print(f"\n🔍 Testing {name}...")
         result = test_func()
         results.append((name, result))
-    
+
     print("\n📊 Summary:")
     print("=" * 40)
     passed = 0
@@ -316,15 +333,16 @@ def main():
         print(f"{name}: {status}")
         if result:
             passed += 1
-    
+
     print(f"\nOverall: {passed}/{len(results)} tests passed")
-    
+
     if passed == len(results):
         print("🎉 All GPU tests passed! Runner is ready.")
         return 0
     else:
         print("⚠️ Some tests failed. Check configuration.")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())
@@ -488,44 +506,60 @@ import json
 import time
 import sys
 
+
 def check_gpu_health():
     """Check GPU health and availability."""
     try:
         # Check GPU temperature
-        result = subprocess.run([
-            'nvidia-smi', '--query-gpu=temperature.gpu', '--format=csv,noheader,nounits'
-        ], capture_output=True, text=True)
-        
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=temperature.gpu", "--format=csv,noheader,nounits"],
+            capture_output=True,
+            text=True,
+        )
+
         if result.returncode == 0:
-            temps = [int(temp) for temp in result.stdout.strip().split('\n')]
+            temps = [int(temp) for temp in result.stdout.strip().split("\n")]
             max_temp = max(temps)
-            
+
             if max_temp > 85:  # Temperature threshold
                 return False, f"GPU temperature too high: {max_temp}°C"
-            
+
             return True, f"GPU temperature OK: {max_temp}°C"
         else:
             return False, "nvidia-smi failed"
-    
+
     except Exception as e:
         return False, f"GPU health check error: {e}"
+
 
 def check_docker_gpu():
     """Check Docker GPU access."""
     try:
-        result = subprocess.run([
-            'docker', 'run', '--rm', '--gpus', 'all',
-            'nvidia/cuda:12.0-base-ubuntu20.04', 'nvidia-smi', '-L'
-        ], capture_output=True, text=True, timeout=15)
-        
+        result = subprocess.run(
+            [
+                "docker",
+                "run",
+                "--rm",
+                "--gpus",
+                "all",
+                "nvidia/cuda:12.0-base-ubuntu20.04",
+                "nvidia-smi",
+                "-L",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+
         if result.returncode == 0:
-            gpu_count = len(result.stdout.strip().split('\n'))
+            gpu_count = len(result.stdout.strip().split("\n"))
             return True, f"Docker GPU access OK: {gpu_count} GPU(s)"
         else:
             return False, "Docker GPU access failed"
-    
+
     except Exception as e:
         return False, f"Docker GPU check error: {e}"
+
 
 def main():
     """Run health checks."""
@@ -533,26 +567,25 @@ def main():
         ("GPU Health", check_gpu_health),
         ("Docker GPU", check_docker_gpu),
     ]
-    
+
     results = {}
     all_passed = True
-    
+
     for name, check_func in checks:
         passed, message = check_func()
         results[name] = {"passed": passed, "message": message}
         if not passed:
             all_passed = False
         print(f"{name}: {'✅' if passed else '❌'} {message}")
-    
+
     # Write results to file for monitoring
-    with open('/home/gpu-runner/health_status.json', 'w') as f:
-        json.dump({
-            "timestamp": time.time(),
-            "overall_health": all_passed,
-            "checks": results
-        }, f, indent=2)
-    
+    with open("/home/gpu-runner/health_status.json", "w") as f:
+        json.dump(
+            {"timestamp": time.time(), "overall_health": all_passed, "checks": results}, f, indent=2
+        )
+
     return 0 if all_passed else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

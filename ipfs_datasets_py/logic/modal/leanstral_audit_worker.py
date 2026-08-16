@@ -24,7 +24,19 @@ import time
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
-from typing import Any, AsyncIterator, Awaitable, Callable, Deque, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import (
+    Any,
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Deque,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 from ipfs_datasets_py.utils import anyio_compat as anyio_runtime
 
@@ -299,9 +311,7 @@ class LeanstralBatchTelemetry:
                 gpu_seconds,
             ),
             "wait_flush_count": int(self.wait_flush_count),
-            "verification_seconds": round(
-                _finite_nonnegative(self.verification_seconds, 0.0), 6
-            ),
+            "verification_seconds": round(_finite_nonnegative(self.verification_seconds, 0.0), 6),
         }
 
 
@@ -639,9 +649,7 @@ def leanstral_batch_metadata(work_item: Any) -> Dict[str, Any]:
     cluster = _mapping(evidence.get("cluster"))
     failure = _mapping(evidence.get("failure_subgoal"))
     request_id = str(
-        getattr(request, "request_id", "")
-        or _mapping(request).get("request_id")
-        or ""
+        getattr(request, "request_id", "") or _mapping(request).get("request_id") or ""
     ).strip()
     theorem_template = str(
         failure.get("theorem_template")
@@ -961,10 +969,7 @@ class LeanstralPersistentServiceManager:
             self._health_failure_count += 1
             self._consecutive_health_failures += 1
             self._last_health_failure_reason = _token(reason, "health_check_failed")
-            if (
-                self._consecutive_health_failures
-                < self.config.bounded_health_failures()
-            ):
+            if self._consecutive_health_failures < self.config.bounded_health_failures():
                 return False
             self._restart_locked()
             return True
@@ -1069,17 +1074,14 @@ class LeanstralPersistentServiceManager:
                 f"Leanstral generation preflight is not healthy: {health.status!r}"
             )
         if self.config.require_cuda_backed and not health.cuda_backed:
-            raise LeanstralServiceHealthError(
-                "Leanstral generation preflight is not CUDA-backed"
-            )
+            raise LeanstralServiceHealthError("Leanstral generation preflight is not CUDA-backed")
         if _token(health.model, "") != self.identity.model:
             raise LeanstralServiceIdentityError(
                 f"preflight model mismatch: {health.model!r} != {self.identity.model!r}"
             )
         if _token(health.provider, "") != self.identity.provider:
             raise LeanstralServiceIdentityError(
-                "preflight provider mismatch: "
-                f"{health.provider!r} != {self.identity.provider!r}"
+                f"preflight provider mismatch: {health.provider!r} != {self.identity.provider!r}"
             )
         if int(health.context_size or 0) != self.identity.context_size:
             raise LeanstralServiceIdentityError(
@@ -1117,9 +1119,7 @@ class LeanstralPersistentServiceManager:
 class LeanstralContinuousBatchServiceConfig:
     """Operational bounds for the cache-first continuous batching service."""
 
-    scheduler: LeanstralBatchSchedulerConfig = field(
-        default_factory=LeanstralBatchSchedulerConfig
-    )
+    scheduler: LeanstralBatchSchedulerConfig = field(default_factory=LeanstralBatchSchedulerConfig)
     max_queue_items: int = 0
     poll_interval_seconds: float = 0.005
     require_cuda_backed_service: bool = False
@@ -1129,9 +1129,7 @@ class LeanstralContinuousBatchServiceConfig:
         scheduler_queue_bound = self.scheduler.bounded_max_queue_items()
         if scheduler_queue_bound:
             queue_bound = (
-                min(queue_bound, scheduler_queue_bound)
-                if queue_bound
-                else scheduler_queue_bound
+                min(queue_bound, scheduler_queue_bound) if queue_bound else scheduler_queue_bound
             )
         return LeanstralBatchSchedulerConfig(
             min_batch_size=self.scheduler.min_batch_size,
@@ -1159,11 +1157,15 @@ def probe_reusable_cuda_leanstral_service(
     provider_name = _token(provider, "leanstral_local")
     model_name = _token(model, "Leanstral")
     base_url = str(values.get("IPFS_ACCELERATE_LLAMA_CPP_BASE_URL") or "").strip()
-    accelerator = str(
-        values.get("LEANSTRAL_AUDIT_LLAMA_CPP_RESOLVED_ACCELERATOR")
-        or values.get("IPFS_ACCELERATE_LLAMA_CPP_RESOLVED_ACCELERATOR")
-        or ""
-    ).strip().lower()
+    accelerator = (
+        str(
+            values.get("LEANSTRAL_AUDIT_LLAMA_CPP_RESOLVED_ACCELERATOR")
+            or values.get("IPFS_ACCELERATE_LLAMA_CPP_RESOLVED_ACCELERATOR")
+            or ""
+        )
+        .strip()
+        .lower()
+    )
     reused = str(values.get("LEANSTRAL_AUDIT_REUSED_LLAMA_SERVER") or "").strip().lower()
     gpu_layers = str(values.get("IPFS_ACCELERATE_LLAMA_CPP_GPU_LAYERS") or "").strip().lower()
     try:
@@ -1173,9 +1175,7 @@ def probe_reusable_cuda_leanstral_service(
         )
     except ValueError:
         context_size = 0
-    context_fingerprint = str(
-        values.get("LEANSTRAL_AUDIT_CONTEXT_FINGERPRINT") or base_url
-    ).strip()
+    context_fingerprint = str(values.get("LEANSTRAL_AUDIT_CONTEXT_FINGERPRINT") or base_url).strip()
     cuda_backed = (
         accelerator == "cuda"
         or reused in {"1", "true", "yes", "on"}
@@ -1233,9 +1233,7 @@ class LeanstralContinuousBatchService:
                 provider=provider,
                 model=model,
             )
-        self.scheduler.telemetry.healthy_cuda_service_reused = bool(
-            self.health.healthy_cuda_backed
-        )
+        self.scheduler.telemetry.healthy_cuda_service_reused = bool(self.health.healthy_cuda_backed)
         if self.config.require_cuda_backed_service and not self.health.healthy_cuda_backed:
             raise RuntimeError("healthy CUDA-backed Leanstral service is required")
         self._futures_by_request_id: Dict[str, Awaitable[Any]] = {}
@@ -1349,8 +1347,7 @@ class LeanstralContinuousBatchService:
             # place.  Refresh metadata before attributing GPU work.
             self.health = self.service_lease.health
         queue_seconds = sum(
-            max(0.0, batch.formed_monotonic - item.enqueued_monotonic)
-            for item in batch.items
+            max(0.0, batch.formed_monotonic - item.enqueued_monotonic) for item in batch.items
         )
         started = time.monotonic()
         results = tuple(await self.worker._run_items_batch(batch.work_items))
@@ -1375,10 +1372,7 @@ class LeanstralContinuousBatchService:
             if getattr(getattr(result, "validation", None), "accepted", False)
             and getattr(getattr(result, "validation", None), "verified", False)
         )
-        marginal = sum(
-            estimate_leanstral_marginal_information(item)
-            for item in batch.work_items
-        )
+        marginal = sum(estimate_leanstral_marginal_information(item) for item in batch.work_items)
         self.scheduler.telemetry.record_efficiency(
             prompt_tokens=prompt_tokens,
             completion_token_budget=completion_budget,
@@ -1588,12 +1582,8 @@ class LeanstralCycleLineage:
             schema_version=str(value.get("schema_version") or ""),
             model=str(value.get("model") or ""),
             source_revision=str(value.get("source_revision") or ""),
-            state_revision=str(
-                value.get("state_revision") or value.get("state_hash") or ""
-            ),
-            proof_lineage=str(
-                value.get("proof_lineage") or value.get("proof_lineage_hash") or ""
-            ),
+            state_revision=str(value.get("state_revision") or value.get("state_hash") or ""),
+            proof_lineage=str(value.get("proof_lineage") or value.get("proof_lineage_hash") or ""),
         )
 
 
@@ -2170,9 +2160,7 @@ class LeanstralCyclePipeline:
         with self._condition:
             return tuple(dict(value) for value in self._diagnostics)
 
-    def request_for_cycle(
-        self, cycle: int
-    ) -> Optional[LeanstralCycleGuidanceRequest]:
+    def request_for_cycle(self, cycle: int) -> Optional[LeanstralCycleGuidanceRequest]:
         """Return the immutable publication receipt retained for ``cycle``."""
 
         with self._condition:
@@ -2211,9 +2199,7 @@ class LeanstralCyclePipeline:
                 elif isinstance(raw_result, Mapping):
                     result = LeanstralCycleGuidanceResult.from_mapping(raw_result)
                 else:
-                    raise TypeError(
-                        "Leanstral cycle evaluator must return a result or mapping"
-                    )
+                    raise TypeError("Leanstral cycle evaluator must return a result or mapping")
             except Exception as exc:
                 result = LeanstralCycleGuidanceResult.for_request(
                     request,
@@ -2226,10 +2212,7 @@ class LeanstralCyclePipeline:
             with self._condition:
                 self._inflight = None
                 retained_request = self._requests.get(request.cycle)
-                if (
-                    retained_request is None
-                    or retained_request.request_id != request.request_id
-                ):
+                if retained_request is None or retained_request.request_id != request.request_id:
                     self._stats["late_result_discarded"] += 1
                     self._record_locked(
                         "late_result_discarded",
@@ -2246,11 +2229,7 @@ class LeanstralCyclePipeline:
                     return
 
     def _bounded_timeout(self, value: Optional[float]) -> float:
-        timeout = (
-            self.config.synchronous_timeout_seconds
-            if value is None
-            else float(value)
-        )
+        timeout = self.config.synchronous_timeout_seconds if value is None else float(value)
         if not math.isfinite(timeout):
             return self.config.synchronous_timeout_seconds
         return max(0.0, min(timeout, self.config.synchronous_timeout_seconds))
@@ -2265,9 +2244,7 @@ class LeanstralCyclePipeline:
         self._requests.pop(cycle, None)
         self._results.pop(cycle, None)
         if self._pending:
-            self._pending = deque(
-                request for request in self._pending if request.cycle != cycle
-            )
+            self._pending = deque(request for request in self._pending if request.cycle != cycle)
 
     def _decision_locked(
         self,

@@ -150,13 +150,9 @@ def test_scheduler_coalesces_audit_and_failure_branch_with_matching_axes() -> No
 def test_scheduler_is_bounded_and_round_robins_logic_families() -> None:
     scheduler = LeanstralBatchScheduler(LeanstralBatchSchedulerConfig(max_batch_size=2))
     for index in range(4):
-        scheduler.enqueue(
-            _work(f"d-{index}", "deontic"), deadline_monotonic=10.5, now=10.0
-        )
+        scheduler.enqueue(_work(f"d-{index}", "deontic"), deadline_monotonic=10.5, now=10.0)
     for index in range(2):
-        scheduler.enqueue(
-            _work(f"t-{index}", "temporal"), deadline_monotonic=10.5, now=10.0
-        )
+        scheduler.enqueue(_work(f"t-{index}", "temporal"), deadline_monotonic=10.5, now=10.0)
 
     batches = scheduler.drain(force=True, now=10.0)
 
@@ -230,9 +226,7 @@ def test_scheduler_batch_ids_and_output_order_are_deterministic() -> None:
     def form() -> tuple[str, tuple[str, ...]]:
         scheduler = LeanstralBatchScheduler(LeanstralBatchSchedulerConfig(max_batch_size=8))
         for request_id in ("r-2", "r-1"):
-            scheduler.enqueue(
-                _work(request_id, "deontic"), deadline_monotonic=41.0, now=40.0
-            )
+            scheduler.enqueue(_work(request_id, "deontic"), deadline_monotonic=41.0, now=40.0)
         batch = scheduler.pop_ready_batch(force=True, now=40.0)
         assert batch is not None
         return batch.batch_id, batch.request_ids
@@ -265,8 +259,7 @@ def test_mesh_batch_responses_are_reassociated_by_request_id() -> None:
     ]
     assert all(result.validation.accepted for result in results)
     assert all(
-        "batch_response_reassociated_by_request_id" in result.repair_reasons
-        for result in results
+        "batch_response_reassociated_by_request_id" in result.repair_reasons for result in results
     )
 
 

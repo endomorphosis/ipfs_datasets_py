@@ -282,9 +282,9 @@ class SecureTDFOLProver(TDFOLProver):
 
 ### With Web API
 ```python
-@app.route('/validate', methods=['POST'])
+@app.route("/validate", methods=["POST"])
 def validate_endpoint():
-    formula = request.json.get('formula')
+    formula = request.json.get("formula")
     user_id = get_user_id()
     result = validator.validate_formula(formula, identifier=user_id)
     return jsonify(result.__dict__)

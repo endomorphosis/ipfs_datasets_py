@@ -31,12 +31,8 @@ _PACKET_000360_FAMILY_PAIRS = (
 def test_packet_000360_pairs_are_supported_across_compiler_ambiguity_policies() -> None:
     for predicted_family, target_family in _PACKET_000360_FAMILY_PAIRS:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(
             predicted_family,

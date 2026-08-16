@@ -132,6 +132,7 @@ def __getattr__(name: str) -> Any:
 def __dir__() -> list[str]:
     return sorted(set(globals()) | set(_LAZY_EXPORTS))
 
+
 __all__ = [
     "ABBY_VOICE_AUDIO_V2",
     "ABBY_VOICE_PROVENANCE_V2",

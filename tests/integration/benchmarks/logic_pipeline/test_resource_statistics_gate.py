@@ -86,24 +86,14 @@ def _component(
     return IndependentComponentResourceV2(
         component_id="pipeline",
         wall_time_ms=values["wall_time_ms"],  # type: ignore[arg-type]
-        peak_memory_bytes=values[
-            "peak_memory_bytes"
-        ],  # type: ignore[arg-type]
+        peak_memory_bytes=values["peak_memory_bytes"],  # type: ignore[arg-type]
         model_calls=values["model_calls"],  # type: ignore[arg-type]
         retries=values["retries"],  # type: ignore[arg-type]
-        solver_processes=values[
-            "solver_processes"
-        ],  # type: ignore[arg-type]
-        accelerator_minutes=values[
-            "accelerator_minutes"
-        ],  # type: ignore[arg-type]
-        queue_delay_ms=values[
-            "queue_delay_ms"
-        ],  # type: ignore[arg-type]
+        solver_processes=values["solver_processes"],  # type: ignore[arg-type]
+        accelerator_minutes=values["accelerator_minutes"],  # type: ignore[arg-type]
+        queue_delay_ms=values["queue_delay_ms"],  # type: ignore[arg-type]
         released=values["released"],  # type: ignore[arg-type]
-        process_group_reaped=values[
-            "process_group_reaped"
-        ],  # type: ignore[arg-type]
+        process_group_reaped=values["process_group_reaped"],  # type: ignore[arg-type]
         missing_reasons=reasons,
     )
 
@@ -139,10 +129,7 @@ def _safety_gate(
 
 def _plain(value: object) -> object:
     if isinstance(value, Mapping):
-        return {
-            str(key): _plain(member)
-            for key, member in value.items()
-        }
+        return {str(key): _plain(member) for key, member in value.items()}
     if isinstance(value, (tuple, list)):
         return [_plain(member) for member in value]
     return value
@@ -160,9 +147,7 @@ def _assert_no_new_bare_sha_fields(value: object) -> None:
 
 @pytest.fixture(scope="module")
 def g237_sources(tmp_path_factory: pytest.TempPathFactory):
-    matrix = _complete_runtime_matrix(
-        tmp_path_factory.mktemp("synthetic-g237")
-    )
+    matrix = _complete_runtime_matrix(tmp_path_factory.mktemp("synthetic-g237"))
     producer = _identity("producer")
     meter = _identity("independent-meter")
     validator = _identity("independent-validator")
@@ -204,9 +189,7 @@ def _build_gate(
     safety=None,
     safety_cid: str | None = None,
 ):
-    selected_receipts = (
-        sources["receipts"] if receipts is None else tuple(receipts)
-    )
+    selected_receipts = sources["receipts"] if receipts is None else tuple(receipts)
     selected_safety = sources["safety"] if safety is None else safety
     return build_resource_statistics_gate_v2(
         sources["matrix"],
@@ -215,14 +198,10 @@ def _build_gate(
         sources["efficacy"],
         selected_safety,
         expected_resource_evidence_set_cid=(
-            sources["resource_set_cid"]
-            if resource_set_cid is None
-            else resource_set_cid
+            sources["resource_set_cid"] if resource_set_cid is None else resource_set_cid
         ),
         expected_safety_gate_receipt_cid=(
-            sources["safety"]["receipt_cid"]
-            if safety_cid is None
-            else safety_cid
+            sources["safety"]["receipt_cid"] if safety_cid is None else safety_cid
         ),
         statistical_plan=TEST_PLAN,
     )
@@ -239,9 +218,7 @@ def test_independent_receipts_are_cid_native_and_authorities_are_distinct(
     g237_sources,
 ) -> None:
     receipt = g237_sources["receipts"][0]
-    replayed = validate_independent_resource_receipt_v2(
-        receipt.to_dict()
-    )
+    replayed = validate_independent_resource_receipt_v2(receipt.to_dict())
 
     assert replayed.receipt_cid == receipt.receipt_cid
     assert replayed.complete is True
@@ -270,15 +247,9 @@ def test_replay_identity_excludes_volatile_measurements_and_run_receipt(
     )
     replay = replace(
         source,
-        runtime_evidence_cid=cid_for_dag_json(
-            {"synthetic": "fresh-runtime"}
-        ),
-        run_identity_cid=cid_for_dag_json(
-            {"synthetic": "fresh-run"}
-        ),
-        coordinate_cid=cid_for_dag_json(
-            {"synthetic": "fresh-runtime-coordinate"}
-        ),
+        runtime_evidence_cid=cid_for_dag_json({"synthetic": "fresh-runtime"}),
+        run_identity_cid=cid_for_dag_json({"synthetic": "fresh-run"}),
+        coordinate_cid=cid_for_dag_json({"synthetic": "fresh-runtime-coordinate"}),
         producer_identity_cid=_identity("replay-producer"),
         meter_identity_cid=_identity("replay-meter"),
         validator_identity_cid=_identity("replay-validator"),
@@ -351,15 +322,11 @@ def test_replay_comparison_rejects_identity_and_cid_tampering(
     source = g237_sources["receipts"][0]
     replay = replace(
         source,
-        replay_coordinate_cid=cid_for_dag_json(
-            {"synthetic": "different-treatment-coordinate"}
-        ),
+        replay_coordinate_cid=cid_for_dag_json({"synthetic": "different-treatment-coordinate"}),
     )
     comparison = compare_resource_replay_measurements_v2(source, replay)
     assert comparison["identity_equal"] is False
-    assert "resource_replay_identity_mismatch" in (
-        comparison["failure_codes"]
-    )
+    assert "resource_replay_identity_mismatch" in (comparison["failure_codes"])
 
     tampered = _plain(comparison)
     tampered["within_tolerance_count"] = 999  # type: ignore[index]
@@ -397,10 +364,7 @@ def test_complete_gate_preserves_pairs_statistics_and_pareto_directions(
         pair["identity_valid"] is True and pair["measured"] is True
         for pair in gate["paired_cost_observations"]
     )
-    assert {
-        item["metric_id"]
-        for item in gate["pareto_evidence"]["objectives"]
-    } == {
+    assert {item["metric_id"] for item in gate["pareto_evidence"]["objectives"]} == {
         "paired_verified_delta_vs_a0",
         "wall_time_ms",
         "peak_memory_bytes",
@@ -424,12 +388,8 @@ def test_complete_gate_preserves_pairs_statistics_and_pareto_directions(
             g237_sources["receipts"],
             g237_sources["efficacy"],
             g237_sources["safety"],
-            expected_resource_evidence_set_cid=(
-                g237_sources["resource_set_cid"]
-            ),
-            expected_safety_gate_receipt_cid=(
-                g237_sources["safety"]["receipt_cid"]
-            ),
+            expected_resource_evidence_set_cid=(g237_sources["resource_set_cid"]),
+            expected_safety_gate_receipt_cid=(g237_sources["safety"]["receipt_cid"]),
             statistical_plan=TEST_PLAN,
         )["receipt_cid"]
         == gate["receipt_cid"]
@@ -449,16 +409,11 @@ def test_null_resource_work_stays_null_and_makes_gate_incomplete(
     expected_code: str,
 ) -> None:
     receipts = list(g237_sources["receipts"])
-    runtime_by_cid = {
-        item.receipt_cid: item
-        for item in g237_sources["matrix"].runtime_evidence
-    }
+    runtime_by_cid = {item.receipt_cid: item for item in g237_sources["matrix"].runtime_evidence}
     target = next(
         index
         for index, receipt in enumerate(receipts)
-        if runtime_by_cid[
-            receipt.runtime_evidence_cid
-        ].case_result.variant_id == "A1"
+        if runtime_by_cid[receipt.runtime_evidence_cid].case_result.variant_id == "A1"
     )
     original = receipts[target]
     component = _component("A1", missing_field=missing_field)
@@ -482,8 +437,7 @@ def test_null_resource_work_stays_null_and_makes_gate_incomplete(
         pair
         for pair in gate["paired_cost_observations"]
         if (
-            pair["candidate_resource_receipt_cid"]
-            == receipts[target].receipt_cid
+            pair["candidate_resource_receipt_cid"] == receipts[target].receipt_cid
             and pair["metric_id"] == missing_field
         )
     ]
@@ -509,10 +463,7 @@ def test_missing_duplicate_stale_and_rebased_resource_sets_fail_closed(
         resource_set_cid=missing_set,
     )
     assert missing_gate["status"] == "incomplete"
-    assert (
-        "resource_receipt_population_incomplete"
-        in missing_gate["failure_codes"]
-    )
+    assert "resource_receipt_population_incomplete" in missing_gate["failure_codes"]
 
     duplicate = (*receipts, receipts[0])
     duplicate_set = resource_evidence_set_cid_v2(
@@ -562,10 +513,7 @@ def test_missing_duplicate_stale_and_rebased_resource_sets_fail_closed(
         resource_set_cid=lifecycle_set,
     )
     assert lifecycle_gate["status"] == "failed"
-    assert (
-        "resource_release_or_reap_failed"
-        in lifecycle_gate["failure_codes"]
-    )
+    assert "resource_release_or_reap_failed" in lifecycle_gate["failure_codes"]
 
     rebased_gate = _build_gate(
         g237_sources,
@@ -592,10 +540,7 @@ def test_safety_is_a_hard_constraint_and_rebased_safety_is_incomplete(
     assert failed_gate["status"] == "failed"
     assert "reviewed_control_safety_failed" in failed_gate["failure_codes"]
     assert failed_gate["pareto_evidence"]["frontier_variant_ids"] == ()
-    assert all(
-        item["eligible"] is False
-        for item in failed_gate["pareto_evidence"]["candidates"]
-    )
+    assert all(item["eligible"] is False for item in failed_gate["pareto_evidence"]["candidates"])
 
     rebased_gate = _build_gate(
         g237_sources,
@@ -643,11 +588,7 @@ def test_gate_validator_rejects_tampered_statistics_and_pareto(
             g237_sources["receipts"],
             g237_sources["efficacy"],
             g237_sources["safety"],
-            expected_resource_evidence_set_cid=(
-                g237_sources["resource_set_cid"]
-            ),
-            expected_safety_gate_receipt_cid=(
-                g237_sources["safety"]["receipt_cid"]
-            ),
+            expected_resource_evidence_set_cid=(g237_sources["resource_set_cid"]),
+            expected_safety_gate_receipt_cid=(g237_sources["safety"]["receipt_cid"]),
             statistical_plan=TEST_PLAN,
         )

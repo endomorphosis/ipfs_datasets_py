@@ -14,6 +14,7 @@ Provides:
 
 Backward-compatible: does not modify MCP JSON-RPC message formats.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -58,12 +59,12 @@ def _utcnow() -> str:
 
 def artifact_cid(obj: Dict[str, Any]) -> str:
     """Compute a content-addressed CID for an artifact dictionary.
-    
+
     Canonicalizes the object and computes its SHA-256 hash as a CID string.
-    
+
     Args:
         obj: Dictionary representing an artifact to hash.
-        
+
     Returns:
         CID string (Qm... format).
     """
@@ -81,6 +82,7 @@ class IntentObject:
 
     Required for policy evaluation and later replay.
     """
+
     tool: str
     input_cid: Optional[str] = None
     interface_cid: Optional[str] = None
@@ -137,6 +139,7 @@ ALLOW_WITH_OBLIGATIONS = "allow_with_obligations"
 @dataclass
 class Obligation:
     """A spawned obligation from a policy decision."""
+
     type: str
     deadline: Optional[str] = None
     details: Optional[Dict[str, Any]] = None
@@ -149,6 +152,7 @@ class DecisionObject:
 
     Produced by evaluators after verifying proofs and evaluating policy.
     """
+
     decision: str  # ALLOW | DENY | ALLOW_WITH_OBLIGATIONS
     intent_cid: str
     policy_cid: Optional[str] = None
@@ -187,10 +191,7 @@ class DecisionObject:
         return self._cid
 
     def _canonical_bytes(self) -> bytes:
-        normalized_obligations = [
-            self._normalize_obligation(o)
-            for o in self.obligations
-        ]
+        normalized_obligations = [self._normalize_obligation(o) for o in self.obligations]
         d = {
             "decision": self.decision,
             "intent_cid": self.intent_cid,
@@ -207,10 +208,7 @@ class DecisionObject:
         return _canonicalize(d)
 
     def to_dict(self) -> Dict[str, Any]:
-        normalized_obligations = [
-            self._normalize_obligation(o)
-            for o in self.obligations
-        ]
+        normalized_obligations = [self._normalize_obligation(o) for o in self.obligations]
         return {
             "decision_cid": self.cid,
             "decision": self.decision,
@@ -218,8 +216,7 @@ class DecisionObject:
             "policy_cid": self.policy_cid,
             "proofs_checked": self.proofs_checked,
             "obligations": [
-                {"type": o["type"], "deadline": o["deadline"]}
-                for o in normalized_obligations
+                {"type": o["type"], "deadline": o["deadline"]} for o in normalized_obligations
             ],
             "justification": self.justification,
             "policy_version": self.policy_version,
@@ -246,6 +243,7 @@ class ReceiptObject:
 
     Audit substrate for disputes, rollbacks, and risk scoring.
     """
+
     intent_cid: str
     output_cid: Optional[str] = None
     decision_cid: Optional[str] = None
@@ -299,6 +297,7 @@ class ReceiptObject:
 # ---------------------------------------------------------------------------
 # Execution Envelope (Profile B §5)
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ExecutionEnvelope:
@@ -369,6 +368,7 @@ class ExecutionEnvelope:
 # ---------------------------------------------------------------------------
 # Event Node (Profile B §7 + Event DAG spec)
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class EventNode:
@@ -444,6 +444,7 @@ class EventNode:
             JSON-encoded string representation of the event node.
         """
         import json  # noqa: PLC0415
+
         return json.dumps(self.to_dict(), indent=indent)
 
     @property

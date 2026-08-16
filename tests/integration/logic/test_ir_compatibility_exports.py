@@ -114,10 +114,7 @@ def test_shared_facades_export_exactly_reviewed_leaf_contracts() -> None:
     assert ir_core.IRObligation is ir_core.Obligation is ir_core.ProofObligation
     assert ir_core.RunManifest is ir_core.ArtifactManifest
     assert legal_ir.LegalIRAdapter is legal_ir.LegalIRFormalizationAdapter
-    assert (
-        legal_ir.LEGAL_IR_VIEW_REGISTRY
-        is legal_ir.LEGAL_IR_FORMALIZATION_VIEW_REGISTRY
-    )
+    assert legal_ir.LEGAL_IR_VIEW_REGISTRY is legal_ir.LEGAL_IR_FORMALIZATION_VIEW_REGISTRY
 
     assert "FormalizationAdvisor" not in formalization.__all__
     assert "CheckpointManifest" not in formalization.__all__
@@ -165,9 +162,7 @@ def test_intent_facade_adds_versioned_decoder_without_runtime_exports() -> None:
     assert set(intent_ir.__all__) == reviewed
     assert intent_ir.GroundingKind is intent_ir.NodeGrounding
     assert (
-        intent_ir.INTENT_IR_SCHEMA_REGISTRY[
-            intent_ir.INTENT_IR_SCHEMA_VERSION
-        ].schema_id
+        intent_ir.INTENT_IR_SCHEMA_REGISTRY[intent_ir.INTENT_IR_SCHEMA_VERSION].schema_id
         == intent_ir.INTENT_IR_SCHEMA_VERSION
     )
     assert "SkillCenterIntentNormalizer" not in intent_ir.__all__

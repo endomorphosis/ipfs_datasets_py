@@ -200,7 +200,7 @@ audit_logger.log_event(
     category=AuditCategory.SECURITY,
     message="Failed login attempt",
     user_id="user123",
-    source_ip="192.168.1.100"
+    source_ip="192.168.1.100",
 )
 
 # Log data access
@@ -209,7 +209,7 @@ audit_logger.log_event(
     category=AuditCategory.DATA_ACCESS,
     message="Dataset accessed",
     dataset_id="dataset456",
-    user_id="user789"
+    user_id="user789",
 )
 ```
 
@@ -239,7 +239,7 @@ security_manager = AdaptiveSecurityManager(audit_logger)
 security_manager.add_response_rule(
     condition="failed_login_attempts > 5",
     action="block_ip",
-    duration=3600  # 1 hour
+    duration=3600,  # 1 hour
 )
 ```
 
@@ -250,9 +250,9 @@ from ipfs_datasets_py.audit.audit_reporting import generate_comprehensive_audit_
 # Generate comprehensive audit report
 report_path = generate_comprehensive_audit_report(
     audit_logger=audit_logger,
-    report_format='html',
-    output_file='./reports/audit_report.html',
-    include_executive_summary=True
+    report_format="html",
+    output_file="./reports/audit_report.html",
+    include_executive_summary=True,
 )
 
 print(f"Comprehensive audit report generated: {report_path}")

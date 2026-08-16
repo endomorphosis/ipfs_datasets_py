@@ -147,24 +147,100 @@ _STOPWORDS = frozenset(
     word.lower()
     for word in [
         # Shared / cross-ITP
-        "forall", "exists", "fun", "let", "in", "if", "then", "else", "do",
-        "match", "with", "end", "where", "class", "instance", "structure",
-        "open", "import", "using", "from", "as", "return", "case", "of",
+        "forall",
+        "exists",
+        "fun",
+        "let",
+        "in",
+        "if",
+        "then",
+        "else",
+        "do",
+        "match",
+        "with",
+        "end",
+        "where",
+        "class",
+        "instance",
+        "structure",
+        "open",
+        "import",
+        "using",
+        "from",
+        "as",
+        "return",
+        "case",
+        "of",
         # Lean4
-        "theorem", "lemma", "def", "definition", "example", "by", "have",
-        "show", "suffices", "this", "sorry", "admit", "variable",
-        "variables", "section", "namespace", "obtain", "rcases", "rintro",
-        "intro", "intros", "apply", "exact", "simp", "rw", "calc",
-        "noncomputable", "mutual", "deriving", "attribute",
+        "theorem",
+        "lemma",
+        "def",
+        "definition",
+        "example",
+        "by",
+        "have",
+        "show",
+        "suffices",
+        "this",
+        "sorry",
+        "admit",
+        "variable",
+        "variables",
+        "section",
+        "namespace",
+        "obtain",
+        "rcases",
+        "rintro",
+        "intro",
+        "intros",
+        "apply",
+        "exact",
+        "simp",
+        "rw",
+        "calc",
+        "noncomputable",
+        "mutual",
+        "deriving",
+        "attribute",
         # Coq / Rocq
-        "proof", "qed", "fixpoint", "inductive", "context", "module",
-        "require", "export", "axiom", "hypothesis", "corollary", "remark",
-        "fact", "record", "notation", "begin", "assumption", "induction",
-        "destruct", "reflexivity", "unfold", "auto",
+        "proof",
+        "qed",
+        "fixpoint",
+        "inductive",
+        "context",
+        "module",
+        "require",
+        "export",
+        "axiom",
+        "hypothesis",
+        "corollary",
+        "remark",
+        "fact",
+        "record",
+        "notation",
+        "begin",
+        "assumption",
+        "induction",
+        "destruct",
+        "reflexivity",
+        "unfold",
+        "auto",
         # Isabelle/HOL
-        "primrec", "datatype", "locale", "assumes", "shows", "obtains",
-        "hence", "thus", "fix", "next", "moreover", "ultimately", "value",
-        "true", "false",
+        "primrec",
+        "datatype",
+        "locale",
+        "assumes",
+        "shows",
+        "obtains",
+        "hence",
+        "thus",
+        "fix",
+        "next",
+        "moreover",
+        "ultimately",
+        "value",
+        "true",
+        "false",
     ]
 )
 
@@ -523,9 +599,7 @@ def score_candidates(
     scored: List[ScoredCandidate] = []
     for entry in pool:
         if not isinstance(entry, TheoremEntry):
-            raise PremiseSelectionError(
-                "candidates must be TheoremEntry instances"
-            )
+            raise PremiseSelectionError("candidates must be TheoremEntry instances")
         entry_symbols = extract_symbols(entry.statement)
         entry_types = extract_types(entry.statement)
         entry_imports = frozenset(entry.imports)
@@ -699,7 +773,9 @@ class PremiseSelectionResult:
                 )
         selected_ids = [premise.premise_id for premise in self.selected]
         if len(set(selected_ids)) != len(selected_ids):
-            raise ValueError("PremiseSelectionResult.selected must not contain duplicate premise_id")
+            raise ValueError(
+                "PremiseSelectionResult.selected must not contain duplicate premise_id"
+            )
 
         if not isinstance(self.excluded, list) or not all(
             isinstance(item, ExcludedPremise) for item in self.excluded
@@ -716,11 +792,11 @@ class PremiseSelectionResult:
                 )
         excluded_ids = [item.premise_id for item in self.excluded]
         if len(set(excluded_ids)) != len(excluded_ids):
-            raise ValueError("PremiseSelectionResult.excluded must not contain duplicate premise_id")
-        if set(selected_ids) & set(excluded_ids):
             raise ValueError(
-                "PremiseSelectionResult.selected and .excluded must be disjoint"
+                "PremiseSelectionResult.excluded must not contain duplicate premise_id"
             )
+        if set(selected_ids) & set(excluded_ids):
+            raise ValueError("PremiseSelectionResult.selected and .excluded must be disjoint")
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -765,8 +841,7 @@ def _resolve_top_k(top_k: int, *, policy: Optional[HammerPolicy]) -> int:
         policy.validate()
         if top_k > policy.max_premises:
             raise InvalidTopKError(
-                f"requested top_k={top_k} exceeds policy.max_premises="
-                f"{policy.max_premises}"
+                f"requested top_k={top_k} exceeds policy.max_premises={policy.max_premises}"
             )
     return top_k
 

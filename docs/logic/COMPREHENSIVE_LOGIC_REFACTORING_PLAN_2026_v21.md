@@ -80,22 +80,26 @@ and defines the v30 evergreen backlog.
 ```python
 # GL252 – Polish detection
 from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (
-    detect_i18n_clauses, _load_i18n_keywords,
+    detect_i18n_clauses,
+    _load_i18n_keywords,
 )
-kw = _load_i18n_keywords("pl")   # → {"permission": [...], "prohibition": [...], "obligation": [...]}
+
+kw = _load_i18n_keywords("pl")  # → {"permission": [...], "prohibition": [...], "obligation": [...]}
 clauses = detect_i18n_clauses("musi zaakceptować", "pl")  # → list[PolicyConflict]
 
 # GM253 – Vietnamese detection
-kw = _load_i18n_keywords("vi")   # → {"permission": [...], ...}
+kw = _load_i18n_keywords("vi")  # → {"permission": [...], ...}
 clauses = detect_i18n_clauses("phải tuân thủ", "vi")
 
 # Full pipeline (18 languages)
 from ipfs_datasets_py.logic.api import detect_all_languages
+
 report = detect_all_languages("user may read; admin must approve")
 assert len(report.by_language) >= 18  # fr/es/de/en/pt/nl/it/ja/zh/ko/ar/sv/ru/el/tr/hi/pl/vi
 
 # GP256 – Audit log + language detection E2E
 from ipfs_datasets_py.mcp_server.policy_audit_log import PolicyAuditLog
+
 log = PolicyAuditLog()
 for lang in report.by_language:
     log.record(policy_cid=lang, intent_cid="intent", decision="allow")

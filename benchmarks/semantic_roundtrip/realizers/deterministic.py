@@ -22,9 +22,7 @@ from benchmarks.semantic_roundtrip.contracts import (
 )
 
 
-CANONICAL_DETERMINISTIC_REALIZER_INTERFACE: Final = (
-    "CanonicalDeterministicRealizer@1"
-)
+CANONICAL_DETERMINISTIC_REALIZER_INTERFACE: Final = "CanonicalDeterministicRealizer@1"
 
 _MODAL_PHRASES: Final = {
     "O": "shall",

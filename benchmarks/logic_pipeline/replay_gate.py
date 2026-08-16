@@ -51,48 +51,37 @@ from .report import (
 
 
 G238_REPLAY_SOURCE_RECORD_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-source-record.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-source-record.v2"
 )
 G238_REPLAY_SOURCE_INDEX_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-source-index.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-source-index.v2"
 )
 G238_DETACHED_REPLAY_RECEIPT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-execution-replay-receipt.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-execution-replay-receipt.v2"
 )
 G238_REPLAY_GATE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-execution-replay-gate.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-execution-replay-gate.v2"
 )
 G238_REPLAY_POLICY_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-execution-replay-policy.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-execution-replay-policy.v2"
 )
 G238_SEMANTIC_OBSERVATION_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-semantic-observation.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-semantic-observation.v2"
 )
 G238_RUNTIME_COORDINATE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-runtime-coordinate.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-runtime-coordinate.v2"
 )
 G238_SEMANTIC_IDENTITY_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-semantic-identity.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-semantic-identity.v2"
 )
 G238_KERNEL_IDENTITY_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-kernel-identity.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-kernel-identity.v2"
 )
 G238_STATUS_IDENTITY_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-status-identity.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-status-identity.v2"
 )
 G238_COMPARISON_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "detached-replay-comparison.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.detached-replay-comparison.v2"
 )
 G238_GIT_COMMIT_IDENTITY_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.git-commit-identity.v2"
@@ -103,8 +92,7 @@ G238_REPLAY_POLICY_V2_CID: Final = cid_for_dag_json(
         "schema": G238_REPLAY_POLICY_SCHEMA_V2,
         "success_population": "all",
         "failure_population": (
-            "lexicographically-lowest-record-cid-per-"
-            "split-cache-variant-stratum"
+            "lexicographically-lowest-record-cid-per-split-cache-variant-stratum"
         ),
         "failure_sample_per_stratum": G238_FAILURE_SAMPLE_PER_STRATUM,
         "required_identity_equalities": [
@@ -113,12 +101,8 @@ G238_REPLAY_POLICY_V2_CID: Final = cid_for_dag_json(
             "status",
             "resource_coordinate_policy_component",
         ],
-        "resource_measurement_comparison_policy_cid": (
-            RESOURCE_REPLAY_COMPARISON_POLICY_V2_CID
-        ),
-        "resource_measurements": (
-            "paired_frozen_tolerance_evidence_not_receipt_equality"
-        ),
+        "resource_measurement_comparison_policy_cid": (RESOURCE_REPLAY_COMPARISON_POLICY_V2_CID),
+        "resource_measurements": ("paired_frozen_tolerance_evidence_not_receipt_equality"),
         "fresh_isolation_dimensions": [
             "detached_worktree",
             "run",
@@ -127,12 +111,8 @@ G238_REPLAY_POLICY_V2_CID: Final = cid_for_dag_json(
             "cache",
         ],
         "operational_source_authority": {
-            "namespace_receipt_schema": (
-                G240_REPLAY_NAMESPACE_RECEIPT_SCHEMA_V2
-            ),
-            "orchestration_receipt_schema": (
-                G240_REPLAY_ORCHESTRATION_RECEIPT_SCHEMA_V2
-            ),
+            "namespace_receipt_schema": (G240_REPLAY_NAMESPACE_RECEIPT_SCHEMA_V2),
+            "orchestration_receipt_schema": (G240_REPLAY_ORCHESTRATION_RECEIPT_SCHEMA_V2),
             "required_private_sources": [
                 "source_policy",
                 "source_executor_contract",
@@ -189,27 +169,19 @@ def _cid(value: object, field: str) -> str:
 
 def _safe_id(value: object, field: str) -> str:
     if not isinstance(value, str) or not _SAFE_ID.fullmatch(value):
-        raise FreshReplayGateError(
-            f"{field} must be a safe nonempty identifier"
-        )
+        raise FreshReplayGateError(f"{field} must be a safe nonempty identifier")
     return value
 
 
 def _commit(value: object, field: str = "source_commit") -> str:
     if not isinstance(value, str) or not _COMMIT.fullmatch(value):
-        raise FreshReplayGateError(
-            f"{field} must be a full lowercase Git object id"
-        )
+        raise FreshReplayGateError(f"{field} must be a full lowercase Git object id")
     return value
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
-        raise FreshReplayGateError(
-            f"{field} must be an object with string keys"
-        )
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
+        raise FreshReplayGateError(f"{field} must be an object with string keys")
     return value
 
 
@@ -220,20 +192,13 @@ def _plain(value: object) -> object:
         return value.value
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
-            raise FreshReplayGateError(
-                "G238 DAG-JSON object keys must be strings"
-            )
-        return {
-            str(key): _plain(member)
-            for key, member in value.items()
-        }
+            raise FreshReplayGateError("G238 DAG-JSON object keys must be strings")
+        return {str(key): _plain(member) for key, member in value.items()}
     if isinstance(value, (tuple, list)):
         return [_plain(member) for member in value]
     if value is None or type(value) in {str, bool, int, float}:
         return value
-    raise FreshReplayGateError(
-        f"G238 value is not DAG-JSON: {type(value).__name__}"
-    )
+    raise FreshReplayGateError(f"G238 value is not DAG-JSON: {type(value).__name__}")
 
 
 def _freeze(value: object) -> object:
@@ -241,12 +206,7 @@ def _freeze(value: object) -> object:
 
     plain = _plain(value)
     if isinstance(plain, dict):
-        return MappingProxyType(
-            {
-                key: _freeze(member)
-                for key, member in plain.items()
-            }
-        )
+        return MappingProxyType({key: _freeze(member) for key, member in plain.items()})
     if isinstance(plain, list):
         return tuple(_freeze(member) for member in plain)
     return plain
@@ -280,14 +240,10 @@ def _runtime(
     field: str,
 ) -> CausalRuntimeEvidenceV2:
     try:
-        source = value.to_dict() if isinstance(
-            value, CausalRuntimeEvidenceV2
-        ) else value
+        source = value.to_dict() if isinstance(value, CausalRuntimeEvidenceV2) else value
         return validate_causal_runtime_evidence_v2(source)
     except (TypeError, ValueError) as exc:
-        raise FreshReplayGateError(
-            f"{field} failed complete causal-runtime replay"
-        ) from exc
+        raise FreshReplayGateError(f"{field} failed complete causal-runtime replay") from exc
 
 
 def _runtime_coordinate_payload(
@@ -298,18 +254,14 @@ def _runtime_coordinate_payload(
     result = evidence.case_result
     return {
         "schema": G238_RUNTIME_COORDINATE_SCHEMA_V2,
-        "resource_replay_coordinate_cid": (
-            runtime_resource_replay_coordinate_cid_v2(evidence)
-        ),
+        "resource_replay_coordinate_cid": (runtime_resource_replay_coordinate_cid_v2(evidence)),
         "source_cid": evidence.compiler_exposure.source_cid,
         "proof_context_cid": evidence.proof_context_cid,
         "case_id": result.case_id,
         "split": result.split.value,
         "cache_mode": result.cache_mode.value,
         "variant_id": result.variant_id,
-        "stage_route": [
-            stage.stage.value for stage in result.stages
-        ],
+        "stage_route": [stage.stage.value for stage in result.stages],
         "run_identity_excluded": True,
         "runtime_receipt_identity_excluded": True,
         "holdout_included": False,
@@ -349,12 +301,12 @@ def _stage_projection(stage: object) -> dict[str, object]:
             requested = _plain(
                 stage.provenance.requested_identity  # type: ignore[union-attr]
             )
-            if not isinstance(data, dict) or not isinstance(
-                effective, dict
-            ) or not isinstance(requested, dict):
-                raise FreshReplayGateError(
-                    "G238 basic stage replay projection must use objects"
-                )
+            if (
+                not isinstance(data, dict)
+                or not isinstance(effective, dict)
+                or not isinstance(requested, dict)
+            ):
+                raise FreshReplayGateError("G238 basic stage replay projection must use objects")
             for field in (
                 "consumed_artifact_sha256",
                 "semantic_context_sha256",
@@ -371,13 +323,9 @@ def _stage_projection(stage: object) -> dict[str, object]:
                     stage.provenance.source  # type: ignore[union-attr]
                 )
             )
-            if (
-                len(source) == 3
-                and source[:2]
-                == (
-                    "benchmarks.logic_pipeline.adapters",
-                    "causal_runtime_v2",
-                )
+            if len(source) == 3 and source[:2] == (
+                "benchmarks.logic_pipeline.adapters",
+                "causal_runtime_v2",
             ):
                 _cid(source[2], "causal runtime provenance receipt CID")
                 source = source[:2]
@@ -396,18 +344,12 @@ def _stage_projection(stage: object) -> dict[str, object]:
             requested_identity = _plain(
                 stage.provenance.requested_identity  # type: ignore[union-attr]
             )
-            if not isinstance(semantic_payload, dict) or not isinstance(
-                requested_identity, dict
-            ):
-                raise FreshReplayGateError(
-                    "G238 SyMAI replay projection must use objects"
-                )
+            if not isinstance(semantic_payload, dict) or not isinstance(requested_identity, dict):
+                raise FreshReplayGateError("G238 SyMAI replay projection must use objects")
             context = semantic_payload.get("semantic_context")
             if isinstance(context, dict):
                 semantic_payload["semantic_context"] = {
-                    key: context[key]
-                    for key in ("schema", "source_cid")
-                    if key in context
+                    key: context[key] for key in ("schema", "source_cid") if key in context
                 }
             requested_identity.pop("semantic_context_cid", None)
             stable = {
@@ -431,9 +373,7 @@ def _stage_projection(stage: object) -> dict[str, object]:
                 stage  # type: ignore[arg-type]
             )
     except (TypeError, ValueError) as exc:
-        raise FreshReplayGateError(
-            "G238 stage failed deterministic replay projection"
-        ) from exc
+        raise FreshReplayGateError("G238 stage failed deterministic replay projection") from exc
     return {
         "stage": stage.stage.value,  # type: ignore[union-attr]
         "status": stage.status.value,  # type: ignore[union-attr]
@@ -455,9 +395,7 @@ def _semantic_projection(
 
     return {
         "schema": G238_SEMANTIC_IDENTITY_SCHEMA_V2,
-        "runtime_coordinate_cid": runtime_replay_coordinate_cid_v2(
-            evidence
-        ),
+        "runtime_coordinate_cid": runtime_replay_coordinate_cid_v2(evidence),
         "stages": [
             _stage_projection(stage)
             for stage in evidence.case_result.stages
@@ -475,32 +413,18 @@ def _kernel_projection(
     """Project the exact terminal native-kernel execution semantics."""
 
     kernel = next(
-        (
-            stage
-            for stage in evidence.case_result.stages
-            if stage.stage is StageName.KERNEL
-        ),
+        (stage for stage in evidence.case_result.stages if stage.stage is StageName.KERNEL),
         None,
     )
     try:
-        native = (
-            None
-            if kernel is None
-            else _stable_native_kernel_replay_projection(kernel)
-        )
+        native = None if kernel is None else _stable_native_kernel_replay_projection(kernel)
     except (TypeError, ValueError) as exc:
-        raise FreshReplayGateError(
-            "G238 terminal kernel failed replay projection"
-        ) from exc
+        raise FreshReplayGateError("G238 terminal kernel failed replay projection") from exc
     kernel_stage = None
     if kernel is not None:
-        requested_identity = _plain(
-            kernel.provenance.requested_identity
-        )
+        requested_identity = _plain(kernel.provenance.requested_identity)
         if not isinstance(requested_identity, dict):  # pragma: no cover
-            raise FreshReplayGateError(
-                "G238 kernel requested identity must be an object"
-            )
+            raise FreshReplayGateError("G238 kernel requested identity must be an object")
         # The complete compiler exposure is independently validated and its
         # stable candidate/source identities remain in this projection.  Its
         # receipt CID changes solely because the fresh compiler StageRecord
@@ -513,27 +437,17 @@ def _kernel_projection(
             "stage": kernel.stage.value,
             "status": kernel.status.value,
             "adapter_version": kernel.adapter_version,
-            "failure_code": (
-                None
-                if kernel.failure_code is None
-                else kernel.failure_code.value
-            ),
+            "failure_code": (None if kernel.failure_code is None else kernel.failure_code.value),
             "kernel_accepted": kernel.kernel_accepted,
             "requested_identity": requested_identity,
             "effective_adapter_id": kernel.provenance.adapter_id,
-            "environment_sha256": (
-                kernel.provenance.environment_sha256
-            ),
+            "environment_sha256": (kernel.provenance.environment_sha256),
             "stable_native_execution": _plain(native),
-            "non_native_data": (
-                _plain(kernel.data) if native is None else None
-            ),
+            "non_native_data": (_plain(kernel.data) if native is None else None),
         }
     return {
         "schema": G238_KERNEL_IDENTITY_SCHEMA_V2,
-        "runtime_coordinate_cid": runtime_replay_coordinate_cid_v2(
-            evidence
-        ),
+        "runtime_coordinate_cid": runtime_replay_coordinate_cid_v2(evidence),
         "kernel_present": kernel is not None,
         "kernel_stage": kernel_stage,
         "native_kernel_execution": _plain(native),
@@ -550,26 +464,16 @@ def _status_projection(
     result = evidence.case_result
     return {
         "schema": G238_STATUS_IDENTITY_SCHEMA_V2,
-        "runtime_coordinate_cid": runtime_replay_coordinate_cid_v2(
-            evidence
-        ),
+        "runtime_coordinate_cid": runtime_replay_coordinate_cid_v2(evidence),
         "outcome_status": result.status.value,
-        "failure_code": (
-            None
-            if result.failure_code is None
-            else result.failure_code.value
-        ),
+        "failure_code": (None if result.failure_code is None else result.failure_code.value),
         "verification_authority": result.verification_authority.value,
         "kernel_accepted": result.kernel_accepted,
         "stage_statuses": [
             {
                 "stage": stage.stage.value,
                 "status": stage.status.value,
-                "failure_code": (
-                    None
-                    if stage.failure_code is None
-                    else stage.failure_code.value
-                ),
+                "failure_code": (None if stage.failure_code is None else stage.failure_code.value),
                 "kernel_accepted": stage.kernel_accepted,
             }
             for stage in result.stages
@@ -584,11 +488,7 @@ def _terminal_status(
     result = evidence.case_result
     if result.status is OutcomeStatus.VERIFIED:
         return "success", None
-    failure = (
-        result.failure_code.value
-        if result.failure_code is not None
-        else result.status.value
-    )
+    failure = result.failure_code.value if result.failure_code is not None else result.status.value
     return "failure", _safe_id(failure, "failure_kind")
 
 
@@ -606,44 +506,27 @@ class G238SemanticObservationV2:
 
     def __post_init__(self) -> None:
         if self.schema != G238_SEMANTIC_OBSERVATION_SCHEMA_V2:
-            raise FreshReplayGateError(
-                "unsupported G238 semantic-observation schema"
-            )
+            raise FreshReplayGateError("unsupported G238 semantic-observation schema")
         for field in (
             "runtime_evidence_cid",
             "runtime_coordinate_cid",
             "semantic_identity_cid",
         ):
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
         projection = _mapping(
             self.semantic_projection,
             "G238 semantic projection",
         )
         frozen = _freeze(projection)
         if not isinstance(frozen, Mapping):  # pragma: no cover
-            raise FreshReplayGateError(
-                "G238 semantic projection must remain an object"
-            )
+            raise FreshReplayGateError("G238 semantic projection must remain an object")
         object.__setattr__(self, "semantic_projection", frozen)
-        if (
-            self.semantic_identity_cid
-            != cid_for_dag_json(_plain(frozen))
-        ):
-            raise FreshReplayGateError(
-                "G238 semantic identity CID changed"
-            )
+        if self.semantic_identity_cid != cid_for_dag_json(_plain(frozen)):
+            raise FreshReplayGateError("G238 semantic identity CID changed")
         if self.holdout_accessed is not False:
-            raise FreshReplayGateError(
-                "G238 semantic observation crossed the holdout boundary"
-            )
-        if self.observation_cid != cid_for_dag_json(
-            self.identity_payload()
-        ):
-            raise FreshReplayGateError(
-                "G238 semantic-observation CID changed"
-            )
+            raise FreshReplayGateError("G238 semantic observation crossed the holdout boundary")
+        if self.observation_cid != cid_for_dag_json(self.identity_payload()):
+            raise FreshReplayGateError("G238 semantic-observation CID changed")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -671,9 +554,7 @@ class G238SemanticObservationV2:
         payload: dict[str, object] = {
             "schema": G238_SEMANTIC_OBSERVATION_SCHEMA_V2,
             "runtime_evidence_cid": replayed.receipt_cid,
-            "runtime_coordinate_cid": (
-                runtime_replay_coordinate_cid_v2(replayed)
-            ),
+            "runtime_coordinate_cid": (runtime_replay_coordinate_cid_v2(replayed)),
             "semantic_projection": projection,
             "semantic_identity_cid": cid_for_dag_json(projection),
             "holdout_accessed": False,
@@ -707,9 +588,7 @@ def validate_g238_semantic_observation_v2(
     )
     expected = G238SemanticObservationV2.create(evidence)
     if observation.to_dict() != expected.to_dict():
-        raise FreshReplayGateError(
-            "G238 semantic observation did not runtime-recompute"
-        )
+        raise FreshReplayGateError("G238 semantic observation did not runtime-recompute")
     return observation
 
 
@@ -736,9 +615,7 @@ class G238ReplaySourceRecordV2:
 
     def __post_init__(self) -> None:
         if self.schema != G238_REPLAY_SOURCE_RECORD_SCHEMA_V2:
-            raise FreshReplayGateError(
-                "unsupported G238 replay source-record schema"
-            )
+            raise FreshReplayGateError("unsupported G238 replay source-record schema")
         runtime = _runtime(
             self.runtime_evidence,
             "G238 source runtime evidence",
@@ -767,81 +644,44 @@ class G238ReplaySourceRecordV2:
             "status_identity_cid",
             "resource_replay_identity_cid",
         ):
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
         expected_coordinate_cid = runtime_replay_coordinate_cid_v2(runtime)
-        expected_kernel_cid = cid_for_dag_json(
-            _kernel_projection(runtime)
-        )
-        expected_status_cid = cid_for_dag_json(
-            _status_projection(runtime)
-        )
+        expected_kernel_cid = cid_for_dag_json(_kernel_projection(runtime))
+        expected_status_cid = cid_for_dag_json(_status_projection(runtime))
         if (
             self.runtime_evidence_cid != runtime.receipt_cid
             or self.case_cid != expected_coordinate_cid
-            or semantic.runtime_coordinate_cid
-            != expected_coordinate_cid
-            or self.semantic_identity_cid
-            != semantic.semantic_identity_cid
+            or semantic.runtime_coordinate_cid != expected_coordinate_cid
+            or self.semantic_identity_cid != semantic.semantic_identity_cid
             or self.kernel_identity_cid != expected_kernel_cid
             or self.status_identity_cid != expected_status_cid
-            or self.resource_replay_identity_cid
-            != resource.replay_identity_cid
+            or self.resource_replay_identity_cid != resource.replay_identity_cid
         ):
-            raise FreshReplayGateError(
-                "G238 source derived identity changed"
-            )
+            raise FreshReplayGateError("G238 source derived identity changed")
         result = runtime.case_result
         if self.split not in _SPLITS:
-            raise FreshReplayGateError(
-                "G238 source split must be pilot or development"
-            )
+            raise FreshReplayGateError("G238 source split must be pilot or development")
         if self.cache_mode not in _CACHE_MODES:
-            raise FreshReplayGateError(
-                "G238 source cache mode must be cold or warm"
-            )
-        if not isinstance(self.variant_id, str) or not _VARIANT.fullmatch(
-            self.variant_id
-        ):
-            raise FreshReplayGateError(
-                "G238 source variant must be one of A0 through A12"
-            )
+            raise FreshReplayGateError("G238 source cache mode must be cold or warm")
+        if not isinstance(self.variant_id, str) or not _VARIANT.fullmatch(self.variant_id):
+            raise FreshReplayGateError("G238 source variant must be one of A0 through A12")
         if (
             self.split != result.split.value
             or self.cache_mode != result.cache_mode.value
             or self.variant_id != result.variant_id
         ):
-            raise FreshReplayGateError(
-                "G238 source coordinate differs from its runtime"
-            )
+            raise FreshReplayGateError("G238 source coordinate differs from its runtime")
         if self.terminal_status not in _SOURCE_STATUSES:
-            raise FreshReplayGateError(
-                "G238 source status must be success or failure"
-            )
+            raise FreshReplayGateError("G238 source status must be success or failure")
         if self.terminal_status == "success":
             if self.failure_kind is not None:
-                raise FreshReplayGateError(
-                    "successful G238 source cannot name a failure"
-                )
-        elif (
-            not isinstance(self.failure_kind, str)
-            or not _SAFE_ID.fullmatch(self.failure_kind)
-        ):
-            raise FreshReplayGateError(
-                "failed G238 source requires a stable failure kind"
-            )
-        if (
-            (self.terminal_status, self.failure_kind)
-            != _terminal_status(runtime)
-        ):
-            raise FreshReplayGateError(
-                "G238 source terminal status differs from its runtime"
-            )
+                raise FreshReplayGateError("successful G238 source cannot name a failure")
+        elif not isinstance(self.failure_kind, str) or not _SAFE_ID.fullmatch(self.failure_kind):
+            raise FreshReplayGateError("failed G238 source requires a stable failure kind")
+        if (self.terminal_status, self.failure_kind) != _terminal_status(runtime):
+            raise FreshReplayGateError("G238 source terminal status differs from its runtime")
         if self.record_cid != cid_for_dag_json(self.identity_payload()):
-            raise FreshReplayGateError(
-                "G238 replay source-record CID changed"
-            )
+            raise FreshReplayGateError("G238 replay source-record CID changed")
 
     @property
     def failure_stratum(self) -> tuple[str, str, str]:
@@ -863,9 +703,7 @@ class G238ReplaySourceRecordV2:
             "semantic_identity_cid": self.semantic_identity_cid,
             "kernel_identity_cid": self.kernel_identity_cid,
             "status_identity_cid": self.status_identity_cid,
-            "resource_replay_identity_cid": (
-                self.resource_replay_identity_cid
-            ),
+            "resource_replay_identity_cid": (self.resource_replay_identity_cid),
         }
 
     def to_dict(self) -> dict[str, object]:
@@ -911,15 +749,9 @@ class G238ReplaySourceRecordV2:
             "terminal_status": terminal_status,
             "failure_kind": failure_kind,
             "semantic_identity_cid": semantic.semantic_identity_cid,
-            "kernel_identity_cid": cid_for_dag_json(
-                _kernel_projection(runtime)
-            ),
-            "status_identity_cid": cid_for_dag_json(
-                _status_projection(runtime)
-            ),
-            "resource_replay_identity_cid": (
-                resource.replay_identity_cid
-            ),
+            "kernel_identity_cid": cid_for_dag_json(_kernel_projection(runtime)),
+            "status_identity_cid": cid_for_dag_json(_status_projection(runtime)),
+            "resource_replay_identity_cid": (resource.replay_identity_cid),
         }
         typed = {
             **payload,
@@ -951,14 +783,10 @@ class G238ReplaySourceRecordV2:
                     "G238 source runtime evidence",
                 ),
                 "semantic_observation": (
-                    G238SemanticObservationV2.from_dict(
-                        data["semantic_observation"]
-                    )
+                    G238SemanticObservationV2.from_dict(data["semantic_observation"])
                 ),
                 "resource_receipt": (
-                    IndependentResourceReceiptV2.from_dict(
-                        data["resource_receipt"]
-                    )
+                    IndependentResourceReceiptV2.from_dict(data["resource_receipt"])
                 ),
             }
         )  # type: ignore[arg-type]
@@ -986,9 +814,7 @@ class G238ReplaySourceIndexV2:
 
     def __post_init__(self) -> None:
         if self.schema != G238_REPLAY_SOURCE_INDEX_SCHEMA_V2:
-            raise FreshReplayGateError(
-                "unsupported G238 replay source-index schema"
-            )
+            raise FreshReplayGateError("unsupported G238 replay source-index schema")
         _safe_id(self.source_run_id, "source_run_id")
         object.__setattr__(self, "source_commit", _commit(self.source_commit))
         for field in (
@@ -1002,25 +828,16 @@ class G238ReplaySourceIndexV2:
             "source_executor_authority_cid",
             "replay_policy_cid",
         ):
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
-        if self.source_commit_cid != g238_git_commit_cid(
-            self.source_commit
-        ):
-            raise FreshReplayGateError(
-                "G238 source commit CID does not address the Git commit"
-            )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
+        if self.source_commit_cid != g238_git_commit_cid(self.source_commit):
+            raise FreshReplayGateError("G238 source commit CID does not address the Git commit")
         if self.replay_policy_cid != G238_REPLAY_POLICY_V2_CID:
             raise FreshReplayGateError("G238 replay policy changed")
         if (
             type(self.failure_sample_per_stratum) is not int
-            or self.failure_sample_per_stratum
-            != G238_FAILURE_SAMPLE_PER_STRATUM
+            or self.failure_sample_per_stratum != G238_FAILURE_SAMPLE_PER_STRATUM
         ):
-            raise FreshReplayGateError(
-                "G238 failure sampling count changed"
-            )
+            raise FreshReplayGateError("G238 failure sampling count changed")
         records = tuple(
             value
             if isinstance(value, G238ReplaySourceRecordV2)
@@ -1032,27 +849,16 @@ class G238ReplaySourceIndexV2:
             not records
             or record_cids != tuple(sorted(record_cids))
             or len(record_cids) != len(set(record_cids))
-            or len(
-                {record.runtime_evidence_cid for record in records}
-            )
-            != len(records)
+            or len({record.runtime_evidence_cid for record in records}) != len(records)
         ):
-            raise FreshReplayGateError(
-                "G238 source records must be nonempty, sorted, and unique"
-            )
+            raise FreshReplayGateError("G238 source records must be nonempty, sorted, and unique")
         object.__setattr__(self, "records", records)
         if self.index_cid != cid_for_dag_json(self.identity_payload()):
-            raise FreshReplayGateError(
-                "G238 replay source-index CID changed"
-            )
+            raise FreshReplayGateError("G238 replay source-index CID changed")
 
     @property
     def required_records(self) -> tuple[G238ReplaySourceRecordV2, ...]:
-        successes = [
-            record
-            for record in self.records
-            if record.terminal_status == "success"
-        ]
+        successes = [record for record in self.records if record.terminal_status == "success"]
         failures: dict[
             tuple[str, str, str],
             list[G238ReplaySourceRecordV2],
@@ -1083,12 +889,8 @@ class G238ReplaySourceIndexV2:
             "case_index_cid": self.case_index_cid,
             "run_plan_cid": self.run_plan_cid,
             "source_worktree_cid": self.source_worktree_cid,
-            "source_executor_authority_cid": (
-                self.source_executor_authority_cid
-            ),
-            "failure_sample_per_stratum": (
-                self.failure_sample_per_stratum
-            ),
+            "source_executor_authority_cid": (self.source_executor_authority_cid),
+            "failure_sample_per_stratum": (self.failure_sample_per_stratum),
             "replay_policy_cid": self.replay_policy_cid,
             "records": [record.to_dict() for record in self.records],
         }
@@ -1124,12 +926,8 @@ class G238ReplaySourceIndexV2:
             "case_index_cid": case_index_cid,
             "run_plan_cid": run_plan_cid,
             "source_worktree_cid": source_worktree_cid,
-            "source_executor_authority_cid": (
-                source_executor_authority_cid
-            ),
-            "failure_sample_per_stratum": (
-                G238_FAILURE_SAMPLE_PER_STRATUM
-            ),
+            "source_executor_authority_cid": (source_executor_authority_cid),
+            "failure_sample_per_stratum": (G238_FAILURE_SAMPLE_PER_STRATUM),
             "replay_policy_cid": G238_REPLAY_POLICY_V2_CID,
             "records": ordered,
         }
@@ -1152,16 +950,11 @@ class G238ReplaySourceIndexV2:
         )
         records = data["records"]
         if not isinstance(records, list):
-            raise FreshReplayGateError(
-                "G238 replay source-index arrays changed"
-            )
+            raise FreshReplayGateError("G238 replay source-index arrays changed")
         return cls(
             **{
                 **data,
-                "records": tuple(
-                    G238ReplaySourceRecordV2.from_dict(record)
-                    for record in records
-                ),
+                "records": tuple(G238ReplaySourceRecordV2.from_dict(record) for record in records),
             }
         )  # type: ignore[arg-type]
 
@@ -1206,9 +999,7 @@ class G238DetachedReplayReceiptV2:
 
     def __post_init__(self) -> None:
         if self.schema != G238_DETACHED_REPLAY_RECEIPT_SCHEMA_V2:
-            raise FreshReplayGateError(
-                "unsupported G238 detached replay receipt schema"
-            )
+            raise FreshReplayGateError("unsupported G238 detached replay receipt schema")
         required_cids = (
             "target_record_cid",
             "source_index_cid",
@@ -1232,18 +1023,12 @@ class G238DetachedReplayReceiptV2:
             "replay_validator_authority_cid",
         )
         for field in required_cids:
-            object.__setattr__(
-                self, field, _cid(getattr(self, field), field)
-            )
+            object.__setattr__(self, field, _cid(getattr(self, field), field))
         _safe_id(self.source_run_id, "source_run_id")
         _safe_id(self.replay_run_id, "replay_run_id")
         object.__setattr__(self, "source_commit", _commit(self.source_commit))
-        if self.source_commit_cid != g238_git_commit_cid(
-            self.source_commit
-        ):
-            raise FreshReplayGateError(
-                "G238 receipt source commit CID changed"
-            )
+        if self.source_commit_cid != g238_git_commit_cid(self.source_commit):
+            raise FreshReplayGateError("G238 receipt source commit CID changed")
         for field in (
             "detached",
             "attached",
@@ -1251,9 +1036,7 @@ class G238DetachedReplayReceiptV2:
             "holdout_accessed",
         ):
             if type(getattr(self, field)) is not bool:
-                raise FreshReplayGateError(
-                    f"{field} must be an observed boolean"
-                )
+                raise FreshReplayGateError(f"{field} must be an observed boolean")
         runtime = self.replay_runtime_evidence
         semantic = self.replay_semantic_observation
         resource = self.replay_resource_receipt
@@ -1263,30 +1046,20 @@ class G238DetachedReplayReceiptV2:
                 runtime,
                 "G238 replay runtime evidence",
             )
-            object.__setattr__(
-                self, "replay_runtime_evidence", runtime
-            )
+            object.__setattr__(self, "replay_runtime_evidence", runtime)
             if runtime.case_result.run_id != self.replay_run_id:
-                raise FreshReplayGateError(
-                    "G238 replay run ID differs from complete runtime"
-                )
+                raise FreshReplayGateError("G238 replay run ID differs from complete runtime")
         if semantic is not None:
             if runtime is None:
-                raise FreshReplayGateError(
-                    "G238 semantic observation requires replay runtime"
-                )
+                raise FreshReplayGateError("G238 semantic observation requires replay runtime")
             semantic = validate_g238_semantic_observation_v2(
                 semantic,
                 runtime,
             )
-            object.__setattr__(
-                self, "replay_semantic_observation", semantic
-            )
+            object.__setattr__(self, "replay_semantic_observation", semantic)
         if resource is not None:
             if runtime is None:
-                raise FreshReplayGateError(
-                    "G238 resource receipt requires replay runtime"
-                )
+                raise FreshReplayGateError("G238 resource receipt requires replay runtime")
             try:
                 resource = validate_independent_resource_receipt_v2(
                     resource,
@@ -1296,17 +1069,11 @@ class G238DetachedReplayReceiptV2:
                 raise FreshReplayGateError(
                     "G238 replay resource receipt failed runtime binding"
                 ) from exc
-            object.__setattr__(
-                self, "replay_resource_receipt", resource
-            )
-        complete = all(
-            item is not None for item in (runtime, semantic, resource)
-        )
+            object.__setattr__(self, "replay_resource_receipt", resource)
+        complete = all(item is not None for item in (runtime, semantic, resource))
         if comparison is not None:
             if not complete:
-                raise FreshReplayGateError(
-                    "G238 comparison requires all complete replay evidence"
-                )
+                raise FreshReplayGateError("G238 comparison requires all complete replay evidence")
             comparison_data = _mapping(
                 comparison,
                 "G238 replay comparison",
@@ -1321,23 +1088,15 @@ class G238DetachedReplayReceiptV2:
                 if key != "comparison_receipt_cid"
             }
             if supplied_cid != cid_for_dag_json(body):
-                raise FreshReplayGateError(
-                    "G238 replay comparison CID changed"
-                )
+                raise FreshReplayGateError("G238 replay comparison CID changed")
             frozen = _freeze(comparison_data)
             if not isinstance(frozen, Mapping):  # pragma: no cover
-                raise FreshReplayGateError(
-                    "G238 replay comparison must remain an object"
-                )
+                raise FreshReplayGateError("G238 replay comparison must remain an object")
             object.__setattr__(self, "comparison", frozen)
         elif complete:
-            raise FreshReplayGateError(
-                "complete G238 replay evidence requires a comparison"
-            )
+            raise FreshReplayGateError("complete G238 replay evidence requires a comparison")
         if self.receipt_cid != cid_for_dag_json(self.identity_payload()):
-            raise FreshReplayGateError(
-                "G238 detached replay receipt CID changed"
-            )
+            raise FreshReplayGateError("G238 detached replay receipt CID changed")
 
     def identity_payload(self) -> dict[str, object]:
         payload: dict[str, object] = {
@@ -1369,11 +1128,7 @@ class G238DetachedReplayReceiptV2:
                     if self.replay_resource_receipt is None
                     else self.replay_resource_receipt.to_dict()
                 ),
-                "comparison": (
-                    None
-                    if self.comparison is None
-                    else _plain(self.comparison)
-                ),
+                "comparison": (None if self.comparison is None else _plain(self.comparison)),
             }
         )
         return payload
@@ -1413,19 +1168,10 @@ class G238DetachedReplayReceiptV2:
         the private G240 source receipt before accepting this receipt.
         """
 
-        index = G238ReplaySourceIndexV2.from_dict(
-            source_index.to_dict()
-        )
-        record = G238ReplaySourceRecordV2.from_dict(
-            source_record.to_dict()
-        )
-        if not any(
-            item.record_cid == record.record_cid
-            for item in index.records
-        ):
-            raise FreshReplayGateError(
-                "G238 replay target is absent from its source index"
-            )
+        index = G238ReplaySourceIndexV2.from_dict(source_index.to_dict())
+        record = G238ReplaySourceRecordV2.from_dict(source_record.to_dict())
+        if not any(item.record_cid == record.record_cid for item in index.records):
+            raise FreshReplayGateError("G238 replay target is absent from its source index")
         runtime = (
             None
             if replay_runtime_evidence is None
@@ -1465,20 +1211,14 @@ class G238DetachedReplayReceiptV2:
                 semantic,
                 resource,
             )
-            if (
-                runtime is not None
-                and semantic is not None
-                and resource is not None
-            )
+            if (runtime is not None and semantic is not None and resource is not None)
             else None
         )
         payload: dict[str, object] = {
             "schema": G238_DETACHED_REPLAY_RECEIPT_SCHEMA_V2,
             "target_record_cid": record.record_cid,
             "source_index_cid": index.index_cid,
-            "source_runtime_evidence_cid": (
-                record.runtime_evidence_cid
-            ),
+            "source_runtime_evidence_cid": (record.runtime_evidence_cid),
             "source_run_id": index.source_run_id,
             "replay_run_id": replay_run_id,
             "source_commit": index.source_commit,
@@ -1490,32 +1230,18 @@ class G238DetachedReplayReceiptV2:
             "run_plan_cid": index.run_plan_cid,
             "source_worktree_cid": index.source_worktree_cid,
             "replay_worktree_cid": replay_worktree_cid,
-            "source_namespace_receipt_cid": (
-                source_namespace_receipt_cid
-            ),
+            "source_namespace_receipt_cid": (source_namespace_receipt_cid),
             "source_process_namespace_cid": source_process_namespace_cid,
-            "replay_process_namespace_cid": (
-                replay_process_namespace_cid
-            ),
+            "replay_process_namespace_cid": (replay_process_namespace_cid),
             "source_state_namespace_cid": source_state_namespace_cid,
             "replay_state_namespace_cid": replay_state_namespace_cid,
             "source_cache_namespace_cid": source_cache_namespace_cid,
             "replay_cache_namespace_cid": replay_cache_namespace_cid,
-            "replay_executor_authority_cid": (
-                replay_executor_authority_cid
-            ),
-            "replay_validator_authority_cid": (
-                replay_validator_authority_cid
-            ),
-            "replay_runtime_evidence": (
-                None if runtime is None else runtime.to_dict()
-            ),
-            "replay_semantic_observation": (
-                None if semantic is None else semantic.to_dict()
-            ),
-            "replay_resource_receipt": (
-                None if resource is None else resource.to_dict()
-            ),
+            "replay_executor_authority_cid": (replay_executor_authority_cid),
+            "replay_validator_authority_cid": (replay_validator_authority_cid),
+            "replay_runtime_evidence": (None if runtime is None else runtime.to_dict()),
+            "replay_semantic_observation": (None if semantic is None else semantic.to_dict()),
+            "replay_resource_receipt": (None if resource is None else resource.to_dict()),
             "comparison": comparison,
             "detached": detached,
             "attached": attached,
@@ -1561,16 +1287,12 @@ class G238DetachedReplayReceiptV2:
                 "replay_semantic_observation": (
                     None
                     if semantic_data is None
-                    else G238SemanticObservationV2.from_dict(
-                        semantic_data
-                    )
+                    else G238SemanticObservationV2.from_dict(semantic_data)
                 ),
                 "replay_resource_receipt": (
                     None
                     if resource_data is None
-                    else IndependentResourceReceiptV2.from_dict(
-                        resource_data
-                    )
+                    else IndependentResourceReceiptV2.from_dict(resource_data)
                 ),
             }
         )  # type: ignore[arg-type]
@@ -1579,12 +1301,8 @@ class G238DetachedReplayReceiptV2:
 def build_g238_replay_comparison_v2(
     source_record: G238ReplaySourceRecordV2 | Mapping[str, object],
     replay_runtime_evidence: CausalRuntimeEvidenceV2 | Mapping[str, object],
-    replay_semantic_observation: (
-        G238SemanticObservationV2 | Mapping[str, object]
-    ),
-    replay_resource_receipt: (
-        IndependentResourceReceiptV2 | Mapping[str, object]
-    ),
+    replay_semantic_observation: (G238SemanticObservationV2 | Mapping[str, object]),
+    replay_resource_receipt: (IndependentResourceReceiptV2 | Mapping[str, object]),
 ) -> dict[str, object]:
     """Recompute one semantic/kernel/status/resource replay comparison.
 
@@ -1617,41 +1335,18 @@ def build_g238_replay_comparison_v2(
             replay_resource,
         )
     except (TypeError, ValueError) as exc:
-        raise FreshReplayGateError(
-            "G238 resource comparison failed receipt replay"
-        ) from exc
+        raise FreshReplayGateError("G238 resource comparison failed receipt replay") from exc
 
-    source_runtime_coordinate_cid = (
-        runtime_replay_coordinate_cid_v2(source.runtime_evidence)
-    )
-    replay_runtime_coordinate_cid = (
-        runtime_replay_coordinate_cid_v2(replay_runtime)
-    )
-    replay_kernel_identity_cid = cid_for_dag_json(
-        _kernel_projection(replay_runtime)
-    )
-    replay_status_identity_cid = cid_for_dag_json(
-        _status_projection(replay_runtime)
-    )
-    runtime_coordinate_equal = (
-        source_runtime_coordinate_cid
-        == replay_runtime_coordinate_cid
-    )
-    semantic_equal = (
-        source.semantic_identity_cid
-        == replay_semantic.semantic_identity_cid
-    )
-    kernel_equal = (
-        source.kernel_identity_cid
-        == replay_kernel_identity_cid
-    )
-    status_equal = (
-        source.status_identity_cid
-        == replay_status_identity_cid
-    )
+    source_runtime_coordinate_cid = runtime_replay_coordinate_cid_v2(source.runtime_evidence)
+    replay_runtime_coordinate_cid = runtime_replay_coordinate_cid_v2(replay_runtime)
+    replay_kernel_identity_cid = cid_for_dag_json(_kernel_projection(replay_runtime))
+    replay_status_identity_cid = cid_for_dag_json(_status_projection(replay_runtime))
+    runtime_coordinate_equal = source_runtime_coordinate_cid == replay_runtime_coordinate_cid
+    semantic_equal = source.semantic_identity_cid == replay_semantic.semantic_identity_cid
+    kernel_equal = source.kernel_identity_cid == replay_kernel_identity_cid
+    status_equal = source.status_identity_cid == replay_status_identity_cid
     resource_identity_equal = (
-        source.resource_replay_identity_cid
-        == replay_resource.replay_identity_cid
+        source.resource_replay_identity_cid == replay_resource.replay_identity_cid
     )
     failures: list[str] = []
     if not runtime_coordinate_equal:
@@ -1668,39 +1363,23 @@ def build_g238_replay_comparison_v2(
     if not isinstance(resource_failure_codes, list) or not all(
         isinstance(code, str) for code in resource_failure_codes
     ):
-        raise FreshReplayGateError(
-            "G238 resource comparison failure codes changed"
-        )
+        raise FreshReplayGateError("G238 resource comparison failure codes changed")
     failures.extend(resource_failure_codes)
     failure_codes = sorted(set(failures))
     body: dict[str, object] = {
         "schema": G238_COMPARISON_SCHEMA_V2,
         "replay_policy_cid": G238_REPLAY_POLICY_V2_CID,
-        "resource_comparison_policy_cid": (
-            RESOURCE_REPLAY_COMPARISON_POLICY_V2_CID
-        ),
+        "resource_comparison_policy_cid": (RESOURCE_REPLAY_COMPARISON_POLICY_V2_CID),
         "source_record_cid": source.record_cid,
         "source_runtime_evidence_cid": source.runtime_evidence_cid,
         "replay_runtime_evidence_cid": replay_runtime.receipt_cid,
-        "source_runtime_coordinate_cid": (
-            source_runtime_coordinate_cid
-        ),
-        "replay_runtime_coordinate_cid": (
-            replay_runtime_coordinate_cid
-        ),
+        "source_runtime_coordinate_cid": (source_runtime_coordinate_cid),
+        "replay_runtime_coordinate_cid": (replay_runtime_coordinate_cid),
         "runtime_coordinate_equal": runtime_coordinate_equal,
-        "source_semantic_observation_cid": (
-            source.semantic_observation.observation_cid
-        ),
-        "replay_semantic_observation_cid": (
-            replay_semantic.observation_cid
-        ),
-        "source_semantic_identity_cid": (
-            source.semantic_identity_cid
-        ),
-        "replay_semantic_identity_cid": (
-            replay_semantic.semantic_identity_cid
-        ),
+        "source_semantic_observation_cid": (source.semantic_observation.observation_cid),
+        "replay_semantic_observation_cid": (replay_semantic.observation_cid),
+        "source_semantic_identity_cid": (source.semantic_identity_cid),
+        "replay_semantic_identity_cid": (replay_semantic.semantic_identity_cid),
         "semantic_equal": semantic_equal,
         "source_kernel_identity_cid": source.kernel_identity_cid,
         "replay_kernel_identity_cid": replay_kernel_identity_cid,
@@ -1708,17 +1387,11 @@ def build_g238_replay_comparison_v2(
         "source_status_identity_cid": source.status_identity_cid,
         "replay_status_identity_cid": replay_status_identity_cid,
         "status_equal": status_equal,
-        "source_resource_replay_identity_cid": (
-            source.resource_replay_identity_cid
-        ),
-        "replay_resource_replay_identity_cid": (
-            replay_resource.replay_identity_cid
-        ),
+        "source_resource_replay_identity_cid": (source.resource_replay_identity_cid),
+        "replay_resource_replay_identity_cid": (replay_resource.replay_identity_cid),
         "resource_identity_equal": resource_identity_equal,
         "resource_comparison": resource_comparison,
-        "resource_comparison_receipt_cid": resource_comparison[
-            "comparison_receipt_cid"
-        ],
+        "resource_comparison_receipt_cid": resource_comparison["comparison_receipt_cid"],
         "complete": not failure_codes,
         "passed": not failure_codes,
         "failure_codes": failure_codes,
@@ -1734,12 +1407,8 @@ def validate_g238_replay_comparison_v2(
     value: object,
     source_record: G238ReplaySourceRecordV2 | Mapping[str, object],
     replay_runtime_evidence: CausalRuntimeEvidenceV2 | Mapping[str, object],
-    replay_semantic_observation: (
-        G238SemanticObservationV2 | Mapping[str, object]
-    ),
-    replay_resource_receipt: (
-        IndependentResourceReceiptV2 | Mapping[str, object]
-    ),
+    replay_semantic_observation: (G238SemanticObservationV2 | Mapping[str, object]),
+    replay_resource_receipt: (IndependentResourceReceiptV2 | Mapping[str, object]),
 ) -> str:
     """Source-recompute one complete G238 comparison receipt."""
 
@@ -1752,9 +1421,7 @@ def validate_g238_replay_comparison_v2(
     )
     _exact(data, set(rebuilt), "G238 replay comparison")
     if _plain(data) != rebuilt:
-        raise FreshReplayGateError(
-            "G238 replay comparison did not source-recompute"
-        )
+        raise FreshReplayGateError("G238 replay comparison did not source-recompute")
     return _cid(
         data["comparison_receipt_cid"],
         "comparison_receipt_cid",
@@ -1768,15 +1435,10 @@ def _flag(failures: set[str], condition: bool, code: str) -> None:
 
 def build_g238_detached_replay_gate_v2(
     source_index: G238ReplaySourceIndexV2 | Mapping[str, object],
-    replay_receipts: Sequence[
-        G238DetachedReplayReceiptV2 | Mapping[str, object]
-    ],
+    replay_receipts: Sequence[G238DetachedReplayReceiptV2 | Mapping[str, object]],
     *,
     validator_authority_cid: str,
-    operational_replay_sources: Mapping[
-        str, G240PrivateReplayValidationSourcesV2
-    ]
-    | None = None,
+    operational_replay_sources: Mapping[str, G240PrivateReplayValidationSourcesV2] | None = None,
 ) -> dict[str, object]:
     """Recompute the exact detached replay population and positive gate."""
 
@@ -1785,38 +1447,23 @@ def build_g238_detached_replay_gate_v2(
         if isinstance(source_index, G238ReplaySourceIndexV2)
         else G238ReplaySourceIndexV2.from_dict(source_index)
     )
-    validator_cid = _cid(
-        validator_authority_cid, "validator_authority_cid"
-    )
+    validator_cid = _cid(validator_authority_cid, "validator_authority_cid")
     receipts = tuple(
         receipt
         if isinstance(receipt, G238DetachedReplayReceiptV2)
         else G238DetachedReplayReceiptV2.from_dict(receipt)
         for receipt in replay_receipts
     )
-    required = {
-        record.record_cid: record for record in index.required_records
-    }
+    required = {record.record_cid: record for record in index.required_records}
     by_target: dict[str, list[G238DetachedReplayReceiptV2]] = {}
     for receipt in receipts:
         by_target.setdefault(receipt.target_record_cid, []).append(receipt)
-    operational = (
-        {}
-        if operational_replay_sources is None
-        else dict(operational_replay_sources)
-    )
-    if (
-        any(not isinstance(key, str) for key in operational)
-        or any(
-            not isinstance(
-                item, G240PrivateReplayValidationSourcesV2
-            )
-            for item in operational.values()
-        )
+    operational = {} if operational_replay_sources is None else dict(operational_replay_sources)
+    if any(not isinstance(key, str) for key in operational) or any(
+        not isinstance(item, G240PrivateReplayValidationSourcesV2) for item in operational.values()
     ):
         raise FreshReplayGateError(
-            "G238 operational replay sources must be keyed private G240 "
-            "validation bundles"
+            "G238 operational replay sources must be keyed private G240 validation bundles"
         )
 
     failures: set[str] = set()
@@ -1886,22 +1533,18 @@ def build_g238_detached_replay_gate_v2(
                 or receipt.source_run_id != index.source_run_id
                 or receipt.source_commit != index.source_commit
                 or receipt.source_commit_cid != index.source_commit_cid
-                or receipt.recursive_gitlinks_cid
-                != index.recursive_gitlinks_cid
+                or receipt.recursive_gitlinks_cid != index.recursive_gitlinks_cid
                 or receipt.environment_cid != index.environment_cid
-                or receipt.route_manifest_cid
-                != index.route_manifest_cid
+                or receipt.route_manifest_cid != index.route_manifest_cid
                 or receipt.case_index_cid != index.case_index_cid
                 or receipt.run_plan_cid != index.run_plan_cid
-                or receipt.source_worktree_cid
-                != index.source_worktree_cid
+                or receipt.source_worktree_cid != index.source_worktree_cid
             ),
             "stale_source_binding",
         )
         _flag(
             failures,
-            receipt.source_runtime_evidence_cid
-            != record.runtime_evidence_cid,
+            receipt.source_runtime_evidence_cid != record.runtime_evidence_cid,
             "source_record_mismatch",
         )
         _flag(
@@ -1916,26 +1559,17 @@ def build_g238_detached_replay_gate_v2(
         )
         _flag(
             failures,
-            (
-                receipt.source_process_namespace_cid
-                == receipt.replay_process_namespace_cid
-            ),
+            (receipt.source_process_namespace_cid == receipt.replay_process_namespace_cid),
             "process_namespace_not_isolated",
         )
         _flag(
             failures,
-            (
-                receipt.source_state_namespace_cid
-                == receipt.replay_state_namespace_cid
-            ),
+            (receipt.source_state_namespace_cid == receipt.replay_state_namespace_cid),
             "state_namespace_not_isolated",
         )
         _flag(
             failures,
-            (
-                receipt.source_cache_namespace_cid
-                == receipt.replay_cache_namespace_cid
-            ),
+            (receipt.source_cache_namespace_cid == receipt.replay_cache_namespace_cid),
             "cache_namespace_not_isolated",
         )
         _flag(
@@ -1956,12 +1590,9 @@ def build_g238_detached_replay_gate_v2(
         _flag(
             failures,
             (
-                receipt.replay_validator_authority_cid
-                != validator_cid
-                or receipt.replay_validator_authority_cid
-                == receipt.replay_executor_authority_cid
-                or receipt.replay_validator_authority_cid
-                == index.source_executor_authority_cid
+                receipt.replay_validator_authority_cid != validator_cid
+                or receipt.replay_validator_authority_cid == receipt.replay_executor_authority_cid
+                or receipt.replay_validator_authority_cid == index.source_executor_authority_cid
             ),
             "replay_authority_not_independent",
         )
@@ -2005,12 +1636,8 @@ def build_g238_detached_replay_gate_v2(
                         orchestration,
                     ) = validate_g240_private_replay_sources_v2(
                         private_sources,
-                        source_runtime_evidence=(
-                            record.runtime_evidence
-                        ),
-                        replay_runtime_evidence=(
-                            receipt.replay_runtime_evidence
-                        ),
+                        source_runtime_evidence=(record.runtime_evidence),
+                        replay_runtime_evidence=(receipt.replay_runtime_evidence),
                     )
                     replay_resource = receipt.replay_resource_receipt
                     assert replay_resource is not None
@@ -2020,10 +1647,8 @@ def build_g238_detached_replay_gate_v2(
                     source_cache_set_cid = g240_cache_namespace_set_cid(
                         source_namespace.cache_namespace_cids
                     )
-                    source_worktree_cid = (
-                        g240_worktree_safety_projection_cid(
-                            private_sources.source_worktree_safety_receipt
-                        )
+                    source_worktree_cid = g240_worktree_safety_projection_cid(
+                        private_sources.source_worktree_safety_receipt
                     )
                     disjoint_authorities = {
                         policy.namespace_authority_cid,
@@ -2038,38 +1663,28 @@ def build_g238_detached_replay_gate_v2(
                     }
                     operational_matches = (
                         policy.run_id == index.source_run_id
-                        and policy.source_commit_cid
-                        == index.source_commit_cid
-                        and policy.recursive_gitlinks_cid
-                        == index.recursive_gitlinks_cid
-                        and policy.environment_cid
-                        == index.environment_cid
-                        and source_namespace.runtime_evidence_cid
-                        == record.runtime_evidence_cid
-                        and source_namespace.receipt_cid
-                        == receipt.source_namespace_receipt_cid
+                        and policy.source_commit_cid == index.source_commit_cid
+                        and policy.recursive_gitlinks_cid == index.recursive_gitlinks_cid
+                        and policy.environment_cid == index.environment_cid
+                        and source_namespace.runtime_evidence_cid == record.runtime_evidence_cid
+                        and source_namespace.receipt_cid == receipt.source_namespace_receipt_cid
                         and source_namespace.process_namespace_cid
                         == receipt.source_process_namespace_cid
                         and source_namespace.state_namespace_cid
                         == receipt.source_state_namespace_cid
-                        and source_cache_set_cid
-                        == receipt.source_cache_namespace_cid
+                        and source_cache_set_cid == receipt.source_cache_namespace_cid
                         and source_namespace.executor_identity_cid
                         == index.source_executor_authority_cid
                         and record.resource_receipt.producer_identity_cid
                         == index.source_executor_authority_cid
-                        and source_worktree_cid
-                        == index.source_worktree_cid
-                        and replay_namespace.replay_run_id
-                        == receipt.replay_run_id
-                        and replay_namespace.replay_worktree_cid
-                        == receipt.replay_worktree_cid
+                        and source_worktree_cid == index.source_worktree_cid
+                        and replay_namespace.replay_run_id == receipt.replay_run_id
+                        and replay_namespace.replay_worktree_cid == receipt.replay_worktree_cid
                         and replay_namespace.replay_process_namespace_cid
                         == receipt.replay_process_namespace_cid
                         and replay_namespace.replay_state_namespace_cid
                         == receipt.replay_state_namespace_cid
-                        and cache_set_cid
-                        == receipt.replay_cache_namespace_cid
+                        and cache_set_cid == receipt.replay_cache_namespace_cid
                         and replay_namespace.replay_executor_identity_cid
                         == receipt.replay_executor_authority_cid
                         and replay_namespace.replay_observer_identity_cid
@@ -2093,12 +1708,8 @@ def build_g238_detached_replay_gate_v2(
                     "operational_replay_not_source_recomputed",
                 )
                 if operational_matches:
-                    validated_namespace_receipts.append(
-                        str(replay_namespace.receipt_cid)
-                    )
-                    validated_orchestration_receipts.append(
-                        str(orchestration.receipt_cid)
-                    )
+                    validated_namespace_receipts.append(str(replay_namespace.receipt_cid))
+                    validated_orchestration_receipts.append(str(orchestration.receipt_cid))
             if comparison_matches:
                 comparison_cid = _cid(
                     rebuilt["comparison_receipt_cid"],
@@ -2107,12 +1718,8 @@ def build_g238_detached_replay_gate_v2(
                 validated_comparisons.append(comparison_cid)
                 comparison_failures = rebuilt["failure_codes"]
                 if not isinstance(comparison_failures, list):
-                    raise FreshReplayGateError(
-                        "G238 comparison failure codes changed"
-                    )
-                failures.update(
-                    str(code) for code in comparison_failures
-                )
+                    raise FreshReplayGateError("G238 comparison failure codes changed")
+                failures.update(str(code) for code in comparison_failures)
             if comparison_matches and operational_matches:
                 validated_receipts.append(receipt.receipt_cid)
 
@@ -2132,29 +1739,19 @@ def build_g238_detached_replay_gate_v2(
         "validator_authority_cid": validator_cid,
         "source_record_count": len(index.records),
         "source_success_count": sum(
-            record.terminal_status == "success"
-            for record in index.records
+            record.terminal_status == "success" for record in index.records
         ),
         "source_failure_count": sum(
-            record.terminal_status == "failure"
-            for record in index.records
+            record.terminal_status == "failure" for record in index.records
         ),
         "required_replay_count": len(required),
         "required_target_record_cids": sorted(required),
         "presented_target_record_cids": sorted(presented_cids),
-        "presented_replay_receipt_cids": sorted(
-            receipt.receipt_cid for receipt in receipts
-        ),
+        "presented_replay_receipt_cids": sorted(receipt.receipt_cid for receipt in receipts),
         "validated_replay_receipt_cids": sorted(validated_receipts),
-        "validated_comparison_receipt_cids": sorted(
-            validated_comparisons
-        ),
-        "validated_namespace_receipt_cids": sorted(
-            validated_namespace_receipts
-        ),
-        "validated_orchestration_receipt_cids": sorted(
-            validated_orchestration_receipts
-        ),
+        "validated_comparison_receipt_cids": sorted(validated_comparisons),
+        "validated_namespace_receipt_cids": sorted(validated_namespace_receipts),
+        "validated_orchestration_receipt_cids": sorted(validated_orchestration_receipts),
         "status": "complete" if not failure_codes else "incomplete",
         "passed": not failure_codes,
         "failure_codes": failure_codes,
@@ -2165,15 +1762,10 @@ def build_g238_detached_replay_gate_v2(
 def validate_g238_detached_replay_gate_v2(
     value: object,
     source_index: G238ReplaySourceIndexV2 | Mapping[str, object],
-    replay_receipts: Sequence[
-        G238DetachedReplayReceiptV2 | Mapping[str, object]
-    ],
+    replay_receipts: Sequence[G238DetachedReplayReceiptV2 | Mapping[str, object]],
     *,
     validator_authority_cid: str,
-    operational_replay_sources: Mapping[
-        str, G240PrivateReplayValidationSourcesV2
-    ]
-    | None = None,
+    operational_replay_sources: Mapping[str, G240PrivateReplayValidationSourcesV2] | None = None,
 ) -> str:
     """Source-recompute a G238 gate and return its canonical receipt CID."""
 
@@ -2215,9 +1807,7 @@ def validate_g238_detached_replay_gate_v2(
         operational_replay_sources=operational_replay_sources,
     )
     if dict(data) != rebuilt:
-        raise FreshReplayGateError(
-            "G238 detached replay gate did not source-recompute"
-        )
+        raise FreshReplayGateError("G238 detached replay gate did not source-recompute")
     return _cid(data["receipt_cid"], "receipt_cid")
 
 

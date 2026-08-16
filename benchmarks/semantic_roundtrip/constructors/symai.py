@@ -106,9 +106,7 @@ class SyMAIRouteError(LeanstralUnavailableError, SyMAIClientError):
     """SyMAI did not resolve to the frozen inner Leanstral service."""
 
 
-class SyMAIMalformedResponseError(
-    LeanstralMalformedResponseError, SyMAIClientError
-):
+class SyMAIMalformedResponseError(LeanstralMalformedResponseError, SyMAIClientError):
     """SyMAI returned an invalid envelope, route receipt, or JSON value."""
 
 
@@ -222,23 +220,15 @@ class SyMAICompletion:
 
     def __post_init__(self) -> None:
         if not isinstance(self.value, Mapping):
-            raise SyMAIMalformedResponseError(
-                "SyMAI completion value must be an object"
-            )
+            raise SyMAIMalformedResponseError("SyMAI completion value must be an object")
         if not isinstance(self.metadata, Mapping):
-            raise SyMAIMalformedResponseError(
-                "SyMAI completion metadata must be an object"
-            )
+            raise SyMAIMalformedResponseError("SyMAI completion metadata must be an object")
         object.__setattr__(self, "value", MappingProxyType(dict(self.value)))
         object.__setattr__(
             self,
             "metadata",
             MappingProxyType(
-                {
-                    str(key): item
-                    for key, item in self.metadata.items()
-                    if str(key) in _ROUTE_KEYS
-                }
+                {str(key): item for key, item in self.metadata.items() if str(key) in _ROUTE_KEYS}
             ),
         )
 
@@ -296,9 +286,7 @@ def _metadata_nonnegative_int(
 ) -> int:
     value = metadata.get(key, default)
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise SyMAIMalformedResponseError(
-            f"SyMAI {key} must be a nonnegative integer"
-        )
+        raise SyMAIMalformedResponseError(f"SyMAI {key} must be a nonnegative integer")
     return value
 
 
@@ -308,18 +296,10 @@ def _route_receipt(
     role: str,
     max_tokens: int,
 ) -> SyMAIRouteReceipt:
-    provider = _metadata_string(
-        metadata, "resolved_provider_name", "resolved_provider"
-    )
-    endpoint = _metadata_string(
-        metadata, "service_endpoint", "resolved_endpoint"
-    )
-    model = _metadata_string(
-        metadata, "resolved_model_name", "resolved_model"
-    )
-    backend = _metadata_string(
-        metadata, "routing_backend", "resolved_backend"
-    )
+    provider = _metadata_string(metadata, "resolved_provider_name", "resolved_provider")
+    endpoint = _metadata_string(metadata, "service_endpoint", "resolved_endpoint")
+    model = _metadata_string(metadata, "resolved_model_name", "resolved_model")
+    backend = _metadata_string(metadata, "routing_backend", "resolved_backend")
     expected = {
         "resolved provider": (provider, LEANSTRAL_PROVIDER),
         "endpoint": (endpoint, LEANSTRAL_ENDPOINT),
@@ -328,19 +308,10 @@ def _route_receipt(
     }
     missing = [name for name, (actual, _) in expected.items() if actual is None]
     if missing:
-        raise SyMAIRouteError(
-            "SyMAI route receipt omitted " + ", ".join(missing)
-        )
-    drifted = [
-        name
-        for name, (actual, frozen) in expected.items()
-        if actual != frozen
-    ]
+        raise SyMAIRouteError("SyMAI route receipt omitted " + ", ".join(missing))
+    drifted = [name for name, (actual, frozen) in expected.items() if actual != frozen]
     if drifted:
-        raise SyMAIRouteError(
-            "SyMAI route drifted from direct Leanstral: "
-            + ", ".join(drifted)
-        )
+        raise SyMAIRouteError("SyMAI route drifted from direct Leanstral: " + ", ".join(drifted))
 
     settings = SyMAIGenerationSettings.for_role(max_tokens)
     effective_settings: tuple[tuple[str, object, object], ...] = (
@@ -358,10 +329,7 @@ def _route_receipt(
         name
         for name, actual, frozen in effective_settings
         if actual is not None
-        and (
-            isinstance(actual, bool) != isinstance(frozen, bool)
-            or actual != frozen
-        )
+        and (isinstance(actual, bool) != isinstance(frozen, bool) or actual != frozen)
     ]
     raw_stop = metadata.get("stop")
     if raw_stop is not None and (
@@ -370,34 +338,25 @@ def _route_receipt(
         or tuple(raw_stop) != settings.stop
     ):
         setting_drift.append("stop")
-    independent_model = _metadata_bool(
-        metadata, "independent_model", False
-    )
+    independent_model = _metadata_bool(metadata, "independent_model", False)
     if independent_model:
         setting_drift.append("independent_model")
     if setting_drift:
         raise SyMAIRouteError(
-            "SyMAI model settings drifted from direct Leanstral: "
-            + ", ".join(setting_drift)
+            "SyMAI model settings drifted from direct Leanstral: " + ", ".join(setting_drift)
         )
 
     attempts = _metadata_nonnegative_int(metadata, "attempts", 1)
     retries = _metadata_nonnegative_int(metadata, "retries", 0)
-    cache_enabled = _metadata_bool(
-        metadata, "cache_enabled", SYMAI_CACHE_ENABLED
-    )
+    cache_enabled = _metadata_bool(metadata, "cache_enabled", SYMAI_CACHE_ENABLED)
     cache_hit = _metadata_bool(metadata, "cache_hit", False)
     cache_value = metadata.get("cache")
     if isinstance(cache_value, str):
         cache_hit = cache_hit or cache_value.strip().lower() == "hit"
     if attempts != 1 or retries != 0:
-        raise SyMAIRouteError(
-            "SyMAI retry behavior drifted from the one-attempt direct arm"
-        )
+        raise SyMAIRouteError("SyMAI retry behavior drifted from the one-attempt direct arm")
     if cache_enabled or cache_hit:
-        raise SyMAIRouteError(
-            "SyMAI cache behavior drifted from the uncached direct arm"
-        )
+        raise SyMAIRouteError("SyMAI cache behavior drifted from the uncached direct arm")
 
     return SyMAIRouteReceipt(
         role=role,
@@ -500,12 +459,7 @@ class SyMAIClient:
                 "schema": _server_schema(schema),
             },
         }
-        routed_prompt = (
-            "SYSTEM_INSTRUCTION:\n"
-            + system
-            + "\nUSER_REQUEST:\n"
-            + prompt
-        )
+        routed_prompt = "SYSTEM_INSTRUCTION:\n" + system + "\nUSER_REQUEST:\n" + prompt
         request_bytes = json.dumps(
             {
                 "prompt": routed_prompt,
@@ -518,9 +472,7 @@ class SyMAIClient:
             allow_nan=False,
         ).encode("utf-8")
         if len(request_bytes) > MAX_REQUEST_BYTES:
-            raise LeanstralRequestError(
-                "SyMAI request exceeds the direct arm's 64 KiB bound"
-            )
+            raise LeanstralRequestError("SyMAI request exceeds the direct arm's 64 KiB bound")
         try:
             result = self._invoker(
                 prompt=routed_prompt,
@@ -543,9 +495,7 @@ class SyMAIClient:
             or len(result) != 2
             or not isinstance(result[1], Mapping)
         ):
-            raise SyMAIMalformedResponseError(
-                "SyMAI must return output and route metadata"
-            )
+            raise SyMAIMalformedResponseError("SyMAI must return output and route metadata")
         raw, metadata = result
         if isinstance(raw, str):
             if len(raw.encode("utf-8")) > MAX_RESPONSE_BYTES:
@@ -563,18 +513,14 @@ class SyMAIClient:
                     allow_nan=False,
                 ).encode("utf-8")
             except (RecursionError, TypeError, ValueError) as exc:
-                raise SyMAIMalformedResponseError(
-                    "SyMAI output is not strict JSON data"
-                ) from exc
+                raise SyMAIMalformedResponseError("SyMAI output is not strict JSON data") from exc
             if len(encoded) > MAX_RESPONSE_BYTES:
                 raise SyMAIMalformedResponseError(
                     "SyMAI response exceeds the direct arm's byte bound"
                 )
             value = dict(raw)
         else:
-            raise SyMAIMalformedResponseError(
-                "SyMAI output must be JSON text or an object"
-            )
+            raise SyMAIMalformedResponseError("SyMAI output must be JSON text or an object")
         receipt = _route_receipt(
             metadata,
             role=schema_name,
@@ -593,9 +539,8 @@ def _coerce_completion(
     if isinstance(value, SyMAICompletion):
         candidate = value.value
         metadata = value.metadata
-    elif (
-        isinstance(getattr(value, "value", None), Mapping)
-        and isinstance(getattr(value, "metadata", None), Mapping)
+    elif isinstance(getattr(value, "value", None), Mapping) and isinstance(
+        getattr(value, "metadata", None), Mapping
     ):
         candidate = value.value
         metadata = value.metadata
@@ -609,9 +554,7 @@ def _coerce_completion(
         candidate = value[0]
         metadata = value[1]
     else:
-        raise SyMAIMalformedResponseError(
-            "SyMAI client must return a candidate and route metadata"
-        )
+        raise SyMAIMalformedResponseError("SyMAI client must return a candidate and route metadata")
     return candidate, _route_receipt(
         metadata,
         role=role,
@@ -687,16 +630,12 @@ class SyMAICanonicalConstructor:
             self._client.endpoint.rstrip("/") != LEANSTRAL_ENDPOINT
             or self._client.model != LEANSTRAL_MODEL
         ):
-            raise ValueError(
-                "client must bind the exact frozen Leanstral endpoint/model"
-            )
+            raise ValueError("client must bind the exact frozen Leanstral endpoint/model")
         self._last_receipt: SyMAIRouteReceipt | None = None
 
     @property
     def identity(self) -> str:
-        settings = SyMAIGenerationSettings.for_role(
-            CONSTRUCTOR_MAX_TOKENS
-        )
+        settings = SyMAIGenerationSettings.for_role(CONSTRUCTOR_MAX_TOKENS)
         return (
             f"{self.interface}:{SYMAI_ROUTE}:{LEANSTRAL_ENDPOINT}:"
             f"{LEANSTRAL_MODEL}:temperature={settings.temperature}:"
@@ -716,10 +655,7 @@ class SyMAICanonicalConstructor:
 
     @property
     def ranking_eligible(self) -> bool:
-        return bool(
-            self._last_receipt is not None
-            and self._last_receipt.ranking_eligible
-        )
+        return bool(self._last_receipt is not None and self._last_receipt.ranking_eligible)
 
     @property
     def round_trip_contract(self) -> Mapping[str, object]:
@@ -744,14 +680,10 @@ class SyMAICanonicalConstructor:
                 system=_CONSTRUCTOR_SYSTEM,
                 prompt=_constructor_prompt(request, None),
                 schema_name="semantic_roundtrip_canonical_ir_v1",
-                schema=canonical_ir_schema(
-                    request.allowed_atom_vocabulary
-                ),
+                schema=canonical_ir_schema(request.allowed_atom_vocabulary),
                 max_tokens=CONSTRUCTOR_MAX_TOKENS,
             )
-            canonical_ir = CanonicalRuleIR.from_dict(
-                candidate, request.allowed_atom_vocabulary
-            )
+            canonical_ir = CanonicalRuleIR.from_dict(candidate, request.allowed_atom_vocabulary)
             if canonical_ir.is_empty:
                 self._last_receipt = replace(
                     receipt,
@@ -777,9 +709,7 @@ class SyMAICanonicalConstructor:
             if receipt is not None:
                 self._last_receipt = replace(
                     receipt,
-                    ranking_exclusion_reason=(
-                        "coarse_or_noncanonical_forward_response"
-                    ),
+                    ranking_exclusion_reason=("coarse_or_noncanonical_forward_response"),
                 )
             return _failure_result(exc)
 

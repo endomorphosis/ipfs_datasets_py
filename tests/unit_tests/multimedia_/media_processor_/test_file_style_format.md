@@ -43,7 +43,9 @@ def test_status_response_time_meets_5ms_threshold(self):
     WHEN measuring response time from request to completion
     THEN expect response time ≤ STATUS_RESPONSE_TIME_THRESHOLD under normal operating conditions
     """
-    raise NotImplementedError("test_status_response_time_meets_5ms_threshold test needs to be implemented")
+    raise NotImplementedError(
+        "test_status_response_time_meets_5ms_threshold test needs to be implemented"
+    )
 ```
 
 ### **5. Behavioral Testing Philosophy**

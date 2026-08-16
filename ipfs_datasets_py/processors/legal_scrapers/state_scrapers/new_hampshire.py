@@ -40,18 +40,20 @@ class NewHampshireScraper(BaseStateScraper):
         r"/rsa/html/(?!nhtoc/)(?:[ivxlcdm0-9a-z-]+/){2,}[0-9a-z:.-]+\.htm$",
         re.IGNORECASE,
     )
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for New Hampshire's legislative website."""
         return "https://www.gencourt.state.nh.us"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for New Hampshire."""
-        return [{
-            "name": "New Hampshire Revised Statutes",
-            "url": f"{self.get_base_url()}/rsa/html/NHTOC.htm",
-            "type": "Code"
-        }]
+        return [
+            {
+                "name": "New Hampshire Revised Statutes",
+                "url": f"{self.get_base_url()}/rsa/html/NHTOC.htm",
+                "type": "Code",
+            }
+        ]
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -61,7 +63,7 @@ class NewHampshireScraper(BaseStateScraper):
             if self._NH_STATUTE_URL_RE.search(source):
                 filtered.append(statute)
         return filtered
-    
+
     async def scrape_code(
         self,
         code_name: str,
@@ -69,11 +71,11 @@ class NewHampshireScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from New Hampshire's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -101,18 +103,26 @@ class NewHampshireScraper(BaseStateScraper):
                 os.getenv("STATE_SCRAPER_NH_ARCHIVE_DISCOVERY_LIMIT", "1200") or "1200"
             ).strip()
             try:
-                discovery_limit = int(full_corpus_discovery_limit_raw) if full_corpus_discovery_limit_raw else 1200
+                discovery_limit = (
+                    int(full_corpus_discovery_limit_raw)
+                    if full_corpus_discovery_limit_raw
+                    else 1200
+                )
             except Exception:
                 discovery_limit = 1200
             discovery_limit = max(120, min(2500, discovery_limit))
         else:
             discovery_limit = max(10, return_threshold)
-        discovered_archive_candidates = await self._discover_archived_rsa_urls(limit=discovery_limit)
+        discovered_archive_candidates = await self._discover_archived_rsa_urls(
+            limit=discovery_limit
+        )
         full_corpus_max_candidates_raw = str(
             os.getenv("STATE_SCRAPER_NH_FULL_CORPUS_MAX_CANDIDATES", "120") or "120"
         ).strip()
         try:
-            full_corpus_max_candidates = int(full_corpus_max_candidates_raw) if full_corpus_max_candidates_raw else 120
+            full_corpus_max_candidates = (
+                int(full_corpus_max_candidates_raw) if full_corpus_max_candidates_raw else 120
+            )
         except Exception:
             full_corpus_max_candidates = 120
         full_corpus_max_candidates = max(12, min(800, full_corpus_max_candidates))
@@ -181,7 +191,9 @@ class NewHampshireScraper(BaseStateScraper):
             return merged
 
         if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_archived_seed_sections(code_name, max_statutes=return_threshold)
+            direct = await self._scrape_direct_archived_seed_sections(
+                code_name, max_statutes=return_threshold
+            )
             if direct:
                 return direct[:return_threshold]
 
@@ -189,7 +201,9 @@ class NewHampshireScraper(BaseStateScraper):
             os.getenv("STATE_SCRAPER_NH_MAX_STAGNANT_CANDIDATES", "20") or "20"
         ).strip()
         try:
-            full_corpus_stagnation_cap = int(full_corpus_stagnation_cap_raw) if full_corpus_stagnation_cap_raw else 20
+            full_corpus_stagnation_cap = (
+                int(full_corpus_stagnation_cap_raw) if full_corpus_stagnation_cap_raw else 20
+            )
         except Exception:
             full_corpus_stagnation_cap = 20
         full_corpus_stagnation_cap = max(4, min(200, full_corpus_stagnation_cap))
@@ -197,7 +211,9 @@ class NewHampshireScraper(BaseStateScraper):
             os.getenv("STATE_SCRAPER_NH_MAX_STAGNANT_CANDIDATES_BOUNDED", "8") or "8"
         ).strip()
         try:
-            bounded_stagnation_cap = int(bounded_stagnation_cap_raw) if bounded_stagnation_cap_raw else 8
+            bounded_stagnation_cap = (
+                int(bounded_stagnation_cap_raw) if bounded_stagnation_cap_raw else 8
+            )
         except Exception:
             bounded_stagnation_cap = 8
         bounded_stagnation_cap = max(2, min(64, bounded_stagnation_cap))
@@ -218,7 +234,9 @@ class NewHampshireScraper(BaseStateScraper):
             statutes = self._filter_section_level(statutes)
             _merge(statutes)
             if statutes:
-                checkpoint.maybe_write(merged, code_name=code_name, stage_label=f"candidate:{candidate}")
+                checkpoint.maybe_write(
+                    merged, code_name=code_name, stage_label=f"candidate:{candidate}"
+                )
             if not full_corpus_unbounded and len(merged) >= return_threshold:
                 return merged
             if full_corpus_unbounded:
@@ -257,7 +275,9 @@ class NewHampshireScraper(BaseStateScraper):
         )
         return merged
 
-    async def _scrape_direct_archived_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
+    async def _scrape_direct_archived_seed_sections(
+        self, code_name: str, max_statutes: int = 1
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -285,7 +305,9 @@ class NewHampshireScraper(BaseStateScraper):
             if len(text) < 160:
                 continue
             title_match = re.search(rf"\b{re.escape(section_number)}\s+([^–-]{{4,180}})", text)
-            section_name = title_match.group(1).strip() if title_match else f"Section {section_number}"
+            section_name = (
+                title_match.group(1).strip() if title_match else f"Section {section_number}"
+            )
             out.append(
                 NormalizedStatute(
                     state_code=self.state_code,
@@ -369,7 +391,9 @@ class NewHampshireScraper(BaseStateScraper):
             # Avoid expensive archival/search fallback loops for known RSA/Wayback
             # URLs when direct replay fetches miss.
             return b""
-        return await self._fetch_page_content_with_archival_fallback(normalized_url, timeout_seconds=timeout_seconds)
+        return await self._fetch_page_content_with_archival_fallback(
+            normalized_url, timeout_seconds=timeout_seconds
+        )
 
     def _should_prefer_direct_only_fetch(self, url: str) -> bool:
         value = str(url or "").strip().lower()
@@ -418,7 +442,9 @@ class NewHampshireScraper(BaseStateScraper):
                 deduped.append(text)
         return deduped
 
-    def _derive_section_number_from_href(self, *, chapter_id: str, section_url: str, href_text: str) -> str:
+    def _derive_section_number_from_href(
+        self, *, chapter_id: str, section_url: str, href_text: str
+    ) -> str:
         chapter = str(chapter_id or "").strip()
         if not chapter:
             return ""
@@ -571,11 +597,16 @@ class NewHampshireScraper(BaseStateScraper):
                         legal_area=self._identify_legal_area(title_name),
                         official_cite=f"N.H. Rev. Stat. Title {title_no}",
                         metadata=StatuteMetadata(),
-                        structured_data={"skip_hydrate": True, "record_type": "archived_title_stub"},
+                        structured_data={
+                            "skip_hydrate": True,
+                            "record_type": "archived_title_stub",
+                        },
                     )
                 )
                 if checkpoint is not None:
-                    checkpoint.maybe_write(title_stubs, code_name=code_name, stage_label=f"title:{title_no}")
+                    checkpoint.maybe_write(
+                        title_stubs, code_name=code_name, stage_label=f"title:{title_no}"
+                    )
             if title_url_limit is not None and len(title_urls) >= title_url_limit:
                 break
 
@@ -663,11 +694,16 @@ class NewHampshireScraper(BaseStateScraper):
                             legal_area=self._identify_legal_area(chapter_name),
                             official_cite=f"N.H. Rev. Stat. ch. {chapter_id}",
                             metadata=StatuteMetadata(),
-                            structured_data={"skip_hydrate": True, "record_type": "archived_chapter_stub"},
+                            structured_data={
+                                "skip_hydrate": True,
+                                "record_type": "archived_chapter_stub",
+                            },
                         )
                     )
                     if checkpoint is not None:
-                        checkpoint.maybe_write(out, code_name=code_name, stage_label=f"chapter-stub:{chapter_id}")
+                        checkpoint.maybe_write(
+                            out, code_name=code_name, stage_label=f"chapter-stub:{chapter_id}"
+                        )
 
             if title_index == 1 or title_index % 5 == 0:
                 self.logger.info(
@@ -700,7 +736,9 @@ class NewHampshireScraper(BaseStateScraper):
         )
         section_sem = asyncio.Semaphore(section_concurrency)
 
-        async def _fetch_chapter_sections(chapter_id: str, chapter_name: str, chapter_url: str) -> List[NormalizedStatute]:
+        async def _fetch_chapter_sections(
+            chapter_id: str, chapter_name: str, chapter_url: str
+        ) -> List[NormalizedStatute]:
             try:
                 chapter_payload = await self._fetch_known_rsa_page(chapter_url, timeout_seconds=35)
                 if not chapter_payload:
@@ -760,7 +798,9 @@ class NewHampshireScraper(BaseStateScraper):
             ) -> Optional[NormalizedStatute]:
                 async with section_sem:
                     try:
-                        section_payload = await self._fetch_known_rsa_page(section_url, timeout_seconds=35)
+                        section_payload = await self._fetch_known_rsa_page(
+                            section_url, timeout_seconds=35
+                        )
                     except Exception:
                         return None
                     section_text = self._extract_statute_text(section_payload)
@@ -846,12 +886,18 @@ class NewHampshireScraper(BaseStateScraper):
 
         sem = asyncio.Semaphore(4)
 
-        async def _bounded_fetch(chapter_id: str, chapter_name: str, chapter_url: str) -> List[NormalizedStatute]:
+        async def _bounded_fetch(
+            chapter_id: str, chapter_name: str, chapter_url: str
+        ) -> List[NormalizedStatute]:
             async with sem:
                 return await _fetch_chapter_sections(chapter_id, chapter_name, chapter_url)
 
         if self._full_corpus_enabled():
-            chapters_to_fetch = chapter_urls if max_statutes is None else chapter_urls[: chapter_fetch_limit or len(chapter_urls)]
+            chapters_to_fetch = (
+                chapter_urls
+                if max_statutes is None
+                else chapter_urls[: chapter_fetch_limit or len(chapter_urls)]
+            )
         else:
             chapters_to_fetch = chapter_urls[:8]
         if chapter_urls:
@@ -874,6 +920,7 @@ class NewHampshireScraper(BaseStateScraper):
                         "codes_total": 1,
                     },
                 )
+
         async def _bounded_fetch_with_meta(
             chapter_id: str,
             chapter_name: str,
@@ -1009,7 +1056,9 @@ class NewHampshireScraper(BaseStateScraper):
         try:
             payload = await self._request_text_direct(cdx_url, timeout=35)
             if not payload:
-                payload = await self._fetch_page_content_with_archival_fallback(cdx_url, timeout_seconds=35)
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    cdx_url, timeout_seconds=35
+                )
             rows = self._parse_json_rows(payload)
         except Exception:
             return []
@@ -1042,8 +1091,12 @@ class NewHampshireScraper(BaseStateScraper):
         url = str(value or "").strip()
         if not url:
             return url
-        url = re.sub(r"(web\.archive\.org/web/\d+/https?):/([^/])", r"\1://\2", url, flags=re.IGNORECASE)
-        url = re.sub(r"(web\.archive\.org/web/\d+/http):/([^/])", r"\1://\2", url, flags=re.IGNORECASE)
+        url = re.sub(
+            r"(web\.archive\.org/web/\d+/https?):/([^/])", r"\1://\2", url, flags=re.IGNORECASE
+        )
+        url = re.sub(
+            r"(web\.archive\.org/web/\d+/http):/([^/])", r"\1://\2", url, flags=re.IGNORECASE
+        )
         return url
 
     def _parse_json_rows(self, payload: bytes) -> List[List[object]]:
@@ -1105,8 +1158,12 @@ def _statute_from_checkpoint_row(
         kwargs["metadata"] = None
 
     kwargs["state_code"] = str(kwargs.get("state_code") or default_state_code).upper()
-    kwargs["state_name"] = str(kwargs.get("state_name") or default_state_name).strip() or default_state_name
-    kwargs["code_name"] = str(kwargs.get("code_name") or default_code_name).strip() or default_code_name
+    kwargs["state_name"] = (
+        str(kwargs.get("state_name") or default_state_name).strip() or default_state_name
+    )
+    kwargs["code_name"] = (
+        str(kwargs.get("code_name") or default_code_name).strip() or default_code_name
+    )
     kwargs["statute_id"] = str(kwargs.get("statute_id") or "").strip()
     if not kwargs["statute_id"]:
         return None
@@ -1125,10 +1182,14 @@ class _NewHampshireCheckpoint:
         if not raw_dir:
             self.path: Optional[Path] = None
         else:
-            self.path = Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            self.path = (
+                Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            )
             self.path.parent.mkdir(parents=True, exist_ok=True)
         self.state_code = state_code.upper()
-        self.interval = max(1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500)))
+        self.interval = max(
+            1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500))
+        )
         self.last_count = 0
         self.last_write_ts = 0.0
         self.last_stage_label = ""
@@ -1222,7 +1283,9 @@ class _NewHampshireCheckpoint:
                 if isinstance(raw_progress, dict):
                     existing_progress = dict(raw_progress)
 
-        serialized_rows = [statute.to_dict() for statute in statutes if isinstance(statute, NormalizedStatute)]
+        serialized_rows = [
+            statute.to_dict() for statute in statutes if isinstance(statute, NormalizedStatute)
+        ]
         if not serialized_rows and existing_rows:
             serialized_rows = list(existing_rows)
         elif serialized_rows and existing_rows and len(serialized_rows) < len(existing_rows):

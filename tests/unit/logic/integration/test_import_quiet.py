@@ -25,9 +25,9 @@ def test_proof_cache_shim_does_not_warn_on_import() -> None:
         warnings.simplefilter("always", DeprecationWarning)
         importlib.import_module(module_name)
 
-    assert not any(
-        isinstance(w.message, DeprecationWarning) for w in recorded
-    ), "DeprecationWarning should not be emitted at import time"
+    assert not any(isinstance(w.message, DeprecationWarning) for w in recorded), (
+        "DeprecationWarning should not be emitted at import time"
+    )
 
 
 def test_proof_cache_shim_warns_on_attribute_access() -> None:
@@ -39,9 +39,9 @@ def test_proof_cache_shim_warns_on_attribute_access() -> None:
         warnings.simplefilter("always", DeprecationWarning)
         _ = mod.ProofCache
 
-    assert any(
-        isinstance(w.message, DeprecationWarning) for w in recorded
-    ), "DeprecationWarning should be emitted when accessing shim attributes"
+    assert any(isinstance(w.message, DeprecationWarning) for w in recorded), (
+        "DeprecationWarning should be emitted when accessing shim attributes"
+    )
 
 
 def test_legal_symbolic_analyzer_import_is_symai_quiet() -> None:

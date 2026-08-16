@@ -2,6 +2,7 @@
 ExtractionConfig.to_yaml/from_yaml, OntologyOptimizer.best_ontology,
 EntityExtractionResult.filter_by_type.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -27,12 +28,18 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _score(c=0.8, co=0.7, cl=0.6, g=0.5, da=0.4):
     return CriticScore(
-        completeness=c, consistency=co, clarity=cl,
-        granularity=g, relationship_coherence=da, domain_alignment=da,
+        completeness=c,
+        consistency=co,
+        clarity=cl,
+        granularity=g,
+        relationship_coherence=da,
+        domain_alignment=da,
         recommendations=[],
     )
+
 
 def _make_mediator():
     gen = OntologyGenerator()
@@ -61,6 +68,7 @@ def _make_result(**kwargs):
 # OntologyPipeline.warm_cache
 # ---------------------------------------------------------------------------
 
+
 class TestWarmCache:
     def test_warm_cache_returns_none(self):
         pipeline = OntologyPipeline(domain="test")
@@ -69,6 +77,7 @@ class TestWarmCache:
 
     def test_warm_cache_populates_shared_cache(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         OntologyCritic.clear_shared_cache()
         pipeline = OntologyPipeline(domain="test")
         initial = OntologyCritic.shared_cache_size()
@@ -95,6 +104,7 @@ class TestWarmCache:
 # OntologyMediator.undo_last_action
 # ---------------------------------------------------------------------------
 
+
 class TestUndoLastAction:
     def test_undo_raises_when_no_history(self):
         mediator = _make_mediator()
@@ -103,7 +113,9 @@ class TestUndoLastAction:
 
     def test_undo_returns_original_ontology(self, ontology_dict_factory):
         mediator = _make_mediator()
-        original = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        original = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         score = _score()
         ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="test")
         mediator.refine_ontology(original, score, ctx)
@@ -112,7 +124,9 @@ class TestUndoLastAction:
 
     def test_undo_removes_from_stack(self, ontology_dict_factory):
         mediator = _make_mediator()
-        original = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        original = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         score = _score()
         ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="test")
         mediator.refine_ontology(original, score, ctx)
@@ -122,8 +136,12 @@ class TestUndoLastAction:
 
     def test_multiple_refines_multiple_undos(self, ontology_dict_factory):
         mediator = _make_mediator()
-        ont1 = ontology_dict_factory(entity_count=1, relationship_count=0, domain="test", metadata={})
-        ont2 = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        ont1 = ontology_dict_factory(
+            entity_count=1, relationship_count=0, domain="test", metadata={}
+        )
+        ont2 = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         score = _score()
         ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="test")
         mediator.refine_ontology(ont1, score, ctx)
@@ -136,7 +154,9 @@ class TestUndoLastAction:
 
     def test_undo_snapshot_is_deep_copy(self, ontology_dict_factory):
         mediator = _make_mediator()
-        original = ontology_dict_factory(entity_count=2, relationship_count=0, domain="test", metadata={})
+        original = ontology_dict_factory(
+            entity_count=2, relationship_count=0, domain="test", metadata={}
+        )
         score = _score()
         ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="test")
         mediator.refine_ontology(original, score, ctx)
@@ -150,6 +170,7 @@ class TestUndoLastAction:
 # ---------------------------------------------------------------------------
 # ExtractionConfig.to_yaml / from_yaml
 # ---------------------------------------------------------------------------
+
 
 class TestExtractionConfigYaml:
     def test_to_yaml_returns_string(self):
@@ -177,6 +198,7 @@ class TestExtractionConfigYaml:
 
     def test_to_yaml_is_valid_yaml(self):
         import yaml
+
         cfg = ExtractionConfig(confidence_threshold=0.5)
         d = yaml.safe_load(cfg.to_yaml())
         assert isinstance(d, dict)
@@ -196,6 +218,7 @@ class TestExtractionConfigYaml:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.best_ontology
 # ---------------------------------------------------------------------------
+
 
 class TestBestOntology:
     def _make_report(self, score, ontology=None):
@@ -244,6 +267,7 @@ class TestBestOntology:
 # ---------------------------------------------------------------------------
 # EntityExtractionResult.filter_by_type
 # ---------------------------------------------------------------------------
+
 
 class TestFilterByType:
     def test_returns_new_instance(self):

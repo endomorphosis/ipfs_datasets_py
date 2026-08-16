@@ -81,25 +81,23 @@ Extend `BaseCLITool`:
 ```python
 from ipfs_datasets_py.utils.cli_tools import BaseCLITool
 
+
 class MyTool(BaseCLITool):
     tool_name = "mytool"
-    
+
     def _verify_installation(self) -> bool:
         """Check if tool is installed."""
         if not self.cli_path or not self.cli_path.exists():
             return False
         # Additional verification...
         return True
-    
+
     def my_command(self, arg: str) -> str:
         """Custom command."""
-        result = self._run_command(
-            ['subcommand', arg],
-            cache_key=f"my_command:{arg}"
-        )
-        if result['success']:
-            return result['stdout']
-        raise RuntimeError(result['stderr'])
+        result = self._run_command(["subcommand", arg], cache_key=f"my_command:{arg}")
+        if result["success"]:
+            return result["stdout"]
+        raise RuntimeError(result["stderr"])
 ```
 
 ## Features
@@ -124,7 +122,7 @@ All tool wrappers support caching:
 copilot = Copilot(
     enable_cache=True,
     cache_maxsize=100,
-    cache_ttl=600  # 10 minutes
+    cache_ttl=600,  # 10 minutes
 )
 
 # Results are cached
@@ -157,14 +155,17 @@ except RuntimeError as e:
 ```python
 # Old code
 from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
+
 copilot = CopilotCLI()
 
 # New code
 from ipfs_datasets_py.utils.cli_tools import Copilot
+
 copilot = Copilot()
 
 # Or use backward-compatible alias
 from ipfs_datasets_py.utils.cli_tools import CopilotCLI
+
 copilot = CopilotCLI()
 ```
 

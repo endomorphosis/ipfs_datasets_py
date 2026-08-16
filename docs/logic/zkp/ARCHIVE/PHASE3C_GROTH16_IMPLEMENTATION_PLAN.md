@@ -174,41 +174,42 @@ For MVP:
 ```python
 # backends/groth16.py
 
+
 class Groth16Backend:
     """Real Groth16 backend using Rust FFI."""
-    
+
     def __init__(self):
         self.prover_binary = find_groth16_binary()
         self.verifier_binary = self.prover_binary  # Same binary
-    
+
     def generate_proof(self, witness: MVPWitness) -> ZKPProof:
         """Generate real Groth16 proof."""
         # 1. Serialize witness to JSON
         witness_json = witness.to_json()
-        
+
         # 2. Call Rust binary
         result = subprocess.run(
             [self.prover_binary, "--prove"],
             input=witness_json,
             capture_output=True,
         )
-        
+
         # 3. Parse proof from JSON
         proof_data = json.loads(result.stdout)
         return ZKPProof.from_dict(proof_data)
-    
+
     def verify_proof(self, proof: ZKPProof) -> bool:
         """Verify real Groth16 proof."""
         # 1. Serialize proof to JSON
         proof_json = proof.to_json()
-        
+
         # 2. Call Rust binary
         result = subprocess.run(
             [self.verifier_binary, "--verify"],
             input=proof_json,
             capture_output=True,
         )
-        
+
         # 3. Check result
         return result.returncode == 0
 ```
@@ -218,8 +219,8 @@ class Groth16Backend:
 # backends/__init__.py - existing registry, add Groth16
 
 BACKEND_REGISTRY = {
-    'simulated': SimulatedBackend,  # Phase 1-2
-    'groth16': Groth16Backend,      # Phase 3C NEW
+    "simulated": SimulatedBackend,  # Phase 1-2
+    "groth16": Groth16Backend,  # Phase 3C NEW
 }
 ```
 
@@ -238,44 +239,45 @@ BACKEND_REGISTRY = {
 ```python
 # test_groth16_backend.py
 
+
 class TestGroth16Backend:
     """Test real Groth16 backend against golden vectors."""
-    
+
     def test_groth16_generates_proof(self):
         """Generate real proof from golden vector."""
         vector = golden_vectors[0]  # modus_ponens_basic
-        
+
         witness = MVPWitness.from_vector(vector)
         proof = groth16_backend.generate_proof(witness)
-        
+
         # Proof must have Groth16 structure
         assert proof.proof_data is not None
         assert len(proof.proof_data) >= 200  # Typical Groth16 size
-    
+
     def test_groth16_verifies_own_proofs(self):
         """Verify own generated proofs."""
         for vector in golden_vectors:
             witness = MVPWitness.from_vector(vector)
             proof = groth16_backend.generate_proof(witness)
-            
+
             is_valid = groth16_backend.verify_proof(proof)
             assert is_valid is True
-    
+
     def test_groth16_rejects_tampered_proofs(self):
         """Groth16 must reject modified proofs."""
         vector = golden_vectors[0]
         witness = MVPWitness.from_vector(vector)
         proof = groth16_backend.generate_proof(witness)
-        
+
         # Tamper with proof
         tampered_proof = ZKPProof(
-            proof_data=proof.proof_data[:-1] + b'X',  # Last byte changed
+            proof_data=proof.proof_data[:-1] + b"X",  # Last byte changed
             public_inputs=proof.public_inputs,
             metadata=proof.metadata,
             timestamp=proof.timestamp,
             size_bytes=proof.size_bytes,
         )
-        
+
         # Must reject tampered proof
         is_valid = groth16_backend.verify_proof(tampered_proof)
         assert is_valid is False
@@ -285,14 +287,15 @@ class TestGroth16Backend:
 ```python
 # test_backends_compatibility.py
 
+
 def test_simulated_vs_groth16_public_inputs():
     """Public inputs must be identical."""
     witness = MVPWitness(...)
-    
+
     # Generate with both backends
     proof_sim = simulated_backend.generate_proof(witness)
     proof_g16 = groth16_backend.generate_proof(witness)
-    
+
     # Public inputs must match
     assert proof_sim.public_inputs == proof_g16.public_inputs
 ```
@@ -300,6 +303,7 @@ def test_simulated_vs_groth16_public_inputs():
 **Task 3C.3.3: Performance Benchmarks**
 ```python
 # benchmarks/groth16_performance.py
+
 
 def benchmark_proof_generation():
     """Measure Groth16 proof generation time."""
@@ -309,7 +313,7 @@ def benchmark_proof_generation():
         start = time.time()
         proof = groth16_backend.generate_proof(witness)
         times.append(time.time() - start)
-    
+
     avg_time = sum(times) / len(times)
     print(f"Average proof generation: {avg_time:.3f}s")
     assert avg_time < 5.0  # SLA: < 5 seconds
@@ -341,19 +345,20 @@ contract Groth16Verifier {
 ```python
 # on_chain/ethereum.py
 
+
 def submit_proof_to_ethereum(proof: ZKPProof):
     """Submit Groth16 proof to Ethereum contract."""
     # Extract proof components (A, B, C)
     a, b, c = extract_groth16_components(proof)
-    
+
     # Encode public inputs
     public_inputs = [
-        int(proof.public_inputs['theorem_hash'], 16),
-        int(proof.public_inputs['axioms_commitment'], 16),
-        proof.public_inputs['circuit_version'],
-        proof.public_inputs['ruleset_id'],
+        int(proof.public_inputs["theorem_hash"], 16),
+        int(proof.public_inputs["axioms_commitment"], 16),
+        proof.public_inputs["circuit_version"],
+        proof.public_inputs["ruleset_id"],
     ]
-    
+
     # Call Ethereum contract
     tx_hash = contract.functions.verifyProof(a, b, c, public_inputs).transact()
     return tx_hash

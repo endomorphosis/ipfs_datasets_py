@@ -39,18 +39,25 @@ def an_auditevent_exists_with_all_fields_populated():
             source_function="test_function",
             related_events=["evt1", "evt2"],
             tags=["important", "security"],
-            version="1.0"
+            version="1.0",
         )
-        
+
         if event is None:
-            raise FixtureError("Failed to create fixture an_auditevent_exists_with_all_fields_populated: AuditEvent is None") from None
-        
-        if not hasattr(event, 'to_json'):
-            raise FixtureError("Failed to create fixture an_auditevent_exists_with_all_fields_populated: AuditEvent missing 'to_json' method") from None
-        
+            raise FixtureError(
+                "Failed to create fixture an_auditevent_exists_with_all_fields_populated: AuditEvent is None"
+            ) from None
+
+        if not hasattr(event, "to_json"):
+            raise FixtureError(
+                "Failed to create fixture an_auditevent_exists_with_all_fields_populated: AuditEvent missing 'to_json' method"
+            ) from None
+
         return event
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture an_auditevent_exists_with_all_fields_populated: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture an_auditevent_exists_with_all_fields_populated: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_event_has_levelinfo(an_auditevent_exists_with_all_fields_populated):
@@ -59,13 +66,16 @@ def the_event_has_levelinfo(an_auditevent_exists_with_all_fields_populated):
     """
     try:
         event = an_auditevent_exists_with_all_fields_populated
-        
+
         if event.level != AuditLevel.INFO:
-            raise FixtureError(f"Failed to create fixture the_event_has_levelinfo: Event level is {event.level}, expected INFO") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_event_has_levelinfo: Event level is {event.level}, expected INFO"
+            ) from None
+
         return event
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_event_has_levelinfo: {e}") from e
+
 
 @pytest.fixture
 def the_event_has_categorydata_access(an_auditevent_exists_with_all_fields_populated):
@@ -74,13 +84,18 @@ def the_event_has_categorydata_access(an_auditevent_exists_with_all_fields_popul
     """
     try:
         event = an_auditevent_exists_with_all_fields_populated
-        
+
         if event.category != AuditCategory.DATA_ACCESS:
-            raise FixtureError(f"Failed to create fixture the_event_has_categorydata_access: Event category is {event.category}, expected DATA_ACCESS") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_event_has_categorydata_access: Event category is {event.category}, expected DATA_ACCESS"
+            ) from None
+
         return event
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture the_event_has_categorydata_access: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture the_event_has_categorydata_access: {e}"
+        ) from e
+
 
 @pytest.fixture
 def the_event_has_actionread(an_auditevent_exists_with_all_fields_populated):
@@ -89,13 +104,16 @@ def the_event_has_actionread(an_auditevent_exists_with_all_fields_populated):
     """
     try:
         event = an_auditevent_exists_with_all_fields_populated
-        
+
         if event.action != "read":
-            raise FixtureError(f"Failed to create fixture the_event_has_actionread: Event action is {event.action}, expected 'read'") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_event_has_actionread: Event action is {event.action}, expected 'read'"
+            ) from None
+
         return event
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_event_has_actionread: {e}") from e
+
 
 @pytest.fixture
 def the_event_has_useralice(an_auditevent_exists_with_all_fields_populated):
@@ -104,16 +122,24 @@ def the_event_has_useralice(an_auditevent_exists_with_all_fields_populated):
     """
     try:
         event = an_auditevent_exists_with_all_fields_populated
-        
+
         if event.user != "alice":
-            raise FixtureError(f"Failed to create fixture the_event_has_useralice: Event user is {event.user}, expected 'alice'") from None
-        
+            raise FixtureError(
+                f"Failed to create fixture the_event_has_useralice: Event user is {event.user}, expected 'alice'"
+            ) from None
+
         return event
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_event_has_useralice: {e}") from e
 
 
-def test_to_json_returns_string(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_returns_string(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json returns string
 
@@ -127,7 +153,13 @@ def test_to_json_returns_string(an_auditevent_exists_with_all_fields_populated, 
     pass
 
 
-def test_to_json_returns_valid_json(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_returns_valid_json(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json returns valid JSON
 
@@ -141,7 +173,13 @@ def test_to_json_returns_valid_json(an_auditevent_exists_with_all_fields_populat
     pass
 
 
-def test_to_json_includes_event_id(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_includes_event_id(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json includes event_id
 
@@ -155,7 +193,13 @@ def test_to_json_includes_event_id(an_auditevent_exists_with_all_fields_populate
     pass
 
 
-def test_to_json_includes_level_as_string_contains_level_key(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_includes_level_as_string_contains_level_key(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json includes level as string contains level key
 
@@ -170,7 +214,13 @@ def test_to_json_includes_level_as_string_contains_level_key(an_auditevent_exist
     pass
 
 
-def test_to_json_includes_level_as_string_has_info_value(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_includes_level_as_string_has_info_value(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json includes level as string has INFO value
 
@@ -185,7 +235,13 @@ def test_to_json_includes_level_as_string_has_info_value(an_auditevent_exists_wi
     pass
 
 
-def test_to_json_includes_category_as_string_contains_category_key(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_includes_category_as_string_contains_category_key(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json includes category as string contains category key
 
@@ -200,7 +256,13 @@ def test_to_json_includes_category_as_string_contains_category_key(an_auditevent
     pass
 
 
-def test_to_json_includes_category_as_string_has_data_access_value(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_includes_category_as_string_has_data_access_value(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json includes category as string has DATA_ACCESS value
 
@@ -215,7 +277,13 @@ def test_to_json_includes_category_as_string_has_data_access_value(an_auditevent
     pass
 
 
-def test_to_json_with_prettyfalse_returns_compact_json_without_indentation(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_with_prettyfalse_returns_compact_json_without_indentation(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json with pretty=False returns compact JSON without indentation
 
@@ -229,7 +297,13 @@ def test_to_json_with_prettyfalse_returns_compact_json_without_indentation(an_au
     pass
 
 
-def test_to_json_with_prettyfalse_returns_compact_json_without_newlines(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_with_prettyfalse_returns_compact_json_without_newlines(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json with pretty=False returns compact JSON without newlines
 
@@ -243,7 +317,13 @@ def test_to_json_with_prettyfalse_returns_compact_json_without_newlines(an_audit
     pass
 
 
-def test_to_json_with_prettytrue_returns_formatted_json_with_indentation(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_with_prettytrue_returns_formatted_json_with_indentation(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json with pretty=True returns formatted JSON with indentation
 
@@ -257,7 +337,13 @@ def test_to_json_with_prettytrue_returns_formatted_json_with_indentation(an_audi
     pass
 
 
-def test_to_json_with_prettytrue_returns_formatted_json_with_newlines(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_with_prettytrue_returns_formatted_json_with_newlines(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json with pretty=True returns formatted JSON with newlines
 
@@ -271,7 +357,13 @@ def test_to_json_with_prettytrue_returns_formatted_json_with_newlines(an_auditev
     pass
 
 
-def test_to_json_includes_details_as_nested_object_with_details_key(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_includes_details_as_nested_object_with_details_key(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json includes details as nested object with details key
 
@@ -289,7 +381,13 @@ def test_to_json_includes_details_as_nested_object_with_details_key(an_auditeven
     pass
 
 
-def test_to_json_includes_details_as_nested_object_that_is_an_object(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_includes_details_as_nested_object_that_is_an_object(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json includes details as nested object that is an object
 
@@ -307,7 +405,13 @@ def test_to_json_includes_details_as_nested_object_that_is_an_object(an_auditeve
     pass
 
 
-def test_to_json_includes_details_with_file_size(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_includes_details_with_file_size(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json includes details with file_size
 
@@ -325,7 +429,13 @@ def test_to_json_includes_details_with_file_size(an_auditevent_exists_with_all_f
     pass
 
 
-def test_to_json_includes_details_with_path(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_includes_details_with_path(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json includes details with path
 
@@ -343,7 +453,13 @@ def test_to_json_includes_details_with_path(an_auditevent_exists_with_all_fields
     pass
 
 
-def test_to_json_handles_none_values_without_error(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_handles_none_values_without_error(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json handles None values without error
 
@@ -360,7 +476,13 @@ def test_to_json_handles_none_values_without_error(an_auditevent_exists_with_all
     pass
 
 
-def test_to_json_handles_none_values_with_valid_json(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_handles_none_values_with_valid_json(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json handles None values with valid JSON
 
@@ -377,7 +499,13 @@ def test_to_json_handles_none_values_with_valid_json(an_auditevent_exists_with_a
     pass
 
 
-def test_to_json_includes_timestamp_in_iso_format_contains_timestamp(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_includes_timestamp_in_iso_format_contains_timestamp(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json includes timestamp in ISO format contains timestamp
 
@@ -392,7 +520,13 @@ def test_to_json_includes_timestamp_in_iso_format_contains_timestamp(an_auditeve
     pass
 
 
-def test_to_json_includes_timestamp_in_iso_format_ends_with_z(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_includes_timestamp_in_iso_format_ends_with_z(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json includes timestamp in ISO format ends with Z
 
@@ -407,7 +541,13 @@ def test_to_json_includes_timestamp_in_iso_format_ends_with_z(an_auditevent_exis
     pass
 
 
-def test_to_json_result_can_be_parsed_back(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
+def test_to_json_result_can_be_parsed_back(
+    an_auditevent_exists_with_all_fields_populated,
+    the_event_has_levelinfo,
+    the_event_has_categorydata_access,
+    the_event_has_actionread,
+    the_event_has_useralice,
+):
     """
     Scenario: To json result can be parsed back
 
@@ -419,4 +559,3 @@ def test_to_json_result_can_be_parsed_back(an_auditevent_exists_with_all_fields_
     """
     # TODO: Implement test
     pass
-

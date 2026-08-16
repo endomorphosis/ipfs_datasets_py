@@ -61,9 +61,7 @@ test generation, linting, and automated PR review.
 ### GitHub operations
 
 ```python
-from ipfs_datasets_py.mcp_server.tools.development_tools import (
-    github_create_pr, github_list_issues
-)
+from ipfs_datasets_py.mcp_server.tools.development_tools import github_create_pr, github_list_issues
 
 # Create a pull request
 pr = await github_create_pr(
@@ -73,16 +71,12 @@ pr = await github_create_pr(
     body="## Summary\nThis PR fixes...",
     head="feature/fix-loading",
     base="main",
-    draft=False
+    draft=False,
 )
 
 # List issues
 issues = await github_list_issues(
-    owner="my-org",
-    repo="my-repo",
-    state="open",
-    labels=["bug"],
-    max_results=20
+    owner="my-org", repo="my-repo", state="open", labels=["bug"], max_results=20
 )
 ```
 
@@ -94,9 +88,9 @@ from ipfs_datasets_py.mcp_server.tools.development_tools import search_codebase
 result = await search_codebase(
     root_path="/home/user/project",
     query="class DatasetLoader",
-    search_type="symbol",      # "symbol" | "text" | "regex" | "file"
+    search_type="symbol",  # "symbol" | "text" | "regex" | "file"
     file_extensions=[".py"],
-    max_results=20
+    max_results=20,
 )
 ```
 
@@ -108,8 +102,8 @@ from ipfs_datasets_py.mcp_server.tools.development_tools import generate_docs
 result = await generate_docs(
     source_path="/home/user/project/src",
     output_path="/home/user/project/docs",
-    format="markdown",         # "markdown" | "rst" | "html"
-    include_private=False
+    format="markdown",  # "markdown" | "rst" | "html"
+    include_private=False,
 )
 ```
 
@@ -122,7 +116,7 @@ result = await generate_tests(
     source_file="/home/user/project/src/loader.py",
     output_file="/home/user/project/tests/test_loader.py",
     test_framework="pytest",
-    coverage_target=80
+    coverage_target=80,
 )
 ```
 
@@ -134,7 +128,7 @@ from ipfs_datasets_py.mcp_server.tools.development_tools import lint_file
 result = await lint_file(
     file_path="/home/user/project/src/loader.py",
     linters=["flake8", "mypy"],
-    fix=True                   # Auto-fix fixable issues
+    fix=True,  # Auto-fix fixable issues
 )
 ```
 
@@ -145,8 +139,8 @@ from ipfs_datasets_py.mcp_server.tools.development_tools import claude_analyze_c
 
 result = await claude_analyze_code(
     code=open("/home/user/project/src/loader.py").read(),
-    task="review",             # "review" | "explain" | "refactor" | "test"
-    focus=["security", "performance"]
+    task="review",  # "review" | "explain" | "refactor" | "test"
+    focus=["security", "performance"],
 )
 ```
 

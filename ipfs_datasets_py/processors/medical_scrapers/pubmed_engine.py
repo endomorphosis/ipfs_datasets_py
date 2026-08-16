@@ -145,9 +145,7 @@ class PubMedScraper:
                     break
 
             mesh_terms = [
-                mesh.text
-                for mesh in medline.findall(".//MeshHeading/DescriptorName")
-                if mesh.text
+                mesh.text for mesh in medline.findall(".//MeshHeading/DescriptorName") if mesh.text
             ]
             article_types = [pt.text for pt in article.findall(".//PublicationType")]
 
@@ -289,9 +287,7 @@ class PubMedScraper:
         query = f"{topic} AND (biochemistry[MeSH] OR molecular biology[MeSH])"
         start_date = None
         if time_range_days:
-            start_date = (datetime.now() - timedelta(days=time_range_days)).strftime(
-                "%Y/%m/%d"
-            )
+            start_date = (datetime.now() - timedelta(days=time_range_days)).strftime("%Y/%m/%d")
         return self.search_medical_research(
             query=query,
             max_results=max_results,

@@ -55,7 +55,9 @@ def test_generic_snapshot_api_preserves_skillcenter_wire_contract() -> None:
     assert SkillCenterSnapshot.from_json(snapshot.to_json()) == snapshot
     assert snapshot.schema_version == "skillcenter-snapshot/v1"
     assert snapshot.snapshot_id.startswith("skillcenter-snapshot:sha256:")
-    assert snapshot.logical_source == (f"hf://datasets/Publicus/abby-voice@{_COMMIT}/sources/audio/abby.wav")
+    assert snapshot.logical_source == (
+        f"hf://datasets/Publicus/abby-voice@{_COMMIT}/sources/audio/abby.wav"
+    )
     assert snapshot.to_artifact().content_sha256 == snapshot.expected_sha256
 
 
@@ -76,7 +78,9 @@ def test_generic_and_skillcenter_cache_share_existing_alias(
     assert cached.read_bytes() == _PAYLOAD
 
 
-def test_cache_hit_never_calls_network_or_fetcher(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cache_hit_never_calls_network_or_fetcher(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     snapshot = _snapshot()
     warm_cache = HuggingFaceSnapshotCache(
         tmp_path,

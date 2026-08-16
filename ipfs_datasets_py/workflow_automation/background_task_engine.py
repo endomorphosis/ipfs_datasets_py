@@ -236,9 +236,7 @@ class MockTaskManager:
         for task in tasks:
             counters[task.status.value] = counters.get(task.status.value, 0) + 1
         return {
-            "queues": {
-                ttype: len(queue) for ttype, queue in self.task_queues.items()
-            },
+            "queues": {ttype: len(queue) for ttype, queue in self.task_queues.items()},
             "running_tasks": len(self.running_tasks),
             "total_tasks": len(tasks),
             "counters": {

@@ -20,7 +20,11 @@ import json
 import time
 
 from ..converters.deontic_logic_core import DeonticFormula, DeonticRuleSet
-from ..converters.logic_translation_core import LogicTranslationTarget, TranslationResult, LogicTranslator
+from ..converters.logic_translation_core import (
+    LogicTranslationTarget,
+    TranslationResult,
+    LogicTranslator,
+)
 from ..converters.logic_translation_core import LeanTranslator, CoqTranslator, SMTTranslator
 from ...security.rate_limiting import RateLimiter
 from ...security.input_validation import InputValidator
@@ -41,7 +45,7 @@ class ProofExecutionEngine:
     """
     Engine for executing proofs using various theorem provers.
     """
-    
+
     def __init__(
         self,
         temp_dir: Optional[str] = None,
@@ -71,10 +75,7 @@ class ProofExecutionEngine:
         # Proof caching
         self.enable_caching = enable_caching
         if enable_caching:
-            self.proof_cache = get_global_cache(
-                maxsize=cache_size,
-                ttl=cache_ttl
-            )
+            self.proof_cache = get_global_cache(maxsize=cache_size, ttl=cache_ttl)
             logger.info(f"Proof caching enabled: maxsize={cache_size}, ttl={cache_ttl}s")
         else:
             self.proof_cache = None
@@ -150,19 +151,21 @@ class ProofExecutionEngine:
             subprocess.run(args, check=False, env=env)
         except Exception as exc:
             logger.info(f"Auto-install provers failed (best-effort): {exc}")
-        
+
     def _detect_available_provers(self) -> Dict[str, bool]:
         """Detect which theorem provers are available on the system."""
         # NOTE: Lean installed via elan may download the toolchain on first use;
         # `lean --version` can legitimately take >10s in that case.
         provers = {
-            'z3': self._test_command([self._prover_cmd('z3'), '--version'], timeout_s=10),
-            'cvc5': self._test_command([self._prover_cmd('cvc5'), '--version'], timeout_s=10),
-            'lean': self._test_command([self._prover_cmd('lean'), '--version'], timeout_s=60),
-            'coq': self._test_command([self._prover_cmd('coq'), '--version'], timeout_s=30),
+            "z3": self._test_command([self._prover_cmd("z3"), "--version"], timeout_s=10),
+            "cvc5": self._test_command([self._prover_cmd("cvc5"), "--version"], timeout_s=10),
+            "lean": self._test_command([self._prover_cmd("lean"), "--version"], timeout_s=60),
+            "coq": self._test_command([self._prover_cmd("coq"), "--version"], timeout_s=30),
         }
-        
-        logger.info(f"Available theorem provers: {[p for p, available in provers.items() if available]}")
+
+        logger.info(
+            f"Available theorem provers: {[p for p, available in provers.items() if available]}"
+        )
         return provers
 
     def _common_bin_dirs(self) -> List[Path]:
@@ -194,7 +197,7 @@ class ProofExecutionEngine:
 
         # Then common user bins.
         candidates = []
-        for d in (extra or []):
+        for d in extra or []:
             candidates.append(d / name)
         for d in self._common_bin_dirs():
             candidates.append(d / name)
@@ -220,7 +223,7 @@ class ProofExecutionEngine:
         if prover == "cvc5":
             return self.prover_binaries.get("cvc5") or self._find_executable("cvc5") or "cvc5"
         return prover
-        
+
     def _test_command(self, cmd: List[str], *, timeout_s: int = 10) -> bool:
         """Test if a command is available."""
         try:
@@ -228,7 +231,7 @@ class ProofExecutionEngine:
             return result.returncode == 0
         except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError, OSError):
             return False
-    
+
     def prove_deontic_formula(
         self,
         formula: DeonticFormula,
@@ -238,19 +241,21 @@ class ProofExecutionEngine:
     ) -> ProofResult:
         """
         Prove a deontic logic formula using the specified theorem prover.
-        
+
         Args:
             formula: The deontic formula to prove
             prover: The prover to use (z3, cvc5, lean, coq)
             user_id: User identifier for rate limiting
             use_cache: Whether to use cached results (default: True)
-            
+
         Returns:
             ProofResult with status and details
         """
         # Check cache first if enabled
         if use_cache and self.enable_caching and self.proof_cache:
-            formula_str = formula.to_fol_string() if hasattr(formula, 'to_fol_string') else str(formula)
+            formula_str = (
+                formula.to_fol_string() if hasattr(formula, "to_fol_string") else str(formula)
+            )
             prover_name = prover or self.default_prover or "z3"
             cached_result = self.proof_cache.get(formula_str, prover_name=prover_name)
             if cached_result:
@@ -263,10 +268,12 @@ class ProofExecutionEngine:
                         cached_result_dict["status"] = ProofStatus(status_value)
                     except (ValueError, KeyError):
                         # If the cached status string is unexpected, default to ERROR
-                        logger.warning(f"Invalid cached status value: {status_value}, defaulting to ERROR")
+                        logger.warning(
+                            f"Invalid cached status value: {status_value}, defaulting to ERROR"
+                        )
                         cached_result_dict["status"] = ProofStatus.ERROR
                 return ProofResult(**cached_result_dict)
-        
+
         # Apply rate limiting
         if self.enable_rate_limiting:
             try:
@@ -276,9 +283,9 @@ class ProofExecutionEngine:
                     prover=prover or self.default_prover or "z3",
                     statement=str(formula),
                     status=ProofStatus.ERROR,
-                    errors=[f"Rate limit exceeded: {e}"]
+                    errors=[f"Rate limit exceeded: {e}"],
                 )
-        
+
         # Validate formula complexity
         if self.enable_validation:
             try:
@@ -288,26 +295,26 @@ class ProofExecutionEngine:
                     prover=prover or self.default_prover or "z3",
                     statement=str(formula),
                     status=ProofStatus.ERROR,
-                    errors=[f"Validation failed: {e}"]
+                    errors=[f"Validation failed: {e}"],
                 )
-        
+
         prover = str(prover or self.default_prover or "z3")
         if prover not in self.available_provers:
             return ProofResult(
                 prover=prover,
                 statement=formula.to_fol_string(),
                 status=ProofStatus.UNSUPPORTED,
-                errors=[f"Prover {prover} not available"]
+                errors=[f"Prover {prover} not available"],
             )
-        
+
         if not self.available_provers[prover]:
             return ProofResult(
                 prover=prover,
                 statement=formula.to_fol_string(),
                 status=ProofStatus.ERROR,
-                errors=[f"Prover {prover} not installed"]
+                errors=[f"Prover {prover} not installed"],
             )
-        
+
         # Translate formula to target format
         translator = self._get_translator(prover)
         if not translator:
@@ -315,60 +322,63 @@ class ProofExecutionEngine:
                 prover=prover,
                 statement=formula.to_fol_string(),
                 status=ProofStatus.UNSUPPORTED,
-                errors=[f"No translator available for {prover}"]
+                errors=[f"No translator available for {prover}"],
             )
-        
+
         translation_result = translator.translate_deontic_formula(formula)
         if not translation_result.success:
             return ProofResult(
                 prover=prover,
                 statement=formula.to_fol_string(),
                 status=ProofStatus.ERROR,
-                errors=[f"Translation failed: {translation_result.errors}"]
+                errors=[f"Translation failed: {translation_result.errors}"],
             )
-        
+
         # Execute proof based on prover type
-        if prover == 'z3':
+        if prover == "z3":
             result = self._execute_z3_proof(formula, translation_result)
-        elif prover == 'cvc5':
+        elif prover == "cvc5":
             result = self._execute_cvc5_proof(formula, translation_result)
-        elif prover == 'lean':
+        elif prover == "lean":
             result = self._execute_lean_proof(formula, translation_result)
-        elif prover == 'coq':
+        elif prover == "coq":
             result = self._execute_coq_proof(formula, translation_result)
         else:
             result = ProofResult(
                 prover=prover,
                 statement=formula.to_fol_string(),
                 status=ProofStatus.UNSUPPORTED,
-                errors=[f"Proof execution not implemented for {prover}"]
+                errors=[f"Proof execution not implemented for {prover}"],
             )
-        
+
         # Cache the result if enabled
         if use_cache and self.enable_caching and self.proof_cache:
-            formula_str = formula.to_fol_string() if hasattr(formula, 'to_fol_string') else str(formula)
+            formula_str = (
+                formula.to_fol_string() if hasattr(formula, "to_fol_string") else str(formula)
+            )
             # Convert ProofResult to dict for caching
             result_dict = result.to_dict()
             self.proof_cache.set(formula_str, result_dict, prover_name=prover)
             logger.debug(f"Cached proof result for formula with prover={prover}")
-        
+
         return result
-    
+
     def _get_translator(self, prover: str) -> Optional[LogicTranslator]:
         """Get appropriate translator for prover."""
         translators = {
-            'z3': SMTTranslator(),
-            'cvc5': SMTTranslator(),
-            'lean': LeanTranslator(),
-            'coq': CoqTranslator()
+            "z3": SMTTranslator(),
+            "cvc5": SMTTranslator(),
+            "lean": LeanTranslator(),
+            "coq": CoqTranslator(),
         }
         return translators.get(prover)
-    
-    def _execute_z3_proof(self, formula: DeonticFormula, 
-                         translation: TranslationResult) -> ProofResult:
+
+    def _execute_z3_proof(
+        self, formula: DeonticFormula, translation: TranslationResult
+    ) -> ProofResult:
         """Execute proof using Z3 SMT solver."""
         start_time = time.time()
-        
+
         # Create SMT-LIB file for Z3
         smt_content = f"""
 ; Deontic logic axioms
@@ -393,22 +403,22 @@ class ProofExecutionEngine:
 (check-sat)
 (get-model)
 """
-        
+
         # Write to temporary file
         smt_file = self.temp_dir / f"formula_{formula.formula_id}.smt2"
         smt_file.write_text(smt_content)
-        
+
         try:
             # Run Z3
             result = subprocess.run(
-                [self._prover_cmd('z3'), str(smt_file)],
+                [self._prover_cmd("z3"), str(smt_file)],
                 capture_output=True,
                 text=True,
-                timeout=self.timeout
+                timeout=self.timeout,
             )
-            
+
             execution_time = time.time() - start_time
-            
+
             if result.returncode == 0:
                 output = result.stdout.strip()
                 if "sat" in output.lower():
@@ -417,14 +427,14 @@ class ProofExecutionEngine:
                     status = ProofStatus.SUCCESS  # Unsat can be valid result
                 else:
                     status = ProofStatus.FAILURE
-                    
+
                 return ProofResult(
                     prover="z3",
                     statement=formula.to_fol_string(),
                     status=status,
                     proof_output=output,
                     execution_time=execution_time,
-                    metadata={"smt_file": str(smt_file)}
+                    metadata={"smt_file": str(smt_file)},
                 )
             else:
                 return ProofResult(
@@ -432,30 +442,31 @@ class ProofExecutionEngine:
                     statement=formula.to_fol_string(),
                     status=ProofStatus.ERROR,
                     execution_time=execution_time,
-                    errors=[result.stderr]
+                    errors=[result.stderr],
                 )
-                
+
         except subprocess.TimeoutExpired:
             return ProofResult(
                 prover="z3",
                 statement=formula.to_fol_string(),
                 status=ProofStatus.TIMEOUT,
                 execution_time=self.timeout,
-                errors=["Execution timeout"]
+                errors=["Execution timeout"],
             )
         except Exception as e:
             return ProofResult(
                 prover="z3",
                 statement=formula.to_fol_string(),
                 status=ProofStatus.ERROR,
-                errors=[str(e)]
+                errors=[str(e)],
             )
-    
-    def _execute_cvc5_proof(self, formula: DeonticFormula, 
-                          translation: TranslationResult) -> ProofResult:
+
+    def _execute_cvc5_proof(
+        self, formula: DeonticFormula, translation: TranslationResult
+    ) -> ProofResult:
         """Execute proof using CVC5 SMT solver."""
         start_time = time.time()
-        
+
         # Create SMT-LIB file for CVC5 (similar to Z3)
         smt_content = f"""
 (set-logic ALL)
@@ -479,31 +490,35 @@ class ProofExecutionEngine:
 
 (check-sat)
 """
-        
+
         smt_file = self.temp_dir / f"formula_{formula.formula_id}_cvc5.smt2"
         smt_file.write_text(smt_content)
-        
+
         try:
             result = subprocess.run(
-                [self._prover_cmd('cvc5'), str(smt_file)],
+                [self._prover_cmd("cvc5"), str(smt_file)],
                 capture_output=True,
                 text=True,
-                timeout=self.timeout
+                timeout=self.timeout,
             )
-            
+
             execution_time = time.time() - start_time
-            
+
             if result.returncode == 0:
                 output = result.stdout.strip()
-                status = ProofStatus.SUCCESS if "sat" in output.lower() or "unsat" in output.lower() else ProofStatus.FAILURE
-                
+                status = (
+                    ProofStatus.SUCCESS
+                    if "sat" in output.lower() or "unsat" in output.lower()
+                    else ProofStatus.FAILURE
+                )
+
                 return ProofResult(
                     prover="cvc5",
                     statement=formula.to_fol_string(),
                     status=status,
                     proof_output=output,
                     execution_time=execution_time,
-                    metadata={"smt_file": str(smt_file)}
+                    metadata={"smt_file": str(smt_file)},
                 )
             else:
                 return ProofResult(
@@ -511,27 +526,28 @@ class ProofExecutionEngine:
                     statement=formula.to_fol_string(),
                     status=ProofStatus.ERROR,
                     execution_time=execution_time,
-                    errors=[result.stderr]
+                    errors=[result.stderr],
                 )
-                
+
         except subprocess.TimeoutExpired:
             return ProofResult(
                 prover="cvc5",
                 statement=formula.to_fol_string(),
                 status=ProofStatus.TIMEOUT,
                 execution_time=self.timeout,
-                errors=["Execution timeout"]
+                errors=["Execution timeout"],
             )
         except Exception as e:
             return ProofResult(
                 prover="cvc5",
                 statement=formula.to_fol_string(),
                 status=ProofStatus.ERROR,
-                errors=[str(e)]
+                errors=[str(e)],
             )
-    
-    def _execute_lean_proof(self, formula: DeonticFormula, 
-                          translation: TranslationResult) -> ProofResult:
+
+    def _execute_lean_proof(
+        self, formula: DeonticFormula, translation: TranslationResult
+    ) -> ProofResult:
         """Execute proof using Lean 4."""
         start_time = time.time()
 
@@ -569,20 +585,20 @@ theorem deontic_consistency (P : Prop) : ¬(Obligatory P ∧ Forbidden P) := by
 #check statement
 #check deontic_consistency
 """
-        
+
         lean_file = self.temp_dir / f"formula_{formula.formula_id}.lean"
         lean_file.write_text(lean_content)
-        
+
         try:
             result = subprocess.run(
-                [self._prover_cmd('lean'), str(lean_file)],
+                [self._prover_cmd("lean"), str(lean_file)],
                 capture_output=True,
                 text=True,
-                timeout=self.timeout
+                timeout=self.timeout,
             )
-            
+
             execution_time = time.time() - start_time
-            
+
             if result.returncode == 0:
                 return ProofResult(
                     prover="lean",
@@ -590,7 +606,7 @@ theorem deontic_consistency (P : Prop) : ¬(Obligatory P ∧ Forbidden P) := by
                     status=ProofStatus.SUCCESS,
                     proof_output=result.stdout,
                     execution_time=execution_time,
-                    metadata={"lean_file": str(lean_file)}
+                    metadata={"lean_file": str(lean_file)},
                 )
             else:
                 return ProofResult(
@@ -599,30 +615,31 @@ theorem deontic_consistency (P : Prop) : ¬(Obligatory P ∧ Forbidden P) := by
                     status=ProofStatus.ERROR,
                     execution_time=execution_time,
                     errors=[result.stderr],
-                    proof_output=result.stdout
+                    proof_output=result.stdout,
                 )
-                
+
         except subprocess.TimeoutExpired:
             return ProofResult(
                 prover="lean",
                 statement=formula.to_fol_string(),
                 status=ProofStatus.TIMEOUT,
                 execution_time=self.timeout,
-                errors=["Execution timeout"]
+                errors=["Execution timeout"],
             )
         except Exception as e:
             return ProofResult(
                 prover="lean",
                 statement=formula.to_fol_string(),
                 status=ProofStatus.ERROR,
-                errors=[str(e)]
+                errors=[str(e)],
             )
-    
-    def _execute_coq_proof(self, formula: DeonticFormula, 
-                         translation: TranslationResult) -> ProofResult:
+
+    def _execute_coq_proof(
+        self, formula: DeonticFormula, translation: TranslationResult
+    ) -> ProofResult:
         """Execute proof using Coq."""
         start_time = time.time()
-        
+
         # Create Coq file
         coq_content = f"""
 (* Deontic Logic Theory *)
@@ -649,20 +666,20 @@ Proof.
   exact I.
 Qed.
 """
-        
+
         coq_file = self.temp_dir / f"formula_{formula.formula_id}.v"
         coq_file.write_text(coq_content)
-        
+
         try:
             result = subprocess.run(
-                [self._prover_cmd('coq'), str(coq_file)],
+                [self._prover_cmd("coq"), str(coq_file)],
                 capture_output=True,
                 text=True,
-                timeout=self.timeout
+                timeout=self.timeout,
             )
-            
+
             execution_time = time.time() - start_time
-            
+
             if result.returncode == 0:
                 return ProofResult(
                     prover="coq",
@@ -670,7 +687,7 @@ Qed.
                     status=ProofStatus.SUCCESS,
                     proof_output=result.stdout,
                     execution_time=execution_time,
-                    metadata={"coq_file": str(coq_file)}
+                    metadata={"coq_file": str(coq_file)},
                 )
             else:
                 return ProofResult(
@@ -679,45 +696,43 @@ Qed.
                     status=ProofStatus.ERROR,
                     execution_time=execution_time,
                     errors=[result.stderr],
-                    proof_output=result.stdout
+                    proof_output=result.stdout,
                 )
-                
+
         except subprocess.TimeoutExpired:
             return ProofResult(
                 prover="coq",
                 statement=formula.to_fol_string(),
                 status=ProofStatus.TIMEOUT,
                 execution_time=self.timeout,
-                errors=["Execution timeout"]
+                errors=["Execution timeout"],
             )
         except Exception as e:
             return ProofResult(
                 prover="coq",
                 statement=formula.to_fol_string(),
                 status=ProofStatus.ERROR,
-                errors=[str(e)]
+                errors=[str(e)],
             )
-    
-    def prove_rule_set(self, rule_set: DeonticRuleSet, 
-                      prover: str = "z3") -> List[ProofResult]:
+
+    def prove_rule_set(self, rule_set: DeonticRuleSet, prover: str = "z3") -> List[ProofResult]:
         """
         Prove all formulas in a rule set.
         """
         results = []
-        
+
         for formula in rule_set.formulas:
             result = self.prove_deontic_formula(formula, prover)
             results.append(result)
-            
+
         return results
-    
-    def prove_consistency(self, rule_set: DeonticRuleSet, 
-                         prover: str = "z3") -> ProofResult:
+
+    def prove_consistency(self, rule_set: DeonticRuleSet, prover: str = "z3") -> ProofResult:
         """
         Check if a rule set is logically consistent.
         """
         start_time = time.time()
-        
+
         if prover == "z3":
             return self._check_z3_consistency(rule_set, start_time)
         elif prover == "cvc5":
@@ -727,14 +742,14 @@ Qed.
                 prover=prover,
                 statement=f"Consistency check for {len(rule_set.formulas)} formulas",
                 status=ProofStatus.UNSUPPORTED,
-                errors=[f"Consistency checking not implemented for {prover}"]
+                errors=[f"Consistency checking not implemented for {prover}"],
             )
-    
+
     def _check_z3_consistency(self, rule_set: DeonticRuleSet, start_time: float) -> ProofResult:
         """Check consistency using Z3."""
         # Translate all formulas to SMT-LIB
         translator = SMTTranslator()
-        
+
         smt_content = """
 ; Deontic logic consistency check
 (declare-sort Agent 0)
@@ -751,30 +766,30 @@ Qed.
     (=> (Obligatory a p) (Permitted a p))))
 
 """
-        
+
         # Add all formulas
         for formula in rule_set.formulas:
             translation_result = translator.translate_deontic_formula(formula)
             if translation_result.success:
                 smt_content += f"; {formula.source_text[:50]}...\n"
                 smt_content += f"(assert {translation_result.translated_formula})\n\n"
-        
+
         smt_content += "(check-sat)\n"
-        
+
         # Write to file
         smt_file = self.temp_dir / f"consistency_{rule_set.name}.smt2"
         smt_file.write_text(smt_content)
-        
+
         try:
             result = subprocess.run(
-                [self._prover_cmd('z3'), str(smt_file)],
+                [self._prover_cmd("z3"), str(smt_file)],
                 capture_output=True,
                 text=True,
-                timeout=self.timeout
+                timeout=self.timeout,
             )
-            
+
             execution_time = time.time() - start_time
-            
+
             if result.returncode == 0:
                 output = result.stdout.strip()
                 if "unsat" in output.lower():
@@ -786,14 +801,14 @@ Qed.
                 else:
                     status = ProofStatus.ERROR
                     message = f"Unexpected Z3 output: {output}"
-                
+
                 return ProofResult(
                     prover="z3",
                     statement=f"Consistency of {len(rule_set.formulas)} formulas",
                     status=status,
                     proof_output=f"{message}\n\nZ3 output:\n{output}",
                     execution_time=execution_time,
-                    metadata={"smt_file": str(smt_file), "formula_count": len(rule_set.formulas)}
+                    metadata={"smt_file": str(smt_file), "formula_count": len(rule_set.formulas)},
                 )
             else:
                 return ProofResult(
@@ -801,30 +816,30 @@ Qed.
                     statement=f"Consistency of {len(rule_set.formulas)} formulas",
                     status=ProofStatus.ERROR,
                     execution_time=execution_time,
-                    errors=[result.stderr]
+                    errors=[result.stderr],
                 )
-                
+
         except subprocess.TimeoutExpired:
             return ProofResult(
                 prover="z3",
                 statement=f"Consistency of {len(rule_set.formulas)} formulas",
                 status=ProofStatus.TIMEOUT,
                 execution_time=self.timeout,
-                errors=["Execution timeout"]
+                errors=["Execution timeout"],
             )
         except Exception as e:
             return ProofResult(
                 prover="z3",
                 statement=f"Consistency of {len(rule_set.formulas)} formulas",
                 status=ProofStatus.ERROR,
-                errors=[str(e)]
+                errors=[str(e)],
             )
-    
+
     def _check_cvc5_consistency(self, rule_set: DeonticRuleSet, start_time: float) -> ProofResult:
         """Check consistency using CVC5."""
         # Similar to Z3 but with CVC5-specific syntax
         translator = SMTTranslator()
-        
+
         smt_content = """
 (set-logic ALL)
 
@@ -841,30 +856,30 @@ Qed.
     (not (and (Obligatory a p) (Forbidden a p)))))
 
 """
-        
+
         # Add all formulas
         for formula in rule_set.formulas:
             translation_result = translator.translate_deontic_formula(formula)
             if translation_result.success:
                 smt_content += f"; {formula.source_text[:50]}...\n"
                 smt_content += f"(assert {translation_result.translated_formula})\n\n"
-        
+
         smt_content += "(check-sat)\n"
-        
+
         # Write to file
         smt_file = self.temp_dir / f"consistency_cvc5_{rule_set.name}.smt2"
         smt_file.write_text(smt_content)
-        
+
         try:
             result = subprocess.run(
-                [self._prover_cmd('cvc5'), str(smt_file)],
+                [self._prover_cmd("cvc5"), str(smt_file)],
                 capture_output=True,
                 text=True,
-                timeout=self.timeout
+                timeout=self.timeout,
             )
-            
+
             execution_time = time.time() - start_time
-            
+
             if result.returncode == 0:
                 output = result.stdout.strip()
                 if "sat" in output.lower():
@@ -873,14 +888,14 @@ Qed.
                     status = ProofStatus.FAILURE
                 else:
                     status = ProofStatus.ERROR
-                
+
                 return ProofResult(
                     prover="cvc5",
                     statement=f"Consistency of {len(rule_set.formulas)} formulas",
                     status=status,
                     proof_output=output,
                     execution_time=execution_time,
-                    metadata={"smt_file": str(smt_file)}
+                    metadata={"smt_file": str(smt_file)},
                 )
             else:
                 return ProofResult(
@@ -888,33 +903,34 @@ Qed.
                     statement=f"Consistency of {len(rule_set.formulas)} formulas",
                     status=ProofStatus.ERROR,
                     execution_time=execution_time,
-                    errors=[result.stderr]
+                    errors=[result.stderr],
                 )
-                
+
         except subprocess.TimeoutExpired:
             return ProofResult(
                 prover="cvc5",
                 statement=f"Consistency of {len(rule_set.formulas)} formulas",
                 status=ProofStatus.TIMEOUT,
                 execution_time=self.timeout,
-                errors=["Execution timeout"]
+                errors=["Execution timeout"],
             )
         except Exception as e:
             return ProofResult(
                 prover="cvc5",
                 statement=f"Consistency of {len(rule_set.formulas)} formulas",
                 status=ProofStatus.ERROR,
-                errors=[str(e)]
+                errors=[str(e)],
             )
 
-    def prove_multiple_provers(self, formula: DeonticFormula, 
-                             provers: List[str] = None) -> Dict[str, ProofResult]:
+    def prove_multiple_provers(
+        self, formula: DeonticFormula, provers: List[str] = None
+    ) -> Dict[str, ProofResult]:
         """
         Prove the same formula using multiple theorem provers.
         """
         if provers is None:
             provers = [p for p, available in self.available_provers.items() if available]
-        
+
         results = {}
         for prover in provers:
             if prover in self.available_provers and self.available_provers[prover]:
@@ -924,9 +940,9 @@ Qed.
                     prover=prover,
                     statement=formula.to_fol_string(),
                     status=ProofStatus.UNSUPPORTED,
-                    errors=[f"Prover {prover} not available"]
+                    errors=[f"Prover {prover} not available"],
                 )
-        
+
         return results
 
     def get_prover_status(self) -> Dict[str, Any]:
@@ -934,28 +950,26 @@ Qed.
         status = {
             "available_provers": self.available_provers,
             "temp_directory": str(self.temp_dir),
-            "timeout": self.timeout
+            "timeout": self.timeout,
         }
-        
+
         # Test each available prover with a simple statement
         for prover, available in self.available_provers.items():
             if available:
                 # Create a simple test formula
                 from ..converters.deontic_logic_core import create_obligation, LegalAgent
+
                 test_agent = LegalAgent("test_agent", "Test Agent", "organization")
                 test_formula = create_obligation(test_agent, "test_proposition", "Test proposition")
-                
+
                 try:
                     test_result = self.prove_deontic_formula(test_formula, prover)
                     status[f"{prover}_test"] = {
                         "status": test_result.status.value,
-                        "execution_time": test_result.execution_time
+                        "execution_time": test_result.execution_time,
                     }
                 except Exception as e:
-                    status[f"{prover}_test"] = {
-                        "status": "error",
-                        "error": str(e)
-                    }
+                    status[f"{prover}_test"] = {"status": "error", "error": str(e)}
 
         return status
 
@@ -970,11 +984,11 @@ from .proof_execution_engine_utils import (
 
 # Export key classes and functions
 __all__ = [
-    'ProofExecutionEngine',
-    'ProofStatus',
-    'ProofResult',
-    'create_proof_engine',
-    'prove_formula',
-    'prove_with_all_provers',
-    'check_consistency',
+    "ProofExecutionEngine",
+    "ProofStatus",
+    "ProofResult",
+    "create_proof_engine",
+    "prove_formula",
+    "prove_with_all_provers",
+    "check_consistency",
 ]

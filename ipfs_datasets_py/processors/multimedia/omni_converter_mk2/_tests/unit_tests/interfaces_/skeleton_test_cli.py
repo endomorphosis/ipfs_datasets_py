@@ -4,6 +4,7 @@
 Test file for cli.py
 Generated automatically by test generator at 2025-05-25 23:22:30
 """
+
 from __future__ import annotations
 import unittest
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
@@ -14,9 +15,9 @@ import sys
 from typing import Any, Callable, Optional, TypeVar
 # Test classes
 
+
 class TestClassCLI(unittest.TestCase):
-    """Unit tests for the CLI class
-    """
+    """Unit tests for the CLI class"""
 
     def setUp(self) -> None:
         """Set up test class"""
@@ -91,6 +92,7 @@ class TestClassCLI(unittest.TestCase):
         #     Exit code.
         # Method takes args: self
         raise NotImplementedError("Test for main has not been written.")
+
 
 if __name__ == "__main__":
     unittest.main()

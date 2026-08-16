@@ -27,7 +27,6 @@ except ImportError:  # pragma: no cover - standalone ipfs_datasets_py fallback
         def to_dict(self) -> Dict[str, Any]:
             return asdict(self)
 
-
     @dataclass(frozen=True)
     class FilingSupportReference:
         """Identifies a filing and the proposition the filing relies on."""
@@ -38,7 +37,6 @@ except ImportError:  # pragma: no cover - standalone ipfs_datasets_py fallback
 
         def to_dict(self) -> Dict[str, Any]:
             return asdict(self)
-
 
     @dataclass
     class SupportMapEntry:
@@ -69,7 +67,6 @@ except ImportError:  # pragma: no cover - standalone ipfs_datasets_py fallback
                 "evidence_ids": list(self.evidence_ids),
             }
 
-
     @dataclass
     class MotionSupportMap:
         """Collection wrapper for support-map entries."""
@@ -81,7 +78,6 @@ except ImportError:  # pragma: no cover - standalone ipfs_datasets_py fallback
                 "entry_count": len(self.entries),
                 "entries": [entry.to_dict() for entry in self.entries],
             }
-
 
     class SupportMapBuilder:
         """Build support maps from deontic graphs and fact catalogs."""
@@ -135,7 +131,12 @@ except ImportError:  # pragma: no cover - standalone ipfs_datasets_py fallback
                         fact_id=str(source_id),
                         predicate=str(payload.get("predicate") or source_id),
                         status=str(payload.get("status") or "alleged"),
-                        source_ids=[str(value) for value in list(payload.get("source_ids") or payload.get("evidence_ids") or [])],
+                        source_ids=[
+                            str(value)
+                            for value in list(
+                                payload.get("source_ids") or payload.get("evidence_ids") or []
+                            )
+                        ],
                         attributes=dict(payload.get("attributes") or {}),
                     )
                 )

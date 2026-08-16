@@ -18,6 +18,7 @@ from .optimizer_result import OptimizerResult
 from .seed_control import apply_deterministic_seed
 
 if TYPE_CHECKING:
+
     class _LifecycleHooksBase(Protocol):
         def on_session_start(self, context: Any, input_data: Any) -> None: ...
         def on_generate_complete(self, artifact: Any, context: Any) -> None: ...
@@ -41,6 +42,7 @@ _logger = logging.getLogger(__name__)
 
 try:
     from opentelemetry import trace  # type: ignore[import-not-found]
+
     HAVE_OPENTELEMETRY = True
 except ImportError:  # pragma: no cover - optional dependency
     trace = None
@@ -49,6 +51,7 @@ except ImportError:  # pragma: no cover - optional dependency
 
 class OptimizationStrategy(Enum):
     """Strategy for optimization."""
+
     SGD = "sgd"  # Stochastic Gradient Descent
     EVOLUTIONARY = "evolutionary"  # Evolutionary algorithms
     REINFORCEMENT = "reinforcement"  # Reinforcement learning
@@ -58,7 +61,7 @@ class OptimizationStrategy(Enum):
 @dataclass
 class OptimizerConfig:
     """Configuration for optimizer.
-    
+
     Attributes:
         strategy: Optimization strategy to use
         max_iterations: Maximum iterations per session
@@ -69,6 +72,7 @@ class OptimizerConfig:
         validation_enabled: Enable validation step
         metrics_enabled: Enable metrics collection
     """
+
     strategy: OptimizationStrategy = OptimizationStrategy.SGD
     max_iterations: int = 10
     target_score: float = 0.85
@@ -83,7 +87,7 @@ class OptimizerConfig:
 @dataclass
 class OptimizationContext:
     """Context for optimization session.
-    
+
     Attributes:
         session_id: Unique session identifier
         input_data: Input data for optimization
@@ -92,6 +96,7 @@ class OptimizationContext:
         metadata: Additional context metadata
         created_at: When context was created
     """
+
     session_id: str
     input_data: Any
     domain: str
@@ -102,38 +107,38 @@ class OptimizationContext:
 
 class BaseOptimizer(_LifecycleHooksBase, ABC):
     """Base class for all optimizer types.
-    
+
     This abstract class defines the common interface that all optimizers
     (agentic, logic_theorem, graphrag) must implement. It provides the
     standard optimization workflow:
-    
+
     1. Generate: Create initial artifact from input
     2. Critique: Evaluate quality of artifact
     3. Optimize: Improve artifact based on feedback
     4. Validate: Verify improvements are valid
-    
+
     Subclasses implement domain-specific logic for each step while
     benefiting from common infrastructure for metrics, LLM integration,
     and session management.
-    
+
     Example:
         >>> class MyOptimizer(BaseOptimizer):
         ...     def generate(self, input_data, context):
         ...         return self._create_artifact(input_data)
-        ...     
+        ...
         ...     def critique(self, artifact, context):
         ...         return self._evaluate_quality(artifact)
-        ...     
+        ...
         ...     def optimize(self, artifact, score, feedback, context):
         ...         return self._improve_artifact(artifact, feedback)
-        ...     
+        ...
         ...     def validate(self, artifact, context):
         ...         return self._check_validity(artifact)
-        >>> 
+        >>>
         >>> optimizer = MyOptimizer(config=OptimizerConfig())
         >>> result = optimizer.run_session(input_data, context)
     """
-    
+
     def __init__(
         self,
         config: Optional[OptimizerConfig] = None,
@@ -141,7 +146,7 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
         metrics_collector: Optional[Any] = None,  # PerformanceMetricsCollector
     ):
         """Initialize base optimizer.
-        
+
         Args:
             config: Optimizer configuration
             llm_backend: Optional LLM backend for generation
@@ -164,15 +169,28 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
         if self._otel_enabled and HAVE_OPENTELEMETRY and trace is not None:
             try:
                 self._otel_tracer = trace.get_tracer(__name__)
-            except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - optional tracing dependency
+            except (
+                AttributeError,
+                ImportError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as exc:  # pragma: no cover - optional tracing dependency
                 _logger.debug("OpenTelemetry tracer unavailable: %s", exc)
 
         # Optional Prometheus collector (enabled via ENABLE_PROMETHEUS env var).
         # This is best-effort and must never break optimizer execution.
         try:
             from .metrics_prometheus import PrometheusMetrics
+
             self._prometheus_metrics = PrometheusMetrics()
-        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - optional dependency path
+        except (
+            AttributeError,
+            ImportError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:  # pragma: no cover - optional dependency path
             _logger.debug("Prometheus metrics unavailable: %s", exc)
 
     @contextmanager
@@ -188,7 +206,12 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
 
         try:
             span_cm = self._otel_tracer.start_as_current_span(operation)
-        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - optional dependency path
+        except (
+            AttributeError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as exc:  # pragma: no cover - optional dependency path
             _logger.debug("Failed to create OpenTelemetry span %s: %s", operation, exc)
             yield None
             return
@@ -202,10 +225,15 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
                         span.set_attribute(key, value)
                     else:
                         span.set_attribute(key, str(value))
-                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - best effort
+                except (
+                    AttributeError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as exc:  # pragma: no cover - best effort
                     _logger.debug("Failed to set span attribute %s=%r: %s", key, value, exc)
             yield span
-        
+
     @abstractmethod
     def generate(
         self,
@@ -213,24 +241,24 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
         context: OptimizationContext,
     ) -> Any:
         """Generate initial artifact from input data.
-        
+
         This is the first step in the optimization pipeline. Implementations
         should create an initial version of the artifact (code, theorem,
         ontology, etc.) from the input data.
-        
+
         Args:
             input_data: Input data to generate from
             context: Optimization context
-            
+
         Returns:
             Generated artifact (type depends on optimizer)
-            
+
         Raises:
             ValueError: If input data is invalid
             RuntimeError: If generation fails
         """
         pass
-    
+
     @abstractmethod
     def critique(
         self,
@@ -238,25 +266,25 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
         context: OptimizationContext,
     ) -> Tuple[float, List[str]]:
         """Evaluate quality of artifact.
-        
+
         This is the second step in the optimization pipeline. Implementations
         should evaluate the artifact across multiple dimensions and return
         a score (0-1) and list of improvement suggestions.
-        
+
         Args:
             artifact: Artifact to evaluate
             context: Optimization context
-            
+
         Returns:
             Tuple of (score, feedback_list)
             - score: Quality score from 0 (worst) to 1 (best)
             - feedback_list: List of improvement suggestions
-            
+
         Raises:
             ValueError: If artifact is invalid
         """
         pass
-    
+
     @abstractmethod
     def optimize(
         self,
@@ -266,62 +294,62 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
         context: OptimizationContext,
     ) -> Any:
         """Improve artifact based on critique feedback.
-        
+
         This is the third step in the optimization pipeline. Implementations
         should use the score and feedback to create an improved version of
         the artifact.
-        
+
         Args:
             artifact: Current artifact
             score: Current quality score
             feedback: List of improvement suggestions
             context: Optimization context
-            
+
         Returns:
             Improved artifact
-            
+
         Raises:
             RuntimeError: If optimization fails
         """
         pass
-    
+
     def validate(
         self,
         artifact: Any,
         context: OptimizationContext,
     ) -> bool:
         """Validate that artifact meets requirements.
-        
+
         Optional validation step. Default implementation always returns True.
         Override to add domain-specific validation (syntax checking,
         theorem proving, consistency checks, etc.).
-        
+
         Args:
             artifact: Artifact to validate
             context: Optimization context
-            
+
         Returns:
             True if valid, False otherwise
         """
         return True
-    
+
     def run_session(
         self,
         input_data: Any,
         context: OptimizationContext,
     ) -> OptimizerResult:
         """Run complete optimization session.
-        
+
         Executes the full optimization workflow:
         1. Generate initial artifact
         2. Critique quality
         3. Iteratively optimize until target reached or max iterations
         4. Validate final result
-        
+
         Args:
             input_data: Input data for optimization
             context: Optimization context
-            
+
         Returns:
             Dictionary with:
             - artifact: Final optimized artifact
@@ -360,7 +388,12 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
                     pass  # Never let metrics break the optimization
             try:
                 self.on_session_start(context, input_data)
-            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - hooks are best effort
+            except (
+                AttributeError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ) as exc:  # pragma: no cover - hooks are best effort
                 _logger.debug("on_session_start hook failed: %s", exc)
 
             # Generate initial artifact
@@ -397,12 +430,22 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
                 iterations = iteration + 1
                 try:
                     self.on_optimize_complete(artifact, score, feedback, iteration + 1, context)
-                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
+                except (
+                    AttributeError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as exc:  # pragma: no cover
                     _logger.debug("on_optimize_complete hook failed: %s", exc)
                 score, feedback = self.critique(artifact, context)
                 try:
                     self.on_critique_complete(artifact, score, feedback, context)
-                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
+                except (
+                    AttributeError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as exc:  # pragma: no cover
                     _logger.debug("on_critique_complete hook failed: %s", exc)
 
             # Validate
@@ -411,7 +454,12 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
                 valid = self.validate(artifact, context)
                 try:
                     self.on_validate_complete(artifact, valid, context)
-                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover
+                except (
+                    AttributeError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as exc:  # pragma: no cover
                     _logger.debug("on_validate_complete hook failed: %s", exc)
 
             execution_time = (datetime.now() - start_time).total_seconds()
@@ -448,7 +496,12 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
                     )
                     if not valid:
                         self._prometheus_metrics.record_error("validation_failed", context.domain)
-                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - metrics must be non-fatal
+                except (
+                    AttributeError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as exc:  # pragma: no cover - metrics must be non-fatal
                     _logger.debug("Prometheus metrics recording failed: %s", exc)
 
             _logger.info(
@@ -463,23 +516,23 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
             )
 
             result: OptimizerResult = {
-                'artifact': artifact,
-                'score': score,
-                'iterations': iterations,
-                'valid': valid,
-                'execution_time': execution_time,
-                'execution_time_ms': execution_time_ms,
+                "artifact": artifact,
+                "score": score,
+                "iterations": iterations,
+                "valid": valid,
+                "execution_time": execution_time,
+                "execution_time_ms": execution_time_ms,
             }
 
             if self.config.metrics_enabled:
-                result['metrics'] = {
-                    'initial_score': initial_score,
-                    'final_score': score,
-                    'improvement': score - initial_score,
-                    'score_delta': score - initial_score,
-                    'iterations': iterations,
-                    'execution_time': execution_time,
-                    'execution_time_ms': execution_time_ms,
+                result["metrics"] = {
+                    "initial_score": initial_score,
+                    "final_score": score,
+                    "improvement": score - initial_score,
+                    "score_delta": score - initial_score,
+                    "iterations": iterations,
+                    "execution_time": execution_time,
+                    "execution_time_ms": execution_time_ms,
                 }
 
             if _span is not None:
@@ -488,7 +541,12 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
                     _span.set_attribute("optimizer.final_score", float(score))
                     _span.set_attribute("optimizer.valid", bool(valid))
                     _span.set_attribute("optimizer.execution_time_ms", execution_time_ms)
-                except (AttributeError, RuntimeError, TypeError, ValueError) as exc:  # pragma: no cover - best effort
+                except (
+                    AttributeError,
+                    RuntimeError,
+                    TypeError,
+                    ValueError,
+                ) as exc:  # pragma: no cover - best effort
                     _logger.debug("Failed to set final span attributes: %s", exc)
 
             try:
@@ -497,10 +555,10 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
                 _logger.debug("on_session_complete hook failed: %s", exc)
 
             return result
-    
+
     def get_capabilities(self) -> Dict[str, Any]:
         """Get optimizer capabilities.
-        
+
         Returns:
             Dictionary describing optimizer capabilities:
             - strategy: Optimization strategy used
@@ -509,27 +567,27 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
             - metrics_enabled: Whether metrics collection is enabled
         """
         return {
-            'strategy': self.config.strategy.value,
-            'max_iterations': self.config.max_iterations,
-            'validation_enabled': self.config.validation_enabled,
-            'metrics_enabled': self.config.metrics_enabled,
+            "strategy": self.config.strategy.value,
+            "max_iterations": self.config.max_iterations,
+            "validation_enabled": self.config.validation_enabled,
+            "metrics_enabled": self.config.metrics_enabled,
         }
-    
+
     def dry_run(
         self,
         input_data: Any,
         context: OptimizationContext,
     ) -> OptimizerResult:
         """Validate optimization setup without full optimization.
-        
+
         Performs a single optimization cycle (generate + critique + validate)
         to verify that the optimization pipeline is correctly configured
         and can process the given input data. Useful for testing and validation.
-        
+
         Args:
             input_data: Input data to test
             context: Optimization context
-            
+
         Returns:
             Dictionary with:
             - artifact: Generated artifact
@@ -538,28 +596,28 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
             - feedback: Initial critique feedback
             - execution_time: Time in seconds
             - execution_time_ms: Time in milliseconds
-            
+
         Raises:
             RuntimeError: If any step (generate, critique, validate) fails
             ValueError: If input data is invalid
         """
         start_time = datetime.now()
-        
+
         try:
             # Generate initial artifact
             artifact = self.generate(input_data, context)
-            
+
             # Critique (without optimization)
             score, feedback = self.critique(artifact, context)
-            
+
             # Validate
             valid = True
             if self.config.validation_enabled:
                 valid = self.validate(artifact, context)
-            
+
             execution_time = (datetime.now() - start_time).total_seconds()
             execution_time_ms = execution_time * 1000.0
-            
+
             _logger.info(
                 "dry_run completed session_id=%s domain=%s "
                 "score=%.4f valid=%s execution_time_ms=%.1f",
@@ -569,14 +627,14 @@ class BaseOptimizer(_LifecycleHooksBase, ABC):
                 valid,
                 execution_time_ms,
             )
-            
+
             return {
-                'artifact': artifact,
-                'score': score,
-                'valid': valid,
-                'feedback': feedback,
-                'execution_time': execution_time,
-                'execution_time_ms': execution_time_ms,
+                "artifact": artifact,
+                "score": score,
+                "valid": valid,
+                "feedback": feedback,
+                "execution_time": execution_time,
+                "execution_time_ms": execution_time_ms,
             }
         except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             _logger.error(

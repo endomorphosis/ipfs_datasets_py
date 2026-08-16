@@ -288,9 +288,21 @@ class LegalIREvalSplitConfig:
         if not math.isfinite(threshold) or threshold <= 0.0 or threshold > 1.0:
             raise ValueError("near_duplicate_jaccard_threshold must be in (0, 1]")
         object.__setattr__(self, "near_duplicate_jaccard_threshold", threshold)
-        object.__setattr__(self, "external_test_sources", tuple(_safe_key(v) for v in self.external_test_sources if _safe_key(v)))
-        object.__setattr__(self, "statute_family_holdout_values", tuple(_safe_key(v) for v in self.statute_family_holdout_values if _safe_key(v)))
-        object.__setattr__(self, "jurisdiction_holdout_values", tuple(_safe_key(v) for v in self.jurisdiction_holdout_values if _safe_key(v)))
+        object.__setattr__(
+            self,
+            "external_test_sources",
+            tuple(_safe_key(v) for v in self.external_test_sources if _safe_key(v)),
+        )
+        object.__setattr__(
+            self,
+            "statute_family_holdout_values",
+            tuple(_safe_key(v) for v in self.statute_family_holdout_values if _safe_key(v)),
+        )
+        object.__setattr__(
+            self,
+            "jurisdiction_holdout_values",
+            tuple(_safe_key(v) for v in self.jurisdiction_holdout_values if _safe_key(v)),
+        )
         protected = tuple(split for split in self.protected_splits if split in LEGAL_IR_EVAL_SPLITS)
         object.__setattr__(self, "protected_splits", protected or PROTECTED_LEGAL_IR_SPLITS)
 
@@ -396,7 +408,9 @@ class LegalIRSplitExample:
         return cls(
             sample_id=_string(value.get("sample_id")),
             content_hash=_string(value.get("content_hash")),
-            citation_clusters=tuple(_string(item) for item in value.get("citation_clusters", ()) if _string(item)),
+            citation_clusters=tuple(
+                _string(item) for item in value.get("citation_clusters", ()) if _string(item)
+            ),
             source_span_key=_string(value.get("source_span_key")),
             amendment_key=_string(value.get("amendment_key")),
             statute_family=_string(value.get("statute_family")),
@@ -404,7 +418,9 @@ class LegalIRSplitExample:
             effective_date=_string(value.get("effective_date")),
             source_label=_string(value.get("source_label")),
             near_duplicate_key=_string(value.get("near_duplicate_key")),
-            token_fingerprint=tuple(_string(item) for item in value.get("token_fingerprint", ()) if _string(item)),
+            token_fingerprint=tuple(
+                _string(item) for item in value.get("token_fingerprint", ()) if _string(item)
+            ),
         )
 
     def with_near_duplicate_key(self, key: str) -> "LegalIRSplitExample":
@@ -507,9 +523,7 @@ class LegalIRSplitManifest:
             self,
             "assignment_conflicts",
             {
-                str(sample_id): tuple(
-                    split for split in splits if split in LEGAL_IR_EVAL_SPLITS
-                )
+                str(sample_id): tuple(split for split in splits if split in LEGAL_IR_EVAL_SPLITS)
                 for sample_id, splits in sorted(self.assignment_conflicts.items())
                 if len(tuple(splits)) > 1
             },
@@ -533,8 +547,7 @@ class LegalIRSplitManifest:
         payload = {
             "assignments": dict(self.assignments),
             "assignment_conflicts": {
-                sample_id: list(splits)
-                for sample_id, splits in self.assignment_conflicts.items()
+                sample_id: list(splits) for sample_id, splits in self.assignment_conflicts.items()
             },
             "config_digest": self.config_digest,
             "examples": [item.to_dict() for item in self.examples],
@@ -573,18 +586,30 @@ class LegalIRSplitManifest:
             }
         else:
             raw_conflicts = payload.get("assignment_conflicts", {})
-            assignment_conflicts = {
-                str(sample_id): tuple(_sequence_strings(splits))
-                for sample_id, splits in raw_conflicts.items()
-            } if isinstance(raw_conflicts, Mapping) else {}
+            assignment_conflicts = (
+                {
+                    str(sample_id): tuple(_sequence_strings(splits))
+                    for sample_id, splits in raw_conflicts.items()
+                }
+                if isinstance(raw_conflicts, Mapping)
+                else {}
+            )
         return cls(
             examples=examples,
             assignments=assignments if isinstance(assignments, Mapping) else {},
-            config_digest=_string(payload.get("config_digest") or payload.get("split_config_digest") or ""),
-            protected_splits=tuple(_sequence_strings(payload.get("protected_splits"))) or PROTECTED_LEGAL_IR_SPLITS,
-            schema_version=_string(payload.get("schema_version") or LEGAL_IR_EVAL_SPLIT_SCHEMA_VERSION),
-            partition_names=tuple(_sequence_strings(payload.get("partition_names"))) or LEGAL_IR_EVAL_SPLITS,
-            metadata=payload.get("metadata", {}) if isinstance(payload.get("metadata", {}), Mapping) else {},
+            config_digest=_string(
+                payload.get("config_digest") or payload.get("split_config_digest") or ""
+            ),
+            protected_splits=tuple(_sequence_strings(payload.get("protected_splits")))
+            or PROTECTED_LEGAL_IR_SPLITS,
+            schema_version=_string(
+                payload.get("schema_version") or LEGAL_IR_EVAL_SPLIT_SCHEMA_VERSION
+            ),
+            partition_names=tuple(_sequence_strings(payload.get("partition_names")))
+            or LEGAL_IR_EVAL_SPLITS,
+            metadata=payload.get("metadata", {})
+            if isinstance(payload.get("metadata", {}), Mapping)
+            else {},
             assignment_conflicts=assignment_conflicts,
         )
 
@@ -755,12 +780,22 @@ def _group_split(
         return JURISDICTION_SPLIT
 
     family_key = sorted(families)[0] if families else group_id
-    if config.statute_family_ratio > 0.0 and _bucket(config.seed, "family", family_key) < config.statute_family_ratio:
+    if (
+        config.statute_family_ratio > 0.0
+        and _bucket(config.seed, "family", family_key) < config.statute_family_ratio
+    ):
         return STATUTE_FAMILY_SPLIT
     jurisdiction_key = sorted(jurisdictions)[0] if jurisdictions else group_id
-    if config.jurisdiction_ratio > 0.0 and _bucket(config.seed, "jurisdiction", jurisdiction_key) < config.jurisdiction_ratio:
+    if (
+        config.jurisdiction_ratio > 0.0
+        and _bucket(config.seed, "jurisdiction", jurisdiction_key) < config.jurisdiction_ratio
+    ):
         return JURISDICTION_SPLIT
-    if config.temporal_ratio > 0.0 and dates and _bucket(config.seed, "temporal", max(dates).isoformat()) < config.temporal_ratio:
+    if (
+        config.temporal_ratio > 0.0
+        and dates
+        and _bucket(config.seed, "temporal", max(dates).isoformat()) < config.temporal_ratio
+    ):
         return TEMPORAL_SPLIT
 
     bucket = _bucket(config.seed, "primary", group_id)
@@ -786,7 +821,11 @@ def validate_legal_ir_eval_splits(
 ) -> LegalIRSplitGuardResult:
     """Validate content, citation, source, amendment, and duplicate isolation."""
 
-    resolved = manifest if isinstance(manifest, LegalIRSplitManifest) else LegalIRSplitManifest.from_mapping(manifest)
+    resolved = (
+        manifest
+        if isinstance(manifest, LegalIRSplitManifest)
+        else LegalIRSplitManifest.from_mapping(manifest)
+    )
     violations: list[LegalIRLeakageViolation] = []
     examples = resolved.examples
     assignments = resolved.assignments
@@ -822,8 +861,7 @@ def validate_legal_ir_eval_splits(
                     key=sample_id,
                     splits=tuple(sorted(by_split)),
                     sample_ids_by_split={
-                        split: tuple(ids)
-                        for split, ids in sorted(by_split.items())
+                        split: tuple(ids) for split, ids in sorted(by_split.items())
                     },
                     protected_splits=tuple(sorted(set(by_split) & protected)),
                 )
@@ -904,9 +942,7 @@ def _source_overlap_violations(
                         key=key,
                         splits=tuple(sorted(split for split in by_split if split)),
                         sample_ids_by_split={
-                            split: tuple(ids)
-                            for split, ids in sorted(by_split.items())
-                            if split
+                            split: tuple(ids) for split, ids in sorted(by_split.items()) if split
                         },
                         protected_splits=tuple(sorted(set(by_split) & protected)),
                     )
@@ -935,7 +971,11 @@ def authorize_legal_ir_split_use(
     operation: str,
     items: Sequence[Any] = (),
 ) -> LegalIRSplitGuardResult:
-    resolved = manifest if isinstance(manifest, LegalIRSplitManifest) else LegalIRSplitManifest.from_mapping(manifest)
+    resolved = (
+        manifest
+        if isinstance(manifest, LegalIRSplitManifest)
+        else LegalIRSplitManifest.from_mapping(manifest)
+    )
     result = require_legal_ir_split_guard(resolved, operation=operation)
     normalized_operation = str(operation or "").strip().lower()
     allowed = LEGAL_IR_SPLIT_OPERATION_ALLOWED_SPLITS.get(normalized_operation)
@@ -1030,9 +1070,7 @@ def require_codex_todo_projection_split(
 def split_guard_from_payload(payload: Mapping[str, Any]) -> LegalIRSplitGuardResult | None:
     """Decode a compact split guard block from rollout/projection payloads."""
 
-    if "passed" in payload and (
-        "violations" in payload or "blocked_operations" in payload
-    ):
+    if "passed" in payload and ("violations" in payload or "blocked_operations" in payload):
         value: Any = payload
     else:
         value = payload.get("legal_ir_split_guard")

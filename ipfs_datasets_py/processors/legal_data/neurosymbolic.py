@@ -112,7 +112,9 @@ class NeurosymbolicMatcher:
                         "requirement_name": legal_requirement.name,
                         "requirement_description": legal_requirement.description,
                         "citation": legal_requirement.citation,
-                        "suggested_action": match.get("suggested_action", "Gather more information"),
+                        "suggested_action": match.get(
+                            "suggested_action", "Gather more information"
+                        ),
                     }
                 )
 
@@ -143,14 +145,20 @@ class NeurosymbolicMatcher:
         dependencies = dependency_graph.get_dependencies_for_node(claim_id, direction="incoming")
         for dependency in dependencies:
             requirement_node = dependency_graph.get_node(dependency.source_id)
-            if requirement_node and self._requirement_matches(legal_requirement.name, requirement_node.name):
+            if requirement_node and self._requirement_matches(
+                legal_requirement.name, requirement_node.name
+            ):
                 if requirement_node.satisfied:
                     result["satisfied"] = True
                     result["confidence"] = max(requirement_node.confidence, 0.8)
-                    result["evidence"].append(f"Requirement node '{requirement_node.name}' is satisfied")
+                    result["evidence"].append(
+                        f"Requirement node '{requirement_node.name}' is satisfied"
+                    )
                     return result
 
-        semantic_match = self._semantic_requirement_check(legal_requirement.name, claim_name, knowledge_graph)
+        semantic_match = self._semantic_requirement_check(
+            legal_requirement.name, claim_name, knowledge_graph
+        )
         if semantic_match["satisfied"]:
             result["satisfied"] = True
             result["confidence"] = semantic_match["confidence"]
@@ -180,7 +188,8 @@ class NeurosymbolicMatcher:
         claim_entities = [
             entity
             for entity in knowledge_graph.entities
-            if entity.type == "claim" and entity.label in {claim_name, claim_name.replace("_", " ").title()}
+            if entity.type == "claim"
+            and entity.label in {claim_name, claim_name.replace("_", " ").title()}
         ]
         if not claim_entities:
             result["suggested_action"] = f"Provide more information about {claim_name}"
@@ -190,12 +199,15 @@ class NeurosymbolicMatcher:
             supporting_relationships = [
                 relationship
                 for relationship in knowledge_graph.relationships
-                if relationship.source == claim_entity.id and relationship.type.lower() == "supported_by"
+                if relationship.source == claim_entity.id
+                and relationship.type.lower() == "supported_by"
             ]
             if supporting_relationships:
                 result["satisfied"] = True
                 result["confidence"] = 0.7
-                result["evidence"].append(f"Found {len(supporting_relationships)} supporting relationships")
+                result["evidence"].append(
+                    f"Found {len(supporting_relationships)} supporting relationships"
+                )
                 return result
         return result
 

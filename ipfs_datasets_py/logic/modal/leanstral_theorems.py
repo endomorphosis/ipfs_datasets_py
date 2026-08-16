@@ -239,9 +239,7 @@ def generate_legal_semantics_theorem_registry(
         {
             "formulas": list(decoded.formulas),
             "modal_span_coverage": round(float(decoded.modal_span_coverage), 12),
-            "reconstruction_similarity": round(
-                float(decoded.reconstruction_similarity), 12
-            ),
+            "reconstruction_similarity": round(float(decoded.reconstruction_similarity), 12),
             "strategy": decoded.reconstruction_strategy,
             "text_hash": _hash_text(decoded.text),
         }
@@ -342,10 +340,7 @@ class _RegistryBuilder:
             (
                 "modal_operator_preserved",
                 "modality",
-                (
-                    "LegalIR.modalityPreserved {facts} {family} {system} "
-                    "{symbol} {predicate}"
-                ),
+                ("LegalIR.modalityPreserved {facts} {family} {system} {symbol} {predicate}"),
             ),
             (
                 "prohibition_semantics_preserved",
@@ -360,18 +355,12 @@ class _RegistryBuilder:
             (
                 "exception_scope_preserved",
                 "exception_scope",
-                (
-                    "LegalIR.exceptionScopePreserved {facts} {exception_hash} "
-                    "{exception_count}"
-                ),
+                ("LegalIR.exceptionScopePreserved {facts} {exception_hash} {exception_count}"),
             ),
             (
                 "temporal_bounds_preserved",
                 "temporal_bounds",
-                (
-                    "LegalIR.temporalBoundsPreserved {facts} {temporal_hash} "
-                    "{temporal_count}"
-                ),
+                ("LegalIR.temporalBoundsPreserved {facts} {temporal_hash} {temporal_count}"),
             ),
             (
                 "actor_action_object_roles_preserved",
@@ -460,9 +449,7 @@ class _RegistryBuilder:
                 "sample_id": self.sample.sample_id,
                 "template_id": "graph_endpoint_integrity_preserved",
             },
-            statement_template=(
-                "LegalIR.graphEndpointIntegrityPreserved {facts} {endpoint_hash}"
-            ),
+            statement_template=("LegalIR.graphEndpointIntegrityPreserved {facts} {endpoint_hash}"),
         )
 
     def _theorem(
@@ -502,9 +489,7 @@ class _RegistryBuilder:
                 prohibition_expected=_lean_bool(
                     bool(bound_facts.get("prohibitionExpected", False))
                 ),
-                permission_expected=_lean_bool(
-                    bool(bound_facts.get("permissionExpected", False))
-                ),
+                permission_expected=_lean_bool(bool(bound_facts.get("permissionExpected", False))),
                 exception_hash=_lean_string(bound_facts.get("exceptionHash")),
                 exception_count=_lean_nat(bound_facts.get("exceptionCount", 0)),
                 temporal_hash=_lean_string(bound_facts.get("temporalHash")),
@@ -517,9 +502,7 @@ class _RegistryBuilder:
                 source_span_hash=_lean_string(bound_facts.get("sourceSpanHash")),
                 endpoint_hash=_lean_string(bound_facts.get("graphEndpointHash")),
                 decompiler_hash=_lean_string(bound_facts.get("decompilerHash")),
-                round_trip_hash=_lean_string(
-                    bound_facts.get("compilerRoundTripHash")
-                ),
+                round_trip_hash=_lean_string(bound_facts.get("compilerRoundTripHash")),
             )
         )
         theorem_id_payload = {
@@ -642,7 +625,10 @@ def _formula_temporal_values(
             continue
         if "temporal" in predicate or predicate.endswith("_deadline"):
             values.append(f"{predicate}:{value}")
-        elif predicate in {"condition_prefix_key", "exception_prefix_key"} and value in _TEMPORAL_PREFIXES:
+        elif (
+            predicate in {"condition_prefix_key", "exception_prefix_key"}
+            and value in _TEMPORAL_PREFIXES
+        ):
             values.append(f"{predicate}:{value}")
     return sorted(dict.fromkeys(values))
 
@@ -684,18 +670,15 @@ def _graph_endpoint_evidence(
     formulas_with_document_edges = {
         triple["subject"]
         for triple in canonical
-        if triple["predicate"] == "belongs_to_document"
-        and triple["object"] == modal_ir.document_id
+        if triple["predicate"] == "belongs_to_document" and triple["object"] == modal_ir.document_id
     }
     nonempty_endpoints = all(
-        bool(triple["subject"] and triple["predicate"] and triple["object"])
-        for triple in canonical
+        bool(triple["subject"] and triple["predicate"] and triple["object"]) for triple in canonical
     )
     unknown_document_edges = [
         triple
         for triple in canonical
-        if triple["predicate"] == "belongs_to_document"
-        and triple["object"] != modal_ir.document_id
+        if triple["predicate"] == "belongs_to_document" and triple["object"] != modal_ir.document_id
     ]
     evidence = {
         "document_id": modal_ir.document_id,

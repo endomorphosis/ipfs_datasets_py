@@ -75,9 +75,7 @@ def test_legal_ir_projection_extracts_transfer_codification_lineage() -> None:
     )
 
     assert predicates["status_keyword"] == ["transferred"]
-    assert predicates["status_transfer_destination_citation"] == [
-        "20 U.S.C. 1087-51"
-    ]
+    assert predicates["status_transfer_destination_citation"] == ["20 U.S.C. 1087-51"]
     assert predicates["status_codification_origin_section"] == ["121"]
     assert predicates["status_codification_origin_public_law"] == ["88-452"]
     assert predicates["status_codification_renumbered_section"] == ["441"]
@@ -204,10 +202,7 @@ def test_legal_ir_projection_structural_us_code_facts_add_neo4j_target_view() ->
         triples = augment_legal_ir_projection_triples(
             [{"subject": subject, "predicate": "sample_text", "object": text}]
         )
-        values = {
-            (triple["predicate"], triple["object"])
-            for triple in triples
-        }
+        values = {(triple["predicate"], triple["object"]) for triple in triples}
 
         assert ("usc_hierarchy_projection", "true") in values
         assert ("status_keyword", "repealed") in values

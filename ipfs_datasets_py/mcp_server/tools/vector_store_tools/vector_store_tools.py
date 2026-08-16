@@ -6,6 +6,7 @@ All vector-store logic lives in ipfs_datasets_py.vector_stores.vector_store_tool
 Each function below is a minimal async wrapper that unpacks MCP-style
 parameters and delegates straight to the canonical implementation.
 """
+
 from __future__ import annotations
 
 import logging
@@ -28,6 +29,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Thin standalone wrappers
 # ---------------------------------------------------------------------------
+
 
 async def vector_index(
     action: str,
@@ -127,6 +129,7 @@ async def vector_metadata(
 # Backward-compatible class aliases
 # ---------------------------------------------------------------------------
 
+
 class VectorIndexTool:  # noqa: E302
     """Thin compatibility shim — wraps vector_index()."""
 
@@ -137,7 +140,9 @@ class VectorIndexTool:  # noqa: E302
 
     async def execute(self, action: str, index_name: str, config=None) -> Dict[str, Any]:
         return await vector_index(
-            action=action, index_name=index_name, config=config,
+            action=action,
+            index_name=index_name,
+            config=config,
             vector_service=self.vector_service,
         )
 
@@ -150,9 +155,14 @@ class VectorRetrievalTool:
     def __init__(self, vector_service=None):
         self.vector_service = vector_service
 
-    async def execute(self, collection="default", ids=None, filters=None, limit=100) -> Dict[str, Any]:
+    async def execute(
+        self, collection="default", ids=None, filters=None, limit=100
+    ) -> Dict[str, Any]:
         return await vector_retrieval(
-            collection=collection, ids=ids, filters=filters, limit=limit,
+            collection=collection,
+            ids=ids,
+            filters=filters,
+            limit=limit,
             vector_service=self.vector_service,
         )
 
@@ -165,8 +175,13 @@ class VectorMetadataTool:
     def __init__(self, vector_service=None):
         self.vector_service = vector_service
 
-    async def execute(self, action: str, collection="default", ids=None, metadata=None) -> Dict[str, Any]:
+    async def execute(
+        self, action: str, collection="default", ids=None, metadata=None
+    ) -> Dict[str, Any]:
         return await vector_metadata(
-            action=action, collection=collection, ids=ids, metadata=metadata,
+            action=action,
+            collection=collection,
+            ids=ids,
+            metadata=metadata,
             vector_service=self.vector_service,
         )

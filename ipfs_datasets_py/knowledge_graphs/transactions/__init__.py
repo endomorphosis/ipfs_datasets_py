@@ -26,18 +26,18 @@ Usage:
     from ipfs_datasets_py.knowledge_graphs.transactions import (
         TransactionManager, IsolationLevel
     )
-    
+
     # Create transaction manager
     txn_manager = TransactionManager(storage_backend)
-    
+
     # Begin transaction
     txn = txn_manager.begin(isolation_level=IsolationLevel.REPEATABLE_READ)
-    
+
     try:
         # Perform operations
         txn.write_node(node_data)
         txn.write_relationship(rel_data)
-        
+
         # Commit changes
         root_cid = txn_manager.commit(txn)
         print(f"Transaction committed: {root_cid}")
@@ -78,7 +78,7 @@ from .types import (
     Transaction,
     ConflictError,
     TransactionAbortedError,
-    DeadlockDetectedError
+    DeadlockDetectedError,
 )
 from .wal import WriteAheadLog
 from .manager import TransactionManager

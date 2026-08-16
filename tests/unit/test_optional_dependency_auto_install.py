@@ -68,7 +68,9 @@ def test_ipfs_simple_api_retries_after_fastapi_install(monkeypatch):
     monkeypatch.setattr(
         auto_installer,
         "ensure_module",
-        lambda module_name, package_name=None, **kwargs: install_calls.append((module_name, package_name)) or object(),
+        lambda module_name, package_name=None, **kwargs: (
+            install_calls.append((module_name, package_name)) or object()
+        ),
     )
     sys.modules.pop("ipfs_kit_py._high_level_api_impl", None)
 
@@ -100,7 +102,9 @@ def test_modal_logic_extension_installs_symai_after_permission_error(monkeypatch
     fake_symai.Expression = FakeExpression
 
     fake_symai_config = types.ModuleType("ipfs_datasets_py.utils.symai_config")
-    fake_symai_config.ensure_symai_config_for_import = lambda *args, **kwargs: ensure_calls.append("called") or None
+    fake_symai_config.ensure_symai_config_for_import = lambda *args, **kwargs: (
+        ensure_calls.append("called") or None
+    )
 
     installer = types.SimpleNamespace(
         auto_install=True,

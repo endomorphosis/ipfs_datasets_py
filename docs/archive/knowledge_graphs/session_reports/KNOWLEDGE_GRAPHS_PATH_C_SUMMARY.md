@@ -39,9 +39,9 @@ context = JSONLDContext(
     vocab=VocabularyType.SCHEMA_ORG.value,
     prefixes={
         "prov": VocabularyType.PROV.value,  # Provenance
-        "geo": VocabularyType.GEO.value,    # Geographic
-        "time": VocabularyType.TIME.value   # Temporal
-    }
+        "geo": VocabularyType.GEO.value,  # Geographic
+        "time": VocabularyType.TIME.value,  # Temporal
+    },
 )
 ```
 
@@ -55,8 +55,8 @@ shape = {
     "property": {
         "path": "email",
         "pattern": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-        "minCount": 1
-    }
+        "minCount": 1,
+    },
 }
 result = validator.validate(data, shape)
 ```

@@ -31,14 +31,18 @@ class WalletStorageBackendConfig:
     pin: bool = True
 
     @classmethod
-    def from_config(cls, config: str | Mapping[str, Any] | "WalletStorageBackendConfig" | None) -> "WalletStorageBackendConfig":
+    def from_config(
+        cls, config: str | Mapping[str, Any] | "WalletStorageBackendConfig" | None
+    ) -> "WalletStorageBackendConfig":
         if config is None:
             return cls()
         if isinstance(config, cls):
             return config
         if isinstance(config, str):
             return cls(storage_type=config)
-        storage_type = str(config.get("type") or config.get("storage_type") or config.get("provider") or "memory")
+        storage_type = str(
+            config.get("type") or config.get("storage_type") or config.get("provider") or "memory"
+        )
         return cls(
             storage_type=storage_type,
             root=config.get("root") or config.get("path"),
@@ -56,7 +60,9 @@ class WalletStorageConfig:
     mirrors: list[WalletStorageBackendConfig] = field(default_factory=list)
 
     @classmethod
-    def from_config(cls, config: str | Mapping[str, Any] | "WalletStorageConfig" | None) -> "WalletStorageConfig":
+    def from_config(
+        cls, config: str | Mapping[str, Any] | "WalletStorageConfig" | None
+    ) -> "WalletStorageConfig":
         if config is None:
             return cls()
         if isinstance(config, cls):
@@ -242,7 +248,9 @@ class FilecoinEncryptedBlobStore:
         else:
             raise TypeError("Filecoin backend must implement store_bytes or put")
         locator_text = str(locator)
-        uri = locator_text if locator_text.startswith("filecoin://") else f"filecoin://{locator_text}"
+        uri = (
+            locator_text if locator_text.startswith("filecoin://") else f"filecoin://{locator_text}"
+        )
         return StorageRef(uri=uri, storage_type="filecoin", size_bytes=len(data), sha256=digest)
 
     def get(self, ref: StorageRef) -> bytes:
@@ -263,7 +271,9 @@ class FilecoinEncryptedBlobStore:
 class ReplicatedEncryptedBlobStore:
     """Write encrypted blobs to a primary store and optional mirror stores."""
 
-    def __init__(self, primary: EncryptedBlobStore, mirrors: Optional[Iterable[EncryptedBlobStore]] = None) -> None:
+    def __init__(
+        self, primary: EncryptedBlobStore, mirrors: Optional[Iterable[EncryptedBlobStore]] = None
+    ) -> None:
         self.primary = primary
         self.mirrors = list(mirrors or [])
 
@@ -290,10 +300,7 @@ class ReplicatedEncryptedBlobStore:
     def check_ref(self, ref: StorageRef) -> list[StorageReplicaStatus]:
         """Verify every known replica for this ref without decrypting bytes."""
 
-        return [
-            self._check_candidate(role, candidate)
-            for role, candidate in self._known_refs(ref)
-        ]
+        return [self._check_candidate(role, candidate) for role, candidate in self._known_refs(ref)]
 
     def repair_ref(self, ref: StorageRef) -> list[StorageReplicaStatus]:
         """Repair invalid or missing replicas from any valid encrypted source."""
@@ -325,7 +332,9 @@ class ReplicatedEncryptedBlobStore:
 
         repaired_mirrors: list[StorageRef] = []
         for mirror_store in self.mirrors:
-            existing = next((mirror for mirror in ref.mirrors if _store_matches_ref(mirror_store, mirror)), None)
+            existing = next(
+                (mirror for mirror in ref.mirrors if _store_matches_ref(mirror_store, mirror)), None
+            )
             if existing is None:
                 mirror_ref = mirror_store.put(data)
                 mirror_ref.mirrors = []

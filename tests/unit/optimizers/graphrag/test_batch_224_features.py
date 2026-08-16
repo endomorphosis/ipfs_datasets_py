@@ -143,7 +143,6 @@ def _make_ont(nodes, edges):
 
 
 class TestScoreVarianceToRangeRatio:
-
     def test_empty_returns_zero(self):
         opt = _make_opt()
         assert opt.score_variance_to_range_ratio() == 0.0
@@ -195,7 +194,6 @@ class TestScoreVarianceToRangeRatio:
 
 
 class TestScoreDimensionRangeRatio:
-
     def test_uniform_returns_zero(self):
         critic = _make_critic()
         s = _make_score()  # all 0.5
@@ -204,8 +202,12 @@ class TestScoreDimensionRangeRatio:
     def test_all_zero_returns_zero(self):
         critic = _make_critic()
         s = _make_score(
-            completeness=0.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         assert critic.score_dimension_range_ratio(s) == 0.0
 
@@ -213,8 +215,12 @@ class TestScoreDimensionRangeRatio:
         # max=1.0 min=0.0 → (1-0)/(1+0) = 1.0
         critic = _make_critic()
         s = _make_score(
-            completeness=0.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=1.0,
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=1.0,
         )
         result = critic.score_dimension_range_ratio(s)
         assert result == 1.0
@@ -223,8 +229,12 @@ class TestScoreDimensionRangeRatio:
         # max=0.8 min=0.2 → (0.8-0.2)/(0.8+0.2) = 0.6
         critic = _make_critic()
         s = CriticScore(
-            completeness=0.2, consistency=0.8, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+            completeness=0.2,
+            consistency=0.8,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
         )
         result = critic.score_dimension_range_ratio(s)
         assert abs(result - 0.6) < 1e-9
@@ -245,8 +255,14 @@ class TestScoreDimensionRangeRatio:
         # Test two extreme dims: same as OntologyOptimizer.score_range_ratio formula
         critic = _make_critic()
         lo, hi = 0.3, 0.7
-        s = _make_score(completeness=lo, consistency=lo, clarity=lo,
-                        granularity=lo, relationship_coherence=lo, domain_alignment=hi)
+        s = _make_score(
+            completeness=lo,
+            consistency=lo,
+            clarity=lo,
+            granularity=lo,
+            relationship_coherence=lo,
+            domain_alignment=hi,
+        )
         expected = (hi - lo) / (hi + lo)
         assert abs(critic.score_dimension_range_ratio(s) - expected) < 1e-9
 
@@ -257,7 +273,6 @@ class TestScoreDimensionRangeRatio:
 
 
 class TestEntityConfidenceAboveThreshold:
-
     def test_empty_returns_zero(self):
         gen = _make_gen()
         result = _make_result()
@@ -326,7 +341,6 @@ class TestEntityConfidenceAboveThreshold:
 
 
 class TestFeedbackDeclineStreaks:
-
     def test_empty_returns_zero(self):
         adapter = _make_adapter()
         assert adapter.feedback_decline_streaks() == 0
@@ -393,7 +407,6 @@ class TestFeedbackDeclineStreaks:
 
 
 class TestRunScoreJerk:
-
     def test_empty_returns_zero(self):
         p = _make_pipeline([])
         assert p.run_score_jerk() == 0.0
@@ -449,7 +462,6 @@ class TestRunScoreJerk:
 
 
 class TestSccGiantFraction:
-
     def test_empty_ontology_returns_zero(self):
         lv = _make_lv()
         ont = _make_ont([], [])
@@ -504,8 +516,7 @@ class TestSccGiantFraction:
 
     def test_consistent_with_sizes(self):
         lv = _make_lv()
-        ont = _make_ont(["A", "B", "C", "D", "E"],
-                        [("A", "B"), ("B", "A"), ("C", "D"), ("D", "C")])
+        ont = _make_ont(["A", "B", "C", "D", "E"], [("A", "B"), ("B", "A"), ("C", "D"), ("D", "C")])
         sizes = lv.strongly_connected_component_sizes(ont)
         total = sum(sizes)
         expected = sizes[0] / total

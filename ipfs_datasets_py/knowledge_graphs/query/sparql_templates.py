@@ -28,10 +28,10 @@ Query Template Categories:
 Usage Example:
     # Search for entities by name
     query = build_entity_query("Albert Einstein")
-    
+
     # Validate relationships between entities
     relationship_query = build_direct_relationship_query("Q937", "Q5")
-    
+
     # Find similar entities based on properties
     similarity_query = build_similar_entities_query("Q937", "Q5")
 
@@ -235,6 +235,7 @@ ORDER BY DESC(?expectedPercentage)
 
 # Functions to build SPARQL queries with proper parameters
 
+
 def build_entity_query(entity_name: str) -> str:
     """
     Build a SPARQL query to search for entities by name in Wikidata.
@@ -259,7 +260,7 @@ def build_entity_query(entity_name: str) -> str:
     Examples:
         >>> query = build_entity_query("Albert Einstein")
         >>> # Returns SPARQL query to find entities with "Albert Einstein" in their label
-        
+
         >>> query = build_entity_query("university")
         >>> # Returns SPARQL query to find entities containing "university"
 
@@ -269,6 +270,7 @@ def build_entity_query(entity_name: str) -> str:
         to 10 entities to prevent excessive response sizes.
     """
     return ENTITY_QUERY % entity_name
+
 
 def build_entity_properties_query(entity_id: str) -> str:
     """
@@ -293,7 +295,7 @@ def build_entity_properties_query(entity_id: str) -> str:
     Examples:
         >>> query = build_entity_properties_query("Q937")
         >>> # Returns SPARQL query to get all properties of Albert Einstein
-        
+
         >>> query = build_entity_properties_query("Q5")
         >>> # Returns SPARQL query to get all properties of the "human" concept
 
@@ -303,6 +305,7 @@ def build_entity_properties_query(entity_id: str) -> str:
         are not included in the basic property retrieval.
     """
     return ENTITY_PROPERTIES_QUERY % entity_id
+
 
 def build_direct_relationship_query(source_id: str, target_id: str) -> str:
     """
@@ -330,7 +333,7 @@ def build_direct_relationship_query(source_id: str, target_id: str) -> str:
     Examples:
         >>> query = build_direct_relationship_query("Q937", "Q5")
         >>> # Returns query to find direct relationships from Einstein to "human"
-        
+
         >>> query = build_direct_relationship_query("Q95", "Q183")
         >>> # Returns query to find relationships from Google to Germany
 
@@ -340,6 +343,7 @@ def build_direct_relationship_query(source_id: str, target_id: str) -> str:
         The direction matters: source → target relationships only.
     """
     return DIRECT_RELATIONSHIP_QUERY % (source_id, target_id)
+
 
 def build_inverse_relationship_query(target_id: str, source_id: str) -> str:
     """
@@ -367,7 +371,7 @@ def build_inverse_relationship_query(target_id: str, source_id: str) -> str:
     Examples:
         >>> query = build_inverse_relationship_query("Q5", "Q937")
         >>> # Returns query to find relationships from "human" back to Einstein
-        
+
         >>> query = build_inverse_relationship_query("Q183", "Q95")
         >>> # Returns query to find relationships from Germany back to Google
 
@@ -377,6 +381,7 @@ def build_inverse_relationship_query(target_id: str, source_id: str) -> str:
         bidirectional relationship analysis between two entities.
     """
     return INVERSE_RELATIONSHIP_QUERY % (target_id, source_id)
+
 
 def build_entity_type_query(entity_id: str) -> str:
     """
@@ -402,7 +407,7 @@ def build_entity_type_query(entity_id: str) -> str:
     Examples:
         >>> query = build_entity_type_query("Q937")
         >>> # Returns query to get types of Albert Einstein (human, physicist, etc.)
-        
+
         >>> query = build_entity_type_query("Q95")
         >>> # Returns query to get types of Google (company, organization, etc.)
 
@@ -412,6 +417,7 @@ def build_entity_type_query(entity_id: str) -> str:
         are not included and would require a separate query for complete type hierarchy.
     """
     return ENTITY_TYPE_QUERY % entity_id
+
 
 def build_path_relationship_query(source_id: str, target_id: str) -> str:
     """
@@ -440,7 +446,7 @@ def build_path_relationship_query(source_id: str, target_id: str) -> str:
     Examples:
         >>> query = build_path_relationship_query("Q937", "Q5")
         >>> # Returns query to find paths from Einstein to "human" concept
-        
+
         >>> query = build_path_relationship_query("Q95", "Q30")
         >>> # Returns query to find paths from Google to United States
 
@@ -450,6 +456,7 @@ def build_path_relationship_query(source_id: str, target_id: str) -> str:
         query performance. Results include property labels for human readability.
     """
     return PATH_RELATIONSHIP_QUERY % (source_id, target_id)
+
 
 def build_similar_entities_query(entity_id: str, type_id: Optional[str] = None) -> str:
     """
@@ -478,7 +485,7 @@ def build_similar_entities_query(entity_id: str, type_id: Optional[str] = None) 
     Examples:
         >>> query = build_similar_entities_query("Q937")
         >>> # Returns query to find entities similar to Einstein (any type)
-        
+
         >>> query = build_similar_entities_query("Q937", "Q5")
         >>> # Returns query to find humans similar to Einstein
 
@@ -489,6 +496,7 @@ def build_similar_entities_query(entity_id: str, type_id: Optional[str] = None) 
     """
     type_filter = f"FILTER EXISTS {{ ?item wdt:P31 wd:{type_id} }}" if type_id else ""
     return SIMILAR_ENTITIES_QUERY % (entity_id, entity_id, type_filter)
+
 
 def build_property_stats_query(type_id: str) -> str:
     """
@@ -516,7 +524,7 @@ def build_property_stats_query(type_id: str) -> str:
     Examples:
         >>> query = build_property_stats_query("Q5")
         >>> # Returns statistics for properties used by human entities
-        
+
         >>> query = build_property_stats_query("Q4830453")
         >>> # Returns statistics for properties used by business entities
 
@@ -526,6 +534,7 @@ def build_property_stats_query(type_id: str) -> str:
         qualifiers are not included in the basic statistics.
     """
     return PROPERTY_STATS_QUERY % (type_id, type_id)
+
 
 def build_property_validation_query(type_id: str, entity_id: str) -> str:
     """
@@ -555,7 +564,7 @@ def build_property_validation_query(type_id: str, entity_id: str) -> str:
     Examples:
         >>> query = build_property_validation_query("Q5", "Q937")
         >>> # Validates Einstein's properties against common human properties
-        
+
         >>> query = build_property_validation_query("Q4830453", "Q95")
         >>> # Validates Google's properties against common business properties
 

@@ -7,6 +7,7 @@ with just the essential parts needed to import the module.
 
 from typing import Dict, List, Any, Optional, Tuple, Union, Callable, Set
 
+
 class GraphRAGQueryStats:
     """Statistics collector for GraphRAG queries."""
 
@@ -19,18 +20,25 @@ class GraphRAGQueryStats:
         self.learning_interval = 50
         self.patterns: Dict[str, Any] = {}
 
-    def record_query(self, query_id: str, params: Dict[str, Any],
-                    results: List[Dict[str, Any]], duration: float, success: bool = True) -> None:
+    def record_query(
+        self,
+        query_id: str,
+        params: Dict[str, Any],
+        results: List[Dict[str, Any]],
+        duration: float,
+        success: bool = True,
+    ) -> None:
         """Record a query and its results."""
         self.queries[query_id] = {
-            'params': params,
-            'result_count': len(results),
-            'duration': duration,
-            'success': success,
+            "params": params,
+            "result_count": len(results),
+            "duration": duration,
+            "success": success,
         }
         if success:
             self.analyzed_queries += 1
             self.learning_counter += 1
+
 
 class GraphRAGQueryOptimizer:
     """Optimizer for GraphRAG queries based on statistical learning."""
@@ -47,12 +55,16 @@ class GraphRAGQueryOptimizer:
         """Enable or disable statistical learning."""
         self.stats.learning_enabled = enabled
 
-    def _derive_rules_from_patterns(self, successful_queries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _derive_rules_from_patterns(
+        self, successful_queries: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Derive optimization rules from successful query patterns."""
         rules: List[Dict[str, Any]] = []
         return rules
 
-    def _derive_wikipedia_specific_rules(self, successful_queries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _derive_wikipedia_specific_rules(
+        self, successful_queries: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         Derives Wikipedia-specific optimization rules from successful query patterns.
 
@@ -64,7 +76,8 @@ class GraphRAGQueryOptimizer:
         """
         return []
 
-    def _create_fallback_plan(self, query: Dict[str, Any], priority: str = "normal",
-                            error: Optional[str] = None) -> Dict[str, Any]:
+    def _create_fallback_plan(
+        self, query: Dict[str, Any], priority: str = "normal", error: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Create a fallback query plan when optimization fails."""
         return {"query": query.copy()}

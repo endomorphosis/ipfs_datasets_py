@@ -41,10 +41,10 @@ class TestAutomaticStrategySelection:
         prover = TDFOLProver()
         p = Predicate("P", [Term("a")])
         prover.add_axiom(p)
-        
+
         # WHEN
         result = prover.prove(p, timeout_ms=1000)
-        
+
         # THEN
         assert result.status == ProofStatus.PROVED
         assert result.formula == p
@@ -62,10 +62,10 @@ class TestAutomaticStrategySelection:
         # □P(a) - modal necessity
         modal_p = TemporalFormula(TemporalOperator.ALWAYS, p)
         prover.add_axiom(modal_p)
-        
+
         # WHEN
         result = prover.prove(modal_p, timeout_ms=1000)
-        
+
         # THEN
         assert result.status == ProofStatus.PROVED
         assert result.formula == modal_p
@@ -82,10 +82,10 @@ class TestAutomaticStrategySelection:
         # ◊P(a) - temporal eventually
         eventually_p = TemporalFormula(TemporalOperator.EVENTUALLY, p)
         prover.add_axiom(eventually_p)
-        
+
         # WHEN
         result = prover.prove(eventually_p, timeout_ms=1000)
-        
+
         # THEN
         assert result.status == ProofStatus.PROVED
         assert result.formula == eventually_p
@@ -103,15 +103,15 @@ class TestManualStrategyOverride:
         # GIVEN
         try:
             from ipfs_datasets_py.logic.TDFOL.strategies import ForwardChainingStrategy
-            
+
             custom_strategy = ForwardChainingStrategy(rules=[], max_iterations=50)
             prover = TDFOLProver(strategy=custom_strategy)
             p = Predicate("P", [Term("a")])
             prover.add_axiom(p)
-            
+
             # WHEN
             result = prover.prove(p, timeout_ms=1000)
-            
+
             # THEN
             assert result.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE]
             # Verify custom strategy was used (selector should be None)
@@ -129,16 +129,16 @@ class TestManualStrategyOverride:
         # GIVEN
         try:
             from ipfs_datasets_py.logic.TDFOL.strategies import ModalTableauxStrategy
-            
+
             custom_strategy = ModalTableauxStrategy()
             prover = TDFOLProver(strategy=custom_strategy)
             p = Predicate("P", [Term("a")])
             modal_p = TemporalFormula(TemporalOperator.ALWAYS, p)
             prover.add_axiom(modal_p)
-            
+
             # WHEN
             result = prover.prove(modal_p, timeout_ms=1000)
-            
+
             # THEN
             assert result.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE]
             assert prover.selector is None
@@ -160,14 +160,14 @@ class TestCacheIntegration:
         prover = TDFOLProver(enable_cache=True)
         p = Predicate("P", [Term("a")])
         prover.add_axiom(p)
-        
+
         # First prove to populate cache
         result1 = prover.prove(p, timeout_ms=1000)
         assert result1.status == ProofStatus.PROVED
-        
+
         # WHEN - prove again (should hit cache)
         result2 = prover.prove(p, timeout_ms=1000)
-        
+
         # THEN
         assert result2.status == ProofStatus.PROVED
         assert result2.formula == p
@@ -186,14 +186,14 @@ class TestCacheIntegration:
         q = Predicate("Q", [Term("b")])
         prover.add_axiom(p)
         prover.add_axiom(q)
-        
+
         # Verify cache is initialized
         if prover.proof_cache is None:
             pytest.skip("Proof cache not available")
-        
+
         # WHEN
         result = prover.prove(p, timeout_ms=1000)
-        
+
         # THEN
         assert result.status == ProofStatus.PROVED
         # Cache should contain the result (can verify via second lookup)
@@ -204,7 +204,7 @@ class TestCacheIntegration:
 class TestStrategyFallback:
     """Test fallback behavior when strategies unavailable."""
 
-    @patch('ipfs_datasets_py.logic.TDFOL.tdfol_prover.HAVE_STRATEGIES', False)
+    @patch("ipfs_datasets_py.logic.TDFOL.tdfol_prover.HAVE_STRATEGIES", False)
     def test_prove_fallback_when_strategies_unavailable(self):
         """
         GIVEN a TDFOLProver when strategies are not available
@@ -214,10 +214,10 @@ class TestStrategyFallback:
         # GIVEN
         prover = TDFOLProver()
         p = Predicate("P", [Term("a")])
-        
+
         # WHEN
         result = prover.prove(p, timeout_ms=1000)
-        
+
         # THEN
         # Should either find it as axiom or return error
         if p not in prover.kb.axioms:
@@ -234,15 +234,21 @@ class TestStrategyFallback:
         prover = TDFOLProver()
         # Create a formula that might cause issues
         p = Predicate("P", [Variable("x")])
-        
+
         # WHEN
         result = prover.prove(p, timeout_ms=100)  # Very short timeout
-        
+
         # THEN
         # Should return a result (even if unprovable or error)
         assert result is not None
         assert isinstance(result, ProofResult)
-        assert result.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE, ProofStatus.UNKNOWN, ProofStatus.TIMEOUT, ProofStatus.ERROR]
+        assert result.status in [
+            ProofStatus.PROVED,
+            ProofStatus.UNPROVABLE,
+            ProofStatus.UNKNOWN,
+            ProofStatus.TIMEOUT,
+            ProofStatus.ERROR,
+        ]
 
 
 class TestKnowledgeBaseIntegration:
@@ -258,22 +264,22 @@ class TestKnowledgeBaseIntegration:
         prover = TDFOLProver()
         p = Predicate("P", [Term("a")])
         q = Predicate("Q", [Term("b")])
-        
+
         # Add axioms: P(a), P(a) → Q(b)
         prover.add_axiom(p)
         implication = BinaryFormula(LogicOperator.IMPLIES, p, q)
         prover.add_axiom(implication)
-        
+
         # WHEN - prove P(a) (axiom)
         result_p = prover.prove(p, timeout_ms=1000)
-        
+
         # THEN
         assert result_p.status == ProofStatus.PROVED
         assert result_p.formula == p
-        
+
         # WHEN - prove Q(b) (derivable from axioms)
         result_q = prover.prove(q, timeout_ms=5000)
-        
+
         # THEN
         # Should be proved via forward chaining or similar
         assert result_q.status in [ProofStatus.PROVED, ProofStatus.UNPROVABLE]
@@ -292,10 +298,10 @@ class TestEdgeCases:
         # GIVEN
         prover = TDFOLProver()
         p = Predicate("P", [Term("a")])
-        
+
         # WHEN
         result = prover.prove(p, timeout_ms=1000)
-        
+
         # THEN
         assert result.status in [ProofStatus.UNPROVABLE, ProofStatus.UNKNOWN, ProofStatus.ERROR]
 
@@ -309,10 +315,10 @@ class TestEdgeCases:
         prover = TDFOLProver()
         p = Predicate("P", [Term("a")])
         prover.add_axiom(p)
-        
+
         # WHEN
         result = prover.prove(p, timeout_ms=0)
-        
+
         # THEN
         # Should still work for axiom lookup
         assert result is not None
@@ -328,17 +334,17 @@ class TestEdgeCases:
         prover = TDFOLProver()
         p = Predicate("P", [Term("a")])
         q = Predicate("Q", [Term("b")])
-        
+
         # Create nested formula: □(P(a) → ◊Q(b))
         inner_implication = BinaryFormula(LogicOperator.IMPLIES, p, q)
         eventually_q = TemporalFormula(TemporalOperator.EVENTUALLY, inner_implication)
         always_formula = TemporalFormula(TemporalOperator.ALWAYS, eventually_q)
-        
+
         prover.add_axiom(always_formula)
-        
+
         # WHEN
         result = prover.prove(always_formula, timeout_ms=2000)
-        
+
         # THEN
         assert result is not None
         assert isinstance(result, ProofResult)

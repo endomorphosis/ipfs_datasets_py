@@ -23,10 +23,7 @@ MODEL_IDS = [f"model-{index}" for index in range(26)]
 
 def _fixture(tmp_path: Path) -> tuple[Path, list[str], str]:
     path = tmp_path / "pilot_cases.json"
-    rows = [
-        {"case_id": f"case-{index}", "source_text": f"case {index}"}
-        for index in range(5)
-    ]
+    rows = [{"case_id": f"case-{index}", "source_text": f"case {index}"} for index in range(5)]
     raw = json.dumps(rows, sort_keys=True).encode()
     path.write_bytes(raw)
     return path, [row["case_id"] for row in rows], hashlib.sha256(raw).hexdigest()
@@ -123,9 +120,7 @@ def _complete_report(
         for repeat_index in range(5):
             coordinates: list[dict[str, object]] = []
             for arm_index, arm_id in enumerate(MODEL_IDS):
-                namespace = (
-                    f"uncached-{case_index}-{repeat_index}-{arm_index}"
-                )
+                namespace = f"uncached-{case_index}-{repeat_index}-{arm_index}"
                 coordinates.append(
                     {
                         "arm_id": arm_id,
@@ -157,20 +152,10 @@ def _complete_report(
         "blocks": blocks,
     }
     deterministic_records = [
-        _record(case_id, 0, arm_id)
-        for case_id in case_ids
-        for arm_id in DETERMINISTIC_IDS
+        _record(case_id, 0, arm_id) for case_id in case_ids for arm_id in DETERMINISTIC_IDS
     ]
-    summaries = {
-        arm_id: _summary(case_ids, repeats=1)
-        for arm_id in DETERMINISTIC_IDS
-    }
-    summaries.update(
-        {
-            arm_id: _summary(case_ids, repeats=5)
-            for arm_id in MODEL_IDS
-        }
-    )
+    summaries = {arm_id: _summary(case_ids, repeats=1) for arm_id in DETERMINISTIC_IDS}
+    summaries.update({arm_id: _summary(case_ids, repeats=5) for arm_id in MODEL_IDS})
     report: dict[str, object] = {
         "interface": REPORT_INTERFACE,
         "schema_version": REPORT_SCHEMA_VERSION,
@@ -225,9 +210,7 @@ def _complete_report(
                 "source-copy exclusion, polarity preservation, and full "
                 "coverage must pass for every frozen case/repeat coordinate"
             ),
-            "selection_metric": (
-                "lowest per-case-first macro mean end-to-end loss"
-            ),
+            "selection_metric": ("lowest per-case-first macro mean end-to-end loss"),
             "reasons": ["no arm passed all frozen gates"],
         },
     }
@@ -316,15 +299,9 @@ def _set_selection(
             arm_id,
         ),
     )
-    best = (
-        summaries[ranked[0]]["aggregate"]["end_to_end"]["mean"]
-        if ranked
-        else None
-    )
+    best = summaries[ranked[0]]["aggregate"]["end_to_end"]["mean"] if ranked else None
     co_winners = [
-        arm_id
-        for arm_id in ranked
-        if summaries[arm_id]["aggregate"]["end_to_end"]["mean"] == best
+        arm_id for arm_id in ranked if summaries[arm_id]["aggregate"]["end_to_end"]["mean"] == best
     ]
     outcome = (
         "selected"

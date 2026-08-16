@@ -17,6 +17,7 @@ from ...playwright_limiter import acquire_playwright_slot
 
 try:
     from playwright.async_api import async_playwright
+
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
@@ -26,17 +27,25 @@ class GeorgiaScraper(BaseStateScraper):
     """Scraper for Georgia state laws from http://www.legis.ga.gov"""
 
     _GA_JUSTIA_TITLE_RE = re.compile(r"/codes/georgia/(?:\d{4}/)?title-[^/]+/?$", re.IGNORECASE)
-    _GA_JUSTIA_INTERMEDIATE_RE = re.compile(r"/codes/georgia/(?:\d{4}/)?title-[^/]+/(?!.*section-)[^?#]+/?$", re.IGNORECASE)
-    _GA_JUSTIA_SECTION_RE = re.compile(r"/codes/georgia/(?:\d{4}/)?title-[^/]+/.*/section-[^/]+/?$", re.IGNORECASE)
+    _GA_JUSTIA_INTERMEDIATE_RE = re.compile(
+        r"/codes/georgia/(?:\d{4}/)?title-[^/]+/(?!.*section-)[^?#]+/?$", re.IGNORECASE
+    )
+    _GA_JUSTIA_SECTION_RE = re.compile(
+        r"/codes/georgia/(?:\d{4}/)?title-[^/]+/.*/section-[^/]+/?$", re.IGNORECASE
+    )
     _GA_SECTION_NUMBER_RE = re.compile(r"/section-([^/]+)/?$", re.IGNORECASE)
 
-    def _filter_non_code_results(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+    def _filter_non_code_results(
+        self, statutes: List[NormalizedStatute]
+    ) -> List[NormalizedStatute]:
         out: List[NormalizedStatute] = []
         for statute in statutes:
             url = str(statute.source_url or "").lower()
             text = str(statute.full_text or "").lower()
             allow_justia_section = bool(self._GA_JUSTIA_SECTION_RE.search(url))
-            allow_summary_pdf = url.endswith("25sumdoc.pdf") or "general-statutes-summary-pdf.pdf" in url
+            allow_summary_pdf = (
+                url.endswith("25sumdoc.pdf") or "general-statutes-summary-pdf.pdf" in url
+            )
             if any(
                 hint in url
                 for hint in [
@@ -46,7 +55,10 @@ class GeorgiaScraper(BaseStateScraper):
                 ]
             ):
                 continue
-            if "temporary error. please try again" in text or "complete the security check before continuing" in text:
+            if (
+                "temporary error. please try again" in text
+                or "complete the security check before continuing" in text
+            ):
                 continue
             if "law.justia.com" in url and not allow_justia_section:
                 continue
@@ -54,19 +66,21 @@ class GeorgiaScraper(BaseStateScraper):
                 continue
             out.append(statute)
         return out
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Georgia's legislative website."""
         return "http://www.legis.ga.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Georgia."""
-        return [{
-            "name": "Official Code of Georgia",
-            "url": f"{self.get_base_url()}/legislation/laws.html",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Official Code of Georgia",
+                "url": f"{self.get_base_url()}/legislation/laws.html",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -74,11 +88,11 @@ class GeorgiaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Georgia's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -96,9 +110,13 @@ class GeorgiaScraper(BaseStateScraper):
                 return summary_pdf_statutes[:return_threshold]
 
         justia_statutes: List[NormalizedStatute] = []
-        if max_statutes is not None or self._env_enabled("GEORGIA_JUSTIA_ENABLE", default=False) or self._env_enabled(
-            "LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL",
-            default=False,
+        if (
+            max_statutes is not None
+            or self._env_enabled("GEORGIA_JUSTIA_ENABLE", default=False)
+            or self._env_enabled(
+                "LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL",
+                default=False,
+            )
         ):
             justia_statutes = await self._scrape_justia_year(
                 code_name,
@@ -123,10 +141,14 @@ class GeorgiaScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            if PLAYWRIGHT_AVAILABLE and self._env_enabled("GEORGIA_PLAYWRIGHT_ENABLE", default=False):
+            if PLAYWRIGHT_AVAILABLE and self._env_enabled(
+                "GEORGIA_PLAYWRIGHT_ENABLE", default=False
+            ):
                 self.logger.info("Georgia: Using Playwright for JavaScript rendering")
                 try:
-                    result = await self._scrape_with_playwright(code_name, candidate, "Ga. Code Ann.")
+                    result = await self._scrape_with_playwright(
+                        code_name, candidate, "Ga. Code Ann."
+                    )
                     result = self._filter_non_code_results(result)
                     if len(result) > len(best_statutes):
                         best_statutes = result
@@ -160,7 +182,9 @@ class GeorgiaScraper(BaseStateScraper):
             return default
         return value.strip().lower() in {"1", "true", "yes", "on"}
 
-    async def _scrape_justia_year(self, code_name: str, year: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_justia_year(
+        self, code_name: str, year: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -168,7 +192,9 @@ class GeorgiaScraper(BaseStateScraper):
 
         year_url = f"https://law.justia.com/codes/georgia/{year}/"
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(year_url, timeout_seconds=40)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                year_url, timeout_seconds=40
+            )
         except Exception:
             return []
         if not payload:
@@ -197,7 +223,9 @@ class GeorgiaScraper(BaseStateScraper):
         intermediate_cap = max(2, int(max_statutes * 2))
         for title_url in title_urls:
             try:
-                title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
+                title_payload = await self._fetch_page_content_with_archival_fallback(
+                    title_url, timeout_seconds=35
+                )
             except Exception:
                 continue
             if not title_payload:
@@ -225,7 +253,9 @@ class GeorgiaScraper(BaseStateScraper):
 
         for page_url in intermediate_urls[:intermediate_cap]:
             try:
-                page_payload = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
+                page_payload = await self._fetch_page_content_with_archival_fallback(
+                    page_url, timeout_seconds=35
+                )
             except Exception:
                 continue
             if not page_payload:
@@ -246,7 +276,9 @@ class GeorgiaScraper(BaseStateScraper):
 
         statutes: List[NormalizedStatute] = []
         for index, section_url in enumerate(section_urls[:section_cap], start=1):
-            statute = await self._build_justia_statute(code_name=code_name, section_url=section_url, fallback_number=str(index))
+            statute = await self._build_justia_statute(
+                code_name=code_name, section_url=section_url, fallback_number=str(index)
+            )
             if statute is None:
                 continue
             statutes.append(statute)
@@ -255,22 +287,32 @@ class GeorgiaScraper(BaseStateScraper):
 
         return statutes
 
-    async def _build_justia_statute(self, *, code_name: str, section_url: str, fallback_number: str) -> NormalizedStatute | None:
+    async def _build_justia_statute(
+        self, *, code_name: str, section_url: str, fallback_number: str
+    ) -> NormalizedStatute | None:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
             return None
 
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                section_url, timeout_seconds=35
+            )
         except Exception:
             return None
         if not payload:
             return None
 
-        html = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
+        html = (
+            payload.decode("utf-8", errors="replace")
+            if isinstance(payload, bytes)
+            else str(payload)
+        )
         soup = BeautifulSoup(html, "html.parser")
-        content_node = soup.select_one("main") or soup.select_one("article") or soup.select_one("body")
+        content_node = (
+            soup.select_one("main") or soup.select_one("article") or soup.select_one("body")
+        )
         if content_node is None:
             return None
 
@@ -417,15 +459,13 @@ class GeorgiaScraper(BaseStateScraper):
 
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+            await self._cache_successful_page_fetch(
+                url=url, payload=payload, provider="requests_direct"
+            )
         return payload
-    
+
     async def _scrape_with_playwright(
-        self,
-        code_name: str,
-        code_url: str,
-        citation_format: str,
-        max_sections: int = 140
+        self, code_name: str, code_url: str, citation_format: str, max_sections: int = 140
     ) -> List[NormalizedStatute]:
         """Scrape Georgia using Playwright for JavaScript rendering."""
         try:
@@ -433,21 +473,21 @@ class GeorgiaScraper(BaseStateScraper):
             from urllib.parse import urljoin
         except ImportError:
             return []
-        
+
         statutes = []
-        
+
         async with acquire_playwright_slot():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
                 page = await browser.new_page()
 
                 try:
-                    await page.goto(code_url, wait_until='networkidle', timeout=60000)
-                    await page.wait_for_selector('a', timeout=10000)
+                    await page.goto(code_url, wait_until="networkidle", timeout=60000)
+                    await page.wait_for_selector("a", timeout=10000)
 
                     content = await page.content()
-                    soup = BeautifulSoup(content, 'html.parser')
-                    links = soup.find_all('a', href=True)
+                    soup = BeautifulSoup(content, "html.parser")
+                    links = soup.find_all("a", href=True)
 
                     section_count = 0
                     for link in links:
@@ -455,17 +495,20 @@ class GeorgiaScraper(BaseStateScraper):
                             break
 
                         link_text = link.get_text(strip=True)
-                        link_href = link.get('href', '')
+                        link_href = link.get("href", "")
 
                         if len(link_text) < 5:
                             continue
 
-                        keywords = ['title', 'chapter', 'code', 'statute']
+                        keywords = ["title", "chapter", "code", "statute"]
                         if not any(k in link_text.lower() for k in keywords):
                             continue
 
                         full_url = urljoin(code_url, link_href)
-                        section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
+                        section_number = (
+                            self._extract_section_number(link_text)
+                            or f"Section-{section_count + 1}"
+                        )
 
                         statute = NormalizedStatute(
                             state_code=self.state_code,
@@ -478,7 +521,7 @@ class GeorgiaScraper(BaseStateScraper):
                             legal_area=self._identify_legal_area(link_text),
                             source_url=full_url,
                             official_cite=f"{citation_format} § {section_number}",
-                            metadata=StatuteMetadata()
+                            metadata=StatuteMetadata(),
                         )
 
                         statutes.append(statute)
@@ -491,18 +534,14 @@ class GeorgiaScraper(BaseStateScraper):
                         await page.close()
                     finally:
                         await browser.close()
-        
+
         return statutes
-    
+
     async def _custom_scrape_georgia(
-        self,
-        code_name: str,
-        code_url: str,
-        citation_format: str,
-        max_sections: int = 320
+        self, code_name: str, code_url: str, citation_format: str, max_sections: int = 320
     ) -> List[NormalizedStatute]:
         """Custom scraper for Georgia's legislative website.
-        
+
         Georgia's website is a JavaScript SPA (Single Page Application).
         For better results, consider:
         1. Using Playwright to render JavaScript
@@ -512,18 +551,18 @@ class GeorgiaScraper(BaseStateScraper):
         # Try alternative URLs first
         alternative_urls = [
             "https://advance.lexis.com/container?config=014CJAAyZGVmYXVsdHM6OTU5ZDJjOGYtMGZjMC00MGI0LWIzYzEtNmVhYTZmYzJmY2RhKgxYmRQzkSm9zOIGXjY8",  # LexisNexis
-            "http://web.archive.org/web/*/www.legis.ga.gov/legislation/laws.html"  # Internet Archive
+            "http://web.archive.org/web/*/www.legis.ga.gov/legislation/laws.html",  # Internet Archive
         ]
-        
+
         try:
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
             return []
-        
+
         statutes = []
-        
+
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(
                 code_url,
@@ -532,29 +571,41 @@ class GeorgiaScraper(BaseStateScraper):
             if not page_bytes:
                 raise RuntimeError(f"empty response for {code_url}")
 
-            soup = BeautifulSoup(page_bytes, 'html.parser')
-            links = soup.find_all('a', href=True)
-            
+            soup = BeautifulSoup(page_bytes, "html.parser")
+            links = soup.find_all("a", href=True)
+
             section_count = 0
             for link in links:
                 if section_count >= max_sections:
                     break
-                
+
                 link_text = link.get_text(strip=True)
-                link_href = link.get('href', '')
-                
+                link_href = link.get("href", "")
+
                 if not link_text or len(link_text) < 5:
                     continue
-                
+
                 # Georgia Code patterns - relaxed matching
-                keywords_ga = ['title', 'chapter', '§', 'section', 'part', 'code', 'statute', 'article', 'ga.']
+                keywords_ga = [
+                    "title",
+                    "chapter",
+                    "§",
+                    "section",
+                    "part",
+                    "code",
+                    "statute",
+                    "article",
+                    "ga.",
+                ]
                 if not any(keyword in link_text.lower() for keyword in keywords_ga):
                     continue
-                
+
                 full_url = urljoin(code_url, link_href)
-                section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
+                section_number = (
+                    self._extract_section_number(link_text) or f"Section-{section_count + 1}"
+                )
                 legal_area = self._identify_legal_area(link_text)
-                
+
                 statute = NormalizedStatute(
                     state_code=self.state_code,
                     state_name=self.state_name,
@@ -566,32 +617,38 @@ class GeorgiaScraper(BaseStateScraper):
                     legal_area=legal_area,
                     source_url=full_url,
                     official_cite=f"{citation_format} § {section_number}",
-                    metadata=StatuteMetadata()
+                    metadata=StatuteMetadata(),
                 )
-                
+
                 statutes.append(statute)
                 section_count += 1
-            
+
             self.logger.info(f"Georgia custom scraper: Scraped {len(statutes)} sections")
-            
+
             # Fallback to generic scraper if no data found
             if not statutes:
                 self.logger.warning("Georgia custom scraper found no data - site uses JavaScript")
                 self.logger.info("For Georgia, consider using:")
-                self.logger.info("  1. Playwright for JavaScript rendering: pip install playwright && playwright install")
+                self.logger.info(
+                    "  1. Playwright for JavaScript rendering: pip install playwright && playwright install"
+                )
                 self.logger.info("  2. Alternative source: Internet Archive")
                 self.logger.info("  3. API access if available from GA General Assembly")
                 if self._env_enabled("GEORGIA_GENERIC_FALLBACK", default=False):
-                    return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+                    return await self._generic_scrape(
+                        code_name, code_url, citation_format, max_sections
+                    )
                 return []
-            
+
         except Exception as e:
             self.logger.error(f"Georgia custom scraper failed: {e}")
             self.logger.info("Note: Georgia's site requires JavaScript. Consider using Playwright.")
             if self._env_enabled("GEORGIA_GENERIC_FALLBACK", default=False):
-                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+                return await self._generic_scrape(
+                    code_name, code_url, citation_format, max_sections
+                )
             return []
-        
+
         return statutes
 
 

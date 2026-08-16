@@ -47,11 +47,9 @@ def test_prover_target_coverage_record_reports_incomplete_role_matrix_without_bl
     assert coverage["target_role_matrix_complete"] is False
     assert coverage["target_role_matrix_requires_validation"] is True
     assert coverage["target_role_matrix_blockers"] == [
-        f"unknown_target_formula_role:{target}"
-        for target in sorted(LOCAL_PROVER_SYNTAX_TARGETS)
+        f"unknown_target_formula_role:{target}" for target in sorted(LOCAL_PROVER_SYNTAX_TARGETS)
     ] + [
-        f"unknown_target_dialect_family:{target}"
-        for target in sorted(LOCAL_PROVER_SYNTAX_TARGETS)
+        f"unknown_target_dialect_family:{target}" for target in sorted(LOCAL_PROVER_SYNTAX_TARGETS)
     ]
     assert role_summary["target_role_matrix_status_by_target"] == {
         target: "unknown_role_and_dialect" for target in LOCAL_PROVER_SYNTAX_TARGETS

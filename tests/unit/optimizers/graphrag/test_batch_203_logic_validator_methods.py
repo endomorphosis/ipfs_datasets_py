@@ -257,7 +257,13 @@ class TestResultConsistencyRatio:
 
     def test_consistency_ratio_mixed(self, validator, consistent_result, inconsistent_result):
         """Test ratio with mixed results."""
-        results = [consistent_result, inconsistent_result, consistent_result, inconsistent_result, consistent_result]
+        results = [
+            consistent_result,
+            inconsistent_result,
+            consistent_result,
+            inconsistent_result,
+            consistent_result,
+        ]
         # 3 consistent / 5 total = 0.6
         ratio = validator.result_consistency_ratio(results)
         assert abs(ratio - 0.6) < 0.01
@@ -324,10 +330,10 @@ class TestBatch203Integration:
             consistent_result,
             consistent_result,
         ]
-        
+
         consistency_ratio = validator.result_consistency_ratio(results)
         avg_time = validator.average_validation_time(results)
-        
+
         # 3/4 = 0.75
         assert abs(consistency_ratio - 0.75) < 0.01
         # (50 + 120 + 50 + 50) / 4 = 67.5
@@ -337,10 +343,10 @@ class TestBatch203Integration:
         """Test cache performance analysis."""
         # Simulate cache usage
         validator._cache = {"ont1": "result1", "ont2": "result2"}
-        
+
         size = validator.cache_size()
         hit_ratio = validator.cache_hit_ratio(total_checks=10)
-        
+
         assert size == 2
         assert abs(hit_ratio - 0.2) < 0.01  # 2/10
 

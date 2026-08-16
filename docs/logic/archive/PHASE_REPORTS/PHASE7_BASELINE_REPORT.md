@@ -160,6 +160,7 @@ from ipfs_datasets_py.logic.fol.text_to_fol import estimate_sentence_complexity
 # File: tests/unit_tests/logic/deontic/test_conflict_detection_advanced.py
 # OLD:
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import DeonticOperator
+
 # FIX:
 from ipfs_datasets_py.logic.types import DeonticOperator
 ```

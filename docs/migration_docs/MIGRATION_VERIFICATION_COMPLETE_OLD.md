@@ -23,7 +23,7 @@ Checked all test files for import paths:
 from ipfs_datasets_py.mcp_server.tools.investigation_tools.geospatial_analysis_tools import (
     extract_geographic_entities,
     map_spatiotemporal_events,
-    query_geographic_context
+    query_geographic_context,
 )
 ```
 

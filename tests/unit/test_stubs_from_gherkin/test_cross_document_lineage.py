@@ -4,11 +4,13 @@ Test stubs for cross_document_lineage module.
 Feature: Cross-Document Lineage
   Track relationships and lineage across documents
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_collection_of_documents():
@@ -83,6 +85,7 @@ def source_and_derived_documents():
 
 
 # Test scenarios
+
 
 def test_establish_document_relationships():
     """
@@ -173,6 +176,7 @@ def test_visualize_document_lineage():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a collection of documents")
@@ -343,4 +347,3 @@ def version_lineage_is_maintained():
     """Step: Then version lineage is maintained"""
     # TODO: Implement step
     pass
-

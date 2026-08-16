@@ -93,10 +93,7 @@ def _matching_explicit_ambiguity(
             continue
         if metadata.get("target_family") != target_family:
             continue
-        if (
-            abs(float(metadata.get("family_margin_raw", 0.0)) - expected_margin)
-            > 1e-12
-        ):
+        if abs(float(metadata.get("family_margin_raw", 0.0)) - expected_margin) > 1e-12:
             continue
         return ambiguity
     return None
@@ -177,9 +174,7 @@ def test_compiler_emits_packet_000577_explicit_adaptive_ambiguities() -> None:
     )
 
     for case in cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         predicted_family = str(case["predicted_family"])
         target_family = str(case["target_family"])
         family_margin = float(case["family_margin"])
@@ -188,9 +183,7 @@ def test_compiler_emits_packet_000577_explicit_adaptive_ambiguities() -> None:
             target_family=target_family,
             family_margin=family_margin,
             runner_up_family=(
-                str(case["runner_up_family"])
-                if case.get("runner_up_family") is not None
-                else None
+                str(case["runner_up_family"]) if case.get("runner_up_family") is not None else None
             ),
         )
         compiler._adaptive_family_ranking_from_logits = (  # type: ignore[method-assign]

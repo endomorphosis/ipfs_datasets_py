@@ -17,7 +17,9 @@ from typing import Dict, List, Any, Optional, Union, Callable
 
 # Import visualization and monitoring components
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
-from ipfs_datasets_py.dashboards.rag.query_visualization import create_learning_metrics_visualizations
+from ipfs_datasets_py.dashboards.rag.query_visualization import (
+    create_learning_metrics_visualizations,
+)
 from ipfs_datasets_py.optimizers.optimizer_alert_system import LearningAlertSystem, LearningAnomaly
 from ipfs_datasets_py.monitoring import MetricsCollector
 
@@ -74,12 +76,12 @@ class UnifiedDashboard:
             refresh_interval=300,
             auto_refresh=True
         )
-        
+
         # Register monitoring components
         dashboard.register_learning_visualizer(visualizer)
         dashboard.register_alert_system(alert_system)
         dashboard.register_metrics_collector(metrics_collector)
-        
+
         # Dashboard will automatically update and generate HTML interface
     """
 
@@ -90,7 +92,7 @@ class UnifiedDashboard:
         refresh_interval: int = 300,  # 5 minutes
         auto_refresh: bool = True,
         max_alerts: int = 100,
-        template_dir: Optional[str] = None
+        template_dir: Optional[str] = None,
     ) -> None:
         """
         Initialize the unified monitoring dashboard.
@@ -140,7 +142,12 @@ class UnifiedDashboard:
         self.assets_dir = os.path.join(self.dashboard_dir, "assets")
 
         # Create subdirectories
-        for directory in [self.visualizations_dir, self.alerts_dir, self.metrics_dir, self.assets_dir]:
+        for directory in [
+            self.visualizations_dir,
+            self.alerts_dir,
+            self.metrics_dir,
+            self.assets_dir,
+        ]:
             if not os.path.exists(directory):
                 os.makedirs(directory, exist_ok=True)
 
@@ -172,11 +179,11 @@ class UnifiedDashboard:
 
     def _save_config(self):
         """Save current dashboard configuration to persistent storage.
-        
+
         Persists the dashboard settings including title, refresh interval,
         auto-refresh status, and last update timestamp to a JSON configuration
         file for state preservation across sessions.
-        
+
         Raises:
             IOError: If configuration file cannot be written
             JSONEncodeError: If configuration data cannot be serialized
@@ -187,10 +194,10 @@ class UnifiedDashboard:
             "auto_refresh": self.auto_refresh,
             "max_alerts": self.max_alerts,
             "dashboard_dir": self.dashboard_dir,
-            "last_update": self.last_update_time.isoformat() if self.last_update_time else None
+            "last_update": self.last_update_time.isoformat() if self.last_update_time else None,
         }
 
-        with open(self.config_json_path, 'w') as f:
+        with open(self.config_json_path, "w") as f:
             json.dump(config, f, indent=2)
 
     def register_learning_visualizer(self, visualizer: OptimizerLearningMetricsVisualizer):
@@ -235,7 +242,7 @@ class UnifiedDashboard:
         self.alert_system = alert_system
 
         # Register an alert handler for the dashboard
-        if not hasattr(alert_system, 'alert_handlers') or alert_system.alert_handlers is None:
+        if not hasattr(alert_system, "alert_handlers") or alert_system.alert_handlers is None:
             alert_system.alert_handlers = []
 
         alert_system.alert_handlers.append(self._alert_handler)
@@ -283,7 +290,7 @@ class UnifiedDashboard:
 
         # Keep only max_alerts most recent
         if len(self.recent_alerts) > self.max_alerts:
-            self.recent_alerts = self.recent_alerts[-self.max_alerts:]
+            self.recent_alerts = self.recent_alerts[-self.max_alerts :]
 
         # Save alerts to JSON
         self._save_alerts()
@@ -295,11 +302,11 @@ class UnifiedDashboard:
 
     def _save_alerts(self):
         """Persist current alert collection to JSON storage.
-        
+
         Serializes the recent alerts collection to a JSON file for persistence
         across dashboard sessions and enables external access to alert data.
         Handles serialization errors gracefully to maintain dashboard stability.
-        
+
         Raises:
             IOError: If alert file cannot be written
             JSONEncodeError: If alert data cannot be serialized
@@ -313,7 +320,7 @@ class UnifiedDashboard:
             except Exception as e:
                 logger.error(f"Error serializing alert: {e}")
 
-        with open(self.alerts_json_path, 'w') as f:
+        with open(self.alerts_json_path, "w") as f:
             json.dump(alerts_data, f, indent=2)
 
     def update_dashboard(self):
@@ -346,9 +353,15 @@ class UnifiedDashboard:
                 timestamp = self.last_update_time.strftime("%Y%m%d_%H%M%S")
 
                 # Paths for static visualizations
-                cycles_png = os.path.join(self.visualizations_dir, f"learning_cycles_{timestamp}.png")
-                params_png = os.path.join(self.visualizations_dir, f"parameter_adaptations_{timestamp}.png")
-                strategy_png = os.path.join(self.visualizations_dir, f"strategy_effectiveness_{timestamp}.png")
+                cycles_png = os.path.join(
+                    self.visualizations_dir, f"learning_cycles_{timestamp}.png"
+                )
+                params_png = os.path.join(
+                    self.visualizations_dir, f"parameter_adaptations_{timestamp}.png"
+                )
+                strategy_png = os.path.join(
+                    self.visualizations_dir, f"strategy_effectiveness_{timestamp}.png"
+                )
 
                 # Generate visualizations
                 viz_results = self.learning_visualizer.update_visualizations(create_dashboard=False)
@@ -366,7 +379,7 @@ class UnifiedDashboard:
                 metrics_data = self.metrics_collector.get_metrics_snapshot()
 
                 # Save metrics to JSON
-                with open(self.metrics_json_path, 'w') as f:
+                with open(self.metrics_json_path, "w") as f:
                     json.dump(metrics_data, f, indent=2)
 
                 logger.info("Updated metrics data")
@@ -412,7 +425,7 @@ class UnifiedDashboard:
             TemplateError: If HTML generation encounters formatting issues
         """
         # Create dashboard HTML
-        with open(self.dashboard_path, 'w') as f:
+        with open(self.dashboard_path, "w") as f:
             # Basic HTML structure
             f.write(f"""
             <!DOCTYPE html>
@@ -444,7 +457,7 @@ class UnifiedDashboard:
                         <div class="row">
                             <div class="col-md-8">
                                 <h1>{self.dashboard_title}</h1>
-                                <p class="refresh-info">Last updated: {self.last_update_time.strftime('%Y-%m-%d %H:%M:%S')}</p>
+                                <p class="refresh-info">Last updated: {self.last_update_time.strftime("%Y-%m-%d %H:%M:%S")}</p>
                             </div>
                             <div class="col-md-4 text-end">
                                 <button class="btn btn-primary" onclick="window.location.reload();">Refresh Dashboard</button>
@@ -489,8 +502,8 @@ class UnifiedDashboard:
             status_class = "text-success"
 
             if len(self.recent_alerts) > 0:
-                critical_alerts = [a for a in self.recent_alerts if a.severity == 'critical']
-                warning_alerts = [a for a in self.recent_alerts if a.severity == 'warning']
+                critical_alerts = [a for a in self.recent_alerts if a.severity == "critical"]
+                warning_alerts = [a for a in self.recent_alerts if a.severity == "warning"]
 
                 if critical_alerts:
                     system_status = "Critical Issues"
@@ -511,8 +524,8 @@ class UnifiedDashboard:
             """)
 
             # Add learning status if available
-            if metrics_data and 'learning_status' in metrics_data:
-                learning_enabled = metrics_data.get('learning_status', {}).get('enabled', False)
+            if metrics_data and "learning_status" in metrics_data:
+                learning_enabled = metrics_data.get("learning_status", {}).get("enabled", False)
                 learning_status = "Enabled" if learning_enabled else "Disabled"
                 learning_class = "text-success" if learning_enabled else "text-danger"
 
@@ -524,10 +537,10 @@ class UnifiedDashboard:
                 """)
 
             # Add performance indicators if available
-            if metrics_data and 'performance' in metrics_data:
-                perf = metrics_data.get('performance', {})
-                success_rate = perf.get('success_rate', 0) * 100
-                latency = perf.get('avg_latency', 0)
+            if metrics_data and "performance" in metrics_data:
+                perf = metrics_data.get("performance", {})
+                success_rate = perf.get("success_rate", 0) * 100
+                latency = perf.get("avg_latency", 0)
 
                 success_class = "text-success"
                 if success_rate < 80:
@@ -563,27 +576,25 @@ class UnifiedDashboard:
 
             # Add recent alerts (up to 5)
             recent_alerts_to_show = sorted(
-                self.recent_alerts,
-                key=lambda x: x.timestamp,
-                reverse=True
+                self.recent_alerts, key=lambda x: x.timestamp, reverse=True
             )[:5]
 
             if recent_alerts_to_show:
                 for alert in recent_alerts_to_show:
                     severity_class = {
-                        'critical': 'critical',
-                        'major': 'critical',
-                        'warning': 'warning',
-                        'moderate': 'warning',
-                        'minor': 'info',
-                        'info': 'info'
-                    }.get(alert.severity, 'info')
+                        "critical": "critical",
+                        "major": "critical",
+                        "warning": "warning",
+                        "moderate": "warning",
+                        "minor": "info",
+                        "info": "info",
+                    }.get(alert.severity, "info")
 
                     f.write(f"""
                                                 <div class="alert-item {severity_class}">
-                                                    <h6>{alert.anomaly_type.replace('_', ' ').title()}</h6>
+                                                    <h6>{alert.anomaly_type.replace("_", " ").title()}</h6>
                                                     <p>{alert.description}</p>
-                                                    <small>{alert.timestamp.strftime('%Y-%m-%d %H:%M:%S')}</small>
+                                                    <small>{alert.timestamp.strftime("%Y-%m-%d %H:%M:%S")}</small>
                                                 </div>
                     """)
             else:
@@ -612,7 +623,7 @@ class UnifiedDashboard:
                 # Get the most recent file of each type
                 viz_files = {}
                 for output_type, output_path in viz_outputs.items():
-                    if os.path.exists(output_path) and output_path.endswith('.png'):
+                    if os.path.exists(output_path) and output_path.endswith(".png"):
                         rel_path = os.path.relpath(output_path, self.dashboard_dir)
                         viz_files[output_type] = rel_path
 
@@ -622,7 +633,7 @@ class UnifiedDashboard:
                     """)
 
                     for viz_type, viz_file in viz_files.items():
-                        viz_title = viz_type.replace('_', ' ').title()
+                        viz_title = viz_type.replace("_", " ").title()
                         f.write(f"""
                                                 <div class="col-md-4 text-center">
                                                     <h6>{viz_title}</h6>
@@ -661,21 +672,21 @@ class UnifiedDashboard:
             """)
 
             # Add learning metrics details if available
-            if metrics_data and 'learning_metrics' in metrics_data:
-                learning_metrics = metrics_data.get('learning_metrics', {})
+            if metrics_data and "learning_metrics" in metrics_data:
+                learning_metrics = metrics_data.get("learning_metrics", {})
 
                 # Learning cycles stats
-                cycles = learning_metrics.get('learning_cycles', {})
-                total_cycles = cycles.get('total_cycles', 0)
-                analyzed_queries = cycles.get('total_analyzed_queries', 0)
-                patterns_identified = cycles.get('total_patterns', 0)
-                parameters_adjusted = cycles.get('total_adjustments', 0)
+                cycles = learning_metrics.get("learning_cycles", {})
+                total_cycles = cycles.get("total_cycles", 0)
+                analyzed_queries = cycles.get("total_analyzed_queries", 0)
+                patterns_identified = cycles.get("total_patterns", 0)
+                parameters_adjusted = cycles.get("total_adjustments", 0)
 
                 # Parameter adaptations
-                adaptations = learning_metrics.get('parameter_adaptations', {})
+                adaptations = learning_metrics.get("parameter_adaptations", {})
 
                 # Strategy effectiveness
-                strategies = learning_metrics.get('strategy_effectiveness', {})
+                strategies = learning_metrics.get("strategy_effectiveness", {})
 
                 f.write(f"""
                                             <div class="row mb-4">
@@ -719,8 +730,8 @@ class UnifiedDashboard:
 
                     # Add up to 5 most recent parameter adaptations
                     for param_name, param_data in list(adaptations.items())[:5]:
-                        old_value = param_data.get('old_value', 'N/A')
-                        new_value = param_data.get('new_value', 'N/A')
+                        old_value = param_data.get("old_value", "N/A")
+                        new_value = param_data.get("new_value", "N/A")
                         f.write(f"""
                                                             <tr>
                                                                 <td>{param_name}</td>
@@ -759,8 +770,8 @@ class UnifiedDashboard:
 
                     for strategy_name, strategy_data in strategies.items():
                         for query_type, type_data in strategy_data.items():
-                            success_rate = type_data.get('success_rate', 0) * 100
-                            latency = type_data.get('mean_latency', 0)
+                            success_rate = type_data.get("success_rate", 0) * 100
+                            latency = type_data.get("mean_latency", 0)
 
                             success_class = ""
                             if success_rate < 70:
@@ -823,33 +834,33 @@ class UnifiedDashboard:
             if self.recent_alerts:
                 for alert in sorted(self.recent_alerts, key=lambda x: x.timestamp, reverse=True):
                     severity_class = {
-                        'critical': 'critical',
-                        'major': 'critical',
-                        'warning': 'warning',
-                        'moderate': 'warning',
-                        'minor': 'info',
-                        'info': 'info'
-                    }.get(alert.severity, 'info')
+                        "critical": "critical",
+                        "major": "critical",
+                        "warning": "warning",
+                        "moderate": "warning",
+                        "minor": "info",
+                        "info": "info",
+                    }.get(alert.severity, "info")
 
                     # Add data attributes for filtering
                     f.write(f"""
                                                 <div class="alert-item {severity_class}" data-severity="{alert.severity}">
                                                     <div class="d-flex justify-content-between">
-                                                        <h6>{alert.anomaly_type.replace('_', ' ').title()}</h6>
+                                                        <h6>{alert.anomaly_type.replace("_", " ").title()}</h6>
                                                         <span class="badge bg-secondary">{alert.severity.upper()}</span>
                                                     </div>
                                                     <p>{alert.description}</p>
                     """)
 
                     # Add any additional metadata
-                    if hasattr(alert, 'affected_parameters') and alert.affected_parameters:
-                        affected = ', '.join(alert.affected_parameters)
+                    if hasattr(alert, "affected_parameters") and alert.affected_parameters:
+                        affected = ", ".join(alert.affected_parameters)
                         f.write(f"""
                                                     <p><small>Affected: {affected}</small></p>
                         """)
 
                     f.write(f"""
-                                                    <small>{alert.timestamp.strftime('%Y-%m-%d %H:%M:%S')}</small>
+                                                    <small>{alert.timestamp.strftime("%Y-%m-%d %H:%M:%S")}</small>
                                                 </div>
                     """)
             else:
@@ -877,20 +888,20 @@ class UnifiedDashboard:
             """)
 
             # Add performance metrics if available
-            if metrics_data and 'performance' in metrics_data:
-                perf = metrics_data.get('performance', {})
+            if metrics_data and "performance" in metrics_data:
+                perf = metrics_data.get("performance", {})
 
                 # Key metrics
-                total_queries = perf.get('total_queries', 0)
-                success_rate = perf.get('success_rate', 0) * 100
-                avg_latency = perf.get('avg_latency', 0)
-                p95_latency = perf.get('p95_latency', 0)
-                p99_latency = perf.get('p99_latency', 0)
+                total_queries = perf.get("total_queries", 0)
+                success_rate = perf.get("success_rate", 0) * 100
+                avg_latency = perf.get("avg_latency", 0)
+                p95_latency = perf.get("p95_latency", 0)
+                p99_latency = perf.get("p99_latency", 0)
 
                 # Resource usage
-                resources = metrics_data.get('resources', {})
-                cpu_usage = resources.get('cpu_usage', 0)
-                memory_usage = resources.get('memory_usage', 0)
+                resources = metrics_data.get("resources", {})
+                cpu_usage = resources.get("cpu_usage", 0)
+                memory_usage = resources.get("memory_usage", 0)
 
                 f.write(f"""
                                             <div class="row">
@@ -936,8 +947,8 @@ class UnifiedDashboard:
                 """)
 
                 # Add query type breakdown if available
-                if 'query_types' in perf:
-                    query_types = perf.get('query_types', {})
+                if "query_types" in perf:
+                    query_types = perf.get("query_types", {})
 
                     f.write("""
                                             <div class="row mt-4">
@@ -956,9 +967,9 @@ class UnifiedDashboard:
                     """)
 
                     for query_type, type_data in query_types.items():
-                        count = type_data.get('count', 0)
-                        success = type_data.get('success_rate', 0) * 100
-                        latency = type_data.get('avg_latency', 0)
+                        count = type_data.get("count", 0)
+                        success = type_data.get("success_rate", 0) * 100
+                        latency = type_data.get("avg_latency", 0)
 
                         success_class = ""
                         if success < 70:
@@ -988,7 +999,8 @@ class UnifiedDashboard:
                                             <p class="text-muted">No performance metrics available</p>
                 """)
 
-            f.write("""
+            f.write(
+                """
                                         </div>
                                     </div>
                                 </div>
@@ -1014,8 +1026,12 @@ class UnifiedDashboard:
                     });
 
                     // Auto-refresh handling
-                    const autoRefresh = """ + str(self.auto_refresh).lower() + """;
-                    const refreshInterval = """ + str(self.refresh_interval * 1000) + """;
+                    const autoRefresh = """
+                + str(self.auto_refresh).lower()
+                + """;
+                    const refreshInterval = """
+                + str(self.refresh_interval * 1000)
+                + """;
 
                     if (autoRefresh) {
                         setTimeout(() => {
@@ -1025,7 +1041,8 @@ class UnifiedDashboard:
                 </script>
             </body>
             </html>
-            """)
+            """
+            )
 
     def start_auto_refresh(self):
         """
@@ -1049,10 +1066,7 @@ class UnifiedDashboard:
             return
 
         self._stop_refresh.clear()
-        self._refresh_thread = threading.Thread(
-            target=self._auto_refresh_loop,
-            daemon=True
-        )
+        self._refresh_thread = threading.Thread(target=self._auto_refresh_loop, daemon=True)
         self._refresh_thread.start()
         logger.info(f"Started auto-refresh with interval {self.refresh_interval} seconds")
 
@@ -1116,7 +1130,7 @@ def create_unified_dashboard(
     refresh_interval: int = 300,
     auto_refresh: bool = True,
     max_alerts: int = 100,
-    template_dir: Optional[str] = None
+    template_dir: Optional[str] = None,
 ) -> UnifiedDashboard:
     """
     Create and configure a unified monitoring dashboard instance.
@@ -1163,7 +1177,7 @@ def create_unified_dashboard(
         refresh_interval=refresh_interval,
         auto_refresh=auto_refresh,
         max_alerts=max_alerts,
-        template_dir=template_dir
+        template_dir=template_dir,
     )
 
     # Initial dashboard update
@@ -1185,7 +1199,7 @@ if __name__ == "__main__":
         dashboard_dir=dashboard_dir,
         dashboard_title="RAG Optimizer Monitoring Demo",
         refresh_interval=30,  # 30 seconds for demo
-        auto_refresh=True
+        auto_refresh=True,
     )
 
     # Add sample alerts
@@ -1194,9 +1208,9 @@ if __name__ == "__main__":
         anomaly = LearningAnomaly(
             anomaly_type=["parameter_oscillation", "performance_decline", "learning_stall"][i % 3],
             severity=severity,
-            description=f"Sample alert {i+1} for demonstration purposes",
+            description=f"Sample alert {i + 1} for demonstration purposes",
             affected_parameters=["param1", "param2"] if i % 2 == 0 else [],
-            timestamp=datetime.now() - timedelta(minutes=i*10)
+            timestamp=datetime.now() - timedelta(minutes=i * 10),
         )
         dashboard._alert_handler(anomaly)
 

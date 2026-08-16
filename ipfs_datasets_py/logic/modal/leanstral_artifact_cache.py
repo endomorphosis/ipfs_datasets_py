@@ -19,9 +19,7 @@ from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Protocol, runtime_checkable
 
 
-LEANSTRAL_ARTIFACT_CACHE_INDEX_SCHEMA_VERSION = (
-    "legal-ir-leanstral-artifact-cache-index-v1"
-)
+LEANSTRAL_ARTIFACT_CACHE_INDEX_SCHEMA_VERSION = "legal-ir-leanstral-artifact-cache-index-v1"
 
 LEANSTRAL_ARTIFACT_CACHE_ENV = "IPFS_DATASETS_PY_LEANSTRAL_ARTIFACT_CACHE"
 LEANSTRAL_AUDIT_IPFS_CACHE_ENV = "LEANSTRAL_AUDIT_IPFS_CACHE"
@@ -119,10 +117,7 @@ class LeanstralArtifactCache:
             index_path = resolved_cache_dir / ".leanstral-artifact-cache-index.json"
         else:
             index_path = (
-                Path.home()
-                / ".cache"
-                / "ipfs_datasets_py"
-                / "leanstral-artifact-cache-index.json"
+                Path.home() / ".cache" / "ipfs_datasets_py" / "leanstral-artifact-cache-index.json"
             )
         return cls(
             index_path=index_path,
@@ -261,8 +256,7 @@ class LeanstralArtifactCache:
 
 def _json_bytes(payload: Mapping[str, Any]) -> bytes:
     return (
-        json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
-        + "\n"
+        json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":")) + "\n"
     ).encode("utf-8")
 
 

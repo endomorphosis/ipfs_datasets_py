@@ -6,6 +6,7 @@ Tests cover:
 - validate_token (permission check)
 - get_user_info (token introspection)
 """
+
 import pytest
 from unittest.mock import patch, MagicMock
 

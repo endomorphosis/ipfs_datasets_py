@@ -131,7 +131,9 @@ def test_search_executor_does_not_retry_rate_limited_provider() -> None:
         def search(self, query, max_results, offset, engines):
             self.calls.append(list(engines))
             if engines == ["brave"]:
-                raise SearchEngineRateLimitError("Brave search temporarily rate limited; retry after 60.0s")
+                raise SearchEngineRateLimitError(
+                    "Brave search temporarily rate limited; retry after 60.0s"
+                )
             return SimpleNamespace(
                 results=[],
                 took_ms=12.0,

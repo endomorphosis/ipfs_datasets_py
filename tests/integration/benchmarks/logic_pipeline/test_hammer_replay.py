@@ -69,21 +69,14 @@ SHA_F = "f" * 64
 
 def _stamp(value: dict[str, object], field: str) -> dict[str, object]:
     body = {key: item for key, item in value.items() if key != field}
-    value[field] = hashlib.sha256(
-        canonical_json(body).encode("utf-8")
-    ).hexdigest()
+    value[field] = hashlib.sha256(canonical_json(body).encode("utf-8")).hexdigest()
     return value
 
 
 def _semantic_binding(tag: str) -> dict[str, object]:
     return {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "semantic-stage-context.v1"
-        ),
-        "context_sha256": hashlib.sha256(
-            f"context-{tag}".encode()
-        ).hexdigest(),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.semantic-stage-context.v1"),
+        "context_sha256": hashlib.sha256(f"context-{tag}".encode()).hexdigest(),
         "source_text_sha256": SHA_A,
         "artifact_sha256s": [
             hashlib.sha256(f"spacy-{tag}".encode()).hexdigest(),
@@ -104,12 +97,8 @@ def _premise_selection(tag: str) -> dict[str, object]:
         "candidate_count": 2,
         "top_k": 2,
         "symai_invoked": True,
-        "symai_artifact_sha256": hashlib.sha256(
-            f"symai-artifact-{tag}".encode()
-        ).hexdigest(),
-        "symai_output_sha256": hashlib.sha256(
-            f"symai-output-{tag}".encode()
-        ).hexdigest(),
+        "symai_artifact_sha256": hashlib.sha256(f"symai-artifact-{tag}".encode()).hexdigest(),
+        "symai_output_sha256": hashlib.sha256(f"symai-output-{tag}".encode()).hexdigest(),
         "symai_identity_sha256": SHA_F,
         "semantic_signal_sha256": SHA_A,
         "semantic_term_count": 3,
@@ -213,9 +202,7 @@ def _direct_stage_identity(
         identity.update(
             {
                 "premise_selection_sha256": premise["receipt_sha256"],
-                "premise_ranking_contract": premise[
-                    "ranking_contract"
-                ],
+                "premise_ranking_contract": premise["ranking_contract"],
             }
         )
     return identity
@@ -268,9 +255,7 @@ def _full_payload(
     )
     raw_stdout = "unsat\n"
     raw_stderr = ""
-    raw_output_digest = compute_content_digest(
-        {"stdout": raw_stdout, "stderr": raw_stderr}
-    )
+    raw_output_digest = compute_content_digest({"stdout": raw_stdout, "stderr": raw_stderr})
     attempt = SolverAttemptRecord(
         attempt_id=attempt_id,
         request_id=request_id,
@@ -380,10 +365,7 @@ def _full_payload(
         candidate_id=candidate_id,
         target_itp=ITPKind.LEAN,
         environment_lock_id=environment_id,
-        kernel_command=(
-            f"/usr/bin/lean --json "
-            f"/tmp/hammer-lean-recon-{tag}/Reconstruction.lean"
-        ),
+        kernel_command=(f"/usr/bin/lean --json /tmp/hammer-lean-recon-{tag}/Reconstruction.lean"),
         kernel_accepted=accepted,
         kernel_output_digest=compute_content_digest(
             {"stdout": "accepted" if accepted else "rejected"}
@@ -406,9 +388,7 @@ def _full_payload(
         "schema": HAMMER_EVIDENCE_SCHEMA,
         **record_payload,
     }
-    evidence_id = hashlib.sha256(
-        canonical_json(outer).encode("utf-8")
-    ).hexdigest()
+    evidence_id = hashlib.sha256(canonical_json(outer).encode("utf-8")).hexdigest()
     return {
         "schema": HAMMER_EVIDENCE_SCHEMA,
         "evidence_id": evidence_id,
@@ -418,9 +398,7 @@ def _full_payload(
 
 def _restamp_outer(value: dict[str, object]) -> dict[str, object]:
     body = {key: item for key, item in value.items() if key != "evidence_id"}
-    value["evidence_id"] = hashlib.sha256(
-        canonical_json(body).encode("utf-8")
-    ).hexdigest()
+    value["evidence_id"] = hashlib.sha256(canonical_json(body).encode("utf-8")).hexdigest()
     return value
 
 
@@ -520,9 +498,7 @@ def _stage_record(
     failure_code: FailureCode | None = None,
 ) -> StageRecord:
     return StageRecord(
-        schema=(
-            "ipfs-datasets.logic-pipeline-benchmark.stage-record.v1"
-        ),
+        schema=("ipfs-datasets.logic-pipeline-benchmark.stage-record.v1"),
         protocol_sha256=DEFAULT_PROTOCOL_SHA256,
         run_id=run_id,
         case_id="hammer-replay-case",
@@ -534,18 +510,11 @@ def _stage_record(
         adapter_version="1",
         status=status,
         provenance=StageProvenance(
-            schema=(
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "stage-provenance.v1"
-            ),
+            schema=("ipfs-datasets.logic-pipeline-benchmark.stage-provenance.v1"),
             adapter_id=f"{stage.value}-adapter",
             adapter_version="1",
             source=("tests.hammer_replay",),
-            requested_identity=(
-                {}
-                if requested_identity is None
-                else requested_identity
-            ),
+            requested_identity=({} if requested_identity is None else requested_identity),
             effective_identity=effective_identity,
             input_sha256=SHA_B,
             environment_sha256=SHA_C,
@@ -553,18 +522,12 @@ def _stage_record(
         telemetry=TelemetryRecord(resource_lane=ResourceLane.SOLVER),
         data=data,
         output_sha256=(
-            hashlib.sha256(
-                canonical_json(data).encode("utf-8")
-            ).hexdigest()
+            hashlib.sha256(canonical_json(data).encode("utf-8")).hexdigest()
             if status is StageStatus.SUCCESS
             else None
         ),
         failure_code=failure_code,
-        failure_detail=(
-            None
-            if failure_code is None
-            else "synthetic Hammer process failure"
-        ),
+        failure_detail=(None if failure_code is None else "synthetic Hammer process failure"),
     )
 
 
@@ -584,10 +547,7 @@ def _bound_graph_stages(
     }
     symai = _stage_record(
         {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "symai-evidence.v1"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v1"),
             "candidate_ir": {"proposition": "P"},
         },
         stage=StageName.SYMAI,
@@ -624,15 +584,10 @@ def _bound_graph_stages(
     elif drift == "invoked":
         premise["symai_invoked"] = False
         premise["symai_output_sha256"] = None
-        premise["ranking_contract"] = (
-            "ambiguity-gate-closed-source-order-v1"
-        )
+        premise["ranking_contract"] = "ambiguity-gate-closed-source-order-v1"
     _stamp(premise, "receipt_sha256")
     context = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "semantic-stage-context.v1"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.semantic-stage-context.v1"),
         "context_sha256": SHA_D,
         "source_text_sha256": SHA_A,
         "artifact_sha256s": [symai_artifact],
@@ -676,10 +631,7 @@ def test_direct_receipts_normalize_only_upstream_addresses() -> None:
         "@semantic-artifact-000",
         "@semantic-artifact-001",
     ]
-    assert (
-        "symai_artifact_sha256"
-        not in projection["premise_selection"]
-    )
+    assert "symai_artifact_sha256" not in projection["premise_selection"]
     assert "receipt_sha256" not in projection["premise_selection"]
 
 
@@ -691,9 +643,7 @@ def test_failed_hammer_stage_uses_the_same_strict_replay_projection() -> None:
         run_id="failed-hammer-replay",
         effective_identity=_direct_stage_identity(payload),
         status=StageStatus.FAILED,
-        failure_code=(
-            FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
-        ),
+        failure_code=(FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE),
     )
 
     direct = project_hammer_stage_for_replay(stage)
@@ -701,10 +651,7 @@ def test_failed_hammer_stage_uses_the_same_strict_replay_projection() -> None:
 
     assert through_report["data"] == direct["data"]
     assert through_report["data"]["returncode"] == 1
-    assert (
-        through_report["data"]["termination_reason"]
-        == "nonzero_exit"
-    )
+    assert through_report["data"]["termination_reason"] == "nonzero_exit"
 
 
 def test_failed_hammer_stage_rejects_outer_failure_code_mismatch() -> None:
@@ -731,9 +678,7 @@ def test_failed_hammer_stage_rejects_malformed_process_evidence() -> None:
         run_id="failed-hammer-malformed",
         effective_identity=_direct_stage_identity(payload),
         status=StageStatus.FAILED,
-        failure_code=(
-            FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE
-        ),
+        failure_code=(FailureCode.SOLVER_TIMEOUT_ERROR_OR_INCONCLUSIVE),
     )
 
     with pytest.raises(HammerReplayError, match="returncode"):
@@ -776,10 +721,7 @@ def test_failed_full_hammer_stage_binds_reconstruction_failure() -> None:
 
     assert through_report["data"] == direct["data"]
     assert through_report["data"]["status"] == "candidate"
-    assert (
-        through_report["data"]["reconstruction"]["kernel_accepted"]
-        is False
-    )
+    assert through_report["data"]["reconstruction"]["kernel_accepted"] is False
 
 
 @pytest.mark.parametrize(
@@ -876,9 +818,7 @@ def test_full_hammer_success_stage_projection_does_not_regress(
     projection = report._stable_stage_replay_projection(stage)
 
     assert projection["data"]["reconstruction_kernel_accepted"] is accepted
-    assert projection["data"]["status"] == (
-        "verified" if accepted else "candidate"
-    )
+    assert projection["data"]["status"] == ("verified" if accepted else "candidate")
 
 
 @pytest.mark.parametrize(
@@ -897,9 +837,9 @@ def test_direct_solver_semantic_and_certificate_drift_reject(
     replayed = _direct_payload()
     replayed[field] = new_value
     if field == "proof_text":
-        replayed["native_reconstruction"]["certificate_sha256"] = (
-            hashlib.sha256(str(new_value).encode()).hexdigest()
-        )
+        replayed["native_reconstruction"]["certificate_sha256"] = hashlib.sha256(
+            str(new_value).encode()
+        ).hexdigest()
     with pytest.raises(HammerReplayError):
         validate_hammer_replay_equivalence(original, replayed)
 
@@ -973,10 +913,7 @@ def test_full_evidence_normalizes_relational_ids_and_operational_observations() 
     assert first == second
     assert first["request"]["request_id"] == "@request"
     assert first["portfolio"]["attempts"][0]["attempt_id"] == "@attempt-000"
-    assert (
-        first["portfolio"]["evidence"]["@attempt-000"]["command"][-1]
-        == "<HAMMER_INPUT>"
-    )
+    assert first["portfolio"]["evidence"]["@attempt-000"]["command"][-1] == "<HAMMER_INPUT>"
     assert first["proof_candidate"]["candidate_id"] == "@candidate"
     assert first["environment_lock"]["lock_id"] == "@environment"
     assert first["reconstruction"]["reconstruction_id"] == "@reconstruction"
@@ -1083,30 +1020,20 @@ def test_report_graph_rejects_cross_bound_a11_premise_receipts(
     drift: str,
 ) -> None:
     valid = _bound_graph_stages()
-    report._validate_result_graph_bindings(
-        SimpleNamespace(stages=valid)
-    )
+    report._validate_result_graph_bindings(SimpleNamespace(stages=valid))
 
     invalid = _bound_graph_stages(drift=drift)
     with pytest.raises(ProtocolContractError):
-        report._validate_result_graph_bindings(
-            SimpleNamespace(stages=invalid)
-        )
+        report._validate_result_graph_bindings(SimpleNamespace(stages=invalid))
 
 
 def test_report_rejects_a11_projection_without_an_auditable_graph() -> None:
     _symai, graph_hammer = _bound_graph_stages()
     data = graph_hammer.to_dict()["data"]
     identity = {
-        "premise_selection_sha256": data["premise_selection"][
-            "receipt_sha256"
-        ],
-        "premise_ranking_contract": data["premise_selection"][
-            "ranking_contract"
-        ],
-        "semantic_context_sha256": data["semantic_context"][
-            "context_sha256"
-        ],
+        "premise_selection_sha256": data["premise_selection"]["receipt_sha256"],
+        "premise_ranking_contract": data["premise_selection"]["ranking_contract"],
+        "semantic_context_sha256": data["semantic_context"]["context_sha256"],
     }
     legacy_hammer = _stage_record(
         data,
@@ -1115,9 +1042,7 @@ def test_report_rejects_a11_projection_without_an_auditable_graph() -> None:
         effective_identity=identity,
     )
     with pytest.raises(ProtocolContractError, match="graph-bound"):
-        report._validate_result_graph_bindings(
-            SimpleNamespace(stages=(legacy_hammer,))
-        )
+        report._validate_result_graph_bindings(SimpleNamespace(stages=(legacy_hammer,)))
 
 
 @pytest.mark.parametrize(
@@ -1138,9 +1063,7 @@ def test_full_native_environment_and_solver_evidence_forgery_rejects(
     attempt_id = next(iter(value["portfolio"]["evidence"]))
     evidence = value["portfolio"]["evidence"][attempt_id]
     if corruption == "policy_digest":
-        value["environment_lock"]["policy_digest"] = (
-            compute_content_digest({"different": "policy"})
-        )
+        value["environment_lock"]["policy_digest"] = compute_content_digest({"different": "policy"})
     elif corruption == "lock_id":
         forged = compute_content_digest({"forged": "environment"})
         value["environment_lock"]["lock_id"] = forged
@@ -1188,9 +1111,7 @@ def test_full_native_replay_requires_complete_content_addressed_lock_bindings(
         executable_paths.pop("z3")
         _restamp_environment(value)
     elif corruption == "kernel_command_template":
-        environment["kernel_command_template"] = (
-            "lean --evil {proof_file}"
-        )
+        environment["kernel_command_template"] = "lean --evil {proof_file}"
         _restamp_environment(value)
     elif corruption == "kernel_output_digest":
         reconstruction["kernel_output_digest"] = "latest"
@@ -1211,8 +1132,8 @@ def test_direct_solver_status_and_whitespace_proof_fail_closed() -> None:
 
     whitespace_proof = _direct_payload()
     whitespace_proof["proof_text"] = "   "
-    whitespace_proof["native_reconstruction"]["certificate_sha256"] = (
-        hashlib.sha256(b"   ").hexdigest()
-    )
+    whitespace_proof["native_reconstruction"]["certificate_sha256"] = hashlib.sha256(
+        b"   "
+    ).hexdigest()
     with pytest.raises(HammerReplayError, match="candidate"):
         project_hammer_data_for_replay(whitespace_proof)

@@ -5,6 +5,7 @@ This module provides factory functions for creating format handlers and assembli
 them into a format registry. It centralizes the creation of these components
 and manages their dependencies.
 """
+
 import os
 from types_ import Any, Callable, Logger, TypedDict
 
@@ -16,7 +17,7 @@ from ._content_extractor import ContentExtractor
 from ._map_extension_to_format import map_extension_to_format
 from .handlers import make_all_handlers
 from .processors import make_processors
-from file_format_detector import make_file_format_detector 
+from file_format_detector import make_file_format_detector
 from supported_formats import SupportedFormats
 from utils.filesystem import FileSystem
 
@@ -53,6 +54,6 @@ def make_content_extractor() -> ContentExtractor:
         "splitext": os.path.splitext,
         "file_exists": FileSystem.file_exists,
         "logger": logger,
-        "content": Content, 
+        "content": Content,
     }
     return ContentExtractor(resources=resources, configs=configs)

@@ -10,6 +10,7 @@ Tests cover:
 - LogicValidator.avg_path_length()
 - LogicValidator.node_density()
 """
+
 from __future__ import annotations
 
 import math
@@ -34,6 +35,7 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _report(score: float = 0.5) -> OptimizationReport:
     return OptimizationReport(average_score=score, trend="stable")
@@ -89,6 +91,7 @@ def ontology_builder(ontology_dict_factory):
 # OntologyOptimizer.score_geometric_mean
 # ---------------------------------------------------------------------------
 
+
 class TestScoreGeometricMean:
     def test_empty_history(self):
         opt = OntologyOptimizer()
@@ -137,6 +140,7 @@ class TestScoreGeometricMean:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_harmonic_mean
 # ---------------------------------------------------------------------------
+
 
 class TestScoreHarmonicMean:
     def test_empty_history(self):
@@ -189,6 +193,7 @@ class TestScoreHarmonicMean:
 # OntologyLearningAdapter.feedback_geometric_mean
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackGeometricMean:
     def test_no_feedback(self):
         adapter = OntologyLearningAdapter(domain="test")
@@ -226,6 +231,7 @@ class TestFeedbackGeometricMean:
 # OntologyLearningAdapter.feedback_harmonic_mean
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackHarmonicMean:
     def test_no_feedback(self):
         adapter = OntologyLearningAdapter(domain="test")
@@ -262,6 +268,7 @@ class TestFeedbackHarmonicMean:
 # OntologyGenerator.relationship_confidence_avg
 # ---------------------------------------------------------------------------
 
+
 class TestRelationshipConfidenceAvg:
     def setup_method(self):
         self.gen = OntologyGenerator()
@@ -271,25 +278,23 @@ class TestRelationshipConfidenceAvg:
         assert self.gen.relationship_confidence_avg(result) == 0.0
 
     def test_single_relationship(self):
-        rels = [Relationship(id="r1", source_id="e1", target_id="e2",
-                             type="knows", confidence=0.75)]
+        rels = [
+            Relationship(id="r1", source_id="e1", target_id="e2", type="knows", confidence=0.75)
+        ]
         result = _make_result(rels=rels)
         assert self.gen.relationship_confidence_avg(result) == pytest.approx(0.75)
 
     def test_multiple_relationships(self):
         rels = [
-            Relationship(id="r1", source_id="e1", target_id="e2",
-                         type="knows", confidence=0.6),
-            Relationship(id="r2", source_id="e2", target_id="e3",
-                         type="works_at", confidence=0.8),
+            Relationship(id="r1", source_id="e1", target_id="e2", type="knows", confidence=0.6),
+            Relationship(id="r2", source_id="e2", target_id="e3", type="works_at", confidence=0.8),
         ]
         result = _make_result(rels=rels)
         assert self.gen.relationship_confidence_avg(result) == pytest.approx(0.7)
 
     def test_uniform_confidence(self):
         rels = [
-            Relationship(id=f"r{i}", source_id="e1", target_id="e2",
-                         type="t", confidence=0.9)
+            Relationship(id=f"r{i}", source_id="e1", target_id="e2", type="t", confidence=0.9)
             for i in range(5)
         ]
         result = _make_result(rels=rels)
@@ -298,16 +303,15 @@ class TestRelationshipConfidenceAvg:
     def test_matches_confidence_mean(self):
         """relationship_confidence_avg must equal relationship_confidence_mean."""
         rels = [
-            Relationship(id="r1", source_id="e1", target_id="e2",
-                         type="t", confidence=0.55),
+            Relationship(id="r1", source_id="e1", target_id="e2", type="t", confidence=0.55),
         ]
         result = _make_result(rels=rels)
-        assert (self.gen.relationship_confidence_avg(result)
-                == self.gen.relationship_confidence_mean(result))
+        assert self.gen.relationship_confidence_avg(
+            result
+        ) == self.gen.relationship_confidence_mean(result)
 
     def test_returns_float(self):
-        rels = [Relationship(id="r1", source_id="e1", target_id="e2",
-                             type="t", confidence=0.5)]
+        rels = [Relationship(id="r1", source_id="e1", target_id="e2", type="t", confidence=0.5)]
         result = _make_result(rels=rels)
         assert isinstance(self.gen.relationship_confidence_avg(result), float)
 
@@ -315,6 +319,7 @@ class TestRelationshipConfidenceAvg:
 # ---------------------------------------------------------------------------
 # LogicValidator.avg_path_length
 # ---------------------------------------------------------------------------
+
 
 class TestAvgPathLength:
     def setup_method(self):
@@ -338,8 +343,7 @@ class TestAvgPathLength:
     def test_matches_average_path_length(self, ontology_builder):
         """avg_path_length must be identical to average_path_length."""
         ont = ontology_builder(n_entities=4, n_rels=3)
-        assert (self.validator.avg_path_length(ont)
-                == self.validator.average_path_length(ont))
+        assert self.validator.avg_path_length(ont) == self.validator.average_path_length(ont)
 
     def test_disconnected_graph(self):
         ont = {
@@ -357,6 +361,7 @@ class TestAvgPathLength:
 # ---------------------------------------------------------------------------
 # LogicValidator.node_density
 # ---------------------------------------------------------------------------
+
 
 class TestNodeDensity:
     def setup_method(self):

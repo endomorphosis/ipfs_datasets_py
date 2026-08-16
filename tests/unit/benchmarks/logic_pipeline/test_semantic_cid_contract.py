@@ -14,9 +14,7 @@ from ipfs_datasets_py.utils.cid_utils import (
 )
 
 
-FROZEN_V1_PROTOCOL_SHA256 = (
-    "a12067c4239b9628fde065db3fe10e623148c95a55891a642306e0c90dee8fa3"
-)
+FROZEN_V1_PROTOCOL_SHA256 = "a12067c4239b9628fde065db3fe10e623148c95a55891a642306e0c90dee8fa3"
 FROZEN_V1_VARIANT_REGISTRY_SHA256 = (
     "53a106ddd6c68af445d0a3a912b0d7d09e04c6b23500d4c6362bb5c089f2e44f"
 )
@@ -51,18 +49,16 @@ def test_semantic_v2_is_additive_and_v1_digest_is_immutable() -> None:
 
     assert contracts.DEFAULT_PROTOCOL_SHA256 == FROZEN_V1_PROTOCOL_SHA256
     assert VARIANT_REGISTRY_SHA256 == FROZEN_V1_VARIANT_REGISTRY_SHA256
-    assert (
-        contracts.SEMANTIC_PARENT_VARIANT_REGISTRY_SHA256_V1
-        == FROZEN_V1_VARIANT_REGISTRY_SHA256
-    )
+    assert contracts.SEMANTIC_PARENT_VARIANT_REGISTRY_SHA256_V1 == FROZEN_V1_VARIANT_REGISTRY_SHA256
     assert contracts.SEMANTIC_PROTOCOL_V2.protocol_version == 2
-    assert contracts.SEMANTIC_PROTOCOL_V2.parent_protocol_sha256 == (
-        FROZEN_V1_PROTOCOL_SHA256
+    assert contracts.SEMANTIC_PROTOCOL_V2.parent_protocol_sha256 == (FROZEN_V1_PROTOCOL_SHA256)
+    assert (
+        validate_cid(
+            contracts.SEMANTIC_PROTOCOL_V2_CID,
+            codecs=("dag-json",),
+        )
+        == contracts.SEMANTIC_PROTOCOL_V2_CID
     )
-    assert validate_cid(
-        contracts.SEMANTIC_PROTOCOL_V2_CID,
-        codecs=("dag-json",),
-    ) == contracts.SEMANTIC_PROTOCOL_V2_CID
 
 
 @pytest.mark.parametrize(
@@ -84,9 +80,10 @@ def test_semantic_protocol_components_are_dag_json_cids(value: str) -> None:
 
 
 def test_reviewed_target_source_cid_recomputes_from_exact_spec() -> None:
-    assert cid_for_dag_json(
-        contracts.semantic_reviewed_target_source_v2()
-    ) == contracts.SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
+    assert (
+        cid_for_dag_json(contracts.semantic_reviewed_target_source_v2())
+        == contracts.SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
+    )
 
 
 def test_producer_registry_binds_adapter_and_evidence_identities() -> None:
@@ -100,18 +97,12 @@ def test_producer_registry_binds_adapter_and_evidence_identities() -> None:
         assert producer["adapter_version"] == "2"
         assert str(producer["evidence_schema"]).endswith(".v2")
         assert producer["evidence_cid_codec"] == "dag-json"
-    symai = next(
-        producer
-        for producer in producers
-        if producer["producer_id"] == "symai"
-    )
+    symai = next(producer for producer in producers if producer["producer_id"] == "symai")
     assert symai["raw_output_cid_codec"] == "raw"
 
 
 def test_projection_round_trip_preserves_cid_codec_boundaries() -> None:
-    projection = _projection(
-        evidence_cid=cid_for_dag_json({"model": "validated response"})
-    )
+    projection = _projection(evidence_cid=cid_for_dag_json({"model": "validated response"}))
 
     assert projection.source_cid == cid_for_bytes(
         "A licensed agency shall retain each record.".encode("utf-8")
@@ -123,9 +114,7 @@ def test_projection_round_trip_preserves_cid_codec_boundaries() -> None:
         codecs=("dag-json",),
     )
     assert validate_cid(projection.projection_cid, codecs=("dag-json",))
-    assert contracts.SemanticProjection.from_dict(
-        projection.to_dict()
-    ) == projection
+    assert contracts.SemanticProjection.from_dict(projection.to_dict()) == projection
 
 
 def test_projection_rejects_raw_cid_for_structured_evidence() -> None:
@@ -133,9 +122,7 @@ def test_projection_rejects_raw_cid_for_structured_evidence() -> None:
         contracts.ProtocolContractError,
         match="evidence_cid is not a canonical CID",
     ):
-        _projection(
-            evidence_cid=cid_for_bytes(b'{"model":"raw response"}')
-        )
+        _projection(evidence_cid=cid_for_bytes(b'{"model":"raw response"}'))
 
 
 def test_semantic_content_cid_is_producer_independent() -> None:

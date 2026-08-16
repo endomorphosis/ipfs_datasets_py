@@ -74,7 +74,9 @@ vector_ids = index.add_vectors(vectors, metadata=metadata)
 query_vector = np.random.rand(768)
 results = index.search(query_vector, top_k=5)
 for i, result in enumerate(results):
-    print(f"Result {i+1}: ID={result.id}, Score={result.score:.4f}, Title={result.metadata['title']}")
+    print(
+        f"Result {i + 1}: ID={result.id}, Score={result.score:.4f}, Title={result.metadata['title']}"
+    )
 ```
 
 ## Working with Datasets
@@ -101,10 +103,9 @@ dataset = ipfs_datasets.load_from_car("path/to/data.car")
 
 ```python
 # Transform dataset
-processed_dataset = dataset.map(lambda example: {
-    "text": example["text"].lower(),
-    "word_count": len(example["text"].split())
-})
+processed_dataset = dataset.map(
+    lambda example: {"text": example["text"].lower(), "word_count": len(example["text"].split())}
+)
 
 # Filter dataset
 filtered_dataset = dataset.filter(lambda example: example["word_count"] > 100)
@@ -191,32 +192,18 @@ from ipfs_datasets_py.ipfs_knn_index import MultiModelSearch
 
 # Create multi-model searcher
 searcher = MultiModelSearch(
-    models={
-        "miniLM": {"dimension": 384, "weight": 0.3},
-        "mpnet": {"dimension": 768, "weight": 0.7}
-    }
+    models={"miniLM": {"dimension": 384, "weight": 0.3}, "mpnet": {"dimension": 768, "weight": 0.7}}
 )
 
 # Add vectors for each model
-searcher.add_vectors(
-    model_name="miniLM",
-    vectors=vectors_miniLM,
-    metadata=metadata
-)
-searcher.add_vectors(
-    model_name="mpnet",
-    vectors=vectors_mpnet,
-    metadata=metadata
-)
+searcher.add_vectors(model_name="miniLM", vectors=vectors_miniLM, metadata=metadata)
+searcher.add_vectors(model_name="mpnet", vectors=vectors_mpnet, metadata=metadata)
 
 # Perform multi-model search
 results = searcher.search(
-    query_vectors={
-        "miniLM": query_vector_miniLM,
-        "mpnet": query_vector_mpnet
-    },
+    query_vectors={"miniLM": query_vector_miniLM, "mpnet": query_vector_mpnet},
     top_k=10,
-    aggregation_method="weighted"
+    aggregation_method="weighted",
 )
 ```
 
@@ -231,24 +218,28 @@ from ipfs_datasets_py.knowledge_graph import IPLDKnowledgeGraph
 kg = IPLDKnowledgeGraph()
 
 # Add entities
-entity1_cid = kg.add_entity({
-    "name": "IPFS",
-    "type": "technology",
-    "properties": {"description": "InterPlanetary File System"}
-})
+entity1_cid = kg.add_entity(
+    {
+        "name": "IPFS",
+        "type": "technology",
+        "properties": {"description": "InterPlanetary File System"},
+    }
+)
 
-entity2_cid = kg.add_entity({
-    "name": "Content Addressing",
-    "type": "concept",
-    "properties": {"description": "Addressing content by its hash"}
-})
+entity2_cid = kg.add_entity(
+    {
+        "name": "Content Addressing",
+        "type": "concept",
+        "properties": {"description": "Addressing content by its hash"},
+    }
+)
 
 # Add relationships
 relationship_cid = kg.add_relationship(
     source_cid=entity1_cid,
     target_cid=entity2_cid,
     relationship_type="uses",
-    properties={"confidence": 0.95}
+    properties={"confidence": 0.95},
 )
 ```
 
@@ -256,10 +247,7 @@ relationship_cid = kg.add_relationship(
 
 ```python
 # Simple query
-results = kg.query(
-    start_entity=entity1_cid,
-    relationship_path=["uses", "related_to"]
-)
+results = kg.query(start_entity=entity1_cid, relationship_path=["uses", "related_to"])
 
 # Vector-augmented query
 query_vector = embedding_generator.generate("How does IPFS use content addressing?")
@@ -267,8 +255,8 @@ results = kg.vector_augmented_query(
     query_vector=query_vector,
     relationship_constraints=[
         {"type": "uses", "direction": "outgoing"},
-        {"type": "related_to", "direction": "any"}
-    ]
+        {"type": "related_to", "direction": "any"},
+    ],
 )
 ```
 
@@ -278,10 +266,7 @@ results = kg.vector_augmented_query(
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
 
 # Create extractor
-extractor = KnowledgeGraphExtractor(
-    extraction_temperature=0.7,
-    structure_temperature=0.5
-)
+extractor = KnowledgeGraphExtractor(extraction_temperature=0.7, structure_temperature=0.5)
 
 # Extract knowledge graph from text
 text = "IPFS is a peer-to-peer hypermedia protocol designed to preserve and grow humanity's knowledge..."
@@ -306,9 +291,7 @@ index = IPFSKnnIndex.load("path/to/index")
 
 # Create GraphRAG processor
 processor = GraphRAGLLMProcessor(
-    knowledge_graph=kg,
-    vector_index=index,
-    embedding_model="sentence-transformers/all-MiniLM-L6-v2"
+    knowledge_graph=kg, vector_index=index, embedding_model="sentence-transformers/all-MiniLM-L6-v2"
 )
 ```
 
@@ -316,17 +299,14 @@ processor = GraphRAGLLMProcessor(
 
 ```python
 # Simple query
-results = processor.query(
-    query_text="How does IPFS implement content addressing?",
-    max_results=5
-)
+results = processor.query(query_text="How does IPFS implement content addressing?", max_results=5)
 
 # Cross-document reasoning
 reasoning_result = processor.cross_document_reasoning(
     query="Compare how IPFS and Git implement content addressing",
     max_hops=2,
     min_relevance=0.7,
-    reasoning_depth="deep"
+    reasoning_depth="deep",
 )
 
 print(reasoning_result["answer"])
@@ -377,15 +357,12 @@ warc_file = processor.create_warc(
     options={
         "agent": "wget",  # or "squidwarc" for dynamic sites
         "depth": 2,
-        "compress": True
-    }
+        "compress": True,
+    },
 )
 
 # Index WARC to IPFS using IPWB
-index_result = processor.index_warc(
-    warc_path=warc_file,
-    output_path="indexes/example.cdxj"
-)
+index_result = processor.index_warc(warc_path=warc_file, output_path="indexes/example.cdxj")
 
 print(f"IPFS hash: {index_result['ipfs_hash']}")
 print(f"Record count: {index_result['record_count']}")
@@ -412,7 +389,7 @@ is_url = archivenow.push("https://example.com", "is")
 print(f"Archive.is: {is_url}")
 
 # Archive to Perma.cc
-cc_url = archivenow.push("https://example.com", "cc") 
+cc_url = archivenow.push("https://example.com", "cc")
 print(f"Perma.cc: {cc_url}")
 
 # Create local WARC file
@@ -427,21 +404,17 @@ Query and download historical web content:
 ```python
 import requests
 
+
 def query_wayback_machine(url, from_date="20200101", to_date="20240101"):
     """Query Wayback Machine for historical captures."""
     cdx_url = "http://web.archive.org/cdx/search/cdx"
-    params = {
-        'url': url,
-        'from': from_date,
-        'to': to_date,
-        'output': 'json',
-        'limit': 100
-    }
-    
+    params = {"url": url, "from": from_date, "to": to_date, "output": "json", "limit": 100}
+
     response = requests.get(cdx_url, params=params)
     captures = response.json()[1:]  # Skip header row
-    
+
     return captures
+
 
 # Query historical captures
 captures = query_wayback_machine("example.com")
@@ -462,19 +435,16 @@ Access large-scale web crawl data:
 def query_common_crawl(domain, crawl_id="CC-MAIN-2024-10"):
     """Query Common Crawl for domain content."""
     cc_url = f"https://index.commoncrawl.org/{crawl_id}-index"
-    params = {
-        'url': f"*.{domain}/*",
-        'output': 'json',
-        'limit': 100
-    }
-    
+    params = {"url": f"*.{domain}/*", "output": "json", "limit": 100}
+
     response = requests.get(cc_url, params=params)
     results = []
-    for line in response.text.strip().split('\n'):
+    for line in response.text.strip().split("\n"):
         if line:
             results.append(json.loads(line))
-    
+
     return results
+
 
 # Query Common Crawl data
 cc_results = query_common_crawl("example.com")
@@ -482,9 +452,9 @@ print(f"Found {len(cc_results)} Common Crawl records")
 
 # Download specific WARC records from Common Crawl
 for result in cc_results[:3]:  # First 3 results
-    warc_url = result['url']
-    offset = result['offset']
-    length = result['length']
+    warc_url = result["url"]
+    offset = result["offset"]
+    length = result["length"]
     print(f"WARC record: {warc_url} (offset: {offset}, length: {length})")
 ```
 
@@ -494,19 +464,21 @@ for result in cc_results[:3]:  # First 3 results
 import requests
 import time
 
+
 def archive_to_archive_is(url):
     """Archive URL to archive.is service."""
     response = requests.post(
-        'https://archive.is/submit/',
-        data={'url': url},
-        headers={'User-Agent': 'IPFS Datasets Archive Bot 1.0'},
-        timeout=30
+        "https://archive.is/submit/",
+        data={"url": url},
+        headers={"User-Agent": "IPFS Datasets Archive Bot 1.0"},
+        timeout=30,
     )
-    
+
     if response.status_code == 200:
         return response.url  # Archive URL
     else:
         raise Exception(f"Archive failed with status: {response.status_code}")
+
 
 # Archive to archive.is
 try:
@@ -524,7 +496,9 @@ Download content from 1000+ platforms using YT-DLP:
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.media_tools import (
-    ytdlp_download_video, ytdlp_download_playlist, ytdlp_extract_info
+    ytdlp_download_video,
+    ytdlp_download_playlist,
+    ytdlp_extract_info,
 )
 
 # Download single video with metadata
@@ -534,7 +508,7 @@ video_result = await ytdlp_download_video(
     quality="best[height<=720]",
     download_info_json=True,
     download_thumbnails=True,
-    subtitle_langs=["en", "auto"]
+    subtitle_langs=["en", "auto"],
 )
 
 # Download playlist
@@ -542,13 +516,12 @@ playlist_result = await ytdlp_download_playlist(
     url="https://www.youtube.com/playlist?list=PLrAXtmRdnEQy5JBZM-0P3KKiMxz5e3fXr",
     output_dir="downloads/playlists",
     quality="best[height<=480]",
-    max_downloads=10
+    max_downloads=10,
 )
 
 # Extract video information without downloading
 info_result = await ytdlp_extract_info(
-    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    extract_flat=False
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", extract_flat=False
 )
 
 print(f"Video title: {info_result['title']}")
@@ -562,7 +535,10 @@ Process downloaded media with professional tools:
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.media_tools import (
-    ffmpeg_convert, ffmpeg_probe, ffmpeg_apply_filters, ffmpeg_batch_process
+    ffmpeg_convert,
+    ffmpeg_probe,
+    ffmpeg_apply_filters,
+    ffmpeg_batch_process,
 )
 
 # Convert video to standard format
@@ -572,7 +548,7 @@ conversion_result = await ffmpeg_convert(
     video_codec="libx264",
     audio_codec="aac",
     resolution="1280x720",
-    quality="medium"
+    quality="medium",
 )
 
 # Extract audio from video
@@ -581,7 +557,7 @@ audio_result = await ffmpeg_convert(
     output_file="processed/audio.mp3",
     video_codec=None,  # Remove video stream
     audio_codec="mp3",
-    audio_bitrate="320k"
+    audio_bitrate="320k",
 )
 
 # Apply filters and effects
@@ -589,7 +565,7 @@ filtered_result = await ffmpeg_apply_filters(
     input_file="processed/video.mp4",
     output_file="processed/enhanced.mp4",
     video_filters=["scale=1920:1080", "brightness=0.1"],
-    audio_filters=["volume=1.2", "highpass=f=100"]
+    audio_filters=["volume=1.2", "highpass=f=100"],
 )
 
 # Batch process multiple files
@@ -597,12 +573,8 @@ batch_result = await ffmpeg_batch_process(
     input_files=["file1.mp4", "file2.webm", "file3.avi"],
     output_directory="processed/batch/",
     operation="convert",
-    operation_params={
-        "video_codec": "libx264",
-        "audio_codec": "aac",
-        "quality": "medium"
-    },
-    max_parallel=3
+    operation_params={"video_codec": "libx264", "audio_codec": "aac", "quality": "medium"},
+    max_parallel=3,
 )
 ```
 
@@ -629,8 +601,7 @@ result = db.query_to_arrow("""
 
 # Export to Parquet
 db.export_to_parquet(
-    query="SELECT * FROM my_table WHERE value > 100",
-    output_path="filtered.parquet"
+    query="SELECT * FROM my_table WHERE value > 100", output_path="filtered.parquet"
 )
 
 # Import from Parquet
@@ -644,7 +615,7 @@ db.import_from_parquet("data.parquet", "imported_table")
 db.export_to_car(
     query="SELECT * FROM my_table WHERE category = 'science'",
     output_path="science_data.car",
-    hash_columns=["id", "timestamp"]
+    hash_columns=["id", "timestamp"],
 )
 
 # Import from CAR file
@@ -652,8 +623,7 @@ db.import_from_car("data.car", "imported_table")
 
 # Execute query and store result to IPFS
 cid = db.query_to_ipfs(
-    query="SELECT * FROM analytics WHERE date BETWEEN '2023-01-01' AND '2023-12-31'",
-    pin=True
+    query="SELECT * FROM analytics WHERE date BETWEEN '2023-01-01' AND '2023-12-31'", pin=True
 )
 ```
 
@@ -672,15 +642,12 @@ transform_id = provenance.record_transformation(
     source_id="dataset123",
     transformation_type="filter",
     parameters={"column": "quality", "operator": ">", "value": 0.8},
-    output_id="filtered_dataset456"
+    output_id="filtered_dataset456",
 )
 
 # Record data access
 access_id = provenance.record_access(
-    data_id="filtered_dataset456",
-    access_type="read",
-    user_id="user789",
-    purpose="analysis"
+    data_id="filtered_dataset456", access_type="read", user_id="user789", purpose="analysis"
 )
 
 # Get lineage
@@ -703,28 +670,19 @@ audit_logger.min_level = AuditLevel.INFO
 audit_logger.default_application = "ipfs_datasets_example"
 
 # Add handlers
-audit_logger.add_file_handler(
-    name="file",
-    file_path="logs/audit.log",
-    min_level=AuditLevel.INFO
-)
+audit_logger.add_file_handler(name="file", file_path="logs/audit.log", min_level=AuditLevel.INFO)
 
 # Log events
 audit_logger.log(
     level=AuditLevel.INFO,
     category=AuditCategory.DATA_ACCESS,
     message="User accessed dataset",
-    context={
-        "user_id": "user123",
-        "dataset_id": "dataset456",
-        "access_type": "read"
-    }
+    context={"user_id": "user123", "dataset_id": "dataset456", "access_type": "read"},
 )
 
 # Use with context manager
 with audit_logger.create_context(
-    category=AuditCategory.DATA_MODIFICATION,
-    context={"operation": "transform"}
+    category=AuditCategory.DATA_MODIFICATION, context={"operation": "transform"}
 ) as audit_ctx:
     # Perform operations
     audit_ctx.log(AuditLevel.INFO, "Starting transformation")
@@ -741,17 +699,11 @@ from ipfs_datasets_py.access_control import AccessControlManager
 acm = AccessControlManager()
 
 # Grant permissions
-acm.grant_permission(
-    resource_id="dataset123",
-    user_id="user456",
-    permission="read"
-)
+acm.grant_permission(resource_id="dataset123", user_id="user456", permission="read")
 
 # Check permissions
 has_permission = acm.check_permission(
-    resource_id="dataset123",
-    user_id="user456",
-    permission="write"
+    resource_id="dataset123", user_id="user456", permission="write"
 )
 
 # Use with datasets
@@ -771,14 +723,13 @@ publisher = DatasetPublisher()
 topic = publisher.publish(
     dataset=dataset,
     topic="science-datasets",
-    metadata={"name": "Climate Data 2023", "version": "1.0"}
+    metadata={"name": "Climate Data 2023", "version": "1.0"},
 )
 
 # Subscribe to datasets
 subscriber = DatasetSubscriber()
 subscription = subscriber.subscribe(
-    topic="science-datasets",
-    callback=lambda dataset, metadata: process_dataset(dataset, metadata)
+    topic="science-datasets", callback=lambda dataset, metadata: process_dataset(dataset, metadata)
 )
 ```
 
@@ -788,17 +739,10 @@ subscription = subscriber.subscribe(
 from ipfs_datasets_py.federated_search import FederatedSearch
 
 # Create federated search
-searcher = FederatedSearch(
-    nodes=["node1", "node2", "node3"],
-    timeout_seconds=30
-)
+searcher = FederatedSearch(nodes=["node1", "node2", "node3"], timeout_seconds=30)
 
 # Search across nodes
-results = searcher.search(
-    query_vector=query_vector,
-    top_k=10,
-    combine_method="score_based"
-)
+results = searcher.search(query_vector=query_vector, top_k=10, combine_method="score_based")
 ```
 
 ### Distributed Processing
@@ -807,16 +751,13 @@ results = searcher.search(
 from ipfs_datasets_py.distributed import DistributedProcessor
 
 # Create distributed processor
-processor = DistributedProcessor(
-    worker_nodes=["node1", "node2", "node3"],
-    task_timeout=60
-)
+processor = DistributedProcessor(worker_nodes=["node1", "node2", "node3"], task_timeout=60)
 
 # Process dataset in distributed manner
 result = processor.map_reduce(
     dataset=large_dataset,
     map_function=lambda chunk: process_chunk(chunk),
-    reduce_function=lambda results: combine_results(results)
+    reduce_function=lambda results: combine_results(results),
 )
 ```
 
@@ -831,10 +772,7 @@ from ipfs_datasets_py.streaming import StreamingProcessor
 processor = StreamingProcessor(chunk_size=10000)
 
 # Process Parquet file to CAR file
-processor.stream_parquet_to_car(
-    parquet_path="large_dataset.parquet",
-    car_path="large_dataset.car"
-)
+processor.stream_parquet_to_car(parquet_path="large_dataset.parquet", car_path="large_dataset.car")
 ```
 
 ### Query Profiling

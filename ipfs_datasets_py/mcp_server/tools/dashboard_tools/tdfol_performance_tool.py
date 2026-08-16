@@ -3,6 +3,7 @@ TDFOL Performance Dashboard Tool for MCP Server (thin wrapper).
 
 Business logic lives in tdfol_performance_engine.TDFOLPerformanceEngine.
 """
+
 from __future__ import annotations
 
 import logging
@@ -78,51 +79,84 @@ def reset_tdfol_metrics() -> Dict[str, Any]:
 
 
 TDFOL_PERFORMANCE_TOOLS = [
-    {"name": "get_tdfol_metrics", "description": "Get current TDFOL performance metrics",
-     "function": get_tdfol_metrics, "parameters": {}, "category": "dashboard_tools"},
-    {"name": "profile_tdfol_operation",
-     "description": "Profile a TDFOL proving operation with detailed metrics",
-     "function": profile_tdfol_operation,
-     "parameters": {"formula_str": {"type": "string", "required": True},
-                    "kb_formulas": {"type": "array", "required": False},
-                    "runs": {"type": "integer", "default": 10},
-                    "strategy": {"type": "string", "required": False}},
-     "category": "dashboard_tools"},
-    {"name": "generate_tdfol_dashboard",
-     "description": "Generate interactive HTML performance dashboard",
-     "function": generate_tdfol_dashboard,
-     "parameters": {"output_path": {"type": "string", "required": False},
-                    "include_profiling": {"type": "boolean", "default": False}},
-     "category": "dashboard_tools"},
-    {"name": "export_tdfol_statistics",
-     "description": "Export TDFOL performance statistics in various formats",
-     "function": export_tdfol_statistics,
-     "parameters": {"format": {"type": "string", "default": "json"},
-                    "include_raw_data": {"type": "boolean", "default": False}},
-     "category": "dashboard_tools"},
-    {"name": "get_tdfol_profiler_report",
-     "description": "Get detailed profiler report with bottlenecks",
-     "function": get_tdfol_profiler_report,
-     "parameters": {"report_format": {"type": "string", "default": "text"},
-                    "top_n": {"type": "integer", "default": 20}},
-     "category": "dashboard_tools"},
-    {"name": "compare_tdfol_strategies",
-     "description": "Compare performance across different proving strategies",
-     "function": compare_tdfol_strategies,
-     "parameters": {"formula_str": {"type": "string", "required": True},
-                    "strategies": {"type": "array", "required": False},
-                    "kb_formulas": {"type": "array", "required": False},
-                    "runs_per_strategy": {"type": "integer", "default": 10}},
-     "category": "dashboard_tools"},
-    {"name": "check_tdfol_performance_regression",
-     "description": "Check for performance regressions against baseline",
-     "function": check_tdfol_performance_regression,
-     "parameters": {"baseline_path": {"type": "string", "required": False},
-                    "threshold_percent": {"type": "number", "default": 10.0}},
-     "category": "dashboard_tools"},
-    {"name": "reset_tdfol_metrics",
-     "description": "Reset TDFOL performance metrics and collectors",
-     "function": reset_tdfol_metrics, "parameters": {}, "category": "dashboard_tools"},
+    {
+        "name": "get_tdfol_metrics",
+        "description": "Get current TDFOL performance metrics",
+        "function": get_tdfol_metrics,
+        "parameters": {},
+        "category": "dashboard_tools",
+    },
+    {
+        "name": "profile_tdfol_operation",
+        "description": "Profile a TDFOL proving operation with detailed metrics",
+        "function": profile_tdfol_operation,
+        "parameters": {
+            "formula_str": {"type": "string", "required": True},
+            "kb_formulas": {"type": "array", "required": False},
+            "runs": {"type": "integer", "default": 10},
+            "strategy": {"type": "string", "required": False},
+        },
+        "category": "dashboard_tools",
+    },
+    {
+        "name": "generate_tdfol_dashboard",
+        "description": "Generate interactive HTML performance dashboard",
+        "function": generate_tdfol_dashboard,
+        "parameters": {
+            "output_path": {"type": "string", "required": False},
+            "include_profiling": {"type": "boolean", "default": False},
+        },
+        "category": "dashboard_tools",
+    },
+    {
+        "name": "export_tdfol_statistics",
+        "description": "Export TDFOL performance statistics in various formats",
+        "function": export_tdfol_statistics,
+        "parameters": {
+            "format": {"type": "string", "default": "json"},
+            "include_raw_data": {"type": "boolean", "default": False},
+        },
+        "category": "dashboard_tools",
+    },
+    {
+        "name": "get_tdfol_profiler_report",
+        "description": "Get detailed profiler report with bottlenecks",
+        "function": get_tdfol_profiler_report,
+        "parameters": {
+            "report_format": {"type": "string", "default": "text"},
+            "top_n": {"type": "integer", "default": 20},
+        },
+        "category": "dashboard_tools",
+    },
+    {
+        "name": "compare_tdfol_strategies",
+        "description": "Compare performance across different proving strategies",
+        "function": compare_tdfol_strategies,
+        "parameters": {
+            "formula_str": {"type": "string", "required": True},
+            "strategies": {"type": "array", "required": False},
+            "kb_formulas": {"type": "array", "required": False},
+            "runs_per_strategy": {"type": "integer", "default": 10},
+        },
+        "category": "dashboard_tools",
+    },
+    {
+        "name": "check_tdfol_performance_regression",
+        "description": "Check for performance regressions against baseline",
+        "function": check_tdfol_performance_regression,
+        "parameters": {
+            "baseline_path": {"type": "string", "required": False},
+            "threshold_percent": {"type": "number", "default": 10.0},
+        },
+        "category": "dashboard_tools",
+    },
+    {
+        "name": "reset_tdfol_metrics",
+        "description": "Reset TDFOL performance metrics and collectors",
+        "function": reset_tdfol_metrics,
+        "parameters": {},
+        "category": "dashboard_tools",
+    },
 ]
 
 

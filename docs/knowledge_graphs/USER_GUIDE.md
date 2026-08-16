@@ -55,7 +55,7 @@ Control extraction detail level with temperature (0.0-1.0):
 # Conservative extraction (0.2-0.3) - Legal/factual data
 kg = extractor.extract_knowledge_graph(text, extraction_temperature=0.3)
 
-# Balanced extraction (0.5-0.6) - Mixed content  
+# Balanced extraction (0.5-0.6) - Mixed content
 kg = extractor.extract_knowledge_graph(text, extraction_temperature=0.6)
 
 # Detailed extraction (0.8-0.9) - Research/exploratory
@@ -75,14 +75,14 @@ Entities represent real-world objects or concepts in the knowledge graph.
 from ipfs_datasets_py.knowledge_graphs.extraction import Entity
 
 entity = Entity(
-    entity_type="person",              # Classification
-    name="Marie Curie",                # Primary identifier
-    properties={                        # Additional metadata
+    entity_type="person",  # Classification
+    name="Marie Curie",  # Primary identifier
+    properties={  # Additional metadata
         "birth_year": "1867",
         "nationality": "Polish",
-        "field": "Physics"
+        "field": "Physics",
     },
-    confidence=0.95                     # Extraction confidence (0.0-1.0)
+    confidence=0.95,  # Extraction confidence (0.0-1.0)
 )
 ```
 
@@ -103,14 +103,14 @@ Relationships connect entities and describe their interactions.
 from ipfs_datasets_py.knowledge_graphs.extraction import Relationship
 
 relationship = Relationship(
-    source="Marie Curie",              # Source entity
-    target="Nobel Prize",              # Target entity
-    relationship_type="WON",           # Semantic connection
-    properties={                        # Context
+    source="Marie Curie",  # Source entity
+    target="Nobel Prize",  # Target entity
+    relationship_type="WON",  # Semantic connection
+    properties={  # Context
         "year": "1903",
-        "shared_with": "Henri Becquerel"
+        "shared_with": "Henri Becquerel",
     },
-    confidence=0.92                     # Relationship confidence
+    confidence=0.92,  # Relationship confidence
 )
 ```
 
@@ -184,10 +184,7 @@ from ipfs_datasets_py.knowledge_graphs.extraction import Entity, KnowledgeGraph
 
 # Create entities manually
 person = Entity(
-    entity_type="person",
-    name="Marie Curie",
-    properties={"birth_year": "1867"},
-    confidence=0.95
+    entity_type="person", name="Marie Curie", properties={"birth_year": "1867"}, confidence=0.95
 )
 
 # Create graph
@@ -218,19 +215,15 @@ for entity in kg.entities:
 Validate extracted entities against external knowledge bases (e.g., Wikidata):
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractorWithValidation
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractorWithValidation
 
 # Enable validation during extraction
-validator = KnowledgeGraphExtractorWithValidation(
-    validate_during_extraction=True
-)
+validator = KnowledgeGraphExtractorWithValidation(validate_during_extraction=True)
 
 # Extract and validate
 result = validator.extract_knowledge_graph(
     text,
-    validation_depth=2  # Depth of validation checks
+    validation_depth=2,  # Depth of validation checks
 )
 
 kg = result["knowledge_graph"]
@@ -250,13 +243,13 @@ Process multiple documents and merge results:
 documents = [
     {"text": "Marie Curie won Nobel Prize...", "source": "bio1.txt"},
     {"text": "Albert Einstein developed...", "source": "bio2.txt"},
-    {"text": "Isaac Newton discovered...", "source": "bio3.txt"}
+    {"text": "Isaac Newton discovered...", "source": "bio3.txt"},
 ]
 
 # Extract from all documents
 kg = extractor.extract_from_documents(
     documents,
-    text_key="text"  # Key containing text in each document
+    text_key="text",  # Key containing text in each document
 )
 
 # Entities automatically deduplicated by name
@@ -275,9 +268,9 @@ with open("large_document.txt") as f:
 # Extract with automatic chunking
 kg = extractor.extract_enhanced_knowledge_graph(
     large_text,
-    use_chunking=True,         # Enable automatic chunking
+    use_chunking=True,  # Enable automatic chunking
     extraction_temperature=0.7,
-    structure_temperature=0.6
+    structure_temperature=0.6,
 )
 
 # Chunks automatically merged by name similarity
@@ -292,8 +285,7 @@ Extract knowledge from Wikipedia pages:
 ```python
 # Extract from Wikipedia
 kg = extractor.extract_from_wikipedia(
-    page_title="Artificial Intelligence",
-    extraction_temperature=0.7
+    page_title="Artificial Intelligence", extraction_temperature=0.7
 )
 
 print(f"Extracted from Wikipedia: {kg.name}")
@@ -318,15 +310,15 @@ custom_patterns = [
         "pattern": r"(\w+)\s+develops?\s+(\w+)",
         "source_type": "person",
         "target_type": "technology",
-        "confidence": 0.85
+        "confidence": 0.85,
     },
     {
         "name": "founded",
         "pattern": r"(\w+)\s+founded\s+(\w+)",
         "source_type": "person",
         "target_type": "organization",
-        "confidence": 0.90
-    }
+        "confidence": 0.90,
+    },
 ]
 
 # Create extractor with custom patterns
@@ -369,9 +361,7 @@ Find connections between entities:
 ```python
 # Find path between two entities
 path = kg.find_path(
-    source_entity_id="marie_curie_id",
-    target_entity_id="albert_einstein_id",
-    max_depth=5
+    source_entity_id="marie_curie_id", target_entity_id="albert_einstein_id", max_depth=5
 )
 
 if path:
@@ -436,16 +426,13 @@ Combine vector similarity with graph structure:
 from ipfs_datasets_py.knowledge_graphs.query import HybridSearchEngine
 
 # Create hybrid search engine
-hybrid = HybridSearchEngine(
-    graph=kg,
-    vector_store=vector_store
-)
+hybrid = HybridSearchEngine(graph=kg, vector_store=vector_store)
 
 # Search with both vector and graph signals
 results = hybrid.search(
     query="Nobel Prize winners in Physics",
     top_k=10,
-    hybrid_weight=0.7  # 70% vector, 30% graph
+    hybrid_weight=0.7,  # 70% vector, 30% graph
 )
 
 for result in results:
@@ -517,28 +504,30 @@ import hashlib
 import os
 import json
 
+
 class CachedExtractor:
     def __init__(self, cache_dir="kg_cache"):
         self.cache_dir = cache_dir
         self.extractor = KnowledgeGraphExtractor()
         os.makedirs(cache_dir, exist_ok=True)
-    
+
     def extract(self, text, use_cache=True):
         # Generate cache key
         cache_key = hashlib.sha256(text.encode()).hexdigest()
         cache_path = os.path.join(self.cache_dir, f"{cache_key}.json")
-        
+
         # Check cache
         if use_cache and os.path.exists(cache_path):
             with open(cache_path) as f:
                 return KnowledgeGraph.from_json(f.read())
-        
+
         # Extract and cache
         kg = self.extractor.extract_knowledge_graph(text)
         with open(cache_path, "w") as f:
             f.write(kg.to_json())
-        
+
         return kg
+
 
 # Usage
 cached_extractor = CachedExtractor()
@@ -553,19 +542,20 @@ For production systems with high throughput:
 ```python
 import redis
 
+
 class RedisKnowledgeCache:
     def __init__(self):
-        self.redis = redis.Redis(host='localhost', port=6379, db=0)
+        self.redis = redis.Redis(host="localhost", port=6379, db=0)
         self.extractor = KnowledgeGraphExtractor()
-    
+
     def get_or_extract(self, text, ttl=3600):
         cache_key = f"kg:{hashlib.sha256(text.encode()).hexdigest()}"
-        
+
         # Try cache
         cached = self.redis.get(cache_key)
         if cached:
             return KnowledgeGraph.from_json(cached.decode())
-        
+
         # Extract and cache
         kg = self.extractor.extract_knowledge_graph(text)
         self.redis.setex(cache_key, ttl, kg.to_json())
@@ -586,22 +576,23 @@ class IncrementalKnowledgeGraph:
         self.name = name
         self.versions = {0: KnowledgeGraph(name=name)}
         self.current_version = 0
-    
+
     def update(self, new_kg, description=""):
         # Merge new knowledge
         self.versions[self.current_version].merge(new_kg)
         self.current_version += 1
-        
+
         print(f"Updated to version {self.current_version}: {description}")
-    
+
     def rollback(self, version):
         if version in self.versions:
             self.current_version = version
             return self.versions[version]
         raise ValueError(f"Version {version} not found")
-    
+
     def get_current(self):
         return self.versions[self.current_version]
+
 
 # Usage
 incremental = IncrementalKnowledgeGraph("research_kb")
@@ -618,10 +609,11 @@ Save progress during long-running operations:
 import os
 import json
 
+
 def process_large_batch(file_paths, checkpoint_file="checkpoint.json"):
     extractor = KnowledgeGraphExtractor()
     combined_kg = KnowledgeGraph(name="batch_result")
-    
+
     # Load checkpoint if exists
     processed_files = set()
     if os.path.exists(checkpoint_file):
@@ -629,28 +621,25 @@ def process_large_batch(file_paths, checkpoint_file="checkpoint.json"):
             checkpoint = json.load(f)
             combined_kg = KnowledgeGraph.from_dict(checkpoint["kg"])
             processed_files = set(checkpoint["processed"])
-    
+
     # Process files
     for i, file_path in enumerate(file_paths):
         if file_path in processed_files:
             continue
-        
+
         # Extract and merge
         with open(file_path) as f:
             kg = extractor.extract_knowledge_graph(f.read())
             combined_kg.merge(kg)
-        
+
         processed_files.add(file_path)
-        
+
         # Save checkpoint every 10 files
         if (i + 1) % 10 == 0:
             with open(checkpoint_file, "w") as f:
-                json.dump({
-                    "kg": combined_kg.to_dict(),
-                    "processed": list(processed_files)
-                }, f)
-            print(f"Checkpoint saved: {i+1}/{len(file_paths)} files")
-    
+                json.dump({"kg": combined_kg.to_dict(), "processed": list(processed_files)}, f)
+            print(f"Checkpoint saved: {i + 1}/{len(file_paths)} files")
+
     return combined_kg
 ```
 
@@ -695,7 +684,7 @@ kg = extractor.extract_knowledge_graph(text)
 
 # Step 2: Validate against external sources
 validation = extractor.validate_against_wikidata(kg, "Marie Curie")
-coverage = validation['coverage']
+coverage = validation["coverage"]
 
 if coverage < 0.5:
     print(f"Warning: Low validation coverage ({coverage:.2%})")
@@ -719,48 +708,45 @@ class KnowledgeGraphSystem:
     def __init__(self):
         self.kg = KnowledgeGraph(name="live_knowledge")
         self.extractor = KnowledgeGraphExtractor()
-    
+
     def add_document(self, text, metadata=None):
         # Extract from new document
         doc_kg = self.extractor.extract_knowledge_graph(text)
-        
+
         # Merge into main graph
         self.kg.merge(doc_kg)
-        
+
         return {
             "entities_added": len(doc_kg.entities),
             "relationships_added": len(doc_kg.relationships),
-            "total_entities": len(self.kg.entities)
+            "total_entities": len(self.kg.entities),
         }
-    
+
     def query_entity(self, name):
         entities = self.kg.get_entities_by_name(name)
         if not entities:
             return None
-        
+
         entity = entities[0]
         rels = self.kg.get_relationships_by_entity(entity)
-        
-        return {
-            "entity": entity,
-            "relationships": rels,
-            "related_count": len(rels)
-        }
-    
+
+        return {"entity": entity, "relationships": rels, "related_count": len(rels)}
+
     def find_connection(self, name1, name2):
         entities1 = self.kg.get_entities_by_name(name1)
         entities2 = self.kg.get_entities_by_name(name2)
-        
+
         if not entities1 or not entities2:
             return None
-        
+
         path = self.kg.find_path(entities1[0].id, entities2[0].id, max_depth=5)
-        
+
         return {
             "connected": path is not None,
             "path_length": len(path) if path else None,
-            "path_entities": [self.kg.entities[id] for id in path] if path else []
+            "path_entities": [self.kg.entities[id] for id in path] if path else [],
         }
+
 
 # Usage
 system = KnowledgeGraphSystem()
@@ -777,6 +763,7 @@ Process multiple documents in parallel:
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
 
+
 def extract_from_file(file_path):
     extractor = KnowledgeGraphExtractor()
     with open(file_path) as f:
@@ -784,21 +771,23 @@ def extract_from_file(file_path):
     kg = extractor.extract_knowledge_graph(text)
     return kg.to_dict()
 
+
 def parallel_extraction(file_paths, max_workers=None):
     if max_workers is None:
         max_workers = multiprocessing.cpu_count()
-    
+
     # Extract in parallel
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         results = list(executor.map(extract_from_file, file_paths))
-    
+
     # Merge results
     combined = KnowledgeGraph(name="parallel_combined")
     for kg_dict in results:
         kg = KnowledgeGraph.from_dict(kg_dict)
         combined.merge(kg)
-    
+
     return combined
+
 
 # Usage
 file_paths = ["doc1.txt", "doc2.txt", "doc3.txt", "doc4.txt"]
@@ -816,23 +805,24 @@ class MultiSourceKnowledgeFusion:
     def __init__(self):
         self.source_graphs = {}
         self.extractor = KnowledgeGraphExtractor()
-    
+
     def add_source(self, source_id, text, metadata=None):
         kg = self.extractor.extract_knowledge_graph(text)
         kg.metadata = metadata or {}
-        kg.metadata['source_id'] = source_id
+        kg.metadata["source_id"] = source_id
         self.source_graphs[source_id] = kg
-    
+
     def fuse(self, conflict_resolution="vote"):
         fused = KnowledgeGraph(name="fused_knowledge")
-        
+
         for source_id, kg in self.source_graphs.items():
             # Merge with source tracking
             for entity in kg.entities.values():
-                entity.properties['source'] = source_id
+                entity.properties["source"] = source_id
             fused.merge(kg)
-        
+
         return fused
+
 
 # Usage
 fusion = MultiSourceKnowledgeFusion()
@@ -850,6 +840,7 @@ fused_kg = fusion.fuse()
 
 ```python
 import time
+
 
 def extract_with_retry(text, extractor, max_retries=3, retry_delay=2):
     """Extract with exponential backoff retry logic."""
@@ -869,6 +860,7 @@ def extract_with_retry(text, extractor, max_retries=3, retry_delay=2):
             print(f"Validation error: {e}")
             raise
 
+
 # Usage
 try:
     kg = extract_with_retry(text, extractor)
@@ -885,6 +877,7 @@ import time
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class MonitoredExtractor:
     def __init__(self):
         self.extractor = KnowledgeGraphExtractor()
@@ -893,22 +886,22 @@ class MonitoredExtractor:
             "total_time": 0.0,
             "total_entities": 0,
             "total_relationships": 0,
-            "errors": 0
+            "errors": 0,
         }
-    
+
     def extract(self, text, **kwargs):
         start = time.time()
-        
+
         try:
             kg = self.extractor.extract_knowledge_graph(text, **kwargs)
             elapsed = time.time() - start
-            
+
             # Update stats
             self.stats["total_extractions"] += 1
             self.stats["total_time"] += elapsed
             self.stats["total_entities"] += len(kg.entities)
             self.stats["total_relationships"] += len(kg.relationships)
-            
+
             # Log
             logger.info(
                 f"Extraction successful: "
@@ -916,21 +909,22 @@ class MonitoredExtractor:
                 f"{len(kg.relationships)} relationships, "
                 f"{elapsed:.2f}s"
             )
-            
+
             return kg
-            
+
         except Exception as e:
             self.stats["errors"] += 1
             logger.error(f"Extraction failed: {e}")
             raise
-    
+
     def get_stats(self):
-        avg_time = (self.stats["total_time"] / self.stats["total_extractions"] 
-                    if self.stats["total_extractions"] > 0 else 0)
-        return {
-            **self.stats,
-            "avg_extraction_time": avg_time
-        }
+        avg_time = (
+            self.stats["total_time"] / self.stats["total_extractions"]
+            if self.stats["total_extractions"] > 0
+            else 0
+        )
+        return {**self.stats, "avg_extraction_time": avg_time}
+
 
 # Usage
 monitored = MonitoredExtractor()
@@ -947,21 +941,21 @@ print(f"Statistics: {monitored.get_stats()}")
 legal_extractor = KnowledgeGraphExtractor()
 kg = legal_extractor.extract_knowledge_graph(
     legal_text,
-    extraction_temperature=0.2  # Only extract clear, explicit facts
+    extraction_temperature=0.2,  # Only extract clear, explicit facts
 )
 
 # Balanced: News articles, documentation
 news_extractor = KnowledgeGraphExtractor()
 kg = news_extractor.extract_knowledge_graph(
     news_text,
-    extraction_temperature=0.6  # Balance between precision and recall
+    extraction_temperature=0.6,  # Balance between precision and recall
 )
 
 # Detailed: Research papers, exploratory analysis
 research_extractor = KnowledgeGraphExtractor()
 kg = research_extractor.extract_knowledge_graph(
     research_text,
-    extraction_temperature=0.9  # Extract all possible relationships
+    extraction_temperature=0.9,  # Extract all possible relationships
 )
 ```
 
@@ -972,15 +966,14 @@ kg = research_extractor.extract_knowledge_graph(
 for entity in kg.entities.values():
     if entity.confidence < 0.7:
         validation = extractor.validate_against_wikidata(kg, entity.name)
-        
-        if validation['coverage'] < 0.5:
+
+        if validation["coverage"] < 0.5:
             logger.warning(
-                f"Low validation for {entity.name}: "
-                f"{validation['coverage']:.2%} coverage"
+                f"Low validation for {entity.name}: {validation['coverage']:.2%} coverage"
             )
-            
+
             # Consider removing or flagging low-confidence entities
-            entity.properties['needs_review'] = True
+            entity.properties["needs_review"] = True
 ```
 
 ### 5. Resource Monitoring
@@ -989,26 +982,25 @@ for entity in kg.entities.values():
 import psutil
 import os
 
+
 class ResourceMonitor:
     def __init__(self):
         self.process = psutil.Process(os.getpid())
         self.initial_memory = self.get_memory_usage()
-    
+
     def get_memory_usage(self):
         return self.process.memory_info().rss / 1024 / 1024  # MB
-    
+
     def get_cpu_percent(self):
         return self.process.cpu_percent(interval=1)
-    
+
     def log_resources(self, stage):
         memory = self.get_memory_usage()
         cpu = self.get_cpu_percent()
         memory_delta = memory - self.initial_memory
-        
-        logger.info(
-            f"{stage}: Memory={memory:.1f}MB (+{memory_delta:.1f}MB), "
-            f"CPU={cpu:.1f}%"
-        )
+
+        logger.info(f"{stage}: Memory={memory:.1f}MB (+{memory_delta:.1f}MB), CPU={cpu:.1f}%")
+
 
 # Usage
 monitor = ResourceMonitor()
@@ -1043,7 +1035,7 @@ monitor.log_resources("After merge")
 from ipfs_datasets_py.knowledge_graphs.exceptions import (
     ExtractionError,
     ValidationError,
-    StorageError
+    StorageError,
 )
 
 try:
@@ -1065,6 +1057,7 @@ except Exception as e:
 ```python
 # Enable debug logging
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 
 # Inspect extraction results
@@ -1104,7 +1097,7 @@ fast_extractor = KnowledgeGraphExtractor()
 kg = fast_extractor.extract_knowledge_graph(
     text,
     extraction_temperature=0.3,  # Lower = faster
-    use_chunking=False           # Skip chunking if not needed
+    use_chunking=False,  # Skip chunking if not needed
 )
 
 # Optimize for detail
@@ -1112,7 +1105,7 @@ detailed_extractor = KnowledgeGraphExtractor()
 kg = detailed_extractor.extract_knowledge_graph(
     text,
     extraction_temperature=0.9,  # Higher = more entities/relationships
-    use_chunking=True            # Handle large documents
+    use_chunking=True,  # Handle large documents
 )
 ```
 
@@ -1207,8 +1200,8 @@ kg = extractor.extract_knowledge_graph(history_text, extraction_temperature=0.7)
 
 # Extract events with dates
 events = kg.get_entities_by_type("event")
-for event in sorted(events, key=lambda e: e.properties.get('year', '9999')):
-    year = event.properties.get('year', 'Unknown')
+for event in sorted(events, key=lambda e: e.properties.get("year", "9999")):
+    year = event.properties.get("year", "Unknown")
     print(f"{year}: {event.name}")
 ```
 
@@ -1228,7 +1221,7 @@ for event in sorted(events, key=lambda e: e.properties.get('year', '9999')):
 documents = [
     "Python was created by Guido van Rossum in 1991.",
     "Guido van Rossum worked at Google from 2005 to 2012.",
-    "Google was founded by Larry Page and Sergey Brin in 1998."
+    "Google was founded by Larry Page and Sergey Brin in 1998.",
 ]
 
 # Extract and merge
@@ -1272,6 +1265,7 @@ import os
 import json
 from datetime import datetime
 
+
 class ProductionKnowledgeSystem:
     def __init__(self, cache_dir="kg_cache", output_dir="kg_output"):
         self.cache_dir = cache_dir
@@ -1282,68 +1276,67 @@ class ProductionKnowledgeSystem:
             "documents_processed": 0,
             "total_entities": 0,
             "total_relationships": 0,
-            "start_time": datetime.now()
+            "start_time": datetime.now(),
         }
-        
+
         os.makedirs(output_dir, exist_ok=True)
-    
+
     def process_directory(self, input_dir, output_file="knowledge_graph.json"):
         combined_kg = KnowledgeGraph(name="production_kg")
-        
+
         # Get all text files
         file_paths = [
-            os.path.join(input_dir, f) 
-            for f in os.listdir(input_dir) 
-            if f.endswith('.txt')
+            os.path.join(input_dir, f) for f in os.listdir(input_dir) if f.endswith(".txt")
         ]
-        
+
         logger.info(f"Processing {len(file_paths)} files...")
-        
+
         # Process each file
         for i, file_path in enumerate(file_paths):
             try:
                 with open(file_path) as f:
                     text = f.read()
-                
+
                 # Extract with retry and caching
                 kg = extract_with_retry(text, self.extractor, max_retries=3)
-                
+
                 # Merge into combined graph
                 combined_kg.merge(kg)
-                
+
                 # Update stats
                 self.stats["documents_processed"] += 1
                 self.stats["total_entities"] = len(combined_kg.entities)
                 self.stats["total_relationships"] = len(combined_kg.relationships)
-                
+
                 # Log progress
                 if (i + 1) % 10 == 0:
-                    self.monitor.log_resources(f"After {i+1} files")
-                    logger.info(f"Progress: {i+1}/{len(file_paths)} files")
-                
+                    self.monitor.log_resources(f"After {i + 1} files")
+                    logger.info(f"Progress: {i + 1}/{len(file_paths)} files")
+
             except Exception as e:
                 logger.error(f"Failed to process {file_path}: {e}")
                 continue
-        
+
         # Save final graph
         output_path = os.path.join(self.output_dir, output_file)
         with open(output_path, "w") as f:
             f.write(combined_kg.to_json())
-        
+
         # Compute final stats
         elapsed = (datetime.now() - self.stats["start_time"]).total_seconds()
         self.stats["total_time"] = elapsed
         self.stats["avg_time_per_doc"] = elapsed / self.stats["documents_processed"]
-        
+
         # Save stats
         stats_path = os.path.join(self.output_dir, "stats.json")
         with open(stats_path, "w") as f:
             json.dump({k: str(v) for k, v in self.stats.items()}, f, indent=2)
-        
+
         logger.info(f"Processing complete: {output_path}")
         logger.info(f"Stats: {json.dumps(self.stats, indent=2, default=str)}")
-        
+
         return combined_kg
+
 
 # Usage
 system = ProductionKnowledgeSystem()
@@ -1381,14 +1374,14 @@ All features previously listed as "planned" in the v2.x roadmap have been implem
 **Graph diff/patch (v3.22.24):**
 ```python
 diff = kg1.diff(kg2)
-print(diff.summary())    # "Added 3 entities, removed 1 entity"
+print(diff.summary())  # "Added 3 entities, removed 1 entity"
 kg1.apply_diff(diff)
 ```
 
 **Graph events and subscriptions (v3.22.25):**
 ```python
 handler_id = kg.subscribe(lambda e: print(e.event_type, e.entity_id))
-kg.add_entity(entity)   # fires ENTITY_ADDED
+kg.add_entity(entity)  # fires ENTITY_ADDED
 kg.unsubscribe(handler_id)
 ```
 
@@ -1402,35 +1395,39 @@ kg.restore_snapshot("v1")
 **GraphQL queries (v3.22.26):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.query import KnowledgeGraphQLExecutor
+
 result = KnowledgeGraphQLExecutor(kg).execute('{ person(name: "Alice") { type confidence } }')
 ```
 
 **Visualization (v3.22.27):**
 ```python
-dot_src  = kg.to_dot()
-mermaid  = kg.to_mermaid()
-d3_data  = kg.to_d3_json()
-ascii    = kg.to_ascii()
+dot_src = kg.to_dot()
+mermaid = kg.to_mermaid()
+d3_data = kg.to_d3_json()
+ascii = kg.to_ascii()
 ```
 
 **Federated KGs (v3.22.28):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.query import FederatedKnowledgeGraph
+
 fed = FederatedKnowledgeGraph()
-fed.add_graph(kg1, "source_a"); fed.add_graph(kg2, "source_b")
+fed.add_graph(kg1, "source_a")
+fed.add_graph(kg2, "source_b")
 merged = fed.to_merged_graph()
 ```
 
 **Provenance chain (v3.22.29):**
 ```python
 chain = kg.enable_provenance()
-kg.add_entity(entity)   # auto-records ENTITY_CREATED
+kg.add_entity(entity)  # auto-records ENTITY_CREATED
 valid, errors = chain.verify_chain()
 ```
 
 **GNN embeddings (v3.22.30):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.query import GraphNeuralNetworkAdapter, GNNConfig
+
 adapter = GraphNeuralNetworkAdapter(kg, GNNConfig(embedding_dim=64))
 similar = adapter.find_similar_entities(entity_id, top_k=5)
 ```
@@ -1438,8 +1435,9 @@ similar = adapter.find_similar_entities(entity_id, top_k=5)
 **Zero-knowledge proofs (v3.22.30–32):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.query import KGZKProver, KGZKVerifier
+
 prover = KGZKProver(kg)
-proof  = prover.prove_entity_exists("person", "Alice")
+proof = prover.prove_entity_exists("person", "Alice")
 assert KGZKVerifier().verify_statement(proof)
 ```
 

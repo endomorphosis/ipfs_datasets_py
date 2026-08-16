@@ -248,6 +248,7 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from .mcp_interfaces import MCPServerProtocol
 
+
 class MyAdapter:
     def use_server(self, server: "MCPServerProtocol"):
         # Type hints preserved, no circular import
@@ -260,6 +261,7 @@ class MyAdapter:
 async def my_tool(param: str) -> str:
     """Thin wrapper delegates to core module."""
     from ipfs_datasets_py.core import do_work
+
     return await do_work(param)
 ```
 
@@ -368,16 +370,21 @@ except ImportError as e:
 def my_func(param: str = None) -> str:
     pass
 
+
 # GOOD - explicit Optional[]
 def my_func(param: Optional[str] = None) -> Optional[str]:
     pass
+
 
 # BAD - Any type without explanation
 def process(data: Any) -> Any:
     pass
 
+
 # GOOD - specific type or TypeVar
-T = TypeVar('T')
+T = TypeVar("T")
+
+
 def process(data: T) -> T:
     pass
 ```
@@ -445,6 +452,7 @@ def load_dataset(source: str, split: Optional[str] = None) -> Dict[str, Any]:
 ```python
 for cat in categories:
     for name, func in tools.items():
+
         def wrapper(*args, **kwargs):
             # BUG: 'cat' is captured from loop, may reference last value
             return self._execute_tool(cat, name, func, *args, **kwargs)
@@ -457,9 +465,10 @@ for cat in categories:
         # Fix: Explicit binding with default argument
         def wrapper(*args, cat=cat, name=name, func=func, **kwargs):
             return self._execute_tool(cat, name, func, *args, **kwargs)
-        
+
         # Better: Use functools.partial
         from functools import partial
+
         wrapper = partial(self._execute_tool, cat, name, func)
 ```
 
@@ -489,6 +498,7 @@ async def get_tools(self) -> dict:
     """Async method for getting tools."""
     return await self._async_get_tools()
 
+
 # Option 2: Use existing event loop
 def tools(self) -> dict:
     """Sync property using existing event loop."""
@@ -497,17 +507,19 @@ def tools(self) -> dict:
         # Create task in existing loop
         task = loop.create_task(self._async_get_tools())
         # For properties, we need sync result - cache it
-        if not hasattr(self, '_tools_cache'):
+        if not hasattr(self, "_tools_cache"):
             self._tools_cache = None
         return self._tools_cache or {}
     except RuntimeError:
         # No event loop running, safe to create one
         return asyncio.run(self._async_get_tools())
 
+
 # Option 3: Cache result on initialization
 def __init__(self):
     self._tools_cache = asyncio.run(self._async_get_tools())
-    
+
+
 @property
 def tools(self) -> dict:
     return self._tools_cache
@@ -535,12 +547,13 @@ async def generate_embeddings_api(request: EmbeddingRequest):
 ```python
 from pydantic import BaseModel, Field, validator
 
+
 class EmbeddingRequest(BaseModel):
     texts: List[str] = Field(..., max_items=1000)
     batch_size: Optional[int] = Field(default=32, ge=1, le=256)
     model: Optional[str] = Field(default="all-MiniLM-L6-v2")
-    
-    @validator('texts')
+
+    @validator("texts")
     def validate_texts(cls, v):
         if not v:
             raise ValueError("texts cannot be empty")
@@ -548,13 +561,12 @@ class EmbeddingRequest(BaseModel):
             raise ValueError("Individual text length cannot exceed 10000 characters")
         return v
 
+
 @app.post("/embeddings/generate")
 async def generate_embeddings_api(request: EmbeddingRequest):
     # Pydantic validates automatically
     embeddings = await generate_embeddings(
-        request.texts, 
-        batch_size=request.batch_size,
-        model=request.model
+        request.texts, batch_size=request.batch_size, model=request.model
     )
 ```
 
@@ -689,6 +701,7 @@ async def generate_embeddings_api(request: EmbeddingRequest):
    async def cluster_add(cid: str, replication_factor: int = 3) -> Dict:
        """Add content to IPFS cluster with replication."""
        from ipfs_datasets_py.ipfs_cluster import ClusterManager
+
        manager = ClusterManager()
        return await manager.add(cid, replication_factor)
    ```
@@ -719,11 +732,12 @@ async def generate_embeddings_api(request: EmbeddingRequest):
 2. **Create thin wrapper:** `geospatial_analysis_tools.py` (120 lines)
    ```python
    @mcp.tool()
-   async def calculate_distance(point1: Tuple[float, float], 
-                                 point2: Tuple[float, float],
-                                 method: str = "haversine") -> float:
+   async def calculate_distance(
+       point1: Tuple[float, float], point2: Tuple[float, float], method: str = "haversine"
+   ) -> float:
        """Calculate distance between two geographic points."""
        from ipfs_datasets_py.geospatial import GeospatialAnalyzer
+
        analyzer = GeospatialAnalyzer()
        return analyzer.calculate_distance(point1, point2, method)
    ```
@@ -754,11 +768,10 @@ async def generate_embeddings_api(request: EmbeddingRequest):
 2. **Create thin wrapper:** `common_crawl_tools.py` (100 lines)
    ```python
    @mcp.tool()
-   async def search_common_crawl(query: str, 
-                                  index: str = "latest",
-                                  limit: int = 100) -> List[Dict]:
+   async def search_common_crawl(query: str, index: str = "latest", limit: int = 100) -> List[Dict]:
        """Search Common Crawl index for URLs matching query."""
        from ipfs_datasets_py.web_archive import CommonCrawlClient
+
        client = CommonCrawlClient()
        return await client.search(query, index, limit)
    ```
@@ -934,29 +947,35 @@ tests/mcp/test_hierarchical_tool_manager.py (600+ lines)
 ```python
 # tests/mcp/conftest.py
 
+
 @pytest.fixture
 def mcp_server():
     """Create a test MCP server instance."""
     from ipfs_datasets_py.mcp_server import server
+
     srv = server.create_server(config={"test_mode": True})
     yield srv
     srv.cleanup()
+
 
 @pytest.fixture
 def server_context():
     """Create a test ServerContext."""
     from ipfs_datasets_py.mcp_server.server_context import ServerContext
+
     ctx = ServerContext()
     yield ctx
     ctx.cleanup()
 
+
 @pytest.fixture
 def mock_ipfs():
     """Mock IPFS client for testing."""
-    with patch('ipfs_datasets_py.mcp_server.ipfs_client') as mock:
+    with patch("ipfs_datasets_py.mcp_server.ipfs_client") as mock:
         mock.add_bytes.return_value = "QmTest123..."
         mock.cat.return_value = b"test data"
         yield mock
+
 
 @pytest.fixture
 async def async_server():
@@ -1207,10 +1226,7 @@ class HierarchicalToolManager:
 class MCPServer:
     async def execute_tools_parallel(self, calls: List[ToolCall]) -> List[Result]:
         """Execute multiple independent tools in parallel."""
-        tasks = [
-            asyncio.create_task(self.execute_tool(call.name, call.params))
-            for call in calls
-        ]
+        tasks = [asyncio.create_task(self.execute_tool(call.name, call.params)) for call in calls]
         return await asyncio.gather(*tasks, return_exceptions=True)
 ```
 
@@ -1230,16 +1246,17 @@ class MCPServer:
 ```python
 from functools import lru_cache
 
+
 class IPFSCache:
     def __init__(self, max_size: int = 1000):
         self._cache = LRUCache(max_size)
-    
+
     @lru_cache(maxsize=1000)
     async def cat(self, cid: str) -> bytes:
         """Get content with caching."""
         if cid in self._cache:
             return self._cache[cid]
-        
+
         content = await ipfs_client.cat(cid)
         self._cache[cid] = content
         return content
@@ -1280,6 +1297,7 @@ class ToolRegistry:
 import pytest
 import time
 
+
 def test_server_startup_time():
     """Server startup should be <1s."""
     start = time.time()
@@ -1287,35 +1305,35 @@ def test_server_startup_time():
     elapsed = time.time() - start
     assert elapsed < 1.0, f"Startup took {elapsed:.2f}s"
 
+
 @pytest.mark.asyncio
 async def test_parallel_tool_execution():
     """Parallel execution should be 3x faster than sequential."""
     server = MCPServer()
-    
+
     # Sequential
     start = time.time()
     for i in range(10):
         await server.execute_tool("test_tool", {"x": i})
     sequential_time = time.time() - start
-    
+
     # Parallel
     start = time.time()
-    await server.execute_tools_parallel([
-        ToolCall("test_tool", {"x": i}) for i in range(10)
-    ])
+    await server.execute_tools_parallel([ToolCall("test_tool", {"x": i}) for i in range(10)])
     parallel_time = time.time() - start
-    
+
     speedup = sequential_time / parallel_time
     assert speedup > 3.0, f"Speedup only {speedup:.1f}x"
+
 
 def test_ipfs_cache_hit_rate():
     """IPFS cache hit rate should be >80%."""
     cache = IPFSCache()
-    
+
     # Prime cache
     for cid in test_cids[:100]:
         cache.cat(cid)
-    
+
     # Test hit rate
     hits = sum(1 for cid in test_cids[:100] if cache.cat(cid))
     hit_rate = hits / 100
@@ -1500,10 +1518,11 @@ tests/mcp/
 @pytest.fixture
 def mock_ipfs():
     """Mock IPFS client."""
-    with patch('ipfs_datasets_py.mcp_server.ipfs_client') as mock:
+    with patch("ipfs_datasets_py.mcp_server.ipfs_client") as mock:
         mock.add_bytes.return_value = "QmTest..."
         mock.cat.return_value = b"test data"
         yield mock
+
 
 def test_tool_with_mocked_ipfs(mock_ipfs):
     """Test tool with mocked IPFS operations."""
@@ -1519,13 +1538,12 @@ def test_tool_with_mocked_ipfs(mock_ipfs):
 async def test_end_to_end_workflow():
     """Test complete workflow with real components."""
     server = await create_server(test_mode=False)
-    
+
     # Submit workflow
-    workflow_id = await server.submit_workflow({
-        "task": "process_dataset",
-        "params": {"source": "squad"}
-    })
-    
+    workflow_id = await server.submit_workflow(
+        {"task": "process_dataset", "params": {"source": "squad"}}
+    )
+
     # Wait for completion
     result = await server.wait_for_workflow(workflow_id, timeout=30)
     assert result["status"] == "completed"
@@ -1534,6 +1552,7 @@ async def test_end_to_end_workflow():
 #### Pattern 3: Property-Based Testing
 ```python
 from hypothesis import given, strategies as st
+
 
 @given(st.text(min_size=1, max_size=1000))
 def test_tool_handles_arbitrary_input(input_text):

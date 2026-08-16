@@ -64,12 +64,15 @@ Core Modules Created:    1 (analytics/analysis_engine.py)
 # ipfs_datasets_py/data_processing/processor.py
 class DataProcessor:
     """Core data processing logic."""
+
     def chunk_text(self, text: str, strategy: str, **kwargs):
         # Implementation here
         pass
 
+
 # mcp_server/tools/data_processing_tools/data_processing_tools.py
 from ipfs_datasets_py.data_processing import DataProcessor
+
 
 async def chunk_text(text: str, **kwargs):
     processor = DataProcessor()
@@ -107,15 +110,18 @@ async def chunk_text(text: str, **kwargs):
 # ipfs_datasets_py/storage/manager.py
 class StorageManager:
     """Core storage management logic."""
+
     def __init__(self, backend: str = "filesystem"):
         self.backend = backend
-    
+
     def store_item(self, key: str, value: Any):
         # Implementation
         pass
 
+
 # mcp_server/tools/storage_tools/storage_tools.py
 from ipfs_datasets_py.storage import StorageManager
+
 
 async def manage_storage(operation: str, **kwargs):
     manager = StorageManager()
@@ -154,15 +160,18 @@ async def manage_storage(operation: str, **kwargs):
 # ipfs_datasets_py/workflow_engine/engine.py
 class WorkflowEngine:
     """Core workflow execution engine."""
+
     def __init__(self):
         self.registry = WorkflowRegistry()
-    
+
     def execute_workflow(self, workflow_id: str, **kwargs):
         # Implementation
         pass
 
+
 # mcp_server/tools/workflow_tools/workflow_tools.py
 from ipfs_datasets_py.workflow_engine import WorkflowEngine
+
 
 async def execute_workflow(workflow_id: str, **kwargs):
     engine = WorkflowEngine()
@@ -227,23 +236,18 @@ All business logic should reside in the core module.
 
 from ipfs_datasets_py.core_module import CoreClass
 
+
 async def mcp_tool_function(**kwargs):
     """MCP tool function - delegates to core."""
     try:
         core_instance = CoreClass()
         result = await core_instance.core_method(**kwargs)
-        
+
         # Format MCP response
-        return {
-            "status": "success",
-            "result": result
-        }
+        return {"status": "success", "result": result}
     except Exception as e:
         logger.error(f"Operation failed: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 ```
 
 ### ❌ INCORRECT Pattern (Avoid)
@@ -254,10 +258,11 @@ class EmbeddedBusinessLogic:
     def __init__(self):
         # Complex logic here
         pass
-    
+
     def complex_processing(self, data):
         # 500+ lines of processing
         pass
+
 
 async def mcp_tool(**kwargs):
     processor = EmbeddedBusinessLogic()

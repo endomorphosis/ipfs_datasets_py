@@ -89,24 +89,16 @@ def test_canonical_ir_enforces_exact_schema_bounds_and_vocabulary() -> None:
     with pytest.raises(ContractError, match="exactly"):
         CanonicalRule.from_dict({**rule, "native_payload": {}})
     with pytest.raises(ContractError, match="item bound"):
-        CanonicalRule.from_dict(
-            {**rule, "conditions": [f"q{index}" for index in range(9)]}
-        )
+        CanonicalRule.from_dict({**rule, "conditions": [f"q{index}" for index in range(9)]})
     with pytest.raises(ContractError, match="outside"):
-        CanonicalRuleIR((_rule(actor="invented"),)).validate_vocabulary(
-            _vocabulary()
-        )
+        CanonicalRuleIR((_rule(actor="invented"),)).validate_vocabulary(_vocabulary())
     with pytest.raises(ContractError, match="string array"):
-        AllowedAtomVocabulary.from_dict(
-            {**_vocabulary().to_dict(), "actors": "agency"}
-        )
+        AllowedAtomVocabulary.from_dict({**_vocabulary().to_dict(), "actors": "agency"})
 
 
 def test_requests_freeze_configuration_and_protocols_are_crossable() -> None:
     config = {"decode": {"temperature": 0}, "stops": ["END"]}
-    constructor_request = ConstructorRequest(
-        "Agency shall file notice.", _vocabulary(), config
-    )
+    constructor_request = ConstructorRequest("Agency shall file notice.", _vocabulary(), config)
     config["decode"]["temperature"] = 1  # type: ignore[index]
 
     assert (
@@ -125,9 +117,7 @@ def test_requests_freeze_configuration_and_protocols_are_crossable() -> None:
         identity = "realizer@1"
 
         def realize(self, request: RealizerRequest) -> RealizerResult:
-            return RealizerResult(
-                ComponentStatus.SUCCESS, "Agency shall file notice."
-            )
+            return RealizerResult(ComponentStatus.SUCCESS, "Agency shall file notice.")
 
     assert isinstance(Constructor(), RoundTripConstructor)
     assert isinstance(Realizer(), RoundTripRealizer)
@@ -203,14 +193,11 @@ def test_weighted_exact_assignment_score_matches_existing_pilot() -> None:
 
 
 def test_maximum_weight_assignment_avoids_greedy_local_optimum() -> None:
-    assignment = maximum_weight_assignment(
-        [[0.90, 0.80], [0.85, 0.0]]
-    )
+    assignment = maximum_weight_assignment([[0.90, 0.80], [0.85, 0.0]])
 
     assert assignment == [(0, 1), (1, 0)]
     assert sum(
-        [[0.90, 0.80], [0.85, 0.0]][row][column]
-        for row, column in assignment
+        [[0.90, 0.80], [0.85, 0.0]][row][column] for row, column in assignment
     ) == pytest.approx(1.65)
 
 
@@ -263,9 +250,7 @@ def test_failures_missing_and_empty_results_assign_all_losses_one(
 
 
 def test_round_trip_result_binds_primary_loss_and_failure_policy() -> None:
-    success = make_round_trip_result(
-        _ir(), _ir(), "Agency shall file notice.", _ir()
-    )
+    success = make_round_trip_result(_ir(), _ir(), "Agency shall file notice.", _ir())
     failure = make_round_trip_result(
         _ir(),
         _ir(),
@@ -281,9 +266,7 @@ def test_round_trip_result_binds_primary_loss_and_failure_policy() -> None:
     assert failure.primary_loss == 1.0
     assert not failure.is_complete
 
-    inferred_empty = make_round_trip_result(
-        _ir(), CanonicalRuleIR(()), "text", _ir()
-    )
+    inferred_empty = make_round_trip_result(_ir(), CanonicalRuleIR(()), "text", _ir())
     assert inferred_empty.status is ComponentStatus.FAILED
     assert inferred_empty.failure_reason is FailureReason.EMPTY_L1
 

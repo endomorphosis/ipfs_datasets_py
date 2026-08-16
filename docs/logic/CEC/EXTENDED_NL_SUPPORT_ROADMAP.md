@@ -149,6 +149,7 @@ def convert_obligation_pattern(text: str) -> Formula:
     match = re.match(r"(.+) must (.+)", text)
     return ObligationFormula(...)  # Simple extraction
 
+
 # Use compositional semantics
 def convert_with_semantics(parse_tree: ParseNode) -> Formula:
     # Bottom-up semantic composition
@@ -156,7 +157,7 @@ def convert_with_semantics(parse_tree: ParseNode) -> Formula:
         agent_sem = convert_with_semantics(parse_tree.children[0])
         action_sem = convert_with_semantics(parse_tree.children[1])
         return ObligationFormula(action_sem)  # Proper composition
-    
+
     elif parse_tree.rule == "complex_sentence":
         # Handle coordination, subordination, etc.
         left = convert_with_semantics(parse_tree.children[0])
@@ -183,26 +184,23 @@ class AmbiguityResolver:
         # 2. Semantic plausibility
         # 3. Context coherence
         # 4. Domain knowledge
-        
-        scored = [
-            (self.score(parse, context), parse)
-            for parse in parses
-        ]
-        
+
+        scored = [(self.score(parse, context), parse) for parse in parses]
+
         return max(scored, key=lambda x: x[0])[1]
-    
+
     def score(self, parse: ParseTree, context: Context) -> float:
         score = 0.0
-        
+
         # Syntactic scoring
         score += self.syntactic_score(parse)  # Prefer simpler
-        
+
         # Semantic scoring
         score += self.semantic_score(parse)  # Type-coherent
-        
+
         # Context scoring
         score += self.context_score(parse, context)  # Coherent
-        
+
         return score
 ```
 
@@ -455,23 +453,24 @@ GERMAN_OBLIGATION_PATTERNS = [
 ```python
 from langdetect import detect
 
+
 class MultilingualConverter:
     def __init__(self):
         self.converters = {
-            'en': EnglishConverter(),
-            'es': SpanishConverter(),
-            'fr': FrenchConverter(),
-            'de': GermanConverter(),
+            "en": EnglishConverter(),
+            "es": SpanishConverter(),
+            "fr": FrenchConverter(),
+            "de": GermanConverter(),
         }
-    
+
     def convert(self, text: str, language: str = None) -> Formula:
         if language is None:
             language = detect(text)
-        
+
         converter = self.converters.get(language)
         if converter is None:
             raise ValueError(f"Unsupported language: {language}")
-        
+
         return converter.convert(text)
 ```
 
@@ -575,24 +574,24 @@ class DiscourseContext:
         self.entities: Dict[str, Entity] = {}
         self.propositions: List[Formula] = []
         self.focus_stack: List[Entity] = []
-    
+
     def add_entity(self, name: str, entity_type: str):
         entity = Entity(name, entity_type)
         self.entities[name] = entity
         self.focus_stack.append(entity)
-    
+
     def add_proposition(self, formula: Formula):
         self.propositions.append(formula)
-    
+
     def resolve_reference(self, reference: str) -> Optional[Entity]:
         # Try exact match
         if reference in self.entities:
             return self.entities[reference]
-        
+
         # Try pronoun resolution
-        if reference in ('he', 'she', 'it', 'they'):
+        if reference in ("he", "she", "it", "they"):
             return self.resolve_pronoun(reference)
-        
+
         return None
 ```
 
@@ -608,22 +607,22 @@ class PronounResolver:
             if self.matches_gender_number(pronoun, entity):
                 return entity
         return None
-    
+
     def matches_gender_number(self, pronoun: str, entity: Entity) -> bool:
         pronoun_features = {
-            'he': {'gender': 'male', 'number': 'singular'},
-            'she': {'gender': 'female', 'number': 'singular'},
-            'it': {'gender': 'neuter', 'number': 'singular'},
-            'they': {'number': 'plural'},
+            "he": {"gender": "male", "number": "singular"},
+            "she": {"gender": "female", "number": "singular"},
+            "it": {"gender": "neuter", "number": "singular"},
+            "they": {"number": "plural"},
         }
-        
+
         features = pronoun_features.get(pronoun, {})
-        
-        if 'gender' in features and entity.gender != features['gender']:
+
+        if "gender" in features and entity.gender != features["gender"]:
             return False
-        if 'number' in features and entity.number != features['number']:
+        if "number" in features and entity.number != features["number"]:
             return False
-        
+
         return True
 ```
 

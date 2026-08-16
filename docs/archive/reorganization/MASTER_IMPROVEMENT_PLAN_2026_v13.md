@@ -47,11 +47,10 @@ pinning via `ipfs_kit_py`:
   all IPFS methods log a warning and return `None` without raising.
 
 ```python
-store = IPFSPolicyStore("/var/lib/mcp/policies.json", registry,
-                        ipfs_client=my_client)
-store.save()              # writes JSON + pins to IPFS
+store = IPFSPolicyStore("/var/lib/mcp/policies.json", registry, ipfs_client=my_client)
+store.save()  # writes JSON + pins to IPFS
 cid = store.get_ipfs_cid("admin_only")  # "Qm..." or "bafy..."
-store.retrieve_from_ipfs(cid)           # fetch back from IPFS
+store.retrieve_from_ipfs(cid)  # fetch back from IPFS
 ```
 
 ---
@@ -75,7 +74,9 @@ Added **`can_invoke_with_revocation()`**:
 
 ```python
 ok, reason = can_invoke_with_revocation(
-    leaf_cid, tool, actor,
+    leaf_cid,
+    tool,
+    actor,
     evaluator=ev,
     revocation_list=revlist,
 )
@@ -106,10 +107,10 @@ Added **`DelegationStore`** — persistent JSON store for `Delegation` objects:
 ```python
 store = DelegationStore("/var/lib/mcp/delegations.json")
 store.add(delegation)
-store.save()                # on shutdown
+store.save()  # on shutdown
 
 store2 = DelegationStore("/var/lib/mcp/delegations.json")
-store2.load()               # on startup
+store2.load()  # on startup
 ev = store2.to_evaluator()
 ev.can_invoke("leaf-cid", resource="tool", ability="tool", actor="alice")
 ```

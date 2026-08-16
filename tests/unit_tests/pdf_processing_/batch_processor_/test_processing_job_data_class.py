@@ -12,7 +12,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -25,8 +25,12 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_proces
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/batch_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 import pytest
 import json
@@ -47,13 +51,15 @@ from ipfs_datasets_py.pdf_processing.batch_processor import (
     BatchProcessor,
     ProcessingJob,
     BatchJobResult,
-    BatchStatus
+    BatchStatus,
 )
 
 import pytest
 from datetime import datetime
 from ipfs_datasets_py.pdf_processing.batch_processor import (
-    ProcessingJob, BatchJobResult, BatchStatus
+    ProcessingJob,
+    BatchJobResult,
+    BatchStatus,
 )
 from .conftest import DEFAULT_PRIORITY, HIGH_PRIORITY, LOW_PRIORITY, MAX_PRIORITY
 
@@ -78,20 +84,21 @@ assert BatchProcessor.get_processing_statistics
 assert BatchProcessor.export_batch_results
 
 
-
-
 class TestProcessingJobDataclass:
     """Test class for ProcessingJob dataclass functionality."""
 
-    @pytest.mark.parametrize("attribute,expected_value", [
-        ("job_id", "test_job_123"),
-        ("pdf_path", "/path/to/document.pdf"),
-        ("priority", DEFAULT_PRIORITY),
-        ("status", "pending"),
-        ("error_message", None),
-        ("result", None),
-        ("processing_time", 0.0)
-    ])
+    @pytest.mark.parametrize(
+        "attribute,expected_value",
+        [
+            ("job_id", "test_job_123"),
+            ("pdf_path", "/path/to/document.pdf"),
+            ("priority", DEFAULT_PRIORITY),
+            ("status", "pending"),
+            ("error_message", None),
+            ("result", None),
+            ("processing_time", 0.0),
+        ],
+    )
     def test_processing_job_basic_attributes(self, processing_job_basic, attribute, expected_value):
         """
         GIVEN valid parameters for ProcessingJob
@@ -117,17 +124,22 @@ class TestProcessingJobDataclass:
         """
         assert isinstance(processing_job_basic.created_at, str)
 
-    @pytest.mark.parametrize("attribute,expected_value", [
-        ("job_id", "custom_job_456"),
-        ("pdf_path", "/custom/path/doc.pdf"),
-        ("priority", HIGH_PRIORITY),
-        ("status", "processing"),
-        ("error_message", "Custom error"),
-        ("result", {"doc_id": "doc_789"}),
-        ("processing_time", 125.5),
-        ("created_at", "2024-01-01T12:00:00")
-    ])
-    def test_processing_job_custom_attributes(self, processing_job_custom, attribute, expected_value):
+    @pytest.mark.parametrize(
+        "attribute,expected_value",
+        [
+            ("job_id", "custom_job_456"),
+            ("pdf_path", "/custom/path/doc.pdf"),
+            ("priority", HIGH_PRIORITY),
+            ("status", "processing"),
+            ("error_message", "Custom error"),
+            ("result", {"doc_id": "doc_789"}),
+            ("processing_time", 125.5),
+            ("created_at", "2024-01-01T12:00:00"),
+        ],
+    )
+    def test_processing_job_custom_attributes(
+        self, processing_job_custom, attribute, expected_value
+    ):
         """
         GIVEN custom values for all ProcessingJob parameters
         WHEN ProcessingJob is instantiated with custom values
@@ -144,23 +156,22 @@ class TestProcessingJobDataclass:
         expected_metadata = {
             "batch_id": "custom_batch",
             "user_id": "user_123",
-            "tags": ["research", "analysis"]
+            "tags": ["research", "analysis"],
         }
         assert processing_job_custom.metadata == expected_metadata
 
     @pytest.fixture
     def job_auto_timestamp(self):
         """Create ProcessingJob to test automatic timestamp generation."""
-        return ProcessingJob(
-            job_id="timestamp_test_1",
-            pdf_path="/test1.pdf",
-            metadata={}
-        )
+        return ProcessingJob(job_id="timestamp_test_1", pdf_path="/test1.pdf", metadata={})
 
-    @pytest.mark.parametrize("job_fixture,timestamp_assertion", [
-        ("job_auto_timestamp", lambda created_at: created_at != ""),
-        ("job_auto_timestamp", lambda created_at: "T" in created_at),
-    ])
+    @pytest.mark.parametrize(
+        "job_fixture,timestamp_assertion",
+        [
+            ("job_auto_timestamp", lambda created_at: created_at != ""),
+            ("job_auto_timestamp", lambda created_at: "T" in created_at),
+        ],
+    )
     def test_post_init_timestamp_generation(self, job_fixture, timestamp_assertion, request):
         """
         GIVEN ProcessingJob creation without explicit created_at
@@ -176,7 +187,7 @@ class TestProcessingJobDataclass:
         WHEN __post_init__ is called automatically
         THEN it should generate valid datetime string
         """
-        parsed_time = datetime.fromisoformat(job_auto_timestamp.created_at.replace('Z', '+00:00'))
+        parsed_time = datetime.fromisoformat(job_auto_timestamp.created_at.replace("Z", "+00:00"))
         assert isinstance(parsed_time, datetime)
 
     @pytest.fixture
@@ -184,10 +195,7 @@ class TestProcessingJobDataclass:
         """Create ProcessingJob with explicit timestamp for testing."""
         explicit_time = "2023-12-01T15:30:45"
         return ProcessingJob(
-            job_id="timestamp_test_2",
-            pdf_path="/test2.pdf",
-            metadata={},
-            created_at=explicit_time
+            job_id="timestamp_test_2", pdf_path="/test2.pdf", metadata={}, created_at=explicit_time
         ), explicit_time
 
     def test_post_init_preserves_explicit_timestamp(self, job_explicit_timestamp):
@@ -203,16 +211,16 @@ class TestProcessingJobDataclass:
     def job_empty_timestamp(self):
         """Create ProcessingJob with empty timestamp for testing."""
         return ProcessingJob(
-            job_id="empty_timestamp_test",
-            pdf_path="/test.pdf",
-            metadata={},
-            created_at=""
+            job_id="empty_timestamp_test", pdf_path="/test.pdf", metadata={}, created_at=""
         )
 
-    @pytest.mark.parametrize("job_fixture,timestamp_assertion", [
-        ("job_empty_timestamp", lambda created_at: created_at != ""),
-        ("job_empty_timestamp", lambda created_at: "T" in created_at),
-    ])
+    @pytest.mark.parametrize(
+        "job_fixture,timestamp_assertion",
+        [
+            ("job_empty_timestamp", lambda created_at: created_at != ""),
+            ("job_empty_timestamp", lambda created_at: "T" in created_at),
+        ],
+    )
     def test_post_init_empty_timestamp_replacement(self, job_fixture, timestamp_assertion, request):
         """
         GIVEN ProcessingJob with empty string created_at
@@ -228,7 +236,7 @@ class TestProcessingJobDataclass:
         WHEN __post_init__ processes the empty timestamp
         THEN it should generate valid timestamp
         """
-        parsed_time = datetime.fromisoformat(job_empty_timestamp.created_at.replace('Z', '+00:00'))
+        parsed_time = datetime.fromisoformat(job_empty_timestamp.created_at.replace("Z", "+00:00"))
         assert isinstance(parsed_time, datetime)
 
     @pytest.fixture
@@ -238,18 +246,13 @@ class TestProcessingJobDataclass:
             "batch_id": "batch_complex",
             "batch_metadata": {
                 "project_id": "proj_123",
-                "settings": {
-                    "ocr_enabled": True,
-                    "quality_threshold": 0.8
-                }
+                "settings": {"ocr_enabled": True, "quality_threshold": 0.8},
             },
             "job_index": 5,
-            "tags": ["urgent", "research"]
+            "tags": ["urgent", "research"],
         }
         return ProcessingJob(
-            job_id="complex_metadata_test",
-            pdf_path="/complex.pdf",
-            metadata=complex_metadata
+            job_id="complex_metadata_test", pdf_path="/complex.pdf", metadata=complex_metadata
         )
 
     def test_metadata_structure_batch_id(self, complex_metadata_job):
@@ -296,10 +299,7 @@ class TestProcessingJobDataclass:
     def min_priority_job(self):
         """Create ProcessingJob with minimum priority."""
         return ProcessingJob(
-            job_id="min_priority",
-            pdf_path="/min.pdf",
-            metadata={},
-            priority=LOW_PRIORITY
+            job_id="min_priority", pdf_path="/min.pdf", metadata={}, priority=LOW_PRIORITY
         )
 
     def test_priority_validation_minimum(self, min_priority_job):
@@ -314,10 +314,7 @@ class TestProcessingJobDataclass:
     def max_priority_job(self):
         """Create ProcessingJob with maximum priority."""
         return ProcessingJob(
-            job_id="max_priority", 
-            pdf_path="/max.pdf",
-            metadata={},
-            priority=MAX_PRIORITY
+            job_id="max_priority", pdf_path="/max.pdf", metadata={}, priority=MAX_PRIORITY
         )
 
     def test_priority_validation_maximum(self, max_priority_job):
@@ -331,11 +328,7 @@ class TestProcessingJobDataclass:
     @pytest.fixture
     def default_priority_job(self):
         """Create ProcessingJob with default priority."""
-        return ProcessingJob(
-            job_id="default_priority",
-            pdf_path="/default.pdf",
-            metadata={}
-        )
+        return ProcessingJob(job_id="default_priority", pdf_path="/default.pdf", metadata={})
 
     def test_priority_validation_default(self, default_priority_job):
         """
@@ -353,13 +346,9 @@ class TestProcessingJobDataclass:
         THEN it should accept all valid status strings
         """
         job = ProcessingJob(
-            job_id=f"status_test_{status}",
-            pdf_path=f"/{status}.pdf",
-            metadata={},
-            status=status
+            job_id=f"status_test_{status}", pdf_path=f"/{status}.pdf", metadata={}, status=status
         )
         assert job.status == status
-
 
 
 if __name__ == "__main__":

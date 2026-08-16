@@ -186,27 +186,19 @@ class PremiseSelectionMethod(str, Enum):
 # ---------------------------------------------------------------------------
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ConstraintValidationError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise ConstraintValidationError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _bounded_text(value: Any, field_name: str, *, allow_empty: bool = False) -> str:
     if not isinstance(value, str):
         raise ConstraintValidationError(f"{field_name} must be a string")
     if not allow_empty and (not value.strip() or value != value.strip()):
-        raise ConstraintValidationError(
-            f"{field_name} must be a non-empty trimmed string"
-        )
+        raise ConstraintValidationError(f"{field_name} must be a non-empty trimmed string")
     if allow_empty and value and value != value.strip():
-        raise ConstraintValidationError(
-            f"{field_name} must not have surrounding whitespace"
-        )
+        raise ConstraintValidationError(f"{field_name} must not have surrounding whitespace")
     if len(value) > MAX_STRING_CHARS:
         raise ConstraintValidationError(
             f"{field_name} exceeds maximum length of {MAX_STRING_CHARS}"
@@ -225,18 +217,14 @@ def _digest_or_empty(value: Any, field_name: str) -> str:
         return ""
     text = _text(value, field_name)
     if not _DIGEST_RE.fullmatch(text):
-        raise ConstraintValidationError(
-            f"{field_name} must be a lowercase sha256:<hex> digest"
-        )
+        raise ConstraintValidationError(f"{field_name} must be a lowercase sha256:<hex> digest")
     return text
 
 
 def _require_digest(value: Any, field_name: str) -> str:
     text = _text(value, field_name)
     if not _DIGEST_RE.fullmatch(text):
-        raise ConstraintValidationError(
-            f"{field_name} must be a lowercase sha256:<hex> digest"
-        )
+        raise ConstraintValidationError(f"{field_name} must be a lowercase sha256:<hex> digest")
     return text
 
 
@@ -246,17 +234,13 @@ def _enum_value(value: Any, enum_cls: type[Enum], field_name: str) -> Enum:
     try:
         return enum_cls(value)
     except (TypeError, ValueError) as exc:
-        raise ConstraintValidationError(
-            f"unknown {field_name}: {value!r}"
-        ) from exc
+        raise ConstraintValidationError(f"unknown {field_name}: {value!r}") from exc
 
 
 def _logic_family(value: Any, field_name: str = "logic_family") -> str:
     family = _identifier(value, field_name)
     if family not in _KNOWN_LOGIC_FAMILIES:
-        raise ConstraintValidationError(
-            f"unknown logic family: {family!r}"
-        )
+        raise ConstraintValidationError(f"unknown logic family: {family!r}")
     return family
 
 
@@ -288,9 +272,7 @@ def _reject_mutable_collection(value: Any, field_name: str) -> None:
         # that are not JSON-compatible mappings handled by FrozenMap.
         return
     if isinstance(value, set):
-        raise ConstraintValidationError(
-            f"{field_name} must not be a mutable set; use a sequence"
-        )
+        raise ConstraintValidationError(f"{field_name} must not be a mutable set; use a sequence")
 
 
 def reject_result_authority_substitution(
@@ -311,9 +293,7 @@ def reject_result_authority_substitution(
         try:
             return AuthorityKind(str(value))
         except (TypeError, ValueError) as exc:
-            raise ConstraintValidationError(
-                f"unknown result authority kind: {value!r}"
-            ) from exc
+            raise ConstraintValidationError(f"unknown result authority kind: {value!r}") from exc
 
     claimed_kind = _kind(claimed)
     required_kind = _kind(required)
@@ -366,29 +346,18 @@ class WorldPolicy:
     schema_version: str = WORLD_POLICY_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "kind", _enum_value(self.kind, WorldPolicyKind, "kind")
-        )
+        object.__setattr__(self, "kind", _enum_value(self.kind, WorldPolicyKind, "kind"))
         object.__setattr__(
             self,
             "default_on_unknown",
             _identifier(self.default_on_unknown, "default_on_unknown"),
         )
         if not isinstance(self.allow_negation_as_failure, bool):
-            raise ConstraintValidationError(
-                "allow_negation_as_failure must be a bool"
-            )
-        if (
-            self.kind is WorldPolicyKind.OPEN
-            and self.allow_negation_as_failure
-        ):
-            raise ConstraintValidationError(
-                "open-world policy cannot enable negation-as-failure"
-            )
+            raise ConstraintValidationError("allow_negation_as_failure must be a bool")
+        if self.kind is WorldPolicyKind.OPEN and self.allow_negation_as_failure:
+            raise ConstraintValidationError("open-world policy cannot enable negation-as-failure")
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != WORLD_POLICY_SCHEMA_VERSION:
             raise ConstraintValidationError(
                 f"unsupported world policy schema: {self.schema_version!r}"
@@ -422,13 +391,9 @@ class WorldPolicy:
         return cls(
             kind=value.get("kind", WorldPolicyKind.CLOSED.value),
             default_on_unknown=value.get("default_on_unknown", "indeterminate"),
-            allow_negation_as_failure=bool(
-                value.get("allow_negation_as_failure", False)
-            ),
+            allow_negation_as_failure=bool(value.get("allow_negation_as_failure", False)),
             metadata=_frozen_map(value.get("metadata", {}), "metadata"),
-            schema_version=value.get(
-                "schema_version", WORLD_POLICY_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", WORLD_POLICY_SCHEMA_VERSION),
         )
 
 
@@ -447,9 +412,7 @@ class NativeViewBinding:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "view_id", _identifier(self.view_id, "view_id"))
-        object.__setattr__(
-            self, "logic_family", _logic_family(self.logic_family)
-        )
+        object.__setattr__(self, "logic_family", _logic_family(self.logic_family))
         object.__setattr__(
             self,
             "formula_ids",
@@ -482,9 +445,7 @@ class NativeViewBinding:
         if len(self.description) > MAX_STRING_CHARS:
             raise ConstraintValidationError("description exceeds maximum length")
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != NATIVE_VIEW_BINDING_SCHEMA_VERSION:
             raise ConstraintValidationError(
                 f"unsupported native view schema: {self.schema_version!r}"
@@ -529,20 +490,12 @@ class NativeViewBinding:
         return cls(
             view_id=value.get("view_id", ""),
             logic_family=value.get("logic_family", ""),
-            formula_ids=tuple(
-                _sequence(value.get("formula_ids", ()), "formula_ids")
-            ),
-            statement_ids=tuple(
-                _sequence(value.get("statement_ids", ()), "statement_ids")
-            ),
-            capabilities=tuple(
-                _sequence(value.get("capabilities", ()), "capabilities")
-            ),
+            formula_ids=tuple(_sequence(value.get("formula_ids", ()), "formula_ids")),
+            statement_ids=tuple(_sequence(value.get("statement_ids", ()), "statement_ids")),
+            capabilities=tuple(_sequence(value.get("capabilities", ()), "capabilities")),
             description=value.get("description", ""),
             metadata=_frozen_map(value.get("metadata", {}), "metadata"),
-            schema_version=value.get(
-                "schema_version", NATIVE_VIEW_BINDING_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", NATIVE_VIEW_BINDING_SCHEMA_VERSION),
         )
 
 
@@ -563,15 +516,9 @@ class ConstraintStatement:
     schema_version: str = CONSTRAINT_STATEMENT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "statement_id", _identifier(self.statement_id, "statement_id")
-        )
-        object.__setattr__(
-            self, "role", _enum_value(self.role, ConstraintRole, "role")
-        )
-        object.__setattr__(
-            self, "logic_family", _logic_family(self.logic_family)
-        )
+        object.__setattr__(self, "statement_id", _identifier(self.statement_id, "statement_id"))
+        object.__setattr__(self, "role", _enum_value(self.role, ConstraintRole, "role"))
+        object.__setattr__(self, "logic_family", _logic_family(self.logic_family))
         expression = (
             self.expression
             if isinstance(self.expression, FrozenMap)
@@ -625,17 +572,13 @@ class ConstraintStatement:
                 sort=True,
             ),
         )
-        object.__setattr__(
-            self, "view_id", _optional_identifier(self.view_id, "view_id")
-        )
+        object.__setattr__(self, "view_id", _optional_identifier(self.view_id, "view_id"))
         if not self.source_ref_ids and not self.span_ids:
             raise ConstraintValidationError(
                 f"statement {self.statement_id!r} must be source-grounded"
             )
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != CONSTRAINT_STATEMENT_SCHEMA_VERSION:
             raise ConstraintValidationError(
                 f"unsupported constraint statement schema: {self.schema_version!r}"
@@ -687,21 +630,13 @@ class ConstraintStatement:
             role=value.get("role", ""),
             logic_family=value.get("logic_family", ""),
             expression=_frozen_map(value.get("expression", {}), "expression"),
-            symbol_ids=tuple(
-                _sequence(value.get("symbol_ids", ()), "symbol_ids")
-            ),
-            source_ref_ids=tuple(
-                _sequence(value.get("source_ref_ids", ()), "source_ref_ids")
-            ),
+            symbol_ids=tuple(_sequence(value.get("symbol_ids", ()), "symbol_ids")),
+            source_ref_ids=tuple(_sequence(value.get("source_ref_ids", ()), "source_ref_ids")),
             span_ids=tuple(_sequence(value.get("span_ids", ()), "span_ids")),
-            assumption_ids=tuple(
-                _sequence(value.get("assumption_ids", ()), "assumption_ids")
-            ),
+            assumption_ids=tuple(_sequence(value.get("assumption_ids", ()), "assumption_ids")),
             view_id=value.get("view_id", ""),
             metadata=_frozen_map(value.get("metadata", {}), "metadata"),
-            schema_version=value.get(
-                "schema_version", CONSTRAINT_STATEMENT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", CONSTRAINT_STATEMENT_SCHEMA_VERSION),
         )
 
 
@@ -719,18 +654,10 @@ class ApplicabilitySelector:
     schema_version: str = APPLICABILITY_SELECTOR_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "selector_id", _identifier(self.selector_id, "selector_id")
-        )
-        object.__setattr__(
-            self, "dimension", _identifier(self.dimension, "dimension")
-        )
-        object.__setattr__(
-            self, "value", _bounded_text(self.value, "value")
-        )
-        object.__setattr__(
-            self, "match_kind", _identifier(self.match_kind, "match_kind")
-        )
+        object.__setattr__(self, "selector_id", _identifier(self.selector_id, "selector_id"))
+        object.__setattr__(self, "dimension", _identifier(self.dimension, "dimension"))
+        object.__setattr__(self, "value", _bounded_text(self.value, "value"))
+        object.__setattr__(self, "match_kind", _identifier(self.match_kind, "match_kind"))
         if not isinstance(self.required, bool):
             raise ConstraintValidationError("required must be a bool")
         object.__setattr__(
@@ -743,9 +670,7 @@ class ApplicabilitySelector:
             ),
         )
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != APPLICABILITY_SELECTOR_SCHEMA_VERSION:
             raise ConstraintValidationError(
                 f"unsupported applicability selector schema: {self.schema_version!r}"
@@ -788,13 +713,9 @@ class ApplicabilitySelector:
             value=value.get("value", ""),
             match_kind=value.get("match_kind", "exact"),
             required=bool(value.get("required", True)),
-            source_ref_ids=tuple(
-                _sequence(value.get("source_ref_ids", ()), "source_ref_ids")
-            ),
+            source_ref_ids=tuple(_sequence(value.get("source_ref_ids", ()), "source_ref_ids")),
             metadata=_frozen_map(value.get("metadata", {}), "metadata"),
-            schema_version=value.get(
-                "schema_version", APPLICABILITY_SELECTOR_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", APPLICABILITY_SELECTOR_SCHEMA_VERSION),
         )
 
 
@@ -812,12 +733,8 @@ class CoverageGap:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "gap_id", _identifier(self.gap_id, "gap_id"))
-        object.__setattr__(
-            self, "kind", _enum_value(self.kind, CoverageGapKind, "kind")
-        )
-        object.__setattr__(
-            self, "description", _bounded_text(self.description, "description")
-        )
+        object.__setattr__(self, "kind", _enum_value(self.kind, CoverageGapKind, "kind"))
+        object.__setattr__(self, "description", _bounded_text(self.description, "description"))
         object.__setattr__(
             self,
             "subject_ids",
@@ -831,17 +748,13 @@ class CoverageGap:
             self,
             "related_selector_ids",
             _unique_identifiers(
-                _bounded_sequence(
-                    self.related_selector_ids, "related_selector_ids"
-                ),
+                _bounded_sequence(self.related_selector_ids, "related_selector_ids"),
                 "related_selector_ids",
                 sort=True,
             ),
         )
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != COVERAGE_GAP_SCHEMA_VERSION:
             raise ConstraintValidationError(
                 f"unsupported coverage gap schema: {self.schema_version!r}"
@@ -880,18 +793,12 @@ class CoverageGap:
             gap_id=value.get("gap_id", ""),
             kind=value.get("kind", CoverageGapKind.OTHER.value),
             description=value.get("description", ""),
-            subject_ids=tuple(
-                _sequence(value.get("subject_ids", ()), "subject_ids")
-            ),
+            subject_ids=tuple(_sequence(value.get("subject_ids", ()), "subject_ids")),
             related_selector_ids=tuple(
-                _sequence(
-                    value.get("related_selector_ids", ()), "related_selector_ids"
-                )
+                _sequence(value.get("related_selector_ids", ()), "related_selector_ids")
             ),
             metadata=_frozen_map(value.get("metadata", {}), "metadata"),
-            schema_version=value.get(
-                "schema_version", COVERAGE_GAP_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", COVERAGE_GAP_SCHEMA_VERSION),
         )
 
 
@@ -934,8 +841,7 @@ class TranslationReceipt:
         )
         if self.source_logic_family == self.target_logic_family:
             raise ConstraintValidationError(
-                "translation must change logic family; identical families are "
-                "not a translation"
+                "translation must change logic family; identical families are not a translation"
             )
         object.__setattr__(
             self,
@@ -948,16 +854,12 @@ class TranslationReceipt:
             _identifier(self.target_view_id, "target_view_id"),
         )
         if self.source_view_id == self.target_view_id:
-            raise ConstraintValidationError(
-                "translation source and target views must differ"
-            )
+            raise ConstraintValidationError("translation source and target views must differ")
         object.__setattr__(
             self,
             "source_statement_ids",
             _unique_identifiers(
-                _bounded_sequence(
-                    self.source_statement_ids, "source_statement_ids"
-                ),
+                _bounded_sequence(self.source_statement_ids, "source_statement_ids"),
                 "source_statement_ids",
                 sort=True,
             ),
@@ -966,9 +868,7 @@ class TranslationReceipt:
             self,
             "target_statement_ids",
             _unique_identifiers(
-                _bounded_sequence(
-                    self.target_statement_ids, "target_statement_ids"
-                ),
+                _bounded_sequence(self.target_statement_ids, "target_statement_ids"),
                 "target_statement_ids",
                 sort=True,
             ),
@@ -986,9 +886,7 @@ class TranslationReceipt:
         if not isinstance(self.lossy, bool):
             raise ConstraintValidationError("lossy must be a bool")
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != TRANSLATION_RECEIPT_SCHEMA_VERSION:
             raise ConstraintValidationError(
                 f"unsupported translation schema: {self.schema_version!r}"
@@ -1040,22 +938,16 @@ class TranslationReceipt:
             source_view_id=value.get("source_view_id", ""),
             target_view_id=value.get("target_view_id", ""),
             source_statement_ids=tuple(
-                _sequence(
-                    value.get("source_statement_ids", ()), "source_statement_ids"
-                )
+                _sequence(value.get("source_statement_ids", ()), "source_statement_ids")
             ),
             target_statement_ids=tuple(
-                _sequence(
-                    value.get("target_statement_ids", ()), "target_statement_ids"
-                )
+                _sequence(value.get("target_statement_ids", ()), "target_statement_ids")
             ),
             translator_id=value.get("translator_id", ""),
             translator_version=value.get("translator_version", ""),
             lossy=bool(value.get("lossy", False)),
             metadata=_frozen_map(value.get("metadata", {}), "metadata"),
-            schema_version=value.get(
-                "schema_version", TRANSLATION_RECEIPT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", TRANSLATION_RECEIPT_SCHEMA_VERSION),
         )
 
 
@@ -1081,9 +973,7 @@ class ReconstructionReceipt:
             "reconstruction_id",
             _identifier(self.reconstruction_id, "reconstruction_id"),
         )
-        object.__setattr__(
-            self, "logic_family", _logic_family(self.logic_family)
-        )
+        object.__setattr__(self, "logic_family", _logic_family(self.logic_family))
         object.__setattr__(self, "view_id", _identifier(self.view_id, "view_id"))
         object.__setattr__(
             self,
@@ -1102,9 +992,7 @@ class ReconstructionReceipt:
         object.__setattr__(
             self,
             "reconstructor_version",
-            _optional_identifier(
-                self.reconstructor_version, "reconstructor_version"
-            ),
+            _optional_identifier(self.reconstructor_version, "reconstructor_version"),
         )
         object.__setattr__(
             self,
@@ -1119,9 +1007,7 @@ class ReconstructionReceipt:
         if not isinstance(self.faithful, bool):
             raise ConstraintValidationError("faithful must be a bool")
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != RECONSTRUCTION_RECEIPT_SCHEMA_VERSION:
             raise ConstraintValidationError(
                 f"unsupported reconstruction schema: {self.schema_version!r}"
@@ -1168,18 +1054,14 @@ class ReconstructionReceipt:
             reconstruction_id=value.get("reconstruction_id", ""),
             logic_family=value.get("logic_family", ""),
             view_id=value.get("view_id", ""),
-            statement_ids=tuple(
-                _sequence(value.get("statement_ids", ()), "statement_ids")
-            ),
+            statement_ids=tuple(_sequence(value.get("statement_ids", ()), "statement_ids")),
             reconstructor_id=value.get("reconstructor_id", ""),
             reconstructor_version=value.get("reconstructor_version", ""),
             source_digest=value.get("source_digest", ""),
             reconstructed_digest=value.get("reconstructed_digest", ""),
             faithful=bool(value.get("faithful", True)),
             metadata=_frozen_map(value.get("metadata", {}), "metadata"),
-            schema_version=value.get(
-                "schema_version", RECONSTRUCTION_RECEIPT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", RECONSTRUCTION_RECEIPT_SCHEMA_VERSION),
         )
 
 
@@ -1200,12 +1082,8 @@ class SelectedPremise:
     schema_version: str = SELECTED_PREMISE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "premise_id", _identifier(self.premise_id, "premise_id")
-        )
-        object.__setattr__(
-            self, "statement", _bounded_text(self.statement, "statement")
-        )
+        object.__setattr__(self, "premise_id", _identifier(self.premise_id, "premise_id"))
+        object.__setattr__(self, "statement", _bounded_text(self.statement, "statement"))
         object.__setattr__(
             self,
             "source_ref_ids",
@@ -1217,20 +1095,15 @@ class SelectedPremise:
         )
         if not self.source_ref_ids:
             raise ConstraintValidationError(
-                f"premise {self.premise_id!r} is ungrounded: "
-                "source_ref_ids must be non-empty"
+                f"premise {self.premise_id!r} is ungrounded: source_ref_ids must be non-empty"
             )
-        object.__setattr__(
-            self, "logic_family", _logic_family(self.logic_family)
-        )
+        object.__setattr__(self, "logic_family", _logic_family(self.logic_family))
         if not isinstance(self.rank, int) or isinstance(self.rank, bool):
             raise ConstraintValidationError("rank must be an int")
         if self.rank < 0:
             raise ConstraintValidationError("rank must be non-negative")
         if self.score is not None:
-            if not isinstance(self.score, (int, float)) or isinstance(
-                self.score, bool
-            ):
+            if not isinstance(self.score, (int, float)) or isinstance(self.score, bool):
                 raise ConstraintValidationError("score must be a finite number")
             score = float(self.score)
             if score != score or score in (float("inf"), float("-inf")):
@@ -1256,9 +1129,7 @@ class SelectedPremise:
             _optional_identifier(self.statement_id, "statement_id"),
         )
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != SELECTED_PREMISE_SCHEMA_VERSION:
             raise ConstraintValidationError(
                 f"unsupported selected premise schema: {self.schema_version!r}"
@@ -1304,21 +1175,15 @@ class SelectedPremise:
         return cls(
             premise_id=value.get("premise_id", ""),
             statement=value.get("statement", ""),
-            source_ref_ids=tuple(
-                _sequence(value.get("source_ref_ids", ()), "source_ref_ids")
-            ),
+            source_ref_ids=tuple(_sequence(value.get("source_ref_ids", ()), "source_ref_ids")),
             logic_family=value.get("logic_family", "unspecified"),
             rank=int(value.get("rank", 0)),
             score=value.get("score", None),
-            selection_method=value.get(
-                "selection_method", PremiseSelectionMethod.EXPLICIT.value
-            ),
+            selection_method=value.get("selection_method", PremiseSelectionMethod.EXPLICIT.value),
             assumption_id=value.get("assumption_id", ""),
             statement_id=value.get("statement_id", ""),
             metadata=_frozen_map(value.get("metadata", {}), "metadata"),
-            schema_version=value.get(
-                "schema_version", SELECTED_PREMISE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", SELECTED_PREMISE_SCHEMA_VERSION),
         )
 
 
@@ -1360,9 +1225,7 @@ class SelectedPremiseSet:
         )
         premise_ids = [item.premise_id for item in premises]
         if len(premise_ids) != len(set(premise_ids)):
-            raise ConstraintValidationError(
-                "selected premise IDs must be unique"
-            )
+            raise ConstraintValidationError("selected premise IDs must be unique")
         object.__setattr__(
             self,
             "premises",
@@ -1380,20 +1243,14 @@ class SelectedPremiseSet:
         for name in ("considered_count", "filtered_count", "budget"):
             value = getattr(self, name)
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
-                raise ConstraintValidationError(
-                    f"{name} must be a non-negative int"
-                )
+                raise ConstraintValidationError(f"{name} must be a non-negative int")
         if self.budget and len(self.premises) > self.budget:
-            raise ConstraintValidationError(
-                "selected premises exceed declared budget"
-            )
+            raise ConstraintValidationError("selected premises exceed declared budget")
         if self.considered_count and self.considered_count < len(self.premises):
             raise ConstraintValidationError(
                 "considered_count must be at least the number of selected premises"
             )
-        object.__setattr__(
-            self, "config_id", _optional_identifier(self.config_id, "config_id")
-        )
+        object.__setattr__(self, "config_id", _optional_identifier(self.config_id, "config_id"))
         object.__setattr__(
             self,
             "query_digest",
@@ -1404,9 +1261,7 @@ class SelectedPremiseSet:
         if len(self.notes) > MAX_STRING_CHARS:
             raise ConstraintValidationError("notes exceeds maximum length")
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != SELECTED_PREMISE_SET_SCHEMA_VERSION:
             raise ConstraintValidationError(
                 f"unsupported selected premise set schema: {self.schema_version!r}"
@@ -1494,9 +1349,7 @@ class SelectedPremiseSet:
                 SelectedPremise.from_dict(_mapping(item, "premise"))
                 for item in _sequence(value.get("premises", ()), "premises")
             ),
-            selection_method=value.get(
-                "selection_method", PremiseSelectionMethod.EXPLICIT.value
-            ),
+            selection_method=value.get("selection_method", PremiseSelectionMethod.EXPLICIT.value),
             considered_count=int(value.get("considered_count", 0)),
             filtered_count=int(value.get("filtered_count", 0)),
             budget=int(value.get("budget", 0)),
@@ -1504,9 +1357,7 @@ class SelectedPremiseSet:
             query_digest=value.get("query_digest", ""),
             notes=value.get("notes", ""),
             metadata=_frozen_map(value.get("metadata", {}), "metadata"),
-            schema_version=value.get(
-                "schema_version", SELECTED_PREMISE_SET_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", SELECTED_PREMISE_SET_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -1514,9 +1365,7 @@ class SelectedPremiseSet:
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise ConstraintValidationError(
-                "selected premise set must be valid JSON"
-            ) from exc
+            raise ConstraintValidationError("selected premise set must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "selected premise set"))
 
 
@@ -1546,9 +1395,7 @@ class ApplicabilityEvidence:
     schema_version: str = APPLICABILITY_EVIDENCE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "evidence_id", _identifier(self.evidence_id, "evidence_id")
-        )
+        object.__setattr__(self, "evidence_id", _identifier(self.evidence_id, "evidence_id"))
         object.__setattr__(
             self,
             "status",
@@ -1563,9 +1410,7 @@ class ApplicabilityEvidence:
         )
         selector_ids = [item.selector_id for item in selectors]
         if len(selector_ids) != len(set(selector_ids)):
-            raise ConstraintValidationError(
-                "applicability selector IDs must be unique"
-            )
+            raise ConstraintValidationError("applicability selector IDs must be unique")
         object.__setattr__(
             self,
             "selectors",
@@ -1576,9 +1421,7 @@ class ApplicabilityEvidence:
             self,
             "matched_selector_ids",
             _unique_identifiers(
-                _bounded_sequence(
-                    self.matched_selector_ids, "matched_selector_ids"
-                ),
+                _bounded_sequence(self.matched_selector_ids, "matched_selector_ids"),
                 "matched_selector_ids",
                 sort=True,
             ),
@@ -1587,9 +1430,7 @@ class ApplicabilityEvidence:
             self,
             "rejected_selector_ids",
             _unique_identifiers(
-                _bounded_sequence(
-                    self.rejected_selector_ids, "rejected_selector_ids"
-                ),
+                _bounded_sequence(self.rejected_selector_ids, "rejected_selector_ids"),
                 "rejected_selector_ids",
                 sort=True,
             ),
@@ -1609,8 +1450,7 @@ class ApplicabilityEvidence:
         overlap = set(self.matched_selector_ids) & set(self.rejected_selector_ids)
         if overlap:
             raise ConstraintValidationError(
-                "selector IDs cannot be both matched and rejected: "
-                + ", ".join(sorted(overlap))
+                "selector IDs cannot be both matched and rejected: " + ", ".join(sorted(overlap))
             )
         gaps = tuple(
             item
@@ -1636,25 +1476,19 @@ class ApplicabilityEvidence:
         object.__setattr__(
             self,
             "constraint_artifact_id",
-            _optional_identifier(
-                self.constraint_artifact_id, "constraint_artifact_id"
-            ),
+            _optional_identifier(self.constraint_artifact_id, "constraint_artifact_id"),
         )
         object.__setattr__(
             self,
             "constraint_artifact_digest",
-            _digest_or_empty(
-                self.constraint_artifact_digest, "constraint_artifact_digest"
-            ),
+            _digest_or_empty(self.constraint_artifact_digest, "constraint_artifact_digest"),
         )
         object.__setattr__(
             self,
             "invocation_digest",
             _digest_or_empty(self.invocation_digest, "invocation_digest"),
         )
-        if self.world_policy is not None and not isinstance(
-            self.world_policy, WorldPolicy
-        ):
+        if self.world_policy is not None and not isinstance(self.world_policy, WorldPolicy):
             if isinstance(self.world_policy, Mapping):
                 object.__setattr__(
                     self,
@@ -1662,9 +1496,7 @@ class ApplicabilityEvidence:
                     WorldPolicy.from_dict(self.world_policy),
                 )
             else:
-                raise ConstraintValidationError(
-                    "world_policy must be a WorldPolicy or mapping"
-                )
+                raise ConstraintValidationError("world_policy must be a WorldPolicy or mapping")
         if self.required_authority is not None:
             object.__setattr__(
                 self,
@@ -1680,9 +1512,7 @@ class ApplicabilityEvidence:
         if len(self.notes) > MAX_STRING_CHARS:
             raise ConstraintValidationError("notes exceeds maximum length")
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != APPLICABILITY_EVIDENCE_SCHEMA_VERSION:
             raise ConstraintValidationError(
                 f"unsupported applicability evidence schema: {self.schema_version!r}"
@@ -1694,12 +1524,8 @@ class ApplicabilityEvidence:
                     "APPLICABLE evidence cannot retain rejected selectors"
                 )
             if self.coverage_gaps:
-                raise ConstraintValidationError(
-                    "APPLICABLE evidence cannot retain coverage gaps"
-                )
-            required = {
-                item.selector_id for item in self.selectors if item.required
-            }
+                raise ConstraintValidationError("APPLICABLE evidence cannot retain coverage gaps")
+            required = {item.selector_id for item in self.selectors if item.required}
             if required - set(self.matched_selector_ids):
                 raise ConstraintValidationError(
                     "APPLICABLE evidence must match all required selectors"
@@ -1722,17 +1548,13 @@ class ApplicabilityEvidence:
             "notes": self.notes,
             "rejected_selector_ids": list(self.rejected_selector_ids),
             "required_authority": (
-                self.required_authority.value
-                if self.required_authority is not None
-                else ""
+                self.required_authority.value if self.required_authority is not None else ""
             ),
             "schema_version": self.schema_version,
             "selectors": [item.to_dict() for item in self.selectors],
             "status": self.status.value,
             "world_policy": (
-                self.world_policy.to_dict()
-                if self.world_policy is not None
-                else None
+                self.world_policy.to_dict() if self.world_policy is not None else None
             ),
         }
 
@@ -1811,9 +1633,7 @@ class ApplicabilityEvidence:
                 for item in _sequence(value.get("selectors", ()), "selectors")
             ),
             matched_selector_ids=tuple(
-                _sequence(
-                    value.get("matched_selector_ids", ()), "matched_selector_ids"
-                )
+                _sequence(value.get("matched_selector_ids", ()), "matched_selector_ids")
             ),
             rejected_selector_ids=tuple(
                 _sequence(
@@ -1823,14 +1643,10 @@ class ApplicabilityEvidence:
             ),
             coverage_gaps=tuple(
                 CoverageGap.from_dict(_mapping(item, "coverage gap"))
-                for item in _sequence(
-                    value.get("coverage_gaps", ()), "coverage_gaps"
-                )
+                for item in _sequence(value.get("coverage_gaps", ()), "coverage_gaps")
             ),
             constraint_artifact_id=value.get("constraint_artifact_id", ""),
-            constraint_artifact_digest=value.get(
-                "constraint_artifact_digest", ""
-            ),
+            constraint_artifact_digest=value.get("constraint_artifact_digest", ""),
             invocation_digest=value.get("invocation_digest", ""),
             world_policy=(
                 WorldPolicy.from_dict(_mapping(world, "world_policy"))
@@ -1840,9 +1656,7 @@ class ApplicabilityEvidence:
             required_authority=authority or None,
             notes=value.get("notes", ""),
             metadata=_frozen_map(value.get("metadata", {}), "metadata"),
-            schema_version=value.get(
-                "schema_version", APPLICABILITY_EVIDENCE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", APPLICABILITY_EVIDENCE_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -1850,9 +1664,7 @@ class ApplicabilityEvidence:
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise ConstraintValidationError(
-                "applicability evidence must be valid JSON"
-            ) from exc
+            raise ConstraintValidationError("applicability evidence must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "applicability evidence"))
 
 
@@ -1899,22 +1711,12 @@ class ConstraintArtifact:
     schema_version: str = CONSTRAINT_ARTIFACT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "artifact_id", _identifier(self.artifact_id, "artifact_id")
-        )
+        object.__setattr__(self, "artifact_id", _identifier(self.artifact_id, "artifact_id"))
         object.__setattr__(self, "domain", _identifier(self.domain, "domain"))
-        object.__setattr__(
-            self, "logic_family", _logic_family(self.logic_family)
-        )
-        object.__setattr__(
-            self, "source_id", _identifier(self.source_id, "source_id")
-        )
-        object.__setattr__(
-            self, "corpus_id", _identifier(self.corpus_id, "corpus_id")
-        )
-        object.__setattr__(
-            self, "config_id", _identifier(self.config_id, "config_id")
-        )
+        object.__setattr__(self, "logic_family", _logic_family(self.logic_family))
+        object.__setattr__(self, "source_id", _identifier(self.source_id, "source_id"))
+        object.__setattr__(self, "corpus_id", _identifier(self.corpus_id, "corpus_id"))
+        object.__setattr__(self, "config_id", _identifier(self.config_id, "config_id"))
         object.__setattr__(
             self,
             "declaration_id",
@@ -1933,9 +1735,7 @@ class ConstraintArtifact:
                     SymbolTable.from_dict(self.vocabulary),
                 )
             else:
-                raise ConstraintValidationError(
-                    "vocabulary must be a SymbolTable"
-                )
+                raise ConstraintValidationError("vocabulary must be a SymbolTable")
         _reject_mutable_collection(self.native_views, "native_views")
         views = tuple(
             item
@@ -1947,9 +1747,7 @@ class ConstraintArtifact:
         if len(view_ids) != len(set(view_ids)):
             raise ConstraintValidationError("native view IDs must be unique")
         if not views:
-            raise ConstraintValidationError(
-                "constraint artifact requires at least one native view"
-            )
+            raise ConstraintValidationError("constraint artifact requires at least one native view")
         object.__setattr__(
             self,
             "native_views",
@@ -1977,9 +1775,7 @@ class ConstraintArtifact:
                     WorldPolicy.from_dict(self.world_policy),
                 )
             else:
-                raise ConstraintValidationError(
-                    "world_policy must be a WorldPolicy"
-                )
+                raise ConstraintValidationError("world_policy must be a WorldPolicy")
         assumptions = tuple(
             item
             if isinstance(item, Assumption)
@@ -1998,15 +1794,11 @@ class ConstraintArtifact:
             item
             if isinstance(item, ProofObligation)
             else ProofObligation.from_dict(_mapping(item, "proof obligation"))
-            for item in _bounded_sequence(
-                self.proof_obligations, "proof_obligations"
-            )
+            for item in _bounded_sequence(self.proof_obligations, "proof_obligations")
         )
         obligation_ids = [item.obligation_id for item in obligations]
         if len(obligation_ids) != len(set(obligation_ids)):
-            raise ConstraintValidationError(
-                "proof obligation IDs must be unique"
-            )
+            raise ConstraintValidationError("proof obligation IDs must be unique")
         # Stable obligation ordering by ID (canonical).
         object.__setattr__(
             self,
@@ -2017,15 +1809,11 @@ class ConstraintArtifact:
             item
             if isinstance(item, ApplicabilitySelector)
             else ApplicabilitySelector.from_dict(_mapping(item, "selector"))
-            for item in _bounded_sequence(
-                self.applicability_selectors, "applicability_selectors"
-            )
+            for item in _bounded_sequence(self.applicability_selectors, "applicability_selectors")
         )
         selector_ids = [item.selector_id for item in selectors]
         if len(selector_ids) != len(set(selector_ids)):
-            raise ConstraintValidationError(
-                "applicability selector IDs must be unique"
-            )
+            raise ConstraintValidationError("applicability selector IDs must be unique")
         object.__setattr__(
             self,
             "applicability_selectors",
@@ -2050,9 +1838,7 @@ class ConstraintArtifact:
                     SelectedPremiseSet.from_dict(self.selected_premises),
                 )
             elif not isinstance(self.selected_premises, SelectedPremiseSet):
-                raise ConstraintValidationError(
-                    "selected_premises must be a SelectedPremiseSet"
-                )
+                raise ConstraintValidationError("selected_premises must be a SelectedPremiseSet")
         translations = tuple(
             item
             if isinstance(item, TranslationReceipt)
@@ -2070,12 +1856,8 @@ class ConstraintArtifact:
         reconstructions = tuple(
             item
             if isinstance(item, ReconstructionReceipt)
-            else ReconstructionReceipt.from_dict(
-                _mapping(item, "reconstruction")
-            )
-            for item in _bounded_sequence(
-                self.reconstructions, "reconstructions"
-            )
+            else ReconstructionReceipt.from_dict(_mapping(item, "reconstruction"))
+            for item in _bounded_sequence(self.reconstructions, "reconstructions")
         )
         reconstruction_ids = [item.reconstruction_id for item in reconstructions]
         if len(reconstruction_ids) != len(set(reconstruction_ids)):
@@ -2083,9 +1865,7 @@ class ConstraintArtifact:
         object.__setattr__(
             self,
             "reconstructions",
-            tuple(
-                sorted(reconstructions, key=lambda item: item.reconstruction_id)
-            ),
+            tuple(sorted(reconstructions, key=lambda item: item.reconstruction_id)),
         )
         gaps = tuple(
             item
@@ -2101,9 +1881,7 @@ class ConstraintArtifact:
             "coverage_gaps",
             tuple(sorted(gaps, key=lambda item: item.gap_id)),
         )
-        if self.diagnostics is not None and not isinstance(
-            self.diagnostics, DiagnosticReport
-        ):
+        if self.diagnostics is not None and not isinstance(self.diagnostics, DiagnosticReport):
             if isinstance(self.diagnostics, Mapping):
                 object.__setattr__(
                     self,
@@ -2111,9 +1889,7 @@ class ConstraintArtifact:
                     DiagnosticReport.from_dict(self.diagnostics),
                 )
             else:
-                raise ConstraintValidationError(
-                    "diagnostics must be a DiagnosticReport"
-                )
+                raise ConstraintValidationError("diagnostics must be a DiagnosticReport")
         for name in (
             "adapter_id",
             "compiler_id",
@@ -2121,9 +1897,7 @@ class ConstraintArtifact:
             "policy_id",
             "producer_id",
         ):
-            object.__setattr__(
-                self, name, _optional_identifier(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _optional_identifier(getattr(self, name), name))
         if self.required_authority is not None:
             object.__setattr__(
                 self,
@@ -2135,9 +1909,7 @@ class ConstraintArtifact:
                 ),
             )
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         self.validate()
 
     def validate(self) -> "ConstraintArtifact":
@@ -2152,9 +1924,7 @@ class ConstraintArtifact:
         known_statements = {item.statement_id: item for item in self.statements}
         known_symbols = set(self.vocabulary.symbol_ids)
         known_assumptions = {item.assumption_id for item in self.assumptions}
-        known_selectors = {
-            item.selector_id for item in self.applicability_selectors
-        }
+        known_selectors = {item.selector_id for item in self.applicability_selectors}
 
         for statement in self.statements:
             unknown_symbols = set(statement.symbol_ids) - known_symbols
@@ -2225,17 +1995,13 @@ class ConstraintArtifact:
                     f"translation {translation.translation_id!r} target logic "
                     "disagrees with target view"
                 )
-            unknown_src = set(translation.source_statement_ids) - set(
-                known_statements
-            )
+            unknown_src = set(translation.source_statement_ids) - set(known_statements)
             if unknown_src:
                 raise ConstraintValidationError(
                     f"translation {translation.translation_id!r} references "
                     f"unknown source statements: {', '.join(sorted(unknown_src))}"
                 )
-            unknown_tgt = set(translation.target_statement_ids) - set(
-                known_statements
-            )
+            unknown_tgt = set(translation.target_statement_ids) - set(known_statements)
             if unknown_tgt:
                 raise ConstraintValidationError(
                     f"translation {translation.translation_id!r} references "
@@ -2251,8 +2017,7 @@ class ConstraintArtifact:
             view = known_views[reconstruction.view_id]
             if view.logic_family != reconstruction.logic_family:
                 raise ConstraintValidationError(
-                    f"reconstruction {reconstruction.reconstruction_id!r} "
-                    "logic disagrees with view"
+                    f"reconstruction {reconstruction.reconstruction_id!r} logic disagrees with view"
                 )
             unknown = set(reconstruction.statement_ids) - set(known_statements)
             if unknown:
@@ -2283,15 +2048,12 @@ class ConstraintArtifact:
                 and evidence.constraint_artifact_id != self.artifact_id
             ):
                 raise ConstraintValidationError(
-                    "applicability evidence constraint_artifact_id disagrees "
-                    "with artifact_id"
+                    "applicability evidence constraint_artifact_id disagrees with artifact_id"
                 )
             # Evidence selectors should be a subset of declared selectors when
             # the artifact declares any.
             if known_selectors:
-                evidence_selector_ids = {
-                    item.selector_id for item in evidence.selectors
-                }
+                evidence_selector_ids = {item.selector_id for item in evidence.selectors}
                 unknown = evidence_selector_ids - known_selectors
                 if unknown:
                     raise ConstraintValidationError(
@@ -2301,18 +2063,12 @@ class ConstraintArtifact:
 
         if self.selected_premises is not None:
             for premise in self.selected_premises.premises:
-                if (
-                    premise.assumption_id
-                    and premise.assumption_id not in known_assumptions
-                ):
+                if premise.assumption_id and premise.assumption_id not in known_assumptions:
                     raise ConstraintValidationError(
                         f"selected premise {premise.premise_id!r} references "
                         f"unknown assumption {premise.assumption_id!r}"
                     )
-                if (
-                    premise.statement_id
-                    and premise.statement_id not in known_statements
-                ):
+                if premise.statement_id and premise.statement_id not in known_statements:
                     raise ConstraintValidationError(
                         f"selected premise {premise.premise_id!r} references "
                         f"unknown statement {premise.statement_id!r}"
@@ -2331,13 +2087,9 @@ class ConstraintArtifact:
     def obligation_digests(self) -> dict[str, str]:
         """Stable digests for each proof obligation (ID → digest)."""
 
-        return {
-            item.obligation_id: item.digest for item in self.proof_obligations
-        }
+        return {item.obligation_id: item.digest for item in self.proof_obligations}
 
-    def require_authority(
-        self, claimed: ResultAuthority | AuthorityKind | str
-    ) -> None:
+    def require_authority(self, claimed: ResultAuthority | AuthorityKind | str) -> None:
         """Reject result-authority substitution against the required kind."""
 
         if self.required_authority is None:
@@ -2352,9 +2104,7 @@ class ConstraintArtifact:
                 if self.applicability_evidence is not None
                 else None
             ),
-            "applicability_selectors": [
-                item.to_dict() for item in self.applicability_selectors
-            ],
+            "applicability_selectors": [item.to_dict() for item in self.applicability_selectors],
             "artifact_id": self.artifact_id,
             "assumptions": [item.to_dict() for item in self.assumptions],
             "compiler_id": self.compiler_id,
@@ -2363,11 +2113,7 @@ class ConstraintArtifact:
             "coverage_gaps": [item.to_dict() for item in self.coverage_gaps],
             "declaration_digest": self.declaration_digest,
             "declaration_id": self.declaration_id,
-            "diagnostics": (
-                self.diagnostics.to_dict()
-                if self.diagnostics is not None
-                else None
-            ),
+            "diagnostics": (self.diagnostics.to_dict() if self.diagnostics is not None else None),
             "domain": self.domain,
             "interface": self.INTERFACE,
             "logic_family": self.logic_family,
@@ -2376,22 +2122,14 @@ class ConstraintArtifact:
             "ontology_id": self.ontology_id,
             "policy_id": self.policy_id,
             "producer_id": self.producer_id,
-            "proof_obligations": [
-                item.to_dict() for item in self.proof_obligations
-            ],
-            "reconstructions": [
-                item.to_dict() for item in self.reconstructions
-            ],
+            "proof_obligations": [item.to_dict() for item in self.proof_obligations],
+            "reconstructions": [item.to_dict() for item in self.reconstructions],
             "required_authority": (
-                self.required_authority.value
-                if self.required_authority is not None
-                else ""
+                self.required_authority.value if self.required_authority is not None else ""
             ),
             "schema_version": self.schema_version,
             "selected_premises": (
-                self.selected_premises.to_dict()
-                if self.selected_premises is not None
-                else None
+                self.selected_premises.to_dict() if self.selected_premises is not None else None
             ),
             "source_id": self.source_id,
             "statements": [item.to_dict() for item in self.statements],
@@ -2479,9 +2217,7 @@ class ConstraintArtifact:
         )
         interface = value.get("interface", CONSTRAINT_ARTIFACT_INTERFACE)
         if interface != CONSTRAINT_ARTIFACT_INTERFACE:
-            raise ConstraintValidationError(
-                f"unknown constraint artifact interface: {interface!r}"
-            )
+            raise ConstraintValidationError(f"unknown constraint artifact interface: {interface!r}")
         evidence = value.get("applicability_evidence")
         premises = value.get("selected_premises")
         diagnostics = value.get("diagnostics")
@@ -2495,14 +2231,10 @@ class ConstraintArtifact:
             config_id=value.get("config_id", ""),
             declaration_id=value.get("declaration_id", ""),
             declaration_digest=value.get("declaration_digest", ""),
-            vocabulary=SymbolTable.from_dict(
-                _mapping(value.get("vocabulary", {}), "vocabulary")
-            ),
+            vocabulary=SymbolTable.from_dict(_mapping(value.get("vocabulary", {}), "vocabulary")),
             native_views=tuple(
                 NativeViewBinding.from_dict(_mapping(item, "native view"))
-                for item in _sequence(
-                    value.get("native_views", ()), "native_views"
-                )
+                for item in _sequence(value.get("native_views", ()), "native_views")
             ),
             statements=tuple(
                 ConstraintStatement.from_dict(_mapping(item, "statement"))
@@ -2517,9 +2249,7 @@ class ConstraintArtifact:
             ),
             proof_obligations=tuple(
                 ProofObligation.from_dict(_mapping(item, "proof obligation"))
-                for item in _sequence(
-                    value.get("proof_obligations", ()), "proof_obligations"
-                )
+                for item in _sequence(value.get("proof_obligations", ()), "proof_obligations")
             ),
             applicability_selectors=tuple(
                 ApplicabilitySelector.from_dict(_mapping(item, "selector"))
@@ -2540,23 +2270,15 @@ class ConstraintArtifact:
             ),
             translations=tuple(
                 TranslationReceipt.from_dict(_mapping(item, "translation"))
-                for item in _sequence(
-                    value.get("translations", ()), "translations"
-                )
+                for item in _sequence(value.get("translations", ()), "translations")
             ),
             reconstructions=tuple(
-                ReconstructionReceipt.from_dict(
-                    _mapping(item, "reconstruction")
-                )
-                for item in _sequence(
-                    value.get("reconstructions", ()), "reconstructions"
-                )
+                ReconstructionReceipt.from_dict(_mapping(item, "reconstruction"))
+                for item in _sequence(value.get("reconstructions", ()), "reconstructions")
             ),
             coverage_gaps=tuple(
                 CoverageGap.from_dict(_mapping(item, "coverage gap"))
-                for item in _sequence(
-                    value.get("coverage_gaps", ()), "coverage_gaps"
-                )
+                for item in _sequence(value.get("coverage_gaps", ()), "coverage_gaps")
             ),
             diagnostics=(
                 DiagnosticReport.from_dict(_mapping(diagnostics, "diagnostics"))
@@ -2570,9 +2292,7 @@ class ConstraintArtifact:
             producer_id=value.get("producer_id", ""),
             required_authority=authority or None,
             metadata=_frozen_map(value.get("metadata", {}), "metadata"),
-            schema_version=value.get(
-                "schema_version", CONSTRAINT_ARTIFACT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", CONSTRAINT_ARTIFACT_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -2580,9 +2300,7 @@ class ConstraintArtifact:
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise ConstraintValidationError(
-                "constraint artifact must be valid JSON"
-            ) from exc
+            raise ConstraintValidationError("constraint artifact must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "constraint artifact"))
 
 

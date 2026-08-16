@@ -242,6 +242,7 @@ prover.prove(temporal_formula)  # Auto-routes to S4 prover
 **Programmatic API:**
 ```python
 from ipfs_datasets_py.logic.integration import NeurosymbolicReasoner
+
 reasoner = NeurosymbolicReasoner()
 result = reasoner.prove(goal)
 ```

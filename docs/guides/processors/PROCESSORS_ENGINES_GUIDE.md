@@ -152,10 +152,7 @@ from ipfs_datasets_py.processors.engines.relationship import RelationshipAnalyze
 analyzer = RelationshipAnalyzer()
 
 # Use async methods
-results = await analyzer.analyze_entity_relationships(
-    documents=documents,
-    min_confidence=0.6
-)
+results = await analyzer.analyze_entity_relationships(documents=documents, min_confidence=0.6)
 ```
 
 **Submodules Available:**

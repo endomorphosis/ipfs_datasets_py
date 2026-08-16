@@ -41,13 +41,15 @@ The lifecycle hooks system provides a standard way to observe and instrument opt
 **Example:**
 ```python
 def on_session_start(self, context, input_data):
-    self.session_log.append({
-        "event": "start",
-        "session_id": context.session_id,
-        "domain": context.domain,
-        "timestamp": datetime.now().isoformat(),
-        "input_size": len(str(input_data)),
-    })
+    self.session_log.append(
+        {
+            "event": "start",
+            "session_id": context.session_id,
+            "domain": context.domain,
+            "timestamp": datetime.now().isoformat(),
+            "input_size": len(str(input_data)),
+        }
+    )
 ```
 
 ---
@@ -136,13 +138,15 @@ def on_critique_complete(self, artifact, score, feedback, context):
 **Example:**
 ```python
 def on_optimize_complete(self, artifact, score, feedback, iteration, context):
-    self.iteration_log.append({
-        "iteration": iteration,
-        "score": score,
-        "feedback_count": len(feedback),
-        "artifact_hash": hash(str(artifact)),
-    })
-    
+    self.iteration_log.append(
+        {
+            "iteration": iteration,
+            "score": score,
+            "feedback_count": len(feedback),
+            "artifact_hash": hash(str(artifact)),
+        }
+    )
+
     # Log every 10 iterations
     if iteration % 10 == 0:
         logger.info("Completed iteration %d with score %.3f", iteration, score)
@@ -270,34 +274,40 @@ class AuditedOptimizer(BaseOptimizer):
         super().__init__(*args, **kwargs)
         self.audit_log = []
         self.audit_log_path = audit_log_path
-    
+
     def on_session_start(self, context, input_data):
-        self.audit_log.append({
-            "event": "session_start",
-            "session_id": context.session_id,
-            "domain": context.domain,
-            "timestamp": datetime.now().isoformat(),
-        })
-    
+        self.audit_log.append(
+            {
+                "event": "session_start",
+                "session_id": context.session_id,
+                "domain": context.domain,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
     def on_optimize_complete(self, artifact, score, feedback, iteration, context):
-        self.audit_log.append({
-            "event": "iteration",
-            "session_id": context.session_id,
-            "iteration": iteration,
-            "score": score,
-            "timestamp": datetime.now().isoformat(),
-        })
-    
+        self.audit_log.append(
+            {
+                "event": "iteration",
+                "session_id": context.session_id,
+                "iteration": iteration,
+                "score": score,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
     def on_session_complete(self, result, context):
-        self.audit_log.append({
-            "event": "session_complete",
-            "session_id": context.session_id,
-            "iterations": result["iterations"],
-            "final_score": result["score"],
-            "valid": result["valid"],
-            "timestamp": datetime.now().isoformat(),
-        })
-        
+        self.audit_log.append(
+            {
+                "event": "session_complete",
+                "session_id": context.session_id,
+                "iterations": result["iterations"],
+                "final_score": result["score"],
+                "valid": result["valid"],
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
         # Persist audit log to file
         if self.audit_log_path:
             with open(self.audit_log_path, "a") as f:
@@ -314,30 +324,32 @@ class MetricsOptimizer(BaseOptimizer):
         super().__init__(*args, **kwargs)
         self.metrics = metrics_collector or MetricsCollector()
         self.session_start_time = None
-    
+
     def on_session_start(self, context, input_data):
         self.session_start_time = time.time()
         self.metrics.increment("sessions_started", labels={"domain": context.domain})
-    
+
     def on_critique_complete(self, artifact, score, feedback, context):
         self.metrics.record_score(score, labels={"domain": context.domain})
-    
+
     def on_optimize_complete(self, artifact, score, feedback, iteration, context):
         self.metrics.increment("iterations_completed", labels={"domain": context.domain})
-        
+
         # Track iteration latency
-        iteration_time = time.time() - getattr(self, "_last_iteration_time", self.session_start_time)
+        iteration_time = time.time() - getattr(
+            self, "_last_iteration_time", self.session_start_time
+        )
         self.metrics.record_duration("iteration_latency_seconds", iteration_time)
         self._last_iteration_time = time.time()
-    
+
     def on_session_complete(self, result, context):
         session_duration = time.time() - self.session_start_time
         self.metrics.record_duration(
             "session_duration_seconds",
             session_duration,
-            labels={"domain": context.domain, "valid": str(result["valid"])}
+            labels={"domain": context.domain, "valid": str(result["valid"])},
         )
-        
+
         if result["valid"]:
             self.metrics.increment("sessions_succeeded", labels={"domain": context.domain})
         else:
@@ -420,7 +432,7 @@ def on_optimize_complete(self, artifact, score, feedback, iteration, context):
             "iteration": iteration,
             "score": score,
             "feedback_count": len(feedback),
-        }
+        },
     )
 ```
 
@@ -480,20 +492,28 @@ def test_hooks_fire_in_expected_order():
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.events = []
-        
+
         def on_session_start(self, context, input_data):
             self.events.append("start")
-        
+
         def on_generate_complete(self, artifact, context):
             self.events.append("generate")
-        
+
         # ... etc ...
-    
+
     optimizer = TestOptimizer(config=OptimizerConfig(max_iterations=1))
     context = OptimizationContext(session_id="test", input_data="x", domain="test")
     optimizer.run_session("x", context)
-    
-    assert optimizerevents == ["start", "generate", "critique", "optimize", "critique", "validate", "complete"]
+
+    assert optimizerevents == [
+        "start",
+        "generate",
+        "critique",
+        "optimize",
+        "critique",
+        "validate",
+        "complete",
+    ]
 ```
 
 ---

@@ -21,17 +21,19 @@ from typing import Dict, List, Any, Optional
 from ipfs_datasets_py.p2p_networking.libp2p_kit import (
     DistributedDatasetManager,
     NodeRole,
-    LIBP2P_AVAILABLE
+    LIBP2P_AVAILABLE,
 )
 
 
 def create_sample_dataset(size=1000):
     """Create a sample dataset for testing."""
-    return pd.DataFrame({
-        "id": list(range(size)),
-        "text": [f"Sample text {i}" for i in range(size)],
-        "vector": [np.random.rand(128).tolist() for _ in range(size)]
-    })
+    return pd.DataFrame(
+        {
+            "id": list(range(size)),
+            "text": [f"Sample text {i}" for i in range(size)],
+            "vector": [np.random.rand(128).tolist() for _ in range(size)],
+        }
+    )
 
 
 async def run_coordinator(args):
@@ -44,7 +46,7 @@ async def run_coordinator(args):
         node_id=args.node_id,
         listen_addresses=["/ip4/0.0.0.0/tcp/0"],
         bootstrap_peers=args.bootstrap_peers,
-        role=NodeRole.COORDINATOR
+        role=NodeRole.COORDINATOR,
     )
 
     # Wait for node to start
@@ -56,7 +58,7 @@ async def run_coordinator(args):
         description="Example dataset distributed across multiple nodes",
         schema={"id": "integer", "text": "string", "vector": "float[]"},
         vector_dimensions=128,
-        tags=["example", "test"]
+        tags=["example", "test"],
     )
 
     print(f"Created dataset with ID: {dataset.dataset_id}")
@@ -72,7 +74,7 @@ async def run_coordinator(args):
         data=data,
         format="parquet",
         shard_size=args.shard_size,
-        replication_factor=args.replication
+        replication_factor=args.replication,
     )
 
     print(f"Created {len(shards)} shards")
@@ -95,8 +97,7 @@ async def run_coordinator(args):
         if args.rebalance:
             print("Rebalancing shards...")
             rebalance_results = await manager.rebalance_shards(
-                dataset_id=dataset.dataset_id,
-                target_replication=args.replication
+                dataset_id=dataset.dataset_id, target_replication=args.replication
             )
             print(f"Rebalanced {rebalance_results['total_shards_rebalanced']} shards")
 
@@ -111,7 +112,7 @@ async def run_worker(args):
         node_id=args.node_id,
         listen_addresses=["/ip4/0.0.0.0/tcp/0"],
         bootstrap_peers=args.bootstrap_peers,
-        role=NodeRole.WORKER
+        role=NodeRole.WORKER,
     )
 
     # Wait for node to start
@@ -152,7 +153,7 @@ async def run_client(args):
         node_id=args.node_id,
         listen_addresses=["/ip4/0.0.0.0/tcp/0"],
         bootstrap_peers=args.bootstrap_peers,
-        role=NodeRole.CLIENT
+        role=NodeRole.CLIENT,
     )
 
     # Wait for node to start
@@ -171,9 +172,9 @@ async def run_client(args):
     print(f"- Peer Count: {network_status['peer_count']}")
     print(f"- Dataset Count: {network_status['dataset_count']}")
 
-    if network_status['dataset_count'] == 0:
+    if network_status["dataset_count"] == 0:
         print("No datasets found. Waiting for datasets to be available...")
-        while network_status['dataset_count'] == 0:
+        while network_status["dataset_count"] == 0:
             await anyio.sleep(5)
             await manager.sync_with_network()
             network_status = await manager.get_network_status()
@@ -191,14 +192,12 @@ async def run_client(args):
         print(f"\nPerforming vector search on dataset {dataset.name}...")
         try:
             results = await manager.vector_search(
-                dataset_id=dataset_id,
-                query_vector=query_vector,
-                top_k=5
+                dataset_id=dataset_id, query_vector=query_vector, top_k=5
             )
 
             print(f"Search results: Found {results['total_results']} matches")
-            for i, result in enumerate(results['results'][:3]):
-                print(f"Result {i+1}: {result}")
+            for i, result in enumerate(results["results"][:3]):
+                print(f"Result {i + 1}: {result}")
 
             print(f"Query executed across {len(results.get('nodes_queried', []))} nodes")
         except Exception as e:
@@ -215,20 +214,31 @@ def main():
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Distributed Dataset Example")
-    parser.add_argument("--role", choices=["coordinator", "worker", "client"],
-                        required=True, help="Node role")
+    parser.add_argument(
+        "--role", choices=["coordinator", "worker", "client"], required=True, help="Node role"
+    )
     parser.add_argument("--node-id", default=None, help="Node ID (generated if not provided)")
     parser.add_argument("--storage-dir", default="./data", help="Storage directory")
-    parser.add_argument("--bootstrap-peers", nargs="+", default=[],
-                        help="Bootstrap peer multiaddresses")
-    parser.add_argument("--dataset-size", type=int, default=1000,
-                        help="Size of the sample dataset (coordinator only)")
-    parser.add_argument("--shard-size", type=int, default=100,
-                        help="Records per shard (coordinator only)")
-    parser.add_argument("--replication", type=int, default=3,
-                        help="Replication factor (coordinator only)")
-    parser.add_argument("--rebalance", action="store_true",
-                        help="Enable periodic shard rebalancing (coordinator only)")
+    parser.add_argument(
+        "--bootstrap-peers", nargs="+", default=[], help="Bootstrap peer multiaddresses"
+    )
+    parser.add_argument(
+        "--dataset-size",
+        type=int,
+        default=1000,
+        help="Size of the sample dataset (coordinator only)",
+    )
+    parser.add_argument(
+        "--shard-size", type=int, default=100, help="Records per shard (coordinator only)"
+    )
+    parser.add_argument(
+        "--replication", type=int, default=3, help="Replication factor (coordinator only)"
+    )
+    parser.add_argument(
+        "--rebalance",
+        action="store_true",
+        help="Enable periodic shard rebalancing (coordinator only)",
+    )
 
     args = parser.parse_args()
 

@@ -7,6 +7,7 @@ Covers:
 - OntologyLearningAdapter.top_actions()
 - OntologyOptimizer.score_trend_summary() + rolling_average_score()
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -18,75 +19,98 @@ import pytest
 # OntologyGenerator.deduplicate_entities()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestDeduplicateEntities:
     """deduplicate_entities() should merge entities with identical normalised text."""
 
     @pytest.fixture
     def gen_ctx(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext,
+            OntologyGenerator,
+            OntologyGenerationContext,
         )
+
         gen = OntologyGenerator()
-        ctx = OntologyGenerationContext(
-            data_source="test", data_type="text", domain="general"
-        )
+        ctx = OntologyGenerationContext(data_source="test", data_type="text", domain="general")
         return gen, ctx
 
     def _make_result(self, entities, relationships=None):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            Entity, Relationship, EntityExtractionResult,
+            Entity,
+            Relationship,
+            EntityExtractionResult,
         )
-        ents = [Entity(id=e["id"], text=e["text"], type=e["type"],
-                       confidence=e.get("confidence", 0.8)) for e in entities]
+
+        ents = [
+            Entity(id=e["id"], text=e["text"], type=e["type"], confidence=e.get("confidence", 0.8))
+            for e in entities
+        ]
         rels = []
-        for r in (relationships or []):
-            rels.append(Relationship(id=r["id"], source_id=r["source_id"],
-                                     target_id=r["target_id"], type=r["type"],
-                                     confidence=0.7, direction="undirected"))
+        for r in relationships or []:
+            rels.append(
+                Relationship(
+                    id=r["id"],
+                    source_id=r["source_id"],
+                    target_id=r["target_id"],
+                    type=r["type"],
+                    confidence=0.7,
+                    direction="undirected",
+                )
+            )
         return EntityExtractionResult(entities=ents, relationships=rels, confidence=0.8)
 
     def test_no_duplicates_unchanged(self, gen_ctx):
         gen, _ = gen_ctx
-        result = self._make_result([
-            {"id": "e1", "text": "Alice", "type": "Person"},
-            {"id": "e2", "text": "Bob", "type": "Person"},
-        ])
+        result = self._make_result(
+            [
+                {"id": "e1", "text": "Alice", "type": "Person"},
+                {"id": "e2", "text": "Bob", "type": "Person"},
+            ]
+        )
         dedup = gen.deduplicate_entities(result)
         assert len(dedup.entities) == 2
 
     def test_exact_duplicate_merged(self, gen_ctx):
         gen, _ = gen_ctx
-        result = self._make_result([
-            {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
-            {"id": "e2", "text": "Alice", "type": "Person", "confidence": 0.7},
-        ])
+        result = self._make_result(
+            [
+                {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
+                {"id": "e2", "text": "Alice", "type": "Person", "confidence": 0.7},
+            ]
+        )
         dedup = gen.deduplicate_entities(result)
         assert len(dedup.entities) == 1
 
     def test_highest_confidence_kept(self, gen_ctx):
         gen, _ = gen_ctx
-        result = self._make_result([
-            {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.6},
-            {"id": "e2", "text": "Alice", "type": "Person", "confidence": 0.9},
-        ])
+        result = self._make_result(
+            [
+                {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.6},
+                {"id": "e2", "text": "Alice", "type": "Person", "confidence": 0.9},
+            ]
+        )
         dedup = gen.deduplicate_entities(result)
         assert dedup.entities[0].confidence == 0.9
 
     def test_case_insensitive_deduplication(self, gen_ctx):
         gen, _ = gen_ctx
-        result = self._make_result([
-            {"id": "e1", "text": "ALICE", "type": "Person", "confidence": 0.8},
-            {"id": "e2", "text": "alice", "type": "Person", "confidence": 0.7},
-        ])
+        result = self._make_result(
+            [
+                {"id": "e1", "text": "ALICE", "type": "Person", "confidence": 0.8},
+                {"id": "e2", "text": "alice", "type": "Person", "confidence": 0.7},
+            ]
+        )
         dedup = gen.deduplicate_entities(result)
         assert len(dedup.entities) == 1
 
     def test_metadata_reports_dedup_count(self, gen_ctx):
         gen, _ = gen_ctx
-        result = self._make_result([
-            {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
-            {"id": "e2", "text": "Alice", "type": "Person", "confidence": 0.7},
-        ])
+        result = self._make_result(
+            [
+                {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
+                {"id": "e2", "text": "Alice", "type": "Person", "confidence": 0.7},
+            ]
+        )
         dedup = gen.deduplicate_entities(result)
         assert dedup.metadata.get("deduplication_count") == 1
 
@@ -111,66 +135,89 @@ class TestDeduplicateEntities:
 # OntologyGenerator.filter_entities()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestFilterEntities:
     """filter_entities() should apply post-extraction filters."""
 
     @pytest.fixture
     def gen_ctx(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerator, OntologyGenerationContext,
+            OntologyGenerator,
+            OntologyGenerationContext,
         )
+
         return OntologyGenerator(), OntologyGenerationContext(
             data_source="test", data_type="text", domain="general"
         )
 
     def _make_result(self, entities, relationships=None):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            Entity, Relationship, EntityExtractionResult,
+            Entity,
+            Relationship,
+            EntityExtractionResult,
         )
-        ents = [Entity(id=e["id"], text=e["text"], type=e["type"],
-                       confidence=e.get("confidence", 0.8)) for e in entities]
+
+        ents = [
+            Entity(id=e["id"], text=e["text"], type=e["type"], confidence=e.get("confidence", 0.8))
+            for e in entities
+        ]
         rels = []
-        for r in (relationships or []):
-            rels.append(Relationship(id=r["id"], source_id=r["source_id"],
-                                     target_id=r["target_id"], type=r["type"],
-                                     confidence=0.7, direction="undirected"))
+        for r in relationships or []:
+            rels.append(
+                Relationship(
+                    id=r["id"],
+                    source_id=r["source_id"],
+                    target_id=r["target_id"],
+                    type=r["type"],
+                    confidence=0.7,
+                    direction="undirected",
+                )
+            )
         return EntityExtractionResult(entities=ents, relationships=rels, confidence=0.8)
 
     def test_min_confidence_filters_low(self, gen_ctx):
         gen, _ = gen_ctx
-        result = self._make_result([
-            {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
-            {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.3},
-        ])
+        result = self._make_result(
+            [
+                {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
+                {"id": "e2", "text": "Bob", "type": "Person", "confidence": 0.3},
+            ]
+        )
         filtered = gen.filter_entities(result, min_confidence=0.7)
         assert len(filtered.entities) == 1
         assert filtered.entities[0].text == "Alice"
 
     def test_allowed_types_filters_type(self, gen_ctx):
         gen, _ = gen_ctx
-        result = self._make_result([
-            {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
-            {"id": "e2", "text": "Acme", "type": "Organization", "confidence": 0.9},
-        ])
+        result = self._make_result(
+            [
+                {"id": "e1", "text": "Alice", "type": "Person", "confidence": 0.9},
+                {"id": "e2", "text": "Acme", "type": "Organization", "confidence": 0.9},
+            ]
+        )
         filtered = gen.filter_entities(result, allowed_types=["Person"])
         assert len(filtered.entities) == 1
         assert filtered.entities[0].type == "Person"
 
     def test_text_contains_filters_text(self, gen_ctx):
         gen, _ = gen_ctx
-        result = self._make_result([
-            {"id": "e1", "text": "Alice Smith", "type": "Person", "confidence": 0.9},
-            {"id": "e2", "text": "Bob Jones", "type": "Person", "confidence": 0.9},
-        ])
+        result = self._make_result(
+            [
+                {"id": "e1", "text": "Alice Smith", "type": "Person", "confidence": 0.9},
+                {"id": "e2", "text": "Bob Jones", "type": "Person", "confidence": 0.9},
+            ]
+        )
         filtered = gen.filter_entities(result, text_contains="alice")
         assert len(filtered.entities) == 1
 
     def test_no_criteria_keeps_all(self, gen_ctx):
         gen, _ = gen_ctx
-        result = self._make_result([
-            {"id": "e1", "text": "Alice", "type": "Person"},
-            {"id": "e2", "text": "Bob", "type": "Person"},
-        ])
+        result = self._make_result(
+            [
+                {"id": "e1", "text": "Alice", "type": "Person"},
+                {"id": "e2", "text": "Bob", "type": "Person"},
+            ]
+        )
         filtered = gen.filter_entities(result)
         assert len(filtered.entities) == 2
 
@@ -193,11 +240,13 @@ class TestFilterEntities:
 # ExtractionConfig.merge()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestExtractionConfigMerge:
     """merge() should overlay non-default values from other onto self."""
 
     def test_merge_returns_new_config(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         base = ExtractionConfig()
         override = ExtractionConfig()
         merged = base.merge(override)
@@ -232,6 +281,7 @@ class TestExtractionConfigMerge:
 
     def test_override_multiple_fields(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         base = ExtractionConfig(confidence_threshold=0.5, window_size=5)
         override = ExtractionConfig(window_size=10, min_entity_length=3)
         merged = base.merge(override)
@@ -244,6 +294,7 @@ class TestExtractionConfigMerge:
 # OntologyLearningAdapter.top_actions()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestTopActions:
     """top_actions() should return N best-performing actions by mean success."""
 
@@ -252,6 +303,7 @@ class TestTopActions:
         from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
             OntologyLearningAdapter,
         )
+
         a = OntologyLearningAdapter(domain="test")
         a.apply_feedback(final_score=0.9, actions=[{"action": "merge_duplicates"}])
         a.apply_feedback(final_score=0.5, actions=[{"action": "prune_orphans"}])
@@ -282,6 +334,7 @@ class TestTopActions:
         from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
             OntologyLearningAdapter,
         )
+
         a = OntologyLearningAdapter()
         assert a.top_actions() == []
 
@@ -290,13 +343,16 @@ class TestTopActions:
 # OntologyOptimizer.score_trend_summary() + rolling_average_score()
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 class TestScoreTrendAndRolling:
     """score_trend_summary() and rolling_average_score() should work correctly."""
 
     def _make_optimizer_with_scores(self, scores):
         from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import (
-            OntologyOptimizer, OptimizationReport,
+            OntologyOptimizer,
+            OptimizationReport,
         )
+
         opt = OntologyOptimizer()
         for s in scores:
             r = MagicMock(spec=OptimizationReport)

@@ -20,7 +20,7 @@ _logger = logging.getLogger(__name__)
 @dataclass
 class SemanticMergeSuggestion:
     """Suggestion to merge two semantically similar entities.
-    
+
     Attributes:
         entity1_id: ID of first entity
         entity2_id: ID of second entity
@@ -28,17 +28,19 @@ class SemanticMergeSuggestion:
         reason: Explanation for suggested merge
         evidence: Detailed evidence dict (semantic_similarity, name_similarity, etc.)
     """
+
     entity1_id: str
     entity2_id: str
     similarity_score: float
     reason: str
     evidence: Dict[str, Any]
-    
+
     def __repr__(self) -> str:
         """Return concise string representation."""
-        return (f"SemanticMergeSuggestion({self.entity1_id} + {self.entity2_id}, "
-                f"score={self.similarity_score:.3f}, reason={self.reason})")
-
+        return (
+            f"SemanticMergeSuggestion({self.entity1_id} + {self.entity2_id}, "
+            f"score={self.similarity_score:.3f}, reason={self.reason})"
+        )
 
 
 # Backwards-compat alias for older test imports
@@ -47,13 +49,13 @@ SemanticSemanticMergeSuggestion = SemanticMergeSuggestion
 
 class SemanticEntityDeduplicator:
     """Semantic entity deduplication using embedding vectors.
-    
+
     Uses embeddings (sentence-transformers by default) to detect semantically
     similar entities that evade string-based matching. Ideal for:
     - Abbreviation expansion ("CEO" → "Chief Executive Officer")
     - Location variants ("NYC" → "New York City")
     - Synonyms ("attorney" → "lawyer")
-    
+
     Example:
         >>> dedup = SemanticEntityDeduplicator()
         >>> ontology = {"entities": [...], "relationships": [...]}
@@ -61,16 +63,16 @@ class SemanticEntityDeduplicator:
         >>> for sugg in suggestions:
         ...     print(f"Merge {sugg.entity1_id} + {sugg.entity2_id}")
     """
-    
+
     def __init__(self, min_string_similarity: float = 0.3):
         """Initialize deduplicator.
-        
+
         Args:
             min_string_similarity: Minimum string similarity (0-1) for including
                 in evidence. Default 0.3. Lower values allow more diverse merges.
         """
         self.min_string_similarity = min_string_similarity
-    
+
     def suggest_merges(
         self,
         ontology: Dict[str, Any],
@@ -80,56 +82,56 @@ class SemanticEntityDeduplicator:
         batch_size: int = 32,
     ) -> List[SemanticMergeSuggestion]:
         """Suggest entity merges using semantic similarity.
-        
+
         Args:
             ontology: Ontology dict with 'entities' and 'relationships'
             threshold: Minimum cosine similarity (0-1). Default 0.85.
             max_suggestions: Optional limit on suggestions. Default None (all).
             embedding_fn: Custom embedding function. Default uses sentence-transformers.
             batch_size: Batch size for embedding generation. Default 32.
-        
+
         Returns:
             List of SemanticMergeSuggestion sorted by similarity (descending)
-        
+
         Raises:
             ValueError: If ontology invalid or threshold out of range
             ExtractionError: If embedding generation fails
         """
         if not isinstance(ontology, dict):
             raise ValueError("ontology must be a dictionary")
-        
+
         if not 0.0 <= threshold <= 1.0:
             raise ValueError("threshold must be between 0.0 and 1.0")
-        
+
         entities = ontology.get("entities", [])
         relationships = ontology.get("relationships", [])
-        
+
         if not isinstance(entities, list):
             raise ValueError("ontology['entities'] must be a list")
-        
+
         if len(entities) < 2:
             _logger.info("Less than 2 entities, no semantic merges possible")
             return []
-        
+
         # Get embeddings function
         if embedding_fn is None:
             embedding_fn = self._get_default_embedding_fn()
-        
+
         # Extract entity data
         entity_data = self._extract_entity_data(entities)
-        
+
         if len(entity_data) < 2:
             _logger.info("Less than 2 valid entities after filtering")
             return []
-        
+
         # Generate embeddings
         try:
             texts = [e["text"] for e in entity_data]
             embeddings = self._batch_embed(texts, embedding_fn, batch_size)
-            
+
             if embeddings is None or len(embeddings) != len(texts):
                 raise ExtractionError("Embedding generation failed")
-                
+
         except (
             AttributeError,
             TypeError,
@@ -142,56 +144,56 @@ class SemanticEntityDeduplicator:
         ) as e:
             _logger.error(f"Failed to generate embeddings: {e}")
             raise ExtractionError(f"Embedding generation failed: {e}")
-        
+
         # Normalize for cosine similarity
         embeddings_norm = embeddings / (np.linalg.norm(embeddings, axis=1, keepdims=True) + 1e-9)
-        
+
         # Compute pairwise similarities
         similarity_matrix = np.dot(embeddings_norm, embeddings_norm.T)
-        
+
         # Find pairs above threshold
         suggestions = self._find_merge_pairs(
             entity_data, similarity_matrix, threshold, relationships
         )
-        
+
         # Sort and limit
         suggestions.sort(key=lambda s: s.similarity_score, reverse=True)
-        
+
         if max_suggestions is not None:
             if max_suggestions > 0:
                 suggestions = suggestions[:max_suggestions]
             else:
                 suggestions = []
-        
-        _logger.info(
-            f"Found {len(suggestions)} semantic merge suggestions (threshold={threshold})"
-        )
-        
+
+        _logger.info(f"Found {len(suggestions)} semantic merge suggestions (threshold={threshold})")
+
         return suggestions
-    
+
     def _extract_entity_data(self, entities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Extract relevant data from entity list."""
         entity_data = []
-        
+
         for entity in entities:
             entity_id = entity.get("id") or entity.get("Id")
             text = entity.get("text") or entity.get("Text") or ""
             entity_type = entity.get("type") or entity.get("Type") or "Unknown"
             confidence = float(entity.get("confidence") or entity.get("Confidence") or 0.5)
-            
+
             if not entity_id or not text:
                 continue
-            
-            entity_data.append({
-                "id": entity_id,
-                "text": text,
-                "type": entity_type,
-                "confidence": confidence,
-                "original": entity,
-            })
-        
+
+            entity_data.append(
+                {
+                    "id": entity_id,
+                    "text": text,
+                    "type": entity_type,
+                    "confidence": confidence,
+                    "original": entity,
+                }
+            )
+
         return entity_data
-    
+
     def _find_merge_pairs(
         self,
         entity_data: List[Dict[str, Any]],
@@ -200,19 +202,19 @@ class SemanticEntityDeduplicator:
         relationships: List[Dict[str, Any]],
     ) -> List[SemanticMergeSuggestion]:
         """Find entity pairs above similarity threshold using optimized sorted merge.
-        
+
         This uses a bucketing strategy instead of O(n²) brute force:
         - Entities are bucketed based on embedding similarity profiles
         - Only pairs in the same/nearby buckets are compared
         - Reduces average case from O(n²) to O(n*k) where k is small bucket size
-        
+
         For n=1000 entities with average bucket size k=50:
           - Brute force: ~500000 comparisons
           - Bucketed: ~25000 comparisons (20x improvement)
         """
         if len(entity_data) < 2:
             return []
-        
+
         # Pre-filter: Extract candidates with high max similarity in their row
         # Skip entities that can't possibly exceed threshold
         candidates_with_peaks = []
@@ -221,41 +223,41 @@ class SemanticEntityDeduplicator:
             # Only include if this entity could potentially match others above threshold
             if max_sim >= threshold:
                 candidates_with_peaks.append((i, max_sim))
-        
+
         if len(candidates_with_peaks) < 2:
             return []
-        
+
         # Create buckets: Sort candidates by their peak similarity value
         # Entities with similar peak values are likely to have matches with each other
         candidates_with_peaks.sort(key=lambda x: x[1], reverse=True)
-        
+
         # Use bucketing to reduce comparisons
         # Bucket size dynamically based on data size (sqrt heuristic)
         bucket_size = max(10, int(np.sqrt(len(candidates_with_peaks))))
         buckets = {}
-        
+
         for bucket_idx, (entity_idx, peak_sim) in enumerate(candidates_with_peaks):
             bucket_label = bucket_idx // bucket_size
             if bucket_label not in buckets:
                 buckets[bucket_label] = []
             buckets[bucket_label].append(entity_idx)
-        
+
         # Find merge pairs by checking within buckets and adjacent buckets
         # This dramatically reduces the number of comparisons needed
         suggestions = []
         checked_pairs = set()  # Avoid duplicate checks
-        
+
         for bucket_label in sorted(buckets.keys()):
             bucket_indices = buckets[bucket_label]
-            
+
             # Check all pairs within this bucket
             for i_pos, i in enumerate(bucket_indices):
-                for j in bucket_indices[i_pos + 1:]:
+                for j in bucket_indices[i_pos + 1 :]:
                     pair_key = (min(i, j), max(i, j))
                     if pair_key not in checked_pairs:
                         checked_pairs.add(pair_key)
                         similarity = float(similarity_matrix[i, j])
-                        
+
                         if similarity >= threshold:
                             entity1 = entity_data[i]
                             entity2 = entity_data[j]
@@ -263,7 +265,7 @@ class SemanticEntityDeduplicator:
                                 entity1, entity2, similarity, relationships
                             )
                             suggestions.append(suggestion)
-            
+
             # Also check pairs with adjacent bucket to catch boundary cases
             if (bucket_label + 1) in buckets:
                 adjacent_indices = buckets[bucket_label + 1]
@@ -273,7 +275,7 @@ class SemanticEntityDeduplicator:
                         if pair_key not in checked_pairs:
                             checked_pairs.add(pair_key)
                             similarity = float(similarity_matrix[i, j])
-                            
+
                             if similarity >= threshold:
                                 entity1 = entity_data[i]
                                 entity2 = entity_data[j]
@@ -281,9 +283,9 @@ class SemanticEntityDeduplicator:
                                     entity1, entity2, similarity, relationships
                                 )
                                 suggestions.append(suggestion)
-        
+
         return suggestions
-    
+
     def _build_merge_suggestion(
         self,
         entity1: Dict[str, Any],
@@ -293,7 +295,7 @@ class SemanticEntityDeduplicator:
     ) -> SemanticMergeSuggestion:
         """Build a merge suggestion from similarity analysis."""
         from difflib import SequenceMatcher
-        
+
         id1 = entity1["id"]
         id2 = entity2["id"]
         text1 = entity1["text"]
@@ -302,11 +304,11 @@ class SemanticEntityDeduplicator:
         type2 = entity2["type"]
         conf1 = entity1["confidence"]
         conf2 = entity2["confidence"]
-        
+
         # Calculate string similarity for comparison
         name_similarity = SequenceMatcher(None, text1.lower(), text2.lower()).ratio()
         type_match = 1.0 if type1 == type2 else 0.0
-        
+
         # Build evidence
         evidence = {
             "semantic_similarity": semantic_similarity,
@@ -319,7 +321,7 @@ class SemanticEntityDeduplicator:
             "confidence_difference": abs(conf1 - conf2),
             "method": "embedding-based",
         }
-        
+
         # Build reason string
         reasons = []
         if semantic_similarity >= 0.95:
@@ -328,15 +330,15 @@ class SemanticEntityDeduplicator:
             reasons.append("high semantic similarity")
         else:
             reasons.append("semantic similarity")
-        
+
         if type_match > 0.5:
             reasons.append("same entity type")
-        
+
         if name_similarity < 0.5:
             reasons.append("different text representations")
-        
+
         reason = "; ".join(reasons)
-        
+
         return SemanticMergeSuggestion(
             entity1_id=id1,
             entity2_id=id2,
@@ -344,7 +346,7 @@ class SemanticEntityDeduplicator:
             reason=reason,
             evidence=evidence,
         )
-    
+
     def _get_default_embedding_fn(self) -> Callable[[List[str]], np.ndarray]:
         """Get default embedding function using sentence-transformers."""
         try:
@@ -354,23 +356,23 @@ class SemanticEntityDeduplicator:
                 "sentence-transformers not available. Install with: "
                 "pip install sentence-transformers"
             )
-        
+
         model_name = "all-MiniLM-L6-v2"  # 384-dim, fast
         _logger.info(f"Loading sentence-transformers model: {model_name}")
-        
+
         try:
             model = SentenceTransformer(model_name)
         except (AttributeError, TypeError, ValueError, RuntimeError, ImportError, OSError) as e:
             _logger.warning(f"Failed to load {model_name}: {e}. Trying fallback...")
             model = SentenceTransformer("paraphrase-MiniLM-L3-v2")
-        
+
         def embed_fn(texts: List[str]) -> np.ndarray:
             if not texts:
                 return np.array([])
             return model.encode(texts, convert_to_numpy=True, show_progress_bar=False)
-        
+
         return embed_fn
-    
+
     def _batch_embed(
         self,
         texts: List[str],
@@ -380,16 +382,15 @@ class SemanticEntityDeduplicator:
         """Generate embeddings in batches."""
         if not texts:
             return np.array([])
-        
+
         embeddings_list = []
-        
+
         for i in range(0, len(texts), batch_size):
-            batch = texts[i:i + batch_size]
+            batch = texts[i : i + batch_size]
             batch_embeddings = embedding_fn(batch)
             embeddings_list.append(batch_embeddings)
-        
-        return np.vstack(embeddings_list)
 
+        return np.vstack(embeddings_list)
 
 
 def create_semantic_deduplicator(
@@ -399,34 +400,34 @@ def create_semantic_deduplicator(
 ) -> "SemanticEntityDeduplicator":
     """
     Factory function to create a semantic entity deduplicator with optimal defaults.
-    
+
     **Recommended Usage**: Always use `use_cache=True` (default) for production workloads.
     Embedding caching provides 50-65% latency reduction for repeated entity processing.
-    
+
     Args:
         use_cache: Enable embedding caching (default: True, RECOMMENDED)
         cache_size: Maximum cache entries (default: 1000)
         min_string_similarity: Minimum string similarity (0-1) for evidence (default: 0.3)
-        
+
     Returns:
         SemanticEntityDeduplicator: Configured deduplicator (cached or uncached)
-        
+
     Performance Impact:
         - Cached: 400-600ms for 100 entities (warm cache)
         - Uncached: 1,400-3,500ms for 100 entities
         - Cache hit rate: 70-90% for typical ontology refinement workflows
-    
+
     Examples:
         >>> # Recommended: Create with caching enabled (default)
         >>> dedup = create_semantic_deduplicator()
         >>> suggestions = dedup.deduplicate(entities)
-        
+
         >>> # Custom cache size for large ontology workloads
         >>> dedup = create_semantic_deduplicator(cache_size=5000)
-        
+
         >>> # Disable caching for one-time batch processing
         >>> dedup = create_semantic_deduplicator(use_cache=False)
-    
+
     See Also:
         - CachedSemanticEntityDeduplicator: Direct access to cached implementation
         - SemanticEntityDeduplicator: Base uncached implementation
@@ -436,6 +437,7 @@ def create_semantic_deduplicator(
         from ipfs_datasets_py.optimizers.graphrag.semantic_deduplicator_cached import (
             CachedSemanticEntityDeduplicator,
         )
+
         return CachedSemanticEntityDeduplicator(
             min_string_similarity=min_string_similarity,
             cache_size=cache_size,

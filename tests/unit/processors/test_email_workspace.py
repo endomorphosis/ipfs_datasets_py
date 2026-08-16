@@ -14,21 +14,21 @@ def test_import_local_eml_directory_materializes_manifest_and_attachments(tmp_pa
     source_dir = tmp_path / "emails"
     source_dir.mkdir()
     sample_eml = (
-        b"From: \"Tilton, Kati\" <KTilton@clackamas.us>\r\n"
+        b'From: "Tilton, Kati" <KTilton@clackamas.us>\r\n'
         b"To: benjamin barber <starworks5@gmail.com>\r\n"
         b"Subject: RE: HCV Orientation\r\n"
         b"Date: Thu, 26 Mar 2026 09:36:46 -0700\r\n"
         b"Message-ID: <msg-1@example.com>\r\n"
         b"MIME-Version: 1.0\r\n"
-        b"Content-Type: multipart/mixed; boundary=\"sep\"\r\n"
+        b'Content-Type: multipart/mixed; boundary="sep"\r\n'
         b"\r\n"
         b"--sep\r\n"
         b"Content-Type: text/plain; charset=utf-8\r\n"
         b"\r\n"
         b"Please see the attached denial for the living room accommodation.\r\n"
         b"--sep\r\n"
-        b"Content-Type: text/plain; name=\"note.txt\"\r\n"
-        b"Content-Disposition: attachment; filename=\"note.txt\"\r\n"
+        b'Content-Type: text/plain; name="note.txt"\r\n'
+        b'Content-Disposition: attachment; filename="note.txt"\r\n'
         b"\r\n"
         b"Attachment text.\r\n"
         b"--sep--\r\n"
@@ -138,6 +138,20 @@ def test_merge_email_manifests_deduplicates_by_message_id(tmp_path: Path) -> Non
 def test_canonical_email_corpus_paths_builds_expected_layout(tmp_path: Path) -> None:
     paths = canonical_email_corpus_paths(repo_root=tmp_path, case_slug="master-email")
 
-    assert paths.manifest_path == tmp_path / "evidence" / "email_imports" / "master-email" / "email_import_manifest.json"
-    assert paths.graphrag_dir == tmp_path / "evidence" / "email_imports" / "master-email" / "graphrag"
-    assert paths.duckdb_path == tmp_path / "evidence" / "email_imports" / "master-email" / "graphrag" / "duckdb" / "email_search.duckdb"
+    assert (
+        paths.manifest_path
+        == tmp_path / "evidence" / "email_imports" / "master-email" / "email_import_manifest.json"
+    )
+    assert (
+        paths.graphrag_dir == tmp_path / "evidence" / "email_imports" / "master-email" / "graphrag"
+    )
+    assert (
+        paths.duckdb_path
+        == tmp_path
+        / "evidence"
+        / "email_imports"
+        / "master-email"
+        / "graphrag"
+        / "duckdb"
+        / "email_search.duckdb"
+    )

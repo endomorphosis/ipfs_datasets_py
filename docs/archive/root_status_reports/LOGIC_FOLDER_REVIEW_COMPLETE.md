@@ -85,7 +85,7 @@ These are placeholders for optional advanced integrations. Basic functionality w
 
 **Warning Message:**
 ```python
-message="CEC proving not yet implemented in bridge"
+message = "CEC proving not yet implemented in bridge"
 ```
 
 **Note:** This is an **informational warning**, not an error. The bridge provides CEC rules to TDFOL.
@@ -114,7 +114,7 @@ return ProofResult(
     status=ProofStatus.UNKNOWN,
     formula=goal,
     method="modal_tableaux",
-    message="Modal tableaux integration not yet implemented"
+    message="Modal tableaux integration not yet implemented",
 )
 ```
 

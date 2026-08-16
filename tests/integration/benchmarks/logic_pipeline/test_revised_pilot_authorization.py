@@ -36,10 +36,7 @@ CANDIDATES = ("A2", "A9")
 
 def _semantic_calibration() -> dict[str, object]:
     body: dict[str, object] = {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "semantic-calibration-report.v2"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.semantic-calibration-report.v2"),
         "semantic_protocol_cid": SEMANTIC_PROTOCOL_V2_CID,
         "status": "complete",
         "coverage": {
@@ -66,9 +63,7 @@ def _rescue_manifest(split: Split) -> CausalRescueManifestV2:
     case = CausalRescueCaseV2(
         case_id=case_id,
         split=split,
-        source_cid=cid_for_bytes(
-            f"Synthetic {split.value} source.".encode("utf-8")
-        ),
+        source_cid=cid_for_bytes(f"Synthetic {split.value} source.".encode("utf-8")),
         obligation_id=f"{case_id}-obligation",
         proof_obligation={
             "kind": "theorem",
@@ -84,15 +79,11 @@ def _rescue_manifest(split: Split) -> CausalRescueManifestV2:
         ),
     )
     return CausalRescueManifestV2(
-        plan_cid=cid_for_dag_json(
-            {"kind": "synthetic-plan", "split": split.value}
-        ),
+        plan_cid=cid_for_dag_json({"kind": "synthetic-plan", "split": split.value}),
         source_manifest_cid=cid_for_dag_json(
             {"kind": "synthetic-source-manifest", "split": split.value}
         ),
-        case_manifest_sha256=(
-            "c" * 64 if split is Split.PILOT else "d" * 64
-        ),
+        case_manifest_sha256=("c" * 64 if split is Split.PILOT else "d" * 64),
         cases=(case,),
     )
 
@@ -123,9 +114,7 @@ def _partial_matrix(calibration_cid: str) -> g230.G210ReceiptMatrix:
                 _rescue_manifest(Split.PILOT),
                 _rescue_manifest(Split.DEVELOPMENT),
             ),
-            key=lambda item: next(
-                case.split.value for case in item.cases
-            ),
+            key=lambda item: next(case.split.value for case in item.cases),
         )
     )
     profiles = tuple(
@@ -149,31 +138,21 @@ def _replacement_seal(
     protocols = {
         "access_policy": cid_for_dag_json({"policy": "synthetic-access"}),
         "causal_proof": CAUSAL_PROOF_PROTOCOL_V2_CID,
-        "holdout_execution": cid_for_dag_json(
-            {"policy": "synthetic-holdout-execution"}
-        ),
-        "independent_authorship": cid_for_dag_json(
-            {"attestation": "synthetic-authorship"}
-        ),
-        "independent_review": cid_for_dag_json(
-            {"attestation": "synthetic-review"}
-        ),
+        "holdout_execution": cid_for_dag_json({"policy": "synthetic-holdout-execution"}),
+        "independent_authorship": cid_for_dag_json({"attestation": "synthetic-authorship"}),
+        "independent_review": cid_for_dag_json({"attestation": "synthetic-review"}),
         "semantic": semantic_protocol_cid,
     }
     body = {
         "schema": REPLACEMENT_HOLDOUT_SEAL_SCHEMA,
-        "sealed_manifest_cid": cid_for_bytes(
-            b"opaque synthetic replacement manifest"
-        ),
+        "sealed_manifest_cid": cid_for_bytes(b"opaque synthetic replacement manifest"),
         "case_count": 4,
         "strata_counts": {"logic": 2, "safety": 2},
         "protocol_cids": protocols,
     }
-    body["access_ledger_authority_cid"] = (
-        replacement_holdout_ledger_authority_cid(
-            body["sealed_manifest_cid"],  # type: ignore[arg-type]
-            "/synthetic-independent-custody/replacement-access.jsonl",
-        )
+    body["access_ledger_authority_cid"] = replacement_holdout_ledger_authority_cid(
+        body["sealed_manifest_cid"],  # type: ignore[arg-type]
+        "/synthetic-independent-custody/replacement-access.jsonl",
     )
     return ReplacementHoldoutSeal(
         schema=REPLACEMENT_HOLDOUT_SEAL_SCHEMA,
@@ -181,9 +160,7 @@ def _replacement_seal(
         case_count=4,
         strata_counts=body["strata_counts"],  # type: ignore[arg-type]
         protocol_cids=protocols,
-        access_ledger_authority_cid=body[
-            "access_ledger_authority_cid"
-        ],  # type: ignore[arg-type]
+        access_ledger_authority_cid=body["access_ledger_authority_cid"],  # type: ignore[arg-type]
         seal_contract_cid=cid_for_dag_json(body),
     )
 
@@ -208,9 +185,7 @@ def _valid_public_inputs() -> dict[str, object]:
         source_freeze_receipt_cid=source.receipt_cid,  # type: ignore[arg-type]
         legacy_environment_sha256=ENVIRONMENT_SHA256,
         identity_cids={
-            key: cid_for_dag_json(
-                {"identity": key, "synthetic_test_only": True}
-            )
+            key: cid_for_dag_json({"identity": key, "synthetic_test_only": True})
             for key in g230.G230_IDENTITY_KEYS
         },
         bound_artifact_cids={
@@ -228,9 +203,7 @@ def _valid_public_inputs() -> dict[str, object]:
             "passed": True,
             "complete": True,
             "value": 1_000_000,
-            "receipt_cid": cid_for_dag_json(
-                {"gate_id": gate_id, "self_asserted": True}
-            ),
+            "receipt_cid": cid_for_dag_json({"gate_id": gate_id, "self_asserted": True}),
         }
         for gate_id in g230.G230_GATE_IDS
     }
@@ -257,18 +230,10 @@ def test_matrix_uses_authoritative_g210_manifest_and_profile_contracts() -> None
     restored = g230.G210ReceiptMatrix.from_dict(matrix.to_dict())
 
     assert restored.to_dict() == matrix.to_dict()
-    assert all(
-        isinstance(item, CausalRescueManifestV2)
-        for item in restored.rescue_manifests
-    )
-    assert all(
-        isinstance(item, CausalExecutionProfileV2)
-        for item in restored.execution_profiles
-    )
+    assert all(isinstance(item, CausalRescueManifestV2) for item in restored.rescue_manifests)
+    assert all(isinstance(item, CausalExecutionProfileV2) for item in restored.execution_profiles)
     assert restored.complete is False
-    assert restored.validation_issues == (
-        "incomplete_pilot_development_receipt_cartesian",
-    )
+    assert restored.validation_issues == ("incomplete_pilot_development_receipt_cartesian",)
 
 
 def test_matrix_rejects_opaque_cid_only_aggregate_assertions() -> None:
@@ -280,18 +245,10 @@ def test_matrix_rejects_opaque_cid_only_aggregate_assertions() -> None:
         match="does not replay",
     ):
         g230.G210ReceiptMatrix(
-            semantic_calibration_artifact_cid=(
-                matrix.semantic_calibration_artifact_cid
-            ),
+            semantic_calibration_artifact_cid=(matrix.semantic_calibration_artifact_cid),
             rescue_manifests=matrix.rescue_manifests,
             execution_profiles=matrix.execution_profiles,
-            causal_aggregates=(
-                {
-                    "aggregate_cid": cid_for_dag_json(
-                        {"self_asserted": True}
-                    )
-                },
-            ),
+            causal_aggregates=({"aggregate_cid": cid_for_dag_json({"self_asserted": True})},),
         )
 
 
@@ -305,9 +262,7 @@ def test_matrix_deeply_freezes_validated_aggregate_receipts(
                 _rescue_manifest(Split.PILOT),
                 _rescue_manifest(Split.DEVELOPMENT),
             ),
-            key=lambda item: next(
-                case.split.value for case in item.cases
-            ),
+            key=lambda item: next(case.split.value for case in item.cases),
         )
     )
     aggregate = {
@@ -320,16 +275,12 @@ def test_matrix_deeply_freezes_validated_aggregate_receipts(
                 "variant_id": "A0",
                 "compiler_reference_state": "absent",
                 "protocol_cid": CAUSAL_PROOF_PROTOCOL_V2_CID,
-                "variant_profile_cid": (
-                    CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
-                ),
+                "variant_profile_cid": (CAUSAL_PROOF_VARIANT_PROFILE_V2_CID),
                 "case_result": {
                     "split": "pilot",
                     "variant_id": "A0",
                     "cache_mode": "cold",
-                    "case_manifest_sha256": (
-                        manifests[1].case_manifest_sha256
-                    ),
+                    "case_manifest_sha256": (manifests[1].case_manifest_sha256),
                     "environment_sha256": ENVIRONMENT_SHA256,
                 },
                 "selection_receipt": {
@@ -354,10 +305,7 @@ def test_matrix_deeply_freezes_validated_aggregate_receipts(
         rescue_manifests=manifests,
         execution_profiles=tuple(
             sorted(
-                (
-                    _profile(item, str(semantic["artifact_cid"]))
-                    for item in manifests
-                ),
+                (_profile(item, str(semantic["artifact_cid"])) for item in manifests),
                 key=lambda item: item.rescue_manifest_cid,
             )
         ),
@@ -379,12 +327,8 @@ def test_matrix_deeply_freezes_validated_aggregate_receipts(
 
 def test_matrix_rejects_tampered_authoritative_manifest() -> None:
     semantic = _semantic_calibration()
-    value = deepcopy(
-        _partial_matrix(str(semantic["artifact_cid"])).to_dict()
-    )
-    value["rescue_manifests"][0]["cases"][0][
-        "selected_before_optional_outcomes"
-    ] = False
+    value = deepcopy(_partial_matrix(str(semantic["artifact_cid"])).to_dict())
+    value["rescue_manifests"][0]["cases"][0]["selected_before_optional_outcomes"] = False
 
     with pytest.raises(ValueError):
         g230.G210ReceiptMatrix.from_dict(value)
@@ -398,19 +342,10 @@ def test_self_asserted_passing_gates_cannot_mint_authorization() -> None:
     assert result.decision.holdout_authorized is False
     assert result.authorization is None
     assert result.authorization_cid is None
-    assert (
-        "source_recomputed_gate_validator_unavailable"
-        in result.decision.failures
-    )
-    assert (
-        "semantic_source_revalidation_capability_unavailable"
-        in result.decision.failures
-    )
+    assert "source_recomputed_gate_validator_unavailable" in result.decision.failures
+    assert "semantic_source_revalidation_capability_unavailable" in result.decision.failures
     assert "unvalidated_gate_receipts_ignored" in result.decision.failures
-    assert all(
-        value is None
-        for value in result.decision.gate_receipt_cids.values()
-    )
+    assert all(value is None for value in result.decision.gate_receipt_cids.values())
 
 
 def test_module_exposes_no_positive_authorization_builder() -> None:
@@ -448,18 +383,13 @@ def test_incomplete_matrix_reports_derived_missing_receipts() -> None:
     result = _evaluate(_valid_public_inputs())
 
     assert "g210_receipt_matrix_incomplete" in result.decision.failures
-    assert (
-        "g210:incomplete_pilot_development_receipt_cartesian"
-        in result.decision.failures
-    )
+    assert "g210:incomplete_pilot_development_receipt_cartesian" in result.decision.failures
 
 
 def test_wrong_replacement_protocol_fails_closed() -> None:
     inputs = _valid_public_inputs()
     inputs["replacement_holdout_seal"] = _replacement_seal(
-        semantic_protocol_cid=cid_for_dag_json(
-            {"protocol": "wrong-synthetic-semantic"}
-        )
+        semantic_protocol_cid=cid_for_dag_json({"protocol": "wrong-synthetic-semantic"})
     )
 
     result = _evaluate(inputs)

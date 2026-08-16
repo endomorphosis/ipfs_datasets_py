@@ -93,16 +93,13 @@ class RecordingRealizer:
 def _case(case_id: str = "case-1", source: str | None = None) -> MatrixCase:
     return MatrixCase(
         case_id=case_id,
-        source_text=source
-        or "Under policy, the agency shall file a notice for public review.",
+        source_text=source or "Under policy, the agency shall file a notice for public review.",
         allowed_atom_vocabulary=VOCABULARY,
         gold_ir=O_IR,
     )
 
 
-def _components() -> tuple[
-    dict[str, RecordingConstructor], dict[str, RecordingRealizer]
-]:
+def _components() -> tuple[dict[str, RecordingConstructor], dict[str, RecordingRealizer]]:
     constructors = {
         constructor_id: RecordingConstructor(f"{constructor_id}@1")
         for constructor_id in MATRIX_CONSTRUCTOR_IDS
@@ -140,21 +137,17 @@ def test_runs_all_eight_cells_with_one_identical_l1_fanout() -> None:
         constructors,
         realizers,
         constructor_configs={
-            constructor_id: {"temperature": 0}
-            for constructor_id in MATRIX_CONSTRUCTOR_IDS
+            constructor_id: {"temperature": 0} for constructor_id in MATRIX_CONSTRUCTOR_IDS
         },
         validators={"hammer_cvc5": validator, "lean": validator},
     )
     case_record = matrix.run_case(_case())
 
     assert len(case_record.coordinates) == 8
-    assert tuple(
-        coordinate.cell_id for coordinate in case_record.coordinates
-    ) == EXPECTED_CELL_IDS
+    assert tuple(coordinate.cell_id for coordinate in case_record.coordinates) == EXPECTED_CELL_IDS
     assert len(validator_calls) == 16
     assert all(
-        coordinate.validation["phase"]
-        == "post_hoc_after_candidate_binding"
+        coordinate.validation["phase"] == "post_hoc_after_candidate_binding"
         for coordinate in case_record.coordinates
     )
     assert all(
@@ -166,21 +159,18 @@ def test_runs_all_eight_cells_with_one_identical_l1_fanout() -> None:
         # T0 is constructed once and the same implementation is applied once
         # to each of the two independent T1 values.
         assert len(constructor.requests) == 3
-        assert sum(
-            request.source_text == _case().source_text
-            for request in constructor.requests
-        ) == 1
+        assert (
+            sum(request.source_text == _case().source_text for request in constructor.requests) == 1
+        )
         assert all(
-            request.to_payload()["config"] == {"temperature": 0}
-            for request in constructor.requests
+            request.to_payload()["config"] == {"temperature": 0} for request in constructor.requests
         )
 
     for realizer in realizers.values():
         assert len(realizer.requests) == 4
         assert all(request.canonical_ir == O_IR for request in realizer.requests)
         assert all(
-            set(request.to_payload())
-            == {"canonical_ir", "allowed_atom_vocabulary", "config"}
+            set(request.to_payload()) == {"canonical_ir", "allowed_atom_vocabulary", "config"}
             for request in realizer.requests
         )
 
@@ -192,9 +182,7 @@ def test_runs_all_eight_cells_with_one_identical_l1_fanout() -> None:
         ]
         assert len({coordinate.l1_cid for coordinate in fanout}) == 1
         assert all(
-            coordinate.diagnostics["l1_payload_cid"]
-            == coordinate.l1_cid
-            for coordinate in fanout
+            coordinate.diagnostics["l1_payload_cid"] == coordinate.l1_cid for coordinate in fanout
         )
 
 
@@ -225,10 +213,7 @@ def test_failures_remain_in_denominators_and_receive_loss_one() -> None:
         assert summary["scheduled_case_count"] == 2
         assert summary["success_count"] == 1
         assert summary["failure_count"] == 1
-        assert (
-            summary["denominator_policy"]
-            == "all_scheduled_cases_including_failures"
-        )
+        assert summary["denominator_policy"] == "all_scheduled_cases_including_failures"
 
     deterministic = result.summaries["typed_deontic__deterministic"]
     leanstral = result.summaries["typed_deontic__leanstral"]
@@ -271,22 +256,13 @@ def test_records_are_cid_addressed_at_coordinate_case_and_run_levels() -> None:
     ).run((_case(),))
     case_record = result.cases[0]
 
-    assert (
-        validate_cid(result.run_cid, codecs=("dag-json",)) == result.run_cid
-    )
-    assert (
-        validate_cid(case_record.record_cid, codecs=("dag-json",))
-        == case_record.record_cid
-    )
+    assert validate_cid(result.run_cid, codecs=("dag-json",)) == result.run_cid
+    assert validate_cid(case_record.record_cid, codecs=("dag-json",)) == case_record.record_cid
     for coordinate in case_record.coordinates:
         assert (
-            validate_cid(coordinate.candidate_cid, codecs=("dag-json",))
-            == coordinate.candidate_cid
+            validate_cid(coordinate.candidate_cid, codecs=("dag-json",)) == coordinate.candidate_cid
         )
-        assert (
-            validate_cid(coordinate.record_cid, codecs=("dag-json",))
-            == coordinate.record_cid
-        )
+        assert validate_cid(coordinate.record_cid, codecs=("dag-json",)) == coordinate.record_cid
         serialized = coordinate.to_dict()
         record_cid = serialized.pop("record_cid")
         assert cid_for_dag_json(serialized) == record_cid
@@ -304,9 +280,7 @@ def test_second_constructor_empty_output_is_reported_as_empty_l2() -> None:
         def construct(self, request: ConstructorRequest) -> ConstructorResult:
             self.requests.append(request)
             if len(self.requests) == 1:
-                return ConstructorResult(
-                    ComponentStatus.SUCCESS, canonical_ir=O_IR
-                )
+                return ConstructorResult(ComponentStatus.SUCCESS, canonical_ir=O_IR)
             return ConstructorResult(
                 ComponentStatus.FAILED,
                 failure_reason=FailureReason.EMPTY_L1,
@@ -314,9 +288,7 @@ def test_second_constructor_empty_output_is_reported_as_empty_l2() -> None:
             )
 
     constructor = EmptySecondConstructor("empty-second@1")
-    realizer = RecordingRealizer(
-        "realizer@1", "Agency shall file notice under policy."
-    )
+    realizer = RecordingRealizer("realizer@1", "Agency shall file notice under policy.")
     matrix = SemanticRoundTripMatrix(
         {"one": constructor},
         {"one": realizer},

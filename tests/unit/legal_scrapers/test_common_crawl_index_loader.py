@@ -5,7 +5,9 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from ipfs_datasets_py.processors.legal_scrapers.common_crawl_index_loader import CommonCrawlIndexLoader
+from ipfs_datasets_py.processors.legal_scrapers.common_crawl_index_loader import (
+    CommonCrawlIndexLoader,
+)
 
 
 def test_loader_prefers_env_local_index_root(monkeypatch, tmp_path) -> None:
@@ -315,7 +317,9 @@ def test_query_state_index_uses_state_query_sidecar_cache(tmp_path, monkeypatch)
     ).exists()
 
 
-def test_materialize_state_index_locally_downloads_parquet_and_queries_it(tmp_path, monkeypatch) -> None:
+def test_materialize_state_index_locally_downloads_parquet_and_queries_it(
+    tmp_path, monkeypatch
+) -> None:
     source_dir = tmp_path / "source"
     source_dir.mkdir()
     source_file = source_dir / "state_source.parquet"

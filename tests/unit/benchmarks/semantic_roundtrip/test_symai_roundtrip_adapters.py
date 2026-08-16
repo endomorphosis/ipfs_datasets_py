@@ -151,9 +151,7 @@ def test_generation_settings_match_direct_leanstral_per_role() -> None:
     realizer_client = RecordingClient([{"text": "Controller must delete."}])
 
     assert (
-        SyMAICanonicalConstructor(constructor_client).construct(
-            constructor_request()
-        ).status
+        SyMAICanonicalConstructor(constructor_client).construct(constructor_request()).status
         is ComponentStatus.SUCCESS
     )
     assert (
@@ -182,9 +180,7 @@ def test_symai_constructor_returns_exact_canonical_rules_for_l1_and_l2() -> None
 
     l1 = constructor.construct(constructor_request())
     l2 = constructor.construct(
-        constructor_request(
-            "The controller must delete records after thirty days."
-        )
+        constructor_request("The controller must delete records after thirty days.")
     )
 
     assert l1.canonical_ir == IR
@@ -200,9 +196,7 @@ def test_symai_constructor_returns_exact_canonical_rules_for_l1_and_l2() -> None
 
 
 def test_realizer_is_source_withheld_and_does_not_serialize_public_config() -> None:
-    client = RecordingClient(
-        [{"text": "The controller must delete records after 30 days."}]
-    )
+    client = RecordingClient([{"text": "The controller must delete records after 30 days."}])
     realizer = SyMAICanonicalRealizer(client)
     source_marker = "PRIVATE_SOURCE_MUST_NEVER_REACH_REVERSE"
     result = realizer.realize(
@@ -260,9 +254,9 @@ def test_receipt_reports_route_retry_cache_and_incremental_attribution() -> None
 def test_route_or_retry_or_cache_drift_is_a_capability_failure(
     metadata: dict[str, object],
 ) -> None:
-    result = SyMAICanonicalConstructor(
-        RecordingClient([IR_DICT], metadata=metadata)
-    ).construct(constructor_request())
+    result = SyMAICanonicalConstructor(RecordingClient([IR_DICT], metadata=metadata)).construct(
+        constructor_request()
+    )
 
     assert result.status is ComponentStatus.FAILED
     assert result.failure_reason is FailureReason.CAPABILITY_UNAVAILABLE
@@ -285,10 +279,7 @@ def test_coarse_forward_only_response_is_excluded_from_ranking() -> None:
     assert receipt is not None
     assert receipt.canonical_contract_validated is False
     assert receipt.ranking_eligible is False
-    assert (
-        receipt.ranking_exclusion_reason
-        == "coarse_or_noncanonical_forward_response"
-    )
+    assert receipt.ranking_exclusion_reason == "coarse_or_noncanonical_forward_response"
 
 
 def test_default_client_forwards_the_frozen_settings_to_symai_router() -> None:
@@ -318,15 +309,13 @@ def test_default_client_forwards_the_frozen_settings_to_symai_router() -> None:
 
 
 def test_reverse_contract_and_terminal_failures_are_fail_closed() -> None:
-    extra = SyMAICanonicalRealizer(
-        RecordingClient([{"text": "ok", "source": "leak"}])
-    ).realize(realizer_request())
-    blank = SyMAICanonicalRealizer(
-        RecordingClient([{"text": "   "}])
-    ).realize(realizer_request())
-    timeout = SyMAICanonicalRealizer(
-        RecordingClient([LeanstralTimeoutError("late")])
-    ).realize(realizer_request())
+    extra = SyMAICanonicalRealizer(RecordingClient([{"text": "ok", "source": "leak"}])).realize(
+        realizer_request()
+    )
+    blank = SyMAICanonicalRealizer(RecordingClient([{"text": "   "}])).realize(realizer_request())
+    timeout = SyMAICanonicalRealizer(RecordingClient([LeanstralTimeoutError("late")])).realize(
+        realizer_request()
+    )
 
     assert extra.failure_reason is FailureReason.INVALID_OUTPUT
     assert blank.failure_reason is FailureReason.BLANK_T1

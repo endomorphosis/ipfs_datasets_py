@@ -192,7 +192,7 @@ Use specific exception types:
 from ipfs_datasets_py.knowledge_graphs.exceptions import (
     EntityExtractionError,
     QueryError,
-    StorageError
+    StorageError,
 )
 
 try:
@@ -209,6 +209,7 @@ except EntityExtractionError as e:
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 def process_graph(graph):
     logger.info(f"Processing graph with {len(graph.entities)} entities")
@@ -255,8 +256,10 @@ for document in documents:
     else:
         kg_combined.merge(doc_kg)  # Automatic deduplication
 
-print(f"Combined graph: {len(kg_combined.entities)} entities, "
-      f"{len(kg_combined.relationships)} relationships")
+print(
+    f"Combined graph: {len(kg_combined.entities)} entities, "
+    f"{len(kg_combined.relationships)} relationships"
+)
 ```
 
 ### Extraction Pipeline Pattern
@@ -268,16 +271,16 @@ def extraction_pipeline(text: str):
     """Complete extraction pipeline with validation."""
     # 1. Extract
     kg = extractor.extract_knowledge_graph(text, extraction_temperature=0.7)
-    
+
     # 2. Validate
     if validator:
         result = validator.validate_graph(kg)
-        if result['coverage'] < 0.5:
+        if result["coverage"] < 0.5:
             logger.warning(f"Low validation coverage: {result['coverage']:.1%}")
-    
+
     # 3. Enrich
     kg = enrich_with_types(kg)
-    
+
     # 4. Query/Export
     return kg
 ```
@@ -293,14 +296,14 @@ custom_patterns = [
         "pattern": r"(\w+)\s+develops?\s+(\w+)",
         "source_type": "person",
         "target_type": "technology",
-        "confidence": 0.85
+        "confidence": 0.85,
     },
     {
         "name": "founded",
         "pattern": r"(\w+)\s+founded\s+(\w+)",
         "source_type": "person",
-        "target_type": "organization"
-    }
+        "target_type": "organization",
+    },
 ]
 
 extractor = KnowledgeGraphExtractor(relation_patterns=custom_patterns)
@@ -321,21 +324,17 @@ Choose temperature based on use case:
 kg = extractor.extract_knowledge_graph(
     text,
     extraction_temperature=0.3,  # Conservative
-    structure_temperature=0.2
+    structure_temperature=0.2,
 )
 
 # Balanced extraction (general content)
-kg = extractor.extract_knowledge_graph(
-    text,
-    extraction_temperature=0.5,
-    structure_temperature=0.5
-)
+kg = extractor.extract_knowledge_graph(text, extraction_temperature=0.5, structure_temperature=0.5)
 
 # Comprehensive extraction (research papers)
 kg = extractor.extract_knowledge_graph(
     text,
     extraction_temperature=0.9,  # Detailed
-    structure_temperature=0.8
+    structure_temperature=0.8,
 )
 ```
 
@@ -346,14 +345,14 @@ Process large document collections efficiently:
 ```python
 from concurrent.futures import ProcessPoolExecutor
 
+
 def extract_parallel(documents, max_workers=4):
     """Parallel extraction with progress tracking."""
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {
-            executor.submit(extractor.extract_knowledge_graph, doc.text): doc
-            for doc in documents
+            executor.submit(extractor.extract_knowledge_graph, doc.text): doc for doc in documents
         }
-        
+
         results = []
         for future in concurrent.futures.as_completed(futures):
             try:
@@ -361,7 +360,7 @@ def extract_parallel(documents, max_workers=4):
                 results.append(kg)
             except Exception as e:
                 logger.error(f"Extraction failed: {e}")
-        
+
         return results
 ```
 
@@ -374,21 +373,23 @@ Implement multi-level caching:
 ```python
 from functools import lru_cache
 
+
 # L1: Memory cache (fast)
 @lru_cache(maxsize=100)
 def cached_query(query_hash):
     return engine.execute_cypher(query)
 
+
 # L2: Disk cache (persistent)
 def query_with_disk_cache(query):
     cache_key = hashlib.md5(query.encode()).hexdigest()
     cache_file = f".cache/queries/{cache_key}.json"
-    
+
     if os.path.exists(cache_file):
         return json.load(open(cache_file))
-    
+
     result = engine.execute_cypher(query)
-    json.dump(result, open(cache_file, 'w'))
+    json.dump(result, open(cache_file, "w"))
     return result
 ```
 
@@ -398,20 +399,10 @@ Tune weights for your use case:
 
 ```python
 # Semantic-focused (entity similarity)
-result = hybrid.search(
-    "machine learning",
-    vector_weight=0.8,
-    graph_weight=0.2,
-    max_hops=1
-)
+result = hybrid.search("machine learning", vector_weight=0.8, graph_weight=0.2, max_hops=1)
 
 # Structure-focused (graph relationships)
-result = hybrid.search(
-    "machine learning",
-    vector_weight=0.2,
-    graph_weight=0.8,
-    max_hops=3
-)
+result = hybrid.search("machine learning", vector_weight=0.2, graph_weight=0.8, max_hops=3)
 ```
 
 ### Performance Profiling
@@ -429,7 +420,7 @@ profiler.enable()
 kg = extractor.extract_knowledge_graph(text)
 
 profiler.disable()
-stats = pstats.Stats(profiler).sort_stats('cumulative')
+stats = pstats.Stats(profiler).sort_stats("cumulative")
 stats.print_stats(20)  # Top 20 functions
 ```
 
@@ -452,6 +443,7 @@ def validate_extraction_input(text: str, max_length: int = 1_000_000) -> bool:
         raise ValueError(f"Text exceeds max length of {max_length}")
     return True
 
+
 # Use in extraction
 validate_extraction_input(text)
 kg = extractor.extract_knowledge_graph(text)
@@ -465,19 +457,17 @@ Use type hints consistently:
 from typing import List, Dict, Optional
 from ipfs_datasets_py.knowledge_graphs.extraction import Entity, Relationship
 
-def merge_graphs(
-    graphs: List[KnowledgeGraph],
-    deduplicate: bool = True
-) -> KnowledgeGraph:
+
+def merge_graphs(graphs: List[KnowledgeGraph], deduplicate: bool = True) -> KnowledgeGraph:
     """Merge multiple knowledge graphs.
-    
+
     Args:
         graphs: List of graphs to merge
         deduplicate: Whether to deduplicate entities
-        
+
     Returns:
         Merged knowledge graph
-        
+
     Raises:
         ValueError: If graphs list is empty
         TypeError: If any item is not a KnowledgeGraph
@@ -494,7 +484,7 @@ from ipfs_datasets_py.knowledge_graphs.exceptions import (
     ExtractionError,
     ValidationError,
     QueryError,
-    StorageError
+    StorageError,
 )
 
 try:
@@ -571,7 +561,7 @@ kg = extractor.extract_knowledge_graph(large_text)  # Memory intensive
 # ✅ Correct
 kg = extractor.extract_enhanced_knowledge_graph(
     large_text,
-    use_chunking=True  # Automatic chunking
+    use_chunking=True,  # Automatic chunking
 )
 ```
 
@@ -633,17 +623,17 @@ module/
 
 ```python
 # Extraction methods
-extract_*()          # Basic extraction
-extract_enhanced_*() # Advanced extraction with features
+extract_ * ()  # Basic extraction
+extract_enhanced_ * ()  # Advanced extraction with features
 
 # Query methods
-get_*_by_*()        # Filtering/lookup
-find_*()            # Search operations
-list_*()            # List all items
+get_ * _by_ * ()  # Filtering/lookup
+find_ * ()  # Search operations
+list_ * ()  # List all items
 
 # Validation methods
-validate_*()        # Validation operations
-check_*()           # Boolean checks
+validate_ * ()  # Validation operations
+check_ * ()  # Boolean checks
 ```
 
 ### Configuration
@@ -652,10 +642,10 @@ Use dictionaries for optional configuration:
 
 ```python
 config = {
-    'extraction_temperature': 0.7,
-    'structure_temperature': 0.6,
-    'enable_validation': True,
-    'cache_enabled': True
+    "extraction_temperature": 0.7,
+    "structure_temperature": 0.6,
+    "enable_validation": True,
+    "cache_enabled": True,
 }
 
 extractor = KnowledgeGraphExtractor(**config)
@@ -721,8 +711,7 @@ for entity in list(kg.entities.values())[:10]:
 
 # 3. Check relationships
 for rel in list(kg.relationships.values())[:5]:
-    print(f"  {rel.source_entity.name} --[{rel.relationship_type}]--> "
-          f"{rel.target_entity.name}")
+    print(f"  {rel.source_entity.name} --[{rel.relationship_type}]--> {rel.target_entity.name}")
 
 # 4. Test path finding
 if len(kg.entities) >= 2:
@@ -741,14 +730,13 @@ import sys
 # Check sizes
 print(f"Entity count: {len(kg.entities)}")
 print(f"Relationship count: {len(kg.relationships)}")
-print(f"Avg entity size: {sum(sys.getsizeof(e) for e in kg.entities.values()) / len(kg.entities):.0f} bytes")
+print(
+    f"Avg entity size: {sum(sys.getsizeof(e) for e in kg.entities.values()) / len(kg.entities):.0f} bytes"
+)
 
 # Use chunking for large documents
 if len(text) > 10000:
-    kg = extractor.extract_enhanced_knowledge_graph(
-        text,
-        use_chunking=True
-    )
+    kg = extractor.extract_enhanced_knowledge_graph(text, use_chunking=True)
 ```
 
 #### Scenario 4: Validation Failures
@@ -776,14 +764,11 @@ import logging
 # Configure detailed logging
 logging.basicConfig(
     level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('kg_debug.log'),
-        logging.StreamHandler()
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("kg_debug.log"), logging.StreamHandler()],
 )
 
-logger = logging.getLogger('ipfs_datasets_py.knowledge_graphs')
+logger = logging.getLogger("ipfs_datasets_py.knowledge_graphs")
 ```
 
 ### Performance Debugging
@@ -800,11 +785,12 @@ print(f"Rate: {len(kg.entities) / elapsed:.1f} entities/sec")
 
 # Profile with cProfile
 import cProfile
+
 profiler = cProfile.Profile()
 profiler.enable()
 kg = extractor.extract_knowledge_graph(text)
 profiler.disable()
-profiler.print_stats(sort='cumulative')
+profiler.print_stats(sort="cumulative")
 ```
 
 ---
@@ -943,16 +929,15 @@ Watch for:
 ```python
 import warnings
 
+
 def old_function():
     """Deprecated function.
-    
+
     .. deprecated:: 2.1.0
         Use :func:`new_function` instead.
     """
     warnings.warn(
-        "old_function is deprecated, use new_function instead",
-        DeprecationWarning,
-        stacklevel=2
+        "old_function is deprecated, use new_function instead", DeprecationWarning, stacklevel=2
     )
     return new_function()
 ```

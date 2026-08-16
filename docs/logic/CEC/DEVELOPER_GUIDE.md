@@ -360,15 +360,18 @@ def test_obligation_creation():
 import pytest
 from ipfs_datasets_py.logic.CEC.native import DCECContainer, TheoremProver
 
+
 @pytest.fixture
 def container():
     """Provide a fresh DCEC container."""
     return DCECContainer()
 
+
 @pytest.fixture
 def prover():
     """Provide a fresh theorem prover."""
     return TheoremProver(enable_cache=False)  # Disable cache for tests
+
 
 # Use in tests
 def test_with_fixtures(container, prover):
@@ -392,16 +395,20 @@ Follow **PEP 8** with these conventions:
 class DCECContainer:
     pass
 
+
 # Functions/methods: snake_case
 def create_obligation(agent: str, action: str) -> str:
     pass
 
+
 # Constants: UPPER_SNAKE_CASE
 MAX_PROOF_STEPS = 1000
+
 
 # Private: leading underscore
 def _internal_helper():
     pass
+
 
 # Very private: double leading underscore
 def __internal_only():
@@ -415,21 +422,18 @@ def __internal_only():
 ```python
 from typing import List, Dict, Optional, Union, Set
 
-def prove_theorem(
-    axioms: List[str],
-    goal: str,
-    max_steps: int = 1000
-) -> ProofResult:
+
+def prove_theorem(axioms: List[str], goal: str, max_steps: int = 1000) -> ProofResult:
     """Prove a theorem.
-    
+
     Args:
         axioms: List of axiom formulas
         goal: Goal formula to prove
         max_steps: Maximum proof steps (default: 1000)
-    
+
     Returns:
         ProofResult with is_proven, proof_steps, etc.
-    
+
     Raises:
         ValueError: If goal is invalid
         ProofError: If proof fails unexpectedly
@@ -741,7 +745,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Or for specific module
-logging.getLogger('ipfs_datasets_py.logic.CEC.native').setLevel(logging.DEBUG)
+logging.getLogger("ipfs_datasets_py.logic.CEC.native").setLevel(logging.DEBUG)
 
 # Use in code
 from ipfs_datasets_py.logic.CEC.native import TheoremProver
@@ -758,7 +762,9 @@ for step in result.proof_steps:
 
 ```python
 # Add breakpoint
-import pdb; pdb.set_trace()
+import pdb
+
+pdb.set_trace()
 
 # Or use built-in breakpoint() (Python 3.7+)
 breakpoint()
@@ -861,10 +867,12 @@ class DeonticOperator(Enum):
     # ... existing operators
     LIBERTY = "L"  # New operator
 
+
 # 2. Add formula class if needed
 @dataclass
 class LibertyFormula(Formula):
     inner_formula: Formula
+
 
 # 3. Add container method (dcec_namespace.py)
 class DCECContainer:
@@ -874,11 +882,13 @@ class DCECContainer:
         self.add_statement(formula)
         return formula
 
+
 # 4. Add tests
 def test_liberty_creation():
     container = DCECContainer()
     liberty = container.create_liberty("vote")
     assert liberty == "L(vote)"
+
 
 # 5. Update documentation
 # - API_REFERENCE.md
@@ -896,6 +906,7 @@ class InferenceEngine:
         # Apply rule logic
         # Return result
 
+
 # 2. Register rule in TheoremProver
 class TheoremProver:
     def __init__(self):
@@ -904,12 +915,14 @@ class TheoremProver:
             self.engine.apply_liberty_rule,
         ]
 
+
 # 3. Add tests
 def test_liberty_inference():
     prover = TheoremProver()
     prover.add_axiom("L(vote)")
     result = prover.prove("P(vote)")
     assert result.is_proven
+
 
 # 4. Update documentation
 ```
@@ -926,11 +939,13 @@ class NaturalLanguageConverter:
             (r"(\w+) is free to (\w+)", r"L(\2(\1))"),
         ]
 
+
 # 2. Add tests
 def test_liberty_conversion():
     converter = NaturalLanguageConverter()
     dcec = converter.english_to_dcec("Alice is free to vote")
     assert dcec == "L(vote(Alice))"
+
 
 # 3. Update documentation
 ```

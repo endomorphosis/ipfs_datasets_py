@@ -45,9 +45,7 @@ def _canonical_state(rows: int = 800, width: int = 64) -> ModalAutoencoderTraini
     randomizer = random.Random(103)
     state = ModalAutoencoderTrainingState(
         decoded_embeddings={
-            f"sample-{row:05d}": [
-                randomizer.uniform(-1.0, 1.0) for _ in range(width)
-            ]
+            f"sample-{row:05d}": [randomizer.uniform(-1.0, 1.0) for _ in range(width)]
             for row in range(rows)
         },
         family_logits={
@@ -59,8 +57,7 @@ def _canonical_state(rows: int = 800, width: int = 64) -> ModalAutoencoderTraini
         },
         feature_embedding_weights={
             f"feature-{row:04d}": [
-                math.sin((row + 1) * (column + 1) / 37.0)
-                for column in range(width)
+                math.sin((row + 1) * (column + 1) / 37.0) for column in range(width)
             ]
             for row in range(100)
         },
@@ -69,9 +66,7 @@ def _canonical_state(rows: int = 800, width: int = 64) -> ModalAutoencoderTraini
             "unless": {"cec": 0.625, "tdfol": 0.375},
         },
         proof_auxiliary_head_logits={
-            "obligation_family": {
-                "__global__": {"mandatory": 0.75, "permissive": -0.25}
-            }
+            "obligation_family": {"__global__": {"mandatory": 0.75, "permissive": -0.25}}
         },
         proof_feedback_version_fingerprint="hammer-toolchain-v1",
         applied_proof_feedback_ids=["proof-a"],
@@ -112,9 +107,7 @@ def test_float32_round_trip_is_exact_at_declared_precision() -> None:
         decoded_embeddings={"sample": [0.123456789, -0.987654321, 1.0 / 3.0]},
         family_logits={"sample": {"deontic": 0.777777777}},
     )
-    loaded = deserialize_checkpoint(
-        serialize_checkpoint(state, float_precision="float32")
-    )
+    loaded = deserialize_checkpoint(serialize_checkpoint(state, float_precision="float32"))
 
     expected = [quantize_float(value, "float32") for value in state.decoded_embeddings["sample"]]
     assert loaded.manifest.float_precision == "float32"

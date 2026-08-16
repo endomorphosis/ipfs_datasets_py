@@ -13,14 +13,16 @@ pin status, and managing replication policies.
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.ipfs_cluster_tools import (
-    cluster_pin, cluster_status, list_cluster_peers
+    cluster_pin,
+    cluster_status,
+    list_cluster_peers,
 )
 
 # Pin content cluster-wide with replication factor
 result = await cluster_pin(
     cid="QmXxx...",
-    replication_factor=3,    # -1 for all nodes
-    name="my-dataset-v1"
+    replication_factor=3,  # -1 for all nodes
+    name="my-dataset-v1",
 )
 
 # Check pin status across all nodes

@@ -134,7 +134,9 @@ class LegalIRBuildDigest:
                 or data.get("id")
                 or ""
             ),
-            sha256=str(data.get("sha256") or data.get("digest") or data.get("content_sha256") or ""),
+            sha256=str(
+                data.get("sha256") or data.get("digest") or data.get("content_sha256") or ""
+            ),
             role=str(data.get("role") or default_role or "artifact"),
             byte_length=int(data.get("byte_length") or data.get("size") or 0),
             path=str(data.get("path") or ""),
@@ -287,7 +289,9 @@ class LegalIRBuildManifest:
             ),
             schema_versions=_mapping(data.get("schema_versions")),
             pass_graph=_mapping(data.get("pass_graph")),
-            model_export_ids=tuple(_mapping(item) for item in _sequence(data.get("model_export_ids"))),
+            model_export_ids=tuple(
+                _mapping(item) for item in _sequence(data.get("model_export_ids"))
+            ),
             proof_tool_versions=tuple(
                 _mapping(item) for item in _sequence(data.get("proof_tool_versions"))
             ),
@@ -312,7 +316,9 @@ class LegalIRBuildManifest:
                 for item in _sequence(data.get("diagnostics"))
             ),
             metadata=_mapping(data.get("metadata")),
-            schema_version=str(data.get("schema_version") or LEGAL_IR_BUILD_MANIFEST_SCHEMA_VERSION),
+            schema_version=str(
+                data.get("schema_version") or LEGAL_IR_BUILD_MANIFEST_SCHEMA_VERSION
+            ),
         )
 
     def canonical_json(self, *, include_manifest_sha256: bool = False) -> str:
@@ -349,7 +355,9 @@ def build_legal_ir_build_manifest(
     source_digests = _artifact_digests(sources, role="source")
     cache_digests = _artifact_digests(caches or (), role="cache")
     output_digests = _artifact_digests(outputs or (), role="output")
-    pass_run_payload = pass_run.to_dict() if isinstance(pass_run, LegalIRPassRun) else _mapping(pass_run)
+    pass_run_payload = (
+        pass_run.to_dict() if isinstance(pass_run, LegalIRPassRun) else _mapping(pass_run)
+    )
     pass_final_digest = str(pass_run_payload.get("final_digest") or "")
     pass_replay_digest = str(pass_run_payload.get("replay_digest") or "")
     if not output_digests and pass_final_digest:
@@ -466,7 +474,11 @@ def validate_legal_ir_build_manifest(
 ) -> LegalIRBuildManifestValidationResult:
     """Validate that a manifest has the fields required for deterministic replay."""
 
-    value = manifest if isinstance(manifest, LegalIRBuildManifest) else LegalIRBuildManifest.from_dict(manifest)
+    value = (
+        manifest
+        if isinstance(manifest, LegalIRBuildManifest)
+        else LegalIRBuildManifest.from_dict(manifest)
+    )
     diagnostics: list[LegalIRBuildDiagnostic] = []
     if value.schema_version != LEGAL_IR_BUILD_MANIFEST_SCHEMA_VERSION:
         diagnostics.append(
@@ -596,8 +608,12 @@ def legal_ir_build_manifests_equivalent(
 ) -> bool:
     """Return true when two manifests bind equivalent inputs and outputs."""
 
-    left_manifest = left if isinstance(left, LegalIRBuildManifest) else LegalIRBuildManifest.from_dict(left)
-    right_manifest = right if isinstance(right, LegalIRBuildManifest) else LegalIRBuildManifest.from_dict(right)
+    left_manifest = (
+        left if isinstance(left, LegalIRBuildManifest) else LegalIRBuildManifest.from_dict(left)
+    )
+    right_manifest = (
+        right if isinstance(right, LegalIRBuildManifest) else LegalIRBuildManifest.from_dict(right)
+    )
     return left_manifest.comparable_dict() == right_manifest.comparable_dict()
 
 
@@ -608,9 +624,15 @@ def assert_legal_ir_build_reproducible(
     """Raise when two LegalIR build manifests are not byte-for-byte equivalent."""
 
     expected_manifest = (
-        expected if isinstance(expected, LegalIRBuildManifest) else LegalIRBuildManifest.from_dict(expected)
+        expected
+        if isinstance(expected, LegalIRBuildManifest)
+        else LegalIRBuildManifest.from_dict(expected)
     )
-    actual_manifest = actual if isinstance(actual, LegalIRBuildManifest) else LegalIRBuildManifest.from_dict(actual)
+    actual_manifest = (
+        actual
+        if isinstance(actual, LegalIRBuildManifest)
+        else LegalIRBuildManifest.from_dict(actual)
+    )
     assert_legal_ir_build_manifest_valid(expected_manifest)
     result = assert_legal_ir_build_manifest_valid(actual_manifest)
     if expected_manifest.comparable_dict() != actual_manifest.comparable_dict():
@@ -649,9 +671,7 @@ def load_legal_ir_build_manifest(
     manifest_path = Path(path)
     if not manifest_path.is_file():
         raise LegalIRBuildManifestError(f"LegalIR build manifest does not exist: {manifest_path}")
-    manifest = LegalIRBuildManifest.from_dict(
-        json.loads(manifest_path.read_text(encoding="utf-8"))
-    )
+    manifest = LegalIRBuildManifest.from_dict(json.loads(manifest_path.read_text(encoding="utf-8")))
     expected = json.loads(manifest_path.read_text(encoding="utf-8")).get("manifest_sha256")
     if expected and expected != manifest.manifest_sha256():
         raise LegalIRBuildManifestError(
@@ -741,7 +761,9 @@ def _artifact_digest(value: Any, *, role: str, fallback_id: str = "") -> LegalIR
         )
         path_text = str(data.get("path") or "")
         if not data.get("sha256") and path_text and _looks_like_existing_path(Path(path_text)):
-            path_digest = _path_digest(Path(path_text), role=str(data.get("role") or role), artifact_id=artifact_id)
+            path_digest = _path_digest(
+                Path(path_text), role=str(data.get("role") or role), artifact_id=artifact_id
+            )
             metadata = {**dict(data.get("metadata") or {}), **dict(path_digest.metadata)}
             return LegalIRBuildDigest(
                 artifact_id=path_digest.artifact_id,
@@ -754,16 +776,19 @@ def _artifact_digest(value: Any, *, role: str, fallback_id: str = "") -> LegalIR
                 metadata=metadata,
             )
         payload, byte_length, media_type = _payload_bytes(data)
-        digest = _normalize_sha256(
-            str(
-                data.get("sha256")
-                or data.get("digest")
-                or data.get("content_sha256")
-                or data.get("source_sha256")
-                or data.get("artifact_sha256")
-                or ""
+        digest = (
+            _normalize_sha256(
+                str(
+                    data.get("sha256")
+                    or data.get("digest")
+                    or data.get("content_sha256")
+                    or data.get("source_sha256")
+                    or data.get("artifact_sha256")
+                    or ""
+                )
             )
-        ) or hashlib.sha256(payload).hexdigest()
+            or hashlib.sha256(payload).hexdigest()
+        )
         return LegalIRBuildDigest(
             artifact_id=artifact_id or f"{role}:{digest[:16]}",
             sha256=digest,
@@ -908,9 +933,7 @@ def _schema_versions(
     pass_graph: Mapping[str, Any],
 ) -> dict[str, Any]:
     artifact_versions = {
-        item.schema_version
-        for item in (*sources, *caches, *outputs)
-        if item.schema_version
+        item.schema_version for item in (*sources, *caches, *outputs) if item.schema_version
     }
     for _, value in _iter_artifacts(model_exports or ()):
         schema = str(_mapping(value).get("schema_version") or "")
@@ -936,7 +959,12 @@ def _model_export_bindings(
         data = _mapping(value)
         if data:
             digest = _normalize_sha256(
-                str(data.get("sha256") or data.get("export_sha256") or data.get("model_sha256") or "")
+                str(
+                    data.get("sha256")
+                    or data.get("export_sha256")
+                    or data.get("model_sha256")
+                    or ""
+                )
             )
             if not digest:
                 digest = _artifact_digest(data, role="model_export", fallback_id=key).sha256
@@ -968,10 +996,15 @@ def _model_export_bindings(
                     "type": "model_export",
                 }
             )
-    return sorted(bindings, key=lambda item: (item["type"], item["model_id"], item["export_id"], item["artifact_id"]))
+    return sorted(
+        bindings,
+        key=lambda item: (item["type"], item["model_id"], item["export_id"], item["artifact_id"]),
+    )
 
 
-def _proof_tool_bindings(proof_tools: Mapping[str, Any] | Sequence[Any] | None) -> list[dict[str, Any]]:
+def _proof_tool_bindings(
+    proof_tools: Mapping[str, Any] | Sequence[Any] | None,
+) -> list[dict[str, Any]]:
     bindings: list[dict[str, Any]] = []
     for key, value in _iter_artifacts(proof_tools or ()):
         data = _mapping(value)
@@ -1041,7 +1074,9 @@ def _iter_artifacts(artifacts: Mapping[str, Any] | Sequence[Any]) -> list[tuple[
     return [("", artifacts)]
 
 
-def _digest_entry(value: LegalIRBuildDigest | Mapping[str, Any], *, role: str) -> LegalIRBuildDigest:
+def _digest_entry(
+    value: LegalIRBuildDigest | Mapping[str, Any], *, role: str
+) -> LegalIRBuildDigest:
     if isinstance(value, LegalIRBuildDigest):
         return value
     return LegalIRBuildDigest.from_dict(_mapping(value), default_role=role)
@@ -1059,10 +1094,16 @@ def _unique_digest_entries(entries: Sequence[LegalIRBuildDigest]) -> tuple[Legal
     return tuple(result)
 
 
-def _validate_digest(entry: LegalIRBuildDigest, field_path: str) -> tuple[LegalIRBuildDiagnostic, ...]:
+def _validate_digest(
+    entry: LegalIRBuildDigest, field_path: str
+) -> tuple[LegalIRBuildDiagnostic, ...]:
     diagnostics: list[LegalIRBuildDiagnostic] = []
     if not entry.artifact_id:
-        diagnostics.append(_diagnostic("artifact_id_missing", "Artifact id is required.", f"{field_path}.artifact_id"))
+        diagnostics.append(
+            _diagnostic(
+                "artifact_id_missing", "Artifact id is required.", f"{field_path}.artifact_id"
+            )
+        )
     if not _SHA256_HEX(entry.sha256):
         diagnostics.append(
             _diagnostic(
@@ -1150,11 +1191,14 @@ def _diagnostic(
 
 
 def _format_diagnostics(diagnostics: Sequence[LegalIRBuildDiagnostic]) -> str:
-    return "; ".join(
-        f"{diagnostic.code}:{diagnostic.field_path or '-'}"
-        for diagnostic in diagnostics
-        if diagnostic.error
-    ) or "LegalIR build manifest validation failed"
+    return (
+        "; ".join(
+            f"{diagnostic.code}:{diagnostic.field_path or '-'}"
+            for diagnostic in diagnostics
+            if diagnostic.error
+        )
+        or "LegalIR build manifest validation failed"
+    )
 
 
 def _dedupe_diagnostics(

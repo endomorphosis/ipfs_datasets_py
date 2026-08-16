@@ -32,7 +32,9 @@ def test_legal_search_federal_register_generates_embedding_and_dispatches(
         captured["provider"] = provider
         return [0.11, 0.22, 0.33]
 
-    async def _fake_search_federal_register_corpus_from_parameters(parameters, tool_version: str = "1.0.0"):
+    async def _fake_search_federal_register_corpus_from_parameters(
+        parameters, tool_version: str = "1.0.0"
+    ):
         captured["parameters"] = dict(parameters)
         captured["tool_version"] = tool_version
         return {
@@ -98,7 +100,9 @@ def test_legal_scrape_netherlands_laws_dispatches(monkeypatch, capsys) -> None:
     cli_module = _load_cli_module()
     captured: dict[str, object] = {}
 
-    async def _fake_scrape_netherlands_laws_from_parameters(parameters, tool_version: str = "1.0.0"):
+    async def _fake_scrape_netherlands_laws_from_parameters(
+        parameters, tool_version: str = "1.0.0"
+    ):
         captured["parameters"] = dict(parameters)
         captured["tool_version"] = tool_version
         return {
@@ -154,7 +158,9 @@ def test_legal_scrape_netherlands_laws_accepts_discovery_run_args(monkeypatch, c
     cli_module = _load_cli_module()
     captured = {}
 
-    async def _fake_scrape_netherlands_laws_from_parameters(parameters, tool_version: str = "1.0.0"):
+    async def _fake_scrape_netherlands_laws_from_parameters(
+        parameters, tool_version: str = "1.0.0"
+    ):
         captured["parameters"] = dict(parameters)
         captured["tool_version"] = tool_version
         return {"status": "success", "metadata": {"seed_pages_visited": 1}}
@@ -191,7 +197,9 @@ def test_legal_scrape_netherlands_laws_accepts_discovery_run_args(monkeypatch, c
     out = capsys.readouterr().out
     assert '"status": "success"' in out
     params = captured["parameters"]
-    assert params["seed_urls"] == ["https://wetten.overheid.nl/zoeken/zoekresultaat/titel/test/page/1/count/100"]
+    assert params["seed_urls"] == [
+        "https://wetten.overheid.nl/zoeken/zoekresultaat/titel/test/page/1/count/100"
+    ]
     assert params["max_seed_pages"] == 5
     assert params["crawl_depth"] == 1
     assert params["rate_limit_delay"] == 0.5

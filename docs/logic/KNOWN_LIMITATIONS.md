@@ -494,6 +494,7 @@ converter = FOLConverter(use_fallback=True)  # No spaCy required
 **Workaround:** Use built-in native prover
 ```python
 from ipfs_datasets_py.logic.TDFOL import TDFOLProver
+
 prover = TDFOLProver()  # No Z3/Lean/Coq required
 ```
 

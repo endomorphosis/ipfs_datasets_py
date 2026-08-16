@@ -264,9 +264,7 @@ We welcome contributions! See the [Developer Guide](developer_guide.md) for:
 
 Yes! Use any Hugging Face model:
 ```python
-generator = EmbeddingGenerator(
-    model_name="sentence-transformers/all-mpnet-base-v2"
-)
+generator = EmbeddingGenerator(model_name="sentence-transformers/all-mpnet-base-v2")
 ```
 
 ### How does data provenance work?

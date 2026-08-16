@@ -110,12 +110,8 @@ def test_packet_000594_pairs_are_registered_across_ambiguity_policies() -> None:
             target_family,
         )
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
 
 
@@ -153,27 +149,18 @@ def test_compiler_surfaces_packet_000594_explicit_adaptive_ambiguities() -> None
             ),
             ranking=ranking,
             family_shares={
-                str(candidate["family"]): float(candidate["share_raw"])
-                for candidate in ranking
+                str(candidate["family"]): float(candidate["share_raw"]) for candidate in ranking
             },
             predicted_family_source="adaptive_logits",
         )
         direction = "outvoted" if family_margin <= 0.0 else "contested"
-        expected_type = (
-            f"adaptive_{predicted_family}_{target_family}_{direction}_margin_low"
-        )
+        expected_type = f"adaptive_{predicted_family}_{target_family}_{direction}_margin_low"
         explicit = next(
-            ambiguity
-            for ambiguity in ambiguities
-            if ambiguity.ambiguity_type == expected_type
+            ambiguity for ambiguity in ambiguities if ambiguity.ambiguity_type == expected_type
         )
 
         assert explicit.metadata["is_explicit_adaptive_ambiguity"] is True
         assert explicit.metadata["is_compiler_ambiguity_bundle_pair"] is True
         assert explicit.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
-        assert explicit.metadata["adaptive_policy_pair"] == (
-            f"{predicted_family}->{target_family}"
-        )
-        assert abs(
-            float(explicit.metadata["family_margin_raw"]) - family_margin
-        ) <= 1e-12
+        assert explicit.metadata["adaptive_policy_pair"] == (f"{predicted_family}->{target_family}")
+        assert abs(float(explicit.metadata["family_margin_raw"]) - family_margin) <= 1e-12

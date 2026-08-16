@@ -31,20 +31,16 @@ from .content_addressing import cid_for_dag_json, validate_cid
 
 
 G240_LANDLOCK_PATH_SET_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g240-landlock-path-set.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g240-landlock-path-set.v1"
 )
 G240_LANDLOCK_TCP_PORT_SET_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g240-landlock-tcp-port-set.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g240-landlock-tcp-port-set.v1"
 )
 G240_LANDLOCK_POLICY_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g240-landlock-policy.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g240-landlock-policy.v1"
 )
 G240_LANDLOCK_RECEIPT_SCHEMA_V1: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g240-landlock-receipt.v1"
+    "ipfs-datasets.logic-pipeline-benchmark.g240-landlock-receipt.v1"
 )
 
 # ABI 6 is the first version that can enforce every isolation property frozen
@@ -106,13 +102,9 @@ G240_LANDLOCK_HANDLED_ACCESS_FS_V1: Final = (
 )
 
 _LANDLOCK_READ_ONLY_DIRECTORY_ACCESS: Final = (
-    _LANDLOCK_ACCESS_FS_EXECUTE
-    | _LANDLOCK_ACCESS_FS_READ_FILE
-    | _LANDLOCK_ACCESS_FS_READ_DIR
+    _LANDLOCK_ACCESS_FS_EXECUTE | _LANDLOCK_ACCESS_FS_READ_FILE | _LANDLOCK_ACCESS_FS_READ_DIR
 )
-_LANDLOCK_READ_ONLY_FILE_ACCESS: Final = (
-    _LANDLOCK_ACCESS_FS_EXECUTE | _LANDLOCK_ACCESS_FS_READ_FILE
-)
+_LANDLOCK_READ_ONLY_FILE_ACCESS: Final = _LANDLOCK_ACCESS_FS_EXECUTE | _LANDLOCK_ACCESS_FS_READ_FILE
 _LANDLOCK_READ_WRITE_DIRECTORY_ACCESS: Final = (
     _LANDLOCK_ACCESS_FS_WRITE_FILE
     | _LANDLOCK_ACCESS_FS_READ_FILE
@@ -133,9 +125,7 @@ G240_LANDLOCK_HANDLED_ACCESS_NET_V1: Final = (
 
 _LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET: Final = 1 << 0
 _LANDLOCK_SCOPE_SIGNAL: Final = 1 << 1
-G240_LANDLOCK_SCOPED_V1: Final = (
-    _LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET | _LANDLOCK_SCOPE_SIGNAL
-)
+G240_LANDLOCK_SCOPED_V1: Final = _LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET | _LANDLOCK_SCOPE_SIGNAL
 
 # ABI 7 introduces optional audit-logging controls rather than a new access
 # right.  The frozen execution contract uses the kernel default logging policy
@@ -191,9 +181,7 @@ def _syscall(
     result = int(library.syscall(number, *arguments))
     if result < 0:
         error_number = ctypes.get_errno()
-        raise G240LandlockConfinementError(
-            f"{operation} failed closed with errno {error_number}"
-        )
+        raise G240LandlockConfinementError(f"{operation} failed closed with errno {error_number}")
     return result
 
 
@@ -203,8 +191,7 @@ def _set_no_new_privileges() -> None:
     if int(library.prctl(_PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) != 0:
         error_number = ctypes.get_errno()
         raise G240LandlockConfinementError(
-            "PR_SET_NO_NEW_PRIVS failed closed with errno "
-            f"{error_number}"
+            f"PR_SET_NO_NEW_PRIVS failed closed with errno {error_number}"
         )
     ctypes.set_errno(0)
     observed = int(library.prctl(_PR_GET_NO_NEW_PRIVS, 0, 0, 0, 0))
@@ -220,9 +207,7 @@ def probe_landlock_abi() -> int:
     """Return the kernel Landlock ABI or fail closed when unavailable."""
 
     if sys.platform != "linux":
-        raise G240LandlockConfinementError(
-            "Landlock confinement requires Linux"
-        )
+        raise G240LandlockConfinementError("Landlock confinement requires Linux")
     abi = _syscall(
         _NR_LANDLOCK_CREATE_RULESET,
         ctypes.c_void_p(),
@@ -232,8 +217,7 @@ def probe_landlock_abi() -> int:
     )
     if abi < G240_MINIMUM_LANDLOCK_ABI:
         raise G240LandlockConfinementError(
-            "Landlock ABI lacks required device-ioctl and IPC-scope "
-            "enforcement"
+            "Landlock ABI lacks required device-ioctl and IPC-scope enforcement"
         )
     if abi > G240_MAXIMUM_KNOWN_LANDLOCK_ABI:
         raise G240LandlockConfinementError(
@@ -275,9 +259,7 @@ def _normalized_path(value: str | os.PathLike[str], role: str) -> Path:
     try:
         raw = os.fspath(value)
     except TypeError as exc:
-        raise G240LandlockConfinementError(
-            f"{role} path must be path-like"
-        ) from exc
+        raise G240LandlockConfinementError(f"{role} path must be path-like") from exc
     if (
         not isinstance(raw, str)
         or not raw
@@ -294,16 +276,11 @@ def _normalized_path(value: str | os.PathLike[str], role: str) -> Path:
         resolved = path.resolve(strict=True)
         metadata = path.lstat()
     except OSError as exc:
-        raise G240LandlockConfinementError(
-            f"{role} path cannot be authenticated"
-        ) from exc
+        raise G240LandlockConfinementError(f"{role} path cannot be authenticated") from exc
     if (
         resolved != path
         or stat.S_ISLNK(metadata.st_mode)
-        or not (
-            stat.S_ISDIR(metadata.st_mode)
-            or stat.S_ISREG(metadata.st_mode)
-        )
+        or not (stat.S_ISDIR(metadata.st_mode) or stat.S_ISREG(metadata.st_mode))
     ):
         raise G240LandlockConfinementError(
             f"{role} path must name a real regular file or directory"
@@ -323,15 +300,10 @@ def _path_object_cid(
     elif stat.S_ISREG(observed.st_mode):
         kind = "regular-file"
     else:
-        raise G240LandlockConfinementError(
-            f"{role} path object type changed"
-        )
+        raise G240LandlockConfinementError(f"{role} path object type changed")
     return cid_for_dag_json(
         {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "g240-landlock-path-object.v1"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.g240-landlock-path-object.v1"),
             # The path is a private CID preimage.  It never enters to_dict().
             "absolute_path": path.as_posix(),
             "role": role,
@@ -349,9 +321,7 @@ def _path_set_cid(paths: Sequence[Path], role: str) -> str:
         {
             "schema": G240_LANDLOCK_PATH_SET_SCHEMA_V1,
             "role": role,
-            "path_object_cids": sorted(
-                _path_object_cid(path, role) for path in paths
-            ),
+            "path_object_cids": sorted(_path_object_cid(path, role) for path in paths),
         }
     )
 
@@ -375,9 +345,7 @@ def _normalize_ports(values: Sequence[int]) -> tuple[int, ...]:
         )
     normalized = tuple(sorted(ports))
     if len(normalized) != len(set(normalized)):
-        raise G240LandlockConfinementError(
-            "approved TCP ports must be unique"
-        )
+        raise G240LandlockConfinementError("approved TCP ports must be unique")
     return normalized
 
 
@@ -415,20 +383,15 @@ class G240LandlockPolicyV1:
 
     def __post_init__(self) -> None:
         if self.schema != G240_LANDLOCK_POLICY_SCHEMA_V1:
-            raise G240LandlockConfinementError(
-                "unsupported G240 Landlock policy schema"
-            )
+            raise G240LandlockConfinementError("unsupported G240 Landlock policy schema")
         if (
             type(self.minimum_landlock_abi) is not int
             or self.minimum_landlock_abi != G240_MINIMUM_LANDLOCK_ABI
         ):
-            raise G240LandlockConfinementError(
-                "G240 Landlock minimum ABI changed"
-            )
+            raise G240LandlockConfinementError("G240 Landlock minimum ABI changed")
         if (
             type(self.maximum_known_landlock_abi) is not int
-            or self.maximum_known_landlock_abi
-            != G240_MAXIMUM_KNOWN_LANDLOCK_ABI
+            or self.maximum_known_landlock_abi != G240_MAXIMUM_KNOWN_LANDLOCK_ABI
             or type(self.expected_landlock_abi) is not int
             or not (
                 self.minimum_landlock_abi
@@ -443,21 +406,16 @@ class G240LandlockPolicyV1:
             type(self.expected_landlock_errata) is not int
             or not 0 <= self.expected_landlock_errata <= (1 << 64) - 1
         ):
-            raise G240LandlockConfinementError(
-                "G240 Landlock errata mask is invalid"
-            )
+            raise G240LandlockConfinementError("G240 Landlock errata mask is invalid")
         if (
             type(self.handled_access_fs) is not int
             or type(self.handled_access_net) is not int
             or type(self.scoped) is not int
             or type(self.restrict_self_flags) is not int
-            or self.handled_access_fs
-            != G240_LANDLOCK_HANDLED_ACCESS_FS_V1
-            or self.handled_access_net
-            != G240_LANDLOCK_HANDLED_ACCESS_NET_V1
+            or self.handled_access_fs != G240_LANDLOCK_HANDLED_ACCESS_FS_V1
+            or self.handled_access_net != G240_LANDLOCK_HANDLED_ACCESS_NET_V1
             or self.scoped != G240_LANDLOCK_SCOPED_V1
-            or self.restrict_self_flags
-            != G240_LANDLOCK_RESTRICT_SELF_FLAGS_V1
+            or self.restrict_self_flags != G240_LANDLOCK_RESTRICT_SELF_FLAGS_V1
         ):
             raise G240LandlockConfinementError(
                 "G240 Landlock access, scope, or activation masks changed"
@@ -483,9 +441,7 @@ class G240LandlockPolicyV1:
         ):
             value = getattr(self, name)
             if type(value) is not int or value < minimum:
-                raise G240LandlockConfinementError(
-                    f"{name} must be an observed count"
-                )
+                raise G240LandlockConfinementError(f"{name} must be an observed count")
         if (
             type(self.no_new_privs_required) is not bool
             or type(self.device_ioctl_restricted) is not bool
@@ -502,18 +458,12 @@ class G240LandlockPolicyV1:
             or not self.signal_scoped
             or self.tcp_address_authenticated
         ):
-            raise G240LandlockConfinementError(
-                "G240 Landlock policy assurance booleans changed"
-            )
+            raise G240LandlockConfinementError("G240 Landlock policy assurance booleans changed")
         expected = cid_for_dag_json(self.identity_payload())
         if self.policy_cid is None:
             object.__setattr__(self, "policy_cid", expected)
-        elif (
-            _canonical_cid(self.policy_cid, "policy_cid") != expected
-        ):
-            raise G240LandlockConfinementError(
-                "G240 Landlock policy CID changed"
-            )
+        elif _canonical_cid(self.policy_cid, "policy_cid") != expected:
+            raise G240LandlockConfinementError("G240 Landlock policy CID changed")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -530,16 +480,10 @@ class G240LandlockPolicyV1:
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
-        if not isinstance(value, Mapping) or not all(
-            isinstance(key, str) for key in value
-        ):
-            raise G240LandlockConfinementError(
-                "G240 Landlock policy must be an object"
-            )
+        if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
+            raise G240LandlockConfinementError("G240 Landlock policy must be an object")
         if set(value) != set(cls.__dataclass_fields__):
-            raise G240LandlockConfinementError(
-                "G240 Landlock policy fields changed"
-            )
+            raise G240LandlockConfinementError("G240 Landlock policy fields changed")
         return cls(**value)  # type: ignore[arg-type]
 
 
@@ -563,13 +507,9 @@ def _public_policy_for_sources(
         handled_access_net=G240_LANDLOCK_HANDLED_ACCESS_NET_V1,
         scoped=G240_LANDLOCK_SCOPED_V1,
         restrict_self_flags=G240_LANDLOCK_RESTRICT_SELF_FLAGS_V1,
-        read_only_path_set_cid=_path_set_cid(
-            read_only_paths, "read-only"
-        ),
+        read_only_path_set_cid=_path_set_cid(read_only_paths, "read-only"),
         read_only_path_count=len(read_only_paths),
-        read_write_path_set_cid=_path_set_cid(
-            read_write_paths, "read-write"
-        ),
+        read_write_path_set_cid=_path_set_cid(read_write_paths, "read-write"),
         read_write_path_count=len(read_write_paths),
         state_path_cid=_path_object_cid(state_path, "state"),
         output_path_cid=_path_object_cid(output_path, "output"),
@@ -604,15 +544,10 @@ class G240LandlockPrivatePolicySourcesV1:
 
     def __post_init__(self) -> None:
         if not isinstance(self.policy, G240LandlockPolicyV1):
-            raise G240LandlockConfinementError(
-                "private sources require a typed Landlock policy"
-            )
+            raise G240LandlockConfinementError("private sources require a typed Landlock policy")
         read_only = tuple(
             sorted(
-                (
-                    _normalized_path(path, "read-only")
-                    for path in self.read_only_paths
-                ),
+                (_normalized_path(path, "read-only") for path in self.read_only_paths),
                 key=Path.as_posix,
             )
         )
@@ -620,10 +555,7 @@ class G240LandlockPrivatePolicySourcesV1:
         output_path = _normalized_path(self.output_path, "output")
         cache_paths = tuple(
             sorted(
-                (
-                    _normalized_path(path, "cache")
-                    for path in self.cache_paths
-                ),
+                (_normalized_path(path, "cache") for path in self.cache_paths),
                 key=Path.as_posix,
             )
         )
@@ -632,12 +564,8 @@ class G240LandlockPrivatePolicySourcesV1:
             raise G240LandlockConfinementError(
                 "Landlock requires read-only, state, output, and cache paths"
             )
-        if len(read_only) != len(set(read_only)) or len(read_write) != len(
-            set(read_write)
-        ):
-            raise G240LandlockConfinementError(
-                "Landlock policy paths must be unique"
-            )
+        if len(read_only) != len(set(read_only)) or len(read_write) != len(set(read_write)):
+            raise G240LandlockConfinementError("Landlock policy paths must be unique")
         if set(read_only) & set(read_write):
             raise G240LandlockConfinementError(
                 "Landlock read-only and read-write paths overlap exactly"
@@ -649,9 +577,7 @@ class G240LandlockPrivatePolicySourcesV1:
             for read_write_root in read_write
             for read_only_member in read_only
         ):
-            raise G240LandlockConfinementError(
-                "a read-write path may not contain a read-only path"
-            )
+            raise G240LandlockConfinementError("a read-write path may not contain a read-only path")
         for path in read_write:
             metadata = path.lstat()
             if (
@@ -711,14 +637,10 @@ def build_g240_landlock_policy_v1(
 ) -> G240LandlockPrivatePolicySourcesV1:
     """Build private enforcement sources and their path-free public policy."""
 
-    normalized_read_only = tuple(
-        _normalized_path(path, "read-only") for path in read_only_paths
-    )
+    normalized_read_only = tuple(_normalized_path(path, "read-only") for path in read_only_paths)
     normalized_state = _normalized_path(state_path, "state")
     normalized_output = _normalized_path(output_path, "output")
-    normalized_caches = tuple(
-        _normalized_path(path, "cache") for path in cache_paths
-    )
+    normalized_caches = tuple(_normalized_path(path, "cache") for path in cache_paths)
     ports = _normalize_ports(approved_tcp_ports)
     observed_abi = probe_landlock_abi()
     observed_errata = probe_landlock_errata()
@@ -776,9 +698,7 @@ class G240LandlockReceiptV1:
 
     def __post_init__(self) -> None:
         if self.schema != G240_LANDLOCK_RECEIPT_SCHEMA_V1:
-            raise G240LandlockConfinementError(
-                "unsupported G240 Landlock receipt schema"
-            )
+            raise G240LandlockConfinementError("unsupported G240 Landlock receipt schema")
         for name in (
             "policy_cid",
             "read_only_path_set_cid",
@@ -796,8 +716,7 @@ class G240LandlockReceiptV1:
         if (
             type(self.observed_landlock_abi) is not int
             or self.observed_landlock_abi < G240_MINIMUM_LANDLOCK_ABI
-            or self.observed_landlock_abi
-            > G240_MAXIMUM_KNOWN_LANDLOCK_ABI
+            or self.observed_landlock_abi > G240_MAXIMUM_KNOWN_LANDLOCK_ABI
         ):
             raise G240LandlockConfinementError(
                 "Landlock receipt ABI is outside the reviewed profile"
@@ -806,21 +725,16 @@ class G240LandlockReceiptV1:
             type(self.observed_landlock_errata) is not int
             or not 0 <= self.observed_landlock_errata <= (1 << 64) - 1
         ):
-            raise G240LandlockConfinementError(
-                "Landlock receipt errata mask is invalid"
-            )
+            raise G240LandlockConfinementError("Landlock receipt errata mask is invalid")
         if (
             type(self.handled_access_fs) is not int
             or type(self.handled_access_net) is not int
             or type(self.scoped) is not int
             or type(self.restrict_self_flags) is not int
-            or self.handled_access_fs
-            != G240_LANDLOCK_HANDLED_ACCESS_FS_V1
-            or self.handled_access_net
-            != G240_LANDLOCK_HANDLED_ACCESS_NET_V1
+            or self.handled_access_fs != G240_LANDLOCK_HANDLED_ACCESS_FS_V1
+            or self.handled_access_net != G240_LANDLOCK_HANDLED_ACCESS_NET_V1
             or self.scoped != G240_LANDLOCK_SCOPED_V1
-            or self.restrict_self_flags
-            != G240_LANDLOCK_RESTRICT_SELF_FLAGS_V1
+            or self.restrict_self_flags != G240_LANDLOCK_RESTRICT_SELF_FLAGS_V1
         ):
             raise G240LandlockConfinementError(
                 "Landlock receipt masks differ from the reviewed profile"
@@ -833,9 +747,7 @@ class G240LandlockReceiptV1:
         ):
             observed = getattr(self, name)
             if type(observed) is not int or observed < minimum:
-                raise G240LandlockConfinementError(
-                    f"{name} must be an observed count"
-                )
+                raise G240LandlockConfinementError(f"{name} must be an observed count")
         for name in (
             "no_new_privs_set",
             "filesystem_rules_enforced",
@@ -848,9 +760,7 @@ class G240LandlockReceiptV1:
             "ruleset_applied",
         ):
             if type(getattr(self, name)) is not bool:
-                raise G240LandlockConfinementError(
-                    f"{name} must be boolean"
-                )
+                raise G240LandlockConfinementError(f"{name} must be boolean")
         if (
             not self.no_new_privs_set
             or not self.filesystem_rules_enforced
@@ -868,12 +778,8 @@ class G240LandlockReceiptV1:
         expected = cid_for_dag_json(self.identity_payload())
         if self.receipt_cid is None:
             object.__setattr__(self, "receipt_cid", expected)
-        elif (
-            _canonical_cid(self.receipt_cid, "receipt_cid") != expected
-        ):
-            raise G240LandlockConfinementError(
-                "G240 Landlock receipt CID changed"
-            )
+        elif _canonical_cid(self.receipt_cid, "receipt_cid") != expected:
+            raise G240LandlockConfinementError("G240 Landlock receipt CID changed")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -890,24 +796,16 @@ class G240LandlockReceiptV1:
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
-        if not isinstance(value, Mapping) or not all(
-            isinstance(key, str) for key in value
-        ):
-            raise G240LandlockConfinementError(
-                "G240 Landlock receipt must be an object"
-            )
+        if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
+            raise G240LandlockConfinementError("G240 Landlock receipt must be an object")
         if set(value) != set(cls.__dataclass_fields__):
-            raise G240LandlockConfinementError(
-                "G240 Landlock receipt fields changed"
-            )
+            raise G240LandlockConfinementError("G240 Landlock receipt fields changed")
         return cls(**value)  # type: ignore[arg-type]
 
 
 def _open_rule_path(path: Path, expected_cid: str, role: str) -> int:
     if not hasattr(os, "O_PATH"):
-        raise G240LandlockConfinementError(
-            "Linux O_PATH is required for Landlock"
-        )
+        raise G240LandlockConfinementError("Linux O_PATH is required for Landlock")
     flags = os.O_PATH | os.O_CLOEXEC
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
@@ -915,9 +813,7 @@ def _open_rule_path(path: Path, expected_cid: str, role: str) -> int:
         descriptor = os.open(path, flags)
         metadata = os.fstat(descriptor)
     except OSError as exc:
-        raise G240LandlockConfinementError(
-            f"{role} Landlock object cannot be opened"
-        ) from exc
+        raise G240LandlockConfinementError(f"{role} Landlock object cannot be opened") from exc
     try:
         if (
             stat.S_ISLNK(metadata.st_mode)
@@ -990,13 +886,8 @@ def apply_g240_landlock_confinement(
     policy = sources.revalidate()
     abi = probe_landlock_abi()
     errata = probe_landlock_errata()
-    if (
-        abi != policy.expected_landlock_abi
-        or errata != policy.expected_landlock_errata
-    ):
-        raise G240LandlockConfinementError(
-            "Landlock ABI or errata differs from the frozen policy"
-        )
+    if abi != policy.expected_landlock_abi or errata != policy.expected_landlock_errata:
+        raise G240LandlockConfinementError("Landlock ABI or errata differs from the frozen policy")
     attributes = _LandlockRulesetAttr(
         handled_access_fs=policy.handled_access_fs,
         handled_access_net=policy.handled_access_net,
@@ -1011,15 +902,11 @@ def apply_g240_landlock_confinement(
     )
     try:
         read_only_cids = sorted(
-            _path_object_cid(path, "read-only")
-            for path in sources.read_only_paths
+            _path_object_cid(path, "read-only") for path in sources.read_only_paths
         )
         for path, path_cid in zip(
             sources.read_only_paths,
-            (
-                _path_object_cid(path, "read-only")
-                for path in sources.read_only_paths
-            ),
+            (_path_object_cid(path, "read-only") for path in sources.read_only_paths),
             strict=True,
         ):
             metadata = path.lstat()
@@ -1036,15 +923,11 @@ def apply_g240_landlock_confinement(
                 allowed_access=allowed_access,
             )
         read_write_cids = sorted(
-            _path_object_cid(path, "read-write")
-            for path in sources.read_write_paths
+            _path_object_cid(path, "read-write") for path in sources.read_write_paths
         )
         for path, path_cid in zip(
             sources.read_write_paths,
-            (
-                _path_object_cid(path, "read-write")
-                for path in sources.read_write_paths
-            ),
+            (_path_object_cid(path, "read-write") for path in sources.read_write_paths),
             strict=True,
         ):
             _add_path_rule(
@@ -1122,9 +1005,7 @@ def make_g240_landlock_preexec(
     """Return a no-argument confinement callback for a controlled child."""
 
     if not isinstance(sources, G240LandlockPrivatePolicySourcesV1):
-        raise G240LandlockConfinementError(
-            "Landlock preexec requires typed private policy sources"
-        )
+        raise G240LandlockConfinementError("Landlock preexec requires typed private policy sources")
 
     def apply_before_exec() -> None:
         apply_g240_landlock_confinement(sources)
@@ -1156,34 +1037,24 @@ def validate_g240_landlock_receipt_v1(
         policy = validate_g240_landlock_policy_v1(expected_policy)
         if (
             receipt.policy_cid != policy.policy_cid
-            or receipt.observed_landlock_abi
-            != policy.expected_landlock_abi
-            or receipt.observed_landlock_errata
-            != policy.expected_landlock_errata
+            or receipt.observed_landlock_abi != policy.expected_landlock_abi
+            or receipt.observed_landlock_errata != policy.expected_landlock_errata
             or receipt.handled_access_fs != policy.handled_access_fs
             or receipt.handled_access_net != policy.handled_access_net
             or receipt.scoped != policy.scoped
             or receipt.restrict_self_flags != policy.restrict_self_flags
-            or receipt.read_only_path_set_cid
-            != policy.read_only_path_set_cid
-            or receipt.read_only_rule_count
-            != policy.read_only_path_count
-            or receipt.read_write_path_set_cid
-            != policy.read_write_path_set_cid
-            or receipt.read_write_rule_count
-            != policy.read_write_path_count
+            or receipt.read_only_path_set_cid != policy.read_only_path_set_cid
+            or receipt.read_only_rule_count != policy.read_only_path_count
+            or receipt.read_write_path_set_cid != policy.read_write_path_set_cid
+            or receipt.read_write_rule_count != policy.read_write_path_count
             or receipt.state_path_cid != policy.state_path_cid
             or receipt.output_path_cid != policy.output_path_cid
             or receipt.cache_path_set_cid != policy.cache_path_set_cid
             or receipt.cache_rule_count != policy.cache_path_count
-            or receipt.approved_tcp_port_set_cid
-            != policy.approved_tcp_port_set_cid
-            or receipt.approved_tcp_port_rule_count
-            != policy.approved_tcp_port_count
+            or receipt.approved_tcp_port_set_cid != policy.approved_tcp_port_set_cid
+            or receipt.approved_tcp_port_rule_count != policy.approved_tcp_port_count
         ):
-            raise G240LandlockConfinementError(
-                "Landlock receipt differs from its expected policy"
-            )
+            raise G240LandlockConfinementError("Landlock receipt differs from its expected policy")
     return receipt
 
 

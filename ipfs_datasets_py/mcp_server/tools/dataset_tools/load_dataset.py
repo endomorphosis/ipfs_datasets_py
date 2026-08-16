@@ -5,6 +5,7 @@ MCP tool for loading datasets.
 This is a thin wrapper around the core DatasetLoader class.
 Core implementation: ipfs_datasets_py.core_operations.dataset_loader.DatasetLoader
 """
+
 import json
 from typing import Dict, Any, Optional
 
@@ -25,10 +26,9 @@ from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
 
 from ipfs_datasets_py.core_operations import DatasetLoader
 
+
 async def load_dataset(
-    source: str,
-    format: Optional[str] = None,
-    options: Optional[Dict[str, Any]] = None
+    source: str, format: Optional[str] = None, options: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Load a dataset from a source.
@@ -77,8 +77,4 @@ async def load_dataset(
         return result
     except Exception as e:
         logger.error(f"Error in load_dataset MCP tool: {e}")
-        return {
-            "status": "error",
-            "message": str(e),
-            "source": source
-        }
+        return {"status": "error", "message": str(e), "source": source}

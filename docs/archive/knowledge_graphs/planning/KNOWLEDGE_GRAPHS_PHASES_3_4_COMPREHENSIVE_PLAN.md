@@ -157,20 +157,26 @@ This document provides a comprehensive plan for completing Phases 3 and 4 of the
 # knowledge_graph_extraction.py (after refactor)
 import warnings
 from ipfs_datasets_py.knowledge_graphs.extraction import (
-    Entity, Relationship, KnowledgeGraph,
-    KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
+    Entity,
+    Relationship,
+    KnowledgeGraph,
+    KnowledgeGraphExtractor,
+    KnowledgeGraphExtractorWithValidation,
 )
 
 warnings.warn(
     "knowledge_graph_extraction module is deprecated. "
     "Please use 'from ipfs_datasets_py.knowledge_graphs.extraction import ...' instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 __all__ = [
-    'Entity', 'Relationship', 'KnowledgeGraph',
-    'KnowledgeGraphExtractor', 'KnowledgeGraphExtractorWithValidation'
+    "Entity",
+    "Relationship",
+    "KnowledgeGraph",
+    "KnowledgeGraphExtractor",
+    "KnowledgeGraphExtractorWithValidation",
 ]
 ```
 

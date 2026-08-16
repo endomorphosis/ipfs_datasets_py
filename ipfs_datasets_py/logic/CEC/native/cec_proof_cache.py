@@ -24,20 +24,20 @@ This ensures:
 Example:
     >>> from ipfs_datasets_py.logic.CEC.native import TheoremProver, cec_proof_cache
     >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import parse_dcec
-    >>> 
+    >>>
     >>> # Create prover with cache-aware wrapper
     >>> prover = cec_proof_cache.CachedTheoremProver()
-    >>> 
+    >>>
     >>> # First proof - cache miss
     >>> goal = parse_dcec("O(p)")
     >>> axioms = [parse_dcec("p")]
     >>> result1 = prover.prove_theorem(goal, axioms)
     >>> print(f"Time: {result1.execution_time:.4f}s")  # e.g., 0.0123s
-    >>> 
+    >>>
     >>> # Second proof - cache hit (much faster!)
     >>> result2 = prover.prove_theorem(goal, axioms)
     >>> print(f"Time: {result2.execution_time:.4f}s")  # e.g., 0.0001s (100x faster)
-    >>> 
+    >>>
     >>> # Get statistics
     >>> stats = prover.get_cache_statistics()
     >>> print(f"Hit rate: {stats['hit_rate']:.1%}")  # e.g., 50%
@@ -62,6 +62,7 @@ from .prover_core import (
 # Import unified proof cache
 try:
     from ...common.proof_cache import ProofCache, CachedProofResult, get_global_cache
+
     HAVE_CACHE = True
 except ImportError:
     ProofCache = None  # type: ignore
@@ -76,10 +77,11 @@ logger = logging.getLogger(__name__)
 class CECCachedProofResult:
     """
     Cached proof result for CEC proofs.
-    
+
     This wraps ProofAttempt for caching, storing just the essential
     information needed to reconstruct the result.
     """
+
     is_proved: bool
     result: ProofResult
     execution_time: float
@@ -88,40 +90,40 @@ class CECCachedProofResult:
     error_message: Optional[str] = None
     timestamp: float = field(default_factory=time.time)
     proof_tree: Optional[Any] = None  # Store proof tree for reconstruction
-    
+
     @classmethod
     def from_proof_attempt(cls, attempt: ProofAttempt) -> CECCachedProofResult:
         """Create cached result from ProofAttempt."""
         proof_steps = 0
         rules_used = []
-        
+
         if attempt.proof_tree:
             # Count steps in proof tree
             def count_steps(node):
                 if not node:
                     return 0
                 count = 1
-                if hasattr(node, 'children'):
+                if hasattr(node, "children"):
                     for child in node.children:
                         count += count_steps(child)
                 return count
-            
+
             proof_steps = count_steps(attempt.proof_tree)
-            
+
             # Extract inference rules
             def extract_rules(node, rules_set):
                 if not node:
                     return
-                if hasattr(node, 'rule') and node.rule:
+                if hasattr(node, "rule") and node.rule:
                     rules_set.add(node.rule)
-                if hasattr(node, 'children'):
+                if hasattr(node, "children"):
                     for child in node.children:
                         extract_rules(child, rules_set)
-            
+
             rules_set = set()
             extract_rules(attempt.proof_tree, rules_set)
             rules_used = list(rules_set)
-        
+
         return cls(
             is_proved=(attempt.result == ProofResult.PROVED),
             result=attempt.result,
@@ -129,9 +131,9 @@ class CECCachedProofResult:
             proof_steps=proof_steps,
             inference_rules_used=rules_used,
             error_message=attempt.error_message,
-            proof_tree=attempt.proof_tree
+            proof_tree=attempt.proof_tree,
         )
-    
+
     def to_proof_attempt(self, goal: Formula, axioms: List[Formula]) -> ProofAttempt:
         """Reconstruct ProofAttempt from cached result."""
         return ProofAttempt(
@@ -147,36 +149,36 @@ class CECCachedProofResult:
 class CachedTheoremProver(BaseTheoremProver):
     """
     Theorem prover with integrated proof caching.
-    
+
     This extends the base TheoremProver with automatic caching of proof results.
     When proving a theorem:
     1. Check cache for existing proof
     2. If hit, return cached result (O(1), microseconds)
     3. If miss, compute proof and cache result
-    
+
     Example:
         >>> prover = CachedTheoremProver(cache_size=1000, cache_ttl=3600)
-        >>> 
+        >>>
         >>> # First proof - cache miss, normal speed
         >>> result1 = prover.prove_theorem(goal, axioms)
-        >>> 
+        >>>
         >>> # Second identical proof - cache hit, 100x faster!
         >>> result2 = prover.prove_theorem(goal, axioms)
-        >>> 
+        >>>
         >>> # Different axioms - cache miss (different cache key)
         >>> result3 = prover.prove_theorem(goal, different_axioms)
     """
-    
+
     def __init__(
         self,
         cache_size: int = 1000,
         cache_ttl: int = 3600,
         use_global_cache: bool = True,
-        enable_caching: bool = True
+        enable_caching: bool = True,
     ):
         """
         Initialize cached theorem prover.
-        
+
         Args:
             cache_size: Maximum number of cached proofs
             cache_ttl: Time-to-live for cached proofs (seconds)
@@ -184,9 +186,9 @@ class CachedTheoremProver(BaseTheoremProver):
             enable_caching: If False, disable caching (for testing)
         """
         super().__init__()
-        
+
         self.enable_caching = enable_caching and HAVE_CACHE
-        
+
         if self.enable_caching:
             if use_global_cache:
                 self.cache = get_global_cache()
@@ -200,7 +202,7 @@ class CachedTheoremProver(BaseTheoremProver):
                 logger.warning("Proof cache not available - install cachetools package")
             else:
                 logger.info("Caching disabled")
-        
+
         # Cache statistics
         self._cache_hits = 0
         self._cache_misses = 0
@@ -216,28 +218,28 @@ class CachedTheoremProver(BaseTheoremProver):
             self._cache_hits = 0
             self._cache_misses = 0
         return result
-    
+
     def prove_theorem(
         self,
         goal: Formula,
         axioms: Optional[List[Formula]] = None,
         timeout: Optional[float] = None,
-        use_cache: bool = True
+        use_cache: bool = True,
     ) -> ProofAttempt:
         """
         Prove a theorem with caching.
-        
+
         Args:
             goal: The formula to prove
             axioms: List of axioms (assumed true)
             timeout: Optional timeout in seconds
             use_cache: If False, bypass cache for this proof
-            
+
         Returns:
             ProofAttempt with results (may be from cache)
         """
         axioms = axioms or []
-        
+
         # Try cache if enabled
         if self.enable_caching and use_cache and self.cache:
             cached_result = self._get_from_cache(goal, axioms)
@@ -250,80 +252,71 @@ class CachedTheoremProver(BaseTheoremProver):
                 with self._cache_lock:
                     self._cache_misses += 1
                 logger.debug(f"Cache MISS for goal: {goal.to_string()[:50]}")
-        
+
         # Cache miss or caching disabled - compute proof
         start_time = time.time()
         attempt = super().prove_theorem(goal, axioms, timeout)
-        
+
         # Cache the result if caching enabled
         if self.enable_caching and use_cache and self.cache:
             cached = CECCachedProofResult.from_proof_attempt(attempt)
             self._put_in_cache(goal, axioms, cached)
-        
+
         return attempt
-    
+
     def _get_from_cache(
-        self,
-        goal: Formula,
-        axioms: List[Formula]
+        self, goal: Formula, axioms: List[Formula]
     ) -> Optional[CECCachedProofResult]:
         """Get cached proof result."""
         if not self.cache:
             return None
-        
+
         try:
             # Create cache key from formula and axioms
             formula_str = goal.to_string()
             axioms_str = ";".join(sorted(a.to_string() for a in axioms))
             cache_key = f"{formula_str}|{axioms_str}"
-            
+
             # Try to get from cache (unified cache API)
-            cached = self.cache.get(
-                formula=cache_key,
-                axioms=axioms,
-                prover_name="cec_native"
-            )
-            
+            cached = self.cache.get(formula=cache_key, axioms=axioms, prover_name="cec_native")
+
             if cached is not None:
                 # After fix: get() may return the stored result directly
                 if isinstance(cached, CECCachedProofResult):
                     return cached
                 # Or wrapped in CachedProofResult
-                if hasattr(cached, 'result'):
+                if hasattr(cached, "result"):
                     inner = cached.result
                     if isinstance(inner, CECCachedProofResult):
                         return inner
                     elif isinstance(inner, dict):
                         return CECCachedProofResult(
-                            is_proved=inner.get('is_proved', False),
-                            result=ProofResult(inner.get('result', 'unknown')),
-                            execution_time=inner.get('execution_time', 0.0),
-                            proof_steps=inner.get('proof_steps', 0),
-                            inference_rules_used=inner.get('inference_rules_used', []),
-                            error_message=inner.get('error_message'),
-                            timestamp=getattr(cached, 'timestamp', 0.0)
+                            is_proved=inner.get("is_proved", False),
+                            result=ProofResult(inner.get("result", "unknown")),
+                            execution_time=inner.get("execution_time", 0.0),
+                            proof_steps=inner.get("proof_steps", 0),
+                            inference_rules_used=inner.get("inference_rules_used", []),
+                            error_message=inner.get("error_message"),
+                            timestamp=getattr(cached, "timestamp", 0.0),
                         )
             return None
         except Exception as e:
             logger.warning(f"Cache lookup error: {e}")
             return None
-    
+
     def _put_in_cache(
-        self,
-        goal: Formula,
-        axioms: List[Formula],
-        result: CECCachedProofResult
+        self, goal: Formula, axioms: List[Formula], result: CECCachedProofResult
     ) -> None:
         """Put proof result in cache."""
         if not self.cache:
             return
-        
+
         try:
             # Create cache key
             formula_str = goal.to_string()
             axioms_str = ";".join(sorted(a.to_string() for a in axioms))
             cache_key = f"{formula_str}|{axioms_str}"
-            
+
             # Create cached result with embedded metadata
             cached_result = CECCachedProofResult(
                 is_proved=result.is_proved,
@@ -331,59 +324,58 @@ class CachedTheoremProver(BaseTheoremProver):
                 proof_steps=result.proof_steps,
                 inference_rules_used=result.inference_rules_used,
                 error_message=result.error_message,
-                execution_time=result.execution_time
+                execution_time=result.execution_time,
             )
-            
+
             # Store in cache (unified cache API)
             self.cache.set(
-                formula=cache_key,
-                result=cached_result,
-                axioms=axioms,
-                prover_name="cec_native"
+                formula=cache_key, result=cached_result, axioms=axioms, prover_name="cec_native"
             )
-            
+
         except Exception as e:
             logger.warning(f"Cache store error: {e}")
-    
+
     def get_cache_statistics(self) -> Dict[str, Any]:
         """
         Get cache performance statistics.
-        
+
         Returns:
             Dictionary with cache hits, misses, hit rate, etc.
         """
         with self._cache_lock:
             total = self._cache_hits + self._cache_misses
             hit_rate = self._cache_hits / total if total > 0 else 0.0
-            
+
             stats = {
-                'cache_enabled': self.enable_caching,
-                'cache_hits': self._cache_hits,
-                'cache_misses': self._cache_misses,
-                'total_lookups': total,
-                'hit_rate': hit_rate,
+                "cache_enabled": self.enable_caching,
+                "cache_hits": self._cache_hits,
+                "cache_misses": self._cache_misses,
+                "total_lookups": total,
+                "hit_rate": hit_rate,
             }
-            
+
             # Add cache-specific stats if available
-            if self.cache and hasattr(self.cache, 'get_stats'):
+            if self.cache and hasattr(self.cache, "get_stats"):
                 cache_stats = self.cache.get_stats()
-                stats.update({
-                    'cache_size': cache_stats.get('cache_size', 0),
-                    'cache_maxsize': cache_stats.get('maxsize', 0),
-                })
-            
+                stats.update(
+                    {
+                        "cache_size": cache_stats.get("cache_size", 0),
+                        "cache_maxsize": cache_stats.get("maxsize", 0),
+                    }
+                )
+
             return stats
-    
+
     def clear_cache(self) -> None:
         """Clear the proof cache."""
         if self.cache:
             self.cache.clear()
             logger.info("Proof cache cleared")
-        
+
         with self._cache_lock:
             self._cache_hits = 0
             self._cache_misses = 0
-    
+
     def get_statistics(self) -> Dict[str, Any]:
         """Get combined prover and cache statistics."""
         stats = super().get_statistics()
@@ -398,25 +390,22 @@ _global_cached_prover: Optional[CachedTheoremProver] = None
 def get_global_cached_prover() -> CachedTheoremProver:
     """
     Get or create the global cached theorem prover.
-    
+
     This is a singleton that uses the global proof cache.
     Useful for applications that want a single shared prover instance.
-    
+
     Returns:
         Global CachedTheoremProver instance
     """
     global _global_cached_prover
     if _global_cached_prover is None:
-        _global_cached_prover = CachedTheoremProver(
-            use_global_cache=True,
-            enable_caching=True
-        )
+        _global_cached_prover = CachedTheoremProver(use_global_cache=True, enable_caching=True)
     return _global_cached_prover
 
 
 __all__ = [
-    'CECCachedProofResult',
-    'CachedTheoremProver',
-    'get_global_cached_prover',
-    'HAVE_CACHE',
+    "CECCachedProofResult",
+    "CachedTheoremProver",
+    "get_global_cached_prover",
+    "HAVE_CACHE",
 ]

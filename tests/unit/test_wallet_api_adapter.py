@@ -27,31 +27,39 @@ def make_client(tmp_path, monkeypatch):
 
 
 def make_magic_ucan(wallet_id: str, *, expires_in_ms: int = 60_000) -> str:
-    encoded = base64.urlsafe_b64encode(
-        json.dumps(
-            {
-                "profile": "abby-magic-ucan-v1",
-                "walletId": wallet_id,
-                "aud": "did:abby:contact:test",
-                "capabilities": [
-                    {
-                        "can": "wallet/recovery/read_encrypted",
-                        "with": f"wallet://{wallet_id}/recovery-bundles/*",
-                    }
-                ],
-                "expiresAt": int(time.time() * 1000) + expires_in_ms,
-            },
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-    ).decode("ascii").rstrip("=")
-    signature = base64.urlsafe_b64encode(
-        hmac.new(
-            b"test-secret",
-            f"abby-magic-ucan-v1.{encoded}".encode("utf-8"),
-            hashlib.sha256,
-        ).digest()
-    ).decode("ascii").rstrip("=")
+    encoded = (
+        base64.urlsafe_b64encode(
+            json.dumps(
+                {
+                    "profile": "abby-magic-ucan-v1",
+                    "walletId": wallet_id,
+                    "aud": "did:abby:contact:test",
+                    "capabilities": [
+                        {
+                            "can": "wallet/recovery/read_encrypted",
+                            "with": f"wallet://{wallet_id}/recovery-bundles/*",
+                        }
+                    ],
+                    "expiresAt": int(time.time() * 1000) + expires_in_ms,
+                },
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+        )
+        .decode("ascii")
+        .rstrip("=")
+    )
+    signature = (
+        base64.urlsafe_b64encode(
+            hmac.new(
+                b"test-secret",
+                f"abby-magic-ucan-v1.{encoded}".encode("utf-8"),
+                hashlib.sha256,
+            ).digest()
+        )
+        .decode("ascii")
+        .rstrip("=")
+    )
     return f"abby-magic-ucan-v1.{encoded}.{signature}"
 
 
@@ -60,7 +68,11 @@ def test_wallet_api_create_and_get_wallet(tmp_path, monkeypatch):
 
     response = client.post(
         "/wallets",
-        json={"owner_did": "did:key:owner", "controller_dids": ["did:key:owner"], "approval_threshold": 1},
+        json={
+            "owner_did": "did:key:owner",
+            "controller_dids": ["did:key:owner"],
+            "approval_threshold": 1,
+        },
     )
 
     assert response.status_code == 200
@@ -102,7 +114,9 @@ def test_wallet_api_lists_core_wallet_state(tmp_path, monkeypatch):
         encoding="utf-8",
     )
 
-    records_response = client.get(f"/wallets/{wallet.wallet_id}/records", params={"data_type": "document"})
+    records_response = client.get(
+        f"/wallets/{wallet.wallet_id}/records", params={"data_type": "document"}
+    )
     assert records_response.status_code == 200
     assert len(records_response.json()["records"]) == 1
 
@@ -161,9 +175,13 @@ def test_wallet_api_mutation_routes(tmp_path, monkeypatch):
     assert approval_response.status_code == 200
     approval = approval_response.json()
 
-    approvals_list_response = client.get(f"/wallets/{wallet_id}/approvals", params={"status": "all"})
+    approvals_list_response = client.get(
+        f"/wallets/{wallet_id}/approvals", params={"status": "all"}
+    )
     assert approvals_list_response.status_code == 200
-    assert [item["approval_id"] for item in approvals_list_response.json()["approvals"]] == [approval["approval_id"]]
+    assert [item["approval_id"] for item in approvals_list_response.json()["approvals"]] == [
+        approval["approval_id"]
+    ]
 
     approval_decision_response = client.post(
         f"/wallets/{wallet_id}/approvals/{approval['approval_id']}/approve",
@@ -201,9 +219,13 @@ def test_wallet_api_mutation_routes(tmp_path, monkeypatch):
     assert access_request_response.status_code == 200
     access_request = access_request_response.json()
 
-    access_list_response = client.get(f"/wallets/{wallet_id}/access-requests", params={"status": "all"})
+    access_list_response = client.get(
+        f"/wallets/{wallet_id}/access-requests", params={"status": "all"}
+    )
     assert access_list_response.status_code == 200
-    assert [item["request_id"] for item in access_list_response.json()["requests"]] == [access_request["request_id"]]
+    assert [item["request_id"] for item in access_list_response.json()["requests"]] == [
+        access_request["request_id"]
+    ]
 
     approve_access_response = client.post(
         f"/wallets/{wallet_id}/access-requests/{access_request['request_id']}/approve",
@@ -768,7 +790,9 @@ def test_wallet_api_admin_mutation_routes(tmp_path, monkeypatch):
         json={
             "actor_did": "did:key:recovery1",
             "controller_did": "did:key:controller3",
-            "approval_id": admin_approval("wallet/controller_recover", requested_by="did:key:recovery1"),
+            "approval_id": admin_approval(
+                "wallet/controller_recover", requested_by="did:key:recovery1"
+            ),
         },
     )
     assert recover_controller_response.status_code == 200
@@ -1022,7 +1046,9 @@ def test_wallet_api_analytics_template_and_consent_routes(tmp_path, monkeypatch)
 
     templates_response = client.get("/analytics/templates")
     assert templates_response.status_code == 200
-    assert [item["template_id"] for item in templates_response.json()["templates"]] == ["housing-needs-v1"]
+    assert [item["template_id"] for item in templates_response.json()["templates"]] == [
+        "housing-needs-v1"
+    ]
 
     consent_response = client.post(
         f"/wallets/{wallet.wallet_id}/analytics/consents/from-template",
@@ -1179,7 +1205,11 @@ def test_wallet_api_service_interaction_routes(tmp_path, monkeypatch):
 
     list_response = client.get(
         f"/wallets/{wallet_id}/portal/interactions",
-        params={"service_doc_id": "service-doc-123", "interaction_type": "call", "status": "completed"},
+        params={
+            "service_doc_id": "service-doc-123",
+            "interaction_type": "call",
+            "status": "completed",
+        },
     )
     assert list_response.status_code == 200
     payload = list_response.json()

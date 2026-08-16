@@ -91,9 +91,7 @@ def _canonical_copy(value: Any) -> Any:
             str(key): _canonical_copy(item)
             for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
         }
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_canonical_copy(item) for item in value]
     raise TypeError(f"unsupported checkpoint value: {type(value).__name__}")
 
@@ -135,7 +133,9 @@ def _numeric_shape(value: Any) -> str:
     if all(
         isinstance(item, Sequence)
         and not isinstance(item, (str, bytes, bytearray))
-        and all(isinstance(number, (int, float)) and not isinstance(number, bool) for number in item)
+        and all(
+            isinstance(number, (int, float)) and not isinstance(number, bool) for number in item
+        )
         for item in values
     ):
         return "keyed_vectors"
@@ -219,9 +219,7 @@ def _encode_state_payload(
         else:
             leaves = list(_mapping_numeric_leaves(value))
             descriptor["paths"] = [list(path) for path, _number in leaves]
-            descriptor["empty_paths"] = [
-                list(path) for path in _mapping_empty_paths(value)
-            ]
+            descriptor["empty_paths"] = [list(path) for path in _mapping_empty_paths(value)]
             values = [number for _path, number in leaves]
 
         packed = bytearray()
@@ -264,12 +262,19 @@ def _decode_state_payload(
         index = json.loads(raw[index_start : index_start + index_length])
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise CheckpointCorruptionError("checkpoint table index is invalid JSON") from exc
-    if not isinstance(index, Mapping) or index.get("schema_version") != MODAL_AUTOENCODER_TABLE_SCHEMA_VERSION:
+    if (
+        not isinstance(index, Mapping)
+        or index.get("schema_version") != MODAL_AUTOENCODER_TABLE_SCHEMA_VERSION
+    ):
         raise UnsupportedCheckpointError("unsupported checkpoint table schema")
     metadata = index.get("metadata")
     tables = index.get("tables")
     component_digests = index.get("component_digests")
-    if not isinstance(metadata, Mapping) or not isinstance(tables, list) or not isinstance(component_digests, Mapping):
+    if (
+        not isinstance(metadata, Mapping)
+        or not isinstance(tables, list)
+        or not isinstance(component_digests, Mapping)
+    ):
         raise CheckpointCorruptionError("checkpoint table index has invalid fields")
     result = _canonical_copy(metadata)
     numeric_start = index_start + index_length
@@ -303,7 +308,11 @@ def _decode_state_payload(
         elif encoding == "keyed_vectors":
             keys = descriptor.get("keys")
             lengths = descriptor.get("row_lengths")
-            if not isinstance(keys, list) or not isinstance(lengths, list) or len(keys) != len(lengths):
+            if (
+                not isinstance(keys, list)
+                or not isinstance(lengths, list)
+                or len(keys) != len(lengths)
+            ):
                 raise CheckpointCorruptionError(f"invalid rows for {field_name}")
             rows: Dict[str, List[float]] = {}
             position = 0
@@ -397,7 +406,9 @@ def _parse_container(
 ) -> tuple[Dict[str, Any], bytes, int]:
     if offset < 0 or len(data) - offset < _HEADER.size:
         raise CheckpointCorruptionError("checkpoint container header is truncated")
-    magic, version, flags, manifest_length, payload_length, manifest_hash, payload_hash = _HEADER.unpack_from(data, offset)
+    magic, version, flags, manifest_length, payload_length, manifest_hash, payload_hash = (
+        _HEADER.unpack_from(data, offset)
+    )
     if expected_magic is not None and magic != expected_magic:
         raise UnsupportedCheckpointError("unexpected checkpoint container kind")
     if magic not in (CHECKPOINT_MAGIC, DELTA_MAGIC):
@@ -606,8 +617,8 @@ def serialize_checkpoint(
     """Serialize a full state into the safe compact binary format."""
 
     source_data = _state_data(state)
-    _source_digest, source_revision, _source_lineage, _source_components, _source_schema = _identity_record(
-        state, metric_lineage
+    _source_digest, source_revision, _source_lineage, _source_components, _source_schema = (
+        _identity_record(state, metric_lineage)
     )
     effective_revision = source_revision if revision is None else int(revision)
     data = _quantized_copy(source_data, float_precision)
@@ -622,15 +633,18 @@ def serialize_checkpoint(
         component_digests=component_digests,
     )
     payload_checksum = _sha256(payload)
-    checkpoint_id = "lir-mae-checkpoint-" + canonical_digest(
-        {
-            "metric_lineage_digest": lineage_digest,
-            "payload_checksum": payload_checksum,
-            "revision": effective_revision,
-            "state_digest": digest,
-            "state_schema_version": state_schema,
-        }
-    )[:32]
+    checkpoint_id = (
+        "lir-mae-checkpoint-"
+        + canonical_digest(
+            {
+                "metric_lineage_digest": lineage_digest,
+                "payload_checksum": payload_checksum,
+                "revision": effective_revision,
+                "state_digest": digest,
+                "state_schema_version": state_schema,
+            }
+        )[:32]
+    )
     manifest = CheckpointManifest(
         schema_version=MODAL_AUTOENCODER_CHECKPOINT_SCHEMA_VERSION,
         kind="full",
@@ -661,11 +675,15 @@ def serialize_delta(
 ) -> bytes:
     """Serialize whole replacements for only the components that changed."""
 
-    _source_base_digest, source_base_revision, _source_base_lineage, _source_base_components, _source_base_schema = _identity_record(
-        base_state, metric_lineage
-    )
-    _source_digest, source_revision, _source_lineage, _source_components, _source_schema = _identity_record(
-        state, metric_lineage
+    (
+        _source_base_digest,
+        source_base_revision,
+        _source_base_lineage,
+        _source_base_components,
+        _source_base_schema,
+    ) = _identity_record(base_state, metric_lineage)
+    _source_digest, source_revision, _source_lineage, _source_components, _source_schema = (
+        _identity_record(state, metric_lineage)
     )
     base_data = _quantized_copy(_state_data(base_state), float_precision)
     data = _quantized_copy(_state_data(state), float_precision)
@@ -704,15 +722,18 @@ def serialize_delta(
         include_components=changed,
     )
     payload_checksum = _sha256(payload)
-    delta_id = "lir-mae-delta-" + canonical_digest(
-        {
-            "base_revision": effective_base_revision,
-            "base_state_digest": base_digest,
-            "payload_checksum": payload_checksum,
-            "revision": effective_revision,
-            "state_digest": digest,
-        }
-    )[:32]
+    delta_id = (
+        "lir-mae-delta-"
+        + canonical_digest(
+            {
+                "base_revision": effective_base_revision,
+                "base_state_digest": base_digest,
+                "payload_checksum": payload_checksum,
+                "revision": effective_revision,
+                "state_digest": digest,
+            }
+        )[:32]
+    )
     manifest = CheckpointManifest(
         schema_version=MODAL_AUTOENCODER_DELTA_SCHEMA_VERSION,
         kind="delta",
@@ -739,7 +760,11 @@ def _validate_manifest_payload(manifest: CheckpointManifest, payload: bytes, *, 
         raise CheckpointCorruptionError(f"invalid {kind} checkpoint manifest")
     if manifest.payload_checksum != _sha256(payload):
         raise CheckpointCorruptionError("manifest payload checksum mismatch")
-    if not manifest.state_schema_version or not manifest.state_digest or not manifest.metric_lineage_digest:
+    if (
+        not manifest.state_schema_version
+        or not manifest.state_digest
+        or not manifest.metric_lineage_digest
+    ):
         raise CheckpointCorruptionError("checkpoint lineage fields are incomplete")
 
 
@@ -789,7 +814,10 @@ def _verify_loaded_state(
     expected_metric_lineage: Any,
     expected_revision: Optional[int],
 ) -> None:
-    if expected_state_schema_version is not None and manifest.state_schema_version != expected_state_schema_version:
+    if (
+        expected_state_schema_version is not None
+        and manifest.state_schema_version != expected_state_schema_version
+    ):
         raise CheckpointLineageError(
             f"state schema mismatch: expected {expected_state_schema_version!r}, got {manifest.state_schema_version!r}"
         )
@@ -798,9 +826,7 @@ def _verify_loaded_state(
             f"state revision mismatch: expected {expected_revision}, got {manifest.revision}"
         )
     effective_metric_lineage = (
-        manifest.metric_lineage
-        if expected_metric_lineage is None
-        else expected_metric_lineage
+        manifest.metric_lineage if expected_metric_lineage is None else expected_metric_lineage
     )
     digest, revision, lineage_digest, components, schema = _identity_record(
         state, effective_metric_lineage
@@ -832,7 +858,9 @@ def _json_load_result(
     if not isinstance(value, Mapping):
         raise CheckpointCorruptionError("legacy JSON state must be an object")
     state = _state_from_data(value, state_factory)
-    digest, revision, lineage_digest, components, schema = _identity_record(state, expected_metric_lineage)
+    digest, revision, lineage_digest, components, schema = _identity_record(
+        state, expected_metric_lineage
+    )
     if expected_state_schema_version is not None and schema != expected_state_schema_version:
         raise CheckpointLineageError("legacy JSON state schema mismatch")
     if expected_revision is not None and revision != int(expected_revision):
@@ -856,7 +884,9 @@ def _json_load_result(
     return CheckpointLoadResult(state=state, manifest=manifest, format="json")
 
 
-def iter_delta_segments(data: bytes, *, recover_truncated_tail: bool = True) -> tuple[List[tuple[CheckpointManifest, bytes]], int, int]:
+def iter_delta_segments(
+    data: bytes, *, recover_truncated_tail: bool = True
+) -> tuple[List[tuple[CheckpointManifest, bytes]], int, int]:
     """Decode complete delta frames and report valid offset/recovered bytes."""
 
     segments: List[tuple[CheckpointManifest, bytes]] = []
@@ -919,7 +949,10 @@ def _apply_delta(
         expected_metric_lineage=metric_lineage,
         expected_revision=delta_manifest.revision,
     )
-    if not delta_manifest.changed_components and delta_manifest.state_digest != current_manifest.state_digest:
+    if (
+        not delta_manifest.changed_components
+        and delta_manifest.state_digest != current_manifest.state_digest
+    ):
         raise CheckpointCorruptionError("metadata-only delta changes state identity")
     return next_state
 
