@@ -963,7 +963,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: A resumable full build covers exactly 51 jurisdictions with corpus-to-BM25-to-vector-to-graph key parity, real pinned GTE embeddings, all shard bounds, no unresolved admission gaps, and measured resource usage.
 
 ## OUL-040 Seal the exact release candidate and publication evidence root
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
