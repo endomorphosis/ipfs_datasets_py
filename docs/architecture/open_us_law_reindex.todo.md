@@ -1107,7 +1107,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: The public 40-hex dataset revision, Viewer configs, bucket content root, exact-51 coverage, model receipt, every descriptor, sparse query mode, fetch trace, attribution notice, and legacy raw preservation are independently verified.
 
 ## OUL-046 Benchmark sparse production retrieval at the public pin
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
