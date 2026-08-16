@@ -1035,7 +1035,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: A clean cache redownloads descriptors and routed shards from the exact 40-hex dataset revision and content-addressed bucket prefix, verifies all bytes, runs every query mode, and demonstrates sparse I/O without local artifact fallback.
 
 ## OUL-043 Create the manifest-bound prepublication authorization seal
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
