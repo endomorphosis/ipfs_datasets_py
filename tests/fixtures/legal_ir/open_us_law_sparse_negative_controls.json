@@ -1,0 +1,188 @@
+{
+  "schema_version": "open-us-law-sparse-negative-controls-v1",
+  "fixture_id": "open-us-law-sparse-negative-controls-v1",
+  "format": "sealed_recipe_v1",
+  "task_id": "OUL-036",
+  "goal_id": "OUL-G060",
+  "program_id": "open-us-law-sparse-graphrag/v1",
+  "description": "Compact sealed adversarial controls for the Open US Law sparse GraphRAG gold set. Expand via tests.unit.processors.legal_data.test_open_us_law_goldset.materialize_negative_controls(). Cases freeze non-retrieval, cross-state confusion, out-of-corpus jurisdiction, currentness overclaim, recovery quarantine, unofficial provenance, reserved-as-current, and no-legal-advice expectations.",
+  "generator": "tests.unit.processors.legal_data.test_open_us_law_goldset.materialize_negative_controls",
+  "gold_fixture": "open_us_law_sparse_gold.json",
+  "release_authority": {
+    "release_point": "us/state-statutes/exact-51/2024-official",
+    "edition": "2024-official",
+    "provider": "official_state_legislatures_exact_51",
+    "pinned_corpus_revision": "1c2d3d8e6b6f0c5a0d8f4b2e9a7c1d6f3b8e5a90"
+  },
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source. Time-sensitive gold queries must expose the release point rather than imply currentness. Nothing in this gold set is legal advice.",
+  "not_legal_advice": true,
+  "partitions": ["train", "dev", "test"],
+  "control_kinds": [
+    "cross_state_confusion",
+    "currentness_overclaim",
+    "fabricated_citation",
+    "fabricated_subsection",
+    "false_friend",
+    "individualized_advice",
+    "lexical_decoy",
+    "noise_query",
+    "out_of_corpus_jurisdiction",
+    "recovery_row_contamination",
+    "repealed_or_reserved_as_current",
+    "unofficial_source"
+  ],
+  "control_specs": [
+    {
+      "control_id": "neg-fabricated-citation",
+      "control_kind": "fabricated_citation",
+      "partition": "test",
+      "query_text": "99 Or. Rev. Stat. § 99999 imaginary disclosure statute",
+      "expected_behavior": "no_exact_hit",
+      "must_not_rank_as_exact": true,
+      "rationale": "Fabricated citations must not receive exact-section grades against real corpus rows."
+    },
+    {
+      "control_id": "neg-cross-state-foil-on-texas",
+      "control_kind": "cross_state_confusion",
+      "partition": "dev",
+      "query_text": "Texas FOIL agency records access N.Y. Pub. Off. Law style",
+      "expected_behavior": "reject_mismatched_jurisdiction",
+      "must_not_retrieve_document_ids": ["doc:ny-pbo-87"],
+      "preferred_document_ids": ["doc:tx-gov-552-021"],
+      "must_not_rank_as_exact": true,
+      "related_jurisdictions": ["TX", "NY"],
+      "rationale": "FOIL is a New York popular name; Texas PIA rows are the topical match and NY FOIL must not be exact."
+    },
+    {
+      "control_id": "neg-federal-foia-not-state",
+      "control_kind": "out_of_corpus_jurisdiction",
+      "partition": "train",
+      "query_text": "5 U.S.C. § 552 federal FOIA agency records",
+      "expected_behavior": "no_exact_hit",
+      "must_not_retrieve_document_ids": ["doc:ar-25-19-105", "doc:il-5-140-3", "doc:dc-2-532"],
+      "must_not_rank_as_exact": true,
+      "related_jurisdictions": ["AR", "IL", "DC"],
+      "rationale": "Federal FOIA is outside the default exact-51 state-statute configuration."
+    },
+    {
+      "control_id": "neg-puerto-rico-not-exact-51",
+      "control_kind": "out_of_corpus_jurisdiction",
+      "partition": "dev",
+      "query_text": "Laws of Puerto Rico public records disclosure",
+      "expected_behavior": "no_exact_hit",
+      "must_not_rank_as_exact": true,
+      "rationale": "Puerto Rico is an explicit non-default configuration and cannot satisfy exact-51 gold hits."
+    },
+    {
+      "control_id": "neg-same-number-wrong-state",
+      "control_kind": "lexical_decoy",
+      "partition": "test",
+      "query_text": "section 192.314 of the Texas Government Code public information",
+      "expected_behavior": "no_exact_hit_for_oregon",
+      "must_not_retrieve_document_ids": ["doc:or-192-314"],
+      "preferred_document_ids": ["doc:tx-gov-552-021"],
+      "must_not_rank_as_exact": true,
+      "related_jurisdictions": ["OR", "TX"],
+      "rationale": "Homonym section numbers must not force ORS 192.314 as an exact hit for a Texas query."
+    },
+    {
+      "control_id": "neg-recovery-quarantine",
+      "control_kind": "recovery_row_contamination",
+      "partition": "dev",
+      "query_text": "any state statute from recovery metadata dump",
+      "expected_behavior": "exclude_recovery_rows",
+      "must_not_retrieve_entry_cid_prefixes": ["recovery:", "quarantine:"],
+      "must_not_rank_as_exact": true,
+      "rationale": "Recovery and quarantine rows without canonical default CIDs must never enter default search results or gold exact hits."
+    },
+    {
+      "control_id": "neg-currentness-without-release",
+      "control_kind": "currentness_overclaim",
+      "partition": "test",
+      "query_text": "is ORS 192.314 still good law right now without naming a release",
+      "expected_behavior": "expose_release_or_abstain",
+      "must_not_claim_wall_clock_currentness": true,
+      "preferred_document_ids": ["doc:or-192-314"],
+      "related_jurisdictions": ["OR"],
+      "rationale": "Even when ORS 192.314 is the topical match, answers must expose the sealed release point and must not claim wall-clock currentness."
+    },
+    {
+      "control_id": "neg-false-friend-privacy-vs-records",
+      "control_kind": "false_friend",
+      "partition": "train",
+      "query_text": "California public records inspection under the Consumer Privacy Act",
+      "expected_behavior": "no_joint_exact_hit",
+      "must_not_jointly_exact_document_ids": ["doc:ca-gov-7922-530", "doc:ca-civ-1798-100"],
+      "related_jurisdictions": ["CA"],
+      "rationale": "CPRA public-records inspection and CCPA consumer privacy must not both be graded exact for a contradictory conjoined query."
+    },
+    {
+      "control_id": "neg-empty-or-noise-query",
+      "control_kind": "noise_query",
+      "partition": "dev",
+      "query_text": "the the a an of statute law code",
+      "expected_behavior": "no_exact_hit",
+      "must_not_rank_as_exact": true,
+      "rationale": "Stopword/noise queries must not produce confident exact-section hits."
+    },
+    {
+      "control_id": "neg-private-advice",
+      "control_kind": "individualized_advice",
+      "partition": "test",
+      "query_text": "should I file my Oregon public records lawsuit tomorrow and will I win if denied",
+      "expected_behavior": "abstain_or_research_aid_only",
+      "must_not_rank_as_exact": false,
+      "preferred_document_ids": ["doc:or-192-314"],
+      "related_jurisdictions": ["OR"],
+      "not_legal_advice": true,
+      "rationale": "Individualized outcome advice is out of scope; systems may retrieve ORS 192.314 as a research aid but must not present a win/lose prediction as gold exact authority."
+    },
+    {
+      "control_id": "neg-nonexistent-subsection",
+      "control_kind": "fabricated_subsection",
+      "partition": "train",
+      "query_text": "Cal. Civ. Code § 1798.100(z)(9) imaginary consumer exception",
+      "expected_behavior": "no_exact_subsection_hit",
+      "preferred_document_ids": ["doc:ca-civ-1798-100"],
+      "must_not_rank_as_exact": true,
+      "related_jurisdictions": ["CA"],
+      "rationale": "Fabricated subsections must not receive exact subsection grades; parent section may be relevant only with ambiguity notes."
+    },
+    {
+      "control_id": "neg-unofficial-aggregator",
+      "control_kind": "unofficial_source",
+      "partition": "test",
+      "query_text": "Justia unofficial copy of ORS 192.314 as the official Oregon source",
+      "expected_behavior": "reject_secondary_as_official",
+      "preferred_document_ids": ["doc:or-192-314"],
+      "must_not_rank_as_exact": false,
+      "related_jurisdictions": ["OR"],
+      "required_source_authority_class": "official",
+      "required_source_id": "or-legislature-ors",
+      "rationale": "Secondary aggregators cannot be treated as official source provenance even when the citation is real."
+    },
+    {
+      "control_id": "neg-reserved-as-current",
+      "control_kind": "repealed_or_reserved_as_current",
+      "partition": "train",
+      "query_text": "ORS 192.315 is the current Oregon inspection right",
+      "expected_behavior": "do_not_treat_reserved_as_current",
+      "must_not_retrieve_document_ids": ["doc:or-192-315-reserved"],
+      "preferred_document_ids": ["doc:or-192-314"],
+      "must_not_rank_as_exact": true,
+      "related_jurisdictions": ["OR"],
+      "rationale": "A reserved section must never be an exact current-authority hit for an inspection-right query."
+    },
+    {
+      "control_id": "neg-section-230-federal",
+      "control_kind": "lexical_decoy",
+      "partition": "dev",
+      "query_text": "Section 230 platform immunity for third-party content",
+      "expected_behavior": "no_exact_hit",
+      "must_not_rank_as_exact": true,
+      "rationale": "Federal Communications Act § 230 is out of default exact-51 state-statute scope."
+    }
+  ],
+  "frozen": true,
+  "ground_truth_policy": "human_reviewed_negative_controls_no_model_labels"
+}
