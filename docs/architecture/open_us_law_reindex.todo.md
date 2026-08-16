@@ -1131,7 +1131,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Cold and warm public queries meet declared relevance, latency, bytes, shard-count, and graph-budget thresholds while proving that no query downloads the complete BM25, vector, graph, or corpus family.
 
 ## OUL-047 Rehearse rollback, quarterly updates, and refill closure
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
