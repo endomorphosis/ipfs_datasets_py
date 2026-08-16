@@ -915,7 +915,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: BM25, vector, hybrid, graph, and semantic traversal meet declared recall and ranking thresholds; fetch traces prove bounded shard selection and substantially less than full-release transfer for routed queries.
 
 ## OUL-038 Prove deterministic builds and fail-closed resource security
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
