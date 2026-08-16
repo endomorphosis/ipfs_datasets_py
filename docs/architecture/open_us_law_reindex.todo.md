@@ -1059,7 +1059,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: The seal is created before mutation and binds the exact candidate, staging revision, bucket prefix, current principal and write scope, task and goal closure including refill work, target IDs, operation set, and expiration.
 
 ## OUL-044 Publish the authorized public Dataset and content-addressed Bucket release
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
