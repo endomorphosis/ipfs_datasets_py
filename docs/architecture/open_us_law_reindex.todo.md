@@ -819,7 +819,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Dataset queries require a 40-hex revision; bucket queries require releases/<manifest_sha256>/ and verified descriptors; both transports fetch only routed artifacts under explicit byte, shard, row, time, graph, and centroid budgets and fail closed on mutable pointers or drift.
 
 ## OUL-034 Implement hybrid retrieval and embedding-guided graph traversal
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
