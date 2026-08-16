@@ -747,7 +747,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Deterministic nodes and edges cover jurisdiction, code, title, chapter, section, subsection, citation, amendment, source, edition, and provenance with unresolved citations preserved and no embedding or lexical similarity misrepresented as legal authority.
 
 ## OUL-031 Build the BM25-backed lexical graph and bounded adjacency
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
