@@ -1,0 +1,1411 @@
+{
+  "acceptance": {
+    "all_artifact_digests_bound": true,
+    "all_expected_outputs_required": true,
+    "binds_all_artifact_digests": true,
+    "binds_bucket_inventory_root": true,
+    "binds_build_manifest": true,
+    "binds_clean_commit": true,
+    "binds_evaluation": true,
+    "binds_expiry_bound_prepublication_policy": true,
+    "binds_source_and_rights_receipts": true,
+    "binds_target_ids": true,
+    "binds_task_and_goal_closure": true,
+    "criteria": "The candidate root binds the exact clean commit, full task and goal closure, source and rights receipts, bucket inventory root, build manifest, evaluation, all artifact digests, target IDs, and an expiry-bound prepublication policy.",
+    "independently_reproducible": true,
+    "no_secret_or_path_leak": true,
+    "publication_not_authorized": true
+  },
+  "adr_path": "docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md",
+  "artifact_digests": {
+    "count": 25,
+    "inventory": {
+      "bm25/index_root": "f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+      "build/config": "071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+      "corpus/root": "f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+      "evidence/acquisition_closure": "f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+      "evidence/adjacency": "6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+      "evidence/bm25": "6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+      "evidence/bucket_inventory": "17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+      "evidence/corpus_admission": "f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+      "evidence/embeddings": "02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+      "evidence/evaluation": "60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+      "evidence/exact_51_coverage": "afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+      "evidence/full_build": "c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+      "evidence/goldset": "e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+      "evidence/identity_schema": "8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+      "evidence/legal_graph": "0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+      "evidence/publication_policy_schema": "237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+      "evidence/query_contract": "a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+      "evidence/release_policy": "f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+      "evidence/reproducibility": "f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+      "evidence/rights_matrix": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+      "evidence/source_admission": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+      "evidence/vectors": "fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+      "graph/projection": "8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+      "vectors/membership": "c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+      "vectors/root": "fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3"
+    },
+    "ok": true,
+    "producer_evidence": [
+      {
+        "key": "acquisition_closure",
+        "path": "docs/reports/open_us_law_reindex/acquisition_refill_closure.json",
+        "sha256": "f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+        "task_id": "OUL-023"
+      },
+      {
+        "key": "adjacency",
+        "path": "docs/reports/open_us_law_reindex/graph_adjacency_receipt.json",
+        "sha256": "6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+        "task_id": "OUL-031"
+      },
+      {
+        "key": "bm25",
+        "path": "docs/reports/open_us_law_reindex/bm25_receipt.json",
+        "sha256": "6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+        "task_id": "OUL-027"
+      },
+      {
+        "key": "bucket_inventory",
+        "path": "docs/reports/open_us_law_reindex/bucket_snapshot.json",
+        "sha256": "17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+        "task_id": "OUL-001"
+      },
+      {
+        "key": "corpus_admission",
+        "path": "docs/reports/open_us_law_reindex/corpus_admission.json",
+        "sha256": "f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+        "task_id": "OUL-024"
+      },
+      {
+        "key": "embeddings",
+        "path": "docs/reports/open_us_law_reindex/embedding_receipt.json",
+        "sha256": "02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+        "task_id": "OUL-028"
+      },
+      {
+        "key": "evaluation",
+        "path": "docs/reports/open_us_law_reindex/evaluation.json",
+        "sha256": "60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+        "task_id": "OUL-037"
+      },
+      {
+        "key": "exact_51_coverage",
+        "path": "docs/reports/open_us_law_reindex/exact_51_coverage.json",
+        "sha256": "afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+        "task_id": "OUL-022"
+      },
+      {
+        "key": "full_build",
+        "path": "docs/reports/open_us_law_reindex/full_build.json",
+        "sha256": "c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+        "task_id": "OUL-039"
+      },
+      {
+        "key": "goldset",
+        "path": "docs/reports/open_us_law_reindex/goldset_rationale.md",
+        "sha256": "e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+        "task_id": "OUL-036"
+      },
+      {
+        "key": "identity_schema",
+        "path": "data/legal/open_us_law/release.schema.json",
+        "sha256": "8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+        "task_id": "OUL-005"
+      },
+      {
+        "key": "legal_graph",
+        "path": "docs/reports/open_us_law_reindex/legal_graph_receipt.json",
+        "sha256": "0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+        "task_id": "OUL-030"
+      },
+      {
+        "key": "publication_policy_schema",
+        "path": "data/legal/open_us_law/publication_policy.schema.json",
+        "sha256": "237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+        "task_id": "OUL-007"
+      },
+      {
+        "key": "query_contract",
+        "path": "docs/reports/open_us_law_reindex/query_contract.json",
+        "sha256": "a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+        "task_id": "OUL-034"
+      },
+      {
+        "key": "release_policy",
+        "path": "data/agent_supervisor/open_us_law_reindex/release_policy.json",
+        "sha256": "f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+        "task_id": "OUL-000"
+      },
+      {
+        "key": "reproducibility",
+        "path": "docs/reports/open_us_law_reindex/reproducibility.json",
+        "sha256": "f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+        "task_id": "OUL-038"
+      },
+      {
+        "key": "rights_matrix",
+        "path": "data/legal/open_us_law/source_admission.json",
+        "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "task_id": "OUL-002"
+      },
+      {
+        "key": "source_admission",
+        "path": "data/legal/open_us_law/source_admission.json",
+        "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+        "task_id": "OUL-002"
+      },
+      {
+        "key": "vectors",
+        "path": "docs/reports/open_us_law_reindex/vector_receipt.json",
+        "sha256": "fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+        "task_id": "OUL-029"
+      }
+    ],
+    "release_artifacts": [
+      {
+        "family": "corpus",
+        "relative_path": "corpus/root",
+        "row_count": 51,
+        "sha256": "f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+        "size_bytes": null,
+        "source": "full_build"
+      },
+      {
+        "family": "bm25",
+        "relative_path": "bm25/index_root",
+        "row_count": 8,
+        "sha256": "f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+        "size_bytes": 196,
+        "source": "full_build"
+      },
+      {
+        "family": "vectors",
+        "relative_path": "vectors/root",
+        "row_count": 8,
+        "sha256": "fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+        "size_bytes": 5,
+        "source": "full_build"
+      },
+      {
+        "family": "graph",
+        "relative_path": "graph/projection",
+        "row_count": 128,
+        "sha256": "8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+        "size_bytes": 73,
+        "source": "full_build"
+      },
+      {
+        "family": "vectors",
+        "relative_path": "vectors/membership",
+        "row_count": 51,
+        "sha256": "c8c7e9cd75297485c2a1a51108a2a831938f76780c937b81e2dad8827285e269",
+        "size_bytes": null,
+        "source": "full_build"
+      },
+      {
+        "family": "config",
+        "relative_path": "build/config",
+        "row_count": 51,
+        "sha256": "071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+        "size_bytes": null,
+        "source": "full_build"
+      }
+    ],
+    "root_digest": "601f4c0b6f3c97eb6d9679e69ee4b481d7553d35f0c12a17e2fdac9e7568025d"
+  },
+  "authorizing_for_publication": false,
+  "authorizing_for_release": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "bucket_inventory": {
+    "bucket_id": "justicedao/open-us-law-bucket",
+    "bucket_is_mutable": true,
+    "inventory_digest_sha256": "8fb795731ad1298faa02e53ac0ea487d631133e9c1a32ae73c646079ca1e2e6b",
+    "object_count": 107,
+    "ok": true,
+    "parquet_object_count": 103,
+    "path": "docs/reports/open_us_law_reindex/bucket_snapshot.json",
+    "provisional_inventory_digest_sha256": "ef84263ab604460297fadfefa4268aee974b1ba1ed914188cc591df62e6ff65b",
+    "root": "8fb795731ad1298faa02e53ac0ea487d631133e9c1a32ae73c646079ca1e2e6b",
+    "sha256": "17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+    "snapshot_digest_sha256": "815b21dba9d6b923e57949d99db20312c13a0cba573cabb1a4e33dc620975c04",
+    "task_id": "OUL-001",
+    "total_bytes": 1134269198
+  },
+  "build_manifest": {
+    "bm25_index_root_cid": "sha256:f5039027b4413666f75b4350879ed9f777d8741a2cede6661e0da5bf8ce9341f",
+    "build_config_cid": "071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+    "config_digest": "071363557463792c49d1ddadffabd986cea209965cd0a7f66bd4ebc38699c35a",
+    "corpus_root_cid": "sha256:f92708535f139baa3b3cdc076e6958ff349eff2b1ee91b0d4cb740aefeb8c6fd",
+    "graph_cid": "sha256:8573755b774c9a141b69616ac7e56fc015071834321a95f2406927158bcd40e7",
+    "jurisdiction_count": 51,
+    "key_parity_ok": true,
+    "ok": true,
+    "path": "docs/reports/open_us_law_reindex/full_build.json",
+    "release_manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "report_digest_sha256": "c5fbad7bbe741030356f685cc7b0861e0b947cb4b9e865f51b422fcd6a6604f1",
+    "sha256": "c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+    "task_id": "OUL-039",
+    "vector_root_cid": "sha256:fa8e4ad3f31ed412742bf224b7f106a7382b03aa6e63e6406a694641e71cd9b3",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "bundle": "candidate-seal",
+  "candidate": {
+    "dataset_id": "justicedao/open-us-law-sparse-graphrag",
+    "default_config": "state_statutes_exact_51",
+    "kind": "fixture_local",
+    "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "package_version": "1",
+    "release_profile": "open-us-law-sparse-graphrag/v1",
+    "release_root_cid": "sha256:99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "root_label": "fixture://open-us-law-hf-release-candidate",
+    "source_revision": "a99db3e9f7e34508242760dc9b6a75740abce3ee",
+    "staging_branch": "stage/open-us-law-sparse-graphrag-v1",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "clean_commit": {
+    "clean": true,
+    "kind": "exact_40_hex",
+    "sha": "a99db3e9f7e34508242760dc9b6a75740abce3ee",
+    "source": "sealed_tree_id"
+  },
+  "closure": {
+    "complete": true,
+    "generated_work_blocks_staging": true,
+    "goals": {
+      "bound": true,
+      "objectives_path": "docs/architecture/open_us_law_reindex.objectives.md",
+      "objectives_sha256": "7ea89dbf291cc8e8ea2805586fb58aa4269573227c9ce1c04be28752c6aa63fd",
+      "parent_goal": {
+        "goal_id": "OUL-G070",
+        "status": "active",
+        "title": "Stage and canary the exact content-addressed candidate"
+      },
+      "predecessors": [
+        {
+          "goal_id": "OUL-G000",
+          "parent": "",
+          "status": "active",
+          "title": "Publish an exact-51 Open US Law sparse GraphRAG release"
+        },
+        {
+          "goal_id": "OUL-G010",
+          "parent": "OUL-G000",
+          "status": "provisionally_complete",
+          "title": "Freeze bucket, authority, completeness, identity, transport, and safety contracts"
+        },
+        {
+          "goal_id": "OUL-G020",
+          "parent": "OUL-G000",
+          "status": "active",
+          "title": "Acquire a complete official corpus for exactly 50 states plus DC"
+        },
+        {
+          "goal_id": "OUL-G021",
+          "parent": "OUL-G020",
+          "status": "provisionally_complete",
+          "title": "Complete official acquisition cohorts A through D"
+        },
+        {
+          "goal_id": "OUL-G022",
+          "parent": "OUL-G020",
+          "status": "active",
+          "title": "Complete official acquisition cohorts E through H"
+        },
+        {
+          "goal_id": "OUL-G023",
+          "parent": "OUL-G020",
+          "status": "active",
+          "title": "Complete official acquisition cohorts I through M including DC"
+        },
+        {
+          "goal_id": "OUL-G024",
+          "parent": "OUL-G020",
+          "status": "active",
+          "title": "Reconcile exact-51 evidence and refill every source gap"
+        },
+        {
+          "goal_id": "OUL-G030",
+          "parent": "OUL-G000",
+          "status": "active",
+          "title": "Build a canonical bounded and streaming Open US Law corpus"
+        },
+        {
+          "goal_id": "OUL-G040",
+          "parent": "OUL-G000",
+          "status": "active",
+          "title": "Produce BM25, GTE vector, and BM25-backed graph families"
+        },
+        {
+          "goal_id": "OUL-G050",
+          "parent": "OUL-G000",
+          "status": "active",
+          "title": "Query Hugging Face sparsely and traverse the graph with embeddings"
+        },
+        {
+          "goal_id": "OUL-G060",
+          "parent": "OUL-G000",
+          "status": "active",
+          "title": "Prove quality, security, reproducibility, and full-scale behavior"
+        }
+      ],
+      "required_goal_ids": [
+        "OUL-G000",
+        "OUL-G010",
+        "OUL-G020",
+        "OUL-G021",
+        "OUL-G022",
+        "OUL-G023",
+        "OUL-G024",
+        "OUL-G030",
+        "OUL-G040",
+        "OUL-G050",
+        "OUL-G060"
+      ]
+    },
+    "tasks": {
+      "complete": true,
+      "generated_blockers": [
+        "OUL-060"
+      ],
+      "generated_count": 25,
+      "generated_tasks": [
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-049-oul-011-validation.json",
+          "goal_id": "OUL-G021",
+          "sha256": "aeb5b1c9101e159a158d4ae95352c58a92c85f55be3d15d01f00971e1be56a9f",
+          "status": "completed",
+          "task_id": "OUL-049",
+          "title": "Resolve validation retry-budget failure for OUL-011"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-050-oul-009-validation.json",
+          "goal_id": "OUL-G021",
+          "sha256": "9ee220454d59c5032955bcff290b7c6738e97c095961ebbf49d7e5fcbbf19187",
+          "status": "completed",
+          "task_id": "OUL-050",
+          "title": "Resolve validation retry-budget failure for OUL-009"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-051-oul-010-validation.json",
+          "goal_id": "OUL-G021",
+          "sha256": "c1fb187629fc8a9588f0c5281814bd369ea5584b73e8aacad22c03617862a25c",
+          "status": "completed",
+          "task_id": "OUL-051",
+          "title": "Resolve validation retry-budget failure for OUL-010"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-052-oul-012-validation.json",
+          "goal_id": "OUL-G021",
+          "sha256": "5468bd80693e190ae6aefb72ffb5e1f7089cdbfb7cef28e7c2cc0a384ec21e16",
+          "status": "completed",
+          "task_id": "OUL-052",
+          "title": "Resolve validation retry-budget failure for OUL-012"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-053-oul-013-validation.json",
+          "goal_id": "OUL-G022",
+          "sha256": "17f2174378b23ca46c5f74a57cddda722077b081e68246eb60d240496ae1240c",
+          "status": "completed",
+          "task_id": "OUL-053",
+          "title": "Resolve validation retry-budget failure for OUL-013"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-054-oul-014-validation.json",
+          "goal_id": "OUL-G022",
+          "sha256": "d193035fde642967a1597d6583071fc4fbc69215bc5131f7f48ef8158930ffc1",
+          "status": "completed",
+          "task_id": "OUL-054",
+          "title": "Resolve validation retry-budget failure for OUL-014"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-055-oul-015-validation.json",
+          "goal_id": "OUL-G022",
+          "sha256": "86dab9b5cf20e38c73e57c6d4c966c6a871ec93a1cd6a0d8eece831ed47913bc",
+          "status": "completed",
+          "task_id": "OUL-055",
+          "title": "Resolve validation retry-budget failure for OUL-015"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-056-oul-020-validation.json",
+          "goal_id": "OUL-G023",
+          "sha256": "c11d8a5c59613230ec7bdc55d9ddf9eadd24de2472328847dda79dd3010da701",
+          "status": "completed",
+          "task_id": "OUL-056",
+          "title": "Resolve validation retry-budget failure for OUL-020"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-057-oul-021-validation.json",
+          "goal_id": "OUL-G023",
+          "sha256": "dc1b28864419f06de55edd13f2b9802d0a4d32045708e0710e83ca2f41f513ff",
+          "status": "completed",
+          "task_id": "OUL-057",
+          "title": "Resolve validation retry-budget failure for OUL-021"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-058-g010-review.json",
+          "goal_id": "OUL-G010",
+          "sha256": "a47c17a618d74874d98a99e2438645ae04fb7d72874da1417b1476285851939c",
+          "status": "completed",
+          "task_id": "OUL-058",
+          "title": "Record a tracked G010 completion-evidence review receipt"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-059-main-checkout.json",
+          "goal_id": "OUL-G000",
+          "sha256": "360b3dba85932be0c059b3fa6b80ae8c5d0a63d02954192a1a6a4c652abe0b20",
+          "status": "completed",
+          "task_id": "OUL-059",
+          "title": "Resolve dirty main checkout blocking 6 worktree merges"
+        },
+        {
+          "goal_id": "OUL-G000",
+          "status": "todo",
+          "task_id": "OUL-060",
+          "title": "Record a tracked root-goal completion-evidence review receipt"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-061-g020-review.json",
+          "goal_id": "OUL-G020",
+          "sha256": "35137d559095774d449d6e936200394c2a61efe2b131fbe27033c0e4878b6b08",
+          "status": "completed",
+          "task_id": "OUL-061",
+          "title": "Record a tracked acquisition completion-evidence review receipt"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-062-oul-011-implementation.json",
+          "goal_id": "OUL-G021",
+          "sha256": "41de708f89de7a7e8d9609f8c6ec638c76e68eaa74c49956053795e639f6fb43",
+          "status": "completed",
+          "task_id": "OUL-062",
+          "title": "Resolve implementation retry-budget failure for OUL-011"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-063-oul-016-validation.json",
+          "goal_id": "OUL-G022",
+          "sha256": "cd1375a98b7789ac58d2d6bb0bd4c98e334b44c5fc3bc97e0de2c70d43ec8ef2",
+          "status": "completed",
+          "task_id": "OUL-063",
+          "title": "Resolve validation retry-budget failure for OUL-016"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-064-oul-017-validation.json",
+          "goal_id": "OUL-G023",
+          "sha256": "4c893baf5baee3d4a35e77894574161bc5817b2b6888a18376ae5e5098c2ca44",
+          "status": "completed",
+          "task_id": "OUL-064",
+          "title": "Resolve validation retry-budget failure for OUL-017"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-065-oul-018-validation.json",
+          "goal_id": "OUL-G023",
+          "sha256": "78022cd6aca1a39569606c7f279d4d62e3660738b84e338e9a898489516cde82",
+          "status": "completed",
+          "task_id": "OUL-065",
+          "title": "Resolve validation retry-budget failure for OUL-018"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-066-oul-019-validation.json",
+          "goal_id": "OUL-G023",
+          "sha256": "1752eda33c205396cb2c518c029b9a02c731c5c70a4a9ffcbd77e4948e181ab4",
+          "status": "completed",
+          "task_id": "OUL-066",
+          "title": "Resolve validation retry-budget failure for OUL-019"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-067-oul-010-validation.json",
+          "goal_id": "OUL-G021",
+          "sha256": "f7e328dde18647c60f1caa22d1a7b75ef23f89cf886a8c6d9e87d8d135018de3",
+          "status": "completed",
+          "task_id": "OUL-067",
+          "title": "Resolve validation retry-budget failure for OUL-010"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-068-oul-011-validation.json",
+          "goal_id": "OUL-G021",
+          "sha256": "dcc8eaf856c80e565a495317bbc2659f097ec539e638c8776683518f2e0d85ad",
+          "status": "completed",
+          "task_id": "OUL-068",
+          "title": "Resolve validation retry-budget failure for OUL-011"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-069-oul-012-validation.json",
+          "goal_id": "OUL-G021",
+          "sha256": "c5fb5744d15dd7db72c547c584a729ac0b1524b54d0acc82d193fea1ef103f65",
+          "status": "completed",
+          "task_id": "OUL-069",
+          "title": "Resolve validation retry-budget failure for OUL-012"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-070-oul-015-validation.json",
+          "goal_id": "OUL-G022",
+          "sha256": "48f64a384c3e7421dcd4e450096e137c6ed1a37c0f6b50616f60797b7af02724",
+          "status": "completed",
+          "task_id": "OUL-070",
+          "title": "Resolve validation retry-budget failure for OUL-015"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-071-oul-021-validation.json",
+          "goal_id": "OUL-G023",
+          "sha256": "48abc24184b1e846fdc6aaf5b65ce123b07308cd8c30563d8305e248d5729965",
+          "status": "completed",
+          "task_id": "OUL-071",
+          "title": "Resolve validation retry-budget failure for OUL-021"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/retry/oul-064-oul-017-validation.json",
+          "goal_id": "OUL-G023",
+          "sha256": "4c893baf5baee3d4a35e77894574161bc5817b2b6888a18376ae5e5098c2ca44",
+          "status": "completed",
+          "task_id": "OUL-072",
+          "title": "Resolve validation retry-budget failure for OUL-064"
+        },
+        {
+          "evidence_path": "docs/architecture/open_us_law_reindex.todo.md",
+          "goal_id": "OUL-G000",
+          "sha256": "d4abb159711729b96ca7a6c051cfa0faf3046531d45848fa8a3c85a00a6ca274",
+          "status": "completed",
+          "task_id": "OUL-073",
+          "title": "Resolve 4 preflight-conflicting backlogged worktree merges"
+        }
+      ],
+      "predecessor_count": 40,
+      "predecessors": [
+        {
+          "evidence_path": "docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md",
+          "goal_id": "OUL-G010",
+          "sha256": "049bb30d20f5d2c9767486bacb482f0ac2b8506ab4316bfc93a2e665ffcda68b",
+          "status": "completed",
+          "task_id": "OUL-000",
+          "title": "Seal the Open US Law supervisor control plane"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/bucket_snapshot.json",
+          "goal_id": "OUL-G010",
+          "sha256": "17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+          "status": "completed",
+          "task_id": "OUL-001",
+          "title": "Freeze and reconcile the live open-us-law bucket inventory"
+        },
+        {
+          "evidence_path": "data/legal/open_us_law/source_admission.schema.json",
+          "goal_id": "OUL-G010",
+          "sha256": "5d39cc1e8d83fc5ee3a535455ae6c15b55b8f95cc3c3033ba63fdfa26ed25eab",
+          "status": "completed",
+          "task_id": "OUL-002",
+          "title": "Seal the exact-51 official-source rights and admission matrix"
+        },
+        {
+          "evidence_path": "data/legal/open_us_law/full_scrape_receipt.schema.json",
+          "goal_id": "OUL-G010",
+          "sha256": "8955cfea51a4cbe7d33e1be0637679a8fcadcc3df6f3254be161ce6e30b4bee6",
+          "status": "completed",
+          "task_id": "OUL-003",
+          "title": "Define the exhaustive 50-state-plus-DC completeness oracle"
+        },
+        {
+          "evidence_path": "tests/fixtures/legal_ir/open_us_law_bucket_listing.json",
+          "goal_id": "OUL-G010",
+          "sha256": "e5ee5d14ba8c3a394a1ca76bd1be06434605327e30f6dd84cbcb9e17243e89f5",
+          "status": "completed",
+          "task_id": "OUL-004",
+          "title": "Implement a fail-closed Hugging Face Bucket snapshot transport"
+        },
+        {
+          "evidence_path": "data/legal/open_us_law/release.schema.json",
+          "goal_id": "OUL-G010",
+          "sha256": "8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+          "status": "completed",
+          "task_id": "OUL-005",
+          "title": "Specify canonical Open US Law identity schema and configuration boundaries"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/acquisition_leases.json",
+          "goal_id": "OUL-G010",
+          "sha256": "1ae3e4f321d6cf12fd387bea957dca27e1ab8bd2dc378d951576fe98de7b2630",
+          "status": "completed",
+          "task_id": "OUL-006",
+          "title": "Coordinate prior state-law evidence and lease only missing live scrapes"
+        },
+        {
+          "evidence_path": "data/legal/open_us_law/publication_policy.schema.json",
+          "goal_id": "OUL-G010",
+          "sha256": "237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+          "status": "completed",
+          "task_id": "OUL-007",
+          "title": "Bind additive Dataset and Bucket publication authority"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/substrate_gap_audit.json",
+          "goal_id": "OUL-G010",
+          "sha256": "d9c68b28566fb0b6f89b3f71b0037e87e464f35ffa32cbcfd03ad9f9ceb2e070",
+          "status": "completed",
+          "task_id": "OUL-008",
+          "title": "Audit and harden the reused USCode sparse GraphRAG substrate for corpus scale"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_A.json",
+          "goal_id": "OUL-G021",
+          "sha256": "a92c8ee760f4f0cbc028aa526e98c8e0b09444d0078f5f157a3b4dba6fc96a73",
+          "status": "completed",
+          "task_id": "OUL-009",
+          "title": "Certify official scrape cohort A (AL, AK, AZ, AR)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_B.json",
+          "goal_id": "OUL-G021",
+          "sha256": "02c923faccf1916018e4f079a95f40a7a0a30ac76bf6c075d1e7c6fa18daa8be",
+          "status": "completed",
+          "task_id": "OUL-010",
+          "title": "Certify official scrape cohort B (CA, CO, CT, DE)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_C.json",
+          "goal_id": "OUL-G021",
+          "sha256": "a3867f26535e5c4d458e7bd035547926aba4b34d9b02318755b4ba05016c34e4",
+          "status": "completed",
+          "task_id": "OUL-011",
+          "title": "Certify official scrape cohort C (FL, GA, HI, ID)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_D.json",
+          "goal_id": "OUL-G021",
+          "sha256": "ac425fd6750efda602170f7f25f79ff45ff4cca52e0668fa83c5067ad98c23db",
+          "status": "completed",
+          "task_id": "OUL-012",
+          "title": "Certify official scrape cohort D (IL, IN, IA, KS)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_E.json",
+          "goal_id": "OUL-G022",
+          "sha256": "eba64f589558695bb45dd4d6b49ffa5709949e2dd877d7728b53996a82ff95a2",
+          "status": "completed",
+          "task_id": "OUL-013",
+          "title": "Certify official scrape cohort E (KY, LA, ME, MD)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_F.json",
+          "goal_id": "OUL-G022",
+          "sha256": "66c9885ad88461c6f778adeae163f781bb4f79edceaa8b027ae9cec0407ba79c",
+          "status": "completed",
+          "task_id": "OUL-014",
+          "title": "Certify official scrape cohort F (MA, MI, MN, MS)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_G.json",
+          "goal_id": "OUL-G022",
+          "sha256": "52e3085f6e9cc9230089f702e9f729691090db6501a316e967c8d8c42adfd764",
+          "status": "completed",
+          "task_id": "OUL-015",
+          "title": "Certify official scrape cohort G (MO, MT, NE, NV)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_H.json",
+          "goal_id": "OUL-G022",
+          "sha256": "a3446c8b1c435c02a650ea80dd3a524ac342bedeb865f2bac83719863a9986ec",
+          "status": "completed",
+          "task_id": "OUL-016",
+          "title": "Certify official scrape cohort H (NH, NJ, NM, NY)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_I.json",
+          "goal_id": "OUL-G023",
+          "sha256": "1beae9b0da892ded732539f462b7ad2d480ca9b39a652d793a1ec4b129e4aca3",
+          "status": "completed",
+          "task_id": "OUL-017",
+          "title": "Certify official scrape cohort I (NC, ND, OH, OK)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_J.json",
+          "goal_id": "OUL-G023",
+          "sha256": "a1c7dfba32a7e09339c8f776760031e296d96bcc27d9411ffc18b58a1cd03da5",
+          "status": "completed",
+          "task_id": "OUL-018",
+          "title": "Certify official scrape cohort J (OR, PA, RI, SC)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_K.json",
+          "goal_id": "OUL-G023",
+          "sha256": "5f27804d8bdfeb0797ed0214ca59e5e64f12485cdb3e572b81e9b587b03b77bd",
+          "status": "completed",
+          "task_id": "OUL-019",
+          "title": "Certify official scrape cohort K (SD, TN, TX, UT)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_L.json",
+          "goal_id": "OUL-G023",
+          "sha256": "41da79fba64ba24e71fa08537b5eb7c5db31d62988a40986e5be6c25656234cd",
+          "status": "completed",
+          "task_id": "OUL-020",
+          "title": "Certify official scrape cohort L (VT, VA, WA, WV)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/cohort_M.json",
+          "goal_id": "OUL-G023",
+          "sha256": "d3393e324a87dd1abe7129f527c3f4d5adcb55c36e93f52d690f1ff5048b24d3",
+          "status": "completed",
+          "task_id": "OUL-021",
+          "title": "Certify official scrape cohort M (WI, WY, DC)"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/exact_51_coverage.json",
+          "goal_id": "OUL-G024",
+          "sha256": "afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+          "status": "completed",
+          "task_id": "OUL-022",
+          "title": "Reconcile exact-51 jurisdiction coverage and bucket deltas"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/acquisition_refill_closure.json",
+          "goal_id": "OUL-G024",
+          "sha256": "f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+          "status": "completed",
+          "task_id": "OUL-023",
+          "title": "Refill and close every acquisition, rights, and frontier gap"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/corpus_admission.json",
+          "goal_id": "OUL-G030",
+          "sha256": "f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+          "status": "completed",
+          "task_id": "OUL-024",
+          "title": "Materialize the canonical exact-51 corpus and quarantine"
+        },
+        {
+          "evidence_path": "ipfs_datasets_py/processors/legal_data/open_us_law_streaming.py",
+          "goal_id": "OUL-G030",
+          "sha256": "192ec1bcb35e580802261d0c0d47372f09f761e8faf0e5b14563f181fa743482",
+          "status": "completed",
+          "task_id": "OUL-025",
+          "title": "Implement streaming chunking, checkpoints, and external sort"
+        },
+        {
+          "evidence_path": "closure/predecessor/OUL-026",
+          "goal_id": "OUL-G030",
+          "sha256": "d34409cf38526a73f467fed95cd40c6d0063edae25890ffdc43f1ea56bb402cb",
+          "status": "completed",
+          "task_id": "OUL-026",
+          "title": "Add hierarchical routes and corpus-scale shared layout primitives"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/bm25_receipt.json",
+          "goal_id": "OUL-G040",
+          "sha256": "6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+          "status": "completed",
+          "task_id": "OUL-027",
+          "title": "Build scalable field-weighted term-range BM25"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/embedding_receipt.json",
+          "goal_id": "OUL-G040",
+          "sha256": "02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+          "status": "completed",
+          "task_id": "OUL-028",
+          "title": "Generate real pinned thenlper gte-small embeddings"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/vector_receipt.json",
+          "goal_id": "OUL-G040",
+          "sha256": "fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+          "status": "completed",
+          "task_id": "OUL-029",
+          "title": "Cluster, sort, and shard centroid-routed vectors"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/legal_graph_receipt.json",
+          "goal_id": "OUL-G040",
+          "sha256": "0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+          "status": "completed",
+          "task_id": "OUL-030",
+          "title": "Build the multi-jurisdiction legal and provenance graph"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/graph_adjacency_receipt.json",
+          "goal_id": "OUL-G040",
+          "sha256": "6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+          "status": "completed",
+          "task_id": "OUL-031",
+          "title": "Build the BM25-backed lexical graph and bounded adjacency"
+        },
+        {
+          "evidence_path": "tests/fixtures/legal_ir/open_us_law_dataset_card.md",
+          "goal_id": "OUL-G040",
+          "sha256": "88feaf926ba131083b2872e0b7ad64606a549cf313b252b51733e46db6c68516",
+          "status": "completed",
+          "task_id": "OUL-032",
+          "title": "Assemble the descriptor-complete sparse GraphRAG release"
+        },
+        {
+          "evidence_path": "ipfs_datasets_py/processors/legal_data/open_us_law_resolver.py",
+          "goal_id": "OUL-G050",
+          "sha256": "6c6b211aa00c3013c9b573c28e7d7a6fc5218f8ac5cb0f3e9d56bc64116f06ad",
+          "status": "completed",
+          "task_id": "OUL-033",
+          "title": "Implement content-addressed Bucket and immutable Dataset resolution"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/query_contract.json",
+          "goal_id": "OUL-G050",
+          "sha256": "a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+          "status": "completed",
+          "task_id": "OUL-034",
+          "title": "Implement hybrid retrieval and embedding-guided graph traversal"
+        },
+        {
+          "evidence_path": "ipfs_datasets_py/processors/legal_data/open_us_law_sparse_graphrag.py",
+          "goal_id": "OUL-G050",
+          "sha256": "201d6c5cce289ca8c2eec2dff94d93b837cd60be9a5097b524300b5b6b5a21db",
+          "status": "completed",
+          "task_id": "OUL-035",
+          "title": "Expose direct-Hugging-Face query API and CLI"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/goldset_rationale.md",
+          "goal_id": "OUL-G060",
+          "sha256": "e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+          "status": "completed",
+          "task_id": "OUL-036",
+          "title": "Seal a jurisdiction-diverse legal retrieval gold set"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/evaluation.json",
+          "goal_id": "OUL-G060",
+          "sha256": "60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+          "status": "completed",
+          "task_id": "OUL-037",
+          "title": "Evaluate retrieval quality, graph utility, and sparse I/O"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/reproducibility.json",
+          "goal_id": "OUL-G060",
+          "sha256": "f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+          "status": "completed",
+          "task_id": "OUL-038",
+          "title": "Prove deterministic builds and fail-closed resource security"
+        },
+        {
+          "evidence_path": "docs/reports/open_us_law_reindex/full_build.json",
+          "goal_id": "OUL-G060",
+          "sha256": "c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+          "status": "completed",
+          "task_id": "OUL-039",
+          "title": "Run the full exact-51 production build end to end"
+        }
+      ],
+      "required_task_ids": [
+        "OUL-000",
+        "OUL-001",
+        "OUL-002",
+        "OUL-003",
+        "OUL-004",
+        "OUL-005",
+        "OUL-006",
+        "OUL-007",
+        "OUL-008",
+        "OUL-009",
+        "OUL-010",
+        "OUL-011",
+        "OUL-012",
+        "OUL-013",
+        "OUL-014",
+        "OUL-015",
+        "OUL-016",
+        "OUL-017",
+        "OUL-018",
+        "OUL-019",
+        "OUL-020",
+        "OUL-021",
+        "OUL-022",
+        "OUL-023",
+        "OUL-024",
+        "OUL-025",
+        "OUL-026",
+        "OUL-027",
+        "OUL-028",
+        "OUL-029",
+        "OUL-030",
+        "OUL-031",
+        "OUL-032",
+        "OUL-033",
+        "OUL-034",
+        "OUL-035",
+        "OUL-036",
+        "OUL-037",
+        "OUL-038",
+        "OUL-039"
+      ],
+      "todo_path": "docs/architecture/open_us_law_reindex.todo.md",
+      "todo_sha256": "d4abb159711729b96ca7a6c051cfa0faf3046531d45848fa8a3c85a00a6ca274"
+    }
+  },
+  "code_version": "1",
+  "currentness_disclaimer": "Acquisition and publication timestamps record when a package was retrieved or sealed; they are not a claim that the codified text is legally current as of wall-clock time. Retrieval output is a research aid and is not a substitute for the official source.",
+  "depends_on": [
+    "OUL-039"
+  ],
+  "digests": {
+    "artifacts_root": "601f4c0b6f3c97eb6d9679e69ee4b481d7553d35f0c12a17e2fdac9e7568025d",
+    "bucket_inventory": "8fb795731ad1298faa02e53ac0ea487d631133e9c1a32ae73c646079ca1e2e6b",
+    "build_manifest": "c5fbad7bbe741030356f685cc7b0861e0b947cb4b9e865f51b422fcd6a6604f1",
+    "clean_commit": "a99db3e9f7e34508242760dc9b6a75740abce3ee",
+    "evaluation": "60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+    "manifest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "prepublication_policy": "1fa4bbd4e1359b7a2943d8733cb984188c51c719bbf92958ecab6499302f5581",
+    "release_root_cid": "sha256:99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "rights": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+    "source": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d"
+  },
+  "evaluation": {
+    "authorizing_for_publication": false,
+    "evaluation_cid": "sha256:426ad5a1acadc0286575e11f7c3a1b5623cf864c9f9f5715e265a37b12862851",
+    "fusion_candidate_id": "plan_default_weighted_0_5_0_5",
+    "fusion_config_digest": "1260bd06c379936d82a51747e4827578ad15ba4df5cada62e72876092e08f61a",
+    "ok": true,
+    "path": "docs/reports/open_us_law_reindex/evaluation.json",
+    "production_searchable": false,
+    "sha256": "60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+    "task_id": "OUL-037"
+  },
+  "evidence": {
+    "acquisition_closure": {
+      "key": "acquisition_closure",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/acquisition_refill_closure.json",
+      "producer_task_id": "OUL-023",
+      "report_digest_sha256": "dadc5fb5c20842085c54463918a577a8b13ff106e41a36bf1a173df77bbfdce5",
+      "sha256": "f909cafeebd3fec32f4d6b0b407e6bda62021c39af63f64bc15f55d7be58c49a",
+      "task_id": "OUL-023"
+    },
+    "adjacency": {
+      "key": "adjacency",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/graph_adjacency_receipt.json",
+      "producer_task_id": "OUL-031",
+      "sha256": "6777646ccd3e3b7c86cd5d80ac88ead22c1bcd6a2755f5c4c8d6fcf52b3ac848",
+      "task_id": "OUL-031"
+    },
+    "bm25": {
+      "key": "bm25",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/bm25_receipt.json",
+      "producer_task_id": "OUL-027",
+      "sha256": "6f150e4dc86fc51da24d122c872c8c6b487f728b9e4093e94af3263f1b7376fd",
+      "task_id": "OUL-027"
+    },
+    "bucket_inventory": {
+      "inventory_digest_sha256": "8fb795731ad1298faa02e53ac0ea487d631133e9c1a32ae73c646079ca1e2e6b",
+      "key": "bucket_inventory",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/bucket_snapshot.json",
+      "producer_task_id": "OUL-001",
+      "sha256": "17aa8527502a3887d46dedd46e703ee4dd1acf5c2739c29a887e082fea3039e5",
+      "snapshot_digest_sha256": "815b21dba9d6b923e57949d99db20312c13a0cba573cabb1a4e33dc620975c04",
+      "task_id": "OUL-001"
+    },
+    "corpus_admission": {
+      "key": "corpus_admission",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/corpus_admission.json",
+      "producer_task_id": "OUL-024",
+      "report_digest_sha256": "251d22bad5471eb64e77e916d7ef352e651b4e65fe9a8e32fd4c1e90b2fe9816",
+      "sha256": "f2cbdc94df00f6d50e8d055a280f0ed6e0e4f52729bdb1f05d2ffabc18f7fe68",
+      "task_id": "OUL-024"
+    },
+    "embeddings": {
+      "key": "embeddings",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/embedding_receipt.json",
+      "producer_task_id": "OUL-028",
+      "sha256": "02aceb18a30e46c4f8beab3fd0f2b00406c92943f4e89432fc969477334ffd75",
+      "task_id": "OUL-028"
+    },
+    "evaluation": {
+      "evaluation_cid": "sha256:426ad5a1acadc0286575e11f7c3a1b5623cf864c9f9f5715e265a37b12862851",
+      "key": "evaluation",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/evaluation.json",
+      "producer_task_id": "OUL-037",
+      "sha256": "60dcfc08ab77e5e91ceb8da583301e66fef636d907f301606336789a3dfbd19a",
+      "task_id": "OUL-037"
+    },
+    "exact_51_coverage": {
+      "key": "exact_51_coverage",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/exact_51_coverage.json",
+      "producer_task_id": "OUL-022",
+      "report_digest_sha256": "6ca4b2b67e4c9ad16d7c939942dcf191a1113d3550920ac3f9144a70cbaa3133",
+      "sha256": "afe7d1d421f3cac56d7b385006c73a8374c0c341223db8bcf301d0157c2c5c69",
+      "task_id": "OUL-022"
+    },
+    "full_build": {
+      "key": "full_build",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/full_build.json",
+      "producer_task_id": "OUL-039",
+      "report_digest_sha256": "c5fbad7bbe741030356f685cc7b0861e0b947cb4b9e865f51b422fcd6a6604f1",
+      "sha256": "c79d8ff15b22cc83795d2de07ea732ac297b208d7f5313baaaa81964de0cd04d",
+      "task_id": "OUL-039"
+    },
+    "goldset": {
+      "key": "goldset",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/goldset_rationale.md",
+      "sha256": "e1ac7cc2d3cc20833216f9f07835b17c48a60b4da1fcf83b68b4de0ba875cb4e",
+      "task_id": "OUL-036"
+    },
+    "identity_schema": {
+      "key": "identity_schema",
+      "ok": true,
+      "path": "data/legal/open_us_law/release.schema.json",
+      "sha256": "8b38f571228c547948d404f4760610a928050f7b3380b7d4da0a1f64eb2faac9",
+      "task_id": "OUL-005"
+    },
+    "legal_graph": {
+      "key": "legal_graph",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/legal_graph_receipt.json",
+      "producer_task_id": "OUL-030",
+      "sha256": "0e3f059df3669a5ab9a8561c0be0ff383c3ae2d6926a95dc71a8aa4c3e9213fd",
+      "task_id": "OUL-030"
+    },
+    "publication_policy_schema": {
+      "key": "publication_policy_schema",
+      "ok": true,
+      "path": "data/legal/open_us_law/publication_policy.schema.json",
+      "sha256": "237cf41f65fcd688eff3ebf1869b81406b232bc5d4416a348c388aa1bf5ff6dc",
+      "task_id": "OUL-007"
+    },
+    "query_contract": {
+      "key": "query_contract",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/query_contract.json",
+      "producer_task_id": "OUL-034",
+      "sha256": "a53e95a33236a063f4b88b3008463b682a9d02db5ec10a72020ae0b31424c191",
+      "task_id": "OUL-034"
+    },
+    "release_policy": {
+      "key": "release_policy",
+      "ok": true,
+      "path": "data/agent_supervisor/open_us_law_reindex/release_policy.json",
+      "sha256": "f076708f3c38a3bea32af821c7d278b3551b50e6bce0bf9212baadf3f5bc52ee",
+      "task_id": "OUL-000"
+    },
+    "reproducibility": {
+      "key": "reproducibility",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/reproducibility.json",
+      "producer_task_id": "OUL-038",
+      "report_digest_sha256": "118f6d948058b5ac579ff5263f43bbc6b63e17b87aea72220cb9895ee17cb9b4",
+      "sha256": "f4505ae81ea7ddb7aa6c1b98872adf63596ed969d1790acaf20f1a2b61b27cc9",
+      "task_id": "OUL-038"
+    },
+    "rights_matrix": {
+      "key": "rights_matrix",
+      "matrix_digest_sha256": "3dc984d1b50b465f60fcd9a03ae27ab9a7f50954848aa1038806d7979ec47d1a",
+      "ok": true,
+      "path": "data/legal/open_us_law/source_admission.json",
+      "producer_task_id": "OUL-002",
+      "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+      "task_id": "OUL-002"
+    },
+    "source_admission": {
+      "key": "source_admission",
+      "matrix_digest_sha256": "3dc984d1b50b465f60fcd9a03ae27ab9a7f50954848aa1038806d7979ec47d1a",
+      "ok": true,
+      "path": "data/legal/open_us_law/source_admission.json",
+      "producer_task_id": "OUL-002",
+      "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+      "task_id": "OUL-002"
+    },
+    "vectors": {
+      "key": "vectors",
+      "ok": true,
+      "path": "docs/reports/open_us_law_reindex/vector_receipt.json",
+      "producer_task_id": "OUL-029",
+      "sha256": "fc7060aa4e6d23ed14586b7b8944ff7795cce5beb410a460b5b1e34322f9e298",
+      "task_id": "OUL-029"
+    }
+  },
+  "fixture_id": "open-us-law-release-candidate-v1",
+  "goal_id": "OUL-G070",
+  "jurisdiction_codes": [
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC"
+  ],
+  "jurisdiction_count": 51,
+  "network_required": false,
+  "notes": "Sealed offline release-candidate root for Open US Law sparse GraphRAG (OUL-040). Binds the exact clean commit, predecessor task/goal closure, source and rights receipts, bucket inventory root, full-build and candidate manifests, evaluation, every artifact digest, authorized target IDs, and an expiry-bound prepublication policy. Does not authorize Dataset or Bucket publication.",
+  "prepublication_policy": {
+    "bound_clean_commit": "a99db3e9f7e34508242760dc9b6a75740abce3ee",
+    "bound_manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "bound_release_root_cid": "sha256:99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "bound_target_ids": {
+      "dataset_repo_id": "justicedao/open-us-law-sparse-graphrag",
+      "source_bucket": "justicedao/open-us-law-bucket"
+    },
+    "candidate_may_enter_staging_review_until_expiry": true,
+    "expires_at": "2026-09-15T00:00:00Z",
+    "ok": true,
+    "public_mutation_authorized": false,
+    "publication_authorized": false,
+    "publication_policy": {
+      "authorized_bucket": "justicedao/open-us-law-bucket",
+      "authorized_dataset": "justicedao/open-us-law-sparse-graphrag",
+      "authorized_operations": [
+        "bucket_pointer_update_last",
+        "bucket_release_prefix_write",
+        "dataset_additive_commit",
+        "dataset_create"
+      ],
+      "bucket_pointer_path": "LATEST.json",
+      "bucket_pointer_updated_last": true,
+      "bucket_prefix_template": "releases/<manifest_sha256>/",
+      "bucket_query_identity": "releases/<manifest_sha256>/",
+      "bucket_raw_root_overwrite_allowed": false,
+      "bucket_release_prefix_writes_authorized": true,
+      "callback_requires_authorization": true,
+      "credentials_environment_only": true,
+      "dataset_additive_commits_authorized": true,
+      "dataset_creation_authorized": true,
+      "dataset_query_identity": "exact_40_hex_commit",
+      "deletion_allowed": false,
+      "forbidden_operations": [
+        "copy",
+        "delete",
+        "delete_file",
+        "delete_folder",
+        "deletefile",
+        "deletefolder",
+        "destructive_upload",
+        "force-push",
+        "force_push",
+        "history-rewrite",
+        "history_rewrite",
+        "move",
+        "mutable_query_pin",
+        "overwrite-legacy",
+        "overwrite_legacy",
+        "overwrite_raw_root",
+        "pre-seal-write",
+        "pre_seal_write",
+        "replace_all",
+        "rewrite-main",
+        "rewrite_main",
+        "root_overwrite",
+        "rotate_credentials",
+        "super_squash_history",
+        "sync-delete",
+        "sync_delete",
+        "truncate",
+        "visibility-change",
+        "visibility_change"
+      ],
+      "force_push_allowed": false,
+      "generated_work_guard": {
+        "deny_nonterminal_generated_work": true,
+        "review_only_exemption_allowed": false,
+        "task_number_floor": 49,
+        "terminal_statuses": [
+          "completed"
+        ],
+        "unscoped_or_unknown_goal_lineage_denies": true
+      },
+      "goal_id": "OUL-G010",
+      "history_rewrite_allowed": false,
+      "mutable_query_pins_allowed": false,
+      "pre_seal_writes_allowed": false,
+      "prepublication_seal_required_for_public": true,
+      "producer": "open_us_law_publication_gate.py",
+      "program_id": "open-us-law-reindex-v1",
+      "protected_raw_root_globs": [
+        "*.parquet",
+        "SHA256SUMS.json",
+        "SHA256SUMS",
+        "README.md"
+      ],
+      "query_operations": [
+        "bucket_query",
+        "dataset_query"
+      ],
+      "release_mode": "additive",
+      "required_gates": [
+        "target_authority",
+        "operation_authority",
+        "bucket_path",
+        "query_pin",
+        "prepublication_seal",
+        "root_preservation",
+        "destructive_ops",
+        "generated_work_guard"
+      ],
+      "schema": "ipfs_datasets_py/open-us-law-publication-policy@1",
+      "schema_version": "open-us-law-publication-policy-v1",
+      "secret_redaction_required": true,
+      "staging_does_not_require_public_seal": true,
+      "task_id": "OUL-007",
+      "visibility_change_allowed": false
+    },
+    "publication_policy_digest": "172d5175f3a62a5cbd6197e8f1be967d3177e370e9a6d4fe5c28c0cb954bae75",
+    "requires_manifest_bound_prepublication_seal": true,
+    "requires_reissue_after_expiry": true,
+    "sealed_at": "2026-08-16T00:00:00Z",
+    "staging_upload_authorized": false,
+    "ttl_seconds": 2592000
+  },
+  "producer": "seal_open_us_law_candidate.py",
+  "program_id": "open-us-law-reindex-v1",
+  "publication_authorized": false,
+  "receipt_sha256": "3f34ea121c9773ac0d407859831ad71e7852dd0a53fa9b5e1bb435dc00047e8e",
+  "release_profile": "open-us-law-sparse-graphrag/v1",
+  "rights_receipts": {
+    "admissible_for_statutory_text_count": 51,
+    "attribution_required": true,
+    "jurisdiction_count": 51,
+    "legal_bases": [
+      "government_edicts_doctrine"
+    ],
+    "license_ids": [
+      "LicenseRef-US-State-Statutory-Text"
+    ],
+    "ok": true,
+    "path": "data/legal/open_us_law/source_admission.json",
+    "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+    "task_id": "OUL-002"
+  },
+  "schema": "ipfs_datasets_py/open-us-law-release-candidate@1",
+  "schema_version": "open-us-law-release-candidate/v1",
+  "sealed_at": "2026-08-16T00:00:00Z",
+  "source_receipts": {
+    "fail_closed_jurisdiction_codes": [
+      "GA",
+      "NC"
+    ],
+    "jurisdiction_codes": [
+      "AL",
+      "AK",
+      "AZ",
+      "AR",
+      "CA",
+      "CO",
+      "CT",
+      "DE",
+      "FL",
+      "GA",
+      "HI",
+      "ID",
+      "IL",
+      "IN",
+      "IA",
+      "KS",
+      "KY",
+      "LA",
+      "ME",
+      "MD",
+      "MA",
+      "MI",
+      "MN",
+      "MS",
+      "MO",
+      "MT",
+      "NE",
+      "NV",
+      "NH",
+      "NJ",
+      "NM",
+      "NY",
+      "NC",
+      "ND",
+      "OH",
+      "OK",
+      "OR",
+      "PA",
+      "RI",
+      "SC",
+      "SD",
+      "TN",
+      "TX",
+      "UT",
+      "VT",
+      "VA",
+      "WA",
+      "WV",
+      "WI",
+      "WY",
+      "DC"
+    ],
+    "jurisdiction_count": 51,
+    "matrix_digest_sha256": "3dc984d1b50b465f60fcd9a03ae27ab9a7f50954848aa1038806d7979ec47d1a",
+    "ok": true,
+    "path": "data/legal/open_us_law/source_admission.json",
+    "schema_version": "open-us-law-source-admission-v1",
+    "sha256": "660ec2c2b591f0b515b8a0f922516f236e2dca7819df97f4081095aaa8b1423d",
+    "task_id": "OUL-002"
+  },
+  "target_ids": {
+    "bucket_pointer_path": "LATEST.json",
+    "bucket_query_identity": "releases/<manifest_sha256>/",
+    "bucket_release_prefix": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+    "bucket_release_prefix_template": "releases/<manifest_sha256>/",
+    "dataset_query_identity": "exact_40_hex_commit",
+    "dataset_repo_id": "justicedao/open-us-law-sparse-graphrag",
+    "default_configuration": "state_statutes_exact_51",
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "program_id": "open-us-law-reindex-v1",
+    "release_profile": "open-us-law-sparse-graphrag/v1",
+    "source_bucket": "justicedao/open-us-law-bucket",
+    "staging_branch": "stage/open-us-law-sparse-graphrag-v1",
+    "vector_space_id": "gte-small@17e1f347d17fe144873b1201da91788898c639cd:d384:pool=mean:norm=l2"
+  },
+  "task_id": "OUL-040"
+}
