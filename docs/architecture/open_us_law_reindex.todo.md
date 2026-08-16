@@ -987,7 +987,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: The candidate root binds the exact clean commit, full task and goal closure, source and rights receipts, bucket inventory root, build manifest, evaluation, all artifact digests, target IDs, and an expiry-bound prepublication policy.
 
 ## OUL-041 Upload the candidate to isolated Dataset and Bucket staging
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
