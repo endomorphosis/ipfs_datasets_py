@@ -843,7 +843,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: BM25 routes by lexicographic term ranges, dense retrieval probes evaluated centroids, hybrid scores late-fuse compatible rankings, and semantic graph traversal hydrates frontier vectors through the entry locator with depth, node, edge, shard, byte, and time budgets.
 
 ## OUL-035 Expose direct-Hugging-Face query API and CLI
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
