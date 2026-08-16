@@ -1011,7 +1011,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: The identical candidate is uploaded additively to an explicit non-default dataset revision and a unique bucket staging prefix after a reviewed dry-run plan; raw bucket root objects are untouched and every remote object identity is recorded.
 
 ## OUL-042 Redownload and canary the immutable staging candidate
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
