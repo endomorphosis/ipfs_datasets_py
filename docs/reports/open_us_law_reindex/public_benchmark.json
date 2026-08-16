@@ -1,0 +1,1150 @@
+{
+  "acceptance": {
+    "all_expected_outputs_required": true,
+    "bound_to_public_pin": true,
+    "cold_queries_meet_bytes": true,
+    "cold_queries_meet_latency": true,
+    "cold_queries_meet_relevance": true,
+    "cold_queries_meet_shard_count": true,
+    "criteria": "Cold and warm public queries meet declared relevance, latency, bytes, shard-count, and graph-budget thresholds while proving that no query downloads the complete BM25, vector, graph, or corpus family.",
+    "graph_budget_met": true,
+    "no_complete_bm25_family_download": true,
+    "no_complete_corpus_family_download": true,
+    "no_complete_graph_family_download": true,
+    "no_complete_vector_family_download": true,
+    "no_secret_or_path_leak": true,
+    "warm_queries_meet_bytes": true,
+    "warm_queries_meet_latency": true,
+    "warm_queries_meet_relevance": true,
+    "warm_queries_meet_shard_count": true
+  },
+  "adr_path": "docs/architecture/OPEN_US_LAW_REINDEX_PLAN.md",
+  "board_namespace": "open-us-law-reindex-v1",
+  "bucket_content_root": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+  "bucket_id": "justicedao/open-us-law-bucket",
+  "bundle": "public-benchmark",
+  "code_version": "1",
+  "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+  "depends_on": [
+    "OUL-037",
+    "OUL-045"
+  ],
+  "evaluation": {
+    "bounded_shard_selection": true,
+    "receipt_schema": "ipfs_datasets_py/open-us-law-sparse-graphrag-evaluation@1",
+    "substantially_less_than_full_release": true,
+    "task_id": "OUL-037"
+  },
+  "family_completeness": {
+    "complete_download": false,
+    "families": {
+      "bm25": {
+        "available": [
+          "data/bm25/postings/part-000000.parquet",
+          "data/bm25/postings/part-000001.parquet",
+          "data/bm25/postings/part-000002.parquet"
+        ],
+        "available_count": 3,
+        "complete_download": false,
+        "max_fetched": 1,
+        "union_fetched": [
+          "data/bm25/postings/part-000000.parquet"
+        ],
+        "unused_siblings": [
+          "data/bm25/postings/part-000001.parquet",
+          "data/bm25/postings/part-000002.parquet"
+        ]
+      },
+      "corpus": {
+        "available": [
+          "data/corpus/part-000000.parquet",
+          "data/corpus/part-000001.parquet",
+          "data/corpus/part-000002.parquet"
+        ],
+        "available_count": 3,
+        "complete_download": false,
+        "max_fetched": 1,
+        "union_fetched": [
+          "data/corpus/part-000000.parquet"
+        ],
+        "unused_siblings": [
+          "data/corpus/part-000001.parquet",
+          "data/corpus/part-000002.parquet"
+        ]
+      },
+      "graph": {
+        "available": [
+          "data/graph/adjacency/out/part-000000.parquet",
+          "data/graph/adjacency/out/part-000001.parquet",
+          "data/graph/adjacency/out/part-000002.parquet"
+        ],
+        "available_count": 3,
+        "complete_download": false,
+        "max_fetched": 1,
+        "union_fetched": [
+          "data/graph/adjacency/out/part-000000.parquet"
+        ],
+        "unused_siblings": [
+          "data/graph/adjacency/out/part-000001.parquet",
+          "data/graph/adjacency/out/part-000002.parquet"
+        ]
+      },
+      "vector": {
+        "available": [
+          "data/vectors/centroid-000000-part-000000.parquet",
+          "data/vectors/centroid-000001-part-000000.parquet",
+          "data/vectors/centroid-000002-part-000000.parquet"
+        ],
+        "available_count": 3,
+        "complete_download": false,
+        "max_fetched": 1,
+        "union_fetched": [
+          "data/vectors/centroid-000000-part-000000.parquet"
+        ],
+        "unused_siblings": [
+          "data/vectors/centroid-000001-part-000000.parquet",
+          "data/vectors/centroid-000002-part-000000.parquet"
+        ]
+      }
+    },
+    "no_complete_bm25_family_download": true,
+    "no_complete_corpus_family_download": true,
+    "no_complete_graph_family_download": true,
+    "no_complete_vector_family_download": true
+  },
+  "fixture_id": "open-us-law-public-benchmark-v1",
+  "goal_id": "OUL-G080",
+  "isolated_transport": true,
+  "live_network": false,
+  "live_proof": {
+    "executed": false,
+    "query_count": 0,
+    "status": "policy_only",
+    "transport": "policy_only"
+  },
+  "local_artifact_fallback": false,
+  "local_root_used": false,
+  "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+  "measurement_model": "deterministic_sparse_io_accounting",
+  "network_required": false,
+  "notes": "Public-pin sparse retrieval benchmark (OUL-046). Cold and warm phases use a wall-clock-independent cost model bound to the immutable Dataset revision and content-addressed Bucket prefix. Each query stays inside declared relevance, latency, byte, shard, and graph-budget gates and fetches a proper subset of every BM25, vector, graph, and corpus family.",
+  "phases": {
+    "cold": {
+      "bytes_max": 16384,
+      "hit_at_k_min": 1.0,
+      "latency_ms_max": 56.0,
+      "network_bytes_max": 16384,
+      "query_count": 5,
+      "shard_count_max": 3
+    },
+    "warm": {
+      "bytes_max": 16384,
+      "hit_at_k_min": 1.0,
+      "latency_ms_max": 10.0,
+      "network_bytes_max": 0,
+      "query_count": 5,
+      "shard_count_max": 3
+    }
+  },
+  "producer": "benchmark_open_us_law_public_release.py",
+  "program_id": "open-us-law-reindex-v1",
+  "public_canary": {
+    "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+    "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "receipt_sha256": "f69b20857a1e23d69bc018506a335f85b972487345b2d1a4afa19d92298a5a6f",
+    "task_id": "OUL-045"
+  },
+  "public_mutation_authorized": false,
+  "publication": {
+    "bucket_release_prefix": "releases/99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce/",
+    "dataset_revision": "40a3fc58dea1e948d7e5446fcb705a2a31f8bfef",
+    "identities_digest": "b75c57f086ec1a148b6682fe6b481d871f9b8948472832a9f9a8a2a1ea229d49",
+    "manifest_digest": "99b5af65876f7e2da5c26a91a5ba957fde5a28df29dc450c790ef1624c4bc1ce",
+    "receipt_sha256": "0a56e9ad25348e7c83eccb2507388f8bf919a5a8e28bb4afa0dadbe699834f8d",
+    "status": "published_isolated",
+    "task_id": "OUL-044"
+  },
+  "publication_authorized": false,
+  "queries": [
+    {
+      "cold": {
+        "bytes": 11264,
+        "cache_hits": 0,
+        "cache_misses": 4,
+        "family_paths": {
+          "bm25": [
+            "data/bm25/postings/part-000000.parquet"
+          ],
+          "corpus": [
+            "data/corpus/part-000000.parquet"
+          ],
+          "graph": [],
+          "vector": []
+        },
+        "fetched_paths": [
+          "data/bm25/postings/part-000000.parquet",
+          "data/corpus/part-000000.parquet",
+          "indexes/bm25_keyword_shards.parquet",
+          "manifest.json"
+        ],
+        "graph_budget": {
+          "depth": 0,
+          "edges": 0,
+          "nodes": 0
+        },
+        "hit_at_k": 1.0,
+        "latency_ms": 44.0,
+        "network_bytes": 11264,
+        "phase": "cold",
+        "relevance_ok": true,
+        "result_count": 1,
+        "shard_count": 2,
+        "top_entry_cid": "entry-a",
+        "unused_siblings_not_fetched": [
+          "data/bm25/postings/part-000001.parquet",
+          "data/bm25/postings/part-000002.parquet",
+          "data/corpus/part-000001.parquet",
+          "data/corpus/part-000002.parquet"
+        ]
+      },
+      "expected_min_results": 1,
+      "expected_top_entry_cid": "entry-a",
+      "family_completeness": {
+        "complete_download": false,
+        "families": {
+          "bm25": {
+            "available": [
+              "data/bm25/postings/part-000000.parquet",
+              "data/bm25/postings/part-000001.parquet",
+              "data/bm25/postings/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 1,
+            "union_fetched": [
+              "data/bm25/postings/part-000000.parquet"
+            ],
+            "unused_siblings": [
+              "data/bm25/postings/part-000001.parquet",
+              "data/bm25/postings/part-000002.parquet"
+            ]
+          },
+          "corpus": {
+            "available": [
+              "data/corpus/part-000000.parquet",
+              "data/corpus/part-000001.parquet",
+              "data/corpus/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 1,
+            "union_fetched": [
+              "data/corpus/part-000000.parquet"
+            ],
+            "unused_siblings": [
+              "data/corpus/part-000001.parquet",
+              "data/corpus/part-000002.parquet"
+            ]
+          },
+          "graph": {
+            "available": [
+              "data/graph/adjacency/out/part-000000.parquet",
+              "data/graph/adjacency/out/part-000001.parquet",
+              "data/graph/adjacency/out/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 0,
+            "union_fetched": [],
+            "unused_siblings": [
+              "data/graph/adjacency/out/part-000001.parquet",
+              "data/graph/adjacency/out/part-000002.parquet"
+            ]
+          },
+          "vector": {
+            "available": [
+              "data/vectors/centroid-000000-part-000000.parquet",
+              "data/vectors/centroid-000001-part-000000.parquet",
+              "data/vectors/centroid-000002-part-000000.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 0,
+            "union_fetched": [],
+            "unused_siblings": [
+              "data/vectors/centroid-000001-part-000000.parquet",
+              "data/vectors/centroid-000002-part-000000.parquet"
+            ]
+          }
+        },
+        "no_complete_bm25_family_download": true,
+        "no_complete_corpus_family_download": true,
+        "no_complete_graph_family_download": true,
+        "no_complete_vector_family_download": true
+      },
+      "id": "bm25_foia",
+      "mode": "bm25",
+      "query": "foia",
+      "start_node_cid": "",
+      "thresholds_met": {
+        "cold": {
+          "bytes": true,
+          "graph_depth": true,
+          "graph_edges": true,
+          "graph_nodes": true,
+          "latency": true,
+          "network_bytes": true,
+          "relevance": true,
+          "shards": true
+        },
+        "warm": {
+          "bytes": true,
+          "graph_depth": true,
+          "graph_edges": true,
+          "graph_nodes": true,
+          "latency": true,
+          "network_bytes": true,
+          "relevance": true,
+          "shards": true
+        },
+        "warm_faster_than_cold": true,
+        "warm_network_not_greater_than_cold": true
+      },
+      "top_k": 3,
+      "unused_siblings_not_fetched": [
+        "data/bm25/postings/part-000001.parquet",
+        "data/bm25/postings/part-000002.parquet",
+        "data/corpus/part-000001.parquet",
+        "data/corpus/part-000002.parquet"
+      ],
+      "warm": {
+        "bytes": 11264,
+        "cache_hits": 4,
+        "cache_misses": 0,
+        "family_paths": {
+          "bm25": [
+            "data/bm25/postings/part-000000.parquet"
+          ],
+          "corpus": [
+            "data/corpus/part-000000.parquet"
+          ],
+          "graph": [],
+          "vector": []
+        },
+        "fetched_paths": [
+          "data/bm25/postings/part-000000.parquet",
+          "data/corpus/part-000000.parquet",
+          "indexes/bm25_keyword_shards.parquet",
+          "manifest.json"
+        ],
+        "graph_budget": {
+          "depth": 0,
+          "edges": 0,
+          "nodes": 0
+        },
+        "hit_at_k": 1.0,
+        "latency_ms": 8.0,
+        "network_bytes": 0,
+        "phase": "warm",
+        "relevance_ok": true,
+        "result_count": 1,
+        "shard_count": 2,
+        "top_entry_cid": "entry-a",
+        "unused_siblings_not_fetched": [
+          "data/bm25/postings/part-000001.parquet",
+          "data/bm25/postings/part-000002.parquet",
+          "data/corpus/part-000001.parquet",
+          "data/corpus/part-000002.parquet"
+        ]
+      }
+    },
+    {
+      "cold": {
+        "bytes": 11264,
+        "cache_hits": 0,
+        "cache_misses": 4,
+        "family_paths": {
+          "bm25": [],
+          "corpus": [
+            "data/corpus/part-000000.parquet"
+          ],
+          "graph": [],
+          "vector": [
+            "data/vectors/centroid-000000-part-000000.parquet"
+          ]
+        },
+        "fetched_paths": [
+          "data/corpus/part-000000.parquet",
+          "data/vectors/centroid-000000-part-000000.parquet",
+          "indexes/vector_chunks.parquet",
+          "manifest.json"
+        ],
+        "graph_budget": {
+          "depth": 0,
+          "edges": 0,
+          "nodes": 0
+        },
+        "hit_at_k": 1.0,
+        "latency_ms": 44.0,
+        "network_bytes": 11264,
+        "phase": "cold",
+        "relevance_ok": true,
+        "result_count": 1,
+        "shard_count": 2,
+        "top_entry_cid": "entry-a",
+        "unused_siblings_not_fetched": [
+          "data/corpus/part-000001.parquet",
+          "data/corpus/part-000002.parquet",
+          "data/vectors/centroid-000001-part-000000.parquet",
+          "data/vectors/centroid-000002-part-000000.parquet"
+        ]
+      },
+      "expected_min_results": 1,
+      "expected_top_entry_cid": "entry-a",
+      "family_completeness": {
+        "complete_download": false,
+        "families": {
+          "bm25": {
+            "available": [
+              "data/bm25/postings/part-000000.parquet",
+              "data/bm25/postings/part-000001.parquet",
+              "data/bm25/postings/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 0,
+            "union_fetched": [],
+            "unused_siblings": [
+              "data/bm25/postings/part-000001.parquet",
+              "data/bm25/postings/part-000002.parquet"
+            ]
+          },
+          "corpus": {
+            "available": [
+              "data/corpus/part-000000.parquet",
+              "data/corpus/part-000001.parquet",
+              "data/corpus/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 1,
+            "union_fetched": [
+              "data/corpus/part-000000.parquet"
+            ],
+            "unused_siblings": [
+              "data/corpus/part-000001.parquet",
+              "data/corpus/part-000002.parquet"
+            ]
+          },
+          "graph": {
+            "available": [
+              "data/graph/adjacency/out/part-000000.parquet",
+              "data/graph/adjacency/out/part-000001.parquet",
+              "data/graph/adjacency/out/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 0,
+            "union_fetched": [],
+            "unused_siblings": [
+              "data/graph/adjacency/out/part-000001.parquet",
+              "data/graph/adjacency/out/part-000002.parquet"
+            ]
+          },
+          "vector": {
+            "available": [
+              "data/vectors/centroid-000000-part-000000.parquet",
+              "data/vectors/centroid-000001-part-000000.parquet",
+              "data/vectors/centroid-000002-part-000000.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 1,
+            "union_fetched": [
+              "data/vectors/centroid-000000-part-000000.parquet"
+            ],
+            "unused_siblings": [
+              "data/vectors/centroid-000001-part-000000.parquet",
+              "data/vectors/centroid-000002-part-000000.parquet"
+            ]
+          }
+        },
+        "no_complete_bm25_family_download": true,
+        "no_complete_corpus_family_download": true,
+        "no_complete_graph_family_download": true,
+        "no_complete_vector_family_download": true
+      },
+      "id": "vector_centroid0",
+      "mode": "vector",
+      "query": "foia agency",
+      "start_node_cid": "",
+      "thresholds_met": {
+        "cold": {
+          "bytes": true,
+          "graph_depth": true,
+          "graph_edges": true,
+          "graph_nodes": true,
+          "latency": true,
+          "network_bytes": true,
+          "relevance": true,
+          "shards": true
+        },
+        "warm": {
+          "bytes": true,
+          "graph_depth": true,
+          "graph_edges": true,
+          "graph_nodes": true,
+          "latency": true,
+          "network_bytes": true,
+          "relevance": true,
+          "shards": true
+        },
+        "warm_faster_than_cold": true,
+        "warm_network_not_greater_than_cold": true
+      },
+      "top_k": 3,
+      "unused_siblings_not_fetched": [
+        "data/corpus/part-000001.parquet",
+        "data/corpus/part-000002.parquet",
+        "data/vectors/centroid-000001-part-000000.parquet",
+        "data/vectors/centroid-000002-part-000000.parquet"
+      ],
+      "warm": {
+        "bytes": 11264,
+        "cache_hits": 4,
+        "cache_misses": 0,
+        "family_paths": {
+          "bm25": [],
+          "corpus": [
+            "data/corpus/part-000000.parquet"
+          ],
+          "graph": [],
+          "vector": [
+            "data/vectors/centroid-000000-part-000000.parquet"
+          ]
+        },
+        "fetched_paths": [
+          "data/corpus/part-000000.parquet",
+          "data/vectors/centroid-000000-part-000000.parquet",
+          "indexes/vector_chunks.parquet",
+          "manifest.json"
+        ],
+        "graph_budget": {
+          "depth": 0,
+          "edges": 0,
+          "nodes": 0
+        },
+        "hit_at_k": 1.0,
+        "latency_ms": 8.0,
+        "network_bytes": 0,
+        "phase": "warm",
+        "relevance_ok": true,
+        "result_count": 1,
+        "shard_count": 2,
+        "top_entry_cid": "entry-a",
+        "unused_siblings_not_fetched": [
+          "data/corpus/part-000001.parquet",
+          "data/corpus/part-000002.parquet",
+          "data/vectors/centroid-000001-part-000000.parquet",
+          "data/vectors/centroid-000002-part-000000.parquet"
+        ]
+      }
+    },
+    {
+      "cold": {
+        "bytes": 16384,
+        "cache_hits": 0,
+        "cache_misses": 6,
+        "family_paths": {
+          "bm25": [
+            "data/bm25/postings/part-000000.parquet"
+          ],
+          "corpus": [
+            "data/corpus/part-000000.parquet"
+          ],
+          "graph": [],
+          "vector": [
+            "data/vectors/centroid-000000-part-000000.parquet"
+          ]
+        },
+        "fetched_paths": [
+          "data/bm25/postings/part-000000.parquet",
+          "data/corpus/part-000000.parquet",
+          "data/vectors/centroid-000000-part-000000.parquet",
+          "indexes/bm25_keyword_shards.parquet",
+          "indexes/vector_chunks.parquet",
+          "manifest.json"
+        ],
+        "graph_budget": {
+          "depth": 0,
+          "edges": 0,
+          "nodes": 0
+        },
+        "hit_at_k": 1.0,
+        "latency_ms": 56.0,
+        "network_bytes": 16384,
+        "phase": "cold",
+        "relevance_ok": true,
+        "result_count": 1,
+        "shard_count": 3,
+        "top_entry_cid": "entry-a",
+        "unused_siblings_not_fetched": [
+          "data/bm25/postings/part-000001.parquet",
+          "data/bm25/postings/part-000002.parquet",
+          "data/corpus/part-000001.parquet",
+          "data/corpus/part-000002.parquet",
+          "data/vectors/centroid-000001-part-000000.parquet",
+          "data/vectors/centroid-000002-part-000000.parquet"
+        ]
+      },
+      "expected_min_results": 1,
+      "expected_top_entry_cid": "entry-a",
+      "family_completeness": {
+        "complete_download": false,
+        "families": {
+          "bm25": {
+            "available": [
+              "data/bm25/postings/part-000000.parquet",
+              "data/bm25/postings/part-000001.parquet",
+              "data/bm25/postings/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 1,
+            "union_fetched": [
+              "data/bm25/postings/part-000000.parquet"
+            ],
+            "unused_siblings": [
+              "data/bm25/postings/part-000001.parquet",
+              "data/bm25/postings/part-000002.parquet"
+            ]
+          },
+          "corpus": {
+            "available": [
+              "data/corpus/part-000000.parquet",
+              "data/corpus/part-000001.parquet",
+              "data/corpus/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 1,
+            "union_fetched": [
+              "data/corpus/part-000000.parquet"
+            ],
+            "unused_siblings": [
+              "data/corpus/part-000001.parquet",
+              "data/corpus/part-000002.parquet"
+            ]
+          },
+          "graph": {
+            "available": [
+              "data/graph/adjacency/out/part-000000.parquet",
+              "data/graph/adjacency/out/part-000001.parquet",
+              "data/graph/adjacency/out/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 0,
+            "union_fetched": [],
+            "unused_siblings": [
+              "data/graph/adjacency/out/part-000001.parquet",
+              "data/graph/adjacency/out/part-000002.parquet"
+            ]
+          },
+          "vector": {
+            "available": [
+              "data/vectors/centroid-000000-part-000000.parquet",
+              "data/vectors/centroid-000001-part-000000.parquet",
+              "data/vectors/centroid-000002-part-000000.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 1,
+            "union_fetched": [
+              "data/vectors/centroid-000000-part-000000.parquet"
+            ],
+            "unused_siblings": [
+              "data/vectors/centroid-000001-part-000000.parquet",
+              "data/vectors/centroid-000002-part-000000.parquet"
+            ]
+          }
+        },
+        "no_complete_bm25_family_download": true,
+        "no_complete_corpus_family_download": true,
+        "no_complete_graph_family_download": true,
+        "no_complete_vector_family_download": true
+      },
+      "id": "hybrid_foia_agency",
+      "mode": "hybrid",
+      "query": "foia agency",
+      "start_node_cid": "",
+      "thresholds_met": {
+        "cold": {
+          "bytes": true,
+          "graph_depth": true,
+          "graph_edges": true,
+          "graph_nodes": true,
+          "latency": true,
+          "network_bytes": true,
+          "relevance": true,
+          "shards": true
+        },
+        "warm": {
+          "bytes": true,
+          "graph_depth": true,
+          "graph_edges": true,
+          "graph_nodes": true,
+          "latency": true,
+          "network_bytes": true,
+          "relevance": true,
+          "shards": true
+        },
+        "warm_faster_than_cold": true,
+        "warm_network_not_greater_than_cold": true
+      },
+      "top_k": 3,
+      "unused_siblings_not_fetched": [
+        "data/bm25/postings/part-000001.parquet",
+        "data/bm25/postings/part-000002.parquet",
+        "data/corpus/part-000001.parquet",
+        "data/corpus/part-000002.parquet",
+        "data/vectors/centroid-000001-part-000000.parquet",
+        "data/vectors/centroid-000002-part-000000.parquet"
+      ],
+      "warm": {
+        "bytes": 16384,
+        "cache_hits": 6,
+        "cache_misses": 0,
+        "family_paths": {
+          "bm25": [
+            "data/bm25/postings/part-000000.parquet"
+          ],
+          "corpus": [
+            "data/corpus/part-000000.parquet"
+          ],
+          "graph": [],
+          "vector": [
+            "data/vectors/centroid-000000-part-000000.parquet"
+          ]
+        },
+        "fetched_paths": [
+          "data/bm25/postings/part-000000.parquet",
+          "data/corpus/part-000000.parquet",
+          "data/vectors/centroid-000000-part-000000.parquet",
+          "indexes/bm25_keyword_shards.parquet",
+          "indexes/vector_chunks.parquet",
+          "manifest.json"
+        ],
+        "graph_budget": {
+          "depth": 0,
+          "edges": 0,
+          "nodes": 0
+        },
+        "hit_at_k": 1.0,
+        "latency_ms": 10.0,
+        "network_bytes": 0,
+        "phase": "warm",
+        "relevance_ok": true,
+        "result_count": 1,
+        "shard_count": 3,
+        "top_entry_cid": "entry-a",
+        "unused_siblings_not_fetched": [
+          "data/bm25/postings/part-000001.parquet",
+          "data/bm25/postings/part-000002.parquet",
+          "data/corpus/part-000001.parquet",
+          "data/corpus/part-000002.parquet",
+          "data/vectors/centroid-000001-part-000000.parquet",
+          "data/vectors/centroid-000002-part-000000.parquet"
+        ]
+      }
+    },
+    {
+      "cold": {
+        "bytes": 7168,
+        "cache_hits": 0,
+        "cache_misses": 3,
+        "family_paths": {
+          "bm25": [],
+          "corpus": [],
+          "graph": [
+            "data/graph/adjacency/out/part-000000.parquet"
+          ],
+          "vector": []
+        },
+        "fetched_paths": [
+          "data/graph/adjacency/out/part-000000.parquet",
+          "indexes/graph_out_adjacency.parquet",
+          "manifest.json"
+        ],
+        "graph_budget": {
+          "depth": 2,
+          "edges": 3,
+          "nodes": 3
+        },
+        "hit_at_k": 1.0,
+        "latency_ms": 38.0,
+        "network_bytes": 7168,
+        "phase": "cold",
+        "relevance_ok": true,
+        "result_count": 1,
+        "shard_count": 1,
+        "top_entry_cid": "entry-a",
+        "unused_siblings_not_fetched": [
+          "data/graph/adjacency/out/part-000001.parquet",
+          "data/graph/adjacency/out/part-000002.parquet"
+        ]
+      },
+      "expected_min_results": 1,
+      "expected_top_entry_cid": "entry-a",
+      "family_completeness": {
+        "complete_download": false,
+        "families": {
+          "bm25": {
+            "available": [
+              "data/bm25/postings/part-000000.parquet",
+              "data/bm25/postings/part-000001.parquet",
+              "data/bm25/postings/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 0,
+            "union_fetched": [],
+            "unused_siblings": [
+              "data/bm25/postings/part-000001.parquet",
+              "data/bm25/postings/part-000002.parquet"
+            ]
+          },
+          "corpus": {
+            "available": [
+              "data/corpus/part-000000.parquet",
+              "data/corpus/part-000001.parquet",
+              "data/corpus/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 0,
+            "union_fetched": [],
+            "unused_siblings": [
+              "data/corpus/part-000001.parquet",
+              "data/corpus/part-000002.parquet"
+            ]
+          },
+          "graph": {
+            "available": [
+              "data/graph/adjacency/out/part-000000.parquet",
+              "data/graph/adjacency/out/part-000001.parquet",
+              "data/graph/adjacency/out/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 1,
+            "union_fetched": [
+              "data/graph/adjacency/out/part-000000.parquet"
+            ],
+            "unused_siblings": [
+              "data/graph/adjacency/out/part-000001.parquet",
+              "data/graph/adjacency/out/part-000002.parquet"
+            ]
+          },
+          "vector": {
+            "available": [
+              "data/vectors/centroid-000000-part-000000.parquet",
+              "data/vectors/centroid-000001-part-000000.parquet",
+              "data/vectors/centroid-000002-part-000000.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 0,
+            "union_fetched": [],
+            "unused_siblings": [
+              "data/vectors/centroid-000001-part-000000.parquet",
+              "data/vectors/centroid-000002-part-000000.parquet"
+            ]
+          }
+        },
+        "no_complete_bm25_family_download": true,
+        "no_complete_corpus_family_download": true,
+        "no_complete_graph_family_download": true,
+        "no_complete_vector_family_download": true
+      },
+      "id": "graph_entry_a",
+      "mode": "graph",
+      "query": "",
+      "start_node_cid": "entry-a",
+      "thresholds_met": {
+        "cold": {
+          "bytes": true,
+          "graph_depth": true,
+          "graph_edges": true,
+          "graph_nodes": true,
+          "latency": true,
+          "network_bytes": true,
+          "relevance": true,
+          "shards": true
+        },
+        "warm": {
+          "bytes": true,
+          "graph_depth": true,
+          "graph_edges": true,
+          "graph_nodes": true,
+          "latency": true,
+          "network_bytes": true,
+          "relevance": true,
+          "shards": true
+        },
+        "warm_faster_than_cold": true,
+        "warm_network_not_greater_than_cold": true
+      },
+      "top_k": 8,
+      "unused_siblings_not_fetched": [
+        "data/graph/adjacency/out/part-000001.parquet",
+        "data/graph/adjacency/out/part-000002.parquet"
+      ],
+      "warm": {
+        "bytes": 7168,
+        "cache_hits": 3,
+        "cache_misses": 0,
+        "family_paths": {
+          "bm25": [],
+          "corpus": [],
+          "graph": [
+            "data/graph/adjacency/out/part-000000.parquet"
+          ],
+          "vector": []
+        },
+        "fetched_paths": [
+          "data/graph/adjacency/out/part-000000.parquet",
+          "indexes/graph_out_adjacency.parquet",
+          "manifest.json"
+        ],
+        "graph_budget": {
+          "depth": 2,
+          "edges": 3,
+          "nodes": 3
+        },
+        "hit_at_k": 1.0,
+        "latency_ms": 7.0,
+        "network_bytes": 0,
+        "phase": "warm",
+        "relevance_ok": true,
+        "result_count": 1,
+        "shard_count": 1,
+        "top_entry_cid": "entry-a",
+        "unused_siblings_not_fetched": [
+          "data/graph/adjacency/out/part-000001.parquet",
+          "data/graph/adjacency/out/part-000002.parquet"
+        ]
+      }
+    },
+    {
+      "cold": {
+        "bytes": 8192,
+        "cache_hits": 0,
+        "cache_misses": 4,
+        "family_paths": {
+          "bm25": [],
+          "corpus": [],
+          "graph": [
+            "data/graph/adjacency/out/part-000000.parquet"
+          ],
+          "vector": []
+        },
+        "fetched_paths": [
+          "data/graph/adjacency/out/part-000000.parquet",
+          "indexes/graph_out_adjacency.parquet",
+          "indexes/vector_entry_locator.parquet",
+          "manifest.json"
+        ],
+        "graph_budget": {
+          "depth": 2,
+          "edges": 3,
+          "nodes": 3
+        },
+        "hit_at_k": 1.0,
+        "latency_ms": 44.0,
+        "network_bytes": 8192,
+        "phase": "cold",
+        "relevance_ok": true,
+        "result_count": 1,
+        "shard_count": 1,
+        "top_entry_cid": "entry-a",
+        "unused_siblings_not_fetched": [
+          "data/graph/adjacency/out/part-000001.parquet",
+          "data/graph/adjacency/out/part-000002.parquet"
+        ]
+      },
+      "expected_min_results": 1,
+      "expected_top_entry_cid": "entry-a",
+      "family_completeness": {
+        "complete_download": false,
+        "families": {
+          "bm25": {
+            "available": [
+              "data/bm25/postings/part-000000.parquet",
+              "data/bm25/postings/part-000001.parquet",
+              "data/bm25/postings/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 0,
+            "union_fetched": [],
+            "unused_siblings": [
+              "data/bm25/postings/part-000001.parquet",
+              "data/bm25/postings/part-000002.parquet"
+            ]
+          },
+          "corpus": {
+            "available": [
+              "data/corpus/part-000000.parquet",
+              "data/corpus/part-000001.parquet",
+              "data/corpus/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 0,
+            "union_fetched": [],
+            "unused_siblings": [
+              "data/corpus/part-000001.parquet",
+              "data/corpus/part-000002.parquet"
+            ]
+          },
+          "graph": {
+            "available": [
+              "data/graph/adjacency/out/part-000000.parquet",
+              "data/graph/adjacency/out/part-000001.parquet",
+              "data/graph/adjacency/out/part-000002.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 1,
+            "union_fetched": [
+              "data/graph/adjacency/out/part-000000.parquet"
+            ],
+            "unused_siblings": [
+              "data/graph/adjacency/out/part-000001.parquet",
+              "data/graph/adjacency/out/part-000002.parquet"
+            ]
+          },
+          "vector": {
+            "available": [
+              "data/vectors/centroid-000000-part-000000.parquet",
+              "data/vectors/centroid-000001-part-000000.parquet",
+              "data/vectors/centroid-000002-part-000000.parquet"
+            ],
+            "available_count": 3,
+            "complete_download": false,
+            "max_fetched": 0,
+            "union_fetched": [],
+            "unused_siblings": [
+              "data/vectors/centroid-000001-part-000000.parquet",
+              "data/vectors/centroid-000002-part-000000.parquet"
+            ]
+          }
+        },
+        "no_complete_bm25_family_download": true,
+        "no_complete_corpus_family_download": true,
+        "no_complete_graph_family_download": true,
+        "no_complete_vector_family_download": true
+      },
+      "id": "semantic_graph_entry_a",
+      "mode": "semantic-graph",
+      "query": "foia",
+      "start_node_cid": "entry-a",
+      "thresholds_met": {
+        "cold": {
+          "bytes": true,
+          "graph_depth": true,
+          "graph_edges": true,
+          "graph_nodes": true,
+          "latency": true,
+          "network_bytes": true,
+          "relevance": true,
+          "shards": true
+        },
+        "warm": {
+          "bytes": true,
+          "graph_depth": true,
+          "graph_edges": true,
+          "graph_nodes": true,
+          "latency": true,
+          "network_bytes": true,
+          "relevance": true,
+          "shards": true
+        },
+        "warm_faster_than_cold": true,
+        "warm_network_not_greater_than_cold": true
+      },
+      "top_k": 8,
+      "unused_siblings_not_fetched": [
+        "data/graph/adjacency/out/part-000001.parquet",
+        "data/graph/adjacency/out/part-000002.parquet"
+      ],
+      "warm": {
+        "bytes": 8192,
+        "cache_hits": 4,
+        "cache_misses": 0,
+        "family_paths": {
+          "bm25": [],
+          "corpus": [],
+          "graph": [
+            "data/graph/adjacency/out/part-000000.parquet"
+          ],
+          "vector": []
+        },
+        "fetched_paths": [
+          "data/graph/adjacency/out/part-000000.parquet",
+          "indexes/graph_out_adjacency.parquet",
+          "indexes/vector_entry_locator.parquet",
+          "manifest.json"
+        ],
+        "graph_budget": {
+          "depth": 2,
+          "edges": 3,
+          "nodes": 3
+        },
+        "hit_at_k": 1.0,
+        "latency_ms": 8.0,
+        "network_bytes": 0,
+        "phase": "warm",
+        "relevance_ok": true,
+        "result_count": 1,
+        "shard_count": 1,
+        "top_entry_cid": "entry-a",
+        "unused_siblings_not_fetched": [
+          "data/graph/adjacency/out/part-000001.parquet",
+          "data/graph/adjacency/out/part-000002.parquet"
+        ]
+      }
+    }
+  ],
+  "query_mode_count": 5,
+  "query_modes": [
+    "bm25",
+    "vector",
+    "hybrid",
+    "graph",
+    "semantic-graph"
+  ],
+  "receipt_sha256": "59fff9e7f0b514c8086e9a0246d2ab392068e7e5678f51ed10c456ee75e08ae9",
+  "require_public_pin": true,
+  "schema": "ipfs_datasets_py/open-us-law-public-benchmark@1",
+  "schema_version": "open-us-law-public-benchmark/v1",
+  "status": "benchmarked_isolated",
+  "target_repo": "justicedao/open-us-law-sparse-graphrag",
+  "task_id": "OUL-046",
+  "thresholds": {
+    "cold_bytes": 1000000,
+    "cold_latency_ms": 250.0,
+    "max_graph_depth": 2,
+    "max_graph_edges": 32,
+    "max_graph_nodes": 16,
+    "max_shards": 8,
+    "relevance_hit_at_k": 1.0,
+    "sparse_family_ratio": 0.75,
+    "warm_bytes": 1000000,
+    "warm_latency_ms": 80.0,
+    "warm_network_bytes": 0
+  },
+  "tokens_used": false,
+  "transport": "isolated_recorded_public_store"
+}
