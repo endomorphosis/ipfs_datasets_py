@@ -723,7 +723,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Deterministic balanced spherical k-means yields at most 8192 rows and two shards per centroid; every physical shard has at most 4096 vectors sorted by descending centroid cosine then entry CID, and a dedicated entry-to-shard locator supports off-centroid graph frontier hydration.
 
 ## OUL-030 Build the multi-jurisdiction legal and provenance graph
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
