@@ -771,7 +771,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: BM25 postings are the canonical virtual term-document graph; optional top-k BM25 neighbor edges use postings-driven candidate accumulation rather than O(N^2) scans; incoming and outgoing adjacency pages and physical shards contain at most 4096 pointers or rows.
 
 ## OUL-032 Assemble the descriptor-complete sparse GraphRAG release
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
