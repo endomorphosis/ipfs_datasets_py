@@ -891,7 +891,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Gold and adversarial queries cover all jurisdiction cohorts, exact citations, terminology variants, cross-state ambiguity, repealed or reserved status, graph citations, source provenance, and explicit no-legal-advice controls.
 
 ## OUL-037 Evaluate retrieval quality, graph utility, and sparse I/O
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
