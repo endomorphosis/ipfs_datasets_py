@@ -939,7 +939,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Two clean builds are byte-identical; malformed descriptors, path escapes, digest drift, oversized pages, decompression bombs, hostile Parquet metadata, budget exhaustion, stale bucket pointers, and cross-release vector misuse fail closed.
 
 ## OUL-039 Run the full exact-51 production build end to end
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
