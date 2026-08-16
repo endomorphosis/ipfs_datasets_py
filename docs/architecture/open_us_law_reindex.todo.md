@@ -795,7 +795,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: The manifest binds corpus, BM25, vectors, centroids, vector locator, graph, two-way adjacency, recovery, configs, source receipts, model revision, row counts, sizes, SHA256 digests, route bounds, and a Viewer-safe default exact-51 configuration.
 
 ## OUL-033 Implement content-addressed Bucket and immutable Dataset resolution
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
