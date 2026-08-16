@@ -867,7 +867,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: Package and CLI expose BM25, vector, hybrid, graph, and semantic-graph modes, jurisdiction and status filters, immutable pins, fetch traces, and resource budgets without full-index download.
 
 ## OUL-036 Seal a jurisdiction-diverse legal retrieval gold set
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
