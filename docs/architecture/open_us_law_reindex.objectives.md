@@ -58,7 +58,7 @@
 - Provisional at: 2026-08-14T04:13:21.953986+00:00
 
 ## OUL-G020 Acquire a complete official corpus for exactly 50 states plus DC
-- Status: active
+- Status: provisionally_complete
 - Parent: OUL-G000
 - Depends on: OUL-G010
 - Fib priority: 13
@@ -83,6 +83,9 @@
 - Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
 - Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
 - Reopen reasons: []
+- State transitioned at: 2026-08-16T04:36:38.247990+00:00
+- State transition reason: Produce completion evidence for: All cohorts close, GA and NC are restored from official sources, nonofficial seeds are repaired or quarantined, and no final acquisition failure remains.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Every descendant must remain verified with all proof requirements fresh, conclusive, uncontradicted, and satisfied.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-16T04:36:38.247990+00:00
 
 ## OUL-G021 Complete official acquisition cohorts A through D
 - Status: provisionally_complete
@@ -115,7 +118,7 @@
 - Provisional at: 2026-08-15T22:29:24.670558+00:00
 
 ## OUL-G022 Complete official acquisition cohorts E through H
-- Status: active
+- Status: provisionally_complete
 - Parent: OUL-G020
 - Depends on: OUL-G010
 - Fib priority: 8
@@ -140,9 +143,12 @@
 - Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
 - Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
 - Reopen reasons: []
+- State transitioned at: 2026-08-16T04:36:38.247990+00:00
+- State transition reason: Produce completion evidence for: Every jurisdiction in KY through NY assigned to these cohorts has replayable exhaustive evidence.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-16T04:36:38.247990+00:00
 
 ## OUL-G023 Complete official acquisition cohorts I through M including DC
-- Status: active
+- Status: provisionally_complete
 - Parent: OUL-G020
 - Depends on: OUL-G010
 - Fib priority: 8
@@ -167,9 +173,12 @@
 - Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
 - Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
 - Reopen reasons: []
+- State transitioned at: 2026-08-16T04:36:38.247990+00:00
+- State transition reason: Produce completion evidence for: Every jurisdiction in NC through DC assigned to these cohorts has replayable exhaustive evidence.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-16T04:36:38.247990+00:00
 
 ## OUL-G024 Reconcile exact-51 evidence and refill every source gap
-- Status: active
+- Status: provisionally_complete
 - Parent: OUL-G020
 - Depends on: OUL-G021, OUL-G022, OUL-G023
 - Fib priority: 8
@@ -194,9 +203,12 @@
 - Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
 - Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
 - Reopen reasons: []
+- State transitioned at: 2026-08-16T04:36:38.247990+00:00
+- State transition reason: Produce completion evidence for: The deduplicated exact-51 union matches admitted artifacts and all discovered gaps have terminal evidence.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-16T04:36:38.247990+00:00
 
 ## OUL-G030 Build a canonical bounded and streaming Open US Law corpus
-- Status: active
+- Status: provisionally_complete
 - Parent: OUL-G000
 - Depends on: OUL-G010, OUL-G020
 - Fib priority: 8
@@ -221,9 +233,12 @@
 - Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
 - Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
 - Reopen reasons: []
+- State transitioned at: 2026-08-16T04:36:38.247990+00:00
+- State transition reason: Produce completion evidence for: Canonical corpus and quarantine are complete, builds resume deterministically, and shared routing scales beyond one 4096-row index page.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-16T04:36:38.247990+00:00
 
 ## OUL-G040 Produce BM25, GTE vector, and BM25-backed graph families
-- Status: active
+- Status: provisionally_complete
 - Parent: OUL-G000
 - Depends on: OUL-G030
 - Fib priority: 13
@@ -248,9 +263,12 @@
 - Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
 - Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
 - Reopen reasons: []
+- State transitioned at: 2026-08-16T04:36:38.247990+00:00
+- State transition reason: Produce completion evidence for: Every admitted key appears in all required families; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-16T04:36:38.247990+00:00
 
 ## OUL-G050 Query Hugging Face sparsely and traverse the graph with embeddings
-- Status: active
+- Status: provisionally_complete
 - Parent: OUL-G000
 - Depends on: OUL-G040
 - Fib priority: 8
@@ -275,9 +293,12 @@
 - Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
 - Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
 - Reopen reasons: []
+- State transitioned at: 2026-08-16T04:36:38.247990+00:00
+- State transition reason: Produce completion evidence for: BM25 term ranges, centroid probes, entry locators, hybrid fusion, and budgeted semantic graph walks fetch only routed artifacts.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-16T04:36:38.247990+00:00
 
 ## OUL-G060 Prove quality, security, reproducibility, and full-scale behavior
-- Status: active
+- Status: provisionally_complete
 - Parent: OUL-G000
 - Depends on: OUL-G030, OUL-G040, OUL-G050
 - Fib priority: 8
@@ -302,9 +323,12 @@
 - Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
 - Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
 - Reopen reasons: []
+- State transitioned at: 2026-08-16T04:36:38.247990+00:00
+- State transition reason: Produce completion evidence for: Quality thresholds, sparse I/O, determinism, hostile-input defenses, real GTE inference, and corpus/index/graph parity all pass.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-16T04:36:38.247990+00:00
 
 ## OUL-G070 Stage and canary the exact content-addressed candidate
-- Status: active
+- Status: provisionally_complete
 - Parent: OUL-G000
 - Depends on: OUL-G060
 - Fib priority: 8
@@ -329,6 +353,9 @@
 - Analyzer health: {"evidence":{},"passed":false,"reason_code":"analyzer_health_missing","status":"missing"}
 - Exhaustion quorum: {"evidence":{},"member_count":null,"reason_code":"exhaustion_quorum_missing","required_members":null,"satisfied":false,"stale_members":[]}
 - Reopen reasons: []
+- State transitioned at: 2026-08-16T04:36:38.247990+00:00
+- State transition reason: Produce completion evidence for: Fresh redownload at immutable pins reproduces every digest and query mode before public mutation is authorized.; Map every mandatory acceptance criterion to fresh, verified implementation and validation proof bound to the current tree.; Every submitted validation proof must be fresh and passing, and every mandatory criterion must have one.; Require an explicitly healthy analyzer that is safe for completion reasoning.; Require the configured number of independent, fresh, healthy exhaustive receipts bound to the current repository tree.; Task completion is provisional until every criterion has valid evidence.
+- Provisional at: 2026-08-16T04:36:38.247990+00:00
 
 ## OUL-G080 Publish and verify the authorized public Hugging Face release
 - Status: active
