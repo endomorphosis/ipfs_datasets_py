@@ -1083,7 +1083,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 - Acceptance: After immediate gate revalidation, the exact staged bytes are committed to justicedao/open-us-law-sparse-graphrag and copied additively under releases/<manifest_sha256>/ in justicedao/open-us-law-bucket; a tiny pointer is updated last, no root raw object is overwritten, and no deletion occurs.
 
 ## OUL-045 Verify the immutable public release and Dataset Viewer
-- Status: todo
+- Status: completed
 - Completion: evidence
 - Is schedulable: true
 - Review only: false
