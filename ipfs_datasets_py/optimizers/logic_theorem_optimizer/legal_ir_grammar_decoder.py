@@ -11,6 +11,7 @@ autoencoder targets, and rollout artifacts uniformly.
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 import re
 from collections.abc import Mapping, Sequence
@@ -21,6 +22,40 @@ from .legal_ir_family_evaluator import canonical_legal_ir_evaluation_family
 
 
 LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION: Final = "legal-ir-typed-grammar-decoder-v1"
+LEGAL_IR_FROZEN_TOKENIZER_SCHEMA_VERSION: Final = "legal-ir-frozen-tokenizer-v1"
+LEGAL_IR_FROZEN_VOCABULARY_SCHEMA: Final = "IRFrozenTokenizerVocabulary@1"
+LEGAL_IR_FROZEN_TOKENIZER_INTERFACE: Final = (
+    "proof-grounded-ir-learning/canonical-frozen-tokenizer/v1"
+)
+LEGAL_IR_IDENTIFIER_BUCKET_COUNT: Final = 32
+LEGAL_IR_TOKEN_CLASSES: Final[tuple[str, ...]] = (
+    "padding",
+    "special",
+    "binder",
+    "operator",
+    "type",
+    "family",
+    "proof",
+    "tactic",
+    "source",
+    "identifier",
+    "production",
+    "source_surface",
+)
+LEGAL_IR_CLOSED_TOKEN_CLASSES: Final[frozenset[str]] = frozenset(
+    {
+        "padding",
+        "special",
+        "binder",
+        "operator",
+        "type",
+        "family",
+        "proof",
+        "tactic",
+        "source",
+        "production",
+    }
+)
 LEGAL_IR_GRAMMAR_FAMILIES: Final[tuple[str, ...]] = (
     "deontic",
     "frame_logic",
@@ -230,11 +265,13 @@ class LegalIRGrammarDecoder:
         self,
         *,
         production_specs: Optional[Sequence[LegalIRProductionSpec]] = None,
+        tokenizer: Optional["LegalIRFrozenTokenizer"] = None,
     ) -> None:
         specs = tuple(production_specs or default_legal_ir_production_specs())
         self.production_specs: dict[str, LegalIRProductionSpec] = {
             spec.name: spec for spec in specs
         }
+        self._frozen_tokenizer = tokenizer
         self.productions_by_family: dict[str, tuple[str, ...]] = {}
         for spec in specs:
             family = canonical_legal_ir_grammar_family(spec.family)
@@ -374,6 +411,34 @@ class LegalIRGrammarDecoder:
             family=family,
             source_text=source_text,
             context=context,
+        )
+
+    def frozen_tokenizer(self) -> "LegalIRFrozenTokenizer":
+        """Return the decoder-bound frozen tokenizer without mutating vocabulary."""
+
+        if self._frozen_tokenizer is None:
+            self._frozen_tokenizer = LegalIRFrozenTokenizer.canonical()
+        return self._frozen_tokenizer
+
+    def encode_structured_output(
+        self,
+        candidate_ir: Any,
+        *,
+        family: str = "",
+        source_text: str = "",
+    ) -> "LegalIRTokenization":
+        """Validate then freeze-encode a structured LegalIR payload."""
+
+        validation = self.validate(
+            candidate_ir,
+            family=family,
+            source_text=source_text,
+        )
+        return self.frozen_tokenizer().encode_canonical(
+            candidate_ir,
+            family=validation.family,
+            source_text=source_text,
+            accepted=validation.accepted,
         )
 
 
@@ -1174,19 +1239,1558 @@ def _stable_digest(value: Any) -> str:
     return hashlib.sha256(repr(value).encode("utf-8", "replace")).hexdigest()
 
 
+def _canonical_json_bytes(value: Any) -> bytes:
+    return json.dumps(
+        value,
+        allow_nan=False,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+
+
+def _content_sha256(value: Any) -> str:
+    return hashlib.sha256(_canonical_json_bytes(value)).hexdigest()
+
+
+def _content_cid(value: Any) -> str:
+    return f"sha256:{_content_sha256(value)}"
+
+
+class FrozenVocabularyMutationError(ValueError):
+    """Raised when a caller attempts to mutate a frozen tokenizer vocabulary."""
+
+
+class UnknownFrozenTokenError(ValueError):
+    """Raised when a closed-class token is absent from the frozen vocabulary."""
+
+
+@dataclass(frozen=True, slots=True)
+class LegalIRVocabEntry:
+    """One frozen vocabulary row with an immutable token class."""
+
+    token_id: int
+    piece: str
+    token_class: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "piece": self.piece,
+            "token_class": self.token_class,
+            "token_id": int(self.token_id),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LegalIRToken:
+    """One encoded token, including class and surface/canonical origin."""
+
+    token_id: int
+    piece: str
+    token_class: str
+    surface: str = "canonical"
+    source_hash: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "piece": self.piece,
+            "source_hash": self.source_hash,
+            "surface": self.surface,
+            "token_class": self.token_class,
+            "token_id": int(self.token_id),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LegalIRTokenization:
+    """Deterministic encoding of one structured or source-surface payload."""
+
+    token_ids: tuple[int, ...]
+    tokens: tuple[LegalIRToken, ...]
+    token_class_counts: Mapping[str, int]
+    vocabulary_cid: str
+    vocabulary_sha256: str
+    source_surface_separated: bool
+    source_surface_token_count: int
+    canonical_token_count: int
+    accepted: bool = True
+    family: str = ""
+    schema_version: str = LEGAL_IR_FROZEN_TOKENIZER_SCHEMA_VERSION
+
+    def token_class_histogram(self) -> dict[str, int]:
+        return {
+            name: int(self.token_class_counts.get(name, 0)) for name in LEGAL_IR_TOKEN_CLASSES
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "accepted": self.accepted,
+            "canonical_token_count": int(self.canonical_token_count),
+            "family": self.family,
+            "schema_version": self.schema_version,
+            "source_surface_separated": self.source_surface_separated,
+            "source_surface_token_count": int(self.source_surface_token_count),
+            "token_class_counts": self.token_class_histogram(),
+            "token_ids": [int(token_id) for token_id in self.token_ids],
+            "tokens": [token.to_dict() for token in self.tokens],
+            "vocabulary_cid": self.vocabulary_cid,
+            "vocabulary_sha256": self.vocabulary_sha256,
+        }
+
+
+class LegalIRFrozenTokenizer:
+    """Canonical, fail-closed tokenizer with a frozen structured vocabulary.
+
+    Source-surface text is encoded on a separate path and never mutates the
+    canonical vocabulary.  Closed-class unknowns fail closed.  Open identifiers
+    hash into a fixed bucket table that is part of the freeze.
+    """
+
+    def __init__(
+        self,
+        *,
+        entries: Optional[Sequence[LegalIRVocabEntry]] = None,
+        frozen: bool = True,
+    ) -> None:
+        resolved = tuple(entries or default_legal_ir_frozen_vocabulary())
+        self._entries = resolved
+        self._piece_to_entry = {entry.piece: entry for entry in resolved}
+        self._id_to_entry = {entry.token_id: entry for entry in resolved}
+        if len(self._piece_to_entry) != len(resolved):
+            raise ValueError("frozen vocabulary pieces must be unique")
+        if list(entry.token_id for entry in resolved) != list(range(len(resolved))):
+            raise ValueError("frozen vocabulary token ids must be contiguous from 0")
+        self._frozen = bool(frozen)
+        vocabulary_payload = self.vocabulary_manifest()
+        self._vocabulary_sha256 = _content_sha256(vocabulary_payload)
+        self._vocabulary_cid = _content_cid(vocabulary_payload)
+
+    @classmethod
+    def canonical(cls) -> "LegalIRFrozenTokenizer":
+        return cls()
+
+    @property
+    def frozen(self) -> bool:
+        return self._frozen
+
+    @property
+    def vocabulary_size(self) -> int:
+        return len(self._entries)
+
+    @property
+    def vocabulary_cid(self) -> str:
+        return self._vocabulary_cid
+
+    @property
+    def vocabulary_sha256(self) -> str:
+        return f"sha256:{self._vocabulary_sha256}"
+
+    @property
+    def pad_id(self) -> int:
+        return self._piece_to_entry["<pad>"].token_id
+
+    @property
+    def bos_id(self) -> int:
+        return self._piece_to_entry["<bos>"].token_id
+
+    @property
+    def eos_id(self) -> int:
+        return self._piece_to_entry["<eos>"].token_id
+
+    @property
+    def unk_id(self) -> int:
+        return self._piece_to_entry["<unk>"].token_id
+
+    @property
+    def source_ref_id(self) -> int:
+        return self._piece_to_entry["<source_ref>"].token_id
+
+    def freeze(self) -> "LegalIRFrozenTokenizer":
+        if self._frozen:
+            return self
+        return LegalIRFrozenTokenizer(entries=self._entries, frozen=True)
+
+    def lookup(self, piece: str) -> Optional[LegalIRVocabEntry]:
+        return self._piece_to_entry.get(str(piece))
+
+    def entry_for_id(self, token_id: int) -> LegalIRVocabEntry:
+        try:
+            return self._id_to_entry[int(token_id)]
+        except KeyError as exc:
+            raise UnknownFrozenTokenError(f"token id {token_id} is outside the freeze") from exc
+
+    def require(self, piece: str, *, token_class: str = "") -> LegalIRVocabEntry:
+        entry = self.lookup(piece)
+        if entry is None:
+            raise UnknownFrozenTokenError(
+                f"closed-class token {piece!r} is absent from the frozen vocabulary"
+            )
+        if token_class and entry.token_class != token_class:
+            raise UnknownFrozenTokenError(
+                f"token {piece!r} has class {entry.token_class!r}, expected {token_class!r}"
+            )
+        return entry
+
+    def add_token(self, piece: str, token_class: str) -> None:
+        raise FrozenVocabularyMutationError(
+            "frozen tokenizer vocabulary cannot be mutated; supersede with a new CID"
+        )
+
+    def encode_canonical(
+        self,
+        candidate_ir: Any,
+        *,
+        family: str = "",
+        source_text: str = "",
+        accepted: bool = True,
+        max_length: int = 64,
+    ) -> LegalIRTokenization:
+        if not self._frozen:
+            raise FrozenVocabularyMutationError("canonical encoding requires a frozen vocabulary")
+        family_name = infer_legal_ir_grammar_family(candidate_ir, family=family)
+        tokens: list[LegalIRToken] = [self._special_token("<bos>")]
+        if family_name and family_name != "unscoped":
+            tokens.append(self._closed_token(family_name, token_class="family"))
+        type_piece = _family_output_type(family_name)
+        if type_piece:
+            tokens.append(self._closed_token(type_piece, token_class="type"))
+        tokens.extend(self._walk_structured(candidate_ir, family=family_name))
+        tokens.append(self._special_token("<eos>"))
+        if len(tokens) > max_length:
+            tokens = [*tokens[: max_length - 1], self._special_token("<eos>")]
+        return self._finalize_tokenization(
+            tokens,
+            family=family_name,
+            accepted=accepted,
+            source_text=source_text,
+        )
+
+    def encode_source_surface(
+        self,
+        source_text: str,
+        *,
+        family: str = "",
+        max_length: int = 32,
+    ) -> LegalIRTokenization:
+        """Encode raw source without touching the canonical vocabulary."""
+
+        normalized = _normalize_text(source_text)
+        tokens: list[LegalIRToken] = [self._special_token("<bos>")]
+        tokens.append(self._special_token("<source_ref>"))
+        if normalized:
+            digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+            for index, chunk in enumerate(_chunks(digest, 8)[: max(0, max_length - 3)]):
+                tokens.append(
+                    LegalIRToken(
+                        token_id=self.source_ref_id,
+                        piece="<source_ref>",
+                        token_class="source_surface",
+                        surface="source",
+                        source_hash=f"{index:02d}:{chunk}",
+                    )
+                )
+        tokens.append(self._special_token("<eos>"))
+        return self._finalize_tokenization(
+            tokens,
+            family=canonical_legal_ir_grammar_family(family),
+            accepted=True,
+            source_text=source_text,
+            source_surface_only=True,
+        )
+
+    def encode_pair(
+        self,
+        candidate_ir: Any,
+        *,
+        family: str = "",
+        source_text: str = "",
+    ) -> dict[str, LegalIRTokenization]:
+        """Return separately addressed canonical and source-surface encodings."""
+
+        return {
+            "canonical": self.encode_canonical(
+                candidate_ir,
+                family=family,
+                source_text=source_text,
+            ),
+            "source_surface": self.encode_source_surface(
+                source_text,
+                family=family,
+            ),
+        }
+
+    def pad_ids(self, token_ids: Sequence[int], *, max_length: int) -> list[int]:
+        bounded = [int(token_id) for token_id in token_ids[: max(0, int(max_length))]]
+        if len(bounded) < max_length:
+            bounded.extend([self.pad_id] * (int(max_length) - len(bounded)))
+        return bounded
+
+    def decode_ids(self, token_ids: Sequence[int]) -> tuple[str, ...]:
+        return tuple(self.entry_for_id(token_id).piece for token_id in token_ids)
+
+    def token_class_for_id(self, token_id: int) -> str:
+        return self.entry_for_id(token_id).token_class
+
+    def vocabulary_manifest(self) -> dict[str, Any]:
+        return {
+            "identifier_bucket_count": LEGAL_IR_IDENTIFIER_BUCKET_COUNT,
+            "interface": LEGAL_IR_FROZEN_TOKENIZER_INTERFACE,
+            "mutation_policy": "supersede_never_overwrite",
+            "schema": LEGAL_IR_FROZEN_VOCABULARY_SCHEMA,
+            "schema_version": LEGAL_IR_FROZEN_TOKENIZER_SCHEMA_VERSION,
+            "token_classes": list(LEGAL_IR_TOKEN_CLASSES),
+            "tokens": [entry.to_dict() for entry in self._entries],
+            "unknown_token_behavior": "fail_closed",
+            "vocabulary_size": len(self._entries),
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        manifest = self.vocabulary_manifest()
+        manifest["frozen"] = self._frozen
+        manifest["vocabulary_cid"] = self.vocabulary_cid
+        manifest["vocabulary_sha256"] = self.vocabulary_sha256
+        return manifest
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "LegalIRFrozenTokenizer":
+        tokens = payload.get("tokens")
+        if not isinstance(tokens, Sequence):
+            raise ValueError("tokenizer payload is missing tokens")
+        entries = []
+        for index, row in enumerate(tokens):
+            if not isinstance(row, Mapping):
+                raise ValueError("tokenizer token row must be a mapping")
+            entries.append(
+                LegalIRVocabEntry(
+                    token_id=int(row.get("token_id", index)),
+                    piece=str(row.get("piece") or ""),
+                    token_class=str(row.get("token_class") or ""),
+                )
+            )
+        tokenizer = cls(entries=entries, frozen=bool(payload.get("frozen", True)))
+        expected_cid = str(payload.get("vocabulary_cid") or "")
+        if expected_cid and expected_cid != tokenizer.vocabulary_cid:
+            raise ValueError("tokenizer vocabulary CID does not match payload")
+        return tokenizer
+
+    def _special_token(self, piece: str) -> LegalIRToken:
+        entry = self.require(piece)
+        return LegalIRToken(
+            token_id=entry.token_id,
+            piece=entry.piece,
+            token_class=entry.token_class,
+        )
+
+    def _closed_token(self, piece: str, *, token_class: str) -> LegalIRToken:
+        entry = self.require(piece, token_class=token_class)
+        return LegalIRToken(
+            token_id=entry.token_id,
+            piece=entry.piece,
+            token_class=entry.token_class,
+        )
+
+    def _identifier_or_source_token(self, value: str, *, field_name: str) -> LegalIRToken:
+        text = str(value or "").strip()
+        if not text:
+            raise UnknownFrozenTokenError(f"empty identifier at {field_name}")
+        if _SOURCE_TEXT_FIELD_RE.match(field_name) or _PLACEHOLDER_RE.search(text):
+            digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+            return LegalIRToken(
+                token_id=self.source_ref_id,
+                piece="<source_ref>",
+                token_class="source",
+                surface="source",
+                source_hash=digest,
+            )
+        existing = self.lookup(text)
+        if existing is not None:
+            return LegalIRToken(
+                token_id=existing.token_id,
+                piece=existing.piece,
+                token_class=existing.token_class,
+            )
+        if " " in text or len(text) > 32:
+            digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+            return LegalIRToken(
+                token_id=self.source_ref_id,
+                piece="<source_ref>",
+                token_class="source",
+                surface="source",
+                source_hash=digest,
+            )
+        bucket = int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (
+            LEGAL_IR_IDENTIFIER_BUCKET_COUNT
+        )
+        piece = f"<id_bucket_{bucket:02d}>"
+        entry = self.require(piece, token_class="identifier")
+        return LegalIRToken(
+            token_id=entry.token_id,
+            piece=entry.piece,
+            token_class=entry.token_class,
+            source_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        )
+
+    def _walk_structured(
+        self,
+        value: Any,
+        *,
+        family: str,
+        path: str = "$",
+    ) -> list[LegalIRToken]:
+        tokens: list[LegalIRToken] = []
+        if isinstance(value, Mapping):
+            for key in sorted(str(item) for item in value.keys()):
+                field_entry = self.lookup(key)
+                if field_entry is not None and field_entry.token_class in {
+                    "identifier",
+                    "operator",
+                    "production",
+                    "type",
+                    "family",
+                }:
+                    tokens.append(
+                        LegalIRToken(
+                            token_id=field_entry.token_id,
+                            piece=field_entry.piece,
+                            token_class=field_entry.token_class,
+                        )
+                    )
+                tokens.extend(
+                    self._walk_structured(
+                        value.get(key),
+                        family=family,
+                        path=f"{path}.{key}",
+                    )
+                )
+            return tokens
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+            for index, item in enumerate(value):
+                tokens.extend(
+                    self._walk_structured(
+                        item,
+                        family=family,
+                        path=f"{path}[{index}]",
+                    )
+                )
+            return tokens
+        if isinstance(value, bool) or value is None:
+            return tokens
+        if isinstance(value, (int, float)):
+            return tokens
+        text = str(value).strip()
+        if not text:
+            return tokens
+        existing = self.lookup(text)
+        if existing is not None:
+            if existing.token_class in LEGAL_IR_CLOSED_TOKEN_CLASSES or existing.token_class in {
+                "identifier",
+                "source",
+            }:
+                tokens.append(
+                    LegalIRToken(
+                        token_id=existing.token_id,
+                        piece=existing.piece,
+                        token_class=existing.token_class,
+                    )
+                )
+                return tokens
+        field_name = path.rsplit(".", 1)[-1]
+        if field_name in _CLOSED_VALUE_FIELDS and existing is None:
+            raise UnknownFrozenTokenError(
+                f"closed-class value {text!r} at {path} is absent from the freeze"
+            )
+        tokens.append(self._identifier_or_source_token(text, field_name=field_name))
+        return tokens
+
+    def _finalize_tokenization(
+        self,
+        tokens: Sequence[LegalIRToken],
+        *,
+        family: str,
+        accepted: bool,
+        source_text: str,
+        source_surface_only: bool = False,
+    ) -> LegalIRTokenization:
+        counts = {name: 0 for name in LEGAL_IR_TOKEN_CLASSES}
+        source_surface_count = 0
+        canonical_count = 0
+        for token in tokens:
+            counts[token.token_class] = counts.get(token.token_class, 0) + 1
+            if token.surface == "source" or token.token_class == "source_surface":
+                if not source_surface_only:
+                    raise UnknownFrozenTokenError(
+                        "source-surface tokens are rejected on the canonical IR path"
+                    )
+                source_surface_count += 1
+            else:
+                canonical_count += 1
+        return LegalIRTokenization(
+            token_ids=tuple(token.token_id for token in tokens),
+            tokens=tuple(tokens),
+            token_class_counts=counts,
+            vocabulary_cid=self.vocabulary_cid,
+            vocabulary_sha256=self.vocabulary_sha256,
+            source_surface_separated=True,
+            source_surface_token_count=source_surface_count,
+            canonical_token_count=canonical_count,
+            accepted=accepted,
+            family=family,
+        )
+
+
+def default_legal_ir_frozen_vocabulary() -> tuple[LegalIRVocabEntry, ...]:
+    """Return the sealed canonical vocabulary used by both experiment arms."""
+
+    pieces: list[tuple[str, str]] = [
+        ("<pad>", "padding"),
+        ("<bos>", "special"),
+        ("<eos>", "special"),
+        ("<sep>", "special"),
+        ("<mask>", "special"),
+        ("<unk>", "special"),
+        ("<source_ref>", "source"),
+        ("forall", "binder"),
+        ("exists", "binder"),
+        ("lambda", "binder"),
+        ("let", "binder"),
+        ("bind", "binder"),
+        ("obligation", "operator"),
+        ("permission", "operator"),
+        ("prohibition", "operator"),
+        ("duty", "operator"),
+        ("right", "operator"),
+        ("and", "operator"),
+        ("or", "operator"),
+        ("not", "operator"),
+        ("implies", "operator"),
+        ("iff", "operator"),
+        ("must", "operator"),
+        ("may", "operator"),
+        ("shall", "operator"),
+        ("must_not", "operator"),
+        ("DeonticRule", "type"),
+        ("FrameLogicTriples", "type"),
+        ("TDFOLFormula", "type"),
+        ("KnowledgeGraph", "type"),
+        ("CounterexampleContext", "type"),
+        ("ExternalProverPlan", "type"),
+        ("TemporalWindow", "type"),
+        ("ProvenanceReceipt", "type"),
+        ("DecompilerPlan", "type"),
+        ("proved", "proof"),
+        ("disproved", "proof"),
+        ("timeout", "proof"),
+        ("unknown", "proof"),
+        ("counterexample", "proof"),
+        ("unchecked", "proof"),
+        ("intro", "tactic"),
+        ("apply", "tactic"),
+        ("simp", "tactic"),
+        ("cases", "tactic"),
+        ("rewrite", "tactic"),
+        ("hammer", "tactic"),
+        ("modality", "identifier"),
+        ("subject", "identifier"),
+        ("action", "identifier"),
+        ("condition", "identifier"),
+        ("exception", "identifier"),
+        ("object", "identifier"),
+        ("provenance", "identifier"),
+        ("relation", "identifier"),
+        ("frame", "identifier"),
+        ("qualifiers", "identifier"),
+        ("predicate", "identifier"),
+        ("arguments", "identifier"),
+        ("quantifier", "identifier"),
+        ("variables", "identifier"),
+        ("connective", "identifier"),
+        ("nodes", "identifier"),
+        ("edges", "identifier"),
+        ("labels", "identifier"),
+        ("properties", "identifier"),
+        ("events", "identifier"),
+        ("counterexamples", "identifier"),
+        ("constraints", "identifier"),
+        ("contexts", "identifier"),
+        ("backend", "identifier"),
+        ("obligations", "identifier"),
+        ("theory", "identifier"),
+        ("timeout", "identifier"),
+        ("route", "identifier"),
+        ("intervals", "identifier"),
+        ("relations", "identifier"),
+        ("bounds", "identifier"),
+        ("calendar", "identifier"),
+        ("timezone", "identifier"),
+        ("source_refs", "identifier"),
+        ("evidence", "identifier"),
+        ("citations", "identifier"),
+        ("span_hashes", "identifier"),
+        ("receipts", "identifier"),
+        ("steps", "identifier"),
+        ("target_view", "identifier"),
+        ("round_trip", "identifier"),
+        ("source_copy_policy", "identifier"),
+        ("surface_template", "identifier"),
+        ("family", "identifier"),
+        ("rules", "identifier"),
+        ("triples", "identifier"),
+        ("formulas", "identifier"),
+        ("hash_only", "identifier"),
+    ]
+    for family in LEGAL_IR_GRAMMAR_FAMILIES:
+        pieces.append((family, "family"))
+    for spec in default_legal_ir_production_specs():
+        pieces.append((spec.name, "production"))
+    for index in range(LEGAL_IR_IDENTIFIER_BUCKET_COUNT):
+        pieces.append((f"<id_bucket_{index:02d}>", "identifier"))
+
+    seen: set[str] = set()
+    entries: list[LegalIRVocabEntry] = []
+    for piece, token_class in pieces:
+        if piece in seen:
+            continue
+        if token_class not in LEGAL_IR_TOKEN_CLASSES:
+            raise ValueError(f"unknown token class {token_class!r}")
+        seen.add(piece)
+        entries.append(
+            LegalIRVocabEntry(
+                token_id=len(entries),
+                piece=piece,
+                token_class=token_class,
+            )
+        )
+    return tuple(entries)
+
+
+def canonical_legal_ir_frozen_tokenizer() -> LegalIRFrozenTokenizer:
+    """Return the process-local canonical freeze.  Vocabulary is immutable."""
+
+    return LegalIRFrozenTokenizer.canonical()
+
+
+def _family_output_type(family: str) -> str:
+    mapping = {
+        spec.family: spec.output_type for spec in default_legal_ir_production_specs()
+    }
+    return mapping.get(family, "")
+
+
+def _chunks(value: str, size: int) -> tuple[str, ...]:
+    return tuple(value[index : index + size] for index in range(0, len(value), size))
+
+
+_CLOSED_VALUE_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "family",
+        "modality",
+        "operator",
+        "quantifier",
+        "connective",
+        "backend",
+    }
+)
+
+
+SHARED_LATENT_ARCHITECTURE_ARM = "shared_latent"
+SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM = "shared_encoder_typed_head"
+COMPATIBLE_ARCHITECTURE_ARMS = (
+    SHARED_LATENT_ARCHITECTURE_ARM,
+    SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM,
+)
+COMPATIBLE_ARCHITECTURE_SCHEMA_VERSION = "legal-ir-compatible-architecture-v1"
+COMPATIBLE_ARCHITECTURE_INIT_CHECKPOINT_SCHEMA = "IRCompatibleArchitectureInitCheckpoint@1"
+SHARED_LATENT_ARCHITECTURE_VERSION = "shared_latent_v1"
+SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_VERSION = "shared_encoder_typed_head_v1"
+COMPATIBLE_ARCHITECTURE_DEFAULT_LATENT_DIM = 16
+COMPATIBLE_ARCHITECTURE_DEFAULT_HIDDEN_DIM = 16
+COMPATIBLE_ARCHITECTURE_DEFAULT_MAX_SEQ_LEN = 32
+COMPATIBLE_ARCHITECTURE_OUTPUT_HEADS = (
+    "family",
+    "view",
+    "reconstruction",
+    "uncertainty",
+)
+MODEL_LEGACY_1_IDENTITY = "MODEL-LEGACY-1"
+COMPATIBLE_LEGACY_ARCHITECTURE_VERSIONS = frozenset(
+    {
+        "legacy_dense_v1",
+        "proof_aware_auxiliary_heads_v2",
+        SHARED_LATENT_ARCHITECTURE_VERSION,
+        SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_VERSION,
+    }
+)
+
+
+class IncompatibleLegacyWarmStartError(ValueError):
+    """Raised when MODEL-LEGACY-1 fails compatibility or quarantine."""
+
+
+def evaluate_legacy_warm_start(
+    *,
+    compatibility_passed: bool,
+    quarantine_passed: bool,
+    architecture_version: str = "",
+    legacy_identity: str = MODEL_LEGACY_1_IDENTITY,
+) -> dict[str, Any]:
+    """Admit MODEL-LEGACY-1 only as a non-authoritative warm start."""
+
+    compatible = bool(compatibility_passed)
+    quarantined = bool(quarantine_passed)
+    allowed = compatible and quarantined
+    if architecture_version and architecture_version not in COMPATIBLE_LEGACY_ARCHITECTURE_VERSIONS:
+        allowed = False
+        reason = "architecture version is not in the compatible set"
+    elif not compatible:
+        reason = "legacy compatibility gate failed"
+    elif not quarantined:
+        reason = "legacy quarantine gate failed"
+    else:
+        reason = "warm-start admitted without promotion or semantic authority"
+    return {
+        "allowed": allowed,
+        "architecture_version": architecture_version,
+        "authority": False,
+        "identity": legacy_identity,
+        "promoted": False,
+        "reason": reason,
+    }
+
+
+def require_legacy_warm_start(**kwargs: Any) -> dict[str, Any]:
+    report = evaluate_legacy_warm_start(**kwargs)
+    if not report["allowed"]:
+        raise IncompatibleLegacyWarmStartError(str(report["reason"]))
+    return report
+
+
+def _compatible_architecture_arm_name(value: Optional[str]) -> str:
+    arm = str(value or SHARED_LATENT_ARCHITECTURE_ARM).strip()
+    if arm not in COMPATIBLE_ARCHITECTURE_ARMS:
+        raise ValueError(
+            "architecture arm must be one of " + ", ".join(COMPATIBLE_ARCHITECTURE_ARMS)
+        )
+    return arm
+
+
+def _architecture_version_for_arm(arm: str) -> str:
+    if arm == SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM:
+        return SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_VERSION
+    return SHARED_LATENT_ARCHITECTURE_VERSION
+
+
+def _zeros(size: int) -> list[float]:
+    return [0.0] * int(size)
+
+
+def _seeded_vector(size: int, *, seed: int, salt: str) -> list[float]:
+    digest = hashlib.sha256(f"{int(seed)}:{salt}".encode("utf-8")).digest()
+    values: list[float] = []
+    block = digest
+    while len(values) < size:
+        for index in range(0, len(block), 4):
+            chunk = block[index : index + 4]
+            if len(chunk) < 4 or len(values) >= size:
+                break
+            raw = int.from_bytes(chunk, "big") / 4294967295.0
+            values.append((raw * 2.0 - 1.0) * 0.05)
+        block = hashlib.sha256(block).digest()
+    return values
+
+
+def _seeded_matrix(rows: int, cols: int, *, seed: int, salt: str) -> list[list[float]]:
+    return [
+        _seeded_vector(cols, seed=seed, salt=f"{salt}:{row}")
+        for row in range(int(rows))
+    ]
+
+
+def _vec_add(left: Sequence[float], right: Sequence[float]) -> list[float]:
+    return [float(a) + float(b) for a, b in zip(left, right)]
+
+
+def _vec_sub(left: Sequence[float], right: Sequence[float]) -> list[float]:
+    return [float(a) - float(b) for a, b in zip(left, right)]
+
+
+def _vec_scale(values: Sequence[float], scale: float) -> list[float]:
+    return [float(value) * float(scale) for value in values]
+
+
+def _dot(left: Sequence[float], right: Sequence[float]) -> float:
+    return sum(float(a) * float(b) for a, b in zip(left, right))
+
+
+def _mat_vec(matrix: Sequence[Sequence[float]], vector: Sequence[float]) -> list[float]:
+    return [_dot(row, vector) for row in matrix]
+
+
+def _transpose_mat_vec(
+    matrix: Sequence[Sequence[float]],
+    vector: Sequence[float],
+) -> list[float]:
+    if not matrix:
+        return []
+    width = len(matrix[0])
+    result = [0.0] * width
+    for row_index, row in enumerate(matrix):
+        scale = float(vector[row_index])
+        for col_index, value in enumerate(row):
+            result[col_index] += float(value) * scale
+    return result
+
+
+def _outer(left: Sequence[float], right: Sequence[float]) -> list[list[float]]:
+    return [[float(a) * float(b) for b in right] for a in left]
+
+
+def _matrix_add(
+    left: Sequence[Sequence[float]],
+    right: Sequence[Sequence[float]],
+) -> list[list[float]]:
+    return [_vec_add(a, b) for a, b in zip(left, right)]
+
+
+def _matrix_scale(matrix: Sequence[Sequence[float]], scale: float) -> list[list[float]]:
+    return [_vec_scale(row, scale) for row in matrix]
+
+
+def _softmax_vector(logits: Sequence[float]) -> list[float]:
+    if not logits:
+        return []
+    peak = max(float(value) for value in logits)
+    exps = [math.exp(float(value) - peak) for value in logits]
+    total = sum(exps) or 1.0
+    return [value / total for value in exps]
+
+
+def _sigmoid_scalar(value: float) -> float:
+    clipped = max(-30.0, min(30.0, float(value)))
+    return 1.0 / (1.0 + math.exp(-clipped))
+
+
+def _entropy(probabilities: Sequence[float]) -> float:
+    total = 0.0
+    for probability in probabilities:
+        if probability > 0.0:
+            total -= float(probability) * math.log(float(probability))
+    return total
+
+
+def _l2_norm(values: Sequence[float]) -> float:
+    return math.sqrt(sum(float(value) * float(value) for value in values))
+
+
+def _matrix_l2_norm(matrix: Sequence[Sequence[float]]) -> float:
+    return math.sqrt(
+        sum(float(value) * float(value) for row in matrix for value in row)
+    )
+
+
+def _copy_matrix(matrix: Sequence[Sequence[float]]) -> list[list[float]]:
+    return [list(row) for row in matrix]
+
+
+def _copy_vector(values: Sequence[float]) -> list[float]:
+    return [float(value) for value in values]
+
+
+@dataclass
+class CompatibleArchitectureConfig:
+    """Smallest compatible experiment-arm configuration."""
+
+    arm: str = SHARED_LATENT_ARCHITECTURE_ARM
+    latent_dim: int = COMPATIBLE_ARCHITECTURE_DEFAULT_LATENT_DIM
+    hidden_dim: int = COMPATIBLE_ARCHITECTURE_DEFAULT_HIDDEN_DIM
+    max_seq_len: int = COMPATIBLE_ARCHITECTURE_DEFAULT_MAX_SEQ_LEN
+    seed: int = 0
+    families: tuple[str, ...] = LEGAL_IR_GRAMMAR_FAMILIES
+    views: tuple[str, ...] = (
+        "deontic.ir",
+        "modal.frame_logic",
+        "TDFOL.prover",
+        "knowledge_graphs.neo4j_compat",
+        "CEC.native",
+        "external_provers.router",
+        "temporal.ir",
+        "provenance.ir",
+        "decompiler.plan",
+    )
+
+    def __post_init__(self) -> None:
+        self.arm = _compatible_architecture_arm_name(self.arm)
+        self.latent_dim = max(2, int(self.latent_dim))
+        self.hidden_dim = max(2, int(self.hidden_dim))
+        self.max_seq_len = max(4, int(self.max_seq_len))
+        self.seed = int(self.seed)
+        self.families = tuple(str(item) for item in self.families)
+        self.views = tuple(str(item) for item in self.views)
+
+    @property
+    def representation_dim(self) -> int:
+        if self.arm == SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM:
+            return int(self.hidden_dim)
+        return int(self.latent_dim)
+
+    @property
+    def architecture_version(self) -> str:
+        return _architecture_version_for_arm(self.arm)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "architecture_version": self.architecture_version,
+            "arm": self.arm,
+            "families": list(self.families),
+            "hidden_dim": int(self.hidden_dim),
+            "latent_dim": int(self.latent_dim),
+            "max_seq_len": int(self.max_seq_len),
+            "seed": int(self.seed),
+            "views": list(self.views),
+        }
+
+
+class CompatibleLearnedArchitecture:
+    """Runnable shared-latent or shared-encoder/typed-head experiment arm.
+
+    Neither arm is a promotion winner.  Proof labels stay nondifferentiable.
+    The frozen tokenizer is the only vocabulary authority.
+    """
+
+    def __init__(
+        self,
+        *,
+        config: Optional[CompatibleArchitectureConfig] = None,
+        tokenizer: Optional[LegalIRFrozenTokenizer] = None,
+        parameters: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        self.config = config or CompatibleArchitectureConfig()
+        self.tokenizer = tokenizer or LegalIRFrozenTokenizer.canonical()
+        if not self.tokenizer.frozen:
+            raise FrozenVocabularyMutationError(
+                "compatible architectures require a frozen tokenizer"
+            )
+        self.families = tuple(self.config.families)
+        self.views = tuple(self.config.views)
+        self.vocab_size = int(self.tokenizer.vocabulary_size)
+        self.dim = int(self.config.representation_dim)
+        self.parameters = self._initialize_parameters(parameters)
+
+    def _initialize_parameters(
+        self,
+        parameters: Optional[Mapping[str, Any]],
+    ) -> dict[str, Any]:
+        if parameters:
+            return self._hydrate_parameters(parameters)
+        seed = self.config.seed
+        arm = self.config.arm
+        typed_heads: dict[str, dict[str, Any]] = {}
+        if self.config.arm == SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM:
+            for family in self.families:
+                typed_heads[family] = {
+                    "bias": _seeded_vector(
+                        len(self.families),
+                        seed=seed,
+                        salt=f"{arm}:typed:{family}:bias",
+                    ),
+                    "uncertainty_bias": _seeded_vector(
+                        1,
+                        seed=seed,
+                        salt=f"{arm}:typed:{family}:uncertainty_bias",
+                    )[0],
+                    "uncertainty_weight": _seeded_vector(
+                        self.dim,
+                        seed=seed,
+                        salt=f"{arm}:typed:{family}:uncertainty_weight",
+                    ),
+                    "weight": _seeded_matrix(
+                        len(self.families),
+                        self.dim,
+                        seed=seed,
+                        salt=f"{arm}:typed:{family}:weight",
+                    ),
+                }
+        return {
+            "embedding": _seeded_matrix(
+                self.vocab_size, self.dim, seed=seed, salt=f"{arm}:embedding"
+            ),
+            "encoder_bias": _seeded_vector(self.dim, seed=seed, salt=f"{arm}:encoder_bias"),
+            "family_bias": _seeded_vector(
+                len(self.families), seed=seed, salt=f"{arm}:family_bias"
+            ),
+            "family_weight": _seeded_matrix(
+                len(self.families), self.dim, seed=seed, salt=f"{arm}:family_weight"
+            ),
+            "reconstruction_bias": _seeded_vector(
+                self.vocab_size, seed=seed, salt=f"{arm}:reconstruction_bias"
+            ),
+            "reconstruction_weight": _seeded_matrix(
+                self.vocab_size,
+                self.dim,
+                seed=seed,
+                salt=f"{arm}:reconstruction_weight",
+            ),
+            "typed_heads": typed_heads,
+            "uncertainty_bias": _seeded_vector(
+                1, seed=seed, salt=f"{arm}:uncertainty_bias"
+            )[0],
+            "uncertainty_weight": _seeded_vector(
+                self.dim, seed=seed, salt=f"{arm}:uncertainty_weight"
+            ),
+            "view_bias": _seeded_vector(len(self.views), seed=seed, salt=f"{arm}:view_bias"),
+            "view_weight": _seeded_matrix(
+                len(self.views), self.dim, seed=seed, salt=f"{arm}:view_weight"
+            ),
+        }
+
+    def _hydrate_parameters(self, parameters: Mapping[str, Any]) -> dict[str, Any]:
+        typed_heads = {}
+        raw_heads = dict(parameters.get("typed_heads") or {})
+        for family, payload in raw_heads.items():
+            typed_heads[str(family)] = {
+                "bias": [float(value) for value in payload["bias"]],
+                "uncertainty_bias": float(payload["uncertainty_bias"]),
+                "uncertainty_weight": [
+                    float(value) for value in payload["uncertainty_weight"]
+                ],
+                "weight": [[float(value) for value in row] for row in payload["weight"]],
+            }
+        return {
+            "embedding": [[float(value) for value in row] for row in parameters["embedding"]],
+            "encoder_bias": [float(value) for value in parameters["encoder_bias"]],
+            "family_bias": [float(value) for value in parameters["family_bias"]],
+            "family_weight": [
+                [float(value) for value in row] for row in parameters["family_weight"]
+            ],
+            "reconstruction_bias": [
+                float(value) for value in parameters["reconstruction_bias"]
+            ],
+            "reconstruction_weight": [
+                [float(value) for value in row]
+                for row in parameters["reconstruction_weight"]
+            ],
+            "typed_heads": typed_heads,
+            "uncertainty_bias": float(parameters["uncertainty_bias"]),
+            "uncertainty_weight": [
+                float(value) for value in parameters["uncertainty_weight"]
+            ],
+            "view_bias": [float(value) for value in parameters["view_bias"]],
+            "view_weight": [
+                [float(value) for value in row] for row in parameters["view_weight"]
+            ],
+        }
+
+    def tokenize(
+        self,
+        structured_ir: Any,
+        *,
+        family: str = "",
+        source_text: str = "",
+    ) -> LegalIRTokenization:
+        return self.tokenizer.encode_canonical(
+            structured_ir,
+            family=family,
+            source_text=source_text,
+            max_length=self.config.max_seq_len,
+        )
+
+    def encode_ids(self, token_ids: Sequence[int]) -> list[float]:
+        if not token_ids:
+            return list(self.parameters["encoder_bias"])
+        pooled = _zeros(self.dim)
+        count = 0
+        for token_id in token_ids:
+            if int(token_id) == self.tokenizer.pad_id:
+                continue
+            pooled = _vec_add(pooled, self.parameters["embedding"][int(token_id)])
+            count += 1
+        if count:
+            pooled = _vec_scale(pooled, 1.0 / float(count))
+        return _vec_add(pooled, self.parameters["encoder_bias"])
+
+    def _family_index(self, family: str) -> int:
+        resolved = str(family or self.families[0])
+        if resolved in self.families:
+            return self.families.index(resolved)
+        return 0
+
+    def _view_index(self, view: str) -> int:
+        resolved = str(view or self.views[0])
+        if resolved in self.views:
+            return self.views.index(resolved)
+        return 0
+
+    def _conditioning_vector(
+        self,
+        *,
+        family: str,
+        view: str,
+        source_text: str,
+    ) -> list[float]:
+        values = _zeros(self.dim)
+        values[self._family_index(family) % self.dim] += 1.0
+        values[self._view_index(view) % self.dim] += 0.5
+        if source_text:
+            digest = hashlib.sha256(
+                " ".join(str(source_text).split()).encode("utf-8")
+            ).digest()
+            for offset in range(min(8, self.dim)):
+                values[offset] += ((digest[offset] / 255.0) * 2.0 - 1.0) * 0.05
+        return values
+
+    def _select_family_head(self, family: str) -> tuple[list[list[float]], list[float]]:
+        if self.config.arm == SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM:
+            head = self.parameters["typed_heads"][self.families[self._family_index(family)]]
+            return head["weight"], head["bias"]
+        return self.parameters["family_weight"], self.parameters["family_bias"]
+
+    def _select_uncertainty_head(self, family: str) -> tuple[list[float], float]:
+        if self.config.arm == SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM:
+            head = self.parameters["typed_heads"][self.families[self._family_index(family)]]
+            return head["uncertainty_weight"], float(head["uncertainty_bias"])
+        return (
+            self.parameters["uncertainty_weight"],
+            float(self.parameters["uncertainty_bias"]),
+        )
+
+    def forward(
+        self,
+        structured_ir: Any,
+        *,
+        family: str = "",
+        source_text: str = "",
+        view: str = "",
+        target_family: str = "",
+        proof_label: str = "",
+    ) -> dict[str, Any]:
+        tokenization = self.tokenize(
+            structured_ir,
+            family=family,
+            source_text=source_text,
+        )
+        token_ids = self.tokenizer.pad_ids(
+            tokenization.token_ids,
+            max_length=self.config.max_seq_len,
+        )
+        hidden = self.encode_ids(token_ids)
+        conditioning = self._conditioning_vector(
+            family=tokenization.family or family,
+            view=view or f"{tokenization.family or family}.ir",
+            source_text=source_text,
+        )
+        latent = _vec_add(hidden, conditioning)
+        latent_norm = _l2_norm(latent) or 1.0
+        latent = _vec_scale(latent, 1.0 / latent_norm)
+        family_weight, family_bias = self._select_family_head(tokenization.family or family)
+        family_logits = _vec_add(_mat_vec(family_weight, latent), family_bias)
+        family_probabilities = _softmax_vector(family_logits)
+        view_logits = _vec_add(
+            _mat_vec(self.parameters["view_weight"], latent),
+            self.parameters["view_bias"],
+        )
+        view_probabilities = _softmax_vector(view_logits)
+        reconstruction_logits = _vec_add(
+            _mat_vec(self.parameters["reconstruction_weight"], latent),
+            self.parameters["reconstruction_bias"],
+        )
+        uncertainty_weight, uncertainty_bias = self._select_uncertainty_head(
+            tokenization.family or family
+        )
+        aleatoric = _sigmoid_scalar(_dot(uncertainty_weight, latent) + uncertainty_bias)
+        epistemic = _entropy(family_probabilities)
+        confidence = max(family_probabilities) if family_probabilities else 0.0
+        predicted_family = (
+            self.families[family_probabilities.index(confidence)]
+            if family_probabilities
+            else ""
+        )
+        target = str(target_family or tokenization.family or family or self.families[0])
+        target_index = self._family_index(target)
+        target_one_hot = [0.0] * len(self.families)
+        target_one_hot[target_index] = 1.0
+        loss = -math.log(max(family_probabilities[target_index], 1.0e-12))
+        return {
+            "accepted": tokenization.accepted,
+            "aleatoric_uncertainty": round(float(aleatoric), 12),
+            "architecture_version": self.config.architecture_version,
+            "arm": self.config.arm,
+            "canonical_token_count": tokenization.canonical_token_count,
+            "conditioning": {
+                "family": tokenization.family or family,
+                "proof_label": str(proof_label or ""),
+                "proof_label_differentiable": False,
+                "source_surface_separated": True,
+                "view": view or f"{tokenization.family or family}.ir",
+            },
+            "confidence": round(float(confidence), 12),
+            "epistemic_uncertainty": round(float(epistemic), 12),
+            "family_logits": [round(float(value), 12) for value in family_logits],
+            "family_probabilities": [
+                round(float(value), 12) for value in family_probabilities
+            ],
+            "heads": {
+                "family": {
+                    "kind": "categorical",
+                    "output_size": len(self.families),
+                    "shared": self.config.arm == SHARED_LATENT_ARCHITECTURE_ARM,
+                },
+                "reconstruction": {
+                    "kind": "token_softmax",
+                    "output_size": self.vocab_size,
+                    "shared": True,
+                },
+                "uncertainty": {
+                    "kind": "aleatoric_epistemic",
+                    "output_size": 2,
+                    "shared": self.config.arm == SHARED_LATENT_ARCHITECTURE_ARM,
+                },
+                "view": {
+                    "kind": "categorical",
+                    "output_size": len(self.views),
+                    "shared": True,
+                },
+            },
+            "hidden": [round(float(value), 12) for value in hidden],
+            "latent": [round(float(value), 12) for value in latent],
+            "latent_normalized": True,
+            "loss": round(float(loss), 12),
+            "predicted_family": predicted_family,
+            "reconstruction_logits": [
+                round(float(value), 12) for value in reconstruction_logits
+            ],
+            "schema_version": COMPATIBLE_ARCHITECTURE_SCHEMA_VERSION,
+            "shapes": {
+                "family_logits": [len(self.families)],
+                "latent": [self.dim],
+                "reconstruction_logits": [self.vocab_size],
+                "token_ids": [self.config.max_seq_len],
+                "view_logits": [len(self.views)],
+            },
+            "source_surface_token_count": tokenization.source_surface_token_count,
+            "target_family": target,
+            "target_one_hot": target_one_hot,
+            "token_class_counts": tokenization.token_class_histogram(),
+            "token_ids": token_ids,
+            "tokenization": tokenization.to_dict(),
+            "tokenizer_vocabulary_cid": self.tokenizer.vocabulary_cid,
+            "view_logits": [round(float(value), 12) for value in view_logits],
+            "view_probabilities": [
+                round(float(value), 12) for value in view_probabilities
+            ],
+            "winner": False,
+        }
+
+    def backward(self, forward_result: Mapping[str, Any]) -> dict[str, Any]:
+        latent = [float(value) for value in forward_result["latent"]]
+        probabilities = [float(value) for value in forward_result["family_probabilities"]]
+        target = [float(value) for value in forward_result["target_one_hot"]]
+        family = str(forward_result.get("conditioning", {}).get("family") or "")
+        family_weight, _family_bias = self._select_family_head(family)
+        d_logits = _vec_sub(probabilities, target)
+        d_weight = _outer(d_logits, latent)
+        d_bias = list(d_logits)
+        d_latent = _transpose_mat_vec(family_weight, d_logits)
+        token_ids = [int(value) for value in forward_result["token_ids"]]
+        active = [token_id for token_id in token_ids if token_id != self.tokenizer.pad_id]
+        scale = 1.0 / float(len(active) or 1)
+        d_embedding = [_zeros(self.dim) for _ in range(self.vocab_size)]
+        for token_id in active:
+            d_embedding[token_id] = _vec_add(
+                d_embedding[token_id],
+                _vec_scale(d_latent, scale),
+            )
+        return {
+            "d_embedding_norm": round(_matrix_l2_norm(d_embedding), 12),
+            "d_family_bias": [round(float(value), 12) for value in d_bias],
+            "d_family_weight": [
+                [round(float(value), 12) for value in row] for row in d_weight
+            ],
+            "d_latent": [round(float(value), 12) for value in d_latent],
+            "gradient_norm": round(
+                math.sqrt(
+                    _matrix_l2_norm(d_weight) ** 2
+                    + _l2_norm(d_bias) ** 2
+                    + _l2_norm(d_latent) ** 2
+                ),
+                12,
+            ),
+            "proof_in_gradient_path": False,
+        }
+
+    def step(
+        self,
+        structured_ir: Any,
+        *,
+        family: str = "",
+        source_text: str = "",
+        target_family: str = "",
+        learning_rate: float = 0.05,
+    ) -> dict[str, Any]:
+        forward_result = self.forward(
+            structured_ir,
+            family=family,
+            source_text=source_text,
+            target_family=target_family,
+        )
+        gradients = self.backward(forward_result)
+        family_name = str(forward_result["conditioning"]["family"] or family)
+        family_weight, family_bias = self._select_family_head(family_name)
+        updated_weight = _matrix_add(
+            family_weight,
+            _matrix_scale(gradients["d_family_weight"], -float(learning_rate)),
+        )
+        updated_bias = _vec_add(
+            family_bias,
+            _vec_scale(gradients["d_family_bias"], -float(learning_rate)),
+        )
+        if self.config.arm == SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM:
+            head = self.parameters["typed_heads"][
+                self.families[self._family_index(family_name)]
+            ]
+            head["weight"] = updated_weight
+            head["bias"] = updated_bias
+        else:
+            self.parameters["family_weight"] = updated_weight
+            self.parameters["family_bias"] = updated_bias
+        updated = self.forward(
+            structured_ir,
+            family=family,
+            source_text=source_text,
+            target_family=target_family,
+        )
+        return {
+            "after": updated,
+            "before": forward_result,
+            "gradients": gradients,
+            "loss_delta": round(float(updated["loss"]) - float(forward_result["loss"]), 12),
+        }
+
+    def parameter_count(self) -> int:
+        count = 0
+        count += self.vocab_size * self.dim
+        count += self.dim
+        count += len(self.families) * self.dim + len(self.families)
+        count += len(self.views) * self.dim + len(self.views)
+        count += self.vocab_size * self.dim + self.vocab_size
+        count += self.dim + 1
+        if self.config.arm == SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM:
+            count += len(self.families) * (
+                len(self.families) * self.dim + len(self.families) + self.dim + 1
+            )
+        return int(count)
+
+    def parameter_resource_estimate(self) -> dict[str, Any]:
+        parameter_count = self.parameter_count()
+        return {
+            "arm": self.config.arm,
+            "bytes_fp32": int(parameter_count * 4),
+            "device": "cpu",
+            "estimated_forward_flops": int(
+                self.config.max_seq_len * self.dim
+                + self.dim * (len(self.families) + len(self.views) + self.vocab_size)
+            ),
+            "gpu_required": False,
+            "hidden_dim": self.config.hidden_dim,
+            "latent_dim": self.config.latent_dim,
+            "max_seq_len": self.config.max_seq_len,
+            "parameter_count": parameter_count,
+            "tokenizer_vocabulary_size": self.vocab_size,
+        }
+
+    def architecture_manifest(self) -> dict[str, Any]:
+        return {
+            "architecture_version": self.config.architecture_version,
+            "arm": self.config.arm,
+            "compatible_with_advisor": True,
+            "config": self.config.to_dict(),
+            "heads": list(COMPATIBLE_ARCHITECTURE_OUTPUT_HEADS),
+            "legacy_promoted": False,
+            "output_heads": {
+                "conditioning": ["family", "view", "source_span_hash"],
+                "family": list(self.families),
+                "uncertainty": ["aleatoric", "epistemic"],
+                "view": list(self.views),
+            },
+            "parameter_resource_estimate": self.parameter_resource_estimate(),
+            "schema_version": COMPATIBLE_ARCHITECTURE_SCHEMA_VERSION,
+            "tokenizer_schema_version": LEGAL_IR_FROZEN_TOKENIZER_SCHEMA_VERSION,
+            "tokenizer_vocabulary_cid": self.tokenizer.vocabulary_cid,
+            "tokenizer_vocabulary_sha256": self.tokenizer.vocabulary_sha256,
+            "winner": False,
+        }
+
+    def initialization_checkpoint(self) -> dict[str, Any]:
+        return {
+            "architecture_manifest": self.architecture_manifest(),
+            "architecture_version": self.config.architecture_version,
+            "arm": self.config.arm,
+            "legacy_promoted": False,
+            "parameters": self.parameters_to_dict(),
+            "schema": COMPATIBLE_ARCHITECTURE_INIT_CHECKPOINT_SCHEMA,
+            "schema_version": COMPATIBLE_ARCHITECTURE_SCHEMA_VERSION,
+            "seed": self.config.seed,
+            "tokenizer_vocabulary_cid": self.tokenizer.vocabulary_cid,
+            "winner": False,
+        }
+
+    def parameters_to_dict(self) -> dict[str, Any]:
+        typed_heads = {
+            family: {
+                "bias": _copy_vector(payload["bias"]),
+                "uncertainty_bias": float(payload["uncertainty_bias"]),
+                "uncertainty_weight": _copy_vector(payload["uncertainty_weight"]),
+                "weight": _copy_matrix(payload["weight"]),
+            }
+            for family, payload in self.parameters["typed_heads"].items()
+        }
+        return {
+            "embedding": _copy_matrix(self.parameters["embedding"]),
+            "encoder_bias": _copy_vector(self.parameters["encoder_bias"]),
+            "family_bias": _copy_vector(self.parameters["family_bias"]),
+            "family_weight": _copy_matrix(self.parameters["family_weight"]),
+            "reconstruction_bias": _copy_vector(self.parameters["reconstruction_bias"]),
+            "reconstruction_weight": _copy_matrix(self.parameters["reconstruction_weight"]),
+            "typed_heads": typed_heads,
+            "uncertainty_bias": float(self.parameters["uncertainty_bias"]),
+            "uncertainty_weight": _copy_vector(self.parameters["uncertainty_weight"]),
+            "view_bias": _copy_vector(self.parameters["view_bias"]),
+            "view_weight": _copy_matrix(self.parameters["view_weight"]),
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "config": self.config.to_dict(),
+            "parameters": self.parameters_to_dict(),
+            "schema_version": COMPATIBLE_ARCHITECTURE_SCHEMA_VERSION,
+            "tokenizer": self.tokenizer.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "CompatibleLearnedArchitecture":
+        config_payload = dict(payload.get("config") or {})
+        default_views = CompatibleArchitectureConfig().views
+        config = CompatibleArchitectureConfig(
+            arm=str(config_payload.get("arm") or SHARED_LATENT_ARCHITECTURE_ARM),
+            latent_dim=int(
+                config_payload.get("latent_dim")
+                or COMPATIBLE_ARCHITECTURE_DEFAULT_LATENT_DIM
+            ),
+            hidden_dim=int(
+                config_payload.get("hidden_dim")
+                or COMPATIBLE_ARCHITECTURE_DEFAULT_HIDDEN_DIM
+            ),
+            max_seq_len=int(
+                config_payload.get("max_seq_len")
+                or COMPATIBLE_ARCHITECTURE_DEFAULT_MAX_SEQ_LEN
+            ),
+            seed=int(config_payload.get("seed") or 0),
+            families=tuple(config_payload.get("families") or LEGAL_IR_GRAMMAR_FAMILIES),
+            views=tuple(config_payload.get("views") or default_views),
+        )
+        tokenizer_payload = payload.get("tokenizer")
+        tokenizer = (
+            LegalIRFrozenTokenizer.from_dict(tokenizer_payload)
+            if isinstance(tokenizer_payload, Mapping)
+            else LegalIRFrozenTokenizer.canonical()
+        )
+        return cls(
+            config=config,
+            tokenizer=tokenizer,
+            parameters=payload.get("parameters"),
+        )
+
+
+def build_compatible_learned_architecture(
+    arm: str = SHARED_LATENT_ARCHITECTURE_ARM,
+    *,
+    tokenizer: Optional[LegalIRFrozenTokenizer] = None,
+    seed: int = 0,
+    latent_dim: int = COMPATIBLE_ARCHITECTURE_DEFAULT_LATENT_DIM,
+    hidden_dim: int = COMPATIBLE_ARCHITECTURE_DEFAULT_HIDDEN_DIM,
+    max_seq_len: int = COMPATIBLE_ARCHITECTURE_DEFAULT_MAX_SEQ_LEN,
+) -> CompatibleLearnedArchitecture:
+    return CompatibleLearnedArchitecture(
+        config=CompatibleArchitectureConfig(
+            arm=arm,
+            latent_dim=latent_dim,
+            hidden_dim=hidden_dim,
+            max_seq_len=max_seq_len,
+            seed=seed,
+        ),
+        tokenizer=tokenizer or LegalIRFrozenTokenizer.canonical(),
+    )
+
+
+def compatible_architecture_suite(
+    *,
+    seed: int = 0,
+    tokenizer: Optional[LegalIRFrozenTokenizer] = None,
+) -> dict[str, Any]:
+    """Expose both runnable arms without choosing a winner or writing files."""
+
+    frozen = tokenizer or LegalIRFrozenTokenizer.canonical()
+    arms = {
+        name: build_compatible_learned_architecture(name, tokenizer=frozen, seed=seed)
+        for name in COMPATIBLE_ARCHITECTURE_ARMS
+    }
+    return {
+        "arms": {
+            name: architecture.architecture_manifest() for name, architecture in arms.items()
+        },
+        "instances": arms,
+        "legacy_promoted": False,
+        "legacy_warm_start": evaluate_legacy_warm_start(
+            compatibility_passed=False,
+            quarantine_passed=False,
+        ),
+        "schema_version": COMPATIBLE_ARCHITECTURE_SCHEMA_VERSION,
+        "tokenizer_vocabulary_cid": frozen.vocabulary_cid,
+        "winner": False,
+    }
+
+
 __all__ = [
+    "COMPATIBLE_ARCHITECTURE_ARMS",
+    "COMPATIBLE_ARCHITECTURE_INIT_CHECKPOINT_SCHEMA",
+    "COMPATIBLE_ARCHITECTURE_SCHEMA_VERSION",
+    "COMPATIBLE_LEGACY_ARCHITECTURE_VERSIONS",
+    "CompatibleArchitectureConfig",
+    "CompatibleLearnedArchitecture",
     "ConstrainedLegalIRDecode",
+    "FrozenVocabularyMutationError",
+    "IncompatibleLegacyWarmStartError",
+    "LEGAL_IR_CLOSED_TOKEN_CLASSES",
+    "LEGAL_IR_FROZEN_TOKENIZER_INTERFACE",
+    "LEGAL_IR_FROZEN_TOKENIZER_SCHEMA_VERSION",
+    "LEGAL_IR_FROZEN_VOCABULARY_SCHEMA",
     "LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION",
     "LEGAL_IR_GRAMMAR_FAMILIES",
+    "LEGAL_IR_IDENTIFIER_BUCKET_COUNT",
+    "LEGAL_IR_TOKEN_CLASSES",
+    "LegalIRFrozenTokenizer",
     "LegalIRGrammarDecoder",
     "LegalIRGrammarRejection",
     "LegalIRGrammarValidation",
     "LegalIRProductionSpec",
+    "LegalIRToken",
+    "LegalIRTokenization",
+    "LegalIRVocabEntry",
+    "MODEL_LEGACY_1_IDENTITY",
+    "SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM",
+    "SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_VERSION",
+    "SHARED_LATENT_ARCHITECTURE_ARM",
+    "SHARED_LATENT_ARCHITECTURE_VERSION",
+    "UnknownFrozenTokenError",
+    "build_compatible_learned_architecture",
+    "canonical_legal_ir_frozen_tokenizer",
     "canonical_legal_ir_grammar_family",
+    "compatible_architecture_suite",
     "constrained_legal_ir_decode",
+    "default_legal_ir_frozen_vocabulary",
     "default_legal_ir_production_specs",
+    "evaluate_legacy_warm_start",
     "grammar_metrics_from_validation",
     "grammar_rejection_reason_names",
     "infer_legal_ir_grammar_family",
+    "require_legacy_warm_start",
     "validate_legal_ir_candidate",
 ]
