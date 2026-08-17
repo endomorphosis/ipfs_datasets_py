@@ -18,6 +18,11 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Final
 
+from .legal_ir_canonical_adapter import (
+    compile_legal_ir_canonical,
+    compile_through_canonical_authority,
+    compiler_request_from_legal_ir_source,
+)
 from .legal_ir_diagnostics import (
     LegalIRDiagnostic,
     LegalIRDiagnosticCode,
@@ -201,6 +206,27 @@ class LegalIRCompilerAPI:
         temporal: Mapping[str, Any] | Sequence[Any] | None = None,
     ) -> LegalIRCompilerResult:
         initial = _initial_state(source)
+        canonical_result, authority = compile_through_canonical_authority(source)
+        initial["canonical_authority"] = authority
+        if canonical_result is not None:
+            initial["canonical_compile"] = {
+                "canonical_ir": (
+                    None
+                    if canonical_result.canonical_ir is None
+                    else canonical_result.canonical_ir.to_dict()
+                ),
+                "canonical_ir_cid": (
+                    None
+                    if canonical_result.canonical_ir is None
+                    else canonical_result.canonical_ir.ir_cid
+                ),
+                "pipeline_trace_cid": canonical_result.provenance.get("pipeline_trace_cid"),
+                "result_cid": canonical_result.result_cid,
+                "status": canonical_result.status.value,
+                "unsupported_semantics": [
+                    item.to_dict() for item in canonical_result.unsupported_semantics
+                ],
+            }
         resolved_passes = tuple(passes or default_legal_ir_api_passes())
         resolved_functions = {**_default_pass_functions(), **dict(pass_functions or {})}
         if passes is not None and pass_functions is None:
@@ -242,6 +268,7 @@ class LegalIRCompilerAPI:
             )
 
         payload = {
+            "canonical_authority": authority,
             "compile": compile_result.to_dict(),
             "compiled": _json_ready(compile_result.output_state),
             "deterministic_output_order": list(compile_result.deterministic_output_order),
@@ -250,6 +277,8 @@ class LegalIRCompilerAPI:
             "proof_aware": bool(self.options.proof_aware),
             "schema_version": LEGAL_IR_COMPILER_ARTIFACT_SCHEMA_VERSION,
         }
+        if canonical_result is not None:
+            payload["canonical_compile"] = initial["canonical_compile"]
         source_map = _source_map_from_payload(compile_result.output_state)
         diagnostics = _compile_diagnostic_report(compile_result, source_map=source_map)
         return _result(
@@ -1014,6 +1043,13 @@ def _options(value: LegalIRCompilerOptions | Mapping[str, Any] | None) -> LegalI
 
 
 def _initial_state(source: str | Mapping[str, Any]) -> dict[str, Any]:
+    if hasattr(source, "source_text") and hasattr(source, "atom_vocabulary"):
+        return {
+            "allow_explicit_partial": bool(getattr(source, "allow_explicit_partial", False)),
+            "atom_vocabulary": _mapping(getattr(source, "atom_vocabulary")),
+            "raw_document": str(getattr(source, "source_text")),
+            "request_id": str(getattr(source, "request_id", "") or "legal-ir-api"),
+        }
     if isinstance(source, str):
         stripped = source.strip()
         if stripped.startswith("{") or stripped.startswith("["):
@@ -1209,6 +1245,8 @@ __all__ = [
     "LegalIRCompilerResult",
     "benchmark_legal_ir",
     "compile_legal_ir",
+    "compile_legal_ir_canonical",
+    "compiler_request_from_legal_ir_source",
     "decompile_legal_ir",
     "default_legal_ir_api_passes",
     "diff_legal_ir",
