@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -16,8 +17,10 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decode
     SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM,
     SHARED_LATENT_ARCHITECTURE_ARM,
     build_compatible_learned_architecture,
+    compatible_architecture_manifests,
     compatible_architecture_suite,
     evaluate_legacy_warm_start,
+    extend_existing_advisor_architectures,
     require_legacy_warm_start,
 )
 
@@ -144,6 +147,8 @@ def test_both_compatible_arms_exist_without_choosing_a_winner() -> None:
     assert suite["winner"] is False
     assert suite["legacy_promoted"] is False
     assert set(suite["arms"]) == set(COMPATIBLE_ARCHITECTURE_ARMS)
+    assert set(suite["initialization_roots"]) == set(COMPATIBLE_ARCHITECTURE_ARMS)
+    assert suite["initialization_roots"][SHARED_LATENT_ARCHITECTURE_ARM]["winner"] is False
     assert shared["arm"] == SHARED_LATENT_ARCHITECTURE_ARM
     assert typed["arm"] == SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM
     assert shared["heads"]["family"]["shared"] is True
@@ -171,6 +176,23 @@ def test_legacy_warm_start_requires_compatibility_and_quarantine() -> None:
     assert admitted["allowed"] is True
     assert admitted["promoted"] is False
     assert admitted["authority"] is False
+
+
+def test_existing_advisor_extends_into_both_arms_without_promotion() -> None:
+    advisor = SimpleNamespace(
+        state=SimpleNamespace(architecture_version="proof_aware_auxiliary_heads_v2")
+    )
+    extended = extend_existing_advisor_architectures(advisor, seed=4)
+    manifests = compatible_architecture_manifests(seed=4)
+
+    assert extended["advisor_extended"] is True
+    assert extended["advisor_mutated"] is False
+    assert extended["compatible_with_advisor"] is True
+    assert extended["winner"] is False
+    assert extended["legacy_promoted"] is False
+    assert set(extended["initialization_roots"]) == set(COMPATIBLE_ARCHITECTURE_ARMS)
+    assert manifests["tokenizer_vocabulary_cid"] == extended["tokenizer_vocabulary_cid"]
+    assert manifests["winner"] is False
 
 
 def test_import_and_construction_are_side_effect_free(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

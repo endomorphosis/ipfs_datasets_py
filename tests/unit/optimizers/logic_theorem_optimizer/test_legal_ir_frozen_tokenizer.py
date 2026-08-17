@@ -8,6 +8,8 @@ import json
 import pytest
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder import (
+    LEGAL_IR_CANONICAL_VOCABULARY_CID,
+    LEGAL_IR_CANONICAL_VOCABULARY_SIZE,
     LEGAL_IR_TOKEN_CLASSES,
     FrozenVocabularyMutationError,
     LegalIRFrozenTokenizer,
@@ -56,6 +58,8 @@ def test_canonical_vocabulary_cid_matches_manifest_digest() -> None:
     assert tokenizer.vocabulary_cid == (
         "sha256:8782ea363f422557c7a1f62442fe376fb6586f90a679bebb4ba60824de425c1b"
     )
+    assert tokenizer.vocabulary_cid == LEGAL_IR_CANONICAL_VOCABULARY_CID
+    assert tokenizer.vocabulary_size == LEGAL_IR_CANONICAL_VOCABULARY_SIZE
     assert tokenizer.vocabulary_size == 143
 
 

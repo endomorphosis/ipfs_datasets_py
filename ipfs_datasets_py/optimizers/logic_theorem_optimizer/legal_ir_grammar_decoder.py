@@ -28,6 +28,10 @@ LEGAL_IR_FROZEN_TOKENIZER_INTERFACE: Final = (
     "proof-grounded-ir-learning/canonical-frozen-tokenizer/v1"
 )
 LEGAL_IR_IDENTIFIER_BUCKET_COUNT: Final = 32
+LEGAL_IR_CANONICAL_VOCABULARY_SIZE: Final = 143
+LEGAL_IR_CANONICAL_VOCABULARY_CID: Final = (
+    "sha256:8782ea363f422557c7a1f62442fe376fb6586f90a679bebb4ba60824de425c1b"
+)
 LEGAL_IR_TOKEN_CLASSES: Final[tuple[str, ...]] = (
     "padding",
     "special",
@@ -439,6 +443,18 @@ class LegalIRGrammarDecoder:
             family=validation.family,
             source_text=source_text,
             accepted=validation.accepted,
+        )
+
+    def compatible_learned_architectures(
+        self,
+        *,
+        seed: int = 0,
+    ) -> dict[str, Any]:
+        """Build both experiment arms on this decoder's frozen tokenizer."""
+
+        return compatible_architecture_suite(
+            seed=seed,
+            tokenizer=self.frozen_tokenizer(),
         )
 
 
@@ -1352,6 +1368,7 @@ class LegalIRFrozenTokenizer:
         entries: Optional[Sequence[LegalIRVocabEntry]] = None,
         frozen: bool = True,
     ) -> None:
+        using_canonical_default = entries is None
         resolved = tuple(entries or default_legal_ir_frozen_vocabulary())
         self._entries = resolved
         self._piece_to_entry = {entry.piece: entry for entry in resolved}
@@ -1364,6 +1381,15 @@ class LegalIRFrozenTokenizer:
         vocabulary_payload = self.vocabulary_manifest()
         self._vocabulary_sha256 = _content_sha256(vocabulary_payload)
         self._vocabulary_cid = _content_cid(vocabulary_payload)
+        if using_canonical_default:
+            if self._vocabulary_cid != LEGAL_IR_CANONICAL_VOCABULARY_CID:
+                raise ValueError(
+                    "canonical frozen vocabulary CID drifted from the sealed digest"
+                )
+            if len(resolved) != LEGAL_IR_CANONICAL_VOCABULARY_SIZE:
+                raise ValueError(
+                    "canonical frozen vocabulary size drifted from the sealed size"
+                )
 
     @classmethod
     def canonical(cls) -> "LegalIRFrozenTokenizer":
@@ -2736,13 +2762,90 @@ def compatible_architecture_suite(
         "arms": {
             name: architecture.architecture_manifest() for name, architecture in arms.items()
         },
+        "initialization_roots": {
+            name: architecture.initialization_checkpoint()
+            for name, architecture in arms.items()
+        },
         "instances": arms,
         "legacy_promoted": False,
         "legacy_warm_start": evaluate_legacy_warm_start(
             compatibility_passed=False,
             quarantine_passed=False,
         ),
+        "parameter_resource_estimates": {
+            name: architecture.parameter_resource_estimate()
+            for name, architecture in arms.items()
+        },
         "schema_version": COMPATIBLE_ARCHITECTURE_SCHEMA_VERSION,
+        "tokenizer_vocabulary_cid": frozen.vocabulary_cid,
+        "winner": False,
+    }
+
+
+def compatible_architecture_manifests(
+    *,
+    seed: int = 0,
+    tokenizer: Optional[LegalIRFrozenTokenizer] = None,
+) -> dict[str, Any]:
+    """Return serializable manifests, init roots, and resource estimates."""
+
+    suite = compatible_architecture_suite(seed=seed, tokenizer=tokenizer)
+    return {
+        "arms": suite["arms"],
+        "initialization_roots": suite["initialization_roots"],
+        "legacy_promoted": False,
+        "parameter_resource_estimates": suite["parameter_resource_estimates"],
+        "schema_version": suite["schema_version"],
+        "tokenizer_vocabulary_cid": suite["tokenizer_vocabulary_cid"],
+        "winner": False,
+    }
+
+
+def advisor_architecture_version(autoencoder: Any) -> str:
+    """Read the existing advisor architecture version without mutating it."""
+
+    if autoencoder is None:
+        return ""
+    state = getattr(autoencoder, "state", None)
+    version = getattr(state, "architecture_version", "") or getattr(
+        autoencoder, "architecture_version", ""
+    )
+    return str(version or "").strip()
+
+
+def extend_existing_advisor_architectures(
+    autoencoder: Any = None,
+    *,
+    seed: int = 0,
+    tokenizer: Optional[LegalIRFrozenTokenizer] = None,
+) -> dict[str, Any]:
+    """Extend the existing modal-autoencoder advisor into both experiment arms.
+
+    The advisor is not mutated, MODEL-LEGACY-1 is not promoted, and neither
+    arm is recorded as a winner.
+    """
+
+    frozen = tokenizer or LegalIRFrozenTokenizer.canonical()
+    suite = compatible_architecture_suite(seed=seed, tokenizer=frozen)
+    advisor_version = advisor_architecture_version(autoencoder)
+    compatible_with_advisor = (not advisor_version) or (
+        advisor_version in COMPATIBLE_LEGACY_ARCHITECTURE_VERSIONS
+    )
+    return {
+        "advisor_architecture_version": advisor_version or None,
+        "advisor_extended": autoencoder is not None,
+        "advisor_mutated": False,
+        "arms": suite["arms"],
+        "compatible_with_advisor": compatible_with_advisor,
+        "initialization_roots": suite["initialization_roots"],
+        "instances": suite["instances"],
+        "legacy_promoted": False,
+        "legacy_warm_start": evaluate_legacy_warm_start(
+            compatibility_passed=False,
+            quarantine_passed=False,
+        ),
+        "parameter_resource_estimates": suite["parameter_resource_estimates"],
+        "schema_version": suite["schema_version"],
         "tokenizer_vocabulary_cid": frozen.vocabulary_cid,
         "winner": False,
     }
@@ -2758,6 +2861,8 @@ __all__ = [
     "ConstrainedLegalIRDecode",
     "FrozenVocabularyMutationError",
     "IncompatibleLegacyWarmStartError",
+    "LEGAL_IR_CANONICAL_VOCABULARY_CID",
+    "LEGAL_IR_CANONICAL_VOCABULARY_SIZE",
     "LEGAL_IR_CLOSED_TOKEN_CLASSES",
     "LEGAL_IR_FROZEN_TOKENIZER_INTERFACE",
     "LEGAL_IR_FROZEN_TOKENIZER_SCHEMA_VERSION",
@@ -2780,10 +2885,13 @@ __all__ = [
     "SHARED_LATENT_ARCHITECTURE_ARM",
     "SHARED_LATENT_ARCHITECTURE_VERSION",
     "UnknownFrozenTokenError",
+    "advisor_architecture_version",
     "build_compatible_learned_architecture",
     "canonical_legal_ir_frozen_tokenizer",
     "canonical_legal_ir_grammar_family",
+    "compatible_architecture_manifests",
     "compatible_architecture_suite",
+    "extend_existing_advisor_architectures",
     "constrained_legal_ir_decode",
     "default_legal_ir_frozen_vocabulary",
     "default_legal_ir_production_specs",

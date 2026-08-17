@@ -13400,3 +13400,137 @@ def test_frame_and_symbolic_penalties_for_valid_sample() -> None:
 
     assert frame_ranking_loss(sample) == pytest.approx(0.0)
     assert symbolic_validity_penalty(sample) == pytest.approx(0.0)
+
+
+def _pgir030_deontic_ir() -> dict:
+    return {
+        "family": "deontic",
+        "rules": [
+            {
+                "modality": "obligation",
+                "subject": "agency",
+                "action": "provide_notice",
+            }
+        ],
+    }
+
+
+def test_pgir030_frozen_tokenizer_is_canonical_and_source_separated() -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder import (
+        LEGAL_IR_CANONICAL_VOCABULARY_CID,
+        LEGAL_IR_CANONICAL_VOCABULARY_SIZE,
+        LEGAL_IR_TOKEN_CLASSES,
+        FrozenVocabularyMutationError,
+        LegalIRFrozenTokenizer,
+        LegalIRGrammarDecoder,
+        UnknownFrozenTokenError,
+    )
+
+    tokenizer = LegalIRFrozenTokenizer.canonical()
+    source = "The agency shall provide notice before the hearing and preserve the record."
+    surface = tokenizer.encode_source_surface(source)
+    canonical = tokenizer.encode_canonical(_pgir030_deontic_ir(), source_text=source)
+    decoder = LegalIRGrammarDecoder(tokenizer=tokenizer)
+    encoding = decoder.encode_structured_output(_pgir030_deontic_ir(), family="deontic")
+
+    assert tokenizer.frozen is True
+    assert tokenizer.vocabulary_cid == LEGAL_IR_CANONICAL_VOCABULARY_CID
+    assert tokenizer.vocabulary_size == LEGAL_IR_CANONICAL_VOCABULARY_SIZE
+    assert tuple(tokenizer.to_dict()["token_classes"]) == LEGAL_IR_TOKEN_CLASSES
+    assert source not in tokenizer.decode_ids(surface.token_ids)
+    assert source not in tokenizer.decode_ids(canonical.token_ids)
+    assert surface.source_surface_separated is True
+    assert canonical.source_surface_token_count == 0
+    assert encoding.accepted is True
+    assert encoding.token_class_histogram()["operator"] >= 1
+    with pytest.raises(UnknownFrozenTokenError):
+        tokenizer.encode_canonical(
+            {
+                "family": "tdfol",
+                "formulas": [{"quantifier": "most", "predicate": "Holds", "arguments": ["x"]}],
+            }
+        )
+    with pytest.raises(FrozenVocabularyMutationError):
+        tokenizer.add_token("brand_new_family", "family")
+
+
+@pytest.mark.parametrize("arm", ("shared_latent", "shared_encoder_typed_head"))
+def test_pgir030_compatible_architecture_arms_have_shapes_and_gradients(arm: str) -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder import (
+        COMPATIBLE_ARCHITECTURE_INIT_CHECKPOINT_SCHEMA,
+        CompatibleLearnedArchitecture,
+        build_compatible_learned_architecture,
+    )
+
+    architecture = build_compatible_learned_architecture(arm, seed=7)
+    payload = architecture.forward(
+        _pgir030_deontic_ir(),
+        family="deontic",
+        source_text="The agency shall provide notice.",
+        target_family="deontic",
+        proof_label="unchecked",
+    )
+    gradients = architecture.backward(payload)
+    restored = CompatibleLearnedArchitecture.from_dict(architecture.to_dict())
+    restored_forward = restored.forward(
+        _pgir030_deontic_ir(),
+        family="deontic",
+        source_text="The agency shall provide notice.",
+        target_family="deontic",
+        proof_label="unchecked",
+    )
+    checkpoint = architecture.initialization_checkpoint()
+    estimate = architecture.parameter_resource_estimate()
+
+    assert payload["arm"] == arm
+    assert payload["winner"] is False
+    assert payload["latent_normalized"] is True
+    assert payload["shapes"]["latent"] == [architecture.dim]
+    assert payload["shapes"]["token_ids"] == [architecture.config.max_seq_len]
+    assert set(payload["heads"]) == {"family", "view", "reconstruction", "uncertainty"}
+    assert payload["conditioning"]["proof_label_differentiable"] is False
+    assert payload["conditioning"]["source_surface_separated"] is True
+    assert pytest.approx(math.sqrt(sum(value * value for value in payload["latent"]))) == 1.0
+    assert gradients["gradient_norm"] > 0.0
+    assert gradients["proof_in_gradient_path"] is False
+    assert restored_forward["latent"] == payload["latent"]
+    assert restored_forward["family_logits"] == payload["family_logits"]
+    assert checkpoint["schema"] == COMPATIBLE_ARCHITECTURE_INIT_CHECKPOINT_SCHEMA
+    assert checkpoint["legacy_promoted"] is False
+    assert estimate["gpu_required"] is False
+    assert estimate["parameter_count"] == architecture.parameter_count()
+
+
+def test_pgir030_advisor_extends_into_both_arms_without_choosing_a_winner() -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder import (
+        COMPATIBLE_ARCHITECTURE_ARMS,
+        LEGAL_IR_CANONICAL_VOCABULARY_CID,
+        SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM,
+        SHARED_LATENT_ARCHITECTURE_ARM,
+        extend_existing_advisor_architectures,
+    )
+
+    autoencoder = AdaptiveModalAutoencoder()
+    extended = extend_existing_advisor_architectures(autoencoder, seed=1)
+    shared = extended["instances"][SHARED_LATENT_ARCHITECTURE_ARM].forward(
+        _pgir030_deontic_ir(),
+        family="deontic",
+        target_family="deontic",
+    )
+    typed = extended["instances"][SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_ARM].forward(
+        _pgir030_deontic_ir(),
+        family="deontic",
+        target_family="deontic",
+    )
+
+    assert autoencoder.state.architecture_version == MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+    assert extended["advisor_architecture_version"] == MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+    assert extended["advisor_mutated"] is False
+    assert extended["compatible_with_advisor"] is True
+    assert extended["winner"] is False
+    assert extended["legacy_promoted"] is False
+    assert set(extended["arms"]) == set(COMPATIBLE_ARCHITECTURE_ARMS)
+    assert shared["heads"]["family"]["shared"] is True
+    assert typed["heads"]["family"]["shared"] is False
+    assert extended["tokenizer_vocabulary_cid"] == LEGAL_IR_CANONICAL_VOCABULARY_CID
+    assert autoencoder.state.architecture_version == MODAL_AUTOENCODER_ARCHITECTURE_VERSION
