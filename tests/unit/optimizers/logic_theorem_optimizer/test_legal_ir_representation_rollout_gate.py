@@ -3,8 +3,16 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import sys
+from pathlib import Path
 
 import pytest
+
+_DATASETS_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(_DATASETS_ROOT))
+for _name in list(sys.modules):
+    if _name == "scripts" or _name.startswith("scripts."):
+        sys.modules.pop(_name, None)
 
 from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import (
     LEGAL_IR_REPRESENTATION_METRICS,

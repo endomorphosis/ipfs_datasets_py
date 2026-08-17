@@ -10,6 +10,12 @@ from typing import Any
 
 import pytest
 
+_DATASETS_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(_DATASETS_ROOT))
+for _name in list(sys.modules):
+    if _name == "scripts" or _name.startswith("scripts."):
+        sys.modules.pop(_name, None)
+
 from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import (
     EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION,
     MULTI_SEED_PROMOTION_METRICS,
@@ -273,7 +279,8 @@ def test_external_validity_cli_writes_decision_and_report(tmp_path: Path) -> Non
     completed = subprocess.run(
         [
             sys.executable,
-            str(ROOT / "scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py"),
+            "-m",
+            "scripts.ops.legal_ir.hammer_leanstral_rollout_gate",
             "external-validity-gate",
             "--evidence-path",
             str(evidence_path),

@@ -537,7 +537,10 @@ def test_introspection_export_floor_preserves_scope_filters() -> None:
 
 
 def test_canonical_restart_requests_real_leanstral_snapshot_floor() -> None:
-    script = Path("scripts/ops/logic/restart_canonical_weights_loop.sh").read_text(encoding="utf-8")
+    script = (
+        Path(__file__).resolve().parents[4]
+        / "scripts/ops/logic/restart_canonical_weights_loop.sh"
+    ).read_text(encoding="utf-8")
 
     assert '--validation-count "${VALIDATION_COUNT:-25}"' in script
     assert '--validation-canary-count "${VALIDATION_CANARY_COUNT:-25}"' in script

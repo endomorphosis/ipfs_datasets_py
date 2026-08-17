@@ -1,9 +1,17 @@
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
+
+_DATASETS_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(_DATASETS_ROOT))
+for _name in list(sys.modules):
+    if _name == "scripts" or _name.startswith("scripts."):
+        sys.modules.pop(_name, None)
 
 from scripts.ops.legal_ir.tune_hammer_leanstral_parallelism import (
     generate_candidate_profiles,

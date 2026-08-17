@@ -801,6 +801,304 @@ class LegalIRFamilyEvaluator:
 FamilyShardedEvaluator = LegalIRFamilyEvaluator
 LegalIRFamilyEvaluationCoordinator = LegalIRFamilyEvaluator
 
+LATENT_STRATA_AXES: Final[tuple[str, ...]] = (
+    "family",
+    "domain",
+    "length",
+    "jurisdiction",
+    "duplicate",
+)
+LATENT_STRATA_FIELDS: Final[Mapping[str, str]] = {
+    "duplicate": "duplicate_group",
+    "domain": "domain",
+    "family": "family",
+    "jurisdiction": "jurisdiction",
+    "length": "length",
+    "ood": "ood",
+}
+LATENT_STRATA_SCHEMA_VERSION: Final = "legal-ir-latent-strata-v1"
+
+
+@dataclass(frozen=True, slots=True)
+class LatentStratumResult:
+    """Family/domain/length/jurisdiction/duplicate clustering for one axis."""
+
+    axis: str
+    group_counts: Mapping[str, int]
+    intra_cosine: Optional[float]
+    inter_cosine: Optional[float]
+    separation: Optional[float]
+    balance_ratio: Optional[float]
+    unspecified_count: int
+    ood_count: int
+    in_distribution_count: int
+    unknown_denominators: tuple[str, ...] = ()
+
+    @property
+    def family_balanced(self) -> bool:
+        return self.balance_ratio is not None and self.balance_ratio >= 0.25
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "axis": self.axis,
+            "balance_ratio": None
+            if self.balance_ratio is None
+            else round(self.balance_ratio, 12),
+            "family_balanced": self.family_balanced if self.axis == "family" else None,
+            "group_counts": {str(key): int(value) for key, value in self.group_counts.items()},
+            "in_distribution_count": self.in_distribution_count,
+            "inter_cosine": None if self.inter_cosine is None else round(self.inter_cosine, 12),
+            "intra_cosine": None if self.intra_cosine is None else round(self.intra_cosine, 12),
+            "latent_similarity_is_not_equivalence": True,
+            "ood_count": self.ood_count,
+            "separation": None if self.separation is None else round(self.separation, 12),
+            "unspecified_count": self.unspecified_count,
+            "unknown_denominators": list(self.unknown_denominators),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LatentStrataReport:
+    """Family-balanced and OOD clustering strata over frozen representations."""
+
+    axes: Mapping[str, LatentStratumResult]
+    ood: LatentStratumResult
+    required_families: tuple[str, ...]
+    missing_families: tuple[str, ...]
+    schema_version: str = LATENT_STRATA_SCHEMA_VERSION
+
+    @property
+    def family_balanced(self) -> bool:
+        family = self.axes.get("family")
+        return bool(family is not None and family.family_balanced and not self.missing_families)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "axes": {name: result.to_dict() for name, result in self.axes.items()},
+            "family_balanced": self.family_balanced,
+            "latent_similarity_is_not_equivalence": True,
+            "missing_families": list(self.missing_families),
+            "ood": self.ood.to_dict(),
+            "required_families": list(self.required_families),
+            "schema_version": self.schema_version,
+        }
+
+
+def evaluate_latent_clustering_strata(
+    records: Sequence[Any],
+    *,
+    required_families: Sequence[str] = (),
+    min_balance_ratio: float = 0.25,
+) -> LatentStrataReport:
+    """Cluster representations by family/domain/length/jurisdiction/duplicate.
+
+    Cosine neighborhoods are diagnostic only.  They are never treated as
+    semantic equivalence.
+    """
+
+    parsed = [_latent_record(item) for item in records]
+    axes = {
+        axis: _stratum_for_axis(parsed, axis, min_balance_ratio=min_balance_ratio)
+        for axis in LATENT_STRATA_AXES
+    }
+    present: list[str] = []
+    for name in axes["family"].group_counts:
+        if name in {"unspecified", "unsupported"}:
+            continue
+        try:
+            present.append(canonical_legal_ir_evaluation_family(name))
+        except ValueError:
+            continue
+    if required_families:
+        required = tuple(
+            canonical_legal_ir_evaluation_family(family) for family in required_families
+        )
+    else:
+        required = tuple(dict.fromkeys(present))
+    missing = tuple(family for family in required if family not in set(present))
+    return LatentStrataReport(
+        axes=axes,
+        ood=_stratum_for_axis(parsed, "ood", min_balance_ratio=min_balance_ratio),
+        required_families=required,
+        missing_families=missing,
+    )
+
+
+def _latent_record(value: Any) -> dict[str, Any]:
+    if hasattr(value, "to_dict") and callable(value.to_dict):
+        raw = value.to_dict()
+        payload = dict(raw) if isinstance(raw, Mapping) else {}
+    elif isinstance(value, Mapping):
+        payload = dict(value)
+    else:
+        payload = {
+            name: getattr(value, name)
+            for name in (
+                "sample_id",
+                "vector",
+                "family",
+                "domain",
+                "jurisdiction",
+                "length_bin",
+                "length",
+                "duplicate_group",
+                "ood",
+                "latent_used",
+            )
+            if hasattr(value, name)
+        }
+    vector = tuple(float(item) for item in payload.get("vector", ()) or ())
+    family_raw = str(payload.get("family") or "").strip()
+    try:
+        family = canonical_legal_ir_evaluation_family(family_raw) if family_raw else "unspecified"
+    except ValueError:
+        family = "unsupported"
+    length_bin = str(payload.get("length_bin") or "").strip()
+    if not length_bin:
+        length_bin = _length_bin(payload.get("length"))
+    return {
+        "domain": str(payload.get("domain") or "").strip() or "unspecified",
+        "duplicate_group": str(payload.get("duplicate_group") or "").strip() or "unspecified",
+        "family": family,
+        "jurisdiction": str(payload.get("jurisdiction") or "").strip() or "unspecified",
+        "length": length_bin,
+        "ood": "ood" if bool(payload.get("ood", False)) else "in_distribution",
+        "ood_flag": bool(payload.get("ood", False)),
+        "sample_id": str(payload.get("sample_id") or ""),
+        "vector": vector,
+    }
+
+
+def _length_bin(value: Any) -> str:
+    if value is None or value == "":
+        return "unspecified"
+    try:
+        length = float(value)
+    except (TypeError, ValueError):
+        text = str(value).strip().lower()
+        return text or "unspecified"
+    if not math.isfinite(length):
+        return "unspecified"
+    if length < 40:
+        return "short"
+    if length < 120:
+        return "medium"
+    return "long"
+
+
+def _stratum_for_axis(
+    records: Sequence[Mapping[str, Any]],
+    axis: str,
+    *,
+    min_balance_ratio: float,
+) -> LatentStratumResult:
+    groups: dict[str, list[tuple[float, ...]]] = {}
+    unspecified = 0
+    ood_count = 0
+    in_count = 0
+    unknown: list[str] = []
+    field_name = LATENT_STRATA_FIELDS.get(axis, axis)
+    for record in records:
+        label = str(record.get(field_name) or "unspecified")
+        if label == "unspecified":
+            unspecified += 1
+        if record.get("ood_flag"):
+            ood_count += 1
+        else:
+            in_count += 1
+        vector = tuple(record.get("vector") or ())
+        if not vector:
+            unknown.append(f"{axis}:empty_vector")
+            continue
+        groups.setdefault(label, []).append(vector)
+    counts = {name: len(vectors) for name, vectors in sorted(groups.items())}
+    intra_values: list[float] = []
+    centroids: dict[str, tuple[float, ...]] = {}
+    for name, vectors in groups.items():
+        if name == "unspecified":
+            continue
+        pairwise = _pairwise_cosines(vectors)
+        if pairwise is None:
+            unknown.append(f"{axis}:{name}:intra_cosine")
+        else:
+            intra_values.extend(pairwise)
+        centroid = _mean_vector(vectors)
+        if centroid is None:
+            unknown.append(f"{axis}:{name}:centroid")
+        else:
+            centroids[name] = centroid
+    intra = _mean_optional(intra_values)
+    if intra is None:
+        unknown.append(f"{axis}:intra_cosine")
+    inter_values = _pairwise_cosines(list(centroids.values()))
+    inter = None if inter_values is None else _mean_optional(inter_values)
+    if inter is None and len(centroids) < 2:
+        unknown.append(f"{axis}:inter_cosine")
+    labeled_counts = [count for name, count in counts.items() if name != "unspecified"]
+    balance = None
+    if len(labeled_counts) >= 2 and max(labeled_counts) > 0:
+        balance = min(labeled_counts) / max(labeled_counts)
+        if balance < min_balance_ratio:
+            unknown.append(f"{axis}:imbalanced")
+    elif labeled_counts:
+        unknown.append(f"{axis}:single_group_balance")
+    else:
+        unknown.append(f"{axis}:no_labeled_groups")
+    separation = None
+    if intra is not None and inter is not None:
+        separation = intra - inter
+    return LatentStratumResult(
+        axis=axis,
+        group_counts=MappingProxyType(counts),
+        intra_cosine=intra,
+        inter_cosine=inter,
+        separation=separation,
+        balance_ratio=balance,
+        unspecified_count=unspecified,
+        ood_count=ood_count,
+        in_distribution_count=in_count,
+        unknown_denominators=tuple(dict.fromkeys(unknown)),
+    )
+
+
+def _mean_vector(vectors: Sequence[Sequence[float]]) -> Optional[tuple[float, ...]]:
+    if not vectors:
+        return None
+    width = len(vectors[0])
+    if width == 0 or any(len(vector) != width for vector in vectors):
+        return None
+    return tuple(sum(vector[index] for vector in vectors) / len(vectors) for index in range(width))
+
+
+def _pairwise_cosines(vectors: Sequence[Sequence[float]]) -> Optional[list[float]]:
+    if len(vectors) < 2:
+        return None
+    values: list[float] = []
+    for left_index, left in enumerate(vectors):
+        for right in vectors[left_index + 1 :]:
+            cosine = _cosine(left, right)
+            if cosine is not None:
+                values.append(cosine)
+    return values or None
+
+
+def _cosine(left: Sequence[float], right: Sequence[float]) -> Optional[float]:
+    if len(left) != len(right) or not left:
+        return None
+    numerator = sum(float(a) * float(b) for a, b in zip(left, right))
+    left_norm = math.sqrt(sum(float(value) * float(value) for value in left))
+    right_norm = math.sqrt(sum(float(value) * float(value) for value in right))
+    if left_norm == 0.0 or right_norm == 0.0:
+        return None
+    return max(-1.0, min(1.0, numerator / (left_norm * right_norm)))
+
+
+def _mean_optional(values: Sequence[float]) -> Optional[float]:
+    finite = [float(value) for value in values if math.isfinite(float(value))]
+    if not finite:
+        return None
+    return sum(finite) / len(finite)
+
 
 __all__ = [
     "FamilyEvaluationAggregate",
@@ -811,10 +1109,14 @@ __all__ = [
     "FamilyShardedEvaluator",
     "FamilySnapshotMismatchError",
     "IncompleteFamilyEvaluationError",
+    "LATENT_STRATA_AXES",
+    "LATENT_STRATA_SCHEMA_VERSION",
     "LEGAL_IR_EVALUATION_FAMILIES",
     "LEGAL_IR_FAMILY_SHARDS",
     "LEGAL_IR_FAMILY_EVALUATION_SCHEMA_VERSION",
     "LEGAL_IR_SEMANTIC_FAMILIES",
+    "LatentStrataReport",
+    "LatentStratumResult",
     "LegalIRFamilyEvaluation",
     "LegalIRFamilyEvaluationCoordinator",
     "LegalIRFamilyEvaluationResult",
@@ -826,4 +1128,5 @@ __all__ = [
     "SharedLegalIRArtifacts",
     "aggregate_family_results",
     "canonical_legal_ir_evaluation_family",
+    "evaluate_latent_clustering_strata",
 ]

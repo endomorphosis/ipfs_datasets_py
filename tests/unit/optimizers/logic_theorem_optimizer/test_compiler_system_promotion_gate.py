@@ -8,6 +8,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
+_DATASETS_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(_DATASETS_ROOT))
+for _name in list(sys.modules):
+    if _name == "scripts" or _name.startswith("scripts."):
+        sys.modules.pop(_name, None)
+
 from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import (
     COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION,
     COMPILER_SYSTEM_REQUIRED_CONFORMANCE_CAPABILITIES,
@@ -297,7 +303,8 @@ def test_compiler_system_gate_cli_writes_decision_and_report(tmp_path: Path) -> 
     completed = subprocess.run(
         [
             sys.executable,
-            str(ROOT / "scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py"),
+            "-m",
+            "scripts.ops.legal_ir.hammer_leanstral_rollout_gate",
             "compiler-system-promotion-gate",
             "--evidence-path",
             str(evidence_path),
