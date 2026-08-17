@@ -254,6 +254,14 @@ __all__ = [
     "grammar_rejection_reason_names",
     "infer_legal_ir_grammar_family",
     "validate_legal_ir_candidate",
+    "CANONICAL_IR_LOSS_CONFIGURATION_CID",
+    "IR_LOSS_CONFIGURATION_SCHEMA",
+    "IR_LOSS_COMPONENT_NAMES",
+    "IRLossConfiguration",
+    "IRCompositeLossResult",
+    "canonical_ir_loss_configuration",
+    "evaluate_ir_composite_loss",
+    "isolate_ir_loss_component",
     "LEGAL_IR_FUZZING_SCHEMA_VERSION",
     "LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION",
     "SEMANTICS_CHANGING",
@@ -1472,6 +1480,21 @@ def __getattr__(name):
         )
 
         return getattr(legal_ir_grammar_decoder, name)
+    elif name in (
+        "CANONICAL_IR_LOSS_CONFIGURATION_CID",
+        "IR_LOSS_CONFIGURATION_SCHEMA",
+        "IR_LOSS_COMPONENT_NAMES",
+        "IRLossConfiguration",
+        "IRCompositeLossResult",
+        "canonical_ir_loss_configuration",
+        "evaluate_ir_composite_loss",
+        "isolate_ir_loss_component",
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            legal_ir_loss_configuration,
+        )
+
+        return getattr(legal_ir_loss_configuration, name)
     elif name in (
         "FUZZING_TARGETS",
         "LEGAL_IR_FUZZING_SCHEMA_VERSION",
