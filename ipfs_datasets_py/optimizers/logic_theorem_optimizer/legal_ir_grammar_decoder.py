@@ -14,7 +14,7 @@ import hashlib
 import json
 import math
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Final, Optional
 
@@ -22,6 +22,24 @@ from .legal_ir_family_evaluator import canonical_legal_ir_evaluation_family
 
 
 LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION: Final = "legal-ir-typed-grammar-decoder-v1"
+LEGAL_IR_CONSTRAINED_DECODER_SCHEMA: Final = "IRConstrainedDecoder@1"
+LEGAL_IR_CONSTRAINED_DECODER_INTERFACE: Final = (
+    "proof-grounded-ir-learning/constrained-decoder/v1"
+)
+LEGAL_IR_MAX_BEAM_WIDTH: Final = 16
+LEGAL_IR_MAX_DECODE_STEPS: Final = 64
+LEGAL_IR_CONSTRAINT_MASK_NAMES: Final[tuple[str, ...]] = (
+    "valid_token",
+    "grammar",
+    "binder",
+    "type",
+    "family",
+)
+LEGAL_IR_DECODE_FALLBACKS: Final[tuple[str, ...]] = (
+    "reject",
+    "eos",
+    "gold_if_admitted",
+)
 LEGAL_IR_FROZEN_TOKENIZER_SCHEMA_VERSION: Final = "legal-ir-frozen-tokenizer-v1"
 LEGAL_IR_FROZEN_VOCABULARY_SCHEMA: Final = "IRFrozenTokenizerVocabulary@1"
 LEGAL_IR_FROZEN_TOKENIZER_INTERFACE: Final = (
@@ -457,6 +475,94 @@ class LegalIRGrammarDecoder:
             tokenizer=self.frozen_tokenizer(),
         )
 
+    def constraint_masks(
+        self,
+        prefix_ids: Sequence[int] = (),
+        *,
+        family: str = "",
+        proof_state: Optional[Mapping[str, Any]] = None,
+        config: Optional["LegalIRConstrainedDecodeConfig"] = None,
+    ) -> "LegalIRConstraintMasks":
+        """Return inspectable valid-token/grammar/binder/type/family masks."""
+
+        return legal_ir_constraint_masks(
+            prefix_ids,
+            family=family,
+            tokenizer=self.frozen_tokenizer(),
+            proof_state=proof_state,
+            config=config,
+        )
+
+    def decode_tokens(
+        self,
+        logits: Any = None,
+        *,
+        family: str = "",
+        source_text: str = "",
+        gold_token_ids: Optional[Sequence[int]] = None,
+        gold_ir: Any = None,
+        proof_state: Optional[Mapping[str, Any]] = None,
+        architecture: Any = None,
+        config: Optional["LegalIRConstrainedDecodeConfig"] = None,
+    ) -> "LegalIRConstrainedTokenDecode":
+        """Run bounded, mask-constrained token decoding."""
+
+        return constrained_legal_ir_token_decode(
+            logits,
+            family=family,
+            source_text=source_text,
+            gold_token_ids=gold_token_ids,
+            gold_ir=gold_ir,
+            proof_state=proof_state,
+            architecture=architecture,
+            tokenizer=self.frozen_tokenizer(),
+            config=config,
+        )
+
+    def admit_gold_path(
+        self,
+        gold_token_ids: Sequence[int] | None = None,
+        *,
+        gold_ir: Any = None,
+        family: str = "",
+        proof_state: Optional[Mapping[str, Any]] = None,
+        config: Optional["LegalIRConstrainedDecodeConfig"] = None,
+    ) -> "LegalIRGoldPathAdmission":
+        """Admit a gold encoding only when every prefix stays legal."""
+
+        return admit_legal_ir_gold_path(
+            gold_token_ids,
+            gold_ir=gold_ir,
+            family=family,
+            tokenizer=self.frozen_tokenizer(),
+            proof_state=proof_state,
+            config=config,
+        )
+
+    def gate_prover_call(
+        self,
+        candidate_ir: Any,
+        *,
+        family: str = "",
+        source_text: str = "",
+        gold_token_ids: Optional[Sequence[int]] = None,
+        proof_state: Optional[Mapping[str, Any]] = None,
+        config: Optional["LegalIRConstrainedDecodeConfig"] = None,
+        prover: Optional[Callable[..., Any]] = None,
+    ) -> "LegalIRProverAdmission":
+        """Reject illegal candidates before they can spend proof budget."""
+
+        return gate_legal_ir_prover_call(
+            candidate_ir,
+            family=family,
+            source_text=source_text,
+            gold_token_ids=gold_token_ids,
+            tokenizer=self.frozen_tokenizer(),
+            proof_state=proof_state,
+            config=config,
+            prover=prover,
+        )
+
 
 def canonical_legal_ir_grammar_family(family: str) -> str:
     """Normalize grammar families, including view-name aliases."""
@@ -536,6 +642,1112 @@ def constrained_legal_ir_decode(
         source_text=source_text,
         context=context,
     )
+
+
+_MASKED_LOGIT: Final = -1.0e9
+_CLOSED_PROOF_STATUSES: Final[frozenset[str]] = frozenset(
+    {"proved", "disproved", "counterexample"}
+)
+_OPERATOR_VALUE_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "modality",
+        "operator",
+        "slot",
+        "label",
+        "connective",
+        "quantifier",
+        "op",
+        "operation",
+        "predicate",
+        "relation",
+        "backend",
+        "goal",
+    }
+)
+_FAMILY_VALUE_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "family",
+        "legal_ir_family",
+        "target_view",
+        "view",
+        "legal_ir_view",
+        "contract_id",
+    }
+)
+_BINDER_VALUE_FIELDS: Final[frozenset[str]] = frozenset(
+    {
+        "quantifier",
+        "variables",
+        "bind",
+        "binder",
+        "lambda",
+        "let",
+    }
+)
+_CROSS_FAMILY_HOSTS: Final[frozenset[str]] = frozenset(
+    {
+        "decompiler",
+        "external_provers",
+        "provenance",
+    }
+)
+_SHARED_OPERATORS: Final[frozenset[str]] = frozenset(
+    {"and", "or", "not", "implies", "iff"}
+)
+_FAMILY_OWNED_OPERATORS: Final[Mapping[str, frozenset[str]]] = {
+    "deontic": frozenset(
+        {
+            "obligation",
+            "permission",
+            "prohibition",
+            "duty",
+            "right",
+            "must",
+            "may",
+            "shall",
+            "must_not",
+        }
+    ),
+    "tdfol": frozenset({"and", "or", "not", "implies", "iff"}),
+    "frame_logic": frozenset({"and", "or", "not", "implies"}),
+    "temporal": frozenset({"and", "or", "not", "implies"}),
+    "knowledge_graphs": frozenset({"and", "or", "not"}),
+    "cec": frozenset({"and", "or", "not"}),
+    "external_provers": frozenset({"and", "or", "not", "implies", "iff"}),
+    "decompiler": frozenset(),
+    "provenance": frozenset(),
+}
+_EXCLUSIVE_OPERATORS_BY_FAMILY: Final[Mapping[str, frozenset[str]]] = {
+    "deontic": frozenset(
+        {
+            "obligation",
+            "permission",
+            "prohibition",
+            "duty",
+            "right",
+            "must",
+            "may",
+            "shall",
+            "must_not",
+        }
+    ),
+}
+
+
+class UnboundedLegalIRBeamError(ValueError):
+    """Raised when a caller requests an unbounded or over-cap beam."""
+
+
+class LegalIRConstraintBypassError(ValueError):
+    """Raised when a caller tries to disable parser or type constraints."""
+
+
+@dataclass(frozen=True, slots=True)
+class LegalIRConstrainedDecodeConfig:
+    """Hard-bounded constrained decoder contract. Parser/type cannot be bypassed."""
+
+    beam_width: int = 4
+    max_steps: int = 32
+    max_expansions: int = 256
+    fallback: str = "reject"
+    proof_state_pruning: bool = False
+    parser_pruning: bool = True
+    type_checks: bool = True
+    family: str = ""
+
+    def __post_init__(self) -> None:
+        width = int(self.beam_width)
+        steps = int(self.max_steps)
+        expansions = int(self.max_expansions)
+        fallback = str(self.fallback or "reject").strip().lower()
+        if width < 1 or width > LEGAL_IR_MAX_BEAM_WIDTH:
+            raise UnboundedLegalIRBeamError(
+                f"beam_width must be in 1..{LEGAL_IR_MAX_BEAM_WIDTH}, got {width}"
+            )
+        if steps < 1 or steps > LEGAL_IR_MAX_DECODE_STEPS:
+            raise UnboundedLegalIRBeamError(
+                f"max_steps must be in 1..{LEGAL_IR_MAX_DECODE_STEPS}, got {steps}"
+            )
+        if expansions < 1:
+            raise UnboundedLegalIRBeamError("max_expansions must be a positive bound")
+        if fallback not in LEGAL_IR_DECODE_FALLBACKS:
+            raise ValueError(
+                "fallback must be one of " + ", ".join(LEGAL_IR_DECODE_FALLBACKS)
+            )
+        if not bool(self.parser_pruning):
+            raise LegalIRConstraintBypassError(
+                "parser pruning cannot be disabled; parser/type bypass is prohibited"
+            )
+        if not bool(self.type_checks):
+            raise LegalIRConstraintBypassError(
+                "type checks cannot be disabled; parser/type bypass is prohibited"
+            )
+        object.__setattr__(self, "beam_width", width)
+        object.__setattr__(self, "max_steps", steps)
+        object.__setattr__(self, "max_expansions", expansions)
+        object.__setattr__(self, "fallback", fallback)
+        object.__setattr__(self, "family", str(self.family or ""))
+
+    def bounds(self) -> dict[str, Any]:
+        return {
+            "beam_width": int(self.beam_width),
+            "fallback": self.fallback,
+            "max_beam_width": LEGAL_IR_MAX_BEAM_WIDTH,
+            "max_expansions": int(self.max_expansions),
+            "max_steps": int(self.max_steps),
+            "parser_pruning": True,
+            "proof_state_pruning": bool(self.proof_state_pruning),
+            "type_checks": True,
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = self.bounds()
+        payload["family"] = self.family
+        payload["schema"] = LEGAL_IR_CONSTRAINED_DECODER_SCHEMA
+        return payload
+
+
+@dataclass(frozen=True, slots=True)
+class LegalIRConstraintMasks:
+    """Separately inspectable constraint masks over the frozen vocabulary."""
+
+    valid_token: tuple[bool, ...]
+    grammar: tuple[bool, ...]
+    binder: tuple[bool, ...]
+    type: tuple[bool, ...]
+    family: tuple[bool, ...]
+    family_name: str = ""
+    prefix_ids: tuple[int, ...] = ()
+    schema: str = LEGAL_IR_CONSTRAINED_DECODER_SCHEMA
+
+    def intersected(self) -> tuple[bool, ...]:
+        return tuple(
+            all(flags)
+            for flags in zip(
+                self.valid_token,
+                self.grammar,
+                self.binder,
+                self.type,
+                self.family,
+                strict=True,
+            )
+        )
+
+    def allowed_token_ids(self) -> tuple[int, ...]:
+        return tuple(
+            index for index, allowed in enumerate(self.intersected()) if allowed
+        )
+
+    def allowed_count(self) -> int:
+        return sum(1 for allowed in self.intersected() if allowed)
+
+    def layer(self, name: str) -> tuple[bool, ...]:
+        layers = {
+            "valid_token": self.valid_token,
+            "grammar": self.grammar,
+            "binder": self.binder,
+            "type": self.type,
+            "family": self.family,
+        }
+        if name not in layers:
+            raise KeyError(f"unknown constraint mask {name!r}")
+        return layers[name]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "allowed_count": self.allowed_count(),
+            "allowed_token_ids": list(self.allowed_token_ids()),
+            "family": self.family_name,
+            "layers": {
+                name: sum(1 for allowed in self.layer(name) if allowed)
+                for name in LEGAL_IR_CONSTRAINT_MASK_NAMES
+            },
+            "prefix_ids": [int(token_id) for token_id in self.prefix_ids],
+            "schema": self.schema,
+            "vocabulary_size": len(self.valid_token),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LegalIRConstraintRejectionTelemetry:
+    """Rejection telemetry for constrained decoding and prover admission."""
+
+    contract: str = LEGAL_IR_CONSTRAINED_DECODER_INTERFACE
+    schema: str = LEGAL_IR_CONSTRAINED_DECODER_SCHEMA
+    family: str = ""
+    rejection_reasons: tuple[str, ...] = ()
+    masked_token_count: int = 0
+    parser_pruned_count: int = 0
+    proof_state_pruned_count: int = 0
+    prover_calls: int = 0
+    prover_calls_avoided: int = 0
+    beam_width: int = 0
+    max_beam_width: int = LEGAL_IR_MAX_BEAM_WIDTH
+    fallback: str = "reject"
+    fallback_used: str = ""
+    bounds: Mapping[str, Any] = field(default_factory=dict)
+    gold_path_preserved: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "beam_width": int(self.beam_width),
+            "bounds": dict(self.bounds),
+            "contract": self.contract,
+            "family": self.family,
+            "fallback": self.fallback,
+            "fallback_used": self.fallback_used,
+            "gold_path_preserved": bool(self.gold_path_preserved),
+            "masked_token_count": int(self.masked_token_count),
+            "max_beam_width": int(self.max_beam_width),
+            "parser_pruned_count": int(self.parser_pruned_count),
+            "proof_state_pruned_count": int(self.proof_state_pruned_count),
+            "prover_calls": int(self.prover_calls),
+            "prover_calls_avoided": int(self.prover_calls_avoided),
+            "rejection_reasons": list(self.rejection_reasons),
+            "schema": self.schema,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LegalIRBeamHypothesis:
+    """One bounded beam hypothesis."""
+
+    token_ids: tuple[int, ...]
+    score: float
+    finished: bool = False
+    fallback_used: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "fallback_used": self.fallback_used,
+            "finished": self.finished,
+            "score": round(float(self.score), 12),
+            "token_ids": [int(token_id) for token_id in self.token_ids],
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LegalIRConstrainedTokenDecode:
+    """Result of bounded grammar/binder/type/family/proof-state decoding."""
+
+    accepted: bool
+    family: str
+    token_ids: tuple[int, ...]
+    tokens: tuple[str, ...] = ()
+    score: float = 0.0
+    beam_width: int = 0
+    steps: int = 0
+    expansions: int = 0
+    fallback: str = "reject"
+    fallback_used: str = ""
+    gold_path_preserved: bool = False
+    parser_pruned: int = 0
+    proof_state_pruned: int = 0
+    hypotheses: tuple[LegalIRBeamHypothesis, ...] = ()
+    telemetry: LegalIRConstraintRejectionTelemetry = field(
+        default_factory=LegalIRConstraintRejectionTelemetry
+    )
+    schema: str = LEGAL_IR_CONSTRAINED_DECODER_SCHEMA
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "accepted": self.accepted,
+            "beam_width": int(self.beam_width),
+            "expansions": int(self.expansions),
+            "fallback": self.fallback,
+            "fallback_used": self.fallback_used,
+            "family": self.family,
+            "gold_path_preserved": self.gold_path_preserved,
+            "hypotheses": [item.to_dict() for item in self.hypotheses],
+            "parser_pruned": int(self.parser_pruned),
+            "proof_state_pruned": int(self.proof_state_pruned),
+            "schema": self.schema,
+            "score": round(float(self.score), 12),
+            "steps": int(self.steps),
+            "telemetry": self.telemetry.to_dict(),
+            "token_ids": [int(token_id) for token_id in self.token_ids],
+            "tokens": list(self.tokens),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LegalIRGoldPathAdmission:
+    """Whether every gold prefix remains inside the constraint masks."""
+
+    admitted: bool
+    family: str
+    token_ids: tuple[int, ...]
+    illegal_index: int = -1
+    illegal_token_id: int = -1
+    rejection_reasons: tuple[str, ...] = ()
+    schema: str = LEGAL_IR_CONSTRAINED_DECODER_SCHEMA
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "admitted": self.admitted,
+            "family": self.family,
+            "illegal_index": int(self.illegal_index),
+            "illegal_token_id": int(self.illegal_token_id),
+            "rejection_reasons": list(self.rejection_reasons),
+            "schema": self.schema,
+            "token_ids": [int(token_id) for token_id in self.token_ids],
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LegalIRProverAdmission:
+    """Fail-closed prover gate: illegal candidates never spend proof budget."""
+
+    admitted: bool
+    family: str
+    prover_calls: int
+    candidate_ir: Any
+    rejection_reasons: tuple[str, ...] = ()
+    proof_result: Any = None
+    telemetry: LegalIRConstraintRejectionTelemetry = field(
+        default_factory=LegalIRConstraintRejectionTelemetry
+    )
+    schema: str = LEGAL_IR_CONSTRAINED_DECODER_SCHEMA
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "admitted": self.admitted,
+            "family": self.family,
+            "prover_calls": int(self.prover_calls),
+            "rejection_reasons": list(self.rejection_reasons),
+            "schema": self.schema,
+            "telemetry": self.telemetry.to_dict(),
+        }
+
+
+def legal_ir_constrained_decode_config(
+    **kwargs: Any,
+) -> LegalIRConstrainedDecodeConfig:
+    return LegalIRConstrainedDecodeConfig(**kwargs)
+
+
+def legal_ir_constraint_masks(
+    prefix_ids: Sequence[int] = (),
+    *,
+    family: str = "",
+    tokenizer: Optional["LegalIRFrozenTokenizer"] = None,
+    proof_state: Optional[Mapping[str, Any]] = None,
+    config: Optional[LegalIRConstrainedDecodeConfig] = None,
+) -> LegalIRConstraintMasks:
+    """Build valid-token, grammar, binder, type, and family masks for a prefix."""
+
+    frozen = tokenizer or LegalIRFrozenTokenizer.canonical()
+    settings = config or LegalIRConstrainedDecodeConfig(family=family)
+    family_name = canonical_legal_ir_grammar_family(family or settings.family)
+    prefix = tuple(int(token_id) for token_id in prefix_ids)
+    vocab_size = frozen.vocabulary_size
+    valid_token = [False] * vocab_size
+    grammar = [False] * vocab_size
+    binder = [False] * vocab_size
+    type_mask = [False] * vocab_size
+    family_mask = [False] * vocab_size
+    phase = _parser_phase(prefix, frozen, family=family_name)
+    last_piece, last_class = _prefix_tail(prefix, frozen)
+    proof = _normalize_proof_state(proof_state)
+    prune_tactics = bool(settings.proof_state_pruning) and _proof_state_closed(proof)
+    forbidden = set(proof.get("forbidden_token_ids") or ())
+    forbidden.update(
+        _token_id_for_piece(frozen, piece)
+        for piece in proof.get("forbidden_tokens") or ()
+        if _token_id_for_piece(frozen, piece) >= 0
+    )
+
+    for entry in frozen._entries:  # noqa: SLF001 - sealed vocab walk
+        token_id = int(entry.token_id)
+        piece = entry.piece
+        token_class = entry.token_class
+        if token_id in forbidden:
+            continue
+        if token_class == "padding" and phase != "complete":
+            continue
+        if token_class == "source_surface":
+            continue
+        valid_token[token_id] = True
+
+        if token_class == "binder":
+            if _binder_allowed(phase, family_name, last_piece, last_class):
+                binder[token_id] = True
+                grammar[token_id] = True
+                type_mask[token_id] = True
+                family_mask[token_id] = True
+            continue
+        binder[token_id] = True
+
+        if token_class == "type":
+            if _type_allowed(phase, family_name, piece):
+                type_mask[token_id] = True
+                grammar[token_id] = True
+                family_mask[token_id] = True
+            continue
+        type_mask[token_id] = True
+
+        if token_class == "family" or _alias_family_piece(family_name, piece, token_class):
+            if _family_token_allowed(phase, family_name, piece, last_piece):
+                family_mask[token_id] = True
+                grammar[token_id] = True
+            continue
+        family_mask[token_id] = True
+
+        if not _grammar_token_allowed(
+            phase,
+            family_name,
+            piece,
+            token_class,
+            last_piece=last_piece,
+            prune_tactics=prune_tactics,
+            eos_id=frozen.eos_id,
+            bos_id=frozen.bos_id,
+            pad_id=frozen.pad_id,
+        ):
+            continue
+        grammar[token_id] = True
+
+    return LegalIRConstraintMasks(
+        valid_token=tuple(valid_token),
+        grammar=tuple(grammar),
+        binder=tuple(binder),
+        type=tuple(type_mask),
+        family=tuple(family_mask),
+        family_name=family_name,
+        prefix_ids=prefix,
+    )
+
+
+def apply_legal_ir_constraint_masks(
+    logits: Sequence[float],
+    masks: LegalIRConstraintMasks,
+) -> list[float]:
+    """Intersect masks and zero out illegal logits without mutating inputs."""
+
+    allowed = masks.intersected()
+    if len(logits) != len(allowed):
+        raise ValueError(
+            f"logit width {len(logits)} does not match vocabulary {len(allowed)}"
+        )
+    return [
+        float(logit) if flag else _MASKED_LOGIT
+        for logit, flag in zip(logits, allowed, strict=True)
+    ]
+
+
+def admit_legal_ir_gold_path(
+    gold_token_ids: Sequence[int] | None = None,
+    *,
+    gold_ir: Any = None,
+    family: str = "",
+    tokenizer: Optional["LegalIRFrozenTokenizer"] = None,
+    proof_state: Optional[Mapping[str, Any]] = None,
+    config: Optional[LegalIRConstrainedDecodeConfig] = None,
+) -> LegalIRGoldPathAdmission:
+    """Every gold prefix must remain a legal continuation."""
+
+    frozen = tokenizer or LegalIRFrozenTokenizer.canonical()
+    family_name = canonical_legal_ir_grammar_family(family)
+    try:
+        token_ids = _resolve_gold_token_ids(
+            gold_token_ids,
+            gold_ir=gold_ir,
+            family=family_name,
+            tokenizer=frozen,
+        )
+    except (UnknownFrozenTokenError, FrozenVocabularyMutationError, ValueError):
+        return LegalIRGoldPathAdmission(
+            admitted=False,
+            family=family_name,
+            token_ids=(),
+            rejection_reasons=("gold_unencodable",),
+        )
+    for index, token_id in enumerate(token_ids):
+        masks = legal_ir_constraint_masks(
+            token_ids[:index],
+            family=family_name,
+            tokenizer=frozen,
+            proof_state=proof_state,
+            config=config,
+        )
+        if int(token_id) not in set(masks.allowed_token_ids()):
+            reason = _gold_rejection_reason(frozen, int(token_id), index)
+            return LegalIRGoldPathAdmission(
+                admitted=False,
+                family=family_name,
+                token_ids=token_ids,
+                illegal_index=index,
+                illegal_token_id=int(token_id),
+                rejection_reasons=(reason,),
+            )
+    return LegalIRGoldPathAdmission(
+        admitted=bool(token_ids),
+        family=family_name,
+        token_ids=token_ids,
+        rejection_reasons=() if token_ids else ("empty_gold_path",),
+    )
+
+
+def constrained_legal_ir_token_decode(
+    logits: Any = None,
+    *,
+    family: str = "",
+    source_text: str = "",
+    gold_token_ids: Optional[Sequence[int]] = None,
+    gold_ir: Any = None,
+    proof_state: Optional[Mapping[str, Any]] = None,
+    architecture: Any = None,
+    tokenizer: Optional["LegalIRFrozenTokenizer"] = None,
+    config: Optional[LegalIRConstrainedDecodeConfig] = None,
+) -> LegalIRConstrainedTokenDecode:
+    """Bounded beam search under grammar/binder/type/family/proof-state masks."""
+
+    del source_text  # source surface stays off the canonical decode path
+    frozen = tokenizer or LegalIRFrozenTokenizer.canonical()
+    settings = config or LegalIRConstrainedDecodeConfig(family=family)
+    family_name = canonical_legal_ir_grammar_family(family or settings.family)
+    gold_ids = _resolve_gold_token_ids(
+        gold_token_ids,
+        gold_ir=gold_ir,
+        family=family_name,
+        tokenizer=frozen,
+    )
+    gold_admission = (
+        admit_legal_ir_gold_path(
+            gold_ids,
+            family=family_name,
+            tokenizer=frozen,
+            proof_state=proof_state,
+            config=settings,
+        )
+        if gold_ids
+        else None
+    )
+    beams: list[LegalIRBeamHypothesis] = [
+        LegalIRBeamHypothesis(token_ids=(), score=0.0, finished=False)
+    ]
+    parser_pruned = 0
+    proof_pruned = 0
+    expansions = 0
+    steps = 0
+    finished: list[LegalIRBeamHypothesis] = []
+
+    for step in range(settings.max_steps):
+        steps = step + 1
+        live = [beam for beam in beams if not beam.finished]
+        if not live:
+            break
+        next_beams: list[LegalIRBeamHypothesis] = []
+        for beam in live:
+            masks = legal_ir_constraint_masks(
+                beam.token_ids,
+                family=family_name,
+                tokenizer=frozen,
+                proof_state=proof_state,
+                config=settings,
+            )
+            raw_logits = _logits_for_prefix(
+                logits,
+                prefix_ids=beam.token_ids,
+                step=step,
+                architecture=architecture,
+                tokenizer=frozen,
+            )
+            masked = apply_legal_ir_constraint_masks(raw_logits, masks)
+            ranked = _rank_allowed_tokens(masked, limit=settings.beam_width)
+            if not ranked:
+                parser_pruned += 1
+                continue
+            for token_id, token_score in ranked:
+                if expansions >= settings.max_expansions and finished:
+                    break
+                expansions += 1
+                entry = frozen.entry_for_id(token_id)
+                if (
+                    settings.proof_state_pruning
+                    and entry.token_class == "tactic"
+                    and _proof_state_closed(_normalize_proof_state(proof_state))
+                ):
+                    proof_pruned += 1
+                    continue
+                extended = (*beam.token_ids, int(token_id))
+                done = int(token_id) == frozen.eos_id
+                hypothesis = LegalIRBeamHypothesis(
+                    token_ids=extended,
+                    score=float(beam.score) + float(token_score),
+                    finished=done,
+                )
+                if done:
+                    finished.append(hypothesis)
+                else:
+                    next_beams.append(hypothesis)
+            if expansions >= settings.max_expansions and finished:
+                break
+        next_beams.sort(key=lambda item: (-item.score, item.token_ids))
+        beams = next_beams[: settings.beam_width]
+        if expansions >= settings.max_expansions and finished:
+            break
+
+    selected, fallback_used, reasons = _select_decode_result(
+        finished=finished,
+        live=beams,
+        settings=settings,
+        gold_ids=gold_ids,
+        gold_admission=gold_admission,
+        tokenizer=frozen,
+    )
+    tokens = (
+        tuple(frozen.decode_ids(selected.token_ids)) if selected.token_ids else ()
+    )
+    gold_preserved = bool(
+        gold_admission
+        and gold_admission.admitted
+        and tuple(selected.token_ids) == gold_ids
+    )
+    accepted = bool(selected.finished and selected.token_ids and not reasons)
+    telemetry = LegalIRConstraintRejectionTelemetry(
+        family=family_name,
+        rejection_reasons=reasons,
+        masked_token_count=max(0, frozen.vocabulary_size - settings.beam_width),
+        parser_pruned_count=parser_pruned,
+        proof_state_pruned_count=proof_pruned,
+        prover_calls=0,
+        prover_calls_avoided=0 if accepted else 1,
+        beam_width=settings.beam_width,
+        fallback=settings.fallback,
+        fallback_used=fallback_used,
+        bounds=settings.bounds(),
+        gold_path_preserved=gold_preserved,
+    )
+    return LegalIRConstrainedTokenDecode(
+        accepted=accepted,
+        family=family_name,
+        token_ids=selected.token_ids,
+        tokens=tokens,
+        score=selected.score,
+        beam_width=settings.beam_width,
+        steps=steps,
+        expansions=expansions,
+        fallback=settings.fallback,
+        fallback_used=fallback_used,
+        gold_path_preserved=gold_preserved,
+        parser_pruned=parser_pruned,
+        proof_state_pruned=proof_pruned,
+        hypotheses=tuple((finished or beams)[: settings.beam_width]),
+        telemetry=telemetry,
+    )
+
+
+def gate_legal_ir_prover_call(
+    candidate_ir: Any,
+    *,
+    family: str = "",
+    source_text: str = "",
+    gold_token_ids: Optional[Sequence[int]] = None,
+    tokenizer: Optional["LegalIRFrozenTokenizer"] = None,
+    proof_state: Optional[Mapping[str, Any]] = None,
+    config: Optional[LegalIRConstrainedDecodeConfig] = None,
+    prover: Optional[Callable[..., Any]] = None,
+) -> LegalIRProverAdmission:
+    """Call the prover only after grammar, token, and optional gold checks pass."""
+
+    frozen = tokenizer or LegalIRFrozenTokenizer.canonical()
+    settings = config or LegalIRConstrainedDecodeConfig(family=family)
+    validation = validate_legal_ir_candidate(
+        candidate_ir,
+        family=family,
+        source_text=source_text,
+    )
+    reasons = list(validation.rejection_reason_names)
+    family_name = validation.family or canonical_legal_ir_grammar_family(family)
+    if gold_token_ids is not None or _looks_like_token_ids(candidate_ir):
+        token_ids = (
+            tuple(int(token_id) for token_id in gold_token_ids)
+            if gold_token_ids is not None
+            else tuple(int(token_id) for token_id in candidate_ir)
+        )
+        admission = admit_legal_ir_gold_path(
+            token_ids,
+            family=family_name,
+            tokenizer=frozen,
+            proof_state=proof_state,
+            config=settings,
+        )
+        if not admission.admitted:
+            reasons.extend(admission.rejection_reasons or ("illegal_token_path",))
+    admitted = not reasons
+    proof_result = None
+    prover_calls = 0
+    if admitted and prover is not None:
+        proof_result = prover(candidate_ir)
+        prover_calls = 1
+    telemetry = LegalIRConstraintRejectionTelemetry(
+        family=family_name,
+        rejection_reasons=tuple(dict.fromkeys(reasons)),
+        prover_calls=prover_calls,
+        prover_calls_avoided=0 if admitted else 1,
+        beam_width=settings.beam_width,
+        fallback=settings.fallback,
+        fallback_used="" if admitted else "reject",
+        bounds=settings.bounds(),
+        gold_path_preserved=admitted,
+    )
+    return LegalIRProverAdmission(
+        admitted=admitted,
+        family=family_name,
+        prover_calls=prover_calls,
+        candidate_ir=candidate_ir,
+        rejection_reasons=tuple(dict.fromkeys(reasons)),
+        proof_result=proof_result,
+        telemetry=telemetry,
+    )
+
+
+def compare_constrained_vs_unconstrained_proof_calls(
+    candidates: Sequence[Any],
+    *,
+    family: str = "",
+    source_text: str = "",
+    proof_state: Optional[Mapping[str, Any]] = None,
+    tokenizer: Optional["LegalIRFrozenTokenizer"] = None,
+    config: Optional[LegalIRConstrainedDecodeConfig] = None,
+    prover: Optional[Callable[..., Any]] = None,
+) -> dict[str, Any]:
+    """Compare prover spend with and without the constrained admission gate."""
+
+    unconstrained_calls = 0
+    constrained_calls = 0
+    avoided = 0
+    admissions: list[dict[str, Any]] = []
+    active_prover = prover or (lambda payload: {"accepted": True, "payload": payload})
+    for candidate in candidates:
+        unconstrained_calls += 1
+        admission = gate_legal_ir_prover_call(
+            candidate,
+            family=family,
+            source_text=source_text,
+            tokenizer=tokenizer,
+            proof_state=proof_state,
+            config=config,
+            prover=active_prover,
+        )
+        constrained_calls += admission.prover_calls
+        avoided += admission.telemetry.prover_calls_avoided
+        admissions.append(admission.to_dict())
+    return {
+        "constrained_prover_calls": constrained_calls,
+        "contract": LEGAL_IR_CONSTRAINED_DECODER_INTERFACE,
+        "schema": LEGAL_IR_CONSTRAINED_DECODER_SCHEMA,
+        "unconstrained_prover_calls": unconstrained_calls,
+        "prover_calls_avoided": avoided,
+        "saved_proof_budget": max(0, unconstrained_calls - constrained_calls),
+        "admissions": admissions,
+    }
+
+
+def _parser_phase(
+    prefix_ids: Sequence[int],
+    tokenizer: "LegalIRFrozenTokenizer",
+    *,
+    family: str = "",
+) -> str:
+    if not prefix_ids:
+        return "expect_bos"
+    pieces = []
+    classes = []
+    for token_id in prefix_ids:
+        entry = tokenizer.entry_for_id(int(token_id))
+        pieces.append(entry.piece)
+        classes.append(entry.token_class)
+    if pieces[0] != "<bos>":
+        return "invalid"
+    if any(piece == "<eos>" for piece in pieces):
+        return "complete"
+    if len(pieces) == 1:
+        return "expect_family"
+    if classes[1] != "family" and pieces[1] != family:
+        return "invalid"
+    if len(pieces) == 2:
+        return "expect_type"
+    if classes[2] != "type":
+        return "invalid"
+    return "body"
+
+
+def _alias_family_piece(family: str, piece: str, token_class: str) -> bool:
+    return token_class == "identifier" and bool(family) and piece == family
+
+
+def _prefix_tail(
+    prefix_ids: Sequence[int],
+    tokenizer: "LegalIRFrozenTokenizer",
+) -> tuple[str, str]:
+    if not prefix_ids:
+        return "", ""
+    entry = tokenizer.entry_for_id(int(prefix_ids[-1]))
+    return entry.piece, entry.token_class
+
+
+def _binder_allowed(phase: str, family: str, last_piece: str, last_class: str) -> bool:
+    if phase != "body":
+        return False
+    if last_piece in _BINDER_VALUE_FIELDS or last_class == "binder":
+        return True
+    return family in {"tdfol", "decompiler"}
+
+
+def _type_allowed(phase: str, family: str, piece: str) -> bool:
+    if phase != "expect_type":
+        return False
+    expected = _family_output_type(family)
+    return bool(expected) and piece == expected
+
+
+def _family_token_allowed(phase: str, family: str, piece: str, last_piece: str) -> bool:
+    if phase == "expect_family":
+        return (not family or family == "unscoped") or piece == family
+    if phase == "body" and last_piece in _FAMILY_VALUE_FIELDS:
+        if last_piece == "target_view":
+            return True
+        return (not family or family == "unscoped") or piece == family
+    return False
+
+
+def _grammar_token_allowed(
+    phase: str,
+    family: str,
+    piece: str,
+    token_class: str,
+    *,
+    last_piece: str,
+    prune_tactics: bool,
+    eos_id: int,
+    bos_id: int,
+    pad_id: int,
+) -> bool:
+    del eos_id, bos_id, pad_id
+    if phase == "expect_bos":
+        return piece == "<bos>"
+    if phase == "complete":
+        return token_class == "padding"
+    if phase in {"expect_family", "expect_type", "invalid"}:
+        return False
+    if piece == "<bos>":
+        return False
+    if piece == "<eos>":
+        return True
+    if token_class == "special":
+        return False
+    if token_class == "padding":
+        return False
+    if token_class == "tactic" and prune_tactics:
+        return False
+    if token_class == "operator":
+        return _operator_allowed(family, piece, last_piece)
+    if token_class == "production":
+        spec_family = next(
+            (
+                spec.family
+                for spec in default_legal_ir_production_specs()
+                if spec.name == piece
+            ),
+            "",
+        )
+        return (not family or family == "unscoped" or spec_family == family) or (
+            family in _CROSS_FAMILY_HOSTS
+        )
+    return token_class in {
+        "special",
+        "identifier",
+        "source",
+        "proof",
+        "tactic",
+        "production",
+    }
+
+
+def _operator_allowed(family: str, piece: str, last_piece: str) -> bool:
+    if family in _CROSS_FAMILY_HOSTS or last_piece in _OPERATOR_VALUE_FIELDS:
+        return True
+    if piece in _SHARED_OPERATORS:
+        return True
+    owned = _FAMILY_OWNED_OPERATORS.get(family, frozenset())
+    if piece in owned:
+        return True
+    for owner, exclusive in _EXCLUSIVE_OPERATORS_BY_FAMILY.items():
+        if piece in exclusive and owner != family:
+            return False
+    return False
+
+
+def _normalize_proof_state(proof_state: Optional[Mapping[str, Any]]) -> dict[str, Any]:
+    if not isinstance(proof_state, Mapping):
+        return {}
+    return dict(proof_state)
+
+
+def _proof_state_closed(proof_state: Mapping[str, Any]) -> bool:
+    status = str(
+        proof_state.get("status")
+        or proof_state.get("state")
+        or proof_state.get("proof_status")
+        or ""
+    ).strip().lower()
+    open_goals = proof_state.get("open_goals", proof_state.get("open_goal_count", 1))
+    try:
+        remaining = int(open_goals)
+    except (TypeError, ValueError):
+        remaining = 1
+    if status in _CLOSED_PROOF_STATUSES and remaining <= 0:
+        return True
+    return bool(proof_state.get("closed")) or bool(proof_state.get("goal_closed"))
+
+
+def _token_id_for_piece(tokenizer: "LegalIRFrozenTokenizer", piece: str) -> int:
+    entry = tokenizer.lookup(str(piece))
+    return -1 if entry is None else int(entry.token_id)
+
+
+def _resolve_gold_token_ids(
+    gold_token_ids: Sequence[int] | None,
+    *,
+    gold_ir: Any,
+    family: str,
+    tokenizer: "LegalIRFrozenTokenizer",
+) -> tuple[int, ...]:
+    if gold_token_ids is not None:
+        return tuple(int(token_id) for token_id in gold_token_ids)
+    if gold_ir is None:
+        return ()
+    encoding = tokenizer.encode_canonical(gold_ir, family=family)
+    return tuple(int(token_id) for token_id in encoding.token_ids)
+
+
+def _looks_like_token_ids(value: Any) -> bool:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        return False
+    return bool(value) and all(isinstance(item, int) and not isinstance(item, bool) for item in value)
+
+
+def _gold_rejection_reason(
+    tokenizer: "LegalIRFrozenTokenizer",
+    token_id: int,
+    index: int,
+) -> str:
+    try:
+        entry = tokenizer.entry_for_id(token_id)
+    except UnknownFrozenTokenError:
+        return f"gold_token_outside_freeze:{index}"
+    return f"gold_prefix_illegal:{entry.token_class}:{entry.piece}"
+
+
+def _logits_for_prefix(
+    logits: Any,
+    *,
+    prefix_ids: Sequence[int],
+    step: int,
+    architecture: Any,
+    tokenizer: "LegalIRFrozenTokenizer",
+) -> list[float]:
+    vocab = tokenizer.vocabulary_size
+    if callable(logits):
+        values = logits(tuple(prefix_ids), step)
+        return _coerce_logits(values, vocab)
+    if isinstance(logits, Sequence) and logits and isinstance(logits[0], Sequence):
+        row = logits[min(step, len(logits) - 1)]
+        return _coerce_logits(row, vocab)
+    if isinstance(logits, Sequence) and logits and not isinstance(logits[0], Sequence):
+        return _coerce_logits(logits, vocab)
+    if architecture is not None and hasattr(architecture, "encode_ids"):
+        hidden = architecture.encode_ids(prefix_ids or (tokenizer.bos_id,))
+        weight = architecture.parameters["reconstruction_weight"]
+        bias = architecture.parameters["reconstruction_bias"]
+        return _vec_add(_mat_vec(weight, hidden), bias)
+    return [0.0] * vocab
+
+
+def _coerce_logits(values: Sequence[Any], vocab_size: int) -> list[float]:
+    coerced = [_finite_float(value, default=_MASKED_LOGIT) for value in values]
+    if len(coerced) < vocab_size:
+        coerced.extend([_MASKED_LOGIT] * (vocab_size - len(coerced)))
+    return coerced[:vocab_size]
+
+
+def _rank_allowed_tokens(
+    masked_logits: Sequence[float],
+    *,
+    limit: int,
+) -> tuple[tuple[int, float], ...]:
+    ranked = [
+        (index, float(score))
+        for index, score in enumerate(masked_logits)
+        if float(score) > _MASKED_LOGIT / 2.0
+    ]
+    ranked.sort(key=lambda item: (-item[1], item[0]))
+    return tuple(ranked[: max(0, int(limit))])
+
+
+def _select_decode_result(
+    *,
+    finished: Sequence[LegalIRBeamHypothesis],
+    live: Sequence[LegalIRBeamHypothesis],
+    settings: LegalIRConstrainedDecodeConfig,
+    gold_ids: Sequence[int],
+    gold_admission: LegalIRGoldPathAdmission | None,
+    tokenizer: "LegalIRFrozenTokenizer",
+) -> tuple[LegalIRBeamHypothesis, str, tuple[str, ...]]:
+    if finished:
+        if gold_ids:
+            matching = [item for item in finished if tuple(item.token_ids) == tuple(gold_ids)]
+            if matching:
+                selected = max(
+                    matching,
+                    key=lambda item: (item.score, -len(item.token_ids), item.token_ids),
+                )
+                return selected, "", ()
+        selected = max(
+            finished,
+            key=lambda item: (item.score, -len(item.token_ids), item.token_ids),
+        )
+        return selected, "", ()
+    if settings.fallback == "gold_if_admitted" and gold_admission and gold_admission.admitted:
+        return (
+            LegalIRBeamHypothesis(
+                token_ids=tuple(gold_ids),
+                score=0.0,
+                finished=True,
+                fallback_used="gold_if_admitted",
+            ),
+            "gold_if_admitted",
+            (),
+        )
+    if settings.fallback == "eos":
+        base = live[0].token_ids if live else (tokenizer.bos_id,)
+        if tokenizer.eos_id in set(base):
+            return (
+                LegalIRBeamHypothesis(token_ids=tuple(base), score=0.0, finished=True),
+                "eos",
+                (),
+            )
+        masks = legal_ir_constraint_masks(
+            base,
+            family=settings.family,
+            tokenizer=tokenizer,
+            config=settings,
+        )
+        if tokenizer.eos_id in set(masks.allowed_token_ids()):
+            return (
+                LegalIRBeamHypothesis(
+                    token_ids=(*base, tokenizer.eos_id),
+                    score=live[0].score if live else 0.0,
+                    finished=True,
+                    fallback_used="eos",
+                ),
+                "eos",
+                (),
+            )
+    empty = LegalIRBeamHypothesis(token_ids=(), score=0.0, finished=False)
+    return empty, "reject", ("no_finished_hypothesis",)
 
 
 def default_legal_ir_production_specs() -> tuple[LegalIRProductionSpec, ...]:
@@ -2864,18 +4076,32 @@ __all__ = [
     "LEGAL_IR_CANONICAL_VOCABULARY_CID",
     "LEGAL_IR_CANONICAL_VOCABULARY_SIZE",
     "LEGAL_IR_CLOSED_TOKEN_CLASSES",
+    "LEGAL_IR_CONSTRAINED_DECODER_INTERFACE",
+    "LEGAL_IR_CONSTRAINED_DECODER_SCHEMA",
+    "LEGAL_IR_CONSTRAINT_MASK_NAMES",
+    "LEGAL_IR_DECODE_FALLBACKS",
     "LEGAL_IR_FROZEN_TOKENIZER_INTERFACE",
     "LEGAL_IR_FROZEN_TOKENIZER_SCHEMA_VERSION",
     "LEGAL_IR_FROZEN_VOCABULARY_SCHEMA",
     "LEGAL_IR_GRAMMAR_DECODER_SCHEMA_VERSION",
     "LEGAL_IR_GRAMMAR_FAMILIES",
     "LEGAL_IR_IDENTIFIER_BUCKET_COUNT",
+    "LEGAL_IR_MAX_BEAM_WIDTH",
+    "LEGAL_IR_MAX_DECODE_STEPS",
     "LEGAL_IR_TOKEN_CLASSES",
+    "LegalIRBeamHypothesis",
+    "LegalIRConstrainedDecodeConfig",
+    "LegalIRConstrainedTokenDecode",
+    "LegalIRConstraintBypassError",
+    "LegalIRConstraintMasks",
+    "LegalIRConstraintRejectionTelemetry",
     "LegalIRFrozenTokenizer",
+    "LegalIRGoldPathAdmission",
     "LegalIRGrammarDecoder",
     "LegalIRGrammarRejection",
     "LegalIRGrammarValidation",
     "LegalIRProductionSpec",
+    "LegalIRProverAdmission",
     "LegalIRToken",
     "LegalIRTokenization",
     "LegalIRVocabEntry",
@@ -2884,21 +4110,29 @@ __all__ = [
     "SHARED_ENCODER_TYPED_HEAD_ARCHITECTURE_VERSION",
     "SHARED_LATENT_ARCHITECTURE_ARM",
     "SHARED_LATENT_ARCHITECTURE_VERSION",
+    "UnboundedLegalIRBeamError",
     "UnknownFrozenTokenError",
+    "admit_legal_ir_gold_path",
     "advisor_architecture_version",
+    "apply_legal_ir_constraint_masks",
     "build_compatible_learned_architecture",
     "canonical_legal_ir_frozen_tokenizer",
     "canonical_legal_ir_grammar_family",
+    "compare_constrained_vs_unconstrained_proof_calls",
     "compatible_architecture_manifests",
     "compatible_architecture_suite",
-    "extend_existing_advisor_architectures",
     "constrained_legal_ir_decode",
+    "constrained_legal_ir_token_decode",
     "default_legal_ir_frozen_vocabulary",
     "default_legal_ir_production_specs",
     "evaluate_legacy_warm_start",
+    "extend_existing_advisor_architectures",
+    "gate_legal_ir_prover_call",
     "grammar_metrics_from_validation",
     "grammar_rejection_reason_names",
     "infer_legal_ir_grammar_family",
+    "legal_ir_constrained_decode_config",
+    "legal_ir_constraint_masks",
     "require_legacy_warm_start",
     "validate_legal_ir_candidate",
 ]

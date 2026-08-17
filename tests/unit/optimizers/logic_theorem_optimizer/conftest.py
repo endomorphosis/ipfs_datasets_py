@@ -14,11 +14,24 @@ directory validation command can stay fail-closed on in-scope work.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
 
 _DATASETS_ROOT = Path(__file__).resolve().parents[4]
+_DATASETS_SCRIPTS = _DATASETS_ROOT / "scripts"
+if (_DATASETS_SCRIPTS / "ops" / "legal_ir").is_dir():
+    datasets_root = str(_DATASETS_ROOT)
+    while datasets_root in sys.path:
+        sys.path.remove(datasets_root)
+    sys.path.insert(0, datasets_root)
+    scripts_mod = sys.modules.get("scripts")
+    scripts_file = getattr(scripts_mod, "__file__", "") or ""
+    if scripts_mod is not None and not str(scripts_file).startswith(str(_DATASETS_SCRIPTS)):
+        for _name in list(sys.modules):
+            if _name == "scripts" or _name.startswith("scripts."):
+                sys.modules.pop(_name, None)
 
 collect_ignore: list[str] = []
 _HISTORICAL_SAMPLE = (
