@@ -2,20 +2,61 @@
 
 from __future__ import annotations
 
-from .registry import (
-    DEFAULT_LEGAL_IR_BRIDGE_NAMES,
-    LogicBridgeSpec,
-    bridge_name_for_component,
-    load_logic_bridge_adapter,
-    logic_bridge_manifest,
-    logic_bridge_spec,
-    logic_bridge_specs,
+from .canonical import (
+    compose_typed_bridge,
+    extract_canonical_ir,
+    extract_formalization_artifact,
+    extract_legal_ir_document,
+    wrap_canonical_ir,
+    wrap_compiler_result,
+    wrap_formalization_artifact,
+    wrap_legal_ir_document,
+)
+from .conformance import (
+    FamilyConformanceReceipt,
+    FamilyConformanceVector,
+    adapter_conformance_records,
+    build_conformance_bridge,
+    evaluate_family_conformance,
+    family_conformance_receipts,
+    family_conformance_vectors,
+    schema_golden_vectors,
+)
+from .constructs import (
+    construct_catalog,
+    construct_coverage,
+    required_bridge_constructs,
+)
+from .migrations import (
+    BridgeMigrationSource,
+    TypedBridgeMigrationReceipt,
+    export_canonical_ir,
+    export_formalization_artifact,
+    export_legal_ir_document,
+    migrate_canonical_ir,
+    migrate_formalization_artifact,
+    migrate_from_source,
+    migrate_identity,
+    migrate_legal_ir_document,
 )
 from .multiview import (
     LegalIRTrainingTarget,
     MultiViewLegalIRReport,
     evaluate_legal_ir_multiview,
 )
+from .registry import (
+    DEFAULT_LEGAL_IR_BRIDGE_NAMES,
+    LogicBridgeSpec,
+    TypedBridgeContractSpec,
+    bridge_name_for_component,
+    load_logic_bridge_adapter,
+    logic_bridge_manifest,
+    logic_bridge_spec,
+    logic_bridge_specs,
+    typed_bridge_contract_manifest,
+    typed_bridge_contract_specs,
+)
+from .schema import load_typed_bridge_schema
 from .types import (
     BridgeEvaluationReport,
     GraphProjectionResult,
@@ -27,7 +68,10 @@ from .types import (
 
 __all__ = [
     "BridgeEvaluationReport",
+    "BridgeMigrationSource",
     "DEFAULT_LEGAL_IR_BRIDGE_NAMES",
+    "FamilyConformanceReceipt",
+    "FamilyConformanceVector",
     "GraphProjectionResult",
     "LegalIRDocument",
     "LegalIRTrainingTarget",
@@ -36,10 +80,40 @@ __all__ = [
     "MultiViewLegalIRReport",
     "ProofGateResult",
     "RoundTripMetrics",
+    "TypedBridgeContractSpec",
+    "TypedBridgeMigrationReceipt",
+    "adapter_conformance_records",
     "bridge_name_for_component",
+    "build_conformance_bridge",
+    "compose_typed_bridge",
+    "construct_catalog",
+    "construct_coverage",
+    "evaluate_family_conformance",
     "evaluate_legal_ir_multiview",
+    "export_canonical_ir",
+    "export_formalization_artifact",
+    "export_legal_ir_document",
+    "extract_canonical_ir",
+    "extract_formalization_artifact",
+    "extract_legal_ir_document",
+    "family_conformance_receipts",
+    "family_conformance_vectors",
     "load_logic_bridge_adapter",
+    "load_typed_bridge_schema",
     "logic_bridge_manifest",
     "logic_bridge_spec",
     "logic_bridge_specs",
+    "migrate_canonical_ir",
+    "migrate_formalization_artifact",
+    "migrate_from_source",
+    "migrate_identity",
+    "migrate_legal_ir_document",
+    "required_bridge_constructs",
+    "schema_golden_vectors",
+    "typed_bridge_contract_manifest",
+    "typed_bridge_contract_specs",
+    "wrap_canonical_ir",
+    "wrap_compiler_result",
+    "wrap_formalization_artifact",
+    "wrap_legal_ir_document",
 ]

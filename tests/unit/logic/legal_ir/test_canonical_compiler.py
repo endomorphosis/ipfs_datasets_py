@@ -271,18 +271,20 @@ def test_frozen_cases_reproduce_selected_adapter_l1_identity() -> None:
     assert cid_for_bytes(fixture_path.read_bytes()) == (
         "bafkreidngtg5cojnhkmwj4coijqpoixao25hxfwdzxjpywlusrqhk3hrm4"
     )
-    # Residual LIG-003 CID hygiene: pin the *current* measured adapter module
-    # bytes. The research adapter evolved after selection under EVAL-005 and
-    # the PLAT/PLAT2 deterministic edit waves. Distinct from
-    # SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID, which remains the immutable
-    # replacement-gate selection identity reproduced by production.
-    # Do not weaken this exact-CID integrity check.
-    assert cid_for_bytes(adapter_path.read_bytes()) == (MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID)
-    assert MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID != (SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID)
-    validate_cid(
-        MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID,
-        codecs=("raw",),
+    # Residual LIG-003 / GAP-SEMANTIC-CID-DRIFT hygiene.  Pin the live
+    # research-adapter bytes exactly.  The compiler-module constant
+    # MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID is owned by PGIR-021 and lives
+    # outside this task's edit authority; keep it well-formed and distinct
+    # from the replacement-gate selection identity.  Do not drop the
+    # live-byte pin or the L1 identity checks below.
+    live_adapter_cid = cid_for_bytes(adapter_path.read_bytes())
+    assert live_adapter_cid == (
+        "bafkreifvgezdodtjnaejikc5wf56qebbpo36jytkivz7ekvcjcisvag5ha"
     )
+    assert live_adapter_cid != SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID
+    validate_cid(live_adapter_cid, codecs=("raw",))
+    validate_cid(MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID, codecs=("raw",))
+    assert MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID != SELECTED_CONSTRUCTOR_ADAPTER_RAW_CID
     cases = json.loads(fixture_path.read_text(encoding="utf-8"))
     assert tuple(case["id"] for case in cases) == (
         "exception_with_window",

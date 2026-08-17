@@ -1,0 +1,296 @@
+{
+  "$id": "https://schemas.ipfs-datasets.dev/logic/bridge/canonical-typed-bridge.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Versioned composition of existing typed contracts. CanonicalRoundTripIR, FormalizationArtifact, and LegalIRDocument remain distinct views. DomainLogicSlice is a family-preserving projection role, never a logic family.",
+  "required": [
+    "adapter_name",
+    "assumptions",
+    "bridge_cid",
+    "bridge_cid_codec",
+    "bridge_cid_scope",
+    "construct_dispositions",
+    "domain_logic_slice",
+    "family_identity",
+    "interface",
+    "metadata",
+    "provenance",
+    "schema_version",
+    "source_references",
+    "trace_refs",
+    "unsupported_constructs",
+    "views"
+  ],
+  "title": "CanonicalTypedBridge@1",
+  "type": "object",
+  "x-canonical-cid": {
+    "base": "base32",
+    "codec": "dag-json",
+    "hash": "sha2-256",
+    "scope": "identity_payload",
+    "version": 1
+  },
+  "x-interface": "CanonicalTypedBridge@1",
+  "x-schema-version": "ipfs-datasets.canonical-typed-bridge.v1",
+  "properties": {
+    "adapter_name": { "type": "string" },
+    "assumptions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/assumption" }
+    },
+    "bridge_cid": { "type": "string", "pattern": "^b[a-z2-7]{20,}$" },
+    "bridge_cid_codec": { "const": "dag-json" },
+    "bridge_cid_scope": { "const": "identity_payload" },
+    "construct_dispositions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assumptions",
+        "canonical_ir",
+        "controlled_natural_language",
+        "counterexample_traces",
+        "domain_logic_slice",
+        "family_extensions",
+        "family_identity",
+        "formalization_artifact",
+        "legal_ir_document",
+        "logic_family_representations",
+        "proof_traces",
+        "provenance",
+        "prover_syntax",
+        "source_references",
+        "source_text",
+        "tactic_traces",
+        "translation_traces",
+        "typed_syntax",
+        "unsupported_constructs"
+      ],
+      "properties": {
+        "assumptions": { "$ref": "#/$defs/disposition" },
+        "canonical_ir": { "$ref": "#/$defs/disposition" },
+        "controlled_natural_language": { "$ref": "#/$defs/disposition" },
+        "counterexample_traces": { "$ref": "#/$defs/disposition" },
+        "domain_logic_slice": { "$ref": "#/$defs/disposition" },
+        "family_extensions": { "$ref": "#/$defs/disposition" },
+        "family_identity": { "$ref": "#/$defs/disposition" },
+        "formalization_artifact": { "$ref": "#/$defs/disposition" },
+        "legal_ir_document": { "$ref": "#/$defs/disposition" },
+        "logic_family_representations": { "$ref": "#/$defs/disposition" },
+        "proof_traces": { "$ref": "#/$defs/disposition" },
+        "provenance": { "$ref": "#/$defs/disposition" },
+        "prover_syntax": { "$ref": "#/$defs/disposition" },
+        "source_references": { "$ref": "#/$defs/disposition" },
+        "source_text": { "$ref": "#/$defs/disposition" },
+        "tactic_traces": { "$ref": "#/$defs/disposition" },
+        "translation_traces": { "$ref": "#/$defs/disposition" },
+        "typed_syntax": { "$ref": "#/$defs/disposition" },
+        "unsupported_constructs": { "$ref": "#/$defs/disposition" }
+      }
+    },
+    "domain_logic_slice": { "$ref": "#/$defs/domainLogicSlice" },
+    "family_identity": { "$ref": "#/$defs/familyIdentity" },
+    "interface": { "const": "CanonicalTypedBridge@1" },
+    "metadata": { "type": "object" },
+    "provenance": { "type": "object" },
+    "schema_version": { "const": "ipfs-datasets.canonical-typed-bridge.v1" },
+    "source_references": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sourceReference" }
+    },
+    "trace_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/traceRef" }
+    },
+    "unsupported_constructs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/unsupportedConstruct" }
+    },
+    "views": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/view" }
+    }
+  },
+  "$defs": {
+    "assumption": {
+      "additionalProperties": false,
+      "required": ["assumption_id", "source_ref_ids", "statement"],
+      "type": "object",
+      "properties": {
+        "assumption_id": { "type": "string", "minLength": 1 },
+        "source_ref_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "statement": { "type": "string", "minLength": 1 }
+      }
+    },
+    "disposition": {
+      "enum": ["represented", "explicit_partial", "unsupported"]
+    },
+    "domainLogicSlice": {
+      "additionalProperties": false,
+      "required": [
+        "disposition",
+        "family_id",
+        "member_ids",
+        "projected_payload_cid",
+        "source_payload_cid",
+        "source_schema_id",
+        "source_view",
+        "unsupported"
+      ],
+      "type": "object",
+      "properties": {
+        "disposition": { "$ref": "#/$defs/disposition" },
+        "family_id": { "type": "string", "minLength": 1 },
+        "member_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "projected_payload_cid": {
+          "type": ["string", "null"],
+          "pattern": "^b[a-z2-7]{20,}$"
+        },
+        "source_payload_cid": {
+          "type": ["string", "null"],
+          "pattern": "^b[a-z2-7]{20,}$"
+        },
+        "source_schema_id": { "type": "string" },
+        "source_view": { "type": "string" },
+        "unsupported": {
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/unsupportedConstruct" }
+          ]
+        }
+      }
+    },
+    "familyIdentity": {
+      "additionalProperties": false,
+      "required": [
+        "authority_schema",
+        "family_id",
+        "payload_cid",
+        "payload_codec",
+        "representation_kind"
+      ],
+      "type": "object",
+      "properties": {
+        "authority_schema": { "type": "string", "minLength": 1 },
+        "family_id": { "type": "string", "minLength": 1 },
+        "payload_cid": { "type": "string", "pattern": "^b[a-z2-7]{20,}$" },
+        "payload_codec": { "enum": ["raw", "dag-json"] },
+        "representation_kind": {
+          "enum": [
+            "source_text",
+            "controlled_natural_language",
+            "typed_syntax",
+            "canonical_ir",
+            "logic_family",
+            "prover_syntax",
+            "formalization_artifact",
+            "legal_ir_document",
+            "trace",
+            "family_extension"
+          ]
+        }
+      }
+    },
+    "sourceReference": {
+      "additionalProperties": false,
+      "required": [
+        "end",
+        "ref_id",
+        "source_cid",
+        "source_revision",
+        "source_uri",
+        "start"
+      ],
+      "type": "object",
+      "properties": {
+        "end": { "type": ["integer", "null"], "minimum": 1 },
+        "ref_id": { "type": "string", "minLength": 1 },
+        "source_cid": { "type": "string", "pattern": "^b[a-z2-7]{20,}$" },
+        "source_revision": { "type": "string" },
+        "source_uri": { "type": "string" },
+        "start": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "traceRef": {
+      "additionalProperties": false,
+      "required": ["kind", "schema_id", "trace_cid", "trace_id"],
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": ["proof", "tactic", "counterexample", "translation"]
+        },
+        "schema_id": { "type": "string" },
+        "trace_cid": {
+          "type": ["string", "null"],
+          "pattern": "^b[a-z2-7]{20,}$"
+        },
+        "trace_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "unsupportedConstruct": {
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "construct_id",
+        "disposition",
+        "end",
+        "family_id",
+        "message",
+        "source_cid",
+        "start"
+      ],
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "construct_id": { "type": "string", "minLength": 1 },
+        "disposition": { "enum": ["abstain", "explicit_partial"] },
+        "end": { "type": ["integer", "null"], "minimum": 1 },
+        "family_id": { "type": "string" },
+        "message": { "type": "string", "minLength": 1 },
+        "source_cid": {
+          "type": ["string", "null"],
+          "pattern": "^b[a-z2-7]{20,}$"
+        },
+        "start": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "view": {
+      "additionalProperties": false,
+      "required": [
+        "family_id",
+        "kind",
+        "name",
+        "payload",
+        "payload_cid",
+        "schema_id"
+      ],
+      "type": "object",
+      "properties": {
+        "family_id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "enum": [
+            "source_text",
+            "controlled_natural_language",
+            "typed_syntax",
+            "canonical_ir",
+            "logic_family",
+            "prover_syntax",
+            "formalization_artifact",
+            "legal_ir_document",
+            "trace",
+            "family_extension"
+          ]
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "payload": { "type": "object" },
+        "payload_cid": { "type": "string", "pattern": "^b[a-z2-7]{20,}$" },
+        "schema_id": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -209,6 +209,75 @@ DEFAULT_LEGAL_IR_BRIDGE_NAMES: tuple[str, ...] = tuple(
 )
 
 
+@dataclass(frozen=True)
+class TypedBridgeContractSpec:
+    """Static mapping from an existing contract onto the typed bridge."""
+
+    name: str
+    schema_id: str
+    family_id: str
+    representation_kind: str
+    adapter_names: tuple[str, ...] = ()
+    required_constructs: tuple[str, ...] = ()
+    notes: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "adapter_names": list(self.adapter_names),
+            "family_id": self.family_id,
+            "name": self.name,
+            "notes": self.notes,
+            "representation_kind": self.representation_kind,
+            "required_constructs": list(self.required_constructs),
+            "schema_id": self.schema_id,
+        }
+
+
+_TYPED_CONTRACTS: tuple[TypedBridgeContractSpec, ...] = (
+    TypedBridgeContractSpec(
+        name="canonical_roundtrip_ir",
+        schema_id="CanonicalRoundTripIR@1",
+        family_id="canonical_roundtrip",
+        representation_kind="canonical_ir",
+        required_constructs=("canonical_ir", "family_identity", "unsupported_constructs"),
+        notes="Measured seven-facet O/P/F IR; parallel to LegalIRDocument.",
+    ),
+    TypedBridgeContractSpec(
+        name="legal_ir_document",
+        schema_id="LegalIRDocument@1",
+        family_id="legal",
+        representation_kind="legal_ir_document",
+        adapter_names=tuple(spec.name for spec in _SPECS if spec.implemented),
+        required_constructs=("legal_ir_document", "family_identity", "source_references"),
+        notes="Source-bearing optimizer envelope; not an alias of CanonicalRoundTripIR.",
+    ),
+    TypedBridgeContractSpec(
+        name="formalization_artifact",
+        schema_id="formalization-artifact/v1",
+        family_id="legal",
+        representation_kind="formalization_artifact",
+        required_constructs=(
+            "formalization_artifact",
+            "assumptions",
+            "source_references",
+            "family_identity",
+        ),
+        notes="Domain-neutral formalization artifact; family identity stays in domain.",
+    ),
+    TypedBridgeContractSpec(
+        name="domain_logic_slice_role",
+        schema_id="bridge.domain_logic_slice",
+        family_id="unspecified",
+        representation_kind="domain_logic_slice",
+        required_constructs=("domain_logic_slice",),
+        notes=(
+            "Projection role only. Not a logic family and not a silent alias of "
+            "an existing family AST."
+        ),
+    ),
+)
+
+
 def logic_bridge_specs(*, implemented_only: bool = False) -> tuple[LogicBridgeSpec, ...]:
     """Return bridge adapter specs in deterministic order."""
 
@@ -254,6 +323,23 @@ def load_logic_bridge_adapter(name: str, **kwargs: Any) -> Any:
     return adapter_cls(**kwargs)
 
 
+def typed_bridge_contract_specs() -> tuple[TypedBridgeContractSpec, ...]:
+    """Return the existing-contract mappings composed by the typed bridge."""
+
+    return _TYPED_CONTRACTS
+
+
+def typed_bridge_contract_manifest() -> dict[str, Any]:
+    """Return the typed-contract manifest used by adapter conformance."""
+
+    return {
+        "contract_count": len(_TYPED_CONTRACTS),
+        "contracts": [spec.to_dict() for spec in _TYPED_CONTRACTS],
+        "implemented_adapter_bridges": list(DEFAULT_LEGAL_IR_BRIDGE_NAMES),
+        "manifest_version": 1,
+    }
+
+
 def bridge_name_for_component(target_component: str) -> Optional[str]:
     """Return the most specific bridge registered for an optimizer component."""
 
@@ -274,9 +360,12 @@ def bridge_name_for_component(target_component: str) -> Optional[str]:
 __all__ = [
     "DEFAULT_LEGAL_IR_BRIDGE_NAMES",
     "LogicBridgeSpec",
+    "TypedBridgeContractSpec",
     "bridge_name_for_component",
     "load_logic_bridge_adapter",
     "logic_bridge_manifest",
     "logic_bridge_spec",
     "logic_bridge_specs",
+    "typed_bridge_contract_manifest",
+    "typed_bridge_contract_specs",
 ]
