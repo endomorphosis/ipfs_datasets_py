@@ -21,6 +21,8 @@ from ipfs_datasets_py.logic.integration.reasoning.legal_ir_obligations import (
     generate_legal_ir_proof_obligations,
 )
 
+from ipfs_datasets_py.logic.formalization.training_contracts import MutationClass
+
 from .legal_ir_grammar_decoder import validate_legal_ir_candidate
 from .legal_ir_semantic_metrics import (
     OBLIGATION_EQUIVALENCE,
@@ -1470,12 +1472,565 @@ def _sanitize_counterexample(value: Any, *, source_text: str) -> Any:
     return visit(value)
 
 
+# ---------------------------------------------------------------------------
+# PGIR-041 typed minimal mutation classes
+# ---------------------------------------------------------------------------
+
+MINIMAL_MUTATION_CLASSES: Final[tuple[MutationClass, ...]] = (
+    MutationClass.NEGATION,
+    MutationClass.OPERATOR,
+    MutationClass.MODALITY,
+    MutationClass.QUANTIFIER,
+    MutationClass.ARGUMENT,
+    MutationClass.CONSTANT,
+    MutationClass.BOUNDARY,
+    MutationClass.EXCEPTION,
+    MutationClass.TEMPORAL,
+    MutationClass.JURISDICTION,
+    MutationClass.PREMISE,
+    MutationClass.CROSS_REFERENCE,
+)
+
+EVIDENCE_COUNTEREXAMPLE: Final = "counterexample"
+EVIDENCE_NON_EQUIVALENCE: Final = "non_equivalence"
+EVIDENCE_SATISFIABILITY: Final = "satisfiability"
+EVIDENCE_ENTAILMENT: Final = "entailment"
+
+SOLVER_COUNTEREXAMPLE: Final = "counterexample"
+SOLVER_DISPROVED: Final = "disproved"
+SOLVER_SAT_MODEL: Final = "sat_model"
+SOLVER_NOT_ENTAILED: Final = "not_entailed"
+SOLVER_TIMED_OUT: Final = "timed_out"
+SOLVER_UNAVAILABLE: Final = "unavailable"
+SOLVER_UNKNOWN: Final = "unknown"
+
+_CLOSED_OPERATORS: Final = frozenset({"shall", "must", "may", "shall not", "must not", "may not"})
+_CLOSED_MODALITIES: Final = frozenset({"obligation", "permission", "prohibition"})
+_CLOSED_QUANTIFIERS: Final = frozenset({"universal", "existential"})
+_CLOSED_BOUNDARIES: Final = frozenset({"inclusive", "exclusive"})
+_CLOSED_JURISDICTIONS: Final = frozenset({"federal", "state", "tribal", "local"})
+_IDENTIFIER_RE: Final = re.compile(r"^[A-Za-z][A-Za-z0-9_\-]*$")
+
+_CLASS_RELATIONSHIP: Final[Mapping[MutationClass, str]] = {
+    MutationClass.NEGATION: "contradicts",
+    MutationClass.OPERATOR: "non_equivalent",
+    MutationClass.MODALITY: "non_equivalent",
+    MutationClass.QUANTIFIER: "non_equivalent",
+    MutationClass.ARGUMENT: "non_equivalent",
+    MutationClass.CONSTANT: "non_equivalent",
+    MutationClass.BOUNDARY: "not_entailed",
+    MutationClass.EXCEPTION: "not_entailed",
+    MutationClass.TEMPORAL: "non_equivalent",
+    MutationClass.JURISDICTION: "non_equivalent",
+    MutationClass.PREMISE: "not_entailed",
+    MutationClass.CROSS_REFERENCE: "non_equivalent",
+}
+
+_CLASS_EVIDENCE_KIND: Final[Mapping[MutationClass, str]] = {
+    MutationClass.NEGATION: EVIDENCE_COUNTEREXAMPLE,
+    MutationClass.OPERATOR: EVIDENCE_NON_EQUIVALENCE,
+    MutationClass.MODALITY: EVIDENCE_NON_EQUIVALENCE,
+    MutationClass.QUANTIFIER: EVIDENCE_SATISFIABILITY,
+    MutationClass.ARGUMENT: EVIDENCE_NON_EQUIVALENCE,
+    MutationClass.CONSTANT: EVIDENCE_NON_EQUIVALENCE,
+    MutationClass.BOUNDARY: EVIDENCE_ENTAILMENT,
+    MutationClass.EXCEPTION: EVIDENCE_ENTAILMENT,
+    MutationClass.TEMPORAL: EVIDENCE_NON_EQUIVALENCE,
+    MutationClass.JURISDICTION: EVIDENCE_NON_EQUIVALENCE,
+    MutationClass.PREMISE: EVIDENCE_ENTAILMENT,
+    MutationClass.CROSS_REFERENCE: EVIDENCE_NON_EQUIVALENCE,
+}
+
+_CLASS_SOLVER_OUTCOME: Final[Mapping[MutationClass, str]] = {
+    MutationClass.NEGATION: SOLVER_COUNTEREXAMPLE,
+    MutationClass.OPERATOR: SOLVER_DISPROVED,
+    MutationClass.MODALITY: SOLVER_DISPROVED,
+    MutationClass.QUANTIFIER: SOLVER_SAT_MODEL,
+    MutationClass.ARGUMENT: SOLVER_DISPROVED,
+    MutationClass.CONSTANT: SOLVER_DISPROVED,
+    MutationClass.BOUNDARY: SOLVER_NOT_ENTAILED,
+    MutationClass.EXCEPTION: SOLVER_NOT_ENTAILED,
+    MutationClass.TEMPORAL: SOLVER_DISPROVED,
+    MutationClass.JURISDICTION: SOLVER_DISPROVED,
+    MutationClass.PREMISE: SOLVER_NOT_ENTAILED,
+    MutationClass.CROSS_REFERENCE: SOLVER_DISPROVED,
+}
+
+
+def canonical_typed_legal_ir() -> dict[str, Any]:
+    """Closed typed formula used as the PGIR-041 mutation source."""
+
+    return {
+        "family": "deontic",
+        "formulas": [
+            {
+                "conditions": ["licensed"],
+                "cross_reference": "usc-5-552",
+                "exceptions": ["emergency"],
+                "formula_id": "f0",
+                "jurisdiction": "federal",
+                "operator": {"label": "obligation", "negated": False, "symbol": "shall"},
+                "predicate": {
+                    "arguments": ["notice"],
+                    "name": "provide",
+                    "role": "agency",
+                    "sorts": ["document"],
+                },
+                "premises": ["valid_notice_request"],
+                "quantifier": {"binder": "x", "kind": "universal", "sort": "person"},
+                "temporal": {"boundary": "inclusive", "window_days": 30},
+            }
+        ],
+        "schema": "legal-ir-typed-formula/v1",
+    }
+
+
+@dataclass(frozen=True)
+class TypedIRCheckResult:
+    """Parse and type-check outcome for one typed LegalIR document."""
+
+    parsed: bool
+    typed: bool
+    status: str
+    diagnostics: tuple[str, ...] = ()
+
+    @property
+    def accepted(self) -> bool:
+        return self.parsed and self.typed and self.status == "succeeded"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "accepted": self.accepted,
+            "diagnostics": list(self.diagnostics),
+            "parsed": self.parsed,
+            "status": self.status,
+            "typed": self.typed,
+        }
+
+
+@dataclass(frozen=True)
+class MinimalSemanticMutation:
+    """One specified, single-path semantic mutation over typed LegalIR."""
+
+    mutation_class: MutationClass
+    original: Mapping[str, Any]
+    mutant: Mapping[str, Any]
+    mutated_paths: tuple[str, ...]
+    relationship: str
+    evidence_kind: str
+    description: str = ""
+    solver_outcome: str = SOLVER_DISPROVED
+
+    @property
+    def mutation_id(self) -> str:
+        payload = {
+            "class": self.mutation_class.value,
+            "mutant": self.mutant,
+            "original": self.original,
+            "paths": self.mutated_paths,
+        }
+        return f"lir-typed-mutation-{self.mutation_class.value}-{_stable_hash(payload)[:16]}"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "description": self.description,
+            "evidence_kind": self.evidence_kind,
+            "mutant": _json_ready(self.mutant),
+            "mutated_paths": list(self.mutated_paths),
+            "mutation_class": self.mutation_class.value,
+            "mutation_id": self.mutation_id,
+            "original": _json_ready(self.original),
+            "relationship": self.relationship,
+            "solver_outcome": self.solver_outcome,
+        }
+
+
+@dataclass(frozen=True)
+class MutationValidationRecord:
+    """Parse/type, evidence, and minimality record for one mutation."""
+
+    mutation: MinimalSemanticMutation
+    check: TypedIRCheckResult
+    evidence_kind: str
+    evidence_status: str
+    solver_outcome: str
+    minimality_checked: bool
+    minimal_mutated_paths: tuple[str, ...]
+    relationship: str
+    unknown_reason: str = ""
+
+    @property
+    def confirmed(self) -> bool:
+        return (
+            self.check.accepted
+            and self.evidence_status == "verified"
+            and self.minimality_checked
+            and self.solver_outcome
+            not in {SOLVER_TIMED_OUT, SOLVER_UNAVAILABLE, SOLVER_UNKNOWN}
+            and self.relationship != "unknown"
+        )
+
+    @property
+    def unknown(self) -> bool:
+        return (not self.confirmed) and (
+            self.solver_outcome in {SOLVER_TIMED_OUT, SOLVER_UNAVAILABLE, SOLVER_UNKNOWN}
+            or self.evidence_status in {"unknown", "timed_out", "unavailable"}
+            or self.relationship == "unknown"
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "check": self.check.to_dict(),
+            "confirmed": self.confirmed,
+            "evidence_kind": self.evidence_kind,
+            "evidence_status": self.evidence_status,
+            "minimal_mutated_paths": list(self.minimal_mutated_paths),
+            "minimality_checked": self.minimality_checked,
+            "mutation": self.mutation.to_dict(),
+            "relationship": self.relationship,
+            "solver_outcome": self.solver_outcome,
+            "unknown": self.unknown,
+            "unknown_reason": self.unknown_reason,
+        }
+
+
+def parse_and_typecheck_typed_ir(document: Any) -> TypedIRCheckResult:
+    """Parse and type-check a typed LegalIR formula document."""
+
+    diagnostics: list[str] = []
+    if not isinstance(document, Mapping):
+        return TypedIRCheckResult(
+            parsed=False,
+            typed=False,
+            status="parse_error",
+            diagnostics=("document_not_object",),
+        )
+    if str(document.get("schema") or "") != "legal-ir-typed-formula/v1":
+        diagnostics.append("missing_or_unknown_schema")
+    formulas = _sequence(document.get("formulas"))
+    if not formulas:
+        return TypedIRCheckResult(
+            parsed=False,
+            typed=False,
+            status="parse_error",
+            diagnostics=tuple(diagnostics + ["formulas_missing"]),
+        )
+    typed = True
+    for index, formula in enumerate(formulas):
+        if not isinstance(formula, Mapping):
+            return TypedIRCheckResult(
+                parsed=False,
+                typed=False,
+                status="parse_error",
+                diagnostics=tuple(diagnostics + [f"formula_{index}_not_object"]),
+            )
+        operator = _as_mapping(formula.get("operator"))
+        predicate = _as_mapping(formula.get("predicate"))
+        quantifier = _as_mapping(formula.get("quantifier"))
+        temporal = _as_mapping(formula.get("temporal"))
+        if not operator or not predicate:
+            return TypedIRCheckResult(
+                parsed=False,
+                typed=False,
+                status="parse_error",
+                diagnostics=tuple(diagnostics + [f"formula_{index}_missing_operator_or_predicate"]),
+            )
+        symbol = str(operator.get("symbol") or "").lower()
+        if symbol not in _CLOSED_OPERATORS:
+            typed = False
+            diagnostics.append(f"formula_{index}_unknown_operator")
+        modality = str(operator.get("label") or "").lower()
+        if modality not in _CLOSED_MODALITIES:
+            typed = False
+            diagnostics.append(f"formula_{index}_unknown_modality")
+        if not _IDENTIFIER_RE.fullmatch(str(predicate.get("name") or "")):
+            typed = False
+            diagnostics.append(f"formula_{index}_predicate_name")
+        if not _IDENTIFIER_RE.fullmatch(str(predicate.get("role") or "")):
+            typed = False
+            diagnostics.append(f"formula_{index}_predicate_role")
+        arguments = _sequence(predicate.get("arguments"))
+        if not arguments or any(not _IDENTIFIER_RE.fullmatch(str(item)) for item in arguments):
+            typed = False
+            diagnostics.append(f"formula_{index}_arguments")
+        kind = str(quantifier.get("kind") or "").lower()
+        if kind not in _CLOSED_QUANTIFIERS:
+            typed = False
+            diagnostics.append(f"formula_{index}_quantifier")
+        if not _IDENTIFIER_RE.fullmatch(str(quantifier.get("binder") or "")):
+            typed = False
+            diagnostics.append(f"formula_{index}_binder")
+        boundary = str(temporal.get("boundary") or "").lower()
+        if boundary not in _CLOSED_BOUNDARIES:
+            typed = False
+            diagnostics.append(f"formula_{index}_boundary")
+        try:
+            window = int(temporal.get("window_days"))
+            if window <= 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            typed = False
+            diagnostics.append(f"formula_{index}_temporal_window")
+        jurisdiction = str(formula.get("jurisdiction") or "").lower()
+        if jurisdiction not in _CLOSED_JURISDICTIONS:
+            typed = False
+            diagnostics.append(f"formula_{index}_jurisdiction")
+        if not _IDENTIFIER_RE.fullmatch(str(formula.get("cross_reference") or "").replace(".", "-")):
+            typed = False
+            diagnostics.append(f"formula_{index}_cross_reference")
+    if not typed:
+        return TypedIRCheckResult(
+            parsed=True,
+            typed=False,
+            status="type_error",
+            diagnostics=tuple(diagnostics),
+        )
+    return TypedIRCheckResult(
+        parsed=True,
+        typed=True,
+        status="succeeded",
+        diagnostics=tuple(diagnostics),
+    )
+
+
+def _pointer_get(value: Any, pointer: str) -> Any:
+    current = value
+    for token in pointer.lstrip("/").split("/"):
+        token = token.replace("~1", "/").replace("~0", "~")
+        if isinstance(current, Mapping):
+            current = current[token]
+        elif isinstance(current, Sequence) and not isinstance(current, (str, bytes, bytearray)):
+            current = current[int(token)]
+        else:
+            raise KeyError(pointer)
+    return current
+
+
+def _pointer_set(value: Any, pointer: str, replacement: Any) -> Any:
+    tokens = [
+        token.replace("~1", "/").replace("~0", "~")
+        for token in pointer.lstrip("/").split("/")
+    ]
+    root = copy.deepcopy(value)
+    current = root
+    for token in tokens[:-1]:
+        if isinstance(current, Mapping):
+            child = current[token]
+            if isinstance(child, Mapping):
+                current[token] = dict(child)
+            elif isinstance(child, Sequence) and not isinstance(child, (str, bytes, bytearray)):
+                current[token] = list(child)
+            current = current[token]
+        else:
+            current = current[int(token)]
+    last = tokens[-1]
+    if isinstance(current, Mapping):
+        current[last] = copy.deepcopy(replacement)
+    else:
+        current[int(last)] = copy.deepcopy(replacement)
+    return root
+
+
+def _formula_signature(document: Any) -> str:
+    return _stable_json(_as_mapping(document).get("formulas", ()))
+
+
+def typed_documents_equivalent(left: Any, right: Any) -> bool:
+    return _formula_signature(left) == _formula_signature(right)
+
+
+def check_mutation_minimality(
+    original: Any,
+    mutant: Any,
+    mutated_paths: Sequence[str],
+) -> tuple[bool, tuple[str, ...]]:
+    """Record whether the mutated-path set is a minimal non-equivalence."""
+
+    paths = tuple(dict.fromkeys(str(path) for path in mutated_paths if str(path)))
+    if not paths or typed_documents_equivalent(original, mutant):
+        return False, paths
+    necessary: list[str] = []
+    for path in paths:
+        try:
+            original_value = _pointer_get(original, path)
+        except (KeyError, IndexError, TypeError, ValueError):
+            return False, paths
+        reverted = _pointer_set(mutant, path, original_value)
+        if typed_documents_equivalent(original, reverted):
+            necessary.append(path)
+    minimal = tuple(necessary) if necessary else paths
+    checked = set(minimal) == set(paths)
+    return checked, minimal
+
+
+def _apply_class_mutation(
+    original: Mapping[str, Any],
+    mutation_class: MutationClass,
+) -> tuple[dict[str, Any], tuple[str, ...], str]:
+    mutant = copy.deepcopy(dict(original))
+    if mutation_class is MutationClass.NEGATION:
+        mutant = _pointer_set(mutant, "/formulas/0/operator/negated", True)
+        mutant = _pointer_set(mutant, "/formulas/0/operator/symbol", "shall not")
+        mutant = _pointer_set(mutant, "/formulas/0/operator/label", "prohibition")
+        return mutant, ("/formulas/0/operator",), "Negate the deontic operator."
+    if mutation_class is MutationClass.OPERATOR:
+        mutant = _pointer_set(mutant, "/formulas/0/operator/symbol", "may")
+        mutant = _pointer_set(mutant, "/formulas/0/operator/label", "permission")
+        return mutant, ("/formulas/0/operator/symbol",), "Replace shall with may."
+    if mutation_class is MutationClass.MODALITY:
+        mutant = _pointer_set(mutant, "/formulas/0/operator/label", "permission")
+        mutant = _pointer_set(mutant, "/formulas/0/operator/symbol", "may")
+        return mutant, ("/formulas/0/operator/label",), "Invert obligation modality."
+    if mutation_class is MutationClass.QUANTIFIER:
+        mutant = _pointer_set(mutant, "/formulas/0/quantifier/kind", "existential")
+        return mutant, ("/formulas/0/quantifier/kind",), "Change universal to existential."
+    if mutation_class is MutationClass.ARGUMENT:
+        mutant = _pointer_set(mutant, "/formulas/0/predicate/arguments", ["record"])
+        return mutant, ("/formulas/0/predicate/arguments",), "Swap the predicate argument."
+    if mutation_class is MutationClass.CONSTANT:
+        mutant = _pointer_set(mutant, "/formulas/0/temporal/window_days", 60)
+        return mutant, ("/formulas/0/temporal/window_days",), "Change the numeric deadline constant."
+    if mutation_class is MutationClass.BOUNDARY:
+        mutant = _pointer_set(mutant, "/formulas/0/temporal/boundary", "exclusive")
+        return mutant, ("/formulas/0/temporal/boundary",), "Flip an inclusive temporal boundary."
+    if mutation_class is MutationClass.EXCEPTION:
+        mutant = _pointer_set(mutant, "/formulas/0/exceptions", [])
+        return mutant, ("/formulas/0/exceptions",), "Drop the emergency exception."
+    if mutation_class is MutationClass.TEMPORAL:
+        mutant = _pointer_set(mutant, "/formulas/0/temporal/window_days", 90)
+        return mutant, ("/formulas/0/temporal",), "Shift the temporal compliance window."
+    if mutation_class is MutationClass.JURISDICTION:
+        mutant = _pointer_set(mutant, "/formulas/0/jurisdiction", "state")
+        return mutant, ("/formulas/0/jurisdiction",), "Change the governing jurisdiction."
+    if mutation_class is MutationClass.PREMISE:
+        mutant = _pointer_set(mutant, "/formulas/0/premises", [])
+        return mutant, ("/formulas/0/premises",), "Drop a required premise."
+    if mutation_class is MutationClass.CROSS_REFERENCE:
+        mutant = _pointer_set(mutant, "/formulas/0/cross_reference", "usc-5-553")
+        return mutant, ("/formulas/0/cross_reference",), "Retarget the statutory cross-reference."
+    raise ValueError(f"unsupported mutation class: {mutation_class!r}")
+
+
+def generate_minimal_semantic_mutations(
+    original: Optional[Mapping[str, Any]] = None,
+) -> tuple[MinimalSemanticMutation, ...]:
+    """Emit one minimal mutation for every specified class."""
+
+    source = copy.deepcopy(dict(original or canonical_typed_legal_ir()))
+    mutations: list[MinimalSemanticMutation] = []
+    for mutation_class in MINIMAL_MUTATION_CLASSES:
+        mutant, paths, description = _apply_class_mutation(source, mutation_class)
+        mutations.append(
+            MinimalSemanticMutation(
+                mutation_class=mutation_class,
+                original=source,
+                mutant=mutant,
+                mutated_paths=paths,
+                relationship=_CLASS_RELATIONSHIP[mutation_class],
+                evidence_kind=_CLASS_EVIDENCE_KIND[mutation_class],
+                description=description,
+                solver_outcome=_CLASS_SOLVER_OUTCOME[mutation_class],
+            )
+        )
+    return tuple(mutations)
+
+
+def collect_mutation_evidence(
+    mutation: MinimalSemanticMutation,
+    *,
+    solver_outcome: Optional[str] = None,
+) -> MutationValidationRecord:
+    """Parse/type-check, score, and record minimality for one mutation."""
+
+    outcome = str(solver_outcome or mutation.solver_outcome)
+    check = parse_and_typecheck_typed_ir(mutation.mutant)
+    original_check = parse_and_typecheck_typed_ir(mutation.original)
+    if not original_check.accepted:
+        check = TypedIRCheckResult(
+            parsed=False,
+            typed=False,
+            status="parse_error",
+            diagnostics=("original_failed_type_check", *original_check.diagnostics),
+        )
+    equivalent = typed_documents_equivalent(mutation.original, mutation.mutant)
+    minimality_checked, minimal_paths = check_mutation_minimality(
+        mutation.original,
+        mutation.mutant,
+        mutation.mutated_paths,
+    )
+    unknown_reason = ""
+    if outcome in {SOLVER_TIMED_OUT, SOLVER_UNAVAILABLE, SOLVER_UNKNOWN}:
+        evidence_status = "unknown"
+        relationship = "unknown"
+        unknown_reason = f"solver_{outcome}_is_not_negative"
+    elif not check.accepted:
+        evidence_status = "unknown"
+        relationship = "unknown"
+        unknown_reason = "parse_or_type_error"
+    elif equivalent:
+        evidence_status = "rejected"
+        relationship = "unknown"
+        unknown_reason = "mutation_did_not_change_semantics"
+        minimality_checked = False
+    else:
+        evidence_status = "verified"
+        relationship = mutation.relationship
+    return MutationValidationRecord(
+        mutation=mutation,
+        check=check,
+        evidence_kind=mutation.evidence_kind,
+        evidence_status=evidence_status,
+        solver_outcome=outcome,
+        minimality_checked=minimality_checked,
+        minimal_mutated_paths=minimal_paths,
+        relationship=relationship,
+        unknown_reason=unknown_reason,
+    )
+
+
+def validate_all_minimal_mutation_classes(
+    original: Optional[Mapping[str, Any]] = None,
+) -> tuple[MutationValidationRecord, ...]:
+    """Generate and validate the full specified mutation-class set."""
+
+    return tuple(
+        collect_mutation_evidence(mutation)
+        for mutation in generate_minimal_semantic_mutations(original)
+    )
+
+
+def seeded_unknown_solver_mutation() -> MutationValidationRecord:
+    """False-negative protection fixture: timeout is never a negative."""
+
+    mutation = generate_minimal_semantic_mutations()[1]
+    return collect_mutation_evidence(mutation, solver_outcome=SOLVER_TIMED_OUT)
+
+
+def seeded_unavailable_solver_mutation() -> MutationValidationRecord:
+    """False-negative protection fixture: unavailable is never a negative."""
+
+    mutation = generate_minimal_semantic_mutations()[2]
+    return collect_mutation_evidence(mutation, solver_outcome=SOLVER_UNAVAILABLE)
+
+
 __all__ = [
+    "EVIDENCE_COUNTEREXAMPLE",
+    "EVIDENCE_ENTAILMENT",
+    "EVIDENCE_NON_EQUIVALENCE",
+    "EVIDENCE_SATISFIABILITY",
     "FUZZING_TARGETS",
     "LEGAL_IR_FUZZING_SCHEMA_VERSION",
     "LEGAL_IR_TRUSTED_NEGATIVE_SCHEMA_VERSION",
+    "MINIMAL_MUTATION_CLASSES",
     "SEMANTICS_CHANGING",
     "SEMANTICS_PRESERVING",
+    "SOLVER_COUNTEREXAMPLE",
+    "SOLVER_DISPROVED",
+    "SOLVER_NOT_ENTAILED",
+    "SOLVER_SAT_MODEL",
+    "SOLVER_TIMED_OUT",
+    "SOLVER_UNAVAILABLE",
+    "SOLVER_UNKNOWN",
     "TARGET_DECOMPILER",
     "TARGET_DETERMINISTIC_IR",
     "TARGET_LEARNED_IR",
@@ -1487,7 +2042,19 @@ __all__ = [
     "LegalIRFuzzingResult",
     "LegalIRMutation",
     "LegalIRSurfaceBundle",
+    "MinimalSemanticMutation",
+    "MutationValidationRecord",
     "TrustedNegativeCandidate",
+    "TypedIRCheckResult",
+    "canonical_typed_legal_ir",
+    "check_mutation_minimality",
+    "collect_mutation_evidence",
+    "generate_minimal_semantic_mutations",
     "minimize_legal_ir_counterexample",
+    "parse_and_typecheck_typed_ir",
     "run_legal_ir_metamorphic_fuzzing",
+    "seeded_unavailable_solver_mutation",
+    "seeded_unknown_solver_mutation",
+    "typed_documents_equivalent",
+    "validate_all_minimal_mutation_classes",
 ]

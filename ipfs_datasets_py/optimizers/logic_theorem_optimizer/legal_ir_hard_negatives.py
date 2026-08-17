@@ -18,11 +18,76 @@ import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from enum import Enum
+from pathlib import Path
 from typing import Any, Final, Optional
+
+from ipfs_datasets_py.logic.formalization.training_contracts import (
+    EvidenceStatus,
+    ExampleDisposition,
+    IRHardNegative,
+    IRTrainingExample,
+    LabelAuthority,
+    LabelEvidence,
+    LineageBinding,
+    MutationClass,
+    NegativeDisposition,
+    RepresentationKind,
+    SemanticRelationship,
+    StatementAuthority,
+    StatementBinding,
+    TrainingContractValidationError,
+)
+from ipfs_datasets_py.logic.formalization.training_shared import (
+    IR_HARD_NEGATIVE_INTERFACE,
+    IR_HARD_NEGATIVE_SCHEMA_VERSION,
+    _RELATION_AUTHORITIES,
+)
+from ipfs_datasets_py.logic.ir_core.protocols import AuthorityKind
+from ipfs_datasets_py.logic.ir_core.source_lineage import RightsDisposition
 
 from .legal_ir_family_evaluator import (
     LEGAL_IR_EVALUATION_FAMILIES,
     canonical_legal_ir_evaluation_family,
+)
+from .legal_ir_fuzzing import (
+    EVIDENCE_COUNTEREXAMPLE,
+    EVIDENCE_ENTAILMENT,
+    EVIDENCE_NON_EQUIVALENCE,
+    EVIDENCE_SATISFIABILITY,
+    MINIMAL_MUTATION_CLASSES,
+    MutationValidationRecord,
+    SOLVER_TIMED_OUT,
+    SOLVER_UNAVAILABLE,
+    SOLVER_UNKNOWN,
+    collect_mutation_evidence,
+    generate_minimal_semantic_mutations,
+    seeded_unavailable_solver_mutation,
+    seeded_unknown_solver_mutation,
+    validate_all_minimal_mutation_classes,
+)
+from .legal_ir_positive_pairs import (
+    INDEPENDENT_AUTHORITIES,
+    MODEL_ONLY_AUTHORITIES,
+    PositiveEquivalenceIndex,
+    SEALED_CORPUS_MANIFEST_CID,
+    SEALED_CORPUS_MANIFEST_ID,
+    SEALED_CORPUS_ROOT_SHA256,
+    SEALED_LINEAGE_GRAPH_CID,
+    SEALED_LINEAGE_GRAPH_ID,
+    SEALED_SPLIT_MANIFEST_DIGEST,
+    SEALED_SPLIT_MANIFEST_ID,
+    SEALED_SPLIT_ROOT_SHA256,
+    TRAIN_SPLIT_NAME,
+    cas_write_json,
+    content_cid,
+    content_digest,
+    load_positive_pair_shards,
+    make_relationship_evidence,
+    make_statement,
+    mine_canonical_positive_pairs,
+    resolve_positive_pair_data_dir,
+    sealed_campaign_lineage,
 )
 from .legal_ir_semantic_metrics import (
     OBLIGATION_EQUIVALENCE,
@@ -1260,28 +1325,1154 @@ def _semantic_score_from_positive_pair(
     return min(values) if values else default
 
 
+# ---------------------------------------------------------------------------
+# PGIR-041 IRHardNegative@1 miner
+# ---------------------------------------------------------------------------
+
+IR_HARD_NEGATIVE_SHARD_INTERFACE: Final = "IRHardNegativeShard@1"
+IR_HARD_NEGATIVE_SHARD_SCHEMA: Final = "ir-hard-negative-shard/v1"
+IR_HARD_NEGATIVE_RECIPE_INTERFACE: Final = "IRHardNegativeRecipe@1"
+IR_HARD_NEGATIVE_RECIPE_SCHEMA: Final = "ir-hard-negative-recipe/v1"
+IR_HARD_NEGATIVE_MANIFEST_INTERFACE: Final = "IRHardNegativeManifest@1"
+IR_HARD_NEGATIVE_MANIFEST_SCHEMA: Final = "ir-hard-negative-manifest/v1"
+IR_HARD_NEGATIVE_INDEX_INTERFACE: Final = "IRHardNegativeIndex@1"
+IR_HARD_NEGATIVE_MINER_VERSION: Final = "pgir-041-negative-miner-v1"
+IR_HARD_NEGATIVE_TASK_ID: Final = "PGIR-041"
+
+RECEIPT_COUNTEREXAMPLE: Final = "counterexample"
+RECEIPT_NON_EQUIVALENCE: Final = "non_equivalence"
+RECEIPT_SATISFIABILITY: Final = "satisfiability"
+RECEIPT_ENTAILMENT: Final = "entailment"
+
+RECEIPT_KINDS: Final[tuple[str, ...]] = (
+    RECEIPT_COUNTEREXAMPLE,
+    RECEIPT_NON_EQUIVALENCE,
+    RECEIPT_SATISFIABILITY,
+    RECEIPT_ENTAILMENT,
+)
+
+FALSE_NEGATIVE_SIBLING_CLASSES: Final[frozenset[SemanticRelationship]] = frozenset(
+    {
+        SemanticRelationship.EXACT,
+        SemanticRelationship.ALPHA_EQUIVALENT,
+        SemanticRelationship.CANONICAL_EQUIVALENT,
+        SemanticRelationship.LOGICALLY_EQUIVALENT,
+        SemanticRelationship.PROOF_EQUIVALENT,
+        SemanticRelationship.TRANSLATION_EQUIVALENT,
+        SemanticRelationship.PARAPHRASE,
+        SemanticRelationship.EQUISATISFIABLE,
+    }
+)
+
+DEFAULT_NEGATIVE_PAIR_DATA_DIR: Final = Path("data/ir_learning/pairs/negative")
+
+_RELATIONSHIP_FROM_VALUE: Final[dict[str, SemanticRelationship]] = {
+    item.value: item for item in SemanticRelationship
+}
+
+_RECEIPT_KIND_FOR_EVIDENCE: Final[dict[str, str]] = {
+    EVIDENCE_COUNTEREXAMPLE: RECEIPT_COUNTEREXAMPLE,
+    EVIDENCE_NON_EQUIVALENCE: RECEIPT_NON_EQUIVALENCE,
+    EVIDENCE_SATISFIABILITY: RECEIPT_SATISFIABILITY,
+    EVIDENCE_ENTAILMENT: RECEIPT_ENTAILMENT,
+}
+
+_AUTHORITY_FOR_EVIDENCE: Final[dict[str, LabelAuthority]] = {
+    EVIDENCE_COUNTEREXAMPLE: LabelAuthority.INDEPENDENT_COUNTEREXAMPLE_CHECKER,
+    EVIDENCE_NON_EQUIVALENCE: LabelAuthority.INDEPENDENT_SEMANTIC_CHECKER,
+    EVIDENCE_SATISFIABILITY: LabelAuthority.INDEPENDENT_COUNTEREXAMPLE_CHECKER,
+    EVIDENCE_ENTAILMENT: LabelAuthority.INDEPENDENT_SEMANTIC_CHECKER,
+}
+
+_RESULT_AUTHORITY_FOR_EVIDENCE: Final[dict[str, AuthorityKind]] = {
+    EVIDENCE_COUNTEREXAMPLE: AuthorityKind.SATISFIABILITY,
+    EVIDENCE_NON_EQUIVALENCE: AuthorityKind.SATISFIABILITY,
+    EVIDENCE_SATISFIABILITY: AuthorityKind.SATISFIABILITY,
+    EVIDENCE_ENTAILMENT: AuthorityKind.THEOREM_PROOF,
+}
+
+
+class HardNegativeMinerError(ValueError):
+    """Raised when a candidate cannot become an ``IRHardNegative@1`` record."""
+
+
+class HardNegativeAdmissionError(HardNegativeMinerError):
+    """Raised when an explicit evidence or false-negative gate fails closed."""
+
+
+class HardNegativeShardConflictError(HardNegativeMinerError):
+    """Raised when a compare-and-swap shard write would clobber different bytes."""
+
+
+class HardNegativeRejection(str, Enum):
+    """Closed vocabulary of miner rejection reasons."""
+
+    TIMEOUT_AS_NEGATIVE = "timeout_as_negative"
+    UNAVAILABLE_AS_NEGATIVE = "unavailable_as_negative"
+    UNKNOWN_AS_NEGATIVE = "unknown_as_negative"
+    UNCHECKED_MODEL_LABEL = "unchecked_model_label"
+    SAME_PROPOSITION_SIBLING = "same_proposition_sibling"
+    POSITIVE_EQUIVALENCE_SIBLING = "positive_equivalence_sibling"
+    ALPHA_EQUIVALENT_SIBLING = "alpha_equivalent_sibling"
+    TRANSLATION_SIBLING = "translation_sibling"
+    PROOF_EQUIVALENT_SIBLING = "proof_equivalent_sibling"
+    PARSE_OR_TYPE_ERROR = "parse_or_type_error"
+    MINIMALITY_UNCHECKED = "minimality_unchecked"
+    MISSING_EVIDENCE = "missing_evidence"
+    UNVERIFIED_EVIDENCE = "unverified_evidence"
+    AUTHORITY_NOT_ADMITTED = "authority_not_admitted"
+    ENDPOINTS_NOT_DISTINCT = "endpoints_not_distinct"
+    NON_TRAINING_SPLIT = "non_training_split"
+    INCOMPLETE_LINEAGE = "incomplete_lineage"
+    RIGHTS_NOT_ADMITTED = "rights_not_admitted"
+    DUPLICATE_NEGATIVE = "duplicate_negative"
+    UNKNOWN_MUTATION_CLASS = "unknown_mutation_class"
+    CONFIRMED_WITHOUT_MINIMALITY = "confirmed_without_minimality"
+
+
+def _digest_for(*parts: str) -> str:
+    payload = "\0".join(parts).encode("utf-8")
+    return f"sha256:{hashlib.sha256(payload).hexdigest()}"
+
+
+def _short_id(digest: str, size: int = 16) -> str:
+    hex_part = digest.split(":", 1)[-1]
+    return hex_part[:size]
+
+
+def _endpoint_key(statement: StatementBinding) -> tuple[str, str]:
+    return (statement.statement_id, statement.statement_digest)
+
+
+def hard_negative_authorities(relationship: SemanticRelationship) -> frozenset[LabelAuthority]:
+    return _RELATION_AUTHORITIES.get(relationship, frozenset())
+
+
+@dataclass(frozen=True, slots=True)
+class HardNegativeCandidate:
+    """One proposed mutation before fail-closed admission."""
+
+    candidate_id: str
+    original: StatementBinding
+    mutant: StatementBinding
+    mutation_class: MutationClass
+    mutated_paths: tuple[str, ...]
+    relationship: SemanticRelationship
+    lineage: LineageBinding
+    evidence: tuple[LabelEvidence, ...]
+    minimality_checked: bool
+    disposition: NegativeDisposition
+    evidence_kind: str = RECEIPT_NON_EQUIVALENCE
+    solver_outcome: str = "disproved"
+    source_kind: str = "typed_mutation"
+    split_name: str = TRAIN_SPLIT_NAME
+    sibling_statement_ids: tuple[str, ...] = ()
+    sibling_relationship: SemanticRelationship | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "candidate_id": self.candidate_id,
+            "disposition": self.disposition.value,
+            "evidence": [item.to_dict() for item in self.evidence],
+            "evidence_kind": self.evidence_kind,
+            "lineage": self.lineage.to_dict(),
+            "minimality_checked": self.minimality_checked,
+            "mutant": self.mutant.to_dict(),
+            "mutated_paths": list(self.mutated_paths),
+            "mutation_class": self.mutation_class.value,
+            "original": self.original.to_dict(),
+            "relationship": self.relationship.value,
+            "sibling_statement_ids": list(self.sibling_statement_ids),
+            "solver_outcome": self.solver_outcome,
+            "source_kind": self.source_kind,
+            "split_name": self.split_name,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class RejectedHardNegativePair:
+    """A candidate that failed a fail-closed negative gate."""
+
+    candidate_id: str
+    reason: HardNegativeRejection
+    detail: str
+    mutation_class: str
+    disposition: str = NegativeDisposition.QUARANTINED.value
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "candidate_id": self.candidate_id,
+            "detail": self.detail,
+            "disposition": self.disposition,
+            "mutation_class": self.mutation_class,
+            "reason": self.reason.value,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class NegativeEvidenceReceipt:
+    """Counterexample, satisfiability, non-equivalence, or entailment receipt."""
+
+    receipt_id: str
+    kind: str
+    negative_id: str
+    evidence_id: str
+    evidence_digest: str
+    authority: str
+    independent: bool
+    relationship: str
+    solver_outcome: str
+    minimality_checked: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "authority": self.authority,
+            "evidence_digest": self.evidence_digest,
+            "evidence_id": self.evidence_id,
+            "independent": self.independent,
+            "kind": self.kind,
+            "minimality_checked": self.minimality_checked,
+            "negative_id": self.negative_id,
+            "receipt_id": self.receipt_id,
+            "relationship": self.relationship,
+            "solver_outcome": self.solver_outcome,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class AdmittedHardNegative:
+    """An ``IRHardNegative@1`` plus the receipt that justified it."""
+
+    record: IRHardNegative
+    source_kind: str
+    receipt: NegativeEvidenceReceipt | None
+    example: IRTrainingExample
+
+    @property
+    def negative_id(self) -> str:
+        return self.record.negative_id
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = {
+            "example_cid": self.example.cid,
+            "example_digest": self.example.digest,
+            "negative": self.record.to_dict(),
+            "negative_cid": self.record.cid,
+            "negative_digest": self.record.digest,
+            "source_kind": self.source_kind,
+        }
+        if self.receipt is not None:
+            payload["receipt"] = self.receipt.to_dict()
+        return payload
+
+
+@dataclass(frozen=True, slots=True)
+class HardNegativeIndex:
+    """Read-only index of mined negatives by class and disposition."""
+
+    interface: str = IR_HARD_NEGATIVE_INDEX_INTERFACE
+    negatives_by_class: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+    negatives_by_disposition: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+    class_by_negative: Mapping[str, str] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "class_by_negative": dict(self.class_by_negative),
+            "interface": self.interface,
+            "negatives_by_class": {
+                key: list(value) for key, value in self.negatives_by_class.items()
+            },
+            "negatives_by_disposition": {
+                key: list(value) for key, value in self.negatives_by_disposition.items()
+            },
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class HardNegativeMiningResult:
+    """Deterministic output of one hard-negative mining pass."""
+
+    admitted: tuple[AdmittedHardNegative, ...]
+    unknown: tuple[AdmittedHardNegative, ...]
+    rejected: tuple[RejectedHardNegativePair, ...]
+    index: HardNegativeIndex
+    receipts: tuple[NegativeEvidenceReceipt, ...]
+    miner_version: str = IR_HARD_NEGATIVE_MINER_VERSION
+    interface: str = IR_HARD_NEGATIVE_INTERFACE
+
+    @property
+    def records(self) -> tuple[IRHardNegative, ...]:
+        return tuple(item.record for item in (*self.admitted, *self.unknown))
+
+    @property
+    def covered_mutation_classes(self) -> tuple[str, ...]:
+        seen = {item.record.mutation_class for item in self.admitted}
+        return tuple(
+            mutation_class.value
+            for mutation_class in MINIMAL_MUTATION_CLASSES
+            if mutation_class in seen
+        )
+
+    def identity(self) -> str:
+        return content_digest(
+            {
+                "admitted": [item.to_dict() for item in self.admitted],
+                "covered_mutation_classes": list(self.covered_mutation_classes),
+                "interface": self.interface,
+                "miner_version": self.miner_version,
+                "rejected": [item.to_dict() for item in self.rejected],
+                "unknown": [item.to_dict() for item in self.unknown],
+            }
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "admitted": [item.to_dict() for item in self.admitted],
+            "admitted_count": len(self.admitted),
+            "covered_mutation_classes": list(self.covered_mutation_classes),
+            "identity": self.identity(),
+            "index": self.index.to_dict(),
+            "interface": self.interface,
+            "miner_version": self.miner_version,
+            "receipts": [item.to_dict() for item in self.receipts],
+            "rejected": [item.to_dict() for item in self.rejected],
+            "rejected_count": len(self.rejected),
+            "unknown": [item.to_dict() for item in self.unknown],
+            "unknown_count": len(self.unknown),
+        }
+
+
+def load_positive_equivalence_index(
+    input_dir: str | Path | None = None,
+) -> PositiveEquivalenceIndex:
+    """Load the sealed PGIR-040 positive index used for false-negative protection."""
+
+    if input_dir is not None:
+        root = Path(input_dir)
+        manifest_path = root / "manifest.json"
+        if manifest_path.is_file():
+            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+            index_payload = payload.get("index") or {}
+            return PositiveEquivalenceIndex(
+                interface=str(
+                    index_payload.get("interface") or PositiveEquivalenceIndex().interface
+                ),
+                pairs_by_class={
+                    str(key): tuple(values)
+                    for key, values in dict(index_payload.get("pairs_by_class") or {}).items()
+                },
+                siblings_by_statement={
+                    str(key): tuple(values)
+                    for key, values in dict(
+                        index_payload.get("siblings_by_statement") or {}
+                    ).items()
+                },
+                class_by_pair={
+                    str(key): str(value)
+                    for key, value in dict(index_payload.get("class_by_pair") or {}).items()
+                },
+            )
+        pairs = load_positive_pair_shards(root)
+        siblings: dict[str, set[str]] = {}
+        class_by_pair: dict[str, str] = {}
+        pairs_by_class: dict[str, list[str]] = {}
+        for pair in pairs:
+            class_by_pair[pair.pair_id] = pair.relationship.value
+            pairs_by_class.setdefault(pair.relationship.value, []).append(pair.pair_id)
+            siblings.setdefault(pair.left.statement_id, set()).add(pair.right.statement_id)
+            siblings.setdefault(pair.right.statement_id, set()).add(pair.left.statement_id)
+        return PositiveEquivalenceIndex(
+            pairs_by_class={key: tuple(values) for key, values in pairs_by_class.items()},
+            siblings_by_statement={
+                key: tuple(sorted(values)) for key, values in sorted(siblings.items())
+            },
+            class_by_pair=class_by_pair,
+        )
+    try:
+        return load_positive_equivalence_index(resolve_positive_pair_data_dir())
+    except (OSError, json.JSONDecodeError, FileNotFoundError):
+        return mine_canonical_positive_pairs().index
+
+
+def _lineage_complete(lineage: LineageBinding, *statements: StatementBinding) -> bool:
+    if not lineage.corpus_manifest_id or not lineage.corpus_manifest_cid:
+        return False
+    if not lineage.lineage_graph_id or not lineage.lineage_graph_cid:
+        return False
+    if not lineage.split_manifest_id or not lineage.split_manifest_digest:
+        return False
+    if not lineage.lineage_group_ids:
+        return False
+    if not lineage.source_record_ids and not lineage.parent_example_id:
+        return False
+    for statement in statements:
+        if not statement.lineage_group_ids:
+            return False
+        if set(statement.lineage_group_ids) - set(lineage.lineage_group_ids):
+            return False
+        if not lineage.parent_example_id and (
+            not statement.source_record_ids or not statement.source_ref_ids
+        ):
+            return False
+        if set(statement.source_record_ids) - set(lineage.source_record_ids):
+            return False
+    return True
+
+
+def _is_positive_or_same_proposition_sibling(
+    candidate: HardNegativeCandidate,
+    index: PositiveEquivalenceIndex,
+) -> bool:
+    original_id = candidate.original.statement_id
+    mutant_id = candidate.mutant.statement_id
+    siblings = set(index.siblings(original_id)) | set(candidate.sibling_statement_ids)
+    return mutant_id in siblings or original_id in set(index.siblings(mutant_id))
+
+
+def classify_hard_negative_candidate(
+    candidate: HardNegativeCandidate,
+    *,
+    positive_index: PositiveEquivalenceIndex | None = None,
+) -> HardNegativeRejection | None:
+    """Return the first fail-closed rejection, or ``None`` when admissible."""
+
+    index = positive_index or PositiveEquivalenceIndex()
+    if candidate.mutation_class not in MINIMAL_MUTATION_CLASSES:
+        return HardNegativeRejection.UNKNOWN_MUTATION_CLASS
+    if _endpoint_key(candidate.original) == _endpoint_key(candidate.mutant):
+        return HardNegativeRejection.ENDPOINTS_NOT_DISTINCT
+    if candidate.lineage.rights_disposition is not RightsDisposition.ADMITTED:
+        return HardNegativeRejection.RIGHTS_NOT_ADMITTED
+    if not _lineage_complete(candidate.lineage, candidate.original, candidate.mutant):
+        return HardNegativeRejection.INCOMPLETE_LINEAGE
+    if (
+        candidate.split_name != TRAIN_SPLIT_NAME
+        or candidate.lineage.split_name != TRAIN_SPLIT_NAME
+    ):
+        return HardNegativeRejection.NON_TRAINING_SPLIT
+
+    if _is_positive_or_same_proposition_sibling(candidate, index):
+        sibling_class = candidate.sibling_relationship
+        if sibling_class is SemanticRelationship.ALPHA_EQUIVALENT:
+            return HardNegativeRejection.ALPHA_EQUIVALENT_SIBLING
+        if sibling_class is SemanticRelationship.TRANSLATION_EQUIVALENT:
+            return HardNegativeRejection.TRANSLATION_SIBLING
+        if sibling_class is SemanticRelationship.PROOF_EQUIVALENT:
+            return HardNegativeRejection.PROOF_EQUIVALENT_SIBLING
+        if sibling_class in FALSE_NEGATIVE_SIBLING_CLASSES:
+            return HardNegativeRejection.POSITIVE_EQUIVALENCE_SIBLING
+        if mutant_in_index := (
+            candidate.mutant.statement_id in set(index.siblings(candidate.original.statement_id))
+            or candidate.original.statement_id in set(index.siblings(candidate.mutant.statement_id))
+        ):
+            return HardNegativeRejection.POSITIVE_EQUIVALENCE_SIBLING
+        return HardNegativeRejection.SAME_PROPOSITION_SIBLING
+
+    outcome = str(candidate.solver_outcome or "").strip().lower()
+    if candidate.disposition is NegativeDisposition.CONFIRMED_NEGATIVE:
+        if outcome in {SOLVER_TIMED_OUT, "timeout"}:
+            return HardNegativeRejection.TIMEOUT_AS_NEGATIVE
+        if outcome == SOLVER_UNAVAILABLE:
+            return HardNegativeRejection.UNAVAILABLE_AS_NEGATIVE
+        if (
+            outcome == SOLVER_UNKNOWN
+            or candidate.relationship is SemanticRelationship.UNKNOWN
+        ):
+            return HardNegativeRejection.UNKNOWN_AS_NEGATIVE
+        if not candidate.minimality_checked:
+            return HardNegativeRejection.CONFIRMED_WITHOUT_MINIMALITY
+        if not candidate.evidence:
+            return HardNegativeRejection.MISSING_EVIDENCE
+        if any(item.authority in MODEL_ONLY_AUTHORITIES for item in candidate.evidence):
+            return HardNegativeRejection.UNCHECKED_MODEL_LABEL
+        verified = [
+            item
+            for item in candidate.evidence
+            if item.status is EvidenceStatus.VERIFIED
+            and item.relationship is candidate.relationship
+        ]
+        if not verified:
+            return HardNegativeRejection.UNVERIFIED_EVIDENCE
+        admitted = hard_negative_authorities(candidate.relationship)
+        if any(item.authority not in admitted for item in verified):
+            return HardNegativeRejection.AUTHORITY_NOT_ADMITTED
+        if not any(
+            item.independent and item.authority in INDEPENDENT_AUTHORITIES for item in verified
+        ):
+            return HardNegativeRejection.UNVERIFIED_EVIDENCE
+    elif candidate.disposition is NegativeDisposition.UNKNOWN:
+        if outcome in {SOLVER_TIMED_OUT, "timeout"}:
+            return None
+        if outcome == SOLVER_UNAVAILABLE:
+            return None
+        if candidate.relationship is not SemanticRelationship.UNKNOWN:
+            return HardNegativeRejection.UNKNOWN_AS_NEGATIVE
+    return None
+
+
+def _negative_and_example(
+    candidate: HardNegativeCandidate,
+) -> tuple[IRHardNegative, IRTrainingExample]:
+    negative_id = (
+        f"negative:{candidate.mutation_class.value}:"
+        f"{_short_id(_digest_for(candidate.original.statement_digest, candidate.mutant.statement_digest, candidate.mutation_class.value))}"
+    )
+    record = IRHardNegative(
+        negative_id=negative_id,
+        lineage=candidate.lineage,
+        original=candidate.original,
+        mutant=candidate.mutant,
+        relationship=candidate.relationship,
+        mutation_class=candidate.mutation_class,
+        mutated_paths=candidate.mutated_paths,
+        minimality_checked=candidate.minimality_checked,
+        disposition=candidate.disposition,
+        evidence=candidate.evidence,
+    )
+    selected = record.evidence[0].evidence_id if record.evidence else ""
+    example = IRTrainingExample.classify(
+        example_id=f"example:{record.negative_id}",
+        record=record,
+        selected_evidence_id=selected,
+    )
+    if (
+        candidate.disposition is NegativeDisposition.CONFIRMED_NEGATIVE
+        and not example.training_eligible
+    ):
+        raise HardNegativeAdmissionError(
+            f"{record.negative_id} failed training admission: "
+            + ", ".join(item.value for item in example.quarantine_reasons)
+        )
+    return record, example
+
+
+def _receipt_for(
+    record: IRHardNegative,
+    candidate: HardNegativeCandidate,
+) -> NegativeEvidenceReceipt | None:
+    if not record.evidence or record.disposition is NegativeDisposition.UNKNOWN:
+        return None
+    evidence = record.evidence[0]
+    kind = candidate.evidence_kind or RECEIPT_NON_EQUIVALENCE
+    if kind not in RECEIPT_KINDS:
+        raise HardNegativeAdmissionError(f"unknown receipt kind {kind!r}")
+    return NegativeEvidenceReceipt(
+        receipt_id=f"receipt:{kind}:{_short_id(evidence.evidence_digest)}",
+        kind=kind,
+        negative_id=record.negative_id,
+        evidence_id=evidence.evidence_id,
+        evidence_digest=evidence.evidence_digest,
+        authority=evidence.authority.value,
+        independent=evidence.independent,
+        relationship=record.relationship.value,
+        solver_outcome=candidate.solver_outcome,
+        minimality_checked=record.minimality_checked,
+    )
+
+
+def _build_negative_index(
+    admitted: Sequence[AdmittedHardNegative],
+    unknown: Sequence[AdmittedHardNegative],
+) -> HardNegativeIndex:
+    by_class: dict[str, list[str]] = {item.value: [] for item in MINIMAL_MUTATION_CLASSES}
+    by_disposition: dict[str, list[str]] = {
+        NegativeDisposition.CONFIRMED_NEGATIVE.value: [],
+        NegativeDisposition.UNKNOWN.value: [],
+    }
+    class_by_negative: dict[str, str] = {}
+    for item in (*admitted, *unknown):
+        record = item.record
+        by_class.setdefault(record.mutation_class.value, []).append(record.negative_id)
+        by_disposition.setdefault(record.disposition.value, []).append(record.negative_id)
+        class_by_negative[record.negative_id] = record.mutation_class.value
+    return HardNegativeIndex(
+        negatives_by_class={key: tuple(values) for key, values in by_class.items() if values},
+        negatives_by_disposition={
+            key: tuple(values) for key, values in by_disposition.items() if values
+        },
+        class_by_negative=class_by_negative,
+    )
+
+
+def mine_hard_negatives(
+    candidates: Sequence[HardNegativeCandidate],
+    *,
+    positive_index: PositiveEquivalenceIndex | None = None,
+    raise_on_reject: bool = False,
+) -> HardNegativeMiningResult:
+    """Admit confirmed negatives, segregate unknowns, and reject false negatives."""
+
+    index = positive_index or load_positive_equivalence_index()
+    rejected: list[RejectedHardNegativePair] = []
+    pending: list[HardNegativeCandidate] = []
+    seen: set[tuple[tuple[str, str], tuple[str, str], str]] = set()
+
+    for candidate in candidates:
+        reason = classify_hard_negative_candidate(candidate, positive_index=index)
+        if reason is not None:
+            item = RejectedHardNegativePair(
+                candidate_id=candidate.candidate_id,
+                reason=reason,
+                detail=reason.value,
+                mutation_class=candidate.mutation_class.value,
+            )
+            rejected.append(item)
+            if raise_on_reject:
+                raise HardNegativeAdmissionError(f"{candidate.candidate_id}: {reason.value}")
+            continue
+        key = (
+            _endpoint_key(candidate.original),
+            _endpoint_key(candidate.mutant),
+            candidate.mutation_class.value,
+        )
+        if key in seen:
+            rejected.append(
+                RejectedHardNegativePair(
+                    candidate_id=candidate.candidate_id,
+                    reason=HardNegativeRejection.DUPLICATE_NEGATIVE,
+                    detail="duplicate endpoints and mutation class",
+                    mutation_class=candidate.mutation_class.value,
+                )
+            )
+            continue
+        seen.add(key)
+        pending.append(candidate)
+
+    admitted: list[AdmittedHardNegative] = []
+    unknown: list[AdmittedHardNegative] = []
+    for candidate in sorted(
+        pending,
+        key=lambda item: (
+            0 if item.disposition is NegativeDisposition.CONFIRMED_NEGATIVE else 1,
+            item.mutation_class.value,
+            item.original.statement_id,
+            item.mutant.statement_id,
+            item.candidate_id,
+        ),
+    ):
+        record, example = _negative_and_example(candidate)
+        receipt = _receipt_for(record, candidate)
+        wrapped = AdmittedHardNegative(
+            record=record,
+            source_kind=candidate.source_kind,
+            receipt=receipt,
+            example=example,
+        )
+        if record.disposition is NegativeDisposition.UNKNOWN:
+            unknown.append(wrapped)
+        else:
+            admitted.append(wrapped)
+
+    receipts = tuple(item.receipt for item in admitted if item.receipt is not None)
+    return HardNegativeMiningResult(
+        admitted=tuple(admitted),
+        unknown=tuple(unknown),
+        rejected=tuple(
+            sorted(rejected, key=lambda item: (item.reason.value, item.candidate_id))
+        ),
+        index=_build_negative_index(admitted, unknown),
+        receipts=receipts,
+    )
+
+
+def candidate_from_validation_record(
+    record: MutationValidationRecord,
+    *,
+    case_id: str | None = None,
+    sibling_statement_ids: Sequence[str] = (),
+    authority: LabelAuthority | None = None,
+    evidence_status: EvidenceStatus | None = None,
+    independent: bool | None = None,
+) -> HardNegativeCandidate:
+    """Bind a typed mutation validation record to a sealed candidate."""
+
+    mutation = record.mutation
+    case = case_id or mutation.mutation_class.value
+    group = f"lineage:pgir-041:{case}"
+    source = f"source:pgir-041:{case}"
+    original = make_statement(
+        f"{case}-original",
+        digest=_digest_for("original", case, _stable_json(mutation.original)),
+        representation=RepresentationKind.CANONICAL_IR,
+        lineage_group_ids=(group,),
+        source_record_ids=(source,),
+    )
+    mutant = make_statement(
+        f"{case}-mutant",
+        digest=_digest_for("mutant", case, _stable_json(mutation.mutant)),
+        representation=RepresentationKind.CANONICAL_IR,
+        lineage_group_ids=(group,),
+        source_record_ids=(source,),
+    )
+    lineage = sealed_campaign_lineage(
+        lineage_group_ids=(group,),
+        source_record_ids=(source,),
+    )
+    if record.unknown or not record.confirmed:
+        return HardNegativeCandidate(
+            candidate_id=f"candidate:{case}",
+            original=original,
+            mutant=mutant,
+            mutation_class=mutation.mutation_class,
+            mutated_paths=record.minimal_mutated_paths or mutation.mutated_paths,
+            relationship=SemanticRelationship.UNKNOWN,
+            lineage=lineage,
+            evidence=(),
+            minimality_checked=False,
+            disposition=NegativeDisposition.UNKNOWN,
+            evidence_kind=mutation.evidence_kind,
+            solver_outcome=record.solver_outcome,
+            source_kind="typed_mutation",
+            sibling_statement_ids=tuple(sibling_statement_ids),
+        )
+    kind = mutation.evidence_kind
+    label_authority = authority or _AUTHORITY_FOR_EVIDENCE[kind]
+    status = evidence_status or EvidenceStatus.VERIFIED
+    relationship = _RELATIONSHIP_FROM_VALUE[record.relationship]
+    evidence = make_relationship_evidence(
+        original,
+        mutant,
+        relationship,
+        evidence_id=f"evidence:{case}",
+        authority=label_authority,
+        status=status,
+        independent=independent if independent is not None else label_authority in INDEPENDENT_AUTHORITIES,
+        result_authority=_RESULT_AUTHORITY_FOR_EVIDENCE[kind],
+        producer_id="checker:pgir-041",
+        producer_version="1.0",
+    )
+    return HardNegativeCandidate(
+        candidate_id=f"candidate:{case}",
+        original=original,
+        mutant=mutant,
+        mutation_class=mutation.mutation_class,
+        mutated_paths=record.minimal_mutated_paths or mutation.mutated_paths,
+        relationship=relationship,
+        lineage=lineage,
+        evidence=(evidence,),
+        minimality_checked=record.minimality_checked,
+        disposition=NegativeDisposition.CONFIRMED_NEGATIVE,
+        evidence_kind=_RECEIPT_KIND_FOR_EVIDENCE[kind],
+        solver_outcome=record.solver_outcome,
+        source_kind="typed_mutation",
+        sibling_statement_ids=tuple(sibling_statement_ids),
+    )
+
+
+def candidate_from_recipe_case(case: Mapping[str, Any]) -> HardNegativeCandidate:
+    """Expand one compact recipe case into a fully bound candidate."""
+
+    if not isinstance(case, Mapping):
+        raise HardNegativeMinerError("recipe case must be a mapping")
+    case_id = str(case.get("case_id") or "").strip()
+    if not case_id:
+        raise HardNegativeMinerError("recipe case requires case_id")
+    try:
+        mutation_class = MutationClass(str(case.get("mutation_class") or ""))
+    except ValueError as exc:
+        raise HardNegativeMinerError(
+            f"unknown mutation class {case.get('mutation_class')!r}"
+        ) from exc
+    solver_outcome = str(case.get("solver_outcome") or "")
+    matching = next(
+        (
+            mutation
+            for mutation in generate_minimal_semantic_mutations()
+            if mutation.mutation_class is mutation_class
+        ),
+        None,
+    )
+    if matching is None:
+        raise HardNegativeMinerError(f"no generator for {mutation_class.value}")
+    record = collect_mutation_evidence(
+        matching,
+        solver_outcome=solver_outcome or matching.solver_outcome,
+    )
+    authority_raw = case.get("authority")
+    authority = LabelAuthority(str(authority_raw)) if authority_raw else None
+    status_raw = case.get("evidence_status")
+    status = EvidenceStatus(str(status_raw)) if status_raw else None
+    candidate = candidate_from_validation_record(
+        record,
+        case_id=case_id,
+        sibling_statement_ids=tuple(case.get("sibling_statement_ids") or ()),
+        authority=authority,
+        evidence_status=status,
+        independent=case.get("independent"),
+    )
+    if "disposition" in case:
+        disposition = NegativeDisposition(str(case["disposition"]))
+        relationship = (
+            SemanticRelationship.UNKNOWN
+            if disposition is NegativeDisposition.UNKNOWN
+            else candidate.relationship
+        )
+        candidate = HardNegativeCandidate(
+            candidate_id=candidate.candidate_id,
+            original=candidate.original,
+            mutant=candidate.mutant,
+            mutation_class=candidate.mutation_class,
+            mutated_paths=tuple(case.get("mutated_paths") or candidate.mutated_paths),
+            relationship=relationship,
+            lineage=candidate.lineage,
+            evidence=() if disposition is NegativeDisposition.UNKNOWN else candidate.evidence,
+            minimality_checked=(
+                False
+                if disposition is NegativeDisposition.UNKNOWN
+                else candidate.minimality_checked
+            ),
+            disposition=disposition,
+            evidence_kind=str(case.get("evidence_kind") or candidate.evidence_kind),
+            solver_outcome=solver_outcome or candidate.solver_outcome,
+            source_kind=str(case.get("source_kind") or candidate.source_kind),
+            sibling_statement_ids=candidate.sibling_statement_ids,
+        )
+    return candidate
+
+
+def canonical_hard_negative_recipe() -> dict[str, Any]:
+    """Compact generator for the sealed PGIR-041 mutation-class coverage set."""
+
+    cases: list[dict[str, Any]] = []
+    for mutation_class in MINIMAL_MUTATION_CLASSES:
+        matching = next(
+            mutation
+            for mutation in generate_minimal_semantic_mutations()
+            if mutation.mutation_class is mutation_class
+        )
+        cases.append(
+            {
+                "authority": _AUTHORITY_FOR_EVIDENCE[matching.evidence_kind].value,
+                "case_id": f"{mutation_class.value}-minimal",
+                "disposition": NegativeDisposition.CONFIRMED_NEGATIVE.value,
+                "evidence_kind": matching.evidence_kind,
+                "independent": True,
+                "mutation_class": mutation_class.value,
+                "mutated_paths": list(matching.mutated_paths),
+                "relationship": matching.relationship,
+                "result_authority": _RESULT_AUTHORITY_FOR_EVIDENCE[matching.evidence_kind].value,
+                "solver_outcome": matching.solver_outcome,
+                "source_kind": "typed_mutation",
+            }
+        )
+    cases.append(
+        {
+            "case_id": "solver-timeout-unknown",
+            "disposition": NegativeDisposition.UNKNOWN.value,
+            "mutation_class": MutationClass.OPERATOR.value,
+            "relationship": SemanticRelationship.UNKNOWN.value,
+            "solver_outcome": SOLVER_TIMED_OUT,
+            "source_kind": "seeded_false_negative_fixture",
+        }
+    )
+    recipe = {
+        "cases": cases,
+        "compiler_identity": "RESULT(PGIR-021)",
+        "corpus_manifest_cid": SEALED_CORPUS_MANIFEST_CID,
+        "corpus_manifest_id": SEALED_CORPUS_MANIFEST_ID,
+        "corpus_root_sha256": SEALED_CORPUS_ROOT_SHA256,
+        "decompiler_identity": "RESULT(PGIR-022)",
+        "false_negative_protection": [
+            "timeout_as_negative",
+            "unavailable_as_negative",
+            "unknown_as_negative",
+            "same_proposition_sibling",
+            "alpha_equivalent_sibling",
+            "translation_sibling",
+            "proof_equivalent_sibling",
+            "unchecked_model_labels",
+        ],
+        "interface": IR_HARD_NEGATIVE_RECIPE_INTERFACE,
+        "miner_version": IR_HARD_NEGATIVE_MINER_VERSION,
+        "model_checkpoint_identity": "none/deterministic",
+        "mutation_classes": [item.value for item in MINIMAL_MUTATION_CLASSES],
+        "prohibited": [
+            "timeout_unavailable_unknown_as_negative",
+            "same_proposition_siblings_as_negatives",
+            "unchecked_model_labels",
+        ],
+        "schema": IR_HARD_NEGATIVE_RECIPE_SCHEMA,
+        "split_manifest_digest": SEALED_SPLIT_MANIFEST_DIGEST,
+        "split_name": TRAIN_SPLIT_NAME,
+        "split_root_sha256": SEALED_SPLIT_ROOT_SHA256,
+        "task_id": IR_HARD_NEGATIVE_TASK_ID,
+    }
+    recipe["recipe_cid"] = content_cid(
+        recipe,
+        domain="ir.hard-negative-recipe",
+        schema_version=IR_HARD_NEGATIVE_RECIPE_SCHEMA,
+    )
+    return recipe
+
+
+def mutation_class_catalog() -> dict[str, Any]:
+    catalog = {
+        "classes": [
+            {
+                "authorities": [
+                    item.value
+                    for item in sorted(
+                        hard_negative_authorities(
+                            _RELATIONSHIP_FROM_VALUE[_CLASS_RELATIONSHIP_VALUE(mutation_class)]
+                        ),
+                        key=lambda item: item.value,
+                    )
+                ],
+                "evidence_kind": _RECEIPT_KIND_FOR_MUTATION(mutation_class),
+                "mutation_class": mutation_class.value,
+                "relationship": _CLASS_RELATIONSHIP_VALUE(mutation_class),
+            }
+            for mutation_class in MINIMAL_MUTATION_CLASSES
+        ],
+        "interface": "IRHardNegativeClassCatalog@1",
+        "schema": "ir-hard-negative-class/v1",
+        "task_id": IR_HARD_NEGATIVE_TASK_ID,
+    }
+    catalog["catalog_cid"] = content_cid(
+        catalog,
+        domain="ir.hard-negative-class-catalog",
+        schema_version="ir-hard-negative-class/v1",
+    )
+    return catalog
+
+
+def _CLASS_RELATIONSHIP_VALUE(mutation_class: MutationClass) -> str:
+    matching = next(
+        mutation
+        for mutation in generate_minimal_semantic_mutations()
+        if mutation.mutation_class is mutation_class
+    )
+    return matching.relationship
+
+
+def _RECEIPT_KIND_FOR_MUTATION(mutation_class: MutationClass) -> str:
+    matching = next(
+        mutation
+        for mutation in generate_minimal_semantic_mutations()
+        if mutation.mutation_class is mutation_class
+    )
+    return _RECEIPT_KIND_FOR_EVIDENCE[matching.evidence_kind]
+
+
+def mine_canonical_hard_negatives() -> HardNegativeMiningResult:
+    recipe = canonical_hard_negative_recipe()
+    candidates = tuple(candidate_from_recipe_case(case) for case in recipe["cases"])
+    return mine_hard_negatives(candidates)
+
+
+def build_hard_negative_shards(
+    result: HardNegativeMiningResult,
+    *,
+    recipe: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    recipe_payload = dict(recipe or canonical_hard_negative_recipe())
+    shards: list[dict[str, Any]] = []
+    for mutation_class in MINIMAL_MUTATION_CLASSES:
+        members = [
+            item.to_dict()
+            for item in result.admitted
+            if item.record.mutation_class is mutation_class
+        ]
+        if not members:
+            continue
+        body = {
+            "class": mutation_class.value,
+            "disposition": NegativeDisposition.CONFIRMED_NEGATIVE.value,
+            "interface": IR_HARD_NEGATIVE_SHARD_INTERFACE,
+            "miner_version": IR_HARD_NEGATIVE_MINER_VERSION,
+            "negatives": members,
+            "pair_count": len(members),
+            "schema": IR_HARD_NEGATIVE_SHARD_SCHEMA,
+            "split_name": TRAIN_SPLIT_NAME,
+            "task_id": IR_HARD_NEGATIVE_TASK_ID,
+        }
+        shards.append(
+            {
+                **body,
+                "shard_cid": content_cid(
+                    body,
+                    domain="ir.hard-negative-shard",
+                    schema_version=IR_HARD_NEGATIVE_SHARD_SCHEMA,
+                ),
+                "shard_digest": content_digest(body),
+            }
+        )
+    if result.unknown:
+        unknown_body = {
+            "class": "unknown",
+            "disposition": NegativeDisposition.UNKNOWN.value,
+            "interface": IR_HARD_NEGATIVE_SHARD_INTERFACE,
+            "miner_version": IR_HARD_NEGATIVE_MINER_VERSION,
+            "negatives": [item.to_dict() for item in result.unknown],
+            "pair_count": len(result.unknown),
+            "schema": IR_HARD_NEGATIVE_SHARD_SCHEMA,
+            "split_name": TRAIN_SPLIT_NAME,
+            "task_id": IR_HARD_NEGATIVE_TASK_ID,
+        }
+        shards.append(
+            {
+                **unknown_body,
+                "shard_cid": content_cid(
+                    unknown_body,
+                    domain="ir.hard-negative-shard",
+                    schema_version=IR_HARD_NEGATIVE_SHARD_SCHEMA,
+                ),
+                "shard_digest": content_digest(unknown_body),
+            }
+        )
+    receipts = {
+        "interface": "IRHardNegativeReceiptSet@1",
+        "kinds": sorted({item.kind for item in result.receipts}),
+        "receipts": [item.to_dict() for item in result.receipts],
+        "schema": "ir-hard-negative-receipts/v1",
+        "task_id": IR_HARD_NEGATIVE_TASK_ID,
+    }
+    receipts["receipts_cid"] = content_cid(
+        receipts,
+        domain="ir.hard-negative-receipts",
+        schema_version="ir-hard-negative-receipts/v1",
+    )
+    catalog = mutation_class_catalog()
+    manifest = {
+        "corpus_manifest_cid": SEALED_CORPUS_MANIFEST_CID,
+        "covered_mutation_classes": list(result.covered_mutation_classes),
+        "index": result.index.to_dict(),
+        "interface": IR_HARD_NEGATIVE_MANIFEST_INTERFACE,
+        "miner_identity": result.identity(),
+        "miner_version": IR_HARD_NEGATIVE_MINER_VERSION,
+        "model_checkpoint_identity": "none/deterministic",
+        "pair_count": len(result.admitted) + len(result.unknown),
+        "recipe_cid": recipe_payload.get("recipe_cid"),
+        "receipts_cid": receipts["receipts_cid"],
+        "rejected_count": len(result.rejected),
+        "schema": IR_HARD_NEGATIVE_MANIFEST_SCHEMA,
+        "shards": [
+            {
+                "class": shard["class"],
+                "disposition": shard["disposition"],
+                "pair_count": shard["pair_count"],
+                "path": f"shards/{shard['class']}.json",
+                "shard_cid": shard["shard_cid"],
+                "shard_digest": shard["shard_digest"],
+            }
+            for shard in shards
+        ],
+        "split_manifest_digest": SEALED_SPLIT_MANIFEST_DIGEST,
+        "split_name": TRAIN_SPLIT_NAME,
+        "task_id": IR_HARD_NEGATIVE_TASK_ID,
+        "unknown_count": len(result.unknown),
+    }
+    manifest["manifest_cid"] = content_cid(
+        manifest,
+        domain="ir.hard-negative-manifest",
+        schema_version=IR_HARD_NEGATIVE_MANIFEST_SCHEMA,
+    )
+    return {
+        "catalog": catalog,
+        "manifest": manifest,
+        "receipts": receipts,
+        "recipe": recipe_payload,
+        "shards": shards,
+    }
+
+
+def write_hard_negative_shards(
+    output_dir: str | Path,
+    *,
+    result: HardNegativeMiningResult | None = None,
+    recipe: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Persist immutable recipe, class catalog, receipts, and class shards."""
+
+    mined = result or mine_canonical_hard_negatives()
+    bundle = build_hard_negative_shards(mined, recipe=recipe)
+    root = Path(output_dir)
+    try:
+        cas_write_json(root / "recipe.json", bundle["recipe"])
+        cas_write_json(root / "classes.json", bundle["catalog"])
+        cas_write_json(root / "receipts.json", bundle["receipts"])
+        cas_write_json(root / "manifest.json", bundle["manifest"])
+        for shard in bundle["shards"]:
+            cas_write_json(root / "shards" / f"{shard['class']}.json", shard)
+    except Exception as exc:
+        raise HardNegativeShardConflictError(str(exc)) from exc
+    return bundle
+
+
+def load_hard_negative_shards(input_dir: str | Path) -> tuple[IRHardNegative, ...]:
+    root = Path(input_dir)
+    records: list[IRHardNegative] = []
+    for path in sorted((root / "shards").glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        for item in payload.get("negatives", ()):
+            records.append(IRHardNegative.from_dict(item["negative"]))
+    return tuple(records)
+
+
+def resolve_hard_negative_data_dir(start: str | Path | None = None) -> Path:
+    """Locate ``data/ir_learning/pairs/negative`` from a package or cwd root."""
+
+    if start is not None:
+        candidate = Path(start)
+        if candidate.is_dir():
+            return candidate
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidate = parent / "data" / "ir_learning" / "pairs" / "negative"
+        if candidate.is_dir():
+            return candidate
+    return Path.cwd() / "ipfs_datasets_py" / "data" / "ir_learning" / "pairs" / "negative"
+
+
 __all__ = [
     "DECOMPILER_HALLUCINATION",
     "DEFAULT_LEGAL_IR_FAMILY_DIFFICULTY",
     "DEFAULT_NEGATIVE_FAMILY_DIFFICULTY",
+    "DEFAULT_NEGATIVE_PAIR_DATA_DIR",
     "HARD_NEGATIVE_FAMILIES",
     "INVERTED_MODALITY",
+    "IR_HARD_NEGATIVE_INTERFACE",
+    "IR_HARD_NEGATIVE_MINER_VERSION",
+    "IR_HARD_NEGATIVE_SCHEMA_VERSION",
     "LEGAL_IR_HARD_NEGATIVE_EFFECT_SCHEMA_VERSION",
     "LEGAL_IR_HARD_NEGATIVE_SCHEMA_VERSION",
+    "MINIMAL_MUTATION_CLASSES",
     "NEAR_MISS_CLAUSE",
     "SOURCE_COPY_SPAN",
     "STALE_AMENDMENT",
     "SWAPPED_ACTOR",
     "VERIFIED_COUNTEREXAMPLE",
     "WRONG_CITATION",
+    "AdmittedHardNegative",
+    "HardNegativeAdmissionError",
+    "HardNegativeCandidate",
     "HardNegativeEffectReport",
+    "HardNegativeIndex",
+    "HardNegativeMinerError",
+    "HardNegativeMiningResult",
+    "HardNegativeRejection",
+    "HardNegativeShardConflictError",
     "LegalIRHardNegativeConfig",
     "LegalIRHardNegativeCurriculum",
     "LegalIRHardNegativeCurriculumBuilder",
     "LegalIRHardNegativeCurriculumStage",
     "LegalIRHardNegativeExample",
+    "NegativeEvidenceReceipt",
     "RejectedHardNegative",
+    "RejectedHardNegativePair",
+    "build_hard_negative_shards",
     "build_legal_ir_hard_negative_curriculum",
+    "candidate_from_recipe_case",
+    "candidate_from_validation_record",
+    "canonical_hard_negative_recipe",
+    "classify_hard_negative_candidate",
     "hard_negative_training_effect_gate",
+    "load_hard_negative_shards",
+    "load_positive_equivalence_index",
+    "mine_canonical_hard_negatives",
+    "mine_hard_negatives",
+    "mutation_class_catalog",
     "prove_hard_negatives_reduce_false_positive_semantic_equivalence",
+    "resolve_hard_negative_data_dir",
+    "write_hard_negative_shards",
 ]
