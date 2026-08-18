@@ -15,7 +15,6 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-
 from ipfs_datasets_py.logic.backends.cvc5.compiler import CVC5SoftwareVerificationBackend
 from ipfs_datasets_py.logic.backends.smt.compiler import (
     INT_SORT,
@@ -73,7 +72,6 @@ from ipfs_datasets_py.logic.verification_api import (
     COMPOSITIONAL_INCREMENTAL_SMT_SCHEMA,
     COMPOSITIONAL_INCREMENTAL_VERIFICATION_INTERFACE,
     COMPOSITIONAL_INCREMENTAL_VERIFICATION_RECEIPT_SCHEMA,
-    COMPOSITIONAL_INTERPOLATION_INTERFACE,
     COMPOSITIONAL_INTERPOLATION_RECEIPT_SCHEMA,
     COMPOSITIONAL_SMT_DIFFERENTIAL_INTERFACE,
     COMPOSITIONAL_SMT_DIFFERENTIAL_SCHEMA,
