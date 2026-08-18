@@ -2569,7 +2569,7 @@ This board is parsed by the `ipfs_accelerate_py` implementation daemon. Every me
 
 ## OUL-085 Resolve validation retry-budget failure for OUL-048
 
-- Status: todo
+- Status: completed
 - Completion: manual
 - Is schedulable: true
 - Review only: false
