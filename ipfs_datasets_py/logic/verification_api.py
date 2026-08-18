@@ -181,6 +181,97 @@ COMPOSITIONAL_VERIFICATION_OPERATIONS: Final[tuple[str, ...]] = (
     "plan_incremental_verification",
     "open_incremental_smt_session",
     "compute_and_validate_interpolant",
+    "run_z3_cvc5_differential",
+)
+
+# Sealed artifact pins for checked compositional adapters (LGCVF-051).
+# Strings are duplicated here so the facade can validate identities without
+# importing implementation modules or optional solvers on cold import.
+COMPOSITIONAL_ABSTRACT_ANALYSIS_INTERFACE: Final = "AbstractAnalysisResult@1"
+COMPOSITIONAL_ABSTRACT_ANALYSIS_SCHEMA: Final = "software-abstract-analysis/v1"
+COMPOSITIONAL_CONTRACT_INTERFACE: Final = "CompositionalContract@1"
+COMPOSITIONAL_CONTRACT_SCHEMA: Final = (
+    "ipfs-datasets.software-contracts.compositional-contract@1"
+)
+COMPOSITIONAL_ASSUME_GUARANTEE_INTERFACE: Final = "AssumeGuaranteeDischarge@1"
+COMPOSITIONAL_ASSUME_GUARANTEE_RECEIPT_SCHEMA: Final = (
+    "assume-guarantee-discharge-receipt/v1"
+)
+COMPOSITIONAL_INCREMENTAL_VERIFICATION_INTERFACE: Final = (
+    "IncrementalVerificationPlan@1"
+)
+COMPOSITIONAL_INCREMENTAL_VERIFICATION_RECEIPT_SCHEMA: Final = (
+    "ipfs-datasets.software-verification.incremental-plan-receipt@1"
+)
+COMPOSITIONAL_INCREMENTAL_SMT_INTERFACE: Final = "IncrementalSmtSession@1"
+COMPOSITIONAL_INCREMENTAL_SMT_SCHEMA: Final = "incremental-smt-session/v1"
+COMPOSITIONAL_INTERPOLATION_INTERFACE: Final = "ValidatedCraigInterpolation@1"
+COMPOSITIONAL_INTERPOLATION_RECEIPT_SCHEMA: Final = "validated-craig-interpolant/v1"
+COMPOSITIONAL_SMT_DIFFERENTIAL_INTERFACE: Final = "SmtDifferentialVerification@1"
+COMPOSITIONAL_SMT_DIFFERENTIAL_SCHEMA: Final = "smt-differential-verification/v1"
+_COMPOSITIONAL_SESSION_METHODS: Final[tuple[str, ...]] = (
+    "add_named_assertion",
+    "push",
+    "pop",
+    "check",
+    "cancel",
+    "close",
+    "snapshot_or_replay_manifest",
+)
+_AGREEING_DIFFERENTIAL_CLASSIFICATIONS: Final[frozenset[str]] = frozenset(
+    {
+        "agree_proved",
+        "agree_disproved",
+        "agree_satisfiable",
+        "agree_unsatisfiable",
+        "agree_unknown",
+    }
+)
+_TYPED_DIFFERENTIAL_CLASSIFICATIONS: Final[frozenset[str]] = frozenset(
+    {
+        *_AGREEING_DIFFERENTIAL_CLASSIFICATIONS,
+        "disagree",
+        "partial_unavailable",
+        "both_unavailable",
+        "malformed",
+        "error",
+    }
+)
+_COMPOSITIONAL_RESULT_CONTRACTS: Final[Mapping[str, tuple[str, str, str | None]]] = (
+    MappingProxyType(
+        {
+            "analyze_abstract_state": (
+                COMPOSITIONAL_ABSTRACT_ANALYSIS_SCHEMA,
+                COMPOSITIONAL_ABSTRACT_ANALYSIS_INTERFACE,
+                "analysis_id",
+            ),
+            "compile_component_contract": (
+                COMPOSITIONAL_CONTRACT_SCHEMA,
+                COMPOSITIONAL_CONTRACT_INTERFACE,
+                "cid",
+            ),
+            "discharge_assume_guarantee": (
+                COMPOSITIONAL_ASSUME_GUARANTEE_RECEIPT_SCHEMA,
+                COMPOSITIONAL_ASSUME_GUARANTEE_INTERFACE,
+                "receipt_cid",
+            ),
+            "plan_incremental_verification": (
+                COMPOSITIONAL_INCREMENTAL_VERIFICATION_RECEIPT_SCHEMA,
+                COMPOSITIONAL_INCREMENTAL_VERIFICATION_INTERFACE,
+                "receipt_cid",
+            ),
+            "compute_and_validate_interpolant": (
+                COMPOSITIONAL_INTERPOLATION_RECEIPT_SCHEMA,
+                COMPOSITIONAL_INTERPOLATION_INTERFACE,
+                "receipt_cid",
+            ),
+            "run_z3_cvc5_differential": (
+                COMPOSITIONAL_SMT_DIFFERENTIAL_SCHEMA,
+                COMPOSITIONAL_SMT_DIFFERENTIAL_INTERFACE,
+                "report_id",
+            ),
+        }
+    )
 )
 
 # FVT-G231 / ProductionAuthorizationReplacement@1 public identity.
@@ -341,6 +432,141 @@ def _string_tuple(values: object, label: str) -> tuple[str, ...]:
     for item in values:
         result.append(_text(item, f"{label} item"))
     return tuple(result)
+
+
+def _require_present(value: object, label: str) -> Any:
+    if value is None:
+        raise VerificationAPIError(f"{label} is required")
+    return value
+
+
+def _require_source_body(value: object, label: str) -> str:
+    if not isinstance(value, str) or not value or "\x00" in value:
+        raise VerificationAPIError(f"{label} must be a non-empty string without NUL")
+    return value
+
+
+def _compositional_artifact_schema(value: Any) -> Any:
+    schema = getattr(value, "schema", None)
+    if schema is None:
+        schema = getattr(value, "schema_version", None)
+    return schema
+
+
+def _compositional_artifact_interface(value: Any) -> Any:
+    interface = getattr(value, "interface", None)
+    if interface is None:
+        interface = getattr(value, "INTERFACE", None)
+    if interface is not None:
+        return interface
+    identity_payload = getattr(value, "identity_payload", None)
+    if callable(identity_payload):
+        payload = identity_payload()
+        if isinstance(payload, Mapping):
+            return payload.get("interface")
+    return None
+
+
+def _compositional_identity(value: Any, attr: str) -> Any:
+    identity = getattr(value, attr, None)
+    if callable(identity):
+        return identity()
+    return identity
+
+
+def _check_incremental_smt_session(result: Any) -> Any:
+    interface = _compositional_artifact_interface(result)
+    if interface != COMPOSITIONAL_INCREMENTAL_SMT_INTERFACE:
+        raise VerificationAPIError(
+            "open_incremental_smt_session: interface "
+            f"{interface!r} does not match {COMPOSITIONAL_INCREMENTAL_SMT_INTERFACE!r}"
+        )
+    fingerprint = getattr(result, "fingerprint", None)
+    if fingerprint is None:
+        raise VerificationAPIError("open_incremental_smt_session: session missing fingerprint")
+    schema = _compositional_artifact_schema(fingerprint)
+    if schema != COMPOSITIONAL_INCREMENTAL_SMT_SCHEMA:
+        raise VerificationAPIError(
+            "open_incremental_smt_session: fingerprint schema "
+            f"{schema!r} does not match {COMPOSITIONAL_INCREMENTAL_SMT_SCHEMA!r}"
+        )
+    for method in _COMPOSITIONAL_SESSION_METHODS:
+        if not callable(getattr(result, method, None)):
+            raise VerificationAPIError(
+                f"open_incremental_smt_session: session missing callable {method}"
+            )
+    return result
+
+
+def _check_differential_report(result: Any) -> None:
+    classification = getattr(result, "classification", None)
+    classification_value = (
+        classification.value if hasattr(classification, "value") else classification
+    )
+    if not isinstance(classification_value, str):
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: missing typed classification"
+        )
+    if classification_value not in _TYPED_DIFFERENTIAL_CLASSIFICATIONS:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: unknown classification "
+            f"{classification_value!r}"
+        )
+    agreement = getattr(result, "agreement", None)
+    if classification_value in _AGREEING_DIFFERENTIAL_CLASSIFICATIONS:
+        if agreement is not True:
+            raise VerificationAPIError(
+                "run_z3_cvc5_differential: agreeing classification must set agreement=True"
+            )
+        return
+    if agreement is not False:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: non-agreeing classification must set agreement=False"
+        )
+    if classification_value != "disagree":
+        return
+    evidence = getattr(result, "disagreement_evidence", None)
+    payload = evidence.to_dict() if hasattr(evidence, "to_dict") else evidence
+    if not isinstance(payload, Mapping) or payload.get("preserved") is not True:
+        raise VerificationAPIError(
+            "run_z3_cvc5_differential: disagreement must preserve typed evidence"
+        )
+
+
+def _check_compositional_result(operation: str, result: Any) -> Any:
+    """Validate a datasets-owned artifact without copying or re-authoring it."""
+
+    if result is None:
+        raise VerificationAPIError(f"{operation} returned no result")
+    if operation == "open_incremental_smt_session":
+        return _check_incremental_smt_session(result)
+    try:
+        expected_schema, expected_interface, identity_attr = (
+            _COMPOSITIONAL_RESULT_CONTRACTS[operation]
+        )
+    except KeyError as exc:
+        raise VerificationAPIError(
+            f"unsupported compositional verification operation {operation!r}"
+        ) from exc
+    schema = _compositional_artifact_schema(result)
+    if schema != expected_schema:
+        raise VerificationAPIError(
+            f"{operation}: schema {schema!r} does not match {expected_schema!r}"
+        )
+    interface = _compositional_artifact_interface(result)
+    if interface is not None and interface != expected_interface:
+        raise VerificationAPIError(
+            f"{operation}: interface {interface!r} does not match {expected_interface!r}"
+        )
+    if identity_attr is not None:
+        identity = _compositional_identity(result, identity_attr)
+        if not isinstance(identity, str) or not identity:
+            raise VerificationAPIError(
+                f"{operation}: result missing {identity_attr} identity"
+            )
+    if operation == "run_z3_cvc5_differential":
+        _check_differential_report(result)
+    return result
 
 
 class VerificationAPIError(ValueError):
@@ -1919,7 +2145,10 @@ class LogicVerificationAPI:
             analyze_abstract_state,
         )
 
-        return analyze_abstract_state(source, **kwargs)
+        return _check_compositional_result(
+            "analyze_abstract_state",
+            analyze_abstract_state(_require_source_body(source, "source"), **kwargs),
+        )
 
     def compile_component_contract(self, contract: Any, **bindings: Any) -> Any:
         """Adapt an existing contract without creating a second authority."""
@@ -1928,7 +2157,10 @@ class LogicVerificationAPI:
             compile_component_contract,
         )
 
-        return compile_component_contract(contract, **bindings)
+        return _check_compositional_result(
+            "compile_component_contract",
+            compile_component_contract(_require_present(contract, "contract"), **bindings),
+        )
 
     def discharge_assume_guarantee(self, graph: Any, **kwargs: Any) -> Any:
         """Discharge a canonical component graph on exact semantic roots."""
@@ -1937,7 +2169,10 @@ class LogicVerificationAPI:
             discharge_assume_guarantee,
         )
 
-        return discharge_assume_guarantee(graph, **kwargs)
+        return _check_compositional_result(
+            "discharge_assume_guarantee",
+            discharge_assume_guarantee(_require_present(graph, "graph"), **kwargs),
+        )
 
     def plan_incremental_verification(
         self, previous_state: Any, current_state: Any, **kwargs: Any
@@ -1948,7 +2183,14 @@ class LogicVerificationAPI:
             plan_incremental_verification,
         )
 
-        return plan_incremental_verification(previous_state, current_state, **kwargs)
+        return _check_compositional_result(
+            "plan_incremental_verification",
+            plan_incremental_verification(
+                _require_present(previous_state, "previous_state"),
+                _require_present(current_state, "current_state"),
+                **kwargs,
+            ),
+        )
 
     def open_incremental_smt_session(self, **kwargs: Any) -> Any:
         """Open a fingerprint-bound local solver session without installation."""
@@ -1957,7 +2199,10 @@ class LogicVerificationAPI:
             open_incremental_smt_session,
         )
 
-        return open_incremental_smt_session(**kwargs)
+        return _check_compositional_result(
+            "open_incremental_smt_session",
+            open_incremental_smt_session(**kwargs),
+        )
 
     def compute_and_validate_interpolant(
         self, partition_a: Any, partition_b: Any, **kwargs: Any
@@ -1968,7 +2213,30 @@ class LogicVerificationAPI:
             compute_and_validate_interpolant,
         )
 
-        return compute_and_validate_interpolant(partition_a, partition_b, **kwargs)
+        return _check_compositional_result(
+            "compute_and_validate_interpolant",
+            compute_and_validate_interpolant(
+                _require_present(partition_a, "partition_a"),
+                _require_present(partition_b, "partition_b"),
+                **kwargs,
+            ),
+        )
+
+    def run_z3_cvc5_differential(self, obligation: Any, **kwargs: Any) -> Any:
+        """Compare one bounded common-fragment obligation on Z3 and CVC5.
+
+        Agreement is a typed report, not proof authority.  Disagreement and
+        unavailability stay explicit; this adapter never invents a verdict.
+        """
+
+        from ipfs_datasets_py.logic.backends.smt.differential import (
+            run_z3_cvc5_differential,
+        )
+
+        return _check_compositional_result(
+            "run_z3_cvc5_differential",
+            run_z3_cvc5_differential(_require_present(obligation, "obligation"), **kwargs),
+        )
 
     # ── LFP-044 Canonical discovery / dual-read one-write migration ───────
 
@@ -6480,6 +6748,10 @@ def compute_and_validate_interpolant(
         partition_a, partition_b, **kwargs
     )
 
+
+def run_z3_cvc5_differential(obligation: Any, **kwargs: Any) -> Any:
+    return get_verification_api().run_z3_cvc5_differential(obligation, **kwargs)
+
 def list_logic_families() -> VerificationResponse:
     return get_verification_api().list_logic_families()
 
@@ -6812,6 +7084,20 @@ __all__ = [
     "CANONICAL_LOGIC_DISCOVERY_SCHEMA",
     "CANONICAL_LOGIC_DISCOVERY_VERSION",
     "CanonicalLogicDiscovery",
+    "COMPOSITIONAL_ABSTRACT_ANALYSIS_INTERFACE",
+    "COMPOSITIONAL_ABSTRACT_ANALYSIS_SCHEMA",
+    "COMPOSITIONAL_ASSUME_GUARANTEE_INTERFACE",
+    "COMPOSITIONAL_ASSUME_GUARANTEE_RECEIPT_SCHEMA",
+    "COMPOSITIONAL_CONTRACT_INTERFACE",
+    "COMPOSITIONAL_CONTRACT_SCHEMA",
+    "COMPOSITIONAL_INCREMENTAL_SMT_INTERFACE",
+    "COMPOSITIONAL_INCREMENTAL_SMT_SCHEMA",
+    "COMPOSITIONAL_INCREMENTAL_VERIFICATION_INTERFACE",
+    "COMPOSITIONAL_INCREMENTAL_VERIFICATION_RECEIPT_SCHEMA",
+    "COMPOSITIONAL_INTERPOLATION_INTERFACE",
+    "COMPOSITIONAL_INTERPOLATION_RECEIPT_SCHEMA",
+    "COMPOSITIONAL_SMT_DIFFERENTIAL_INTERFACE",
+    "COMPOSITIONAL_SMT_DIFFERENTIAL_SCHEMA",
     "COMPOSITIONAL_VERIFICATION_OPERATIONS",
     "LOGIC_MIGRATION_ARTIFACT_SCHEMA",
     "LOGIC_VERIFICATION_API_INTERFACE",
@@ -6883,6 +7169,7 @@ __all__ = [
     "provider_role",
     "replay_counterexample",
     "run_portfolio",
+    "run_z3_cvc5_differential",
     "secpal_artifact_intake",
     "secpal_compatibility_lookup",
     "validate_proof_candidate",
