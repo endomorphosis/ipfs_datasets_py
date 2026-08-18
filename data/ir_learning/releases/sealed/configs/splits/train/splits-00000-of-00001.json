@@ -1,0 +1,1 @@
+{"config_name":"splits","rows":[{"derived_count":38690,"kind":"split_root_row","record_id":"split:release-summary","source_count":7173,"split_root":"sha256:047b263b85067aa3dad6760f623c2855fbaf776d565ec9c273c49425fcc14eb4"}],"split":"train"}
