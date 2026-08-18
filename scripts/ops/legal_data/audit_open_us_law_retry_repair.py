@@ -73,6 +73,43 @@ VALIDATION_COMMANDS: tuple[str, ...] = (
     "python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-049 --source OUL-011 --cohort C --check",
 )
 
+TERMINAL_REPAIR_PAIRS: frozenset[tuple[str, str]] = frozenset({("OUL-085", "OUL-048")})
+TERMINAL_GOAL_ID = "OUL-G090"
+TERMINAL_SOURCE_PATHS: tuple[str, ...] = (
+    "scripts/ops/legal_data/audit_open_us_law_retry_repair.py",
+    "scripts/ops/legal_data/check_open_us_law_public_release.py",
+    "scripts/validate_open_us_law_reindex_board.py",
+)
+TERMINAL_VALIDATION_COMMANDS: tuple[str, ...] = (
+    "python scripts/validate_open_us_law_reindex_board.py --check-all",
+    "python scripts/ops/legal_data/check_open_us_law_public_release.py --require-public-pin --check",
+    "python scripts/ops/legal_data/audit_open_us_law_retry_repair.py --task OUL-085 --source OUL-048 --check",
+)
+TERMINAL_REPAIRS: tuple[dict[str, str], ...] = (
+    {
+        "id": "write-tracked-terminal-repair-receipt",
+        "detail": (
+            "OUL-048 looped on proposal_gate_failed / empty_patch. This "
+            "receipt is the durable tracked repair so the supervisor can "
+            "release OUL-048 from strategy blocked_tasks."
+        ),
+    },
+    {
+        "id": "accept-board-validation-without-cohort",
+        "detail": (
+            "The board validation command does not pass --cohort because "
+            "OUL-048 is terminal evidence, not a scrape cohort."
+        ),
+    },
+)
+
+
+def is_terminal_repair(task_id: str, source_task_id: str) -> bool:
+    return (
+        str(task_id).strip().upper(),
+        str(source_task_id).strip().upper(),
+    ) in TERMINAL_REPAIR_PAIRS
+
 OUL_049_REPAIRS: tuple[dict[str, str], ...] = (
     {
         "id": "split-acquisition-and-certification",
@@ -162,13 +199,86 @@ def current_validation_digests(repo_root: Optional[Path] = None) -> dict[str, st
     return digests
 
 
+def current_terminal_source_digests(repo_root: Optional[Path] = None) -> dict[str, str]:
+    root = repo_root or REPOSITORY_ROOT
+    digests: dict[str, str] = {}
+    for relative in TERMINAL_SOURCE_PATHS:
+        path = root / relative
+        if not path.is_file():
+            raise RetryRepairAuditError(f"terminal source missing: {relative}")
+        digests[relative] = file_digest(path)
+    return digests
+
+
+def build_terminal_retry_repair_payload(
+    *,
+    task_id: str,
+    source_task_id: str,
+    repo_root: Optional[Path] = None,
+) -> dict[str, Any]:
+    if not is_terminal_repair(task_id, source_task_id):
+        raise RetryRepairAuditError(
+            f"{task_id}/{source_task_id} is not a terminal retry-repair pair"
+        )
+    root = repo_root or REPOSITORY_ROOT
+    payload: dict[str, Any] = {
+        "authorizing_for_publication": False,
+        "bridge_task_id": BRIDGE_TASK_ID,
+        "checks": {
+            "cohort_complete": False,
+            "declared_cohort_report_consumed": False,
+            "fixture_proves_cohort_completion": False,
+            "placeholders_rejected": True,
+            "raw_bytes_checked_required": True,
+            "samples_rejected": True,
+            "self_asserted_digests_rejected": True,
+            "software_behavior_proven": True,
+            "zero_row_success_rejected": True,
+        },
+        "code_version": CODE_VERSION,
+        "cohort": "",
+        "cohort_complete": False,
+        "cohort_evidence_schema": COHORT_EVIDENCE_SCHEMA_VERSION,
+        "cohort_evidence_schema_path": "data/legal/open_us_law/cohort_evidence.schema.json",
+        "failure_kind": FAILURE_KIND,
+        "fixture_execution_proves_cohort_completion": False,
+        "goal_id": TERMINAL_GOAL_ID,
+        "jurisdictions": [],
+        "producer": PRODUCER,
+        "program_id": PROGRAM_ID,
+        "repair_completed": True,
+        "repairs": [dict(item) for item in TERMINAL_REPAIRS],
+        "report_schema": REPORT_SCHEMA,
+        "schema_version": SCHEMA_VERSION,
+        "sealed_at": SEALED_AT,
+        "software_behavior_proven": True,
+        "source_digests": current_terminal_source_digests(root),
+        "source_task_id": str(source_task_id).strip().upper(),
+        "source_task_released_for": str(source_task_id).strip().upper(),
+        "status": "passed",
+        "task_id": str(task_id).strip().upper(),
+        "validation_commands": list(TERMINAL_VALIDATION_COMMANDS),
+        "validation_digests": {},
+    }
+    assert_no_secrets(payload)
+    body = {key: value for key, value in payload.items() if key != "report_digest_sha256"}
+    payload["report_digest_sha256"] = sha256_json(body)
+    return payload
+
+
 def build_retry_repair_payload(
     *,
     task_id: str,
     source_task_id: str,
-    cohort: str,
+    cohort: str = "",
     repo_root: Optional[Path] = None,
 ) -> dict[str, Any]:
+    if is_terminal_repair(task_id, source_task_id):
+        return build_terminal_retry_repair_payload(
+            task_id=task_id,
+            source_task_id=source_task_id,
+            repo_root=repo_root,
+        )
     root = repo_root or REPOSITORY_ROOT
     letter = str(cohort).strip().upper()
     codes = list(cohort_codes(letter))
@@ -287,12 +397,15 @@ def validate_retry_repair(
         raise RetryRepairAuditError(f"source_task_id must be {source_task_id}")
     if payload.get("failure_kind") != FAILURE_KIND:
         raise RetryRepairAuditError(f"failure_kind must be {FAILURE_KIND}")
-    if payload.get("cohort") != str(cohort).strip().upper():
-        raise RetryRepairAuditError(f"cohort must be {cohort}")
+    terminal = is_terminal_repair(task_id, source_task_id)
+    expected_cohort = "" if terminal else str(cohort).strip().upper()
+    if payload.get("cohort") != expected_cohort:
+        raise RetryRepairAuditError(f"cohort must be {expected_cohort!r}")
     if payload.get("program_id") != PROGRAM_ID:
         raise RetryRepairAuditError(f"program_id must be {PROGRAM_ID}")
-    if payload.get("goal_id") != GOAL_ID:
-        raise RetryRepairAuditError(f"goal_id must be {GOAL_ID}")
+    expected_goal = TERMINAL_GOAL_ID if terminal else GOAL_ID
+    if payload.get("goal_id") != expected_goal:
+        raise RetryRepairAuditError(f"goal_id must be {expected_goal}")
     if payload.get("repair_completed") is not True:
         raise RetryRepairAuditError("repair_completed must be true")
     if payload.get("cohort_complete") is not False:
@@ -303,23 +416,31 @@ def validate_retry_repair(
         raise RetryRepairAuditError("retry receipt cannot authorize publication")
     if payload.get("status") != "passed":
         raise RetryRepairAuditError("retry receipt status must be passed")
-    expected_codes = list(cohort_codes(cohort))
-    if payload.get("jurisdictions") != expected_codes:
-        raise RetryRepairAuditError(
-            f"jurisdictions must be {expected_codes}, got {payload.get('jurisdictions')}"
-        )
+    if terminal:
+        if payload.get("jurisdictions") != []:
+            raise RetryRepairAuditError("terminal retry receipt jurisdictions must be empty")
+    else:
+        expected_codes = list(cohort_codes(cohort))
+        if payload.get("jurisdictions") != expected_codes:
+            raise RetryRepairAuditError(
+                f"jurisdictions must be {expected_codes}, got {payload.get('jurisdictions')}"
+            )
     secrets = find_secret_surfaces(payload)
     if secrets:
         raise RetryRepairAuditError("retry receipt contains secret material: " + ",".join(secrets))
 
     root = repo_root or REPOSITORY_ROOT
-    expected_sources = current_source_digests(root)
+    expected_sources = (
+        current_terminal_source_digests(root)
+        if terminal
+        else current_source_digests(root)
+    )
     observed_sources = payload.get("source_digests")
     if not isinstance(observed_sources, Mapping) or dict(observed_sources) != expected_sources:
         raise RetryRepairAuditError(
             "source_digests do not match current bridge files"
         )
-    expected_validation = current_validation_digests(root)
+    expected_validation = {} if terminal else current_validation_digests(root)
     observed_validation = payload.get("validation_digests")
     if (
         not isinstance(observed_validation, Mapping)
@@ -328,7 +449,16 @@ def validate_retry_repair(
         raise RetryRepairAuditError(
             "validation_digests do not match current validation targets"
         )
-    if str(task_id).strip().upper() == BRIDGE_TASK_ID:
+    if terminal:
+        repair_ids = {
+            item.get("id")
+            for item in (payload.get("repairs") or [])
+            if isinstance(item, Mapping)
+        }
+        expected_ids = {item["id"] for item in TERMINAL_REPAIRS}
+        if repair_ids != expected_ids:
+            raise RetryRepairAuditError("terminal repairs do not record the exact OUL-048 fix")
+    elif str(task_id).strip().upper() == BRIDGE_TASK_ID:
         repair_ids = {
             item.get("id")
             for item in (payload.get("repairs") or [])
@@ -405,7 +535,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--task", required=True, help="Repair task id, e.g. OUL-049.")
     parser.add_argument("--source", required=True, help="Source task id, e.g. OUL-011.")
-    parser.add_argument("--cohort", required=True, help="Cohort letter A-M.")
+    parser.add_argument(
+        "--cohort",
+        default="",
+        help="Cohort letter A-M. Omit for terminal-evidence repairs such as OUL-085.",
+    )
     parser.add_argument(
         "--check",
         action="store_true",
@@ -447,6 +581,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     task_id = str(args.task).strip().upper()
     source_task_id = str(args.source).strip().upper()
     cohort = str(args.cohort).strip().upper()
+    if not is_terminal_repair(task_id, source_task_id) and not cohort:
+        sys.stderr.write(
+            "audit_open_us_law_retry_repair: FAILED: --cohort is required "
+            "for cohort-scoped retry repairs\n"
+        )
+        return 2
     report_path = (
         Path(args.report).expanduser().resolve()
         if str(args.report or "").strip()

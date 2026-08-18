@@ -85,6 +85,45 @@ def test_cli_check_json_is_secret_free(capsys: pytest.CaptureFixture[str]) -> No
     assert "/home/" not in serialized
 
 
+def test_terminal_oul_085_builder_and_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    payload = audit.build_retry_repair_payload(
+        task_id="OUL-085",
+        source_task_id="OUL-048",
+    )
+    assert payload["task_id"] == "OUL-085"
+    assert payload["source_task_id"] == "OUL-048"
+    assert payload["cohort"] == ""
+    assert payload["goal_id"] == "OUL-G090"
+    assert payload["repair_completed"] is True
+    assert payload["cohort_complete"] is False
+    assert payload["authorizing_for_publication"] is False
+    assert payload["jurisdictions"] == []
+    path = tmp_path / "oul-085-oul-048-validation.json"
+    audit.write_retry_repair(path, payload)
+    assert (
+        main(
+            [
+                "--task",
+                "OUL-085",
+                "--source",
+                "OUL-048",
+                "--check",
+                "--report",
+                str(path),
+            ]
+        )
+        == 0
+    )
+    out = capsys.readouterr().out
+    assert "PASSED" in out
+    assert "OUL-085" in out
+    assert payload["status"] == "passed"
+    serialized = json.dumps(payload)
+    assert "hf_" not in serialized
+    assert "Bearer " not in serialized
+    assert "/home/" not in serialized
+
+
 def test_wrong_source_or_cohort_fails() -> None:
     assert main(["--task", "OUL-049", "--source", "OUL-009", "--cohort", "C", "--check"]) == 1
     assert main(["--task", "OUL-049", "--source", "OUL-011", "--cohort", "A", "--check"]) == 1
