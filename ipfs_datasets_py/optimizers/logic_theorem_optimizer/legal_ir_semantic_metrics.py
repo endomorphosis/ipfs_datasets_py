@@ -35,18 +35,19 @@ from .legal_ir_family_evaluator import (
 )
 
 
-LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION: Final = (
-    "legal-ir-semantic-equivalence-metrics-v1"
-)
+LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION: Final = "legal-ir-semantic-equivalence-metrics-v1"
+LEGAL_IR_LATENT_DIAGNOSTICS_SCHEMA_VERSION: Final = "legal-ir-latent-diagnostics-v1"
+DEFAULT_FALSE_NEIGHBORHOOD_K: Final = 3
+DEFAULT_ACTIVE_DIMENSION_EPSILON: Final = 1e-8
+DEFAULT_JACOBI_SWEEPS: Final = 64
+DEFAULT_JACOBI_TOLERANCE: Final = 1e-15
 
 STRUCTURAL_EQUIVALENCE: Final = "structural_equivalence"
 OBLIGATION_EQUIVALENCE: Final = "obligation_equivalence"
 COUNTEREXAMPLE_EQUIVALENCE: Final = "counterexample_equivalence"
 GRAPH_ISOMORPHISM: Final = "graph_isomorphism"
 TEMPORAL_WINDOW_AGREEMENT: Final = "temporal_window_agreement"
-DECOMPILER_ROUND_TRIP_PRESERVATION: Final = (
-    "decompiler_round_trip_preservation"
-)
+DECOMPILER_ROUND_TRIP_PRESERVATION: Final = "decompiler_round_trip_preservation"
 PROOF_OBLIGATION_DELTA_SCORE: Final = "proof_obligation_delta_score"
 PROOF_OBLIGATION_DELTA: Final = "proof_obligation_delta"
 
@@ -163,9 +164,7 @@ class SemanticEquivalenceConfig:
     require_complete_metrics: bool = True
 
     def __post_init__(self) -> None:
-        families = tuple(
-            canonical_legal_ir_evaluation_family(family) for family in self.families
-        )
+        families = tuple(canonical_legal_ir_evaluation_family(family) for family in self.families)
         if not families:
             raise ValueError("at least one LegalIR family is required")
         if len(set(families)) != len(families):
@@ -296,11 +295,7 @@ class SemanticEquivalenceComparisonReport:
 
     @property
     def failed_families(self) -> tuple[str, ...]:
-        return tuple(
-            family
-            for family, result in self.family_results.items()
-            if not result.passed
-        )
+        return tuple(family for family, result in self.family_results.items() if not result.passed)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -310,8 +305,7 @@ class SemanticEquivalenceComparisonReport:
             "failed_families": list(self.failed_families),
             "families": list(self.family_results),
             "family_results": {
-                family: result.to_dict()
-                for family, result in self.family_results.items()
+                family: result.to_dict() for family, result in self.family_results.items()
             },
             "gate_id": self.gate_id,
             "hard_promotion_gate": True,
@@ -437,9 +431,7 @@ def semantic_equivalence_from_metrics(
         scores[PROOF_OBLIGATION_DELTA_SCORE] = 1.0 / (
             1.0 + max(0.0, raw_deltas[PROOF_OBLIGATION_DELTA])
         )
-    missing = tuple(
-        metric for metric in SEMANTIC_EQUIVALENCE_METRICS if metric not in scores
-    )
+    missing = tuple(metric for metric in SEMANTIC_EQUIVALENCE_METRICS if metric not in scores)
     return SemanticEquivalenceFamilyResult(
         family=_canonical_family_or_unscoped(family),
         scores=scores,
@@ -489,9 +481,7 @@ def compare_legal_ir_semantic_equivalence(
         threshold_failures = _semantic_threshold_failures(after, config)
         if not config.require_complete_metrics:
             threshold_failures = {
-                key: value
-                for key, value in threshold_failures.items()
-                if key in after.scores
+                key: value for key, value in threshold_failures.items() if key in after.scores
             }
         comparison = SemanticEquivalenceFamilyComparison(
             family=family,
@@ -514,12 +504,8 @@ def compare_legal_ir_semantic_equivalence(
         if result.disagreement
     )
     descriptor = {
-        "after": {
-            family: result.after.scores for family, result in family_results.items()
-        },
-        "before": {
-            family: result.before.scores for family, result in family_results.items()
-        },
+        "after": {family: result.after.scores for family, result in family_results.items()},
+        "before": {family: result.before.scores for family, result in family_results.items()},
         "families": config.families,
         "minimum_scores": config.minimum_scores,
     }
@@ -814,8 +800,7 @@ def _obligation_signature(value: Any) -> frozenset[str]:
                 or ""
             )
             if modality in {"obligation", "permission", "prohibition"} or any(
-                name in keys
-                for name in ("obligation", "obligations", "duty", "duties")
+                name in keys for name in ("obligation", "obligations", "duty", "duties")
             ):
                 subject = _normalize_scalar(
                     keys.get("subject")
@@ -958,7 +943,9 @@ def _temporal_window_signature(value: Any) -> frozenset[str]:
                     windows.add(parsed)
             for match in re.finditer(r"\b\d{4}-\d{2}-\d{2}\b", item):
                 windows.add(match.group(0))
-            for match in re.finditer(r"\bwithin\s+\d+\s+(?:day|days|month|months|year|years)\b", item, re.I):
+            for match in re.finditer(
+                r"\bwithin\s+\d+\s+(?:day|days|month|months|year|years)\b", item, re.I
+            ):
                 windows.add(_duration_like(match.group(0)) or _normalize_text(match.group(0)))
 
     visit(value)
@@ -1061,7 +1048,11 @@ def _edge_signature(edge: Any, node_labels: Mapping[str, str]) -> str:
     source_label = node_labels.get(_normalize_scalar(source), _normalize_scalar(source))
     target_label = node_labels.get(_normalize_scalar(target), _normalize_scalar(target))
     return "edge:" + "|".join(
-        (_normalize_scalar(source_label), _normalize_scalar(relation), _normalize_scalar(target_label))
+        (
+            _normalize_scalar(source_label),
+            _normalize_scalar(relation),
+            _normalize_scalar(target_label),
+        )
     )
 
 
@@ -1084,11 +1075,7 @@ def _triple_signature(triple: Any) -> str:
 
 def _flatten_scalars(value: Any) -> set[str]:
     if isinstance(value, Mapping):
-        return {
-            item
-            for child in value.values()
-            for item in _flatten_scalars(child)
-        }
+        return {item for child in value.values() for item in _flatten_scalars(child)}
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return {item for child in value for item in _flatten_scalars(child)}
     return {_normalize_scalar(value)}
@@ -1244,11 +1231,823 @@ def _stable_hash(value: Any) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+@dataclass(frozen=True, slots=True)
+class LatentRepresentationRecord:
+    """One frozen representation used for diagnostic/calibration instrumentation."""
+
+    sample_id: str
+    vector: tuple[float, ...]
+    family: str = ""
+    domain: str = ""
+    jurisdiction: str = ""
+    length_bin: str = ""
+    length: Optional[float] = None
+    duplicate_group: str = ""
+    split: str = "development"
+    ood: bool = False
+    success: Optional[bool] = None
+    confidence: Optional[float] = None
+    latent_used: bool = True
+    semantic_class: str = ""
+
+    def __post_init__(self) -> None:
+        sample_id = str(self.sample_id or "").strip()
+        if not sample_id:
+            raise ValueError("sample_id must be non-empty")
+        vector = tuple(float(value) for value in self.vector)
+        if any(not math.isfinite(value) for value in vector):
+            raise ValueError("representation vector contains a non-finite value")
+        object.__setattr__(self, "sample_id", sample_id)
+        object.__setattr__(self, "vector", vector)
+        object.__setattr__(self, "family", str(self.family or "").strip())
+        object.__setattr__(self, "domain", str(self.domain or "").strip())
+        object.__setattr__(self, "jurisdiction", str(self.jurisdiction or "").strip())
+        object.__setattr__(self, "length_bin", str(self.length_bin or "").strip())
+        object.__setattr__(self, "duplicate_group", str(self.duplicate_group or "").strip())
+        object.__setattr__(self, "split", str(self.split or "development").strip().lower())
+        object.__setattr__(self, "semantic_class", str(self.semantic_class or "").strip())
+        if self.confidence is not None:
+            confidence = float(self.confidence)
+            if not math.isfinite(confidence):
+                raise ValueError("confidence must be finite")
+            object.__setattr__(self, "confidence", max(0.0, min(1.0, confidence)))
+        if self.length is not None:
+            length = float(self.length)
+            if not math.isfinite(length) or length < 0.0:
+                raise ValueError("length must be finite and non-negative")
+            object.__setattr__(self, "length", length)
+
+    @property
+    def dimension(self) -> int:
+        return len(self.vector)
+
+    @property
+    def neighborhood_class(self) -> str:
+        return self.semantic_class or self.family or "unspecified"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "confidence": self.confidence,
+            "domain": self.domain,
+            "duplicate_group": self.duplicate_group,
+            "family": self.family,
+            "jurisdiction": self.jurisdiction,
+            "latent_used": bool(self.latent_used),
+            "length": self.length,
+            "length_bin": self.length_bin,
+            "ood": bool(self.ood),
+            "sample_id": self.sample_id,
+            "semantic_class": self.semantic_class,
+            "split": self.split,
+            "success": self.success,
+            "vector": list(self.vector),
+        }
+
+    @classmethod
+    def from_mapping(cls, payload: Mapping[str, Any]) -> "LatentRepresentationRecord":
+        success = payload.get("success")
+        if success is None:
+            success = payload.get("correct")
+        if not isinstance(success, bool):
+            success = None if success is None else bool(success)
+        vector = payload.get("vector")
+        if vector is None:
+            vector = payload.get("latent") or payload.get("embedding") or ()
+        return cls(
+            sample_id=str(payload.get("sample_id") or payload.get("id") or ""),
+            vector=tuple(float(value) for value in vector or ()),
+            family=str(payload.get("family") or ""),
+            domain=str(payload.get("domain") or ""),
+            jurisdiction=str(payload.get("jurisdiction") or ""),
+            length_bin=str(payload.get("length_bin") or ""),
+            length=payload.get("length"),
+            duplicate_group=str(payload.get("duplicate_group") or ""),
+            split=str(payload.get("split") or "development"),
+            ood=bool(payload.get("ood", False)),
+            success=success,
+            confidence=payload.get("confidence"),
+            latent_used=bool(payload.get("latent_used", True)),
+            semantic_class=str(payload.get("semantic_class") or ""),
+        )
+
+
+def coerce_latent_records(records: Sequence[Any]) -> tuple[LatentRepresentationRecord, ...]:
+    coerced: list[LatentRepresentationRecord] = []
+    for item in records or ():
+        if isinstance(item, LatentRepresentationRecord):
+            coerced.append(item)
+            continue
+        if isinstance(item, Mapping):
+            coerced.append(LatentRepresentationRecord.from_mapping(item))
+            continue
+        if hasattr(item, "to_dict") and callable(item.to_dict):
+            raw = item.to_dict()
+            if isinstance(raw, Mapping):
+                coerced.append(LatentRepresentationRecord.from_mapping(raw))
+                continue
+        payload = {
+            name: getattr(item, name)
+            for name in (
+                "sample_id",
+                "vector",
+                "latent",
+                "embedding",
+                "family",
+                "domain",
+                "jurisdiction",
+                "length_bin",
+                "length",
+                "duplicate_group",
+                "split",
+                "ood",
+                "success",
+                "correct",
+                "confidence",
+                "latent_used",
+                "semantic_class",
+            )
+            if hasattr(item, name)
+        }
+        if "vector" not in payload:
+            payload["vector"] = payload.get("latent") or payload.get("embedding") or ()
+        coerced.append(LatentRepresentationRecord.from_mapping(payload))
+    return tuple(coerced)
+
+
+@dataclass(frozen=True, slots=True)
+class LatentSpectrumReport:
+    """Singular-value, rank, variance, and anisotropy diagnostics."""
+
+    sample_count: int
+    dimension: int
+    singular_values: tuple[float, ...]
+    effective_rank: Optional[float]
+    participation_ratio: Optional[float]
+    spectral_anisotropy: Optional[float]
+    mean_cosine_to_mean: Optional[float]
+    mean_l2_norm: Optional[float]
+    std_l2_norm: Optional[float]
+    min_l2_norm: Optional[float]
+    max_l2_norm: Optional[float]
+    total_variance: Optional[float]
+    mean_per_dimension_variance: Optional[float]
+    active_dimension_count: int
+    active_dimension_ratio: Optional[float]
+    latent_use_rate: Optional[float]
+    vectors_normalized_for_cosine: bool
+    unknown_denominators: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "active_dimension_count": self.active_dimension_count,
+            "active_dimension_ratio": None
+            if self.active_dimension_ratio is None
+            else round(self.active_dimension_ratio, 12),
+            "dimension": self.dimension,
+            "effective_rank": None
+            if self.effective_rank is None
+            else round(self.effective_rank, 12),
+            "latent_use_rate": None
+            if self.latent_use_rate is None
+            else round(self.latent_use_rate, 12),
+            "max_l2_norm": None if self.max_l2_norm is None else round(self.max_l2_norm, 12),
+            "mean_cosine_to_mean": None
+            if self.mean_cosine_to_mean is None
+            else round(self.mean_cosine_to_mean, 12),
+            "mean_l2_norm": None if self.mean_l2_norm is None else round(self.mean_l2_norm, 12),
+            "mean_per_dimension_variance": None
+            if self.mean_per_dimension_variance is None
+            else round(self.mean_per_dimension_variance, 12),
+            "min_l2_norm": None if self.min_l2_norm is None else round(self.min_l2_norm, 12),
+            "participation_ratio": None
+            if self.participation_ratio is None
+            else round(self.participation_ratio, 12),
+            "sample_count": self.sample_count,
+            "singular_values": [round(value, 12) for value in self.singular_values],
+            "spectral_anisotropy": None
+            if self.spectral_anisotropy is None
+            else round(self.spectral_anisotropy, 12),
+            "std_l2_norm": None if self.std_l2_norm is None else round(self.std_l2_norm, 12),
+            "total_variance": None if self.total_variance is None else round(self.total_variance, 12),
+            "unknown_denominators": list(self.unknown_denominators),
+            "vectors_normalized_for_cosine": self.vectors_normalized_for_cosine,
+        }
+
+    def metric_vector(self) -> dict[str, float]:
+        values = {
+            "active_dimension_count": float(self.active_dimension_count),
+            "dimension": float(self.dimension),
+            "sample_count": float(self.sample_count),
+        }
+        for name in (
+            "effective_rank",
+            "participation_ratio",
+            "spectral_anisotropy",
+            "mean_cosine_to_mean",
+            "mean_l2_norm",
+            "std_l2_norm",
+            "total_variance",
+            "latent_use_rate",
+            "active_dimension_ratio",
+        ):
+            value = getattr(self, name)
+            if value is not None:
+                values[name] = round(float(value), 12)
+        for index, value in enumerate(self.singular_values):
+            values[f"singular_value_{index}"] = round(float(value), 12)
+        return values
+
+
+@dataclass(frozen=True, slots=True)
+class FalseNeighborhoodReport:
+    """Nearest-neighbor mixing that must not be treated as equivalence."""
+
+    neighbor_k: int
+    pair_count: int
+    false_neighborhood_count: int
+    false_neighborhood_rate: Optional[float]
+    unknown_denominators: tuple[str, ...]
+    latent_similarity_is_not_equivalence: bool = True
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "false_neighborhood_count": self.false_neighborhood_count,
+            "false_neighborhood_rate": None
+            if self.false_neighborhood_rate is None
+            else round(self.false_neighborhood_rate, 12),
+            "latent_similarity_is_not_equivalence": True,
+            "neighbor_k": self.neighbor_k,
+            "pair_count": self.pair_count,
+            "unknown_denominators": list(self.unknown_denominators),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LatentDiagnosticsReport:
+    """Content-bound latent diagnostic block for one frozen representation batch."""
+
+    spectrum: LatentSpectrumReport
+    false_neighborhoods: FalseNeighborhoodReport
+    schema_version: str = LEGAL_IR_LATENT_DIAGNOSTICS_SCHEMA_VERSION
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "false_neighborhoods": self.false_neighborhoods.to_dict(),
+            "latent_similarity_is_not_equivalence": True,
+            "schema_version": self.schema_version,
+            "spectrum": self.spectrum.to_dict(),
+        }
+
+    def metric_vector(self) -> dict[str, float]:
+        values = self.spectrum.metric_vector()
+        if self.false_neighborhoods.false_neighborhood_rate is not None:
+            values["false_neighborhood_rate"] = round(
+                self.false_neighborhoods.false_neighborhood_rate, 12
+            )
+        values["false_neighborhood_count"] = float(
+            self.false_neighborhoods.false_neighborhood_count
+        )
+        return values
+
+
+def evaluate_latent_diagnostics(
+    records: Sequence[Any],
+    *,
+    neighbor_k: int = DEFAULT_FALSE_NEIGHBORHOOD_K,
+    active_dimension_epsilon: float = DEFAULT_ACTIVE_DIMENSION_EPSILON,
+) -> LatentDiagnosticsReport:
+    """Measure singular values, rank, norms, anisotropy, use, and false neighborhoods."""
+
+    batch = coerce_latent_records(records)
+    return LatentDiagnosticsReport(
+        spectrum=_evaluate_latent_spectrum(
+            batch, active_dimension_epsilon=active_dimension_epsilon
+        ),
+        false_neighborhoods=_evaluate_false_neighborhoods(batch, neighbor_k=neighbor_k),
+    )
+
+
+def _evaluate_latent_spectrum(
+    records: Sequence[LatentRepresentationRecord],
+    *,
+    active_dimension_epsilon: float,
+) -> LatentSpectrumReport:
+    unknown: list[str] = []
+    sample_count = len(records)
+    dimension = records[0].dimension if records else 0
+    if sample_count == 0:
+        unknown.extend(
+            [
+                "spectrum:no_records",
+                "effective_rank",
+                "participation_ratio",
+                "spectral_anisotropy",
+                "mean_cosine_to_mean",
+                "variance",
+                "latent_use_rate",
+            ]
+        )
+        return LatentSpectrumReport(
+            sample_count=0,
+            dimension=0,
+            singular_values=(),
+            effective_rank=None,
+            participation_ratio=None,
+            spectral_anisotropy=None,
+            mean_cosine_to_mean=None,
+            mean_l2_norm=None,
+            std_l2_norm=None,
+            min_l2_norm=None,
+            max_l2_norm=None,
+            total_variance=None,
+            mean_per_dimension_variance=None,
+            active_dimension_count=0,
+            active_dimension_ratio=None,
+            latent_use_rate=None,
+            vectors_normalized_for_cosine=True,
+            unknown_denominators=tuple(unknown),
+        )
+    if any(record.dimension != dimension for record in records):
+        raise ValueError("representation vectors must share one dimension")
+    if dimension == 0:
+        unknown.append("spectrum:zero_dimension")
+    matrix = [list(record.vector) for record in records]
+    norms = [_l2(vector) for vector in matrix]
+    mean_norm = _mean_numbers(norms)
+    std_norm = _std_numbers(norms)
+    used = [1.0 if record.latent_used else 0.0 for record in records]
+    latent_use_rate = _mean_numbers(used)
+    mean_vector = [_mean_numbers([vector[index] for vector in matrix]) for index in range(dimension)]
+    centered = [
+        [vector[index] - mean_vector[index] for index in range(dimension)] for vector in matrix
+    ]
+    variances = [
+        _mean_numbers([(vector[index] - mean_vector[index]) ** 2 for vector in matrix])
+        for index in range(dimension)
+    ]
+    total_variance = sum(variances) if variances else None
+    mean_variance = _mean_numbers(variances) if variances else None
+    active = sum(1 for value in variances if value > active_dimension_epsilon)
+    active_ratio = (active / dimension) if dimension else None
+    singular_values = _singular_values(centered)
+    energy = sum(value * value for value in singular_values)
+    if energy <= 0.0:
+        unknown.extend(
+            [
+                "spectrum:centered_matrix_is_zero",
+                "effective_rank",
+                "participation_ratio",
+                "spectral_anisotropy",
+            ]
+        )
+        effective_rank = None
+        participation = None
+        anisotropy = None
+    else:
+        masses = [(value * value) / energy for value in singular_values if value > 0.0]
+        entropy = -sum(mass * math.log(mass) for mass in masses if mass > 0.0)
+        effective_rank = math.exp(entropy) if masses else None
+        quartic = sum((value * value) ** 2 for value in singular_values)
+        participation = (energy * energy / quartic) if quartic > 0.0 else None
+        anisotropy = (singular_values[0] * singular_values[0] / energy) if singular_values else None
+    mean_cosine = _mean_cosine_to_mean(matrix, mean_vector)
+    if mean_cosine is None:
+        unknown.append("mean_cosine_to_mean")
+    if sample_count < 2:
+        unknown.append("spectrum:sample_count_below_two")
+    return LatentSpectrumReport(
+        sample_count=sample_count,
+        dimension=dimension,
+        singular_values=tuple(round(value, 12) for value in singular_values),
+        effective_rank=effective_rank,
+        participation_ratio=participation,
+        spectral_anisotropy=anisotropy,
+        mean_cosine_to_mean=mean_cosine,
+        mean_l2_norm=mean_norm,
+        std_l2_norm=std_norm,
+        min_l2_norm=min(norms) if norms else None,
+        max_l2_norm=max(norms) if norms else None,
+        total_variance=total_variance,
+        mean_per_dimension_variance=mean_variance,
+        active_dimension_count=active,
+        active_dimension_ratio=active_ratio,
+        latent_use_rate=latent_use_rate,
+        vectors_normalized_for_cosine=True,
+        unknown_denominators=tuple(dict.fromkeys(unknown)),
+    )
+
+
+def _evaluate_false_neighborhoods(
+    records: Sequence[LatentRepresentationRecord],
+    *,
+    neighbor_k: int,
+) -> FalseNeighborhoodReport:
+    unknown: list[str] = []
+    k = max(1, int(neighbor_k))
+    if len(records) < 2:
+        unknown.append("false_neighborhoods:sample_count_below_two")
+        return FalseNeighborhoodReport(
+            neighbor_k=k,
+            pair_count=0,
+            false_neighborhood_count=0,
+            false_neighborhood_rate=None,
+            unknown_denominators=tuple(unknown),
+        )
+    normalized = [_unit_vector(record.vector) for record in records]
+    if any(vector is None for vector in normalized):
+        unknown.append("false_neighborhoods:zero_vector")
+    pair_count = 0
+    false_count = 0
+    for index, left in enumerate(normalized):
+        if left is None:
+            continue
+        scored: list[tuple[float, int]] = []
+        for other_index, right in enumerate(normalized):
+            if other_index == index or right is None:
+                continue
+            scored.append((_dot(left, right), other_index))
+        scored.sort(key=lambda item: (-item[0], records[item[1]].sample_id, item[1]))
+        neighbors = scored[:k]
+        if len(neighbors) < k:
+            unknown.append("false_neighborhoods:insufficient_neighbors")
+        query_class = records[index].neighborhood_class
+        for _score, other_index in neighbors:
+            pair_count += 1
+            other_class = records[other_index].neighborhood_class
+            if query_class == "unspecified" or other_class == "unspecified":
+                unknown.append("false_neighborhoods:unspecified_class")
+                continue
+            if other_class != query_class:
+                false_count += 1
+    rate = (false_count / pair_count) if pair_count else None
+    if rate is None:
+        unknown.append("false_neighborhood_rate")
+    return FalseNeighborhoodReport(
+        neighbor_k=k,
+        pair_count=pair_count,
+        false_neighborhood_count=false_count,
+        false_neighborhood_rate=rate,
+        unknown_denominators=tuple(dict.fromkeys(unknown)),
+    )
+
+
+def _singular_values(centered: Sequence[Sequence[float]]) -> tuple[float, ...]:
+    rows = len(centered)
+    cols = len(centered[0]) if centered else 0
+    if rows == 0 or cols == 0:
+        return ()
+    if rows >= cols:
+        gram = _matmul_ata(centered)
+        eigenvalues = _jacobi_eigenvalues(gram)
+        padded = [math.sqrt(max(0.0, value)) for value in eigenvalues]
+        padded.sort(reverse=True)
+        return tuple(padded)
+    gram = _matmul_aat(centered)
+    eigenvalues = _jacobi_eigenvalues(gram)
+    values = [math.sqrt(max(0.0, value)) for value in eigenvalues]
+    values.sort(reverse=True)
+    values.extend([0.0] * (cols - len(values)))
+    return tuple(values[:cols])
+
+
+def _matmul_ata(matrix: Sequence[Sequence[float]]) -> list[list[float]]:
+    cols = len(matrix[0])
+    gram = [[0.0 for _ in range(cols)] for _ in range(cols)]
+    for row in matrix:
+        for i in range(cols):
+            left = float(row[i])
+            if left == 0.0:
+                continue
+            for j in range(i, cols):
+                product = left * float(row[j])
+                gram[i][j] += product
+                if i != j:
+                    gram[j][i] += product
+    return gram
+
+
+def _matmul_aat(matrix: Sequence[Sequence[float]]) -> list[list[float]]:
+    rows = len(matrix)
+    gram = [[0.0 for _ in range(rows)] for _ in range(rows)]
+    for i in range(rows):
+        for j in range(i, rows):
+            product = _dot(matrix[i], matrix[j])
+            gram[i][j] = product
+            gram[j][i] = product
+    return gram
+
+
+def _jacobi_eigenvalues(matrix: Sequence[Sequence[float]]) -> list[float]:
+    size = len(matrix)
+    if size == 0:
+        return []
+    if size == 1:
+        return [float(matrix[0][0])]
+    work = [list(map(float, row)) for row in matrix]
+    for _sweep in range(DEFAULT_JACOBI_SWEEPS):
+        pivot_i, pivot_j, off = 0, 1, 0.0
+        for i in range(size):
+            for j in range(i + 1, size):
+                value = abs(work[i][j])
+                if value > off:
+                    off, pivot_i, pivot_j = value, i, j
+        if off <= DEFAULT_JACOBI_TOLERANCE:
+            break
+        app = work[pivot_i][pivot_i]
+        aqq = work[pivot_j][pivot_j]
+        apq = work[pivot_i][pivot_j]
+        tau = (aqq - app) / (2.0 * apq)
+        tangent = math.copysign(1.0, tau) / (abs(tau) + math.sqrt(1.0 + tau * tau))
+        cosine = 1.0 / math.sqrt(1.0 + tangent * tangent)
+        sine = tangent * cosine
+        for k in range(size):
+            if k in {pivot_i, pivot_j}:
+                continue
+            aik = work[k][pivot_i]
+            ajk = work[k][pivot_j]
+            work[k][pivot_i] = cosine * aik - sine * ajk
+            work[pivot_i][k] = work[k][pivot_i]
+            work[k][pivot_j] = sine * aik + cosine * ajk
+            work[pivot_j][k] = work[k][pivot_j]
+        work[pivot_i][pivot_i] = cosine * cosine * app - 2.0 * sine * cosine * apq + sine * sine * aqq
+        work[pivot_j][pivot_j] = sine * sine * app + 2.0 * sine * cosine * apq + cosine * cosine * aqq
+        work[pivot_i][pivot_j] = 0.0
+        work[pivot_j][pivot_i] = 0.0
+    return [work[index][index] for index in range(size)]
+
+
+def _mean_cosine_to_mean(
+    matrix: Sequence[Sequence[float]],
+    mean_vector: Sequence[float],
+) -> Optional[float]:
+    unit_mean = _unit_vector(mean_vector)
+    if unit_mean is None:
+        return None
+    values: list[float] = []
+    for vector in matrix:
+        unit = _unit_vector(vector)
+        if unit is None:
+            continue
+        values.append(_dot(unit, unit_mean))
+    return _mean_numbers(values)
+
+
+def _unit_vector(vector: Sequence[float]) -> Optional[tuple[float, ...]]:
+    norm = _l2(vector)
+    if norm == 0.0:
+        return None
+    return tuple(float(value) / norm for value in vector)
+
+
+def _l2(vector: Sequence[float]) -> float:
+    return math.sqrt(sum(float(value) * float(value) for value in vector))
+
+
+def _dot(left: Sequence[float], right: Sequence[float]) -> float:
+    return sum(float(a) * float(b) for a, b in zip(left, right))
+
+
+def _mean_numbers(values: Sequence[float]) -> Optional[float]:
+    if not values:
+        return None
+    return sum(float(value) for value in values) / len(values)
+
+
+def _std_numbers(values: Sequence[float]) -> Optional[float]:
+    if len(values) < 2:
+        return None
+    mean = _mean_numbers(values)
+    if mean is None:
+        return None
+    variance = sum((float(value) - mean) ** 2 for value in values) / (len(values) - 1)
+    return math.sqrt(max(0.0, variance))
+
+
+def synthetic_collapse_fixture() -> tuple[LatentRepresentationRecord, ...]:
+    """Rank-1 batch whose centered spectrum occupies a single axis."""
+
+    return tuple(
+        LatentRepresentationRecord(
+            sample_id=f"collapse-{index}",
+            vector=(float(index), 0.0, 0.0),
+            family="deontic",
+            domain="notice",
+            jurisdiction="us-federal",
+            length_bin="short",
+            length=12.0 + index,
+            duplicate_group="collapse",
+            split="development",
+            success=True,
+            confidence=0.9,
+        )
+        for index in range(1, 5)
+    )
+
+
+def synthetic_anisotropy_fixture() -> tuple[LatentRepresentationRecord, ...]:
+    """Near-collinear batch with a known 2-D singular spectrum."""
+
+    vectors = (
+        (1.0, 0.0),
+        (2.0, 0.1),
+        (3.0, 0.0),
+        (4.0, -0.1),
+    )
+    return tuple(
+        LatentRepresentationRecord(
+            sample_id=f"anisotropy-{index}",
+            vector=vector,
+            family="tdfol",
+            domain="deadline",
+            jurisdiction="us-federal",
+            length_bin="medium",
+            length=50.0 + index,
+            duplicate_group=f"anisotropy-{index}",
+            split="calibration",
+            success=index < 3,
+            confidence=0.8 if index < 3 else 0.2,
+        )
+        for index, vector in enumerate(vectors)
+    )
+
+
+def synthetic_memorization_fixture() -> tuple[LatentRepresentationRecord, ...]:
+    """Exact duplicate groups used to trigger memorization diagnostics."""
+
+    records: list[LatentRepresentationRecord] = []
+    for group, family, vector in (
+        ("dup-a", "deontic", (1.0, 0.0, 0.0, 0.0)),
+        ("dup-b", "frame_logic", (0.0, 1.0, 0.0, 0.0)),
+    ):
+        for copy in range(3):
+            records.append(
+                LatentRepresentationRecord(
+                    sample_id=f"{group}-{copy}",
+                    vector=vector,
+                    family=family,
+                    domain="template",
+                    jurisdiction="ca",
+                    length_bin="short",
+                    length=20.0,
+                    duplicate_group=group,
+                    split="development",
+                    success=True,
+                    confidence=0.99,
+                )
+            )
+    return tuple(records)
+
+
+def synthetic_orthogonal_fixture() -> tuple[LatentRepresentationRecord, ...]:
+    """Centered orthogonal axes used as a well-conditioned golden batch."""
+
+    families = ("deontic", "frame_logic", "tdfol")
+    records: list[LatentRepresentationRecord] = []
+    for axis, family in enumerate(families):
+        positive = [0.0, 0.0, 0.0]
+        negative = [0.0, 0.0, 0.0]
+        positive[axis] = 1.0
+        negative[axis] = -1.0
+        for polarity, vector in (("pos", tuple(positive)), ("neg", tuple(negative))):
+            records.append(
+                LatentRepresentationRecord(
+                    sample_id=f"ortho-{family}-{polarity}",
+                    vector=vector,
+                    family=family,
+                    domain=family,
+                    jurisdiction="us-federal",
+                    length_bin="medium",
+                    length=80.0,
+                    duplicate_group=f"ortho-{family}",
+                    split="development",
+                    ood=False,
+                    success=True,
+                    confidence=0.7,
+                    semantic_class=family,
+                )
+            )
+    return tuple(records)
+
+
+def synthetic_false_neighborhood_fixture() -> tuple[LatentRepresentationRecord, ...]:
+    """Two families occupying one neighborhood, proving similarity is not equivalence."""
+
+    records: list[LatentRepresentationRecord] = []
+    for index, family in enumerate(("deontic", "tdfol", "deontic", "tdfol")):
+        records.append(
+            LatentRepresentationRecord(
+                sample_id=f"neighbor-{family}-{index}",
+                vector=(1.0, 0.01 * index, 0.0),
+                family=family,
+                domain="mixed",
+                jurisdiction="us-federal",
+                length_bin="short",
+                length=15.0,
+                duplicate_group=f"neighbor-{index}",
+                split="calibration",
+                success=family == "deontic",
+                confidence=0.55,
+                semantic_class=family,
+            )
+        )
+    return tuple(records)
+
+
+def synthetic_unknown_denominator_fixture() -> tuple[LatentRepresentationRecord, ...]:
+    """Single unlabeled vector so rank and calibration denominators stay unknown."""
+
+    return (
+        LatentRepresentationRecord(
+            sample_id="unknown-only",
+            vector=(0.0, 0.0, 0.0),
+            family="",
+            split="development",
+            success=None,
+            confidence=None,
+            latent_used=False,
+        ),
+    )
+
+
+GOLDEN_COLLAPSE_METRIC_VECTOR: Final[Mapping[str, float]] = {
+    "dimension": 3.0,
+    "effective_rank": 1.0,
+    "participation_ratio": 1.0,
+    "sample_count": 4.0,
+    "singular_value_0": round(math.sqrt(5.0), 12),
+    "singular_value_1": 0.0,
+    "singular_value_2": 0.0,
+    "spectral_anisotropy": 1.0,
+}
+GOLDEN_ORTHOGONAL_METRIC_VECTOR: Final[Mapping[str, float]] = {
+    "dimension": 3.0,
+    "effective_rank": 3.0,
+    "participation_ratio": 3.0,
+    "sample_count": 6.0,
+    "singular_value_0": round(math.sqrt(2.0), 12),
+    "singular_value_1": round(math.sqrt(2.0), 12),
+    "singular_value_2": round(math.sqrt(2.0), 12),
+    "spectral_anisotropy": round(1.0 / 3.0, 12),
+}
+GOLDEN_ANISOTROPY_METRIC_VECTOR: Final[Mapping[str, float]] = {
+    "dimension": 2.0,
+    "effective_rank": 1.016935639849,
+    "sample_count": 4.0,
+    "singular_value_0": 2.237860410146,
+    "singular_value_1": 0.109456770926,
+    "spectral_anisotropy": 0.997613389502,
+}
+GOLDEN_CALIBRATION_METRIC_VECTOR: Final[Mapping[str, float]] = {
+    "brier_score": 0.01,
+    "expected_calibration_error": 0.1,
+    "failure_conditioned_confidence": 0.1,
+    "success_conditioned_confidence": 0.9,
+}
+
+
+def synthetic_calibration_fixture() -> tuple[LatentRepresentationRecord, ...]:
+    """Five confident successes and five unconfident failures (ECE 0.1, Brier 0.01)."""
+
+    records: list[LatentRepresentationRecord] = []
+    for index in range(5):
+        records.append(
+            LatentRepresentationRecord(
+                sample_id=f"cal-success-{index}",
+                vector=(1.0, 0.0),
+                family="deontic",
+                split="calibration",
+                success=True,
+                confidence=0.9,
+            )
+        )
+        records.append(
+            LatentRepresentationRecord(
+                sample_id=f"cal-failure-{index}",
+                vector=(0.0, 1.0),
+                family="tdfol",
+                split="calibration",
+                success=False,
+                confidence=0.1,
+            )
+        )
+    return tuple(records)
+
+
 __all__ = [
     "COUNTEREXAMPLE_EQUIVALENCE",
     "DECOMPILER_ROUND_TRIP_PRESERVATION",
+    "DEFAULT_FALSE_NEIGHBORHOOD_K",
+    "GOLDEN_ANISOTROPY_METRIC_VECTOR",
+    "GOLDEN_CALIBRATION_METRIC_VECTOR",
+    "GOLDEN_COLLAPSE_METRIC_VECTOR",
+    "GOLDEN_ORTHOGONAL_METRIC_VECTOR",
     "GRAPH_ISOMORPHISM",
+    "LEGAL_IR_LATENT_DIAGNOSTICS_SCHEMA_VERSION",
     "LEGAL_IR_SEMANTIC_METRICS_SCHEMA_VERSION",
+    "FalseNeighborhoodReport",
+    "LatentDiagnosticsReport",
+    "LatentRepresentationRecord",
+    "LatentSpectrumReport",
     "OBLIGATION_EQUIVALENCE",
     "PROOF_OBLIGATION_DELTA",
     "PROOF_OBLIGATION_DELTA_SCORE",
@@ -1259,8 +2058,17 @@ __all__ = [
     "SemanticEquivalenceConfig",
     "SemanticEquivalenceFamilyComparison",
     "SemanticEquivalenceFamilyResult",
+    "coerce_latent_records",
     "compare_legal_ir_semantic_equivalence",
+    "evaluate_latent_diagnostics",
     "evaluate_legal_ir_semantic_equivalence",
     "semantic_equivalence_from_metrics",
     "semantic_equivalence_promotion_gate",
+    "synthetic_anisotropy_fixture",
+    "synthetic_calibration_fixture",
+    "synthetic_collapse_fixture",
+    "synthetic_false_neighborhood_fixture",
+    "synthetic_memorization_fixture",
+    "synthetic_orthogonal_fixture",
+    "synthetic_unknown_denominator_fixture",
 ]

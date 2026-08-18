@@ -114,6 +114,7 @@ def to_target_format(self, formula: TDFOLFormula) -> str:
     """Convert TDFOL formula to target format."""
     pass  # Typed but not implemented
 
+
 def _fallback_forall(self, var: str, condition: Any) -> Any:
     """Fallback universal quantification."""
     pass  # Typed but not implemented

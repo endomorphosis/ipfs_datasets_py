@@ -4,7 +4,7 @@ This module defines the canonical schema for all optimizer structured JSON logs.
 Version 3 adds:
 - Session-level event tracking
 - Iteration/round-level events
-- Resource usage tracking  
+- Resource usage tracking
 - Error classification
 - Universal field naming conventions
 
@@ -14,7 +14,7 @@ Schema Compliance:
     - schema_version: 3
     - event: Event type from EventType enum
     - timestamp: Unix timestamp (float)
-    
+
     All optimizer logs SHOULD include:
     - session_id: Unique session identifier
     - domain: Optimizer domain (code, logic, graph, etc.)
@@ -26,10 +26,10 @@ Usage:
     ...     log_iteration_complete,
     ...     log_error,
     ... )
-    >>> 
+    >>>
     >>> import logging
     >>> logger = logging.getLogger(__name__)
-    >>> 
+    >>>
     >>> log_session_start(logger, session_id="sess-001", domain="graph", input_size=1000)
     >>> log_iteration_complete(logger, session_id="sess-001", iteration=1, score=0.75)
     >>> log_error(logger, "extraction_failed", error_msg="Timeout", session_id="sess-001")
@@ -51,46 +51,46 @@ SCHEMA_VERSION = 3
 
 class EventType(Enum):
     """Standard event types for optimizer logs (schema v3)."""
-    
+
     # Session lifecycle
     SESSION_STARTED = "session.started"
     SESSION_COMPLETED = "session.completed"
     SESSION_FAILED = "session.failed"
-    
+
     # Iteration/round lifecycle
     ITERATION_STARTED = "iteration.started"
     ITERATION_COMPLETED = "iteration.completed"
-    
+
     # Generation events
     GENERATE_STARTED = "generate.started"
     GENERATE_COMPLETED = "generate.completed"
     GENERATE_FAILED = "generate.failed"
-    
+
     # Critique events
     CRITIQUE_STARTED = "critique.started"
     CRITIQUE_COMPLETED = "critique.completed"
     CRITIQUE_FAILED = "critique.failed"
-    
+
     # Optimization events
     OPTIMIZE_STARTED = "optimize.started"
     OPTIMIZE_COMPLETED = "optimize.completed"
     OPTIMIZE_FAILED = "optimize.failed"
-    
+
     # Validation events
     VALIDATE_STARTED = "validate.started"
     VALIDATE_COMPLETED = "validate.completed"
     VALIDATE_FAILED = "validate.failed"
-    
+
     # Convergence/early stopping
     CONVERGENCE_DETECTED = "convergence.detected"
     TARGET_REACHED = "target.reached"
     EARLY_STOP = "early_stop"
-    
+
     # Resource/performance
     CACHE_HIT = "cache.hit"
     CACHE_MISS = "cache.miss"
     MEMORY_WARNING = "memory.warning"
-    
+
     # Error classification
     ERROR_RETRYABLE = "error.retryable"
     ERROR_FATAL = "error.fatal"
@@ -114,14 +114,14 @@ def _build_base_payload(
         "optimizer_pipeline": "common",
         "timestamp": time.time(),
     }
-    
+
     if session_id:
         payload["session_id"] = session_id
     if domain:
         payload["domain"] = domain
     if component:
         payload["component"] = component
-    
+
     return payload
 
 
@@ -142,6 +142,7 @@ def _safe_log(logger: logging.Logger, level: int, payload: Dict[str, Any]) -> No
 # Session-Level Events
 # ============================================================================
 
+
 def log_session_start(
     logger: logging.Logger,
     session_id: str,
@@ -151,7 +152,7 @@ def log_session_start(
     component: Optional[str] = None,
 ) -> None:
     """Log session start event.
-    
+
     Args:
         logger: Python logger
         session_id: Unique session identifier
@@ -166,12 +167,12 @@ def log_session_start(
         domain=domain,
         component=component,
     )
-    
+
     if input_size is not None:
         payload["input_size"] = input_size
     if config:
         payload["config"] = config
-    
+
     _safe_log(logger, logging.INFO, payload)
 
 
@@ -187,7 +188,7 @@ def log_session_complete(
     metrics: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Log session completion event.
-    
+
     Args:
         logger: Python logger
         session_id: Unique session identifier
@@ -205,17 +206,19 @@ def log_session_complete(
         domain=domain,
         component=component,
     )
-    
-    payload.update({
-        "iterations": iterations,
-        "final_score": final_score,
-        "valid": valid,
-        "execution_time_ms": execution_time_ms,
-    })
-    
+
+    payload.update(
+        {
+            "iterations": iterations,
+            "final_score": final_score,
+            "valid": valid,
+            "execution_time_ms": execution_time_ms,
+        }
+    )
+
     if metrics:
         payload["metrics"] = metrics
-    
+
     _safe_log(logger, logging.INFO, payload)
 
 
@@ -229,7 +232,7 @@ def log_session_failed(
     component: Optional[str] = None,
 ) -> None:
     """Log session failure event.
-    
+
     Args:
         logger: Python logger
         session_id: Unique session identifier
@@ -245,21 +248,24 @@ def log_session_failed(
         domain=domain,
         component=component,
     )
-    
-    payload.update({
-        "error_type": error_type,
-        "error_msg": error_msg,
-    })
-    
+
+    payload.update(
+        {
+            "error_type": error_type,
+            "error_msg": error_msg,
+        }
+    )
+
     if iteration is not None:
         payload["iteration"] = iteration
-    
+
     _safe_log(logger, logging.ERROR, payload)
 
 
 # ============================================================================
 # Iteration-Level Events
 # ============================================================================
+
 
 def log_iteration_started(
     logger: logging.Logger,
@@ -270,7 +276,7 @@ def log_iteration_started(
     component: Optional[str] = None,
 ) -> None:
     """Log iteration start event.
-    
+
     Args:
         logger: Python logger
         session_id: Session ID
@@ -284,13 +290,15 @@ def log_iteration_started(
         session_id=session_id,
         component=component,
     )
-    
-    payload.update({
-        "iteration": iteration,
-        "current_score": current_score,
-        "feedback_count": feedback_count,
-    })
-    
+
+    payload.update(
+        {
+            "iteration": iteration,
+            "current_score": current_score,
+            "feedback_count": feedback_count,
+        }
+    )
+
     _safe_log(logger, logging.DEBUG, payload)
 
 
@@ -304,7 +312,7 @@ def log_iteration_complete(
     component: Optional[str] = None,
 ) -> None:
     """Log iteration completion event.
-    
+
     Args:
         logger: Python logger
         session_id: Session ID
@@ -319,20 +327,23 @@ def log_iteration_complete(
         session_id=session_id,
         component=component,
     )
-    
-    payload.update({
-        "iteration": iteration,
-        "score": score,
-        "score_delta": score_delta,
-        "execution_time_ms": execution_time_ms,
-    })
-    
+
+    payload.update(
+        {
+            "iteration": iteration,
+            "score": score,
+            "score_delta": score_delta,
+            "execution_time_ms": execution_time_ms,
+        }
+    )
+
     _safe_log(logger, logging.INFO, payload)
 
 
 # ============================================================================
 # Pipeline Stage Events
 # ============================================================================
+
 
 def log_generate_complete(
     logger: logging.Logger,
@@ -342,7 +353,7 @@ def log_generate_complete(
     component: Optional[str] = None,
 ) -> None:
     """Log generation completion event.
-    
+
     Args:
         logger: Python logger
         session_id: Session ID
@@ -355,12 +366,12 @@ def log_generate_complete(
         session_id=session_id,
         component=component,
     )
-    
+
     if artifact_size is not None:
         payload["artifact_size"] = artifact_size
     if execution_time_ms is not None:
         payload["execution_time_ms"] = execution_time_ms
-    
+
     _safe_log(logger, logging.INFO, payload)
 
 
@@ -373,7 +384,7 @@ def log_critique_complete(
     component: Optional[str] = None,
 ) -> None:
     """Log critique completion event.
-    
+
     Args:
         logger: Python logger
         session_id: Session ID
@@ -387,15 +398,17 @@ def log_critique_complete(
         session_id=session_id,
         component=component,
     )
-    
-    payload.update({
-        "score": score,
-        "feedback_count": feedback_count,
-    })
-    
+
+    payload.update(
+        {
+            "score": score,
+            "feedback_count": feedback_count,
+        }
+    )
+
     if execution_time_ms is not None:
         payload["execution_time_ms"] = execution_time_ms
-    
+
     _safe_log(logger, logging.INFO, payload)
 
 
@@ -407,7 +420,7 @@ def log_validate_complete(
     component: Optional[str] = None,
 ) -> None:
     """Log validation completion event.
-    
+
     Args:
         logger: Python logger
         session_id: Session ID
@@ -420,12 +433,12 @@ def log_validate_complete(
         session_id=session_id,
         component=component,
     )
-    
+
     payload["valid"] = valid
-    
+
     if validation_details:
         payload["validation_details"] = validation_details
-    
+
     level = logging.INFO if valid else logging.WARNING
     _safe_log(logger, level, payload)
 
@@ -433,6 +446,7 @@ def log_validate_complete(
 # ============================================================================
 # Convergence/Stopping Events
 # ============================================================================
+
 
 def log_convergence_detected(
     logger: logging.Logger,
@@ -444,7 +458,7 @@ def log_convergence_detected(
     component: Optional[str] = None,
 ) -> None:
     """Log convergence detection event.
-    
+
     Args:
         logger: Python logger
         session_id: Session ID
@@ -459,14 +473,16 @@ def log_convergence_detected(
         session_id=session_id,
         component=component,
     )
-    
-    payload.update({
-        "iteration": iteration,
-        "score": score,
-        "score_delta": score_delta,
-        "threshold": threshold,
-    })
-    
+
+    payload.update(
+        {
+            "iteration": iteration,
+            "score": score,
+            "score_delta": score_delta,
+            "threshold": threshold,
+        }
+    )
+
     _safe_log(logger, logging.INFO, payload)
 
 
@@ -479,7 +495,7 @@ def log_target_reached(
     component: Optional[str] = None,
 ) -> None:
     """Log target score reached event.
-    
+
     Args:
         logger: Python logger
         session_id: Session ID
@@ -493,19 +509,22 @@ def log_target_reached(
         session_id=session_id,
         component=component,
     )
-    
-    payload.update({
-        "iteration": iteration,
-        "score": score,
-        "target": target,
-    })
-    
+
+    payload.update(
+        {
+            "iteration": iteration,
+            "score": score,
+            "target": target,
+        }
+    )
+
     _safe_log(logger, logging.INFO, payload)
 
 
 # ============================================================================
 # Cache/Performance Events
 # ============================================================================
+
 
 def log_cache_hit(
     logger: logging.Logger,
@@ -514,7 +533,7 @@ def log_cache_hit(
     component: Optional[str] = None,
 ) -> None:
     """Log cache hit event.
-    
+
     Args:
         logger: Python logger
         cache_key: Abbreviated cache key (first 12 chars)
@@ -525,18 +544,19 @@ def log_cache_hit(
         EventType.CACHE_HIT,
         component=component,
     )
-    
+
     payload["cache_key"] = cache_key[:12]
-    
+
     if hit_rate is not None:
         payload["hit_rate"] = hit_rate
-    
+
     _safe_log(logger, logging.DEBUG, payload)
 
 
 # ============================================================================
 # Error Events
 # ============================================================================
+
 
 def log_error(
     logger: logging.Logger,
@@ -549,7 +569,7 @@ def log_error(
     stack_trace: Optional[str] = None,
 ) -> None:
     """Log error event.
-    
+
     Args:
         logger: Python logger
         error_type: Error classification (timeout, validation_failed, import_error, etc.)
@@ -561,22 +581,24 @@ def log_error(
         stack_trace: Optional stack trace
     """
     event = EventType.ERROR_RETRYABLE if retryable else EventType.ERROR_FATAL
-    
+
     payload = _build_base_payload(
         event,
         session_id=session_id,
         component=component,
     )
-    
-    payload.update({
-        "error_type": error_type,
-        "error_msg": error_msg,
-    })
-    
+
+    payload.update(
+        {
+            "error_type": error_type,
+            "error_msg": error_msg,
+        }
+    )
+
     if iteration is not None:
         payload["iteration"] = iteration
     if stack_trace:
         payload["stack_trace"] = stack_trace
-    
+
     level = logging.WARNING if retryable else logging.ERROR
     _safe_log(logger, level, payload)

@@ -10,6 +10,7 @@ Stale smoke tests (already implemented in source, now formally exercised):
   * OntologyCritic.dimension_min(score)
   * OntologyGenerator.relationship_avg_confidence(result)
 """
+
 import math
 import types
 import pytest
@@ -19,21 +20,28 @@ import pytest
 # Lightweight stubs to avoid heavy import chain
 # ---------------------------------------------------------------------------
 
+
 def _make_optimizer(scores):
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     class _E:
         def __init__(self, v):
             self.average_score = v
+
     o = object.__new__(OntologyOptimizer)
     o._history = [_E(v) for v in scores]
     return o
 
 
 def _make_adapter(scores):
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     class _FR:
         def __init__(self, s):
             self.final_score = s
+
     la = object.__new__(OntologyLearningAdapter)
     la._feedback = [_FR(s) for s in scores]
     return la
@@ -41,12 +49,15 @@ def _make_adapter(scores):
 
 def _make_pipeline(scores):
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     class _S:
         def __init__(self, v):
             self.overall = v
+
     class _R:
         def __init__(self, v):
             self.score = _S(v)
+
     p = object.__new__(OntologyPipeline)
     p._run_history = [_R(v) for v in scores]
     return p
@@ -59,9 +70,7 @@ def ontology_builder(ontology_dict_factory):
     def _build(entity_ids, rels):
         ontology = ontology_dict_factory(entity_count=0, relationship_count=0)
         ontology["entities"] = [{"id": i} for i in entity_ids]
-        ontology["relationships"] = [
-            {"source_id": s, "target_id": t} for s, t in rels
-        ]
+        ontology["relationships"] = [{"source_id": s, "target_id": t} for s, t in rels]
         return ontology
 
     return _build
@@ -70,6 +79,7 @@ def ontology_builder(ontology_dict_factory):
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.score_quartile_dispersion
 # ---------------------------------------------------------------------------
+
 
 class TestScoreQuartileDispersion:
     def test_empty_returns_zero(self):
@@ -99,6 +109,7 @@ class TestScoreQuartileDispersion:
 
     def test_result_in_zero_to_one(self):
         import random
+
         random.seed(42)
         vals = [random.random() for _ in range(8)]
         o = _make_optimizer(vals)
@@ -126,6 +137,7 @@ class TestScoreQuartileDispersion:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.feedback_range_ratio
 # ---------------------------------------------------------------------------
+
 
 class TestFeedbackRangeRatio:
     def test_empty_returns_zero(self):
@@ -180,6 +192,7 @@ class TestFeedbackRangeRatio:
 # OntologyPipeline.run_score_quartile_dispersion
 # ---------------------------------------------------------------------------
 
+
 class TestRunScoreQuartileDispersion:
     def test_empty_returns_zero(self):
         p = _make_pipeline([])
@@ -206,6 +219,7 @@ class TestRunScoreQuartileDispersion:
 
     def test_result_in_zero_to_one(self):
         import random
+
         random.seed(99)
         vals = [random.random() for _ in range(10)]
         p = _make_pipeline(vals)
@@ -226,10 +240,12 @@ class TestRunScoreQuartileDispersion:
 # LogicValidator.source_count
 # ---------------------------------------------------------------------------
 
+
 class TestSourceCount:
     @pytest.fixture(autouse=True)
     def _validator(self):
         from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
         self.lv = LogicValidator()
 
     def test_empty_ontology_returns_zero(self, ontology_builder):
@@ -298,9 +314,11 @@ class TestSourceCount:
 # Stale smoke tests (already implemented; exercised here for coverage)
 # ---------------------------------------------------------------------------
 
+
 class TestStaleDimensionMin:
     def test_dimension_min_returns_string(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic, CriticScore
+
         c = OntologyCritic()
         score = CriticScore(
             completeness=0.9,
@@ -315,10 +333,11 @@ class TestStaleDimensionMin:
 
     def test_dimension_min_returns_lowest(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic, CriticScore
+
         c = OntologyCritic()
         score = CriticScore(
             completeness=0.9,
-            consistency=0.1,   # lowest
+            consistency=0.1,  # lowest
             clarity=0.7,
             granularity=0.5,
             relationship_coherence=0.6,
@@ -331,8 +350,10 @@ class TestStaleRelationshipAvgConfidence:
     def _make_result(self, confidences):
         """Build a minimal EntityExtractionResult with relationships."""
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            EntityExtractionResult, Relationship,
+            EntityExtractionResult,
+            Relationship,
         )
+
         rels = [
             Relationship(id=f"r{i}", source_id="A", target_id="B", type="rel", confidence=c)
             for i, c in enumerate(confidences)
@@ -341,12 +362,14 @@ class TestStaleRelationshipAvgConfidence:
 
     def test_empty_relationships_returns_zero(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         g = object.__new__(OntologyGenerator)
         result = self._make_result([])
         assert g.relationship_avg_confidence(result) == 0.0
 
     def test_single_relationship_returns_its_confidence(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         g = object.__new__(OntologyGenerator)
         result = self._make_result([0.7])
         assert abs(g.relationship_avg_confidence(result) - 0.7) < 1e-9

@@ -96,9 +96,7 @@ def _summary(report: dict[str, Any] | None) -> dict[str, Any]:
         "compiler_commit": "compiler-commit-evidence",
         "fixed_canary_id": "fixed-canary-evidence",
         "snapshot_id": "snapshot-evidence",
-        "representation_promotion_report_path": (
-            "workspace/rollout/promotion/report.json"
-        ),
+        "representation_promotion_report_path": ("workspace/rollout/promotion/report.json"),
         "latest_validation_ce_delta": 0.0,
         "latest_validation_cosine_delta": 0.0,
         "latest_compiler_ir_source_copy_reward_hack_penalty": 0.0,
@@ -175,9 +173,7 @@ def test_no_candidate_snapshot_still_emits_complete_non_activation_report() -> N
             "old-compiler!=compiler-commit-evidence",
         ),
         (
-            lambda report: report.update(
-                {"report_artifact_path": "workspace/other/report.json"}
-            ),
+            lambda report: report.update({"report_artifact_path": "workspace/other/report.json"}),
             "representation_promotion_report_path_mismatch:"
             "workspace/other/report.json!=workspace/rollout/promotion/report.json",
         ),

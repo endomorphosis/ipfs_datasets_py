@@ -7,12 +7,14 @@ Methods under test:
   - OntologyPipeline.run_moving_average(n)
   - OntologyPipeline.convergence_round(variance_threshold)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     gen = MagicMock()
     critic = MagicMock()
     return OntologyMediator(gen, critic)
@@ -20,14 +22,20 @@ def _make_mediator():
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -35,6 +43,7 @@ def _make_score(**kwargs):
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -47,6 +56,7 @@ def _push_run(p, score):
 # ---------------------------------------------------------------------------
 # OntologyMediator.clear_feedback / feedback_score_mean
 # ---------------------------------------------------------------------------
+
 
 class TestClearFeedback:
     def test_empty_mediator_clears_zero(self):
@@ -97,6 +107,7 @@ class TestFeedbackScoreMean:
 # OntologyCritic.weighted_score
 # ---------------------------------------------------------------------------
 
+
 class TestWeightedScore:
     def test_equal_weights_equals_mean(self):
         critic = _make_critic()
@@ -107,8 +118,14 @@ class TestWeightedScore:
 
     def test_custom_weights(self):
         critic = _make_critic()
-        score = _make_score(completeness=1.0, consistency=0.0, clarity=0.0,
-                            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0)
+        score = _make_score(
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
+        )
         # give completeness all the weight
         weights = {"completeness": 10.0}
         result = critic.weighted_score(score, weights)
@@ -124,6 +141,7 @@ class TestWeightedScore:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.run_moving_average
 # ---------------------------------------------------------------------------
+
 
 class TestRunMovingAverage:
     def test_empty_returns_empty(self):
@@ -155,6 +173,7 @@ class TestRunMovingAverage:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.convergence_round
 # ---------------------------------------------------------------------------
+
 
 class TestConvergenceRound:
     def test_empty_returns_minus_one(self):

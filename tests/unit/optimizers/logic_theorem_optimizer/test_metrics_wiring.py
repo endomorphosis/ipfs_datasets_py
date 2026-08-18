@@ -27,6 +27,7 @@ def _make_optimizer(collector=None):
 
 def _make_context():
     from ipfs_datasets_py.optimizers.common import OptimizationContext
+
     return OptimizationContext(session_id="lto-test-1", input_data="dummy", domain="logic")
 
 
@@ -95,8 +96,11 @@ class TestLogicTheoremOptimizerMetrics:
 # Tests for learning_metrics_collector wiring (OptimizerLearningMetricsCollector)
 # ---------------------------------------------------------------------------
 
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import LogicTheoremOptimizer
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import (
+    LogicTheoremOptimizer,
+)
 from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizerConfig, OptimizationContext
+
 
 class TestLogicTheoremOptimizerLearningMetrics:
     """LogicTheoremOptimizer wires learning_metrics_collector into run_session."""
@@ -125,28 +129,41 @@ class TestLogicTheoremOptimizerLearningMetrics:
             LogicalStatement,
         )
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_critic import (
-            CriticScore, CriticDimensions, DimensionScore,
+            CriticScore,
+            CriticDimensions,
+            DimensionScore,
         )
         from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationContext
         from ipfs_datasets_py.optimizers.common.extraction_contexts import LogicExtractionConfig
 
         config = LogicExtractionConfig(extraction_mode=ExtractionMode.FOL, domain="general")
         extraction_ctx = LogicExtractionContext(
-            data="Test theorem.", data_type=DataType.TEXT,
-            domain="general", config=config
+            data="Test theorem.", data_type=DataType.TEXT, domain="general", config=config
         )
         fake_result = ExtractionResult(
-            statements=[LogicalStatement(
-                formula="P(x)", natural_language="P holds.", confidence=0.7, formalism="fol",
-            )],
-            context=extraction_ctx, success=True,
+            statements=[
+                LogicalStatement(
+                    formula="P(x)",
+                    natural_language="P holds.",
+                    confidence=0.7,
+                    formalism="fol",
+                )
+            ],
+            context=extraction_ctx,
+            success=True,
         )
         fake_score = CriticScore(
             overall=0.65,
-            dimension_scores=[DimensionScore(
-                dimension=CriticDimensions.SOUNDNESS, score=0.65, feedback="OK",
-            )],
-            strengths=[], weaknesses=[], recommendations=[],
+            dimension_scores=[
+                DimensionScore(
+                    dimension=CriticDimensions.SOUNDNESS,
+                    score=0.65,
+                    feedback="OK",
+                )
+            ],
+            strengths=[],
+            weaknesses=[],
+            recommendations=[],
         )
         monkeypatch.setattr(optimizer.extractor, "extract", lambda ctx: fake_result)
         monkeypatch.setattr(optimizer.critic, "evaluate", lambda a: fake_score)
@@ -155,6 +172,7 @@ class TestLogicTheoremOptimizerLearningMetrics:
 
     def test_learning_metrics_not_created_when_module_missing(self, monkeypatch):
         import ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer as mod
+
         monkeypatch.setattr(mod, "_HAVE_LEARNING_METRICS", False)
         monkeypatch.setattr(mod, "OptimizerLearningMetricsCollector", None)
         opt = self._make_optimizer()
@@ -183,6 +201,7 @@ class TestLogicTheoremOptimizerLearningMetrics:
 
     def test_learning_metrics_auto_created_when_available(self, monkeypatch):
         import ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer as mod
+
         fake_cls = MagicMock(return_value=MagicMock())
         monkeypatch.setattr(mod, "_HAVE_LEARNING_METRICS", True)
         monkeypatch.setattr(mod, "OptimizerLearningMetricsCollector", fake_cls)

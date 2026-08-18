@@ -59,9 +59,7 @@ def test_required_capacity_families_have_distinct_explicit_budgets() -> None:
 
 
 def test_evidence_score_is_bounded_combined_and_ties_are_reproducible() -> None:
-    policy = FeatureCapacityPolicy.evidence_aware(
-        group_budgets={"feature": 2}
-    )
+    policy = FeatureCapacityPolicy.evidence_aware(group_budgets={"feature": 2})
     evidence = {
         "alpha": CapacityEvidence(
             activation_frequency=99.0,
@@ -75,9 +73,7 @@ def test_evidence_score_is_bounded_combined_and_ties_are_reproducible() -> None:
         "charlie": _strong(semantic_family="deontic"),
     }
 
-    first = select_sparse_tail(
-        "feature", evidence, evidence=evidence, policy=policy
-    )
+    first = select_sparse_tail("feature", evidence, evidence=evidence, policy=policy)
     second = select_sparse_tail(
         "feature", reversed(tuple(evidence)), evidence=evidence, policy=policy
     )
@@ -140,9 +136,7 @@ def test_unsafe_signal_can_never_win_or_leak_into_the_report() -> None:
     assert rejected.report["exclusions"] == {"rejected_proof_output": 1}
     assert unsigned.report["exclusions"] == {"unsigned_guidance": 1}
     assert source.report["exclusions"] == {"source_text_memorization": 1}
-    serialized = json.dumps(
-        [rejected.report, unsigned.report, source.report], sort_keys=True
-    )
+    serialized = json.dumps([rejected.report, unsigned.report, source.report], sort_keys=True)
     assert "secret" not in serialized
 
 
@@ -202,9 +196,7 @@ def test_accepted_state_v2_is_an_explicit_exact_zero_risk_baseline() -> None:
             "accepted": {"deontic": 100.0},
         }
     )
-    accepted = ModalAutoencoderTrainingState(
-        feature_family_logits={"accepted": {"temporal": 0.25}}
-    )
+    accepted = ModalAutoencoderTrainingState(feature_family_logits={"accepted": {"temporal": 0.25}})
 
     result = transfer_legacy_autoencoder_features(
         source,
@@ -249,16 +241,10 @@ def test_transfer_imports_only_evidence_backed_tail_and_preserves_coupling() -> 
     )
     target = ModalAutoencoderTrainingState(
         predicate_argument_embedding_weights={"accepted": [0.5]},
-        predicate_argument_family_logits={
-            "accepted": {"deontic": 0.5}
-        },
-        predicate_argument_legal_ir_view_logits={
-            "accepted": {"kg": 0.5}
-        },
+        predicate_argument_family_logits={"accepted": {"deontic": 0.5}},
+        predicate_argument_legal_ir_view_logits={"accepted": {"kg": 0.5}},
     )
-    policy = FeatureCapacityPolicy.evidence_aware(
-        group_budgets={"predicate_argument": 2}
-    )
+    policy = FeatureCapacityPolicy.evidence_aware(group_budgets={"predicate_argument": 2})
 
     result = transfer_legacy_autoencoder_features(
         source,
@@ -281,9 +267,7 @@ def test_transfer_imports_only_evidence_backed_tail_and_preserves_coupling() -> 
     expected = {"accepted", "useful"}
     assert set(result.state.predicate_argument_embedding_weights) == expected
     assert set(result.state.predicate_argument_family_logits) == expected
-    assert (
-        set(result.state.predicate_argument_legal_ir_view_logits) == expected
-    )
+    assert set(result.state.predicate_argument_legal_ir_view_logits) == expected
     selection = result.report["capacity_decisions"]["predicate_argument"]
     assert selection["exclusions"] == {"missing_positive_evidence": 1}
     assert selection["budget"] == 2
@@ -291,9 +275,7 @@ def test_transfer_imports_only_evidence_backed_tail_and_preserves_coupling() -> 
 
 def test_unknown_groups_and_invalid_pinned_budgets_fail_closed() -> None:
     with pytest.raises(UnknownCapacityGroupError, match="unknown"):
-        FeatureCapacityPolicy.evidence_aware(
-            group_budgets={"mystery_parameters": 1}
-        )
+        FeatureCapacityPolicy.evidence_aware(group_budgets={"mystery_parameters": 1})
     with pytest.raises(UnknownCapacityGroupError, match="unknown"):
         select_sparse_tail("mystery_parameters", (), policy=FeatureCapacityPolicy())
 

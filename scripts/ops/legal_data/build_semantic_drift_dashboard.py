@@ -28,7 +28,9 @@ class RunRow:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build semantic drift dashboard from batch manifests.")
+    parser = argparse.ArgumentParser(
+        description="Build semantic drift dashboard from batch manifests."
+    )
     parser.add_argument(
         "--manifests-glob",
         default="artifacts/formal_logic_batches*/batch_manifest.json",
@@ -216,18 +218,26 @@ def main() -> None:
 
     out_json = Path(args.output_json)
     out_json.parent.mkdir(parents=True, exist_ok=True)
-    out_json.write_text(json.dumps(dashboard, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    out_json.write_text(
+        json.dumps(dashboard, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
     out_md = Path(args.output_md)
     out_md.parent.mkdir(parents=True, exist_ok=True)
     out_md.write_text(render_markdown(dashboard), encoding="utf-8")
 
-    print(json.dumps({
-        "manifest_count": dashboard.get("manifest_count", 0),
-        "profile_count": dashboard.get("profile_count", 0),
-        "output_json": str(out_json),
-        "output_md": str(out_md),
-    }, indent=2, ensure_ascii=False))
+    print(
+        json.dumps(
+            {
+                "manifest_count": dashboard.get("manifest_count", 0),
+                "profile_count": dashboard.get("profile_count", 0),
+                "output_json": str(out_json),
+                "output_md": str(out_md),
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":

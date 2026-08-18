@@ -111,7 +111,9 @@ def test_initialize_with_tracer_max_expansions_is_5(wikipediaqueryexpander_insta
     pass
 
 
-def test_expand_query_with_vector_store_result_contains_original_query_vector(wikipediaqueryexpander_instance):
+def test_expand_query_with_vector_store_result_contains_original_query_vector(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query with vector store result contains original_query_vector
 
@@ -130,7 +132,9 @@ def test_expand_query_with_vector_store_result_contains_original_query_vector(wi
     pass
 
 
-def test_expand_query_with_vector_store_result_contains_original_query_text(wikipediaqueryexpander_instance):
+def test_expand_query_with_vector_store_result_contains_original_query_text(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query with vector store result contains original_query_text
 
@@ -149,7 +153,9 @@ def test_expand_query_with_vector_store_result_contains_original_query_text(wiki
     pass
 
 
-def test_expand_query_with_vector_store_result_contains_expansions_with_topics(wikipediaqueryexpander_instance):
+def test_expand_query_with_vector_store_result_contains_expansions_with_topics(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query with vector store result contains expansions with topics
 
@@ -168,7 +174,9 @@ def test_expand_query_with_vector_store_result_contains_expansions_with_topics(w
     pass
 
 
-def test_expand_query_with_vector_store_result_contains_expansions_with_categories(wikipediaqueryexpander_instance):
+def test_expand_query_with_vector_store_result_contains_expansions_with_categories(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query with vector store result contains expansions with categories
 
@@ -187,7 +195,9 @@ def test_expand_query_with_vector_store_result_contains_expansions_with_categori
     pass
 
 
-def test_expand_query_with_vector_store_result_contains_has_expansions_flag(wikipediaqueryexpander_instance):
+def test_expand_query_with_vector_store_result_contains_has_expansions_flag(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query with vector store result contains has_expansions flag
 
@@ -206,7 +216,9 @@ def test_expand_query_with_vector_store_result_contains_has_expansions_flag(wiki
     pass
 
 
-def test_expand_query_finds_similar_topics_expansions_topics_contains_3_items(wikipediaqueryexpander_instance):
+def test_expand_query_finds_similar_topics_expansions_topics_contains_3_items(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query finds similar topics expansions topics contains 3 items
 
@@ -225,7 +237,9 @@ def test_expand_query_finds_similar_topics_expansions_topics_contains_3_items(wi
     pass
 
 
-def test_expand_query_finds_similar_topics_each_topic_has_id_name_and_similarity(wikipediaqueryexpander_instance):
+def test_expand_query_finds_similar_topics_each_topic_has_id_name_and_similarity(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query finds similar topics each topic has id, name, and similarity
 
@@ -244,7 +258,9 @@ def test_expand_query_finds_similar_topics_each_topic_has_id_name_and_similarity
     pass
 
 
-def test_expand_query_filters_by_similarity_threshold_expansions_topics_contains_3_items(wikipediaqueryexpander_instance):
+def test_expand_query_filters_by_similarity_threshold_expansions_topics_contains_3_items(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query filters by similarity threshold expansions topics contains 3 items
 
@@ -263,7 +279,9 @@ def test_expand_query_filters_by_similarity_threshold_expansions_topics_contains
     pass
 
 
-def test_expand_query_filters_by_similarity_threshold_all_topics_have_similarity_065(wikipediaqueryexpander_instance):
+def test_expand_query_filters_by_similarity_threshold_all_topics_have_similarity_065(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query filters by similarity threshold all topics have similarity >= 0.65
 
@@ -301,7 +319,9 @@ def test_expand_query_limits_topics_to_max_expansions(wikipediaqueryexpander_ins
     pass
 
 
-def test_expand_query_finds_related_categories_expansions_categories_contains_physics(wikipediaqueryexpander_instance):
+def test_expand_query_finds_related_categories_expansions_categories_contains_physics(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query finds related categories expansions categories contains Physics
 
@@ -320,7 +340,9 @@ def test_expand_query_finds_related_categories_expansions_categories_contains_ph
     pass
 
 
-def test_expand_query_finds_related_categories_expansions_categories_may_contain_quantum_physics(wikipediaqueryexpander_instance):
+def test_expand_query_finds_related_categories_expansions_categories_may_contain_quantum_physics(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query finds related categories expansions categories may contain Quantum Physics
 
@@ -357,7 +379,9 @@ def test_expand_query_with_category_token_matching(wikipediaqueryexpander_instan
     pass
 
 
-def test_expand_query_sorts_categories_by_depth_categories_are_sorted_by_depth_descending(wikipediaqueryexpander_instance):
+def test_expand_query_sorts_categories_by_depth_categories_are_sorted_by_depth_descending(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query sorts categories by depth categories are sorted by depth descending
 
@@ -377,7 +401,9 @@ def test_expand_query_sorts_categories_by_depth_categories_are_sorted_by_depth_d
     pass
 
 
-def test_expand_query_sorts_categories_by_depth_first_category_has_highest_depth(wikipediaqueryexpander_instance):
+def test_expand_query_sorts_categories_by_depth_first_category_has_highest_depth(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query sorts categories by depth first category has highest depth
 
@@ -397,7 +423,9 @@ def test_expand_query_sorts_categories_by_depth_first_category_has_highest_depth
     pass
 
 
-def test_expand_query_with_no_vector_store_expansions_topics_is_empty(wikipediaqueryexpander_instance):
+def test_expand_query_with_no_vector_store_expansions_topics_is_empty(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query with no vector store expansions topics is empty
 
@@ -416,7 +444,9 @@ def test_expand_query_with_no_vector_store_expansions_topics_is_empty(wikipediaq
     pass
 
 
-def test_expand_query_with_no_vector_store_expansions_categories_may_not_be_empty(wikipediaqueryexpander_instance):
+def test_expand_query_with_no_vector_store_expansions_categories_may_not_be_empty(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query with no vector store expansions categories may not be empty
 
@@ -456,7 +486,9 @@ def test_expand_query_with_tracer_logging(wikipediaqueryexpander_instance):
     pass
 
 
-def test_expand_query_handles_vector_store_errors_expansions_topics_is_empty(wikipediaqueryexpander_instance):
+def test_expand_query_handles_vector_store_errors_expansions_topics_is_empty(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query handles vector store errors expansions topics is empty
 
@@ -475,7 +507,9 @@ def test_expand_query_handles_vector_store_errors_expansions_topics_is_empty(wik
     pass
 
 
-def test_expand_query_handles_vector_store_errors_no_exception_is_raised(wikipediaqueryexpander_instance):
+def test_expand_query_handles_vector_store_errors_no_exception_is_raised(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query handles vector store errors no exception is raised
 
@@ -494,7 +528,9 @@ def test_expand_query_handles_vector_store_errors_no_exception_is_raised(wikiped
     pass
 
 
-def test_expand_query_handles_vector_store_errors_has_expansions_reflects_actual_expansions(wikipediaqueryexpander_instance):
+def test_expand_query_handles_vector_store_errors_has_expansions_reflects_actual_expansions(
+    wikipediaqueryexpander_instance,
+):
     """
     Scenario: Expand query handles vector store errors has_expansions reflects actual expansions
 
@@ -511,4 +547,3 @@ def test_expand_query_handles_vector_store_errors_has_expansions_reflects_actual
         has_expansions reflects actual expansions
     """
     pass
-

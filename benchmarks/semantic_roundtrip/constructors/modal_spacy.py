@@ -42,9 +42,7 @@ from benchmarks.semantic_roundtrip_capabilities import (
 )
 
 
-MODAL_SPACY_CANONICAL_CONSTRUCTOR_INTERFACE: Final = (
-    "ModalSpacyCanonicalConstructor@1"
-)
+MODAL_SPACY_CANONICAL_CONSTRUCTOR_INTERFACE: Final = "ModalSpacyCanonicalConstructor@1"
 DEFAULT_SPACY_MODEL: Final = SPACY_MODEL
 DEFAULT_SPACY_MODEL_VERSION: Final = SPACY_MODEL_VERSION
 REQUIRED_SPACY_PIPELINE: Final = tuple(SPACY_PIPELINE)
@@ -124,9 +122,7 @@ class SourceSpanDiagnostic:
             or self.end_char < self.start_char
         ):
             raise ContractError("source-span offsets are invalid")
-        if self.source_span_sha256 and not _SHA256_RE.fullmatch(
-            self.source_span_sha256
-        ):
+        if self.source_span_sha256 and not _SHA256_RE.fullmatch(self.source_span_sha256):
             raise ContractError("source_span_sha256 must be empty or SHA-256")
 
     def to_dict(self) -> dict[str, object]:
@@ -172,20 +168,14 @@ class ModalSpacyConstructorDiagnostics:
                 raise ContractError(f"{field} must be a string")
         for field in ("requested_pipeline", "effective_pipeline"):
             value = getattr(self, field)
-            if (
-                not isinstance(value, tuple)
-                or not all(isinstance(item, str) for item in value)
-            ):
+            if not isinstance(value, tuple) or not all(isinstance(item, str) for item in value):
                 raise ContractError(f"{field} must be a string tuple")
         if not isinstance(self.fallback_used, bool):
             raise ContractError("fallback_used must be a boolean")
         if not isinstance(self.source_spans, tuple) or not all(
-            isinstance(item, SourceSpanDiagnostic)
-            for item in self.source_spans
+            isinstance(item, SourceSpanDiagnostic) for item in self.source_spans
         ):
-            raise ContractError(
-                "source_spans must contain SourceSpanDiagnostic values"
-            )
+            raise ContractError("source_spans must contain SourceSpanDiagnostic values")
         if self.detail is not None and (
             not isinstance(self.detail, str) or not self.detail.strip()
         ):
@@ -203,9 +193,7 @@ class ModalSpacyConstructorDiagnostics:
             "language": self.language,
             "fallback_used": self.fallback_used,
             "parser_backend": self.parser_backend,
-            "source_spans": [
-                item.to_dict() for item in self.source_spans
-            ],
+            "source_spans": [item.to_dict() for item in self.source_spans],
             "detail": self.detail,
         }
 
@@ -220,12 +208,8 @@ class ModalSpacyConstruction:
     def __post_init__(self) -> None:
         if not isinstance(self.result, ConstructorResult):
             raise ContractError("result must be a ConstructorResult")
-        if not isinstance(
-            self.diagnostics, ModalSpacyConstructorDiagnostics
-        ):
-            raise ContractError(
-                "diagnostics must be ModalSpacyConstructorDiagnostics"
-            )
+        if not isinstance(self.diagnostics, ModalSpacyConstructorDiagnostics):
+            raise ContractError("diagnostics must be ModalSpacyConstructorDiagnostics")
 
 
 def _clean_text(value: object) -> str:
@@ -238,11 +222,7 @@ def _tokens(value: object) -> tuple[str, ...]:
     for word in words:
         if len(word) > 4 and word.endswith("ies"):
             word = word[:-3] + "y"
-        elif (
-            len(word) > 4
-            and word.endswith("s")
-            and not word.endswith("ss")
-        ):
+        elif len(word) > 4 and word.endswith("s") and not word.endswith("ss"):
             word = word[:-1]
         normalized.append(word)
     return tuple(normalized)
@@ -257,9 +237,7 @@ def _flatten_strings(value: object) -> list[str]:
             result.append(str(key))
             result.extend(_flatten_strings(item))
         return result
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         result = []
         for item in value:
             result.extend(_flatten_strings(item))
@@ -275,9 +253,7 @@ def _jaccard(left: object, right: object) -> float:
         return 1.0
     if not left_tokens or not right_tokens:
         return 0.0
-    return len(left_tokens & right_tokens) / len(
-        left_tokens | right_tokens
-    )
+    return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
 
 
 def _best_atom(
@@ -296,10 +272,7 @@ def _best_atom(
     scored = sorted(
         (
             (
-                max(
-                    [_jaccard(text, candidate)]
-                    + [_jaccard(piece, candidate) for piece in pieces]
-                ),
+                max([_jaccard(text, candidate)] + [_jaccard(piece, candidate) for piece in pieces]),
                 candidate,
             )
             for candidate in candidates
@@ -311,36 +284,22 @@ def _best_atom(
     return scored[0][1]
 
 
-def _map_many(
-    value: object, candidates: Sequence[str]
-) -> tuple[str, ...]:
+def _map_many(value: object, candidates: Sequence[str]) -> tuple[str, ...]:
     values: list[object]
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         values = list(value)
     elif value is None or value == "" or value == []:
         values = []
     else:
         values = [value]
-    return tuple(
-        sorted(
-            {
-                atom
-                for item in values
-                if (atom := _best_atom(item, candidates))
-            }
-        )
-    )
+    return tuple(sorted({atom for item in values if (atom := _best_atom(item, candidates))}))
 
 
 def _modality_signal_text(value: object) -> str:
     """Flatten nested modality signals into a single lowercase string."""
 
     pieces = _flatten_strings(value)
-    return " ".join(
-        _clean_text(piece).lower() for piece in pieces if _clean_text(piece)
-    )
+    return " ".join(_clean_text(piece).lower() for piece in pieces if _clean_text(piece))
 
 
 def _surface_has_prohibition_cue(surface: str) -> bool:
@@ -472,9 +431,7 @@ def project_decompiler_record(
     if source_text is not None and not isinstance(source_text, str):
         raise ContractError("source_text must be a string")
     raw_formulas = record.get("formulas") or ()
-    if not isinstance(raw_formulas, Sequence) or isinstance(
-        raw_formulas, (str, bytes, bytearray)
-    ):
+    if not isinstance(raw_formulas, Sequence) or isinstance(raw_formulas, (str, bytes, bytearray)):
         raise ContractError("modal decompiler formulas must be an array")
 
     rules: list[CanonicalRule] = []
@@ -482,10 +439,7 @@ def project_decompiler_record(
         if not isinstance(formula, Mapping):
             continue
         predicate = formula.get("predicate")
-        if (
-            isinstance(predicate, Mapping)
-            and predicate.get("role") not in {None, "", "clause"}
-        ):
+        if isinstance(predicate, Mapping) and predicate.get("role") not in {None, "", "clause"}:
             # The modal compiler emits condition/exception helper formulas.
             # They are guards, not independently scored legal norms.
             continue
@@ -617,15 +571,9 @@ def polarity_preflight(
 
         comparison = compare_semantic_ir(reference_ir, candidate)
         assigned = int(comparison["matched_rule_count"])
-    all_preserved = evaluated and not inversions and (
-        assigned > 0 or reference_ir.is_empty
-    )
+    all_preserved = evaluated and not inversions and (assigned > 0 or reference_ir.is_empty)
     # Nonempty gold with zero assigned matches is fail-closed for polarity.
-    if (
-        evaluated
-        and not reference_ir.is_empty
-        and assigned == 0
-    ):
+    if evaluated and not reference_ir.is_empty and assigned == 0:
         all_preserved = False
     return {
         "interface": POLARITY_PREFLIGHT_INTERFACE,
@@ -640,10 +588,7 @@ def polarity_preflight(
         "detail": (
             None
             if all_preserved and not inversions
-            else (
-                "polarity preflight failed closed: modality inversion or "
-                "unassigned candidate"
-            )
+            else ("polarity preflight failed closed: modality inversion or unassigned candidate")
         ),
     }
 
@@ -711,23 +656,16 @@ def _frontend_diagnostics(
             getattr(encoder, "used_fallback_model", False),
         )
     )
-    effective_pipeline = tuple(
-        str(item) for item in (getattr(nlp, "pipe_names", ()) or ())
-    )
+    effective_pipeline = tuple(str(item) for item in (getattr(nlp, "pipe_names", ()) or ()))
     model_version = str(model_meta.get("version", "") or "")
-    language = str(
-        getattr(nlp, "lang", model_meta.get("lang", "")) or ""
-    )
-    parser_backend = str(
-        getattr(codec_config, "parser_backend", "") or ""
-    )
+    language = str(getattr(nlp, "lang", model_meta.get("lang", "")) or "")
+    parser_backend = str(getattr(codec_config, "parser_backend", "") or "")
     parser_name = str(getattr(encoded, "parser_name", "") or "")
 
     drift: list[str] = []
     if effective_model != requested_model:
         drift.append(
-            f"effective model {effective_model!r} differs from "
-            f"requested {requested_model!r}"
+            f"effective model {effective_model!r} differs from requested {requested_model!r}"
         )
     if fallback_used:
         drift.append("blank-model fallback was used")
@@ -736,9 +674,7 @@ def _frontend_diagnostics(
         (*required_pipeline, *_CODEC_PIPELINE_ADDITIONS),
     }
     if effective_pipeline not in accepted_effective_pipelines:
-        drift.append(
-            "effective pipeline differs from the requested full pipeline"
-        )
+        drift.append("effective pipeline differs from the requested full pipeline")
     if model_version != required_model_version:
         drift.append(
             f"effective model version {model_version!r} differs from "
@@ -752,11 +688,7 @@ def _frontend_diagnostics(
         drift.append("effective modal parser is not the spaCy modal codec")
 
     if status is None:
-        status = (
-            ModalSpacyFrontendStatus.DEGRADED
-            if drift
-            else ModalSpacyFrontendStatus.FULL_MODEL
-        )
+        status = ModalSpacyFrontendStatus.DEGRADED if drift else ModalSpacyFrontendStatus.FULL_MODEL
     if detail is None and drift:
         detail = "; ".join(drift)
     return ModalSpacyConstructorDiagnostics(
@@ -775,16 +707,10 @@ def _frontend_diagnostics(
 
 
 def _raw_formula_spans(modal_ir: object) -> dict[str, tuple[str, int, int]]:
-    serialized = (
-        modal_ir.to_dict()
-        if callable(getattr(modal_ir, "to_dict", None))
-        else modal_ir
-    )
+    serialized = modal_ir.to_dict() if callable(getattr(modal_ir, "to_dict", None)) else modal_ir
     document = _mapping(serialized)
     raw_formulas = document.get("formulas")
-    if not isinstance(raw_formulas, Sequence) or isinstance(
-        raw_formulas, (str, bytes, bytearray)
-    ):
+    if not isinstance(raw_formulas, Sequence) or isinstance(raw_formulas, (str, bytes, bytearray)):
         return {}
     result: dict[str, tuple[str, int, int]] = {}
     for raw in raw_formulas:
@@ -812,25 +738,19 @@ def _source_span_diagnostics(
 ) -> tuple[SourceSpanDiagnostic, ...]:
     raw_spans = _raw_formula_spans(modal_ir)
     raw_formulas = record.get("formulas")
-    if not isinstance(raw_formulas, Sequence) or isinstance(
-        raw_formulas, (str, bytes, bytearray)
-    ):
+    if not isinstance(raw_formulas, Sequence) or isinstance(raw_formulas, (str, bytes, bytearray)):
         return ()
     diagnostics: list[SourceSpanDiagnostic] = []
     for raw in raw_formulas:
         if not isinstance(raw, Mapping):
             continue
         formula_id = str(raw.get("formula_id") or "")
-        source_id, start, end = raw_spans.get(
-            formula_id, ("", 0, 0)
-        )
+        source_id, start, end = raw_spans.get(formula_id, ("", 0, 0))
         span_hash = str(raw.get("source_span_sha256") or "")
         if not span_hash and end > start:
             span = source_text[start : min(end, len(source_text))]
             if span:
-                span_hash = hashlib.sha256(
-                    span.encode("utf-8")
-                ).hexdigest()
+                span_hash = hashlib.sha256(span.encode("utf-8")).hexdigest()
         diagnostics.append(
             SourceSpanDiagnostic(
                 formula_id=formula_id,
@@ -838,9 +758,7 @@ def _source_span_diagnostics(
                 start_char=start,
                 end_char=end,
                 source_span_sha256=span_hash,
-                structural_signature=str(
-                    raw.get("structural_signature") or ""
-                ),
+                structural_signature=str(raw.get("structural_signature") or ""),
             )
         )
     return tuple(
@@ -879,10 +797,7 @@ def _request_config_error(
     config = request.config
     for field in ("requested_model", "spacy_model_name"):
         if field in config and config[field] != requested_model:
-            return (
-                f"constructor config {field} must equal the pinned "
-                f"model {requested_model!r}"
-            )
+            return f"constructor config {field} must equal the pinned model {requested_model!r}"
     if "parser_backend" in config and config["parser_backend"] != "spacy":
         return "constructor config cannot replace the spaCy parser backend"
     for field in ("allow_fallback", "fallback_allowed"):
@@ -916,16 +831,9 @@ class ModalSpacyCanonicalConstructor:
         if not isinstance(requested_model, str) or not requested_model.strip():
             raise ContractError("requested_model must be nonblank")
         pipeline = tuple(required_pipeline)
-        if not pipeline or not all(
-            isinstance(item, str) and item for item in pipeline
-        ):
-            raise ContractError(
-                "required_pipeline must be a nonempty string sequence"
-            )
-        if (
-            not isinstance(required_model_version, str)
-            or not required_model_version.strip()
-        ):
+        if not pipeline or not all(isinstance(item, str) and item for item in pipeline):
+            raise ContractError("required_pipeline must be a nonempty string sequence")
+        if not isinstance(required_model_version, str) or not required_model_version.strip():
             raise ContractError("required_model_version must be nonblank")
         if codec_factory is not None and not callable(codec_factory):
             raise ContractError("codec_factory must be callable")
@@ -937,9 +845,7 @@ class ModalSpacyCanonicalConstructor:
         self._codec_factory = codec_factory or _default_codec_factory
         self._repairer = repairer or _default_repairer
 
-    def construct_with_diagnostics(
-        self, request: ConstructorRequest
-    ) -> ModalSpacyConstruction:
+    def construct_with_diagnostics(self, request: ConstructorRequest) -> ModalSpacyConstruction:
         """Construct canonical IR and retain diagnostics on a separate path."""
 
         empty_diagnostics = _frontend_diagnostics(
@@ -986,8 +892,7 @@ class ModalSpacyCanonicalConstructor:
             return _failed(
                 empty_diagnostics,
                 FailureReason.EXCEPTION,
-                "modal spaCy codec factory raised "
-                f"{type(exc).__name__}",
+                f"modal spaCy codec factory raised {type(exc).__name__}",
             )
 
         diagnostics = _frontend_diagnostics(
@@ -996,22 +901,16 @@ class ModalSpacyCanonicalConstructor:
             required_pipeline=self.required_pipeline,
             required_model_version=self.required_model_version,
         )
-        if (
-            diagnostics.frontend_status
-            is not ModalSpacyFrontendStatus.FULL_MODEL
-        ):
+        if diagnostics.frontend_status is not ModalSpacyFrontendStatus.FULL_MODEL:
             return _failed(
                 diagnostics,
                 FailureReason.CAPABILITY_UNAVAILABLE,
-                "full spaCy frontend degraded: "
-                f"{diagnostics.detail or 'identity mismatch'}",
+                f"full spaCy frontend degraded: {diagnostics.detail or 'identity mismatch'}",
             )
 
         document_id = request.config.get("document_id")
         citation = request.config.get("citation")
-        source = request.config.get(
-            "source", "semantic_roundtrip_modal_spacy_constructor"
-        )
+        source = request.config.get("source", "semantic_roundtrip_modal_spacy_constructor")
         if document_id is not None and not isinstance(document_id, str):
             return _failed(
                 diagnostics,
@@ -1051,8 +950,7 @@ class ModalSpacyCanonicalConstructor:
             return _failed(
                 unavailable,
                 FailureReason.CAPABILITY_UNAVAILABLE,
-                "full spaCy frontend unavailable during encoding: "
-                f"{type(exc).__name__}",
+                f"full spaCy frontend unavailable during encoding: {type(exc).__name__}",
             )
         except Exception as exc:
             unavailable = replace(
@@ -1062,8 +960,7 @@ class ModalSpacyCanonicalConstructor:
             return _failed(
                 unavailable,
                 FailureReason.EXCEPTION,
-                "modal spaCy codec raised "
-                f"{type(exc).__name__}",
+                f"modal spaCy codec raised {type(exc).__name__}",
             )
 
         diagnostics = _frontend_diagnostics(
@@ -1073,15 +970,11 @@ class ModalSpacyCanonicalConstructor:
             required_model_version=self.required_model_version,
             encoded=encoded,
         )
-        if (
-            diagnostics.frontend_status
-            is not ModalSpacyFrontendStatus.FULL_MODEL
-        ):
+        if diagnostics.frontend_status is not ModalSpacyFrontendStatus.FULL_MODEL:
             return _failed(
                 diagnostics,
                 FailureReason.CAPABILITY_UNAVAILABLE,
-                "full spaCy frontend degraded: "
-                f"{diagnostics.detail or 'identity mismatch'}",
+                f"full spaCy frontend degraded: {diagnostics.detail or 'identity mismatch'}",
             )
 
         modal_ir = getattr(encoded, "modal_ir", None)
@@ -1094,15 +987,9 @@ class ModalSpacyCanonicalConstructor:
         try:
             record = self._repairer(modal_ir)
             if not isinstance(record, Mapping):
-                raise ContractError(
-                    "modal decompiler repair returned a non-object"
-                )
-            source_spans = _source_span_diagnostics(
-                record, modal_ir, request.source_text
-            )
-            diagnostics = replace(
-                diagnostics, source_spans=source_spans
-            )
+                raise ContractError("modal decompiler repair returned a non-object")
+            source_spans = _source_span_diagnostics(record, modal_ir, request.source_text)
+            diagnostics = replace(diagnostics, source_spans=source_spans)
             canonical_ir = project_decompiler_record(
                 record,
                 request.allowed_atom_vocabulary,
@@ -1119,15 +1006,13 @@ class ModalSpacyCanonicalConstructor:
             return _failed(
                 diagnostics,
                 FailureReason.INVALID_OUTPUT,
-                "modal spaCy projection rejected: "
-                f"{type(exc).__name__}",
+                f"modal spaCy projection rejected: {type(exc).__name__}",
             )
         except Exception as exc:
             return _failed(
                 diagnostics,
                 FailureReason.EXCEPTION,
-                "modal spaCy projection raised "
-                f"{type(exc).__name__}",
+                f"modal spaCy projection raised {type(exc).__name__}",
             )
 
         if canonical_ir.is_empty:

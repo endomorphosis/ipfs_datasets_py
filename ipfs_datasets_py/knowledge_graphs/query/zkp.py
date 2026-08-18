@@ -83,10 +83,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 class KGProofType(str, Enum):
     """Types of zero-knowledge proof statements for knowledge graphs."""
-    ENTITY_EXISTS = "entity_exists"           # Prove ∃ entity with type/name
-    ENTITY_PROPERTY = "entity_property"       # Prove entity has property value
-    PATH_EXISTS = "path_exists"               # Prove path between two types
-    QUERY_ANSWER_COUNT = "query_answer_count" # Prove |results| ≥ min_count
+
+    ENTITY_EXISTS = "entity_exists"  # Prove ∃ entity with type/name
+    ENTITY_PROPERTY = "entity_property"  # Prove entity has property value
+    PATH_EXISTS = "path_exists"  # Prove path between two types
+    QUERY_ANSWER_COUNT = "query_answer_count"  # Prove |results| ≥ min_count
 
 
 def _sha256_hex(data: str) -> str:
@@ -119,6 +120,7 @@ class KGProofStatement:
         public_inputs: Additional public data needed for verification.
         timestamp: Unix timestamp when the proof was generated.
     """
+
     proof_type: KGProofType
     parameters: Dict[str, Any]
     commitment: str
@@ -167,9 +169,7 @@ class KGZKProver:
             ``ipfs_datasets_py.logic.zkp`` for theorem-level proofs.
     """
 
-    def __init__(
-        self, kg: Any, prover_id: str = "default", logic_prover: Any = None
-    ) -> None:
+    def __init__(self, kg: Any, prover_id: str = "default", logic_prover: Any = None) -> None:
         self.kg = kg
         self.prover_id = prover_id
         self._logic_prover = logic_prover
@@ -235,18 +235,14 @@ class KGZKProver:
         }
         if self._logic_prover is not None:
             info["backend"] = getattr(self._logic_prover, "backend", "simulated")
-            info["security_level"] = getattr(
-                self._logic_prover, "security_level", 128
-            )
+            info["security_level"] = getattr(self._logic_prover, "security_level", 128)
         return info
 
     # ------------------------------------------------------------------
     # Individual proof generators
     # ------------------------------------------------------------------
 
-    def prove_entity_exists(
-        self, entity_type: str, name: str
-    ) -> Optional[KGProofStatement]:
+    def prove_entity_exists(self, entity_type: str, name: str) -> Optional[KGProofStatement]:
         """Prove that an entity with the given type and name exists in the graph.
 
         The proof reveals *only* that such an entity exists — not its ID,
@@ -265,10 +261,7 @@ class KGZKProver:
             ``None`` otherwise.
         """
         for entity in self.kg.entities.values():
-            if (
-                entity.entity_type == entity_type
-                and entity.name.lower() == name.lower()
-            ):
+            if entity.entity_type == entity_type and entity.name.lower() == name.lower():
                 secret = entity.entity_id
                 params = {"entity_type": entity_type, "name_hash": _sha256_hex(name.lower())}
                 commit = _commitment(KGProofType.ENTITY_EXISTS.value, params, secret)
@@ -277,7 +270,11 @@ class KGZKProver:
                 # --- Logic ZKP backend integration ---
                 if self._logic_prover is not None:
                     theorem = f"entity_of_type_{entity_type}_named_{_sha256_hex(name.lower())[:16]}_exists"
-                    private_axioms = [entity.entity_id, f"name:{name.lower()}", f"type:{entity_type}"]
+                    private_axioms = [
+                        entity.entity_id,
+                        f"name:{name.lower()}",
+                        f"type:{entity_type}",
+                    ]
                     try:
                         logic_proof = self._logic_prover.generate_proof(
                             theorem=theorem,
@@ -433,9 +430,7 @@ class KGZKProver:
     # Batch proving
     # ------------------------------------------------------------------
 
-    def batch_prove(
-        self, requests: List[Dict[str, Any]]
-    ) -> List[Optional[KGProofStatement]]:
+    def batch_prove(self, requests: List[Dict[str, Any]]) -> List[Optional[KGProofStatement]]:
         """Run multiple proof requests in sequence.
 
         Each request dict must contain a ``"type"`` key matching a
@@ -457,9 +452,7 @@ class KGZKProver:
             proof_type = req.get("type", "")
             try:
                 if proof_type == KGProofType.ENTITY_EXISTS.value:
-                    stmt = self.prove_entity_exists(
-                        req["entity_type"], req["name"]
-                    )
+                    stmt = self.prove_entity_exists(req["entity_type"], req["name"])
                 elif proof_type == KGProofType.ENTITY_PROPERTY.value:
                     stmt = self.prove_entity_property(
                         req["entity_id"],
@@ -488,21 +481,11 @@ class KGZKProver:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _find_path(
-        self, start_type: str, end_type: str, max_hops: int
-    ) -> Optional[List[str]]:
+    def _find_path(self, start_type: str, end_type: str, max_hops: int) -> Optional[List[str]]:
         """BFS over the KG to find a path from start_type to end_type."""
         # Collect start and end entity IDs
-        start_ids = [
-            eid
-            for eid, e in self.kg.entities.items()
-            if e.entity_type == start_type
-        ]
-        end_ids = {
-            eid
-            for eid, e in self.kg.entities.items()
-            if e.entity_type == end_type
-        }
+        start_ids = [eid for eid, e in self.kg.entities.items() if e.entity_type == start_type]
+        end_ids = {eid for eid, e in self.kg.entities.items() if e.entity_type == end_type}
         if not start_ids or not end_ids:
             return None
 
@@ -614,6 +597,7 @@ class KGZKVerifier:
         if self._logic_verifier is not None and stmt.public_inputs.get("logic_proof_data"):
             try:
                 from ipfs_datasets_py.logic.zkp import ZKPProof
+
                 logic_proof = ZKPProof.from_dict(stmt.public_inputs["logic_proof_data"])
                 if not self._logic_verifier.verify_proof(logic_proof):
                     return False
@@ -623,15 +607,10 @@ class KGZKVerifier:
         self._seen.add(stmt.nullifier)
         return True
 
-    def verify_batch(
-        self, stmts: "List[Optional[KGProofStatement]]"
-    ) -> "List[bool]":
+    def verify_batch(self, stmts: "List[Optional[KGProofStatement]]") -> "List[bool]":
         """Verify a list of proof statements.
 
         Returns:
             List of booleans (``True`` = valid, ``False`` = invalid or ``None``).
         """
-        return [
-            self.verify_statement(s) if s is not None else False
-            for s in stmts
-        ]
+        return [self.verify_statement(s) if s is not None else False for s in stmts]

@@ -31,9 +31,7 @@ from ipfs_datasets_py.logic.intent_ir.source_adapters.snapshot import (  # noqa:
 )
 
 
-DEFAULT_MANIFEST = (
-    REPOSITORY_ROOT / "tests/fixtures/intent_ir/skillcenter/manifest.json"
-)
+DEFAULT_MANIFEST = REPOSITORY_ROOT / "tests/fixtures/intent_ir/skillcenter/manifest.json"
 DEFAULT_PROFILES = ("security-lite", "github-lite")
 
 
@@ -46,11 +44,7 @@ def _positive_int(value: str) -> int:
 
 def _xdg_path(environment_name: str, fallback: str) -> Path:
     configured = str(os.environ.get(environment_name) or "").strip()
-    return (
-        Path(configured).expanduser()
-        if configured
-        else Path(fallback).expanduser()
-    )
+    return Path(configured).expanduser() if configured else Path(fallback).expanduser()
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -80,14 +74,9 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     pilot = SkillCenterPilotManifest.from_path(args.manifest)
-    unknown_profiles = set(args.profiles) - {
-        item.profile for item in pilot.bundles
-    }
+    unknown_profiles = set(args.profiles) - {item.profile for item in pilot.bundles}
     if unknown_profiles:
-        raise ValueError(
-            "unknown pilot profile(s): "
-            + ", ".join(sorted(unknown_profiles))
-        )
+        raise ValueError("unknown pilot profile(s): " + ", ".join(sorted(unknown_profiles)))
     output_dir = args.output_dir or (
         _xdg_path("XDG_DATA_HOME", "~/.local/share")
         / "ipfs_datasets_py/intent-ir/skillcenter-bm25"
@@ -99,22 +88,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         summary = index.summary
     else:
         cache_dir = args.cache_dir or (
-            _xdg_path("XDG_CACHE_HOME", "~/.cache")
-            / "ipfs_datasets_py/skillcenter"
+            _xdg_path("XDG_CACHE_HOME", "~/.cache") / "ipfs_datasets_py/skillcenter"
         )
         cache = SkillCenterSnapshotCache(
             cache_dir,
-            fetcher=HuggingFaceSkillCenterFetcher(
-                local_files_only=bool(args.offline)
-            ),
+            fetcher=HuggingFaceSkillCenterFetcher(local_files_only=bool(args.offline)),
         )
-        selected = [
-            item for item in pilot.bundles if item.profile in args.profiles
-        ]
-        readers = [
-            cache.open_reader(pilot.snapshot_for(bundle))
-            for bundle in selected
-        ]
+        selected = [item for item in pilot.bundles if item.profile in args.profiles]
+        readers = [cache.open_reader(pilot.snapshot_for(bundle)) for bundle in selected]
         summary = build_skillcenter_bm25_index(
             readers,
             output_dir=output_dir,
@@ -126,10 +107,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     query = str(args.smoke_query or "").strip()
     if query:
         payload["smoke_query"] = {
-            "hits": [
-                hit.to_dict()
-                for hit in index.search(query, k=args.query_k)
-            ],
+            "hits": [hit.to_dict() for hit in index.search(query, k=args.query_k)],
             "query": query,
         }
     print(json.dumps(payload, indent=2, sort_keys=True))

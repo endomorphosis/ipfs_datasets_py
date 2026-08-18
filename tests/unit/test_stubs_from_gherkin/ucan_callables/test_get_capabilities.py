@@ -5,10 +5,12 @@ Feature: UCANManager.get_capabilities()
   Tests the get_capabilities() method of UCANManager.
   This callable retrieves all capabilities granted to a DID.
 """
+
 import pytest
 
 
 # Fixtures for Background
+
 
 @pytest.fixture
 def a_ucanmanager_instance_is_initialized():
@@ -48,10 +50,16 @@ def the_token_has_2_capabilities():
 
 # Test scenarios
 
-def test_get_capabilities_returns_list_of_ucancapability_instances(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+
+def test_get_capabilities_returns_list_of_ucancapability_instances(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Get capabilities returns list of UCANCapability instances
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -63,10 +71,15 @@ def test_get_capabilities_returns_list_of_ucancapability_instances(a_ucanmanager
     pass
 
 
-def test_get_capabilities_list_contains_2_capabilities(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_get_capabilities_list_contains_2_capabilities(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Get capabilities list contains 2 capabilities
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -78,10 +91,15 @@ def test_get_capabilities_list_contains_2_capabilities(a_ucanmanager_instance_is
     pass
 
 
-def test_each_capability_has_resource_attribute(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_each_capability_has_resource_attribute(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Each capability has resource attribute
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -93,10 +111,15 @@ def test_each_capability_has_resource_attribute(a_ucanmanager_instance_is_initia
     pass
 
 
-def test_each_capability_has_action_attribute(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_each_capability_has_action_attribute(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Each capability has action attribute
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -108,10 +131,15 @@ def test_each_capability_has_action_attribute(a_ucanmanager_instance_is_initiali
     pass
 
 
-def test_each_capability_has_caveats_dictionary(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_each_capability_has_caveats_dictionary(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Each capability has caveats dictionary
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -123,10 +151,15 @@ def test_each_capability_has_caveats_dictionary(a_ucanmanager_instance_is_initia
     pass
 
 
-def test_get_capabilities_returns_empty_list_when_no_tokens_for_did(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_get_capabilities_returns_empty_list_when_no_tokens_for_did(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Get capabilities returns empty list when no tokens for DID
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -138,10 +171,15 @@ def test_get_capabilities_returns_empty_list_when_no_tokens_for_did(a_ucanmanage
     pass
 
 
-def test_get_capabilities_excludes_expired_tokens(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_get_capabilities_excludes_expired_tokens(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Get capabilities excludes expired tokens
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -155,10 +193,15 @@ def test_get_capabilities_excludes_expired_tokens(a_ucanmanager_instance_is_init
     pass
 
 
-def test_get_capabilities_excludes_revoked_tokens(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_get_capabilities_excludes_revoked_tokens(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Get capabilities excludes revoked tokens
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -172,10 +215,15 @@ def test_get_capabilities_excludes_revoked_tokens(a_ucanmanager_instance_is_init
     pass
 
 
-def test_get_capabilities_aggregates_from_multiple_tokens(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_get_capabilities_aggregates_from_multiple_tokens(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Get capabilities aggregates from multiple tokens
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -191,10 +239,15 @@ def test_get_capabilities_aggregates_from_multiple_tokens(a_ucanmanager_instance
     pass
 
 
-def test_get_capabilities_verifies_each_token_before_including(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_get_capabilities_verifies_each_token_before_including(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Get capabilities verifies each token before including
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -209,10 +262,15 @@ def test_get_capabilities_verifies_each_token_before_including(a_ucanmanager_ins
     pass
 
 
-def test_get_capabilities_returns_only_valid_token_capabilities(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_get_capabilities_returns_only_valid_token_capabilities(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Get capabilities returns only valid token capabilities
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -227,10 +285,15 @@ def test_get_capabilities_returns_only_valid_token_capabilities(a_ucanmanager_in
     pass
 
 
-def test_get_capabilities_returns_duplicate_capabilities(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_get_capabilities_returns_duplicate_capabilities(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Get capabilities returns duplicate capabilities
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -244,10 +307,15 @@ def test_get_capabilities_returns_duplicate_capabilities(a_ucanmanager_instance_
     pass
 
 
-def test_duplicate_capability_entries_have_same_resource_and_action(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_duplicate_capability_entries_have_same_resource_and_action(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Duplicate capability entries have same resource and action
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -261,10 +329,15 @@ def test_duplicate_capability_entries_have_same_resource_and_action(a_ucanmanage
     pass
 
 
-def test_get_capabilities_fails_when_manager_not_initialized(a_ucanmanager_instance_is_initialized, a_token_exists_with_audiencedidkeybob, the_token_is_valid_and_not_expired, the_token_has_2_capabilities):
+def test_get_capabilities_fails_when_manager_not_initialized(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_audiencedidkeybob,
+    the_token_is_valid_and_not_expired,
+    the_token_has_2_capabilities,
+):
     """
     Scenario: Get capabilities fails when manager not initialized
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with audience="did:key:bob"
     Given the token is valid and not expired
@@ -275,4 +348,3 @@ def test_get_capabilities_fails_when_manager_not_initialized(a_ucanmanager_insta
     """
     # TODO: Implement test
     pass
-

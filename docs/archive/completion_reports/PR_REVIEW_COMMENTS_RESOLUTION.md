@@ -19,13 +19,13 @@ Successfully addressed all 3 comments from PR review #3802809365, fixing test as
 **Solution**: Updated test assertions to check for actual methods:
 ```python
 # Before:
-assert hasattr(analyzer, 'detect_error_patterns')  # ❌ Method doesn't exist
+assert hasattr(analyzer, "detect_error_patterns")  # ❌ Method doesn't exist
 
 # After:
-assert hasattr(analyzer, 'analyze_failure')         # ✅ Actual methods
-assert hasattr(analyzer, 'generate_report')
-assert hasattr(analyzer, '_generate_suggestions')
-assert hasattr(analyzer, '_determine_severity')
+assert hasattr(analyzer, "analyze_failure")  # ✅ Actual methods
+assert hasattr(analyzer, "generate_report")
+assert hasattr(analyzer, "_generate_suggestions")
+assert hasattr(analyzer, "_determine_severity")
 ```
 
 **Verification**: Import test passes successfully.

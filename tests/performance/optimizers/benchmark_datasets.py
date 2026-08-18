@@ -6,18 +6,19 @@ technical, financial) at various complexity levels for consistent benchmarking.
 Usage::
 
     from benchmark_datasets import BenchmarkDataset
-    
+
     Legal domain, complex:
     dataset = BenchmarkDataset.load("legal", complexity="complex")
     text, metadata = dataset.text, dataset.metadata
-    
+
     Medical domain, simple:
     simple = BenchmarkDataset.load("medical", complexity="simple")
-    
+
     All datasets:
     for name in BenchmarkDataset.AVAILABLE_DATASETS:
         ds = BenchmarkDataset.load(name)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -28,24 +29,24 @@ import textwrap
 @dataclass
 class BenchmarkDataset:
     """Container for benchmark dataset text and metadata."""
-    
+
     domain: str
     complexity: Literal["simple", "medium", "complex"]
     text: str
     metadata: Dict[str, Any]
-    
+
     @property
     def token_count(self) -> int:
         """Approximate token count (splits on whitespace)."""
         return len(self.text.split())
-    
+
     @property
     def char_count(self) -> int:
         """Character count."""
         return len(self.text)
-    
+
     AVAILABLE_DATASETS = ["legal", "medical", "technical", "financial"]
-    
+
     @classmethod
     def load(
         cls,
@@ -53,39 +54,36 @@ class BenchmarkDataset:
         complexity: Literal["simple", "medium", "complex"] = "medium",
     ) -> "BenchmarkDataset":
         """Load a benchmark dataset by domain and complexity.
-        
+
         Args:
             domain: One of "legal", "medical", "technical", "financial"
             complexity: One of "simple" (~500 tokens), "medium" (~2K tokens), "complex" (~5K tokens)
-            
+
         Returns:
             BenchmarkDataset instance with text and metadata
-            
+
         Raises:
             ValueError: If domain or complexity not supported
         """
         if domain not in cls.AVAILABLE_DATASETS:
-            raise ValueError(
-                f"Unknown domain: {domain}. Supported: {cls.AVAILABLE_DATASETS}"
-            )
-        
+            raise ValueError(f"Unknown domain: {domain}. Supported: {cls.AVAILABLE_DATASETS}")
+
         valid_complexities = ["simple", "medium", "complex"]
         if complexity not in valid_complexities:
-            raise ValueError(
-                f"Unknown complexity: {complexity}. Supported: {valid_complexities}"
-            )
-        
+            raise ValueError(f"Unknown complexity: {complexity}. Supported: {valid_complexities}")
+
         # Dispatch to specific loader
         loader = _DATASET_LOADERS.get((domain, complexity))
         if not loader:
             raise ValueError(f"No dataset for {domain}/{complexity}")
-        
+
         return loader()
 
 
 # ============================================================================
 # Legal Domain Datasets
 # ============================================================================
+
 
 def _load_legal_simple() -> BenchmarkDataset:
     """Simple legal document (~500 tokens): Contract excerpt."""
@@ -118,7 +116,7 @@ def _load_legal_simple() -> BenchmarkDataset:
         Acknowledged by: Robert Smith, CEO
         Smith Manufacturing Corp.
         """)
-    
+
     metadata = {
         "document_type": "engagement_letter",
         "jurisdiction": "US",
@@ -137,7 +135,7 @@ def _load_legal_simple() -> BenchmarkDataset:
             ("Robert Smith", "Smith Manufacturing Corp.", "works_for"),
         ],
     }
-    
+
     return BenchmarkDataset(
         domain="legal",
         complexity="simple",
@@ -211,7 +209,7 @@ def _load_legal_medium() -> BenchmarkDataset:
         Global Finance Holdings, Inc.
         500 Fifth Avenue, New York, NY 10110
         """)
-    
+
     metadata = {
         "document_type": "service_agreement",
         "jurisdiction": "New York",
@@ -232,7 +230,7 @@ def _load_legal_medium() -> BenchmarkDataset:
             ("Michael Chen", "Global Finance Holdings, Inc.", "employment"),
         ],
     }
-    
+
     return BenchmarkDataset(
         domain="legal",
         complexity="medium",
@@ -451,7 +449,7 @@ def _load_legal_complex() -> BenchmarkDataset:
         Title: President and Chief Business Officer
         Date: June 1, 2024
         """)
-    
+
     metadata = {
         "document_type": "development_licensing_agreement",
         "jurisdiction": "California",
@@ -475,7 +473,7 @@ def _load_legal_complex() -> BenchmarkDataset:
             ("David Thompson", "Pacific Pharmaceutical Corporation", "president"),
         ],
     }
-    
+
     return BenchmarkDataset(
         domain="legal",
         complexity="complex",
@@ -487,6 +485,7 @@ def _load_legal_complex() -> BenchmarkDataset:
 # ============================================================================
 # Medical Domain Datasets
 # ============================================================================
+
 
 def _load_medical_simple() -> BenchmarkDataset:
     """Simple medical document (~500 tokens): Clinical note excerpt."""
@@ -524,7 +523,7 @@ def _load_medical_simple() -> BenchmarkDataset:
         By: Michael Chen, MD
         Date: February 20, 2024
         """)
-    
+
     metadata = {
         "document_type": "clinical_note",
         "medical_specialty": "Internal Medicine",
@@ -540,7 +539,7 @@ def _load_medical_simple() -> BenchmarkDataset:
             ("Jane Doe", "Dr. Michael Chen", "patient_of"),
         ],
     }
-    
+
     return BenchmarkDataset(
         domain="medical",
         complexity="simple",
@@ -614,7 +613,7 @@ def _load_medical_medium() -> BenchmarkDataset:
         Catherine Martinez, MD
         Date: January 12, 2024
         """)
-    
+
     metadata = {
         "document_type": "discharge_summary",
         "medical_specialty": "Cardiology",
@@ -636,7 +635,7 @@ def _load_medical_medium() -> BenchmarkDataset:
             ("Robert Johnson", "Dr. Catherine Martinez", "patient_of"),
         ],
     }
-    
+
     return BenchmarkDataset(
         domain="medical",
         complexity="medium",
@@ -761,7 +760,7 @@ def _load_medical_complex() -> BenchmarkDataset:
         Surgical Pathology
         Date: December 20, 2023
         """)
-    
+
     metadata = {
         "document_type": "pathology_report",
         "medical_specialty": "Surgical Pathology/Oncology",
@@ -781,7 +780,7 @@ def _load_medical_complex() -> BenchmarkDataset:
             ("Susan Adams", "Dr. James Richardson", "patient_of"),
         ],
     }
-    
+
     return BenchmarkDataset(
         domain="medical",
         complexity="complex",
@@ -793,6 +792,7 @@ def _load_medical_complex() -> BenchmarkDataset:
 # ============================================================================
 # Technical Domain Datasets
 # ============================================================================
+
 
 def _load_technical_simple() -> BenchmarkDataset:
     """Simple technical document (~500 tokens): API documentation."""
@@ -849,7 +849,7 @@ def _load_technical_simple() -> BenchmarkDataset:
         - 404 Not Found: Resource not found
         - 429 Too Many Requests: Rate limit exceeded (100 req/min)
         """)
-    
+
     metadata = {
         "document_type": "api_documentation",
         "technology": "REST API",
@@ -864,7 +864,7 @@ def _load_technical_simple() -> BenchmarkDataset:
         "expected_entity_types": ["URL", "ID", "Person", "HTTPMethod"],
         "expected_relationships": [],
     }
-    
+
     return BenchmarkDataset(
         domain="technical",
         complexity="simple",
@@ -982,7 +982,7 @@ def _load_technical_medium() -> BenchmarkDataset:
         Document prepared by:
         Alice Chen, Lead Architect
         """)
-    
+
     metadata = {
         "document_type": "architecture_design",
         "technology": "Cloud Infrastructure",
@@ -1002,7 +1002,7 @@ def _load_technical_medium() -> BenchmarkDataset:
             ("Alice Chen", "CloudDataProcessor", "architect"),
         ],
     }
-    
+
     return BenchmarkDataset(
         domain="technical",
         complexity="medium",
@@ -1237,7 +1237,7 @@ def _load_technical_complex() -> BenchmarkDataset:
         Michael Torres, Technical Lead
         Date: February 2024
         """)
-    
+
     metadata = {
         "document_type": "software_requirements_specification",
         "technology": "Event Processing",
@@ -1257,7 +1257,7 @@ def _load_technical_complex() -> BenchmarkDataset:
             ("Michael Torres", "TREPE v3.0", "technical_lead"),
         ],
     }
-    
+
     return BenchmarkDataset(
         domain="technical",
         complexity="complex",
@@ -1269,6 +1269,7 @@ def _load_technical_complex() -> BenchmarkDataset:
 # ============================================================================
 # Financial Domain Datasets
 # ============================================================================
+
 
 def _load_financial_simple() -> BenchmarkDataset:
     """Simple financial document (~500 tokens): Transaction summary."""
@@ -1304,7 +1305,7 @@ def _load_financial_simple() -> BenchmarkDataset:
         
         Questions? Contact support@bank.com or call 1-800-BANKING
         """)
-    
+
     metadata = {
         "document_type": "transaction_statement",
         "financial_product": "Checking Account",
@@ -1322,7 +1323,7 @@ def _load_financial_simple() -> BenchmarkDataset:
             ("Emily Rodriguez", "4567-8901-2345-6789", "account_holder"),
         ],
     }
-    
+
     return BenchmarkDataset(
         domain="financial",
         complexity="simple",
@@ -1425,7 +1426,7 @@ def _load_financial_medium() -> BenchmarkDataset:
         investment advice. Actual results may differ from projections. Past performance does
         not guarantee future results.
         """)
-    
+
     metadata = {
         "document_type": "portfolio_report",
         "financial_product": "Investment Account",
@@ -1447,7 +1448,7 @@ def _load_financial_medium() -> BenchmarkDataset:
             ("Priya Patel", "jennifer walsh", "client_of"),
         ],
     }
-    
+
     return BenchmarkDataset(
         domain="financial",
         complexity="medium",
@@ -1807,7 +1808,7 @@ def _load_financial_complex() -> BenchmarkDataset:
         Name: Susan Robinson
         Date: March 1, 2024
         """)
-    
+
     metadata = {
         "document_type": "merger_agreement",
         "financial_product": "M&A Transaction",
@@ -1829,7 +1830,7 @@ def _load_financial_complex() -> BenchmarkDataset:
             ("Andrew Foster", "Vantage Analytics Systems", "ceo"),
         ],
     }
-    
+
     return BenchmarkDataset(
         domain="financial",
         complexity="complex",

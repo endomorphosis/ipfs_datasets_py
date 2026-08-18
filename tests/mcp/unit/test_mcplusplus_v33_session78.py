@@ -23,6 +23,7 @@ try:
         DelegationManager,
         MergeResult,
     )
+
     _MERGE_RESULT_AVAILABLE = True
 except Exception:
     _MERGE_RESULT_AVAILABLE = False
@@ -31,18 +32,21 @@ try:
     from ipfs_datasets_py.mcp_server.nl_ucan_policy import (
         IPFSReloadResult,
     )
+
     _IPFS_RELOAD_AVAILABLE = True
 except Exception:
     _IPFS_RELOAD_AVAILABLE = False
 
 try:
     from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
     _PUBSUB_AVAILABLE = True
 except Exception:
     _PUBSUB_AVAILABLE = False
 
 try:
     from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
     _COMPLIANCE_AVAILABLE = True
 except Exception:
     _COMPLIANCE_AVAILABLE = False
@@ -300,6 +304,7 @@ class TestComplianceCheckerOldestBackupAge(unittest.TestCase):
 
     def test_static_method(self):
         import inspect
+
         self.assertTrue(
             isinstance(
                 inspect.getattr_static(ComplianceChecker, "oldest_backup_age"),

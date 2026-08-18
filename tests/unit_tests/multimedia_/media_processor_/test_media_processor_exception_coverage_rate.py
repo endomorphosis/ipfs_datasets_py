@@ -18,11 +18,18 @@ while not os.path.exists(os.path.join(work_dir, "__pyproject.toml")):
     if parent == work_dir:
         break
     work_dir = parent
-file_path = os.path.join(work_dir, "ipfs_datasets_py/data_transformation/multimedia/media_processor.py")
-md_path = os.path.join(work_dir, "ipfs_datasets_py/data_transformation/multimedia/media_processor_stubs.md")
+file_path = os.path.join(
+    work_dir, "ipfs_datasets_py/data_transformation/multimedia/media_processor.py"
+)
+md_path = os.path.join(
+    work_dir, "ipfs_datasets_py/data_transformation/multimedia/media_processor_stubs.md"
+)
 
 # Import the MediaProcessor class and its class dependencies
-from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor, make_media_processor
+from ipfs_datasets_py.data_transformation.multimedia.media_processor import (
+    MediaProcessor,
+    make_media_processor,
+)
 from ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper import YtDlpWrapper
 from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
@@ -33,14 +40,26 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 # Test data constants - Complete enumerated exception set
 REQUIRED_EXCEPTION_TYPES = [
-    "URLError", "HTTPError", "TimeoutError", "ConnectionError", "OSError",
-    "PermissionError", "FileNotFoundError", "DiskSpaceError", "CalledProcessError",
-    "ValueError", "TypeError", "KeyError", "IndexError", "anyio.get_cancelled_exc_class()()", "MemoryError"
+    "URLError",
+    "HTTPError",
+    "TimeoutError",
+    "ConnectionError",
+    "OSError",
+    "PermissionError",
+    "FileNotFoundError",
+    "DiskSpaceError",
+    "CalledProcessError",
+    "ValueError",
+    "TypeError",
+    "KeyError",
+    "IndexError",
+    "anyio.get_cancelled_exc_class()()",
+    "MemoryError",
 ]
 
 TOTAL_EXCEPTION_COUNT = 15
@@ -59,7 +78,7 @@ ERROR_INFORMATION_COMPLETENESS = 1.0  # 100% - all required error information mu
 
 class TestExceptionHandlingBehavior:
     """Test exception handling behavior for error resilience.
-    
+
     COMMON DEFINITIONS:
         - "handled correctly" means: error does not propagate uncaught, operation terminates cleanly without system instability
         - "processed completely" means: error is logged, classified by error type, caller receives error indication
@@ -78,23 +97,28 @@ class TestExceptionHandlingBehavior:
     """
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("exception_name,exception_instance", [
-        ("URLError", URLError("Network error")),
-        ("HTTPError", HTTPError("http://test.com", 404, "Not found", {}, None)),
-        ("TimeoutError", TimeoutError("Timeout")),
-        ("ConnectionError", ConnectionError("Connection failed")),
-        ("OSError", OSError("System error")),
-        ("PermissionError", PermissionError("Access denied")),
-        ("FileNotFoundError", FileNotFoundError("File not found")),
-        ("DiskSpaceError", OSError(28, "No space left")),  # errno.ENOSPC
-        ("CalledProcessError", __import__('subprocess').CalledProcessError(1, "cmd")),
-        ("ValueError", ValueError("Invalid value")),
-        ("TypeError", TypeError("Invalid type")),
-        ("KeyError", KeyError("Missing key")),
-        ("IndexError", IndexError("Index error")),
-        ("MemoryError", MemoryError("Out of memory"))
-    ])
-    async def test_all_required_exception_types_have_handling_behavior(self, mock_factory, tmp_path, test_url, exception_name, exception_instance):
+    @pytest.mark.parametrize(
+        "exception_name,exception_instance",
+        [
+            ("URLError", URLError("Network error")),
+            ("HTTPError", HTTPError("http://test.com", 404, "Not found", {}, None)),
+            ("TimeoutError", TimeoutError("Timeout")),
+            ("ConnectionError", ConnectionError("Connection failed")),
+            ("OSError", OSError("System error")),
+            ("PermissionError", PermissionError("Access denied")),
+            ("FileNotFoundError", FileNotFoundError("File not found")),
+            ("DiskSpaceError", OSError(28, "No space left")),  # errno.ENOSPC
+            ("CalledProcessError", __import__("subprocess").CalledProcessError(1, "cmd")),
+            ("ValueError", ValueError("Invalid value")),
+            ("TypeError", TypeError("Invalid type")),
+            ("KeyError", KeyError("Missing key")),
+            ("IndexError", IndexError("Index error")),
+            ("MemoryError", MemoryError("Out of memory")),
+        ],
+    )
+    async def test_all_required_exception_types_have_handling_behavior(
+        self, mock_factory, tmp_path, test_url, exception_name, exception_instance
+    ):
         """
         GIVEN required exception type
         WHEN testing exception handling coverage
@@ -103,16 +127,18 @@ class TestExceptionHandlingBehavior:
             - See class docstring for "complete handling behavior" definition
         """
         processor = mock_factory.create_mock_processor(
-            tmp_path,
-            ytdlp_kwargs={"side_effect": exception_instance}
+            tmp_path, ytdlp_kwargs={"side_effect": exception_instance}
         )
         result = await processor.download_and_convert(test_url)
-        
-        assert result["status"] == "error", f"Expected error status for {exception_name} but got {result['status']}"
 
+        assert result["status"] == "error", (
+            f"Expected error status for {exception_name} but got {result['status']}"
+        )
 
     @pytest.mark.asyncio
-    async def test_exception_handling_processes_error_status_correctly(self, mock_factory, tmp_path, test_url):
+    async def test_exception_handling_processes_error_status_correctly(
+        self, mock_factory, tmp_path, test_url
+    ):
         """
         GIVEN MediaProcessor operation that acquires resources
         WHEN exception occurs during resource usage
@@ -121,8 +147,7 @@ class TestExceptionHandlingBehavior:
             - See class docstring for "processed completely" definition
         """
         processor = mock_factory.create_mock_processor(
-            tmp_path,
-            ytdlp_kwargs={"side_effect": Exception("Test exception")}
+            tmp_path, ytdlp_kwargs={"side_effect": Exception("Test exception")}
         )
         result = await processor.download_and_convert(test_url)
 
@@ -130,7 +155,9 @@ class TestExceptionHandlingBehavior:
         assert result["status"] == "error", f"Expected error status but got {result['status']}"
 
     @pytest.mark.asyncio
-    async def test_exception_handling_prevents_resource_leaks_completely(self, mock_factory, tmp_path, test_url):
+    async def test_exception_handling_prevents_resource_leaks_completely(
+        self, mock_factory, tmp_path, test_url
+    ):
         """
         GIVEN MediaProcessor operation that acquires resources
         WHEN exception occurs during resource usage
@@ -144,16 +171,18 @@ class TestExceptionHandlingBehavior:
         initial_open_files = len(process.open_files())
 
         processor = mock_factory.create_mock_processor(
-            tmp_path,
-            ytdlp_kwargs={"side_effect": Exception("Test exception")}
+            tmp_path, ytdlp_kwargs={"side_effect": Exception("Test exception")}
         )
         result = await processor.download_and_convert(test_url)
 
         # Check resource state after exception
         final_open_files = len(process.open_files())
-        
+
         # Verify no resource leaks
-        assert final_open_files <= initial_open_files + RESOURCE_LEAK_TOLERANCE, f"Expected file descriptor leaks <= {RESOURCE_LEAK_TOLERANCE} but got {final_open_files - initial_open_files}"
+        assert final_open_files <= initial_open_files + RESOURCE_LEAK_TOLERANCE, (
+            f"Expected file descriptor leaks <= {RESOURCE_LEAK_TOLERANCE} but got {final_open_files - initial_open_files}"
+        )
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

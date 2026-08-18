@@ -15,13 +15,23 @@ def test_claim_intake_helpers_refresh_elements_and_render_questions():
         "description": "Employer fired plaintiff after complaints.",
     }
     canonical_facts = [
-        {"text": "Plaintiff was fired on May 1, 2024.", "fact_type": "impact", "element_tags": ["termination_event"]},
+        {
+            "text": "Plaintiff was fired on May 1, 2024.",
+            "fact_type": "impact",
+            "element_tags": ["termination_event"],
+        },
         {"text": "Manager issued the decision.", "fact_type": "responsible_party"},
     ]
 
-    elements = refresh_required_elements(candidate_claim, canonical_facts, "The employer fired plaintiff after a complaint.")
-    question = build_claim_element_question_text("retaliation", "Retaliation", "causation", "Causation")
-    proof_question = build_proof_lead_question_text("employment_discrimination", "Employment Discrimination")
+    elements = refresh_required_elements(
+        candidate_claim, canonical_facts, "The employer fired plaintiff after a complaint."
+    )
+    question = build_claim_element_question_text(
+        "retaliation", "Retaliation", "causation", "Causation"
+    )
+    proof_question = build_proof_lead_question_text(
+        "employment_discrimination", "Employment Discrimination"
+    )
 
     assert normalize_claim_type("wrongful-termination") == "termination"
     assert any(element["status"] == "present" for element in elements)
@@ -30,8 +40,12 @@ def test_claim_intake_helpers_refresh_elements_and_render_questions():
 
 
 def test_match_required_element_and_dependency_graph_readiness():
-    matched = match_required_element_id("termination", "We need more detail about the responsible actor and employer.")
-    graph = DependencyGraphBuilder().build_for_claim("termination", claim_id="claim_1", claim_name="Termination")
+    matched = match_required_element_id(
+        "termination", "We need more detail about the responsible actor and employer."
+    )
+    graph = DependencyGraphBuilder().build_for_claim(
+        "termination", claim_id="claim_1", claim_name="Termination"
+    )
     graph = DependencyGraphBuilder().apply_element_statuses(
         graph,
         claim_type="termination",

@@ -2,11 +2,10 @@ from __future__ import annotations
 from types_ import Any, Configs, Callable, Logger, ModuleType
 
 
-
 class DocumentSecurity:
     """
     DocumentSecurity class for handling security checks on document files.
-    
+
     This class is responsible for performing security checks on document files
     and ensuring they meet the required security standards.
     """
@@ -19,13 +18,13 @@ class DocumentSecurity:
         self._security_rules: dict[str, Any] = {}
 
     def check_document_security(
-            self, 
-            file_path: str, 
-            format_name: str, 
-            ) -> list[str]:
+        self,
+        file_path: str,
+        format_name: str,
+    ) -> list[str]:
         """
         Performs comprehensive security checks on archive files to detect potential threats.
-        
+
         Args:
             file_path: Path to the archive file to analyze
             format_name: Archive format type (zip, tar, gz, etc.)

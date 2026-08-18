@@ -76,21 +76,15 @@ def _evaluation(metrics: Mapping[str, float]) -> AutoencoderEvaluation:
     symbolic_success = float(metrics["symbolic_validity_success_rate"])
     legal_ir_losses = {
         "hammer_proof_success_rate": float(metrics["hammer_proof_success_rate"]),
-        "hammer_reconstruction_success_rate": float(
-            metrics["hammer_reconstruction_success_rate"]
-        ),
+        "hammer_reconstruction_success_rate": float(metrics["hammer_reconstruction_success_rate"]),
         "round_trip_reconstruction_success_rate": float(
             metrics["round_trip_reconstruction_success_rate"]
         ),
-        "round_trip_source_copy_guardrail_loss": float(
-            metrics["source_copy_reward_hack_penalty"]
-        ),
+        "round_trip_source_copy_guardrail_loss": float(metrics["source_copy_reward_hack_penalty"]),
         "round_trip_structural_reconstruction_loss": float(
             metrics["structural_text_reconstruction_loss"]
         ),
-        "source_copy_reward_hack_penalty": float(
-            metrics["source_copy_reward_hack_penalty"]
-        ),
+        "source_copy_reward_hack_penalty": float(metrics["source_copy_reward_hack_penalty"]),
         "symbolic_validity_penalty": max(0.0, 1.0 - symbolic_success),
         "symbolic_validity_success_rate": symbolic_success,
     }
@@ -113,12 +107,10 @@ def _rollout_summary(record: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "cycles": 1,
         "latest_validation_ce_delta": (
-            candidate["compiler_ir_cross_entropy_loss"]
-            - baseline["compiler_ir_cross_entropy_loss"]
+            candidate["compiler_ir_cross_entropy_loss"] - baseline["compiler_ir_cross_entropy_loss"]
         ),
         "latest_validation_cosine_delta": (
-            candidate["compiler_ir_cosine_similarity"]
-            - baseline["compiler_ir_cosine_similarity"]
+            candidate["compiler_ir_cosine_similarity"] - baseline["compiler_ir_cosine_similarity"]
         ),
         "compiler_ir_validation_last_delta": {
             "compiler_ir_cross_entropy_loss": 0.0,
@@ -137,13 +129,9 @@ def _rollout_summary(record: Mapping[str, Any]) -> dict[str, Any]:
                 "hammer_reconstruction_success_rate": candidate[
                     "hammer_reconstruction_success_rate"
                 ],
-                "symbolic_validity_success_rate": candidate[
-                    "symbolic_validity_success_rate"
-                ],
+                "symbolic_validity_success_rate": candidate["symbolic_validity_success_rate"],
             },
-            "obligation_failure_count": len(
-                record["expected"]["failed_obligation_kinds"]
-            ),
+            "obligation_failure_count": len(record["expected"]["failed_obligation_kinds"]),
             "runtime_failure_count": 0,
             "status": "completed",
         },
@@ -185,9 +173,7 @@ def test_rollout_gate_rejects_copy_hack_despite_positive_cosine_delta(
 
     assert result.metrics["latest_validation_cosine_delta"] > 0.0
     assert result.accepted is False
-    assert any(
-        failure.startswith("source_copy_penalty:") for failure in result.failures
-    )
+    assert any(failure.startswith("source_copy_penalty:") for failure in result.failures)
 
 
 @pytest.mark.parametrize("record", _records(), ids=lambda item: item["case_id"])
@@ -205,14 +191,15 @@ def test_autoencoder_objective_and_training_gate_reject_cosine_reward_hack(
 
     assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
     assert after.cross_entropy_loss < before.cross_entropy_loss
-    assert _evaluation_objective_for_training(after) > (
-        _evaluation_objective_for_training(before)
+    assert _evaluation_objective_for_training(after) > (_evaluation_objective_for_training(before))
+    assert (
+        _evaluation_improved_for_training(
+            before,
+            after,
+            max_legal_ir_loss_regression=0.0,
+        )
+        is False
     )
-    assert _evaluation_improved_for_training(
-        before,
-        after,
-        max_legal_ir_loss_regression=0.0,
-    ) is False
     assert "legal_ir:source_copy_reward_hack_penalty" in regressions
     assert "legal_ir:symbolic_validity_success_rate" in regressions
     assert "legal_ir:hammer_proof_success_rate" in regressions

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.core_operations.logic_processor import LogicProcessor
+
     _PROCESSOR = LogicProcessor()
     _AVAILABLE = True
 except Exception as _e:
@@ -65,9 +66,15 @@ async def cec_formula_complexity(formula: str) -> Dict[str, Any]:
     return await _PROCESSOR.get_formula_complexity(formula_str=formula)
 
 
-__all__ = ["cec_analyze_formula", "cec_formula_complexity",
-           "analyze_formula", "visualize_proof", "profile_operation",
-           "get_formula_complexity", "TOOLS"]
+__all__ = [
+    "cec_analyze_formula",
+    "cec_formula_complexity",
+    "analyze_formula",
+    "visualize_proof",
+    "profile_operation",
+    "get_formula_complexity",
+    "TOOLS",
+]
 
 
 def analyze_formula(formula: str) -> Dict[str, Any]:
@@ -81,22 +88,23 @@ def analyze_formula(formula: str) -> Dict[str, Any]:
     # Compute nesting depth via parentheses
     max_depth, cur_depth = 0, 0
     for ch in formula:
-        if ch == '(':
+        if ch == "(":
             cur_depth += 1
             max_depth = max(max_depth, cur_depth)
-        elif ch == ')':
+        elif ch == ")":
             cur_depth = max(0, cur_depth - 1)
     # Extract operators
     operators = []
-    for op in ('->', '→', '&', '∧', '|', '∨', '¬', '~', '↔', '<->'):
+    for op in ("->", "→", "&", "∧", "|", "∨", "¬", "~", "↔", "<->"):
         if op in formula:
             operators.append(op)
     # Count tokens (words/symbols)
     import re
-    tokens = re.findall(r'[A-Za-z_]\w*|[-><&|∧∨¬~→←↔◻◊□◇KBO@]', formula)
+
+    tokens = re.findall(r"[A-Za-z_]\w*|[-><&|∧∨¬~→←↔◻◊□◇KBO@]", formula)
     size = max(1, len(tokens))
     # Complexity
-    modal_ops = ('□', '◇', '◻', '◊')
+    modal_ops = ("□", "◇", "◻", "◊")
     modal_depth = sum(formula.count(op) for op in modal_ops)
     connective_count = len(operators)
     score = modal_depth * 3 + connective_count * 2 + len(formula) // 20
@@ -135,9 +143,9 @@ def get_formula_complexity(formula: str) -> Dict[str, Any]:
     # Duplicate core logic to avoid nested event loop issues
     if not formula:
         return {"success": False, "error": "'formula' is required."}
-    modal_ops = ('□', '◇', '◻', '◊')
+    modal_ops = ("□", "◇", "◻", "◊")
     modal_depth = sum(formula.count(op) for op in modal_ops)
-    connective_ops = ('->', '→', '&', '∧', '|', '∨', '¬', '~', '↔', '<->')
+    connective_ops = ("->", "→", "&", "∧", "|", "∨", "¬", "~", "↔", "<->")
     connective_count = sum(formula.count(op) for op in connective_ops)
     formula_length = len(formula)
     score = modal_depth * 3 + connective_count * 2 + formula_length // 20
@@ -162,6 +170,7 @@ def get_formula_complexity(formula: str) -> Dict[str, Any]:
 def profile_operation(operation: str, formula: str, iterations: int = 10) -> Dict[str, Any]:
     """Profile an operation (parse/prove/analyze) over multiple iterations."""
     import time
+
     if not formula:
         return {"success": False, "error": "'formula' is required."}
     times: list = []

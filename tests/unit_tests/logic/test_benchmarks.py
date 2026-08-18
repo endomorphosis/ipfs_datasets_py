@@ -39,7 +39,7 @@ class TestBenchmarkResult:
             max_time=0.15,
             throughput=10.0,
         )
-        
+
         assert result.name == "Test"
         assert result.iterations == 100
         assert result.throughput == 10.0
@@ -62,9 +62,9 @@ class TestBenchmarkResult:
             max_time=0.12,
             throughput=10.0,
         )
-        
+
         d = result.to_dict()
-        
+
         assert isinstance(d, dict)
         assert d["name"] == "Test"
         assert d["iterations"] == 50
@@ -87,9 +87,9 @@ class TestBenchmarkResult:
             max_time=0.12,
             throughput=10.0,
         )
-        
+
         summary = result.summary()
-        
+
         assert isinstance(summary, str)
         assert "Test" in summary
 
@@ -104,16 +104,16 @@ class TestPerformanceBenchmark:
         THEN: Should measure performance
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
+
         def test_func():
             return sum(range(100))
-        
+
         result = benchmark.benchmark(
             name="Test Sync",
             func=test_func,
             iterations=10,
         )
-        
+
         assert isinstance(result, BenchmarkResult)
         assert result.iterations == 10
         assert result.mean_time > 0
@@ -126,17 +126,17 @@ class TestPerformanceBenchmark:
         THEN: Should measure async performance
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
+
         async def test_func():
             await asyncio.sleep(0.001)
             return "done"
-        
+
         result = await benchmark.benchmark_async(
             name="Test Async",
             func=test_func,
             iterations=10,
         )
-        
+
         assert isinstance(result, BenchmarkResult)
         assert result.iterations == 10
         assert result.mean_time > 0.001  # Should take at least 1ms
@@ -148,10 +148,10 @@ class TestPerformanceBenchmark:
         THEN: Should pass arguments correctly
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
+
         def test_func(x, y):
             return x + y
-        
+
         result = benchmark.benchmark(
             name="Test Args",
             func=test_func,
@@ -159,7 +159,7 @@ class TestPerformanceBenchmark:
             x=5,
             y=3,
         )
-        
+
         assert isinstance(result, BenchmarkResult)
 
     def test_multiple_benchmarks(self):
@@ -169,10 +169,10 @@ class TestPerformanceBenchmark:
         THEN: Should track all results
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
+
         benchmark.benchmark("Test 1", lambda: sum(range(10)), iterations=5)
         benchmark.benchmark("Test 2", lambda: sum(range(20)), iterations=5)
-        
+
         assert len(benchmark.results) == 2
 
     def test_compare_results(self):
@@ -182,12 +182,12 @@ class TestPerformanceBenchmark:
         THEN: Should provide comparison metrics
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
-        result1 = benchmark.benchmark("Fast", lambda: 1+1, iterations=10)
+
+        result1 = benchmark.benchmark("Fast", lambda: 1 + 1, iterations=10)
         result2 = benchmark.benchmark("Slow", lambda: sum(range(1000)), iterations=10)
-        
+
         comparison = benchmark.compare(result1, result2)
-        
+
         assert isinstance(comparison, dict)
         assert "speedup" in comparison
         assert "faster" in comparison
@@ -199,11 +199,11 @@ class TestPerformanceBenchmark:
         THEN: Should return summary dictionary
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
-        benchmark.benchmark("Test", lambda: 1+1, iterations=5)
-        
+
+        benchmark.benchmark("Test", lambda: 1 + 1, iterations=5)
+
         summary = benchmark.get_summary()
-        
+
         assert isinstance(summary, dict)
         assert "total_benchmarks" in summary
         assert summary["total_benchmarks"] == 1
@@ -215,9 +215,9 @@ class TestPerformanceBenchmark:
         THEN: Should handle gracefully
         """
         benchmark = PerformanceBenchmark()
-        
+
         summary = benchmark.get_summary()
-        
+
         assert "error" in summary
 
 
@@ -232,12 +232,9 @@ class TestFOLBenchmarks:
         THEN: Should measure conversion performance
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
-        result = await FOLBenchmarks.benchmark_simple_conversion(
-            benchmark,
-            use_nlp=False
-        )
-        
+
+        result = await FOLBenchmarks.benchmark_simple_conversion(benchmark, use_nlp=False)
+
         assert isinstance(result, BenchmarkResult)
         assert result.iterations == 100
 
@@ -249,12 +246,9 @@ class TestFOLBenchmarks:
         THEN: Should measure complex formula performance
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
-        result = await FOLBenchmarks.benchmark_complex_conversion(
-            benchmark,
-            use_nlp=False
-        )
-        
+
+        result = await FOLBenchmarks.benchmark_complex_conversion(benchmark, use_nlp=False)
+
         assert isinstance(result, BenchmarkResult)
         assert result.iterations == 50
 
@@ -266,12 +260,9 @@ class TestFOLBenchmarks:
         THEN: Should measure batch throughput
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
-        result = await FOLBenchmarks.benchmark_batch_conversion(
-            benchmark,
-            batch_size=5
-        )
-        
+
+        result = await FOLBenchmarks.benchmark_batch_conversion(benchmark, batch_size=5)
+
         assert isinstance(result, BenchmarkResult)
         assert result.iterations == 10
 
@@ -283,21 +274,15 @@ class TestFOLBenchmarks:
         THEN: Should allow performance comparison
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
-        regex_result = await FOLBenchmarks.benchmark_simple_conversion(
-            benchmark,
-            use_nlp=False
-        )
-        
-        nlp_result = await FOLBenchmarks.benchmark_simple_conversion(
-            benchmark,
-            use_nlp=True
-        )
-        
+
+        regex_result = await FOLBenchmarks.benchmark_simple_conversion(benchmark, use_nlp=False)
+
+        nlp_result = await FOLBenchmarks.benchmark_simple_conversion(benchmark, use_nlp=True)
+
         # Both should complete
         assert isinstance(regex_result, BenchmarkResult)
         assert isinstance(nlp_result, BenchmarkResult)
-        
+
         # Compare
         comparison = benchmark.compare(regex_result, nlp_result)
         assert "speedup" in comparison
@@ -313,9 +298,9 @@ class TestCacheBenchmarks:
         THEN: Should measure hit performance
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
+
         result = CacheBenchmarks.benchmark_cache_hit(benchmark)
-        
+
         assert isinstance(result, BenchmarkResult)
         assert result.iterations == 10000
         # Cache hits should be very fast (allowing for CI variability)
@@ -328,9 +313,9 @@ class TestCacheBenchmarks:
         THEN: Should measure miss performance
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
+
         result = CacheBenchmarks.benchmark_cache_miss(benchmark)
-        
+
         assert isinstance(result, BenchmarkResult)
         assert result.iterations == 10000
 
@@ -341,10 +326,10 @@ class TestCacheBenchmarks:
         THEN: Hits should be faster than misses
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
+
         hit_result = CacheBenchmarks.benchmark_cache_hit(benchmark)
         miss_result = CacheBenchmarks.benchmark_cache_miss(benchmark)
-        
+
         # Both should be very fast
         assert hit_result.mean_time < 0.001
         assert miss_result.mean_time < 0.001
@@ -371,7 +356,7 @@ class TestBenchmarkStatistics:
             max_time=0.1,
             throughput=10.0,  # 100 ops / 10 sec = 10 ops/sec
         )
-        
+
         assert result.throughput == 10.0
 
     def test_statistics_with_variation(self):
@@ -381,18 +366,16 @@ class TestBenchmarkStatistics:
         THEN: Should capture variation correctly
         """
         benchmark = PerformanceBenchmark(warmup_iterations=1)
-        
+
         import random
+
         def variable_func():
             time.sleep(random.uniform(0.001, 0.005))
-        
+
         import time
-        result = benchmark.benchmark(
-            "Variable Test",
-            variable_func,
-            iterations=10
-        )
-        
+
+        result = benchmark.benchmark("Variable Test", variable_func, iterations=10)
+
         # Should have some standard deviation
         assert result.std_dev > 0
         assert result.min_time < result.max_time

@@ -127,7 +127,9 @@ def build_embeddings_parquet(
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Embed Oregon court rules into one parquet with gte-small")
+    parser = argparse.ArgumentParser(
+        description="Embed Oregon court rules into one parquet with gte-small"
+    )
     parser.add_argument(
         "--orcp-parquet",
         default="/home/barberb/.ipfs_datasets/state_laws/OR/parsed/parquet/oregon_rules_of_civil_procedure_indexed.parquet",

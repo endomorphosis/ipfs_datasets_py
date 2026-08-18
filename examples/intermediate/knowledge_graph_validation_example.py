@@ -6,6 +6,7 @@ This example shows how to use the KnowledgeGraphExtractorWithValidation to extra
 knowledge graphs from text, Wikipedia articles, and multiple documents, with
 automatic validation against Wikidata's SPARQL endpoint and correction suggestions.
 """
+
 import os
 import sys
 
@@ -15,7 +16,10 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
 # Import required modules
-from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraphExtractorWithValidation
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
+    KnowledgeGraphExtractorWithValidation,
+)
+
 
 def extract_from_text_example():
     """Example of extracting and validating a knowledge graph from text."""
@@ -25,7 +29,7 @@ def extract_from_text_example():
     extractor = KnowledgeGraphExtractorWithValidation(
         validate_during_extraction=True,
         auto_correct_suggestions=True,
-        cache_validation_results=True
+        cache_validation_results=True,
     )
 
     # Sample text about IPFS
@@ -43,7 +47,7 @@ def extract_from_text_example():
         text=text,
         extraction_temperature=0.7,
         structure_temperature=0.6,
-        validation_depth=2  # Include relationship validation
+        validation_depth=2,  # Include relationship validation
     )
 
     # Print extraction results
@@ -81,17 +85,21 @@ def extract_from_text_example():
                 if rel:
                     source = rel.source_entity.name if rel.source_entity else "Unknown"
                     target = rel.target_entity.name if rel.target_entity else "Unknown"
-                    print(f"    - {source} {rel.relationship_type} {target}: {correction['suggestions']}")
+                    print(
+                        f"    - {source} {rel.relationship_type} {target}: {correction['suggestions']}"
+                    )
 
     # Apply corrections if available
     if "corrections" in result:
         print("\nApplying corrections...")
         corrected_kg = extractor.apply_validation_corrections(
-            kg=kg,
-            corrections=result["corrections"]
+            kg=kg, corrections=result["corrections"]
         )
         print(f"Original KG: {len(kg.entities)} entities, {len(kg.relationships)} relationships")
-        print(f"Corrected KG: {len(corrected_kg.entities)} entities, {len(corrected_kg.relationships)} relationships")
+        print(
+            f"Corrected KG: {len(corrected_kg.entities)} entities, {len(corrected_kg.relationships)} relationships"
+        )
+
 
 def extract_from_wikipedia_example():
     """Example of extracting and validating a knowledge graph from a Wikipedia page."""
@@ -101,7 +109,7 @@ def extract_from_wikipedia_example():
     extractor = KnowledgeGraphExtractorWithValidation(
         validate_during_extraction=True,
         auto_correct_suggestions=True,
-        cache_validation_results=True
+        cache_validation_results=True,
     )
 
     # Extract from Wikipedia
@@ -110,7 +118,7 @@ def extract_from_wikipedia_example():
         extraction_temperature=0.7,
         structure_temperature=0.6,
         validation_depth=2,
-        focus_validation_on_main_entity=True
+        focus_validation_on_main_entity=True,
     )
 
     # Print extraction results
@@ -143,13 +151,16 @@ def extract_from_wikipedia_example():
             direct_paths = pa["data"]["direct_paths"]
             print(f"  Direct paths found: {len(direct_paths)}")
             for i, path in enumerate(direct_paths[:3]):  # Show max 3 paths
-                print(f"    {i+1}. {path['property']}")
+                print(f"    {i + 1}. {path['property']}")
 
         if "two_hop_paths" in pa.get("data", {}):
             two_hop_paths = pa["data"]["two_hop_paths"]
             print(f"  Two-hop paths found: {len(two_hop_paths)}")
             for i, path in enumerate(two_hop_paths[:3]):  # Show max 3 paths
-                print(f"    {i+1}. via {path['intermediate']} ({path['first_property']} → {path['second_property']})")
+                print(
+                    f"    {i + 1}. via {path['intermediate']} ({path['first_property']} → {path['second_property']})"
+                )
+
 
 def extract_from_documents_example():
     """Example of extracting and validating a knowledge graph from multiple documents."""
@@ -159,7 +170,7 @@ def extract_from_documents_example():
     extractor = KnowledgeGraphExtractorWithValidation(
         validate_during_extraction=True,
         auto_correct_suggestions=True,
-        cache_validation_results=True
+        cache_validation_results=True,
     )
 
     # Sample documents about AI models
@@ -172,7 +183,7 @@ def extract_from_documents_example():
             professional and academic benchmarks. GPT-4 was trained using both publicly available
             data and data licensed from third-party providers. The training was completed in
             August 2022. OpenAI CEO Sam Altman has called GPT-4 "OpenAI's most capable model."
-            """
+            """,
         },
         {
             "title": "Claude 3 Release",
@@ -183,7 +194,7 @@ def extract_from_documents_example():
             OpenAI researchers. Anthropic raised over $750 million in funding in 2023 from
             investors including Google and Amazon. Claude 3 models are available through
             Anthropic's API and through Amazon's Bedrock service.
-            """
+            """,
         },
         {
             "title": "Gemini Model",
@@ -195,8 +206,8 @@ def extract_from_documents_example():
             achieved state-of-the-art performance on 30 of 32 academic benchmarks used
             in large language model testing. Gemini is integrated into Google products
             including Bard, which was later renamed to Gemini.
-            """
-        }
+            """,
+        },
     ]
 
     # Extract and validate knowledge graph
@@ -205,7 +216,7 @@ def extract_from_documents_example():
         text_key="text",
         extraction_temperature=0.7,
         structure_temperature=0.6,
-        validation_depth=2  # Include relationship validation
+        validation_depth=2,  # Include relationship validation
     )
 
     # Print extraction results
@@ -234,12 +245,13 @@ def extract_from_documents_example():
         paths = result["path_analysis"]
         print(f"  Paths found between top entities: {len(paths)}")
         for i, path in enumerate(paths[:3]):  # Show max 3 path groups
-            print(f"    {i+1}. {path['source']} → {path['target']}")
+            print(f"    {i + 1}. {path['source']} → {path['target']}")
             if "direct_paths" in path["paths"].get("data", {}):
                 direct = path["paths"]["data"]["direct_paths"]
                 print(f"       Direct paths: {len(direct)}")
                 for j, dpath in enumerate(direct[:2]):
-                    print(f"         {j+1}. {dpath['property']}")
+                    print(f"         {j + 1}. {dpath['property']}")
+
 
 def main():
     """Main function demonstrating different extraction and validation examples."""
@@ -252,6 +264,7 @@ def main():
     extract_from_documents_example()
 
     print("\nExamples completed.")
+
 
 if __name__ == "__main__":
     main()

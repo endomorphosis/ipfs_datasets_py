@@ -83,4 +83,3 @@ def aggregate_result_summary(result: Any) -> Dict[str, Any]:
         "privacy_budget_spent": result.privacy_budget_spent,
         "privacy_notes": list(result.privacy_notes),
     }
-

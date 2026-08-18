@@ -101,29 +101,22 @@ from benchmarks.semantic_roundtrip_capabilities import (
 # Interfaces / schemas
 # ---------------------------------------------------------------------------
 
-PLATEAU2_INTERVENTION_REGISTRY_INTERFACE: Final = (
-    "Plateau2InterventionRegistry@1"
-)
+PLATEAU2_INTERVENTION_REGISTRY_INTERFACE: Final = "Plateau2InterventionRegistry@1"
 PLATEAU2_INTERVENTION_REGISTRY_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-plateau2-intervention-registry.v1"
 )
-SEMANTIC_ROUNDTRIP_CAPABILITY_RECORD_INTERFACE: Final = (
-    "SemanticRoundtripCapabilityRecord@1"
-)
+SEMANTIC_ROUNDTRIP_CAPABILITY_RECORD_INTERFACE: Final = "SemanticRoundtripCapabilityRecord@1"
 SEMANTIC_ROUNDTRIP_CAPABILITY_RECORD_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-capability-record.v1"
 )
-RESIDUAL_INTERVENTION_MAPPING_INTERFACE: Final = (
-    "Plateau2ResidualInterventionMapping@1"
-)
+RESIDUAL_INTERVENTION_MAPPING_INTERFACE: Final = "Plateau2ResidualInterventionMapping@1"
 FULL_MATRIX_OVERRIDE_INTERFACE: Final = "Plateau2FullMatrixOverride@1"
 
 REGISTRY_CID_SCOPE: Final = "payload_without_registry_cid"
 CID_CODEC: Final = "dag-json"
 
 DEFAULT_REGISTRY_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "repair_dev_intervention_registry.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/repair_dev_intervention_registry.json"
 )
 DEFAULT_REGISTRY_DOCS_RELATIVE_PATH: Final = Path(
     "docs/benchmarks/semantic_roundtrip_plateau2_interventions.md"
@@ -242,9 +235,7 @@ CAPABILITY_ID_BY_METHOD: Final = MappingProxyType(
 
 INTERVENTION_DET_MISSING_RULE: Final = "det_compiler_missing_rule_hypothesis"
 INTERVENTION_DET_FIELD_MISSING: Final = "det_compiler_field_fill_hypothesis"
-INTERVENTION_DET_FIELD_CONTRADICTORY: Final = (
-    "det_compiler_field_rewrite_hypothesis"
-)
+INTERVENTION_DET_FIELD_CONTRADICTORY: Final = "det_compiler_field_rewrite_hypothesis"
 INTERVENTION_KINDS: Final = frozenset(
     {
         INTERVENTION_DET_MISSING_RULE,
@@ -273,9 +264,7 @@ ADVISORY_IDS: Final = frozenset(
     }
 )
 
-STRUCTURAL_GATE_IDS: Final = frozenset(
-    {METHOD_HAMMER, METHOD_CVC5, METHOD_LEAN}
-)
+STRUCTURAL_GATE_IDS: Final = frozenset({METHOD_HAMMER, METHOD_CVC5, METHOD_LEAN})
 
 RESIDUAL_KIND_MISSING_RULE: Final = "missing_rule"
 RESIDUAL_KIND_FIELD_MISMATCH: Final = "field_mismatch"
@@ -305,8 +294,7 @@ DEFAULT_ASSUMPTIONS: Final = (
     "semantic score aggregates",
     "residual → intervention mapping is preregistered and outcome-independent",
     "full matrix reruns require an explicit evidence-backed override",
-    "blind sources/gold/residuals remain inaccessible without post-freeze "
-    "evaluator authorization",
+    "blind sources/gold/residuals remain inaccessible without post-freeze evaluator authorization",
     "no outcome-dependent selection or blind data may drive method choice",
 )
 
@@ -364,9 +352,7 @@ def _cid(value: object, path: str) -> str:
     try:
         return validate_cid(text, codecs=(CID_CODEC, "raw"))
     except (TypeError, ValueError) as exc:
-        raise HoldoutInterventionError(
-            f"{path} must be a canonical content-addressed CID"
-        ) from exc
+        raise HoldoutInterventionError(f"{path} must be a canonical content-addressed CID") from exc
 
 
 def residual_identity_key(residual: Mapping[str, Any]) -> str:
@@ -374,9 +360,7 @@ def residual_identity_key(residual: Mapping[str, Any]) -> str:
 
     case_id = _nonblank(residual.get("case_id"), "residual.case_id")
     field_path = _nonblank(residual.get("field_path"), "residual.field_path")
-    residual_kind = _nonblank(
-        residual.get("residual_kind"), "residual.residual_kind"
-    )
+    residual_kind = _nonblank(residual.get("residual_kind"), "residual.residual_kind")
     return f"{case_id}::{field_path}::{residual_kind}"
 
 
@@ -430,9 +414,7 @@ def assert_health_only_cannot_establish_model_inference(
     if not isinstance(identity, Mapping):
         identity = {}
     health_only = bool(
-        checks.get("health_only")
-        or identity.get("health_only")
-        or record.get("health_only")
+        checks.get("health_only") or identity.get("health_only") or record.get("health_only")
     )
     inference_claim = (
         checks.get("model_inference_performed")
@@ -458,11 +440,7 @@ def load_frozen_capability_inventory(
     """Load the frozen PLAT capability inventory without re-probing."""
 
     root = Path(repo_root) if repo_root is not None else _repo_root()
-    inventory_path = (
-        Path(path)
-        if path is not None
-        else root / CAPABILITIES_RELATIVE_PATH
-    )
+    inventory_path = Path(path) if path is not None else root / CAPABILITIES_RELATIVE_PATH
     if not inventory_path.is_file():
         # Fall back to module default absolute path if relative missing.
         inventory_path = CAPABILITIES_DEFAULT_OUTPUT
@@ -495,11 +473,7 @@ def load_ae_qualification(
     """Load the frozen causal autoencoder guidance qualification receipt."""
 
     root = Path(repo_root) if repo_root is not None else _repo_root()
-    qual_path = (
-        Path(path)
-        if path is not None
-        else root / AE_QUALIFICATION_RELATIVE_PATH
-    )
+    qual_path = Path(path) if path is not None else root / AE_QUALIFICATION_RELATIVE_PATH
     _require(qual_path.is_file(), f"AE qualification missing at {qual_path}")
     payload = json.loads(qual_path.read_text(encoding="utf-8"))
     return dict(_mapping(payload, "ae qualification"))
@@ -532,9 +506,7 @@ def _model_inference_from_capability(cap: Mapping[str, Any]) -> bool:
     performed = checks.get("model_inference_performed")
     return health_only_establishes_model_inference(
         health_only=health_only,
-        model_inference_performed=(
-            performed if isinstance(performed, bool) else None
-        ),
+        model_inference_performed=(performed if isinstance(performed, bool) else None),
     )
 
 
@@ -547,11 +519,7 @@ def _status_from_capability_availability(
 
     status = str(cap.get("status") or "")
     reason = cap.get("reason")
-    reason_text = (
-        str(reason).strip()
-        if isinstance(reason, str) and reason.strip()
-        else ""
-    )
+    reason_text = str(reason).strip() if isinstance(reason, str) and reason.strip() else ""
     if status == "available":
         if role_status_when_available not in METHOD_STATUSES:
             raise HoldoutInterventionError(
@@ -573,19 +541,12 @@ def _status_from_capability_availability(
             "failed",
         )
     ):
-        return METHOD_STATUS_RUNTIME_FAILED, (
-            reason_text or "capability_runtime_failed"
-        )
-    if any(
-        token in lower
-        for token in ("unsupported", "terminal", "unavailable", "missing")
-    ):
+        return METHOD_STATUS_RUNTIME_FAILED, (reason_text or "capability_runtime_failed")
+    if any(token in lower for token in ("unsupported", "terminal", "unavailable", "missing")):
         return METHOD_STATUS_TERMINAL_UNSUPPORTED, (
             reason_text or "capability_terminal_unsupported"
         )
-    return METHOD_STATUS_NOT_MEASURED, (
-        reason_text or "capability_not_measured"
-    )
+    return METHOD_STATUS_NOT_MEASURED, (reason_text or "capability_not_measured")
 
 
 # ---------------------------------------------------------------------------
@@ -643,8 +604,7 @@ def build_method_capability_record(
                 "toolchain": "typed_deontic_compiler_ir_deterministic_realizer",
                 "route": "not_applicable",
                 "model": None,
-                "version": "TypedDeonticCanonicalConstructor@1+"
-                "CanonicalDeterministicRealizer@1",
+                "version": "TypedDeonticCanonicalConstructor@1+CanonicalDeterministicRealizer@1",
             },
             "evidence": {
                 "kind": "plat_baseline",
@@ -664,9 +624,7 @@ def build_method_capability_record(
                 "semantic_scored_on_deterministic_path": True,
             },
         }
-        assert_health_only_cannot_establish_model_inference(
-            record, path=f"method[{method_id}]"
-        )
+        assert_health_only_cannot_establish_model_inference(record, path=f"method[{method_id}]")
         return record
 
     if method_id == METHOD_AUTOENCODER:
@@ -695,19 +653,12 @@ def build_method_capability_record(
         if any_scored and preregistered and reviewed_adapter:
             status = METHOD_STATUS_SEMANTIC_SCORED
             status_reason = "reviewed_causal_l1_adapter_scored_supported"
-        elif eval_reason == AE_TERMINAL_UNSUPPORTED or (
-            not preregistered
-        ):
+        elif eval_reason == AE_TERMINAL_UNSUPPORTED or (not preregistered):
             status = METHOD_STATUS_TERMINAL_UNSUPPORTED
-            status_reason = (
-                eval_reason
-                or UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER
-            )
+            status_reason = eval_reason or UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER
         elif eval_status == METHOD_STATUS_NOT_MEASURED:
             status = METHOD_STATUS_NOT_MEASURED
-            status_reason = (
-                eval_reason or UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER
-            )
+            status_reason = eval_reason or UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER
         else:
             status = METHOD_STATUS_TERMINAL_UNSUPPORTED
             status_reason = UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER
@@ -725,36 +676,27 @@ def build_method_capability_record(
             "status": status,
             "status_reason": status_reason,
             "identity": {
-                "state_cid": effective.get("cid")
-                or requested.get("cid")
-                or AUTOENCODER_STATE_CID,
+                "state_cid": effective.get("cid") or requested.get("cid") or AUTOENCODER_STATE_CID,
                 "state_sha256": effective.get("sha256")
                 or requested.get("sha256")
                 or AUTOENCODER_STATE_SHA256,
                 "state_schema_version": effective.get("state_schema_version")
                 or requested.get("state_schema_version"),
-                "declared_architecture_version": effective.get(
-                    "declared_architecture_version"
-                )
+                "declared_architecture_version": effective.get("declared_architecture_version")
                 or requested.get("declared_architecture_version"),
-                "effective_architecture_version": effective.get(
-                    "effective_architecture_version"
-                )
+                "effective_architecture_version": effective.get("effective_architecture_version")
                 or requested.get("effective_architecture_version"),
                 "access": "read_only",
                 "route": "causal_guidance_adapter",
                 "model": "modal_autoencoder_stable_feature_export",
-                "version": effective.get("state_schema_version")
-                or "modal-autoencoder-state-v1",
+                "version": effective.get("state_schema_version") or "modal-autoencoder-state-v1",
                 "toolchain": "frozen_autoencoder_state_read_only",
                 "reviewed_adapter_id": reviewed_adapter,
                 "preregistered": preregistered,
             },
             "evidence": {
                 "kind": "plat_ae_qualification_and_capability_smoke",
-                "qualification_path": str(
-                    AE_QUALIFICATION_RELATIVE_PATH
-                ).replace("\\", "/"),
+                "qualification_path": str(AE_QUALIFICATION_RELATIVE_PATH).replace("\\", "/"),
                 "evaluation_status": eval_status,
                 "evaluation_status_reason": eval_reason,
                 "capability_status": cap.get("status"),
@@ -773,9 +715,7 @@ def build_method_capability_record(
                 "scored_supported": any_scored,
             },
         }
-        assert_health_only_cannot_establish_model_inference(
-            record, path=f"method[{method_id}]"
-        )
+        assert_health_only_cannot_establish_model_inference(record, path=f"method[{method_id}]")
         return record
 
     # Capability-backed methods
@@ -796,8 +736,7 @@ def build_method_capability_record(
             "distribution": effective.get("distribution") or "spacy",
             "version": effective.get("version") or SPACY_VERSION,
             "model": effective.get("model") or SPACY_MODEL,
-            "model_version": effective.get("model_version")
-            or SPACY_MODEL_VERSION,
+            "model_version": effective.get("model_version") or SPACY_MODEL_VERSION,
             "pipeline": list(effective.get("pipeline") or []),
             "language": effective.get("language") or "en",
             "route": "modal_spacy_diagnostics",
@@ -814,14 +753,10 @@ def build_method_capability_record(
             "provider": effective.get("provider") or SYMAI_PROVIDER,
             "model_alias": effective.get("model_alias") or SYMAI_MODEL_ALIAS,
             "route": effective.get("route") or "symai_router",
-            "resolved_model": effective.get("resolved_model")
-            or LEANSTRAL_MODEL,
-            "resolved_endpoint": effective.get("resolved_endpoint")
-            or LEANSTRAL_ENDPOINT,
-            "resolved_backend": effective.get("resolved_backend")
-            or LEANSTRAL_BACKEND,
-            "resolved_provider": effective.get("resolved_provider")
-            or LEANSTRAL_PROVIDER,
+            "resolved_model": effective.get("resolved_model") or LEANSTRAL_MODEL,
+            "resolved_endpoint": effective.get("resolved_endpoint") or LEANSTRAL_ENDPOINT,
+            "resolved_backend": effective.get("resolved_backend") or LEANSTRAL_BACKEND,
+            "resolved_provider": effective.get("resolved_provider") or LEANSTRAL_PROVIDER,
             "independent_model": bool(effective.get("independent_model")),
             "toolchain": "symai_router_orchestration_only",
             "proof_credit": False,
@@ -845,12 +780,10 @@ def build_method_capability_record(
             "model": effective.get("model") or LEANSTRAL_MODEL,
             "endpoint": effective.get("endpoint") or LEANSTRAL_ENDPOINT,
             "backend": effective.get("backend") or LEANSTRAL_BACKEND,
-            "route": effective.get("route")
-            or "direct_openai_compatible_http",
+            "route": effective.get("route") or "direct_openai_compatible_http",
             "version": effective.get("model") or LEANSTRAL_MODEL,
             "toolchain": "leanstral_local_llama_cpp",
-            "capacity": effective.get("capacity")
-            or {"model_instances": 1, "parallel_slots": 1},
+            "capacity": effective.get("capacity") or {"model_instances": 1, "parallel_slots": 1},
         }
         model_required = True
         if health_only:
@@ -887,9 +820,7 @@ def build_method_capability_record(
             "solver": effective.get("solver") or "cvc5",
             "solver_version": effective.get("solver_version"),
             "solver_path": effective.get("solver_path"),
-            "solver_executable_sha256": effective.get(
-                "solver_executable_sha256"
-            ),
+            "solver_executable_sha256": effective.get("solver_executable_sha256"),
             "route": "structural_admission_cvc5",
             "toolchain": "cvc5_bounded_smt2_smoke",
             "version": effective.get("solver_version") or "unknown",
@@ -939,9 +870,7 @@ def build_method_capability_record(
         "checks": {
             "health_only": health_only,
             "model_inference_performed": model_inference,
-            "schedulable_for_scored_matrix": bool(
-                checks.get("schedulable_for_scored_matrix")
-            ),
+            "schedulable_for_scored_matrix": bool(checks.get("schedulable_for_scored_matrix")),
             "bounded_smoke_passed": bool(
                 checks.get("bounded_smoke_passed")
                 or checks.get("loaded_full_pipeline")
@@ -949,9 +878,7 @@ def build_method_capability_record(
             ),
         },
     }
-    assert_health_only_cannot_establish_model_inference(
-        record, path=f"method[{method_id}]"
-    )
+    assert_health_only_cannot_establish_model_inference(record, path=f"method[{method_id}]")
     return record
 
 
@@ -990,13 +917,11 @@ def parse_method_capability_record(value: object) -> dict[str, Any]:
 
     data = dict(_mapping(value, "capability record"))
     _require(
-        data.get("interface")
-        == SEMANTIC_ROUNDTRIP_CAPABILITY_RECORD_INTERFACE,
+        data.get("interface") == SEMANTIC_ROUNDTRIP_CAPABILITY_RECORD_INTERFACE,
         "capability record interface mismatch",
     )
     _require(
-        data.get("schema_version")
-        == SEMANTIC_ROUNDTRIP_CAPABILITY_RECORD_SCHEMA,
+        data.get("schema_version") == SEMANTIC_ROUNDTRIP_CAPABILITY_RECORD_SCHEMA,
         "capability record schema mismatch",
     )
     method_id = _nonblank(data.get("method_id"), "method_id")
@@ -1052,9 +977,7 @@ def parse_method_capability_record(value: object) -> dict[str, Any]:
                 },
                 "autoencoder without scored_supported must not be semantic_scored",
             )
-    assert_health_only_cannot_establish_model_inference(
-        data, path=f"method[{method_id}]"
-    )
+    assert_health_only_cannot_establish_model_inference(data, path=f"method[{method_id}]")
     if data.get("health_only") is True:
         _require(
             data.get("model_inference_established") is not True,
@@ -1073,13 +996,10 @@ def select_primary_intervention_kind(
 ) -> str:
     """Preregistered smallest intervention kind for one residual (outcome-free)."""
 
-    residual_kind = _nonblank(
-        residual.get("residual_kind"), "residual.residual_kind"
-    )
+    residual_kind = _nonblank(residual.get("residual_kind"), "residual.residual_kind")
     _require(
         residual_kind in PROJECTABLE_RESIDUAL_KINDS
-        or residual_kind
-        in {RESIDUAL_KIND_MISSING_RULE, RESIDUAL_KIND_FIELD_MISMATCH},
+        or residual_kind in {RESIDUAL_KIND_MISSING_RULE, RESIDUAL_KIND_FIELD_MISMATCH},
         f"unsupported residual_kind for intervention map: {residual_kind!r}",
     )
     if residual_kind in {RESIDUAL_KIND_MISSING_RULE, RESIDUAL_KIND_EXTRA_RULE}:
@@ -1140,9 +1060,8 @@ def advisory_methods_for_residual(
             )
     ae = method_records_by_id.get(METHOD_AUTOENCODER)
     if ae is not None:
-        eligible = (
-            ae.get("status") == METHOD_STATUS_SEMANTIC_SCORED
-            and "scored_supported" in str(ae.get("status_reason") or "")
+        eligible = ae.get("status") == METHOD_STATUS_SEMANTIC_SCORED and "scored_supported" in str(
+            ae.get("status_reason") or ""
         )
         advisories.append(
             {
@@ -1154,10 +1073,7 @@ def advisory_methods_for_residual(
                 "reason": (
                     "causal_guidance_when_scored_supported"
                     if eligible
-                    else str(
-                        ae.get("status_reason")
-                        or UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER
-                    )
+                    else str(ae.get("status_reason") or UNAVAILABLE_NO_REVIEWED_CAUSAL_L1_ADAPTER)
                 ),
             }
         )
@@ -1215,9 +1131,7 @@ def map_residual_to_intervention(
     residual = dict(_mapping(residual, "residual"))
     case_id = _nonblank(residual.get("case_id"), "residual.case_id")
     field_path = _nonblank(residual.get("field_path"), "residual.field_path")
-    residual_kind = _nonblank(
-        residual.get("residual_kind"), "residual.residual_kind"
-    )
+    residual_kind = _nonblank(residual.get("residual_kind"), "residual.residual_kind")
     mapping_id = residual_mapping_id(residual)
     identity_key = residual_identity_key(residual)
     intervention_kind = select_primary_intervention_kind(residual)
@@ -1248,18 +1162,14 @@ def map_residual_to_intervention(
             "gold_rule_index": residual.get("gold_rule_index"),
             "suggested_trigger_kind": residual.get("suggested_trigger_kind"),
         },
-        "selection_rule": (
-            "smallest_preregistered_deterministic_hypothesis_for_residual_kind"
-        ),
+        "selection_rule": ("smallest_preregistered_deterministic_hypothesis_for_residual_kind"),
         "outcome_dependent_selection": False,
     }
 
     negative_controls = [
         {
             "control_id": NEGATIVE_CONTROL_NO_EDIT,
-            "description": (
-                "hold residual fixed; run baseline arm without compiler edit"
-            ),
+            "description": ("hold residual fixed; run baseline arm without compiler edit"),
             "method_id": METHOD_DETERMINISTIC_COMPILER,
             "arm_id": PRODUCTION_ARM_ID,
         },
@@ -1274,9 +1184,7 @@ def map_residual_to_intervention(
         },
     ]
 
-    advisories = advisory_methods_for_residual(
-        residual, method_records_by_id=by_id
-    )
+    advisories = advisory_methods_for_residual(residual, method_records_by_id=by_id)
     gates = structural_gates_for_residual(method_records_by_id=by_id)
 
     per_wave_ablation = {
@@ -1302,9 +1210,7 @@ def map_residual_to_intervention(
                 "mapping_id": mapping_id,
             },
         ],
-        "attribution": (
-            "per_wave_isolates_single_residual_deterministic_hypothesis"
-        ),
+        "attribution": ("per_wave_isolates_single_residual_deterministic_hypothesis"),
     }
 
     cumulative_ids = list(prior_mapping_ids) + [mapping_id]
@@ -1324,9 +1230,7 @@ def map_residual_to_intervention(
                 "mapping_ids": list(prior_mapping_ids),
             },
         ],
-        "attribution": (
-            "cumulative_ablation_attributes_gain_to_current_residual_vs_priors"
-        ),
+        "attribution": ("cumulative_ablation_attributes_gain_to_current_residual_vs_priors"),
     }
 
     return {
@@ -1406,9 +1310,7 @@ def full_matrix_override_policy() -> dict[str, Any]:
             "outcome_dependent_arm_selection",
             "blind_population_probe",
         ],
-        "selection_rule": (
-            "smallest_preregistered_residual_intervention_not_full_matrix"
-        ),
+        "selection_rule": ("smallest_preregistered_residual_intervention_not_full_matrix"),
         "override_validation": (
             "override payload must be CID-bound, cite residual mappings, "
             "and must not depend on blind outcomes or post-hoc scores"
@@ -1493,8 +1395,7 @@ def _bindings_from_artifacts(
         "contract_cid": baseline_report.get("contract_cid"),
         "experiment_id": baseline_report.get("experiment_id"),
         "population_cid": catalog.get("population_cid"),
-        "population_kind": catalog.get("population_kind")
-        or POPULATION_KIND_REPAIR_DEVELOPMENT,
+        "population_kind": catalog.get("population_kind") or POPULATION_KIND_REPAIR_DEVELOPMENT,
         "residuals": list(catalog.get("residuals") or []),
         "tree_cid": catalog.get("tree_cid"),
     }
@@ -1537,25 +1438,17 @@ def build_intervention_registry(
         if ae_qualification is not None
         else load_ae_qualification(repo_root=root)
     )
-    methods = build_all_method_records(
-        inventory=inv, ae_qualification=ae_qual, repo_root=root
-    )
+    methods = build_all_method_records(inventory=inv, ae_qualification=ae_qual, repo_root=root)
     for method in methods:
         parse_method_capability_record(method)
 
-    mappings = build_residual_intervention_mappings(
-        residual_rows, method_records=methods
-    )
+    mappings = build_residual_intervention_mappings(residual_rows, method_records=methods)
     _require(
         len(mappings) == len(residual_rows),
         "residual mapping count must match residual count",
     )
 
-    blind = (
-        dict(blind_status)
-        if blind_status is not None
-        else dict(bindings["blind_holdout"])
-    )
+    blind = dict(blind_status) if blind_status is not None else dict(bindings["blind_holdout"])
     _require(
         blind.get("access_receipt_count") == 0,
         "blind access ledger must have zero receipts for intervention freeze",
@@ -1578,8 +1471,7 @@ def build_intervention_registry(
 
     payload: dict[str, Any] = {
         "assumptions": list(DEFAULT_ASSUMPTIONS),
-        "baseline_report_cid": baseline_report_cid
-        or bindings["baseline_report_cid"],
+        "baseline_report_cid": baseline_report_cid or bindings["baseline_report_cid"],
         "blind_holdout": _plain_json(blind),
         "board_namespace": BOARD_NAMESPACE,
         "catalog_cid": catalog_cid or bindings["catalog_cid"],
@@ -1685,9 +1577,7 @@ def parse_intervention_registry(value: object) -> dict[str, Any]:
     )
 
     methods = _array(data.get("method_records"), "method_records")
-    parsed_methods = [
-        parse_method_capability_record(item) for item in methods
-    ]
+    parsed_methods = [parse_method_capability_record(item) for item in methods]
     method_ids = [item["method_id"] for item in parsed_methods]
     _require(
         tuple(method_ids) == METHOD_IDS,
@@ -1697,8 +1587,7 @@ def parse_intervention_registry(value: object) -> dict[str, Any]:
     # Doctrine checks on roles.
     by_id = {item["method_id"]: item for item in parsed_methods}
     _require(
-        by_id[METHOD_DETERMINISTIC_COMPILER]["role"]
-        == ROLE_PRODUCTION_EDIT_TARGET,
+        by_id[METHOD_DETERMINISTIC_COMPILER]["role"] == ROLE_PRODUCTION_EDIT_TARGET,
         "deterministic compiler must be production edit target",
     )
     _require(
@@ -1745,9 +1634,7 @@ def parse_intervention_registry(value: object) -> dict[str, Any]:
             f"residual_mappings[{index}] interface mismatch",
         )
         mid = _nonblank(row.get("mapping_id"), f"residual_mappings[{index}].mapping_id")
-        key = _nonblank(
-            row.get("identity_key"), f"residual_mappings[{index}].identity_key"
-        )
+        key = _nonblank(row.get("identity_key"), f"residual_mappings[{index}].identity_key")
         _require(key not in seen_keys, f"duplicate residual identity_key {key}")
         seen_keys.add(key)
         primary = dict(
@@ -1781,9 +1668,7 @@ def parse_intervention_registry(value: object) -> dict[str, Any]:
             f"residual_mappings[{index}].negative_controls",
         )
         control_ids = {
-            str(item.get("control_id"))
-            for item in controls
-            if isinstance(item, Mapping)
+            str(item.get("control_id")) for item in controls if isinstance(item, Mapping)
         }
         _require(
             NEGATIVE_CONTROL_NO_EDIT in control_ids,
@@ -1832,9 +1717,7 @@ def parse_intervention_registry(value: object) -> dict[str, Any]:
         "primary edit method must be deterministic compiler",
     )
 
-    matrix_policy = dict(
-        _mapping(data.get("full_matrix_policy"), "full_matrix_policy")
-    )
+    matrix_policy = dict(_mapping(data.get("full_matrix_policy"), "full_matrix_policy"))
     _require(
         matrix_policy.get("full_matrix_rerun_default_allowed") is False,
         "full matrix must not be allowed by default",
@@ -1890,11 +1773,7 @@ def load_intervention_registry(
     repo_root: str | Path | None = None,
 ) -> dict[str, Any]:
     root = Path(repo_root) if repo_root is not None else _repo_root()
-    registry_path = (
-        Path(path)
-        if path is not None
-        else root / DEFAULT_REGISTRY_RELATIVE_PATH
-    )
+    registry_path = Path(path) if path is not None else root / DEFAULT_REGISTRY_RELATIVE_PATH
     payload = json.loads(registry_path.read_text(encoding="utf-8"))
     return parse_intervention_registry(payload)
 
@@ -1908,11 +1787,7 @@ def write_intervention_registry(
     """Write the intervention registry atomically and return the sealed payload."""
 
     root = Path(repo_root) if repo_root is not None else _repo_root()
-    payload = (
-        dict(registry)
-        if registry is not None
-        else build_intervention_registry(root)
-    )
+    payload = dict(registry) if registry is not None else build_intervention_registry(root)
     parse_intervention_registry(payload)
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -1934,24 +1809,18 @@ def write_intervention_registry(
     return payload
 
 
-def method_record_by_id(
-    registry: Mapping[str, Any], method_id: str
-) -> dict[str, Any]:
+def method_record_by_id(registry: Mapping[str, Any], method_id: str) -> dict[str, Any]:
     for item in registry.get("method_records", []):
         if isinstance(item, Mapping) and item.get("method_id") == method_id:
             return dict(item)
     raise HoldoutInterventionError(f"method {method_id!r} not in registry")
 
 
-def mapping_for_residual_key(
-    registry: Mapping[str, Any], identity_key: str
-) -> dict[str, Any]:
+def mapping_for_residual_key(registry: Mapping[str, Any], identity_key: str) -> dict[str, Any]:
     for item in registry.get("residual_mappings", []):
         if isinstance(item, Mapping) and item.get("identity_key") == identity_key:
             return dict(item)
-    raise HoldoutInterventionError(
-        f"residual mapping {identity_key!r} not in registry"
-    )
+    raise HoldoutInterventionError(f"residual mapping {identity_key!r} not in registry")
 
 
 # ---------------------------------------------------------------------------
@@ -1961,9 +1830,7 @@ def mapping_for_residual_key(
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description=(
-            "PLAT2-035 freeze intervention roles, capabilities, and ablations"
-        )
+        description=("PLAT2-035 freeze intervention roles, capabilities, and ablations")
     )
     parser.add_argument(
         "--repo-root",

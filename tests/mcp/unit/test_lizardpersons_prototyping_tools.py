@@ -7,6 +7,7 @@ which is only importable when the package is installed as ``mcp_server`` (not th
 fully-qualified ``ipfs_datasets_py.mcp_server`` path used in tests).  Its tests are
 therefore omitted here.
 """
+
 import os
 
 import pytest
@@ -20,6 +21,7 @@ from ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.prototyping_
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _cleanup(path: str) -> None:
     if os.path.exists(path):
         os.unlink(path)
@@ -28,6 +30,7 @@ def _cleanup(path: str) -> None:
 # ---------------------------------------------------------------------------
 # json_to_pydantic
 # ---------------------------------------------------------------------------
+
 
 class TestJsonToPydantic:
     """Tests for json_to_pydantic — generates Pydantic model files from JSON."""
@@ -77,9 +80,7 @@ class TestJsonToPydantic:
         """GIVEN a successful call THEN result string mentions the model or path."""
         out = "/tmp/TestKeyModel36.py"
         try:
-            result = json_to_pydantic(
-                {"key": "val"}, "/tmp", model_name="TestKeyModel36"
-            )
+            result = json_to_pydantic({"key": "val"}, "/tmp", model_name="TestKeyModel36")
             assert "TestKeyModel36" in result or "/tmp" in result
         finally:
             _cleanup(out)

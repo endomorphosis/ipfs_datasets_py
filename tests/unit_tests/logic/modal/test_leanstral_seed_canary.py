@@ -9,8 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 _SCRIPT_PATH = (
-    Path(__file__).resolve().parents[4]
-    / "scripts/ops/legal_ir/run_leanstral_seed_canary.py"
+    Path(__file__).resolve().parents[4] / "scripts/ops/legal_ir/run_leanstral_seed_canary.py"
 )
 _SPEC = importlib.util.spec_from_file_location("run_leanstral_seed_canary", _SCRIPT_PATH)
 assert _SPEC is not None and _SPEC.loader is not None
@@ -224,7 +223,10 @@ def test_seed_canary_result_is_json_ready() -> None:
     assert decoded["selected_task_count"] == 4
     assert decoded["verified_task_count"] == 4
     assert decoded["aggregate_comparisons"]["compiler_ir_cross_entropy"]["regressed"] is False
-    assert decoded["paired_metrics_provenance_summary"]["synthetic_metrics_reported_as_observed"] is False
+    assert (
+        decoded["paired_metrics_provenance_summary"]["synthetic_metrics_reported_as_observed"]
+        is False
+    )
 
 
 def test_real_seed_canary_allows_rollout_with_observed_isolated_patch_evidence(tmp_path) -> None:
@@ -275,7 +277,9 @@ def test_real_seed_canary_allows_rollout_with_observed_isolated_patch_evidence(t
                 "compiler_or_decompiler_patch": True,
                 "target_component": "modal.ir_decompiler",
                 "validation_worktree": "/tmp/leanstral-worktree",
-                "validation_commands": ["pytest tests/unit_tests/logic/modal/test_leanstral_validation.py -q"],
+                "validation_commands": [
+                    "pytest tests/unit_tests/logic/modal/test_leanstral_validation.py -q"
+                ],
                 "autoencoder_cycle_overhead": 0.04,
                 "transient_execution_failure_rate": 0.02,
                 "state_to_accepted_patch_lag": 1.5,
@@ -287,7 +291,9 @@ def test_real_seed_canary_allows_rollout_with_observed_isolated_patch_evidence(t
                 "accepted_patch": False,
                 "target_component": "modal.ir_decompiler",
                 "validation_worktree": "/tmp/control-worktree",
-                "validation_commands": ["pytest tests/unit_tests/logic/modal/test_leanstral_validation.py -q"],
+                "validation_commands": [
+                    "pytest tests/unit_tests/logic/modal/test_leanstral_validation.py -q"
+                ],
                 "autoencoder_cycle_overhead": 0.0,
                 "transient_execution_failure_rate": 0.0,
                 "state_to_accepted_patch_lag": 2.4,
@@ -322,7 +328,9 @@ def test_real_seed_canary_allows_rollout_with_observed_isolated_patch_evidence(t
             target_component="modal.ir_decompiler",
             target_metrics=("compiler_ir_cross_entropy",),
             theorem_templates=("decompiler_round_trip",),
-            validation_commands=("pytest tests/unit_tests/logic/modal/test_leanstral_validation.py -q",),
+            validation_commands=(
+                "pytest tests/unit_tests/logic/modal/test_leanstral_validation.py -q",
+            ),
         ),
         rank_score=0.9,
         heldout_impact=0.8,

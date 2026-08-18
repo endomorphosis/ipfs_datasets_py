@@ -29,9 +29,7 @@ result = await tools_get_schema("dataset_tools", "load_dataset")
 ### 4. Execute a Tool
 ```python
 result = await tools_dispatch(
-    category="dataset_tools",
-    tool="load_dataset",
-    params={"source": "squad", "format": "json"}
+    category="dataset_tools", tool="load_dataset", params={"source": "squad", "format": "json"}
 )
 # Returns: Tool execution result
 ```
@@ -45,25 +43,23 @@ result = await tools_dispatch(
 # ipfs_datasets_py/your_module/your_logic.py
 """Core business logic for your feature."""
 
+
 class YourFeature:
     """Business logic class."""
-    
+
     async def execute(self, param1: str, param2: int = 10):
         """Execute the core operation.
-        
+
         Args:
             param1: Description
             param2: Description (default: 10)
-        
+
         Returns:
             Dict with results
         """
         # All business logic goes here
         result = self._do_something(param1, param2)
-        return {
-            "status": "success",
-            "result": result
-        }
+        return {"status": "success", "result": result}
 ```
 
 #### Step 2: Create MCP Tool Wrapper
@@ -74,26 +70,24 @@ class YourFeature:
 Core implementation: ipfs_datasets_py.your_module.your_logic.YourFeature
 """
 
+
 async def your_tool(param1: str, param2: int = 10):
     """Execute your feature.
-    
+
     Args:
         param1: Description
         param2: Description (default: 10)
-    
+
     Returns:
         Dict with execution results
     """
     from ipfs_datasets_py.your_module.your_logic import YourFeature
-    
+
     try:
         feature = YourFeature()
         return await feature.execute(param1, param2)
     except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 ```
 
 #### Step 3: Export from Category __init__.py
@@ -133,12 +127,13 @@ That's it! The hierarchical tool manager will automatically discover and registe
 import pytest
 from ipfs_datasets_py.your_module.your_logic import YourFeature
 
+
 @pytest.mark.anyio
 async def test_your_feature():
     """Test the core business logic."""
     feature = YourFeature()
     result = await feature.execute("test_param", 5)
-    
+
     assert result["status"] == "success"
     assert "result" in result
 ```
@@ -149,15 +144,14 @@ async def test_your_feature():
 import pytest
 from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import tools_dispatch
 
+
 @pytest.mark.anyio
 async def test_dispatch_your_tool():
     """Test tool via hierarchical manager."""
     result = await tools_dispatch(
-        category="your_category",
-        tool="your_tool",
-        params={"param1": "test", "param2": 5}
+        category="your_category", tool="your_tool", params={"param1": "test", "param2": 5}
     )
-    
+
     assert result["status"] == "success"
 ```
 
@@ -248,7 +242,7 @@ from .hierarchical_tool_manager import (
     tools_list_categories,
     tools_list_tools,
     tools_get_schema,
-    tools_dispatch
+    tools_dispatch,
 )
 
 # Register only 4 meta-tools
@@ -264,11 +258,10 @@ mcp.add_tool(tools_dispatch, name="tools_dispatch")
 categories = await mcp.call_tool("tools_list_categories")
 
 # Execute a tool
-result = await mcp.call_tool("tools_dispatch", {
-    "category": "dataset_tools",
-    "tool": "load_dataset",
-    "params": {"source": "squad"}
-})
+result = await mcp.call_tool(
+    "tools_dispatch",
+    {"category": "dataset_tools", "tool": "load_dataset", "params": {"source": "squad"}},
+)
 ```
 
 ## CLI Integration (Phase 6)
@@ -278,6 +271,7 @@ CLI will use the same core modules:
 ```python
 # ipfs_datasets_cli.py
 from ipfs_datasets_py.your_module.your_logic import YourFeature
+
 
 async def your_command(param1: str, param2: int = 10):
     """CLI command using same core logic."""

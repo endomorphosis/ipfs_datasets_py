@@ -37,9 +37,7 @@ from .trusted_feedback_trainer import (
 )
 
 
-PROOF_FEEDBACK_ABLATION_REPORT_SCHEMA_VERSION: Final = (
-    "legal-ir-proof-feedback-causal-ablation-v1"
-)
+PROOF_FEEDBACK_ABLATION_REPORT_SCHEMA_VERSION: Final = "legal-ir-proof-feedback-causal-ablation-v1"
 NO_FEEDBACK_ARM: Final = "none"
 HAMMER_ONLY_ARM: Final = "hammer"
 VERIFIED_LEANSTRAL_HAMMER_ARM: Final = "verified_leanstral_hammer"
@@ -197,8 +195,7 @@ class ProofFeedbackAblationReport(_SerializableMapping):
     @property
     def heldout_benefit(self) -> bool:
         return (
-            self.heldout_improvement > 0.0
-            and self.heldout_improvement >= self.minimum_improvement
+            self.heldout_improvement > 0.0 and self.heldout_improvement >= self.minimum_improvement
         )
 
     @property
@@ -304,9 +301,7 @@ def run_proof_feedback_ablation(
     train = tuple(train_samples)
     holdout = tuple(holdout_samples)
     train_ids = tuple(sorted({_sample_id(sample) for sample in train if _sample_id(sample)}))
-    holdout_ids = tuple(
-        sorted({_sample_id(sample) for sample in holdout if _sample_id(sample)})
-    )
+    holdout_ids = tuple(sorted({_sample_id(sample) for sample in holdout if _sample_id(sample)}))
     holdout_id = str(cfg.holdout_id or _stable_hash({"holdout_sample_ids": holdout_ids})[:24])
     fixed_sample_set = bool(holdout_id) and bool(holdout_ids)
     holdout_isolated = bool(holdout_ids) and not set(train_ids).intersection(holdout_ids)
@@ -318,19 +313,13 @@ def run_proof_feedback_ablation(
     )
 
     hammer_items = tuple(_feedback_items(hammer_feedback)) + tuple(
-        item
-        for item in _feedback_items(proof_feedback)
-        if not _is_leanstral_feedback(item)
+        item for item in _feedback_items(proof_feedback) if not _is_leanstral_feedback(item)
     )
     leanstral_items = tuple(_feedback_items(leanstral_feedback)) + tuple(
-        item
-        for item in _feedback_items(trusted_feedback)
-        if _is_leanstral_feedback(item)
+        item for item in _feedback_items(trusted_feedback) if _is_leanstral_feedback(item)
     )
     verified_items = tuple(hammer_items) + tuple(leanstral_items)
-    shuffled_items = tuple(
-        _shuffle_feedback_labels(verified_items, repeat_index=0)
-    )
+    shuffled_items = tuple(_shuffle_feedback_labels(verified_items, repeat_index=0))
     samples_by_id = {sample_id: sample for sample in train if (sample_id := _sample_id(sample))}
 
     all_results: list[ProofFeedbackAblationArmResult] = []
@@ -358,9 +347,7 @@ def run_proof_feedback_ablation(
                         max_updates_per_batch=cfg.max_updates_per_arm,
                         production_weight_writes_enabled=True,
                         require_ablation=False,
-                        require_explicit_train_partition=(
-                            cfg.require_explicit_train_partition
-                        ),
+                        require_explicit_train_partition=(cfg.require_explicit_train_partition),
                     ),
                 )
                 training_report = trainer.train(
@@ -394,10 +381,7 @@ def run_proof_feedback_ablation(
                 )
             )
 
-    by_repeat_arm = {
-        (result.repeat_index, result.arm): result
-        for result in all_results
-    }
+    by_repeat_arm = {(result.repeat_index, result.arm): result for result in all_results}
     primary_metric = _resolve_primary_metric(
         cfg.primary_metric,
         (result.holdout_metrics for result in all_results),
@@ -590,7 +574,9 @@ def _evaluate_holdout(
         family_metrics,
         ("symbolic_validity_success_rate", "symbolic_validity_penalty"),
     )
-    metrics.setdefault("source_copy_penalty", _family_metric_mean(family_metrics, "source_copy_penalty"))
+    metrics.setdefault(
+        "source_copy_penalty", _family_metric_mean(family_metrics, "source_copy_penalty")
+    )
     metrics.setdefault(
         "symbolic_validity_success_rate",
         1.0 - max(0.0, float(metrics.get("symbolic_validity_penalty", 0.0))),
@@ -614,7 +600,9 @@ def _evaluate_holdout(
         float(
             metrics.get(
                 "legal_ir_view_cross_entropy_loss",
-                metrics.get("compiler_ir_cross_entropy_loss", metrics["autoencoder_cross_entropy_loss"]),
+                metrics.get(
+                    "compiler_ir_cross_entropy_loss", metrics["autoencoder_cross_entropy_loss"]
+                ),
             )
         ),
     )
@@ -710,10 +698,7 @@ def _aggregate_metric_deltas(
             by_metric.setdefault(metric, []).append(
                 _metric_improvement(baseline.holdout_metrics, candidate.holdout_metrics, metric)
             )
-    return {
-        metric: round(_mean_finite(values), 12)
-        for metric, values in sorted(by_metric.items())
-    }
+    return {metric: round(_mean_finite(values), 12) for metric, values in sorted(by_metric.items())}
 
 
 def _repeat_metric_deltas(
@@ -768,11 +753,17 @@ def _block_reasons(
     ):
         reasons.append("symbolic_validity_guardrail_evidence_missing")
     for margins in repeat_margins:
-        if margins.get(f"{VERIFIED_LEANSTRAL_HAMMER_ARM}_vs_{NO_FEEDBACK_ARM}", -math.inf) < float(minimum_improvement):
+        if margins.get(f"{VERIFIED_LEANSTRAL_HAMMER_ARM}_vs_{NO_FEEDBACK_ARM}", -math.inf) < float(
+            minimum_improvement
+        ):
             reasons.append("verified_feedback_not_better_than_no_feedback")
-        if margins.get(f"{VERIFIED_LEANSTRAL_HAMMER_ARM}_vs_{HAMMER_ONLY_ARM}", -math.inf) < float(minimum_improvement):
+        if margins.get(f"{VERIFIED_LEANSTRAL_HAMMER_ARM}_vs_{HAMMER_ONLY_ARM}", -math.inf) < float(
+            minimum_improvement
+        ):
             reasons.append("verified_feedback_not_better_than_hammer_only")
-        if margins.get(f"{VERIFIED_LEANSTRAL_HAMMER_ARM}_vs_{SHUFFLED_LABEL_CONTROL_ARM}", -math.inf) < float(minimum_improvement):
+        if margins.get(
+            f"{VERIFIED_LEANSTRAL_HAMMER_ARM}_vs_{SHUFFLED_LABEL_CONTROL_ARM}", -math.inf
+        ) < float(minimum_improvement):
             reasons.append("verified_feedback_not_better_than_shuffled_control")
     if any(
         margin < -float(metric_tolerance)
@@ -840,10 +831,7 @@ def _mean_per_family_deltas(
         for group, metric_names in _ATTRIBUTION_GROUPS.items():
             metric_values = {
                 metric: [
-                    float(
-                        run[family][group]["metric_deltas"].get(metric, 0.0)
-                    )
-                    for run in repeated
+                    float(run[family][group]["metric_deltas"].get(metric, 0.0)) for run in repeated
                 ]
                 for metric in metric_names
             }
@@ -860,10 +848,7 @@ def _mean_per_family_deltas(
                     }
                 ),
                 "score_delta": round(
-                    _mean_finite(
-                        _mean_finite(values)
-                        for values in metric_values.values()
-                    ),
+                    _mean_finite(_mean_finite(values) for values in metric_values.values()),
                     12,
                 ),
             }
@@ -896,7 +881,9 @@ def _feedback_items(value: Any) -> list[Any]:
 def _is_leanstral_feedback(value: Any) -> bool:
     item = _feedback_mapping(value)
     source = str(item.get("source") or item.get("schema_version") or "").lower()
-    return "leanstral" in source or any(_truth(item.get(key)) is True for key in _VERIFIER_KEYS if "leanstral" in key)
+    return "leanstral" in source or any(
+        _truth(item.get(key)) is True for key in _VERIFIER_KEYS if "leanstral" in key
+    )
 
 
 def _feedback_mapping(value: Any) -> dict[str, Any]:
@@ -930,7 +917,9 @@ def _record_guidance_mapping(record: LegalIRProofFeedbackRecord) -> dict[str, An
     }
 
 
-def _shuffle_feedback_labels(items: Sequence[Any], *, repeat_index: int) -> tuple[Mapping[str, Any], ...]:
+def _shuffle_feedback_labels(
+    items: Sequence[Any], *, repeat_index: int
+) -> tuple[Mapping[str, Any], ...]:
     mapped = [_feedback_mapping(item) for item in items]
     mapped = [item for item in mapped if item]
     labels = [
@@ -941,14 +930,15 @@ def _shuffle_feedback_labels(items: Sequence[Any], *, repeat_index: int) -> tupl
     output: list[Mapping[str, Any]] = []
     for index, item in enumerate(mapped):
         copy = dict(item)
-        label = shuffled[index] if index < len(shuffled) else _alternate_label(labels[index] if index < len(labels) else "")
+        label = (
+            shuffled[index]
+            if index < len(shuffled)
+            else _alternate_label(labels[index] if index < len(labels) else "")
+        )
         copy["target_component"] = label
         copy["legal_ir_view"] = label
         original_id = str(
-            copy.get("guidance_id")
-            or copy.get("record_id")
-            or copy.get("feedback_id")
-            or index
+            copy.get("guidance_id") or copy.get("record_id") or copy.get("feedback_id") or index
         )
         copy["guidance_id"] = f"{original_id}:shuffled:{repeat_index}"
         copy["shuffled_label_control"] = True
@@ -966,9 +956,7 @@ def _rotated_labels(labels: Sequence[str], *, repeat_index: int) -> list[str]:
     shift = 1 + (int(repeat_index) % (len(clean) - 1))
     rotated = clean[shift:] + clean[:shift]
     return [
-        rotated[index]
-        if rotated[index] != clean[index]
-        else _alternate_label(clean[index])
+        rotated[index] if rotated[index] != clean[index] else _alternate_label(clean[index])
         for index in range(len(clean))
     ]
 
@@ -1022,9 +1010,7 @@ def _family_metric_mean(
     metric: str,
 ) -> float:
     values = [
-        _metric_value(metrics, metric)
-        for metrics in family_metrics.values()
-        if metric in metrics
+        _metric_value(metrics, metric) for metrics in family_metrics.values() if metric in metrics
     ]
     return _mean_finite(values)
 
@@ -1058,7 +1044,9 @@ def _truth(value: Any) -> Optional[bool]:
 
 
 def _stable_hash(value: Any) -> str:
-    payload = json.dumps(_json_ready(value), ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    payload = json.dumps(
+        _json_ready(value), ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 

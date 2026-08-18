@@ -4,11 +4,13 @@ Test stubs for deontological_reasoning module.
 Feature: Deontological Reasoning
   Ethical and rule-based reasoning system
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def actions_and_ethical_rules():
@@ -83,6 +85,7 @@ def obligations_and_actions():
 
 
 # Test scenarios
+
 
 def test_define_ethical_rules():
     """
@@ -173,6 +176,7 @@ def test_apply_contextual_ethics():
 
 
 # Step definitions
+
 
 # Given steps
 @given("actions and ethical rules")
@@ -343,4 +347,3 @@ def violations_are_identified():
     """Step: Then violations are identified"""
     # TODO: Implement step
     pass
-

@@ -40,9 +40,7 @@ def test_decoder_slot_grounding_audit_accepts_grounded_required_slots():
 
     audit = build_decoder_slot_grounding_audit_record(record)
 
-    assert audit["decoder_slot_grounding_audit_id"].startswith(
-        "decoder-slot-grounding:"
-    )
+    assert audit["decoder_slot_grounding_audit_id"].startswith("decoder-slot-grounding:")
     assert audit["source_id"] == "deontic:test"
     assert audit["required_slots"] == ["actor", "action"]
     assert audit["grounded_slots"] == ["actor", "action"]

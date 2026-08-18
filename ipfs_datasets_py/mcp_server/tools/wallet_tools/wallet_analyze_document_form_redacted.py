@@ -46,4 +46,7 @@ async def wallet_analyze_document_form_redacted(
             "snapshot_path": str(snapshot_path),
         }
     except Exception as exc:
-        return {"status": "error", "message": f"wallet_analyze_document_form_redacted failed: {exc}"}
+        return {
+            "status": "error",
+            "message": f"wallet_analyze_document_form_redacted failed: {exc}",
+        }

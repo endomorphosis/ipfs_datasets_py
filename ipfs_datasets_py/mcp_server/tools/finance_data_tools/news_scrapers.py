@@ -37,22 +37,18 @@ logger = logging.getLogger(__name__)
 
 # MCP Tool Functions
 def fetch_financial_news(
-    topic: str,
-    start_date: str,
-    end_date: str,
-    sources: str = "ap,reuters",
-    max_articles: int = 100
+    topic: str, start_date: str, end_date: str, sources: str = "ap,reuters", max_articles: int = 100
 ) -> str:
     """
     MCP tool to fetch financial news articles.
-    
+
     Args:
         topic: Search topic or keywords
         start_date: Start date in ISO format (YYYY-MM-DD)
         end_date: End date in ISO format (YYYY-MM-DD)
         sources: Comma-separated list of sources (ap, reuters, bloomberg)
         max_articles: Maximum number of articles per source
-    
+
     Returns:
         JSON string with news articles or error message
     """
@@ -60,22 +56,22 @@ def fetch_financial_news(
         # Parse dates
         start = datetime.fromisoformat(start_date)
         end = datetime.fromisoformat(end_date)
-        
+
         # Parse sources
-        source_list = [s.strip().lower() for s in sources.split(',')]
-        
+        source_list = [s.strip().lower() for s in sources.split(",")]
+
         # Create scrapers
         scrapers = []
         for source in source_list:
-            if source == 'ap':
+            if source == "ap":
                 scrapers.append(APNewsScraper())
-            elif source == 'reuters':
+            elif source == "reuters":
                 scrapers.append(ReutersScraper())
-            elif source == 'bloomberg':
+            elif source == "bloomberg":
                 scrapers.append(BloombergScraper())
             else:
                 logger.warning(f"Unknown source: {source}")
-        
+
         # Fetch articles from all sources
         all_articles = []
         for scraper in scrapers:
@@ -84,7 +80,7 @@ def fetch_financial_news(
                 all_articles.extend(articles)
             except Exception as e:
                 logger.error(f"Error fetching from {scraper.source_name}: {e}")
-        
+
         # Remove duplicates
         seen_ids = set()
         unique_articles = []
@@ -92,77 +88,66 @@ def fetch_financial_news(
             if article.article_id not in seen_ids:
                 seen_ids.add(article.article_id)
                 unique_articles.append(article)
-        
+
         result = {
             "topic": topic,
             "start_date": start_date,
             "end_date": end_date,
             "sources": source_list,
             "total_articles": len(unique_articles),
-            "articles": [article.to_dict() for article in unique_articles]
+            "articles": [article.to_dict() for article in unique_articles],
         }
-        
+
         return json.dumps(result, indent=2)
-        
+
     except Exception as e:
         logger.error(f"Error fetching financial news: {e}", exc_info=True)
-        return json.dumps({
-            "error": str(e),
-            "topic": topic
-        })
+        return json.dumps({"error": str(e), "topic": topic})
 
 
-def search_archive_news(
-    url: str,
-    date: Optional[str] = None
-) -> str:
+def search_archive_news(url: str, date: Optional[str] = None) -> str:
     """
     MCP tool to search for archived news articles.
-    
+
     Args:
         url: Original article URL
         date: Optional specific date in ISO format (YYYY-MM-DD)
-    
+
     Returns:
         JSON string with archived content or error message
     """
     try:
         # Parse date if provided
         archive_date = datetime.fromisoformat(date) if date else None
-        
+
         # Create scraper with archive fallback
-        scraper = NewsScraperBase(
-            source_name="archive",
-            use_archive_fallback=True
-        )
-        
+        scraper = NewsScraperBase(source_name="archive", use_archive_fallback=True)
+
         # Fetch from archive
         content = scraper.fetch_from_archive(url, archive_date)
-        
+
         if content:
             result = {
                 "url": url,
                 "date": date,
                 "found": True,
                 "content_length": len(content),
-                "content_preview": content[:500] if content else None
+                "content_preview": content[:500] if content else None,
             }
         else:
             result = {
                 "url": url,
                 "date": date,
                 "found": False,
-                "error": "Article not found in archive.org"
+                "error": "Article not found in archive.org",
             }
-        
+
         return json.dumps(result, indent=2)
-        
+
     except Exception as e:
         logger.error(f"Error searching archive: {e}", exc_info=True)
-        return json.dumps({
-            "error": str(e),
-            "url": url
-        })
+        return json.dumps({"error": str(e), "url": url})
+
 
 async def scrape_financial_news(
     topics: List[str],
@@ -191,9 +176,7 @@ async def scrape_financial_news(
                 "url": f"https://news.example.com/{topic}/{idx + 1}",
                 "published_date": now,
                 "content": (
-                    f"{topic.title()} markets saw steady activity today."
-                    if include_content
-                    else ""
+                    f"{topic.title()} markets saw steady activity today." if include_content else ""
                 ),
                 "source": "example",
             }
@@ -236,7 +219,6 @@ __all__ = [
     "ReutersScraper",
     "BloombergScraper",
     "fetch_financial_news",
-    "search_archive_news"
-        "scrape_financial_news",
-        "search_financial_news"
+    "search_archive_newsscrape_financial_news",
+    "search_financial_news",
 ]

@@ -83,19 +83,15 @@ onto.classes.append(FLogicClass("Animal"))
 onto.classes.append(FLogicClass("Dog", superclasses=["Animal"]))
 onto.classes.append(FLogicClass("Cat", superclasses=["Animal"]))
 
-onto.frames.append(
-    FLogicFrame("rex",  scalar_methods={"name": '"Rex"'},  isa="Dog")
-)
-onto.frames.append(
-    FLogicFrame("whiskers", scalar_methods={"name": '"Whiskers"'}, isa="Cat")
-)
+onto.frames.append(FLogicFrame("rex", scalar_methods={"name": '"Rex"'}, isa="Dog"))
+onto.frames.append(FLogicFrame("whiskers", scalar_methods={"name": '"Whiskers"'}, isa="Cat"))
 
 # ── Query ─────────────────────────────────────────────────────────
 ergo = ErgoAIWrapper()
 ergo.load_ontology(onto)
 
 result = ergo.query("?X : Dog")
-print(result.status)    # FLogicStatus.SUCCESS  (or UNKNOWN in simulation mode)
+print(result.status)  # FLogicStatus.SUCCESS  (or UNKNOWN in simulation mode)
 print(result.bindings)  # [{'?X': 'rex'}]
 ```
 
@@ -126,9 +122,7 @@ print(project.to_ergo_string())
 ### Adding rules
 
 ```python
-ergo.add_rule(
-    "?X[mammal -> true] :- ?X : Animal[warm_blooded -> true]."
-)
+ergo.add_rule("?X[mammal -> true] :- ?X : Animal[warm_blooded -> true].")
 ```
 
 ---

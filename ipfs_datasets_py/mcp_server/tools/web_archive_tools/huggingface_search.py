@@ -3,6 +3,7 @@
 All domain logic lives at:
   ipfs_datasets_py.web_archiving.huggingface_search_engine
 """
+
 from ipfs_datasets_py.web_archiving.huggingface_search_engine import (  # noqa: F401
     batch_search_huggingface,
     get_huggingface_model_info,

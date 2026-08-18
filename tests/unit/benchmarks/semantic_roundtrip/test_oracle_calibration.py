@@ -133,8 +133,7 @@ def _recompiler() -> RecordingTypedRecompiler:
     )
 
 
-def test_gold_ir_is_measured_through_both_realizers_and_one_typed_recompiler(
-) -> None:
+def test_gold_ir_is_measured_through_both_realizers_and_one_typed_recompiler() -> None:
     realizers = _realizers()
     recompiler = _recompiler()
 
@@ -144,13 +143,10 @@ def test_gold_ir_is_measured_through_both_realizers_and_one_typed_recompiler(
         typed_recompiler=recompiler,
     )
 
-    assert [record.realizer_id for record in receipt.records] == list(
-        COMMON_REALIZER_IDS
-    )
+    assert [record.realizer_id for record in receipt.records] == list(COMMON_REALIZER_IDS)
     assert [record.reverse_loss for record in receipt.records] == [0.0, 0.25]
     assert all(
-        record.recompiler_identity == TYPED_RECOMPILER_IDENTITY
-        for record in receipt.records
+        record.recompiler_identity == TYPED_RECOMPILER_IDENTITY for record in receipt.records
     )
     assert len(recompiler.requests) == 2
     assert all(request.config == {} for request in recompiler.requests)
@@ -190,8 +186,7 @@ def test_oracle_arms_and_summaries_are_permanently_non_ranking() -> None:
         assert summary["selection_effect"] == "none"
 
 
-def test_realizer_or_recompiler_failures_receive_loss_one_and_stay_in_mean(
-) -> None:
+def test_realizer_or_recompiler_failures_receive_loss_one_and_stay_in_mean() -> None:
     failed_realizer = RecordingRealizer(
         "deterministic@failed",
         RealizerResult(
@@ -229,8 +224,7 @@ def test_realizer_or_recompiler_failures_receive_loss_one_and_stay_in_mean(
     assert receipt.summaries["deterministic"]["mean_reverse_loss"] == 1.0
     assert receipt.summaries["leanstral"]["mean_reverse_loss"] == 1.0
     assert all(
-        summary["denominator_policy"]
-        == "all_scheduled_cases_including_failures"
+        summary["denominator_policy"] == "all_scheduled_cases_including_failures"
         for summary in receipt.summaries.values()
     )
 
@@ -245,8 +239,7 @@ def test_empty_identity_is_explicitly_vacuous_and_cannot_be_a_case() -> None:
         OracleCalibrationCase("empty", VOCABULARY, empty)
 
 
-def test_calibration_requires_the_frozen_realizer_set_and_typed_recompiler(
-) -> None:
+def test_calibration_requires_the_frozen_realizer_set_and_typed_recompiler() -> None:
     class WrongConstructor(RecordingTypedRecompiler):
         identity = "OriginatingCandidateConstructor@1"
 

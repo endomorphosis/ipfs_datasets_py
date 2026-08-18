@@ -48,10 +48,7 @@ is `import_rate * 100` formatted to one decimal place.
 ```python
 def __repr__(self) -> str:
     succeeded = self.count - self.total_failed
-    return (
-        f"IPFSReloadResult({succeeded}/{self.count} pinned, "
-        f"rate={self.success_rate * 100:.1f}%)"
-    )
+    return f"IPFSReloadResult({succeeded}/{self.count} pinned, rate={self.success_rate * 100:.1f}%)"
 ```
 
 Format: `"IPFSReloadResult(3/4 pinned, rate=75.0%)"`.  Mirrors `summarize()`
@@ -65,10 +62,7 @@ but is concise enough for use in logs and debug output.
 
 ```python
 def handler_topics(self, handler: Any) -> List[str]:
-    return sorted(
-        k for k, handlers in self._subscribers.items()
-        if handler in handlers
-    )
+    return sorted(k for k, handlers in self._subscribers.items() if handler in handlers)
 ```
 
 Returns a sorted list of topic key strings for which *handler* is currently

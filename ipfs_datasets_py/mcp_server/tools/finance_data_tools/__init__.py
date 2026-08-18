@@ -28,10 +28,7 @@ TOOL_CATEGORIES = [
     "knowledge_graph",
     "temporal_reasoning",
     "graphrag_analysis",
-    "embedding_correlation"
+    "embedding_correlation",
 ]
 
-__all__ = [
-    "TOOL_CATEGORIES",
-    "__version__"
-]
+__all__ = ["TOOL_CATEGORIES", "__version__"]

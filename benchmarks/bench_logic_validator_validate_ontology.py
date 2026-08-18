@@ -31,7 +31,7 @@ def _build_ontology(entity_count: int, extra_edges: int = 0) -> dict:
         {
             "id": f"r_chain_{i}",
             "source_id": f"e{i}",
-            "target_id": f"e{i+1}",
+            "target_id": f"e{i + 1}",
             "type": "related_to",
             "confidence": 0.7,
         }

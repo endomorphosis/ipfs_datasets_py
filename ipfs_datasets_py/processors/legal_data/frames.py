@@ -14,7 +14,6 @@ except ImportError:  # pragma: no cover - standalone ipfs_datasets_py fallback
         def to_dict(self) -> Dict[str, Any]:
             return {"value": self.value, "sources": sorted(self.sources)}
 
-
     @dataclass
     class Frame:
         name: str
@@ -39,7 +38,6 @@ except ImportError:  # pragma: no cover - standalone ipfs_datasets_py fallback
                     for slot, values in sorted(self.slots.items())
                 },
             }
-
 
     class FrameKnowledgeBase:
         def __init__(self) -> None:

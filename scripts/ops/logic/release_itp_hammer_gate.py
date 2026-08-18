@@ -393,7 +393,9 @@ def check_schema(evidence: Dict[str, Any], report: GateReport) -> None:
 def check_corpus_lock(evidence: Dict[str, Any], report: GateReport) -> Optional[str]:
     lock = evidence.get("corpus_lock")
     if not isinstance(lock, dict):
-        report.fail("corpus_lock_present", "release-evidence.corpus_lock is missing or not an object")
+        report.fail(
+            "corpus_lock_present", "release-evidence.corpus_lock is missing or not an object"
+        )
         return None
     manifest_id = lock.get("manifest_id")
     revision = lock.get("revision")
@@ -460,8 +462,7 @@ def check_environment_lock(
     else:
         report.ok(
             "environment_lock_not_stale",
-            f"environment lock at {path} is {age_days:.1f} days old "
-            f"(budget: {max_age_days} days)",
+            f"environment lock at {path} is {age_days:.1f} days old (budget: {max_age_days} days)",
         )
 
     recorded_summary = lock.get("summary")
@@ -512,8 +513,7 @@ def check_benchmark_report(
     else:
         report.ok(
             "benchmark_report_not_stale",
-            f"benchmark report at {path} is {age_days:.1f} days old "
-            f"(budget: {max_age_days} days)",
+            f"benchmark report at {path} is {age_days:.1f} days old (budget: {max_age_days} days)",
         )
 
 
@@ -608,7 +608,9 @@ def check_receipts(
 
     for entry in receipts_ref:
         if not isinstance(entry, dict):
-            report.fail("receipt_entry_shape", f"release-evidence receipt entry is not an object: {entry!r}")
+            report.fail(
+                "receipt_entry_shape", f"release-evidence receipt entry is not an object: {entry!r}"
+            )
             continue
         case_id = entry.get("case_id", "<unknown>")
         receipt_id = entry.get("receipt_id")
@@ -639,9 +641,14 @@ def check_receipts(
         try:
             receipt.validate()
         except ReceiptError as exc:
-            report.fail(f"{prefix}.trust_contract_valid", f"receipt {receipt_id!r} failed validation: {exc}")
+            report.fail(
+                f"{prefix}.trust_contract_valid", f"receipt {receipt_id!r} failed validation: {exc}"
+            )
             continue
-        report.ok(f"{prefix}.trust_contract_valid", f"receipt {receipt_id!r} passed trust-contract validation")
+        report.ok(
+            f"{prefix}.trust_contract_valid",
+            f"receipt {receipt_id!r} passed trust-contract validation",
+        )
 
         recomputed_digest = compute_receipt_digest(receipt)
         if recomputed_digest != receipt.receipt_id:
@@ -651,7 +658,10 @@ def check_receipts(
                 f"{recomputed_digest!r}) -- possible tampering",
             )
         else:
-            report.ok(f"{prefix}.not_tampered", f"receipt {receipt_id!r} content digest matches receipt_id")
+            report.ok(
+                f"{prefix}.not_tampered",
+                f"receipt {receipt_id!r} content digest matches receipt_id",
+            )
 
         result = receipt.result
         if corpus_revision is not None and result.corpus_revision != corpus_revision:
@@ -666,7 +676,11 @@ def check_receipts(
                 f"receipt {receipt_id!r} corpus_revision matches release corpus lock",
             )
 
-        age_days = _age_days(receipt.created_at if receipt.created_at.tzinfo else receipt.created_at.replace(tzinfo=timezone.utc))
+        age_days = _age_days(
+            receipt.created_at
+            if receipt.created_at.tzinfo
+            else receipt.created_at.replace(tzinfo=timezone.utc)
+        )
         if age_days is None or age_days > max_receipt_age_days:
             report.fail(
                 f"{prefix}.not_stale",
@@ -725,16 +739,16 @@ def check_receipts(
         )
 
 
-def validate_release_evidence(evidence: Dict[str, Any], repo_root: Path, args: argparse.Namespace) -> GateReport:
+def validate_release_evidence(
+    evidence: Dict[str, Any], repo_root: Path, args: argparse.Namespace
+) -> GateReport:
     report = GateReport()
     check_schema(evidence, report)
     corpus_revision = check_corpus_lock(evidence, report)
     check_environment_lock(
         evidence, repo_root, report, max_age_days=args.max_environment_lock_age_days
     )
-    check_benchmark_report(
-        evidence, repo_root, report, max_age_days=args.max_benchmark_age_days
-    )
+    check_benchmark_report(evidence, repo_root, report, max_age_days=args.max_benchmark_age_days)
     check_golden_report(evidence, repo_root, report, corpus_revision=corpus_revision)
     check_receipts(
         evidence,
@@ -824,7 +838,9 @@ def main(argv: Optional[List[str]] = None) -> int:
             evidence = generate_release_evidence(
                 repo_root=repo_root,
                 receipts_dir=(
-                    args.receipts_dir if args.receipts_dir.is_absolute() else repo_root / args.receipts_dir
+                    args.receipts_dir
+                    if args.receipts_dir.is_absolute()
+                    else repo_root / args.receipts_dir
                 ),
                 environment_lock_path=(
                     args.environment_lock
@@ -837,7 +853,9 @@ def main(argv: Optional[List[str]] = None) -> int:
                     else repo_root / args.benchmark_report
                 ),
                 golden_report_path=(
-                    args.golden_report if args.golden_report.is_absolute() else repo_root / args.golden_report
+                    args.golden_report
+                    if args.golden_report.is_absolute()
+                    else repo_root / args.golden_report
                 ),
                 max_receipt_age_days=args.max_receipt_age_days,
                 max_environment_lock_age_days=args.max_environment_lock_age_days,

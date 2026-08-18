@@ -7,6 +7,4 @@ These tools allow AI assistants to work with security features through the MCP p
 
 from .check_access_permission import check_access_permission
 
-__all__ = [
-    "check_access_permission"
-]
+__all__ = ["check_access_permission"]

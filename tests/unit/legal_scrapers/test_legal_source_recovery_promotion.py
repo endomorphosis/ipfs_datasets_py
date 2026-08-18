@@ -10,7 +10,9 @@ import types
 import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import CanonicalLegalCorpus
-from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery import LegalSourceRecoveryWorkflow
+from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery import (
+    LegalSourceRecoveryWorkflow,
+)
 from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery_promotion import (
     build_recovery_manifest_promotion_row,
     build_recovery_manifest_release_plan,
@@ -37,7 +39,13 @@ class _FakeLiveSearcher:
 
 
 class _FakeArchiveSearcher:
-    def search_with_indexes(self, query: str, jurisdiction_type: str | None = None, state_code: str | None = None, max_results: int = 50):
+    def search_with_indexes(
+        self,
+        query: str,
+        jurisdiction_type: str | None = None,
+        state_code: str | None = None,
+        max_results: int = 50,
+    ):
         return {
             "results": [
                 {
@@ -105,10 +113,14 @@ async def test_recovery_manifest_can_be_promoted_to_bundle(monkeypatch, tmp_path
     second_manifest_dir = Path(result.manifest_path or "").parent.parent / "second-run-mn-518-17"
     second_manifest_dir.mkdir(parents=True)
     second_manifest_path = second_manifest_dir / "recovery_manifest.json"
-    second_manifest_payload = json.loads(Path(result.manifest_path or "").read_text(encoding="utf-8"))
+    second_manifest_payload = json.loads(
+        Path(result.manifest_path or "").read_text(encoding="utf-8")
+    )
     second_manifest_payload["manifest_directory"] = str(second_manifest_dir)
     second_manifest_path.write_text(json.dumps(second_manifest_payload, indent=2), encoding="utf-8")
-    merge_report_second_manifest = merge_recovery_manifest_into_canonical_dataset(second_manifest_path)
+    merge_report_second_manifest = merge_recovery_manifest_into_canonical_dataset(
+        second_manifest_path
+    )
 
     assert merge_report["status"] == "success"
     assert Path(merge_report["target_local_parquet_path"]).exists()
@@ -279,11 +291,15 @@ async def test_recovery_manifest_merge_publishes_only_after_hf_hydration(monkeyp
     assert safe_report["status"] == "success"
     assert safe_report["upload_ready"] is True
     assert safe_report["published_merged_to_hf"] is True
-    assert safe_report["publish_report"]["path_in_repo"] == "state_laws_parquet_cid/STATE-MN.parquet"
+    assert (
+        safe_report["publish_report"]["path_in_repo"] == "state_laws_parquet_cid/STATE-MN.parquet"
+    )
 
 
 def test_hf_parquet_hydration_uses_known_repo_path_aliases(monkeypatch, tmp_path):
-    from ipfs_datasets_py.processors.legal_scrapers import legal_source_recovery_promotion as promotion
+    from ipfs_datasets_py.processors.legal_scrapers import (
+        legal_source_recovery_promotion as promotion,
+    )
 
     downloaded_paths = []
 
@@ -308,7 +324,9 @@ def test_hf_parquet_hydration_uses_known_repo_path_aliases(monkeypatch, tmp_path
 
 
 def test_hf_upload_uses_environment_token_alias(monkeypatch, tmp_path):
-    from ipfs_datasets_py.processors.legal_scrapers import legal_source_recovery_promotion as promotion
+    from ipfs_datasets_py.processors.legal_scrapers import (
+        legal_source_recovery_promotion as promotion,
+    )
 
     local_path = tmp_path / "STATE-MN.parquet"
     local_path.write_bytes(b"PAR1")
@@ -372,7 +390,9 @@ def test_hf_token_resolver_uses_secret_keyring(monkeypatch):
 def test_hf_folder_publisher_uses_shared_keyring_resolver(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_data import legal_source_recovery_promotion as promotion
 
-    script_path = Path(__file__).resolve().parents[3] / "scripts" / "repair" / "publish_parquet_to_hf.py"
+    script_path = (
+        Path(__file__).resolve().parents[3] / "scripts" / "repair" / "publish_parquet_to_hf.py"
+    )
     spec = importlib.util.spec_from_file_location("publish_parquet_to_hf_under_test", script_path)
     assert spec is not None and spec.loader is not None
     publish_parquet_to_hf = importlib.util.module_from_spec(spec)

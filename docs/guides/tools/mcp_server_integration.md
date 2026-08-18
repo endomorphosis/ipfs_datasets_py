@@ -63,12 +63,7 @@ from ipfs_datasets_py import start_mcp_server
 start_mcp_server()
 
 # Or with custom settings
-start_mcp_server(
-    config_path="config.yaml", 
-    host="0.0.0.0", 
-    port=8000, 
-    transport="http"
-)
+start_mcp_server(config_path="config.yaml", host="0.0.0.0", port=8000, transport="http")
 ```
 
 ## Available Tools

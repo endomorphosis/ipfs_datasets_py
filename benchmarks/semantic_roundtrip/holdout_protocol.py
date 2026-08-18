@@ -52,32 +52,18 @@ from benchmarks.semantic_roundtrip.residual_catalog import PILOT_CASE_IDS
 # Interfaces and schema constants
 # ---------------------------------------------------------------------------
 
-SEMANTIC_ROUNDTRIP_POPULATION_MANIFEST_INTERFACE: Final = (
-    "SemanticRoundtripPopulationManifest@1"
-)
-SEMANTIC_ROUNDTRIP_HOLDOUT_SEAL_INTERFACE: Final = (
-    "SemanticRoundtripHoldoutSeal@1"
-)
+SEMANTIC_ROUNDTRIP_POPULATION_MANIFEST_INTERFACE: Final = "SemanticRoundtripPopulationManifest@1"
+SEMANTIC_ROUNDTRIP_HOLDOUT_SEAL_INTERFACE: Final = "SemanticRoundtripHoldoutSeal@1"
 HOLDOUT_ACCESS_AUDIT_INTERFACE: Final = "HoldoutAccessAudit@1"
 
-POPULATION_MANIFEST_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip.population-manifest.v1"
-)
-BLIND_HOLDOUT_SEAL_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip.plateau2-blind-holdout-seal.v1"
-)
-ACCESS_LEDGER_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip.holdout-access-ledger.v1"
-)
-ACCESS_RECEIPT_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip.holdout-access-receipt.v1"
-)
+POPULATION_MANIFEST_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip.population-manifest.v1"
+BLIND_HOLDOUT_SEAL_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip.plateau2-blind-holdout-seal.v1"
+ACCESS_LEDGER_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip.holdout-access-ledger.v1"
+ACCESS_RECEIPT_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip.holdout-access-receipt.v1"
 SAMPLE_SIZE_JUSTIFICATION_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip.sample-size-justification.v1"
 )
-LEAKAGE_POLICY_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip.leakage-policy.v1"
-)
+LEAKAGE_POLICY_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip.leakage-policy.v1"
 
 POPULATION_KIND_PILOT: Final = "pilot"
 POPULATION_KIND_REPAIR_DEVELOPMENT: Final = "repair_development"
@@ -94,15 +80,12 @@ PLAT2_055_AUTHORIZATION_GOAL: Final = "PLAT2-055"
 AUTHORIZATION_GOAL_ID: Final = PLAT2_055_AUTHORIZATION_GOAL
 
 REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
-PILOT_CASES_RELATIVE_PATH: Final = Path(
-    "tests/fixtures/semantic_roundtrip/pilot_cases.json"
-)
+PILOT_CASES_RELATIVE_PATH: Final = Path("tests/fixtures/semantic_roundtrip/pilot_cases.json")
 REPAIR_DEV_CASES_RELATIVE_PATH: Final = Path(
     "tests/fixtures/semantic_roundtrip/repair_dev_cases.json"
 )
 BLIND_SEAL_RELATIVE_PATH: Final = Path(
-    "workspace/benchmarks/semantic-roundtrip-compositions/"
-    "plateau2_blind_holdout_seal.json"
+    "workspace/benchmarks/semantic-roundtrip-compositions/plateau2_blind_holdout_seal.json"
 )
 
 # Preregistered precision justification for the frozen blind population.
@@ -195,9 +178,7 @@ def sha256_json(value: object) -> str:
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
         raise HoldoutProtocolError(f"{field} must be an object with string keys")
     return value
 
@@ -277,9 +258,7 @@ def _exact_keys(
     if observed != expected:
         missing = sorted(expected - observed)
         extra = sorted(observed - expected)
-        raise HoldoutProtocolError(
-            f"{field} keys mismatch; missing={missing!r} extra={extra!r}"
-        )
+        raise HoldoutProtocolError(f"{field} keys mismatch; missing={missing!r} extra={extra!r}")
 
 
 def _string_tuple(value: object, field: str) -> tuple[str, ...]:
@@ -305,9 +284,7 @@ def normalize_source_text(value: str) -> str:
         raise HoldoutProtocolError("source_text must be a nonempty string")
     normalized = unicodedata.normalize("NFKC", value.strip()).casefold()
     result = " ".join(
-        "".join(
-            character if character.isalnum() else " " for character in normalized
-        ).split()
+        "".join(character if character.isalnum() else " " for character in normalized).split()
     )
     if not result:
         raise HoldoutProtocolError(
@@ -328,8 +305,7 @@ def _source_shingles(value: str) -> frozenset[tuple[str, ...]]:
     if width == 0:
         return frozenset()
     return frozenset(
-        tuple(tokens[index : index + width])
-        for index in range(len(tokens) - width + 1)
+        tuple(tokens[index : index + width]) for index in range(len(tokens) - width + 1)
     )
 
 
@@ -390,26 +366,15 @@ class PopulationCaseView:
     def __post_init__(self) -> None:
         object.__setattr__(self, "case_id", _safe_id(self.case_id, "case_id"))
         if self.population_kind not in POPULATION_KINDS:
-            raise HoldoutProtocolError(
-                f"unknown population_kind: {self.population_kind!r}"
-            )
+            raise HoldoutProtocolError(f"unknown population_kind: {self.population_kind!r}")
         if not isinstance(self.source_text, str) or not self.source_text.strip():
             raise HoldoutProtocolError("source_text must be a nonempty string")
-        object.__setattr__(
-            self, "source_ref", _nonempty(self.source_ref, "source_ref")
-        )
+        object.__setattr__(self, "source_ref", _nonempty(self.source_ref, "source_ref"))
         object.__setattr__(self, "stratum", _safe_id(self.stratum, "stratum"))
         if self.prompt_exposure not in {"none", "development", "pilot"}:
-            raise HoldoutProtocolError(
-                "prompt_exposure must be none, development, or pilot"
-            )
-        if (
-            self.population_kind == POPULATION_KIND_BLIND_HOLDOUT
-            and self.prompt_exposure != "none"
-        ):
-            raise HoldoutProtocolError(
-                f"blind case {self.case_id} must have prompt_exposure=none"
-            )
+            raise HoldoutProtocolError("prompt_exposure must be none, development, or pilot")
+        if self.population_kind == POPULATION_KIND_BLIND_HOLDOUT and self.prompt_exposure != "none":
+            raise HoldoutProtocolError(f"blind case {self.case_id} must have prompt_exposure=none")
         if self.gold_ir is not None and not isinstance(self.gold_ir, Mapping):
             raise HoldoutProtocolError("gold_ir must be an object when present")
 
@@ -514,9 +479,7 @@ def load_population_case_views(
     views: list[PopulationCaseView] = []
     for raw, case in zip(raw_cases, matrix_cases):
         default_stratum = (
-            "pilot"
-            if population_kind == POPULATION_KIND_PILOT
-            else "repair_development"
+            "pilot" if population_kind == POPULATION_KIND_PILOT else "repair_development"
         )
         views.append(
             _matrix_case_to_view(
@@ -585,8 +548,7 @@ class SampleSizeJustification:
             raise HoldoutProtocolError("unsupported sample-size justification schema")
         if self.method != "paired_case_cluster_bootstrap_precision":
             raise HoldoutProtocolError(
-                "sample-size method must be "
-                "paired_case_cluster_bootstrap_precision"
+                "sample-size method must be paired_case_cluster_bootstrap_precision"
             )
         object.__setattr__(self, "alpha", _finite_float(self.alpha, "alpha"))
         object.__setattr__(
@@ -597,22 +559,16 @@ class SampleSizeJustification:
         object.__setattr__(
             self,
             "assumed_sd_paired_delta",
-            _finite_float(
-                self.assumed_sd_paired_delta, "assumed_sd_paired_delta"
-            ),
+            _finite_float(self.assumed_sd_paired_delta, "assumed_sd_paired_delta"),
         )
-        object.__setattr__(
-            self, "z_critical", _finite_float(self.z_critical, "z_critical")
-        )
+        object.__setattr__(self, "z_critical", _finite_float(self.z_critical, "z_critical"))
         required = _positive_int(self.required_case_count, "required_case_count")
         actual = _positive_int(self.actual_case_count, "actual_case_count")
         object.__setattr__(self, "required_case_count", required)
         object.__setattr__(self, "actual_case_count", actual)
         strata = _count_mapping(dict(self.strata_counts), "strata_counts")
         if sum(strata.values()) != actual:
-            raise HoldoutProtocolError(
-                "strata_counts must sum to actual_case_count"
-            )
+            raise HoldoutProtocolError("strata_counts must sum to actual_case_count")
         object.__setattr__(self, "strata_counts", MappingProxyType(strata))
         powered = _bool(self.powered, "powered")
         exploratory = _bool(self.exploratory, "exploratory")
@@ -637,15 +593,11 @@ class SampleSizeJustification:
                 "exploratory must be true exactly when the population is underpowered"
             )
         if promotion and not powered:
-            raise HoldoutProtocolError(
-                "underpowered population cannot be promotion_eligible"
-            )
+            raise HoldoutProtocolError("underpowered population cannot be promotion_eligible")
         if promotion != powered:
             # Powered populations may still be blocked by other gates, but
             # sample-size alone permits promotion eligibility only when powered.
-            raise HoldoutProtocolError(
-                "promotion_eligible must match powered for sample-size gate"
-            )
+            raise HoldoutProtocolError("promotion_eligible must match powered for sample-size gate")
         object.__setattr__(self, "powered", powered)
         object.__setattr__(self, "exploratory", exploratory)
         object.__setattr__(self, "promotion_eligible", promotion)
@@ -758,9 +710,7 @@ class SemanticRoundtripPopulationManifest:
 
     def __post_init__(self) -> None:
         if self.interface != SEMANTIC_ROUNDTRIP_POPULATION_MANIFEST_INTERFACE:
-            raise HoldoutProtocolError(
-                "unsupported population manifest interface"
-            )
+            raise HoldoutProtocolError("unsupported population manifest interface")
         if self.schema != POPULATION_MANIFEST_SCHEMA:
             raise HoldoutProtocolError("unsupported population manifest schema")
         if self.population_kind not in {
@@ -771,16 +721,10 @@ class SemanticRoundtripPopulationManifest:
                 "population manifest is only for pilot or repair_development; "
                 "blind holdout uses the public seal"
             )
-        object.__setattr__(
-            self, "fixture_path", _nonempty(self.fixture_path, "fixture_path")
-        )
-        case_ids = tuple(
-            _safe_id(item, "case_ids[]") for item in self.case_ids
-        )
+        object.__setattr__(self, "fixture_path", _nonempty(self.fixture_path, "fixture_path"))
+        case_ids = tuple(_safe_id(item, "case_ids[]") for item in self.case_ids)
         if not case_ids or len(set(case_ids)) != len(case_ids):
-            raise HoldoutProtocolError(
-                "population manifest requires distinct ordered case ids"
-            )
+            raise HoldoutProtocolError("population manifest requires distinct ordered case ids")
         object.__setattr__(self, "case_ids", case_ids)
         for field_name in (
             "case_content_cids",
@@ -790,21 +734,14 @@ class SemanticRoundtripPopulationManifest:
         ):
             values = tuple(getattr(self, field_name))
             if len(values) != len(case_ids):
-                raise HoldoutProtocolError(
-                    f"{field_name} length does not match case_ids"
-                )
+                raise HoldoutProtocolError(f"{field_name} length does not match case_ids")
             if field_name == "source_refs":
-                normalized = tuple(
-                    _nonempty(item, f"{field_name}[]") for item in values
-                )
+                normalized = tuple(_nonempty(item, f"{field_name}[]") for item in values)
             elif field_name.endswith("sha256s"):
-                normalized = tuple(
-                    _digest(item, f"{field_name}[]") for item in values
-                )
+                normalized = tuple(_digest(item, f"{field_name}[]") for item in values)
             else:
                 normalized = tuple(
-                    _cid(item, f"{field_name}[]", codecs=("dag-json",))
-                    for item in values
+                    _cid(item, f"{field_name}[]", codecs=("dag-json",)) for item in values
                 )
             if len(set(normalized)) != len(normalized):
                 raise HoldoutProtocolError(f"{field_name} contains duplicates")
@@ -817,32 +754,19 @@ class SemanticRoundtripPopulationManifest:
         if sum(strata.values()) != case_count:
             raise HoldoutProtocolError("strata_counts must sum to case_count")
         object.__setattr__(self, "strata_counts", MappingProxyType(strata))
-        object.__setattr__(
-            self, "fixture_sha256", _digest(self.fixture_sha256, "fixture_sha256")
-        )
+        object.__setattr__(self, "fixture_sha256", _digest(self.fixture_sha256, "fixture_sha256"))
         object.__setattr__(
             self,
             "fixture_cid",
             _cid(self.fixture_cid, "fixture_cid", codecs=("raw",)),
         )
-        if not isinstance(
-            self.sample_size_justification, SampleSizeJustification
-        ):
-            raise HoldoutProtocolError(
-                "sample_size_justification must be SampleSizeJustification"
-            )
+        if not isinstance(self.sample_size_justification, SampleSizeJustification):
+            raise HoldoutProtocolError("sample_size_justification must be SampleSizeJustification")
         if self.sample_size_justification.actual_case_count != case_count:
-            raise HoldoutProtocolError(
-                "sample_size_justification.actual_case_count must match"
-            )
+            raise HoldoutProtocolError("sample_size_justification.actual_case_count must match")
         expected = cid_for_dag_json(self.identity_payload())
-        if (
-            _cid(self.manifest_cid, "manifest_cid", codecs=("dag-json",))
-            != expected
-        ):
-            raise HoldoutProtocolError(
-                "manifest_cid does not match population manifest content"
-            )
+        if _cid(self.manifest_cid, "manifest_cid", codecs=("dag-json",)) != expected:
+            raise HoldoutProtocolError("manifest_cid does not match population manifest content")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -868,9 +792,7 @@ class SemanticRoundtripPopulationManifest:
     @classmethod
     def from_dict(cls, value: object) -> "SemanticRoundtripPopulationManifest":
         data = _mapping(value, "population_manifest")
-        _exact_keys(
-            data, set(cls.__dataclass_fields__), "population_manifest"
-        )
+        _exact_keys(data, set(cls.__dataclass_fields__), "population_manifest")
         return cls(
             interface=_nonempty(data["interface"], "interface"),
             schema=_nonempty(data["schema"], "schema"),
@@ -900,9 +822,7 @@ class SemanticRoundtripPopulationManifest:
             sample_size_justification=SampleSizeJustification.from_dict(
                 data["sample_size_justification"]
             ),
-            manifest_cid=_cid(
-                data["manifest_cid"], "manifest_cid", codecs=("dag-json",)
-            ),
+            manifest_cid=_cid(data["manifest_cid"], "manifest_cid", codecs=("dag-json",)),
         )
 
 
@@ -920,9 +840,7 @@ def build_population_manifest(
         POPULATION_KIND_PILOT,
         POPULATION_KIND_REPAIR_DEVELOPMENT,
     }:
-        raise HoldoutProtocolError(
-            "build_population_manifest is not for blind holdout"
-        )
+        raise HoldoutProtocolError("build_population_manifest is not for blind holdout")
     ordered = tuple(views)
     if not ordered:
         raise HoldoutProtocolError("population requires at least one case")
@@ -948,9 +866,7 @@ def build_population_manifest(
         "case_ids": list(case_ids),
         "case_content_cids": [view.case_content_cid for view in ordered],
         "source_sha256s": [view.source_sha256 for view in ordered],
-        "normalized_source_sha256s": [
-            view.normalized_source_sha256 for view in ordered
-        ],
+        "normalized_source_sha256s": [view.normalized_source_sha256 for view in ordered],
         "source_refs": [view.source_ref for view in ordered],
         "strata_counts": dict(sorted(strata.items())),
         "case_count": len(ordered),
@@ -966,9 +882,7 @@ def build_population_manifest(
         case_ids=case_ids,
         case_content_cids=tuple(view.case_content_cid for view in ordered),
         source_sha256s=tuple(view.source_sha256 for view in ordered),
-        normalized_source_sha256s=tuple(
-            view.normalized_source_sha256 for view in ordered
-        ),
+        normalized_source_sha256s=tuple(view.normalized_source_sha256 for view in ordered),
         source_refs=tuple(view.source_ref for view in ordered),
         strata_counts=strata,
         case_count=len(ordered),
@@ -985,15 +899,11 @@ def load_pilot_manifest(
 ) -> SemanticRoundtripPopulationManifest:
     root = Path(repository_root) if repository_root is not None else REPOSITORY_ROOT
     path = root / PILOT_CASES_RELATIVE_PATH
-    views = load_population_case_views(
-        path, population_kind=POPULATION_KIND_PILOT
-    )
-    if set(view.case_id for view in views) != set(PILOT_CASE_IDS) or len(
-        views
-    ) != len(PILOT_CASE_IDS):
-        raise HoldoutProtocolError(
-            "pilot fixture must contain exactly the sealed pilot case ids"
-        )
+    views = load_population_case_views(path, population_kind=POPULATION_KIND_PILOT)
+    if set(view.case_id for view in views) != set(PILOT_CASE_IDS) or len(views) != len(
+        PILOT_CASE_IDS
+    ):
+        raise HoldoutProtocolError("pilot fixture must contain exactly the sealed pilot case ids")
     # Reorder to frozen pilot order for stable manifests.
     by_id = {view.case_id: view for view in views}
     ordered = tuple(by_id[case_id] for case_id in PILOT_CASE_IDS)
@@ -1015,9 +925,7 @@ def load_repair_development_manifest(
 ) -> SemanticRoundtripPopulationManifest:
     root = Path(repository_root) if repository_root is not None else REPOSITORY_ROOT
     path = root / REPAIR_DEV_CASES_RELATIVE_PATH
-    views = load_population_case_views(
-        path, population_kind=POPULATION_KIND_REPAIR_DEVELOPMENT
-    )
+    views = load_population_case_views(path, population_kind=POPULATION_KIND_REPAIR_DEVELOPMENT)
     return build_population_manifest(
         views,
         population_kind=POPULATION_KIND_REPAIR_DEVELOPMENT,
@@ -1057,18 +965,12 @@ class PrivateBlindCaseRecord:
         if not isinstance(rules, list) or not rules:
             raise HoldoutProtocolError("blind gold_ir.rules must be nonempty")
         object.__setattr__(self, "gold_ir", MappingProxyType(dict(gold)))
-        object.__setattr__(
-            self, "source_ref", _nonempty(self.source_ref, "source_ref")
-        )
+        object.__setattr__(self, "source_ref", _nonempty(self.source_ref, "source_ref"))
         object.__setattr__(self, "stratum", _safe_id(self.stratum, "stratum"))
         provenance = _mapping(self.provenance, "provenance")
         if provenance.get("prompt_exposure") != "none":
-            raise HoldoutProtocolError(
-                "blind provenance.prompt_exposure must be 'none'"
-            )
-        object.__setattr__(
-            self, "provenance", MappingProxyType(dict(provenance))
-        )
+            raise HoldoutProtocolError("blind provenance.prompt_exposure must be 'none'")
+        object.__setattr__(self, "provenance", MappingProxyType(dict(provenance)))
 
     def as_view(self) -> PopulationCaseView:
         return PopulationCaseView(
@@ -1182,9 +1084,7 @@ class BlindHoldoutSeal:
         if sum(strata.values()) != case_count:
             raise HoldoutProtocolError("strata_counts must sum to case_count")
         object.__setattr__(self, "strata_counts", MappingProxyType(strata))
-        commitments = _mapping(
-            self.aggregate_commitments, "aggregate_commitments"
-        )
+        commitments = _mapping(self.aggregate_commitments, "aggregate_commitments")
         required_commitment_keys = {
             "ordered_source_manifest_cid",
             "ordered_gold_manifest_cid",
@@ -1205,23 +1105,15 @@ class BlindHoldoutSeal:
         }
         # Reject accidental per-case leakage inside commitment values by
         # requiring distinct aggregate CIDs.
-        if len(set(normalized_commitments.values())) != len(
-            normalized_commitments
-        ):
-            raise HoldoutProtocolError(
-                "aggregate commitment CIDs must be distinct"
-            )
+        if len(set(normalized_commitments.values())) != len(normalized_commitments):
+            raise HoldoutProtocolError("aggregate commitment CIDs must be distinct")
         object.__setattr__(
             self,
             "aggregate_commitments",
             MappingProxyType(normalized_commitments),
         )
-        if not isinstance(
-            self.sample_size_justification, SampleSizeJustification
-        ):
-            raise HoldoutProtocolError(
-                "sample_size_justification must be SampleSizeJustification"
-            )
+        if not isinstance(self.sample_size_justification, SampleSizeJustification):
+            raise HoldoutProtocolError("sample_size_justification must be SampleSizeJustification")
         if self.sample_size_justification.actual_case_count != case_count:
             raise HoldoutProtocolError(
                 "sample_size_justification.actual_case_count must match case_count"
@@ -1240,9 +1132,7 @@ class BlindHoldoutSeal:
             ),
         )
         if self.leakage_policy_cid != leakage_policy_cid():
-            raise HoldoutProtocolError(
-                "leakage_policy_cid does not match frozen leakage policy"
-            )
+            raise HoldoutProtocolError("leakage_policy_cid does not match frozen leakage policy")
         object.__setattr__(
             self,
             "access_ledger_authority_cid",
@@ -1268,17 +1158,11 @@ class BlindHoldoutSeal:
             "near_duplicate_jaccard_threshold",
         )
         if threshold != NEAR_DUPLICATE_JACCARD_THRESHOLD:
-            raise HoldoutProtocolError(
-                "near_duplicate_jaccard_threshold must match frozen policy"
-            )
+            raise HoldoutProtocolError("near_duplicate_jaccard_threshold must match frozen policy")
         object.__setattr__(self, "near_duplicate_jaccard_threshold", threshold)
         expected = cid_for_dag_json(self.identity_payload())
-        if (
-            _cid(self.seal_cid, "seal_cid", codecs=("dag-json",)) != expected
-        ):
-            raise HoldoutProtocolError(
-                "seal_cid does not match public blind holdout seal metadata"
-            )
+        if _cid(self.seal_cid, "seal_cid", codecs=("dag-json",)) != expected:
+            raise HoldoutProtocolError("seal_cid does not match public blind holdout seal metadata")
         self._assert_no_forbidden_public_fields(self.to_dict())
 
     @staticmethod
@@ -1289,9 +1173,7 @@ class BlindHoldoutSeal:
             if isinstance(current, Mapping):
                 for key, value in current.items():
                     if key in _FORBIDDEN_PUBLIC_SEAL_KEYS:
-                        raise HoldoutProtocolError(
-                            f"public blind seal must not expose {key!r}"
-                        )
+                        raise HoldoutProtocolError(f"public blind seal must not expose {key!r}")
                     stack.append(value)
             elif isinstance(current, list):
                 stack.extend(current)
@@ -1308,9 +1190,7 @@ class BlindHoldoutSeal:
             "access_ledger_authority_cid": self.access_ledger_authority_cid,
             "sealed_private_bundle_cid": self.sealed_private_bundle_cid,
             "normalization_version": self.normalization_version,
-            "near_duplicate_jaccard_threshold": (
-                self.near_duplicate_jaccard_threshold
-            ),
+            "near_duplicate_jaccard_threshold": (self.near_duplicate_jaccard_threshold),
         }
 
     def to_dict(self) -> dict[str, object]:
@@ -1326,15 +1206,11 @@ class BlindHoldoutSeal:
             schema=_nonempty(data["schema"], "schema"),
             case_count=data["case_count"],  # type: ignore[arg-type]
             strata_counts=_mapping(data["strata_counts"], "strata_counts"),
-            aggregate_commitments=_mapping(
-                data["aggregate_commitments"], "aggregate_commitments"
-            ),
+            aggregate_commitments=_mapping(data["aggregate_commitments"], "aggregate_commitments"),
             sample_size_justification=SampleSizeJustification.from_dict(
                 data["sample_size_justification"]
             ),
-            leakage_policy_cid=_nonempty(
-                data["leakage_policy_cid"], "leakage_policy_cid"
-            ),
+            leakage_policy_cid=_nonempty(data["leakage_policy_cid"], "leakage_policy_cid"),
             access_ledger_authority_cid=_nonempty(
                 data["access_ledger_authority_cid"],
                 "access_ledger_authority_cid",
@@ -1343,9 +1219,7 @@ class BlindHoldoutSeal:
                 data["sealed_private_bundle_cid"],
                 "sealed_private_bundle_cid",
             ),
-            normalization_version=_nonempty(
-                data["normalization_version"], "normalization_version"
-            ),
+            normalization_version=_nonempty(data["normalization_version"], "normalization_version"),
             near_duplicate_jaccard_threshold=data[  # type: ignore[arg-type]
                 "near_duplicate_jaccard_threshold"
             ],
@@ -1415,13 +1289,9 @@ def build_blind_holdout_seal(
         "case_count": len(ordered),
         "strata_counts": dict(sorted(strata.items())),
         "aggregate_commitments": {
-            "ordered_source_manifest_cid": manifests[
-                "ordered_source_manifest_cid"
-            ],
+            "ordered_source_manifest_cid": manifests["ordered_source_manifest_cid"],
             "ordered_gold_manifest_cid": manifests["ordered_gold_manifest_cid"],
-            "ordered_provenance_manifest_cid": manifests[
-                "ordered_provenance_manifest_cid"
-            ],
+            "ordered_provenance_manifest_cid": manifests["ordered_provenance_manifest_cid"],
         },
         "sample_size_justification": justification.to_dict(),
         "leakage_policy_cid": leakage_policy_cid(),
@@ -1457,14 +1327,10 @@ def load_frozen_blind_holdout_seal(
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise HoldoutProtocolError(
-            f"cannot load frozen blind holdout seal: {exc}"
-        ) from exc
+        raise HoldoutProtocolError(f"cannot load frozen blind holdout seal: {exc}") from exc
     seal = BlindHoldoutSeal.from_dict(payload)
     if seal.case_count != FROZEN_BLIND_CASE_COUNT:
-        raise HoldoutProtocolError(
-            "frozen blind seal case_count drifted from preregistered value"
-        )
+        raise HoldoutProtocolError("frozen blind seal case_count drifted from preregistered value")
     if dict(seal.strata_counts) != dict(FROZEN_BLIND_STRATA_COUNTS):
         raise HoldoutProtocolError(
             "frozen blind seal strata_counts drifted from preregistered value"
@@ -1493,9 +1359,7 @@ def validate_cross_split_leakage(
     for kind, views in populations.items():
         for view in views:
             if view.population_kind != kind:
-                raise HoldoutProtocolError(
-                    f"view {view.case_id} population_kind mismatch"
-                )
+                raise HoldoutProtocolError(f"view {view.case_id} population_kind mismatch")
             all_views.append(view)
 
     case_ids = [view.case_id for view in all_views]
@@ -1511,17 +1375,11 @@ def validate_cross_split_leakage(
                 f"{right.case_id} ({right.population_kind})"
             )
             if left.source_sha256 == right.source_sha256:
-                raise HoldoutProtocolError(
-                    f"exact source duplicate across splits: {pair}"
-                )
+                raise HoldoutProtocolError(f"exact source duplicate across splits: {pair}")
             if left.normalized_source_sha256 == right.normalized_source_sha256:
-                raise HoldoutProtocolError(
-                    f"normalized source duplicate across splits: {pair}"
-                )
+                raise HoldoutProtocolError(f"normalized source duplicate across splits: {pair}")
             if left.source_ref == right.source_ref:
-                raise HoldoutProtocolError(
-                    f"source provenance reused across splits: {pair}"
-                )
+                raise HoldoutProtocolError(f"source provenance reused across splits: {pair}")
             similarity = source_similarity(left.source_text, right.source_text)
             if similarity >= NEAR_DUPLICATE_JACCARD_THRESHOLD:
                 raise HoldoutProtocolError(
@@ -1544,9 +1402,7 @@ def validate_prompt_example_isolation(
         prompt = _nonempty(examples[example_id], f"prompt_examples.{example_id}")
         for view in blind_views:
             if view.population_kind != POPULATION_KIND_BLIND_HOLDOUT:
-                raise HoldoutProtocolError(
-                    "prompt isolation requires blind holdout views"
-                )
+                raise HoldoutProtocolError("prompt isolation requires blind holdout views")
             if example_id == view.case_id:
                 raise HoldoutProtocolError(
                     f"blind case id exposed as prompt example: {view.case_id}"
@@ -1581,9 +1437,7 @@ def validate_custodian_store_path(
     store = Path(private_store_path)
     worktree = Path(worktree_path)
     if not store.is_absolute() or not worktree.is_absolute():
-        raise HoldoutProtocolError(
-            "custodian store and worktree paths must be absolute"
-        )
+        raise HoldoutProtocolError("custodian store and worktree paths must be absolute")
     if store.is_symlink():
         raise HoldoutProtocolError("custodian store path must not be a symlink")
     try:
@@ -1598,16 +1452,12 @@ def validate_custodian_store_path(
         resolved_store = store.resolve(strict=False)
         resolved_worktree = worktree.resolve(strict=True)
     except OSError as exc:
-        raise HoldoutProtocolError(
-            "custodian store path boundary cannot be resolved"
-        ) from exc
+        raise HoldoutProtocolError("custodian store path boundary cannot be resolved") from exc
     try:
         resolved_store.relative_to(resolved_worktree)
     except ValueError:
         return resolved_store
-    raise HoldoutProtocolError(
-        "custodian store must remain outside the agent worktree"
-    )
+    raise HoldoutProtocolError("custodian store must remain outside the agent worktree")
 
 
 # ---------------------------------------------------------------------------
@@ -1676,12 +1526,8 @@ class HoldoutAccessReceipt:
                 ),
             )
         if self.purpose not in {"evaluation", "replay", "rejected"}:
-            raise HoldoutProtocolError(
-                "access purpose must be evaluation, replay, or rejected"
-            )
-        object.__setattr__(
-            self, "executor_id", _safe_id(self.executor_id, "executor_id")
-        )
+            raise HoldoutProtocolError("access purpose must be evaluation, replay, or rejected")
+        object.__setattr__(self, "executor_id", _safe_id(self.executor_id, "executor_id"))
         if self.tuning_permitted is not False:
             raise HoldoutProtocolError("tuning_permitted must be false")
         if self.previous_receipt_cid is not None:
@@ -1695,13 +1541,8 @@ class HoldoutAccessReceipt:
                 ),
             )
         expected = cid_for_dag_json(self.identity_payload())
-        if (
-            _cid(self.receipt_cid, "receipt_cid", codecs=("dag-json",))
-            != expected
-        ):
-            raise HoldoutProtocolError(
-                "receipt_cid does not match access receipt content"
-            )
+        if _cid(self.receipt_cid, "receipt_cid", codecs=("dag-json",)) != expected:
+            raise HoldoutProtocolError("receipt_cid does not match access receipt content")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -1804,9 +1645,7 @@ class HoldoutAccessAuthorization:
 
     def __post_init__(self) -> None:
         if self.goal_id != AUTHORIZATION_GOAL_ID:
-            raise HoldoutProtocolError(
-                f"authorization goal_id must be {AUTHORIZATION_GOAL_ID}"
-            )
+            raise HoldoutProtocolError(f"authorization goal_id must be {AUTHORIZATION_GOAL_ID}")
         object.__setattr__(
             self,
             "authorization_cid",
@@ -1816,9 +1655,7 @@ class HoldoutAccessAuthorization:
                 codecs=("dag-json",),
             ),
         )
-        object.__setattr__(
-            self, "seal_cid", _cid(self.seal_cid, "seal_cid", codecs=("dag-json",))
-        )
+        object.__setattr__(self, "seal_cid", _cid(self.seal_cid, "seal_cid", codecs=("dag-json",)))
         object.__setattr__(
             self,
             "candidate_freeze_cid",
@@ -1833,16 +1670,12 @@ class HoldoutAccessAuthorization:
         if self.holdout_authorized is not True:
             raise HoldoutProtocolError("authorization must set holdout_authorized")
         if self.outcomes_inspected is not False:
-            raise HoldoutProtocolError(
-                "authorization must not follow outcome inspection"
-            )
+            raise HoldoutProtocolError("authorization must not follow outcome inspection")
         if self.tuning_permitted is not False:
             raise HoldoutProtocolError("authorization forbids tuning")
         expected = cid_for_dag_json(self.identity_payload())
         if self.authorization_cid != expected:
-            raise HoldoutProtocolError(
-                "authorization_cid does not match authorization content"
-            )
+            raise HoldoutProtocolError("authorization_cid does not match authorization content")
 
     def identity_payload(self) -> dict[str, object]:
         return {
@@ -1906,17 +1739,12 @@ class AppendOnlyAccessLedger:
         if not self.path.exists():
             return ()
         if self.path.is_symlink() or not self.path.is_file():
-            raise HoldoutProtocolError(
-                "access ledger must be a regular non-symlink file"
-            )
+            raise HoldoutProtocolError("access ledger must be a regular non-symlink file")
         raw = self.path.read_bytes()
         return _parse_access_ledger(raw, seal=self.seal)
 
     def has_successful_access(self) -> bool:
-        return any(
-            receipt.event == "manifest_released"
-            for receipt in self.read_receipts()
-        )
+        return any(receipt.event == "manifest_released" for receipt in self.read_receipts())
 
     def append(
         self,
@@ -1932,16 +1760,12 @@ class AppendOnlyAccessLedger:
         try:
             descriptor = os.open(self.path, flags, 0o600)
         except OSError as exc:
-            raise HoldoutProtocolError(
-                "access ledger cannot be opened append-only"
-            ) from exc
+            raise HoldoutProtocolError("access ledger cannot be opened append-only") from exc
         try:
             with os.fdopen(descriptor, "r+b", closefd=True) as handle:
                 handle.seek(0)
                 existing = _parse_access_ledger(handle.read(), seal=self.seal)
-                previous_cid = (
-                    existing[-1].receipt_cid if existing else None
-                )
+                previous_cid = existing[-1].receipt_cid if existing else None
                 sequence = len(existing)
                 if event == "access_granted":
                     self._assert_grant_allowed(existing, authorization)
@@ -1962,14 +1786,10 @@ class AppendOnlyAccessLedger:
                     event=event,
                     seal=self.seal,
                     authorization_goal_id=(
-                        None
-                        if authorization is None
-                        else authorization.goal_id
+                        None if authorization is None else authorization.goal_id
                     ),
                     authorization_cid=(
-                        None
-                        if authorization is None
-                        else authorization.authorization_cid
+                        None if authorization is None else authorization.authorization_cid
                     ),
                     purpose=purpose,
                     executor_id=executor_id,
@@ -1988,9 +1808,7 @@ class AppendOnlyAccessLedger:
         except HoldoutProtocolError:
             raise
         except OSError as exc:
-            raise HoldoutProtocolError(
-                "access ledger append failed"
-            ) from exc
+            raise HoldoutProtocolError("access ledger append failed") from exc
 
     def _assert_grant_allowed(
         self,
@@ -1998,17 +1816,11 @@ class AppendOnlyAccessLedger:
         authorization: HoldoutAccessAuthorization | None,
     ) -> None:
         if authorization is None:
-            raise HoldoutProtocolError(
-                "blind access requires PLAT2-055 authorization"
-            )
+            raise HoldoutProtocolError("blind access requires PLAT2-055 authorization")
         if authorization.seal_cid != self.seal.seal_cid:
-            raise HoldoutProtocolError(
-                "authorization seal_cid does not match ledger seal"
-            )
+            raise HoldoutProtocolError("authorization seal_cid does not match ledger seal")
         if any(item.event == "manifest_released" for item in existing):
-            raise HoldoutProtocolError(
-                "blind holdout access is single-use; seal already released"
-            )
+            raise HoldoutProtocolError("blind holdout access is single-use; seal already released")
         if any(item.event == "access_granted" for item in existing):
             raise HoldoutProtocolError(
                 "access grant already recorded; repeated access is forbidden"
@@ -2020,18 +1832,12 @@ class AppendOnlyAccessLedger:
         authorization: HoldoutAccessAuthorization | None,
     ) -> None:
         if not existing or existing[-1].event != "access_granted":
-            raise HoldoutProtocolError(
-                "manifest release requires a preceding access grant"
-            )
+            raise HoldoutProtocolError("manifest release requires a preceding access grant")
         if authorization is None:
-            raise HoldoutProtocolError(
-                "manifest release requires PLAT2-055 authorization"
-            )
+            raise HoldoutProtocolError("manifest release requires PLAT2-055 authorization")
         grant = existing[-1]
         if grant.authorization_cid != authorization.authorization_cid:
-            raise HoldoutProtocolError(
-                "release authorization does not match the grant"
-            )
+            raise HoldoutProtocolError("release authorization does not match the grant")
 
 
 def _parse_access_ledger(
@@ -2044,9 +1850,7 @@ def _parse_access_ledger(
     records: list[HoldoutAccessReceipt] = []
     for line_number, line in enumerate(raw.splitlines(keepends=True), start=1):
         if not line.endswith(b"\n") or line == b"\n":
-            raise HoldoutProtocolError(
-                "access ledger must contain complete JSONL records"
-            )
+            raise HoldoutProtocolError("access ledger must contain complete JSONL records")
         try:
             text = line[:-1].decode("utf-8")
         except UnicodeDecodeError as exc:
@@ -2054,9 +1858,7 @@ def _parse_access_ledger(
         try:
             value = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise HoldoutProtocolError(
-                f"access ledger line {line_number} is not JSON"
-            ) from exc
+            raise HoldoutProtocolError(f"access ledger line {line_number} is not JSON") from exc
         data = _mapping(value, f"access ledger line {line_number}")
         _exact_keys(
             data,
@@ -2071,28 +1873,18 @@ def _parse_access_ledger(
             "receipt": receipt.to_dict(),
         }
         if canonical_json(wrapper).encode("utf-8") != line[:-1]:
-            raise HoldoutProtocolError(
-                "access ledger record is not canonical JSON"
-            )
+            raise HoldoutProtocolError("access ledger record is not canonical JSON")
         records.append(receipt)
 
     for sequence, receipt in enumerate(records):
-        expected_previous = (
-            None if sequence == 0 else records[sequence - 1].receipt_cid
-        )
-        if (
-            receipt.sequence != sequence
-            or receipt.previous_receipt_cid != expected_previous
-        ):
+        expected_previous = None if sequence == 0 else records[sequence - 1].receipt_cid
+        if receipt.sequence != sequence or receipt.previous_receipt_cid != expected_previous:
             raise HoldoutProtocolError("access ledger chain is broken")
         if (
             receipt.seal_cid != seal.seal_cid
-            or receipt.sealed_private_bundle_cid
-            != seal.sealed_private_bundle_cid
+            or receipt.sealed_private_bundle_cid != seal.sealed_private_bundle_cid
         ):
-            raise HoldoutProtocolError(
-                "access ledger mixes distinct seals"
-            )
+            raise HoldoutProtocolError("access ledger mixes distinct seals")
     return tuple(records)
 
 
@@ -2259,9 +2051,7 @@ def materialize_preregistered_blind_records() -> tuple[PrivateBlindCaseRecord, .
                             "actor": actor,
                             "action": action,
                             "object": obj,
-                            "conditions": [qualifier]
-                            if modality == "P"
-                            else [],
+                            "conditions": [qualifier] if modality == "P" else [],
                             "exceptions": [],
                             "temporal": [qualifier]
                             if modality == "O" and "within" in qualifier
@@ -2600,16 +2390,12 @@ def materialize_preregistered_blind_records() -> tuple[PrivateBlindCaseRecord, .
         )
 
     if len(records) != FROZEN_BLIND_CASE_COUNT:
-        raise HoldoutProtocolError(
-            "preregistered blind record count drifted"
-        )
+        raise HoldoutProtocolError("preregistered blind record count drifted")
     strata: dict[str, int] = {}
     for record in records:
         strata[record.stratum] = strata.get(record.stratum, 0) + 1
     if strata != dict(FROZEN_BLIND_STRATA_COUNTS):
-        raise HoldoutProtocolError(
-            "preregistered blind strata drifted"
-        )
+        raise HoldoutProtocolError("preregistered blind strata drifted")
     return tuple(records)
 
 
@@ -2636,11 +2422,7 @@ def write_frozen_blind_holdout_seal(
     """Write the public seal artifact (no private content)."""
 
     seal = build_frozen_blind_holdout_seal()
-    target = (
-        Path(path)
-        if path is not None
-        else REPOSITORY_ROOT / BLIND_SEAL_RELATIVE_PATH
-    )
+    target = Path(path) if path is not None else REPOSITORY_ROOT / BLIND_SEAL_RELATIVE_PATH
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(
         json.dumps(seal.to_dict(), indent=2, sort_keys=True) + "\n",
@@ -2709,9 +2491,7 @@ def freeze_all_populations_with_private_blind(
     prompt_digests = validate_prompt_example_isolation(blind_views, examples)
     return {
         "pilot_manifest": visible[POPULATION_KIND_PILOT],
-        "repair_development_manifest": visible[
-            POPULATION_KIND_REPAIR_DEVELOPMENT
-        ],
+        "repair_development_manifest": visible[POPULATION_KIND_REPAIR_DEVELOPMENT],
         "blind_holdout_seal": seal,
         "prompt_example_sha256s": prompt_digests,
     }

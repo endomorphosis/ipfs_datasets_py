@@ -36,28 +36,30 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_public
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    payload = json.loads(path.read_text(encoding='utf-8'))
+    payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f'{path} did not contain a JSON object')
+        raise ValueError(f"{path} did not contain a JSON object")
     return payload
 
 
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n',
-        encoding='utf-8',
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n",
+        encoding="utf-8",
     )
 
 
 def _write_text(path: Path, payload: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(payload, encoding='utf-8')
+    path.write_text(payload, encoding="utf-8")
 
 
-def generate(repo_root: Path, *, out: Path | None = None) -> tuple[dict[str, Any], dict[str, Any], str]:
+def generate(
+    repo_root: Path, *, out: Path | None = None
+) -> tuple[dict[str, Any], dict[str, Any], str]:
     model_payload = _load_json(repo_root / MODEL_PATH)
-    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding='utf-8').strip()
+    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding="utf-8").strip()
     bundle = build_public_source_testnet_assurance_bundle(
         model_payload=model_payload,
         model_cid=model_cid,
@@ -84,14 +86,14 @@ def generate(repo_root: Path, *, out: Path | None = None) -> tuple[dict[str, Any
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        '--repo-root',
+        "--repo-root",
         default=str(ROOT_DIR),
-        help='Repository root containing security_ir_artifacts.',
+        help="Repository root containing security_ir_artifacts.",
     )
     parser.add_argument(
-        '--out',
+        "--out",
         default=PUBLIC_SOURCE_TESTNET_ASSURANCE_VERDICT_PATH,
-        help='Verdict output path. The bundle and markdown use their standard task paths.',
+        help="Verdict output path. The bundle and markdown use their standard task paths.",
     )
     args = parser.parse_args(argv)
 
@@ -103,12 +105,14 @@ def main(argv: list[str] | None = None) -> int:
     print(
         json.dumps(
             {
-                'bundle_path': PUBLIC_SOURCE_TESTNET_ASSURANCE_BUNDLE_PATH,
-                'bundle_cid': bundle['artifact_cid'],
-                'verdict_path': str(out.relative_to(repo_root) if out.is_relative_to(repo_root) else out),
-                'verdict_cid': verdict['artifact_cid'],
-                'verdict': verdict['verdict'],
-                'doc_path': PUBLIC_SOURCE_TESTNET_ASSURANCE_DOC_PATH,
+                "bundle_path": PUBLIC_SOURCE_TESTNET_ASSURANCE_BUNDLE_PATH,
+                "bundle_cid": bundle["artifact_cid"],
+                "verdict_path": str(
+                    out.relative_to(repo_root) if out.is_relative_to(repo_root) else out
+                ),
+                "verdict_cid": verdict["artifact_cid"],
+                "verdict": verdict["verdict"],
+                "doc_path": PUBLIC_SOURCE_TESTNET_ASSURANCE_DOC_PATH,
             },
             sort_keys=True,
         )
@@ -116,5 +120,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

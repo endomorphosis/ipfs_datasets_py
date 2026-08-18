@@ -22,24 +22,28 @@ try:
         MergeResult,
         DelegationManager,
     )
+
     _DELEGATION_AVAILABLE = True
 except Exception:
     _DELEGATION_AVAILABLE = False
 
 try:
     from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSReloadResult
+
     _IPFS_RELOAD_AVAILABLE = True
 except Exception:
     _IPFS_RELOAD_AVAILABLE = False
 
 try:
     from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
     _PUBSUB_AVAILABLE = True
 except Exception:
     _PUBSUB_AVAILABLE = False
 
 try:
     from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
     _COMPLIANCE_AVAILABLE = True
 except Exception:
     _COMPLIANCE_AVAILABLE = False
@@ -50,6 +54,7 @@ pytestmark = pytest.mark.unit
 # ===========================================================================
 # 1. MergeResult.from_dict()
 # ===========================================================================
+
 
 @pytest.mark.skipif(not _DELEGATION_AVAILABLE, reason="ucan_delegation unavailable")
 class TestMergeResultFromDict:
@@ -116,6 +121,7 @@ class TestMergeResultFromDict:
 # 2. IPFSReloadResult.from_dict()
 # ===========================================================================
 
+
 @pytest.mark.skipif(not _IPFS_RELOAD_AVAILABLE, reason="nl_ucan_policy unavailable")
 class TestIPFSReloadResultFromDict:
     """IPFSReloadResult.from_dict() — round-trip semantics."""
@@ -179,6 +185,7 @@ class TestIPFSReloadResultFromDict:
 # ===========================================================================
 # 3. PubSubBus.snapshot()
 # ===========================================================================
+
 
 @pytest.mark.skipif(not _PUBSUB_AVAILABLE, reason="mcp_p2p_transport unavailable")
 class TestPubSubBusSnapshot:
@@ -272,6 +279,7 @@ class TestPubSubBusSnapshot:
 # 4. ComplianceChecker.backup_count()
 # ===========================================================================
 
+
 @pytest.mark.skipif(not _COMPLIANCE_AVAILABLE, reason="compliance_checker unavailable")
 class TestComplianceCheckerBackupCount:
     """ComplianceChecker.backup_count() — counts backup files."""
@@ -344,9 +352,14 @@ class TestComplianceCheckerBackupCount:
 # 5. E2E — round-trips + monitoring
 # ===========================================================================
 
+
 @pytest.mark.skipif(
-    not (_DELEGATION_AVAILABLE and _IPFS_RELOAD_AVAILABLE
-         and _PUBSUB_AVAILABLE and _COMPLIANCE_AVAILABLE),
+    not (
+        _DELEGATION_AVAILABLE
+        and _IPFS_RELOAD_AVAILABLE
+        and _PUBSUB_AVAILABLE
+        and _COMPLIANCE_AVAILABLE
+    ),
     reason="one or more modules unavailable",
 )
 class TestE2ESession76:
@@ -355,6 +368,7 @@ class TestE2ESession76:
     def test_merge_result_round_trip_via_json(self):
         """MergeResult survives JSON serialisation + from_dict."""
         import json
+
         r = MergeResult(added_count=4, conflict_count=2, revocations_copied=1)
         restored = MergeResult.from_dict(json.loads(json.dumps(r.to_dict())))
         assert restored.added_count == 4
@@ -364,6 +378,7 @@ class TestE2ESession76:
     def test_ipfs_reload_result_round_trip_via_json(self):
         """IPFSReloadResult count survives JSON serialisation + from_dict."""
         import json
+
         r = IPFSReloadResult(
             count=3,
             pin_results={"a": "Qm1", "b": "Qm2", "c": None},

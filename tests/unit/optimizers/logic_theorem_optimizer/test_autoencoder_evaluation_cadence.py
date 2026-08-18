@@ -84,11 +84,14 @@ def test_cycle_cadence_modes_control_execution(
     every: int,
     expected: bool,
 ) -> None:
-    assert runner._should_run_cycle_cadence(
-        cycle=cycle,
-        mode=mode,
-        every_n_cycles=every,
-    ) is expected
+    assert (
+        runner._should_run_cycle_cadence(
+            cycle=cycle,
+            mode=mode,
+            every_n_cycles=every,
+        )
+        is expected
+    )
 
 
 def test_prior_after_result_is_deeply_immutable_and_exact_lineage_only() -> None:
@@ -124,36 +127,48 @@ def test_prior_after_result_is_deeply_immutable_and_exact_lineage_only() -> None
     assert repeated is not None
     assert repeated.decoded_embeddings["sample-1"][0] == pytest.approx(0.2)
 
-    assert cache.get_before(
-        _lineage(state_hash="state-b"),
-        AutoencoderEvaluation,
-        role="before_train",
-        current_cycle=2,
-    ) is None
-    assert cache.get_before(
-        _lineage(sample_id="other"),
-        AutoencoderEvaluation,
-        role="before_train",
-        current_cycle=2,
-    ) is None
-    assert cache.get_before(
-        _lineage(use_sample_memory=False),
-        AutoencoderEvaluation,
-        role="before_train",
-        current_cycle=2,
-    ) is None
+    assert (
+        cache.get_before(
+            _lineage(state_hash="state-b"),
+            AutoencoderEvaluation,
+            role="before_train",
+            current_cycle=2,
+        )
+        is None
+    )
+    assert (
+        cache.get_before(
+            _lineage(sample_id="other"),
+            AutoencoderEvaluation,
+            role="before_train",
+            current_cycle=2,
+        )
+        is None
+    )
+    assert (
+        cache.get_before(
+            _lineage(use_sample_memory=False),
+            AutoencoderEvaluation,
+            role="before_train",
+            current_cycle=2,
+        )
+        is None
+    )
     assert cache.summary()["saved_wall_time_seconds"] == pytest.approx(1.5)
 
 
 def test_same_cycle_or_before_role_cannot_seed_reuse() -> None:
     cache = LegalIREvaluationResultCache()
     cache.put_after(_lineage(), _evaluation(), role="after_validation", cycle=2)
-    assert cache.get_before(
-        _lineage(),
-        AutoencoderEvaluation,
-        role="before_validation",
-        current_cycle=2,
-    ) is None
+    assert (
+        cache.get_before(
+            _lineage(),
+            AutoencoderEvaluation,
+            role="before_validation",
+            current_cycle=2,
+        )
+        is None
+    )
     with pytest.raises(ValueError, match="only after-evaluations"):
         cache.put_after(_lineage(), _evaluation(), role="before_train", cycle=2)
 
@@ -282,4 +297,3 @@ def test_skipped_compiler_train_block_is_explicitly_non_promotional() -> None:
     assert block["full_family_gates_required"] is False
     assert block["sample_count"] == 8
     assert block["evaluated_count"] == 0
-

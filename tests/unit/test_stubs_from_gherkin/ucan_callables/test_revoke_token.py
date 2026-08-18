@@ -5,10 +5,12 @@ Feature: UCANManager.revoke_token()
   Tests the revoke_token() method of UCANManager.
   This callable revokes a UCAN token.
 """
+
 import pytest
 
 
 # Fixtures for Background
+
 
 @pytest.fixture
 def a_ucanmanager_instance_is_initialized():
@@ -48,10 +50,16 @@ def the_token_audience_is_didkeybob():
 
 # Test scenarios
 
-def test_revoke_token_succeeds_when_revoker_is_issuer(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+
+def test_revoke_token_succeeds_when_revoker_is_issuer(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke token succeeds when revoker is issuer
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -63,10 +71,15 @@ def test_revoke_token_succeeds_when_revoker_is_issuer(a_ucanmanager_instance_is_
     pass
 
 
-def test_revoke_stores_ucanrevocation_in_revocations_dictionary(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_stores_ucanrevocation_in_revocations_dictionary(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke stores UCANRevocation in revocations dictionary
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -78,10 +91,15 @@ def test_revoke_stores_ucanrevocation_in_revocations_dictionary(a_ucanmanager_in
     pass
 
 
-def test_revocation_has_correct_token_id(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revocation_has_correct_token_id(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revocation has correct token_id
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -93,10 +111,15 @@ def test_revocation_has_correct_token_id(a_ucanmanager_instance_is_initialized, 
     pass
 
 
-def test_revocation_has_correct_revoked_by(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revocation_has_correct_revoked_by(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revocation has correct revoked_by
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -108,10 +131,15 @@ def test_revocation_has_correct_revoked_by(a_ucanmanager_instance_is_initialized
     pass
 
 
-def test_revocation_has_correct_reason(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revocation_has_correct_reason(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revocation has correct reason
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -123,10 +151,15 @@ def test_revocation_has_correct_reason(a_ucanmanager_instance_is_initialized, a_
     pass
 
 
-def test_revoke_token_updates_revocationsjson_file(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_token_updates_revocationsjson_file(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke token updates revocations.json file
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -138,10 +171,15 @@ def test_revoke_token_updates_revocationsjson_file(a_ucanmanager_instance_is_ini
     pass
 
 
-def test_revoke_token_succeeds_when_revoker_is_audience(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_token_succeeds_when_revoker_is_audience(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke token succeeds when revoker is audience
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -153,10 +191,15 @@ def test_revoke_token_succeeds_when_revoker_is_audience(a_ucanmanager_instance_i
     pass
 
 
-def test_revocation_by_audience_has_correct_revoked_by(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revocation_by_audience_has_correct_revoked_by(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revocation by audience has correct revoked_by
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -168,10 +211,15 @@ def test_revocation_by_audience_has_correct_revoked_by(a_ucanmanager_instance_is
     pass
 
 
-def test_revoke_token_fails_when_revoker_is_neither_issuer_nor_audience(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_token_fails_when_revoker_is_neither_issuer_nor_audience(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke token fails when revoker is neither issuer nor audience
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -183,10 +231,15 @@ def test_revoke_token_fails_when_revoker_is_neither_issuer_nor_audience(a_ucanma
     pass
 
 
-def test_revoke_by_unauthorized_revoker_stores_no_revocation(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_by_unauthorized_revoker_stores_no_revocation(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke by unauthorized revoker stores no revocation
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -198,10 +251,15 @@ def test_revoke_by_unauthorized_revoker_stores_no_revocation(a_ucanmanager_insta
     pass
 
 
-def test_revoke_token_fails_when_token_not_found(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_token_fails_when_token_not_found(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke token fails when token not found
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -213,10 +271,15 @@ def test_revoke_token_fails_when_token_not_found(a_ucanmanager_instance_is_initi
     pass
 
 
-def test_revoke_token_creates_revocation_with_timestamp(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_token_creates_revocation_with_timestamp(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke token creates revocation with timestamp
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -228,10 +291,15 @@ def test_revoke_token_creates_revocation_with_timestamp(a_ucanmanager_instance_i
     pass
 
 
-def test_revocation_timestamp_is_approximately_current_time(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revocation_timestamp_is_approximately_current_time(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revocation timestamp is approximately current time
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -243,10 +311,15 @@ def test_revocation_timestamp_is_approximately_current_time(a_ucanmanager_instan
     pass
 
 
-def test_revoke_token_persists_revocation_to_storage(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_token_persists_revocation_to_storage(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke token persists revocation to storage
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -258,10 +331,15 @@ def test_revoke_token_persists_revocation_to_storage(a_ucanmanager_instance_is_i
     pass
 
 
-def test_revoke_token_prints_success_message(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_token_prints_success_message(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke token prints success message
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -273,10 +351,15 @@ def test_revoke_token_prints_success_message(a_ucanmanager_instance_is_initializ
     pass
 
 
-def test_revoke_token_allows_revoking_already_revoked_token(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_token_allows_revoking_already_revoked_token(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke token allows revoking already revoked token
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -289,10 +372,15 @@ def test_revoke_token_allows_revoking_already_revoked_token(a_ucanmanager_instan
     pass
 
 
-def test_revoke_already_revoked_token_updates_revocation(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_already_revoked_token_updates_revocation(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke already revoked token updates revocation
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -305,10 +393,15 @@ def test_revoke_already_revoked_token_updates_revocation(a_ucanmanager_instance_
     pass
 
 
-def test_revoke_token_fails_when_manager_not_initialized(a_ucanmanager_instance_is_initialized, a_token_exists_with_token_idtoken123, the_token_issuer_is_didkeyalice, the_token_audience_is_didkeybob):
+def test_revoke_token_fails_when_manager_not_initialized(
+    a_ucanmanager_instance_is_initialized,
+    a_token_exists_with_token_idtoken123,
+    the_token_issuer_is_didkeyalice,
+    the_token_audience_is_didkeybob,
+):
     """
     Scenario: Revoke token fails when manager not initialized
-    
+
     Given a UCANManager instance is initialized
     Given a token exists with token_id="token-123"
     Given the token issuer is "did:key:alice"
@@ -319,4 +412,3 @@ def test_revoke_token_fails_when_manager_not_initialized(a_ucanmanager_instance_
     """
     # TODO: Implement test
     pass
-

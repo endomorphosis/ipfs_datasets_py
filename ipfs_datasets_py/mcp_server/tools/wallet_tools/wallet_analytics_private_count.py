@@ -5,10 +5,19 @@ from typing import Any, Dict, Optional
 
 from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
 
-from ._helpers import aggregate_result_summary, default_blob_dir, default_wallet_dir, load_all, save_all
+from ._helpers import (
+    aggregate_result_summary,
+    default_blob_dir,
+    default_wallet_dir,
+    load_all,
+    save_all,
+)
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Run a private aggregate count across wallet analytics contributions.")
+@tool_metadata(
+    category="wallet_tools",
+    mcp_description="Run a private aggregate count across wallet analytics contributions.",
+)
 async def wallet_analytics_private_count(
     wallet_id: str,
     template_id: str,

@@ -12,6 +12,7 @@ Methods under test:
   - OntologyLearningAdapter.feedback_consecutive_positive()
   - OntologyLearningAdapter.feedback_gini()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -27,14 +28,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -42,6 +49,7 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
@@ -58,11 +66,13 @@ class _FakeOntology:
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -73,16 +83,21 @@ def _push_run(p, score):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(adapter, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     adapter._feedback.append(FeedbackRecord(final_score=score))
 
 
 # ── OntologyOptimizer.score_above_mean_fraction ───────────────────────────────
+
 
 class TestScoreAboveMeanFraction:
     def test_empty_returns_zero(self):
@@ -109,6 +124,7 @@ class TestScoreAboveMeanFraction:
 
 
 # ── OntologyOptimizer.history_gini ────────────────────────────────────────────
+
 
 class TestHistoryGini:
     def test_empty_returns_zero(self):
@@ -142,6 +158,7 @@ class TestHistoryGini:
 
 # ── OntologyCritic.dimension_geometric_mean ───────────────────────────────────
 
+
 class TestDimensionGeometricMean:
     def test_all_same_equals_that_value(self):
         c = _make_critic()
@@ -149,14 +166,32 @@ class TestDimensionGeometricMean:
 
     def test_all_one(self):
         c = _make_critic()
-        score = _make_score(**{d: 1.0 for d in ["completeness", "consistency", "clarity",
-                                                   "granularity", "relationship_coherence", "domain_alignment"]})
+        score = _make_score(
+            **{
+                d: 1.0
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         assert c.dimension_geometric_mean(score) == pytest.approx(1.0, rel=1e-3)
 
     def test_geom_leq_arith(self):
         c = _make_critic()
         score = _make_score(completeness=0.9, consistency=0.1)
-        dims = ["completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"]
+        dims = [
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        ]
         arith = sum(getattr(score, d) for d in dims) / 6
         assert c.dimension_geometric_mean(score) <= arith + 1e-9
 
@@ -166,6 +201,7 @@ class TestDimensionGeometricMean:
 
 
 # ── OntologyCritic.dimensions_below_count ─────────────────────────────────────
+
 
 class TestDimensionsBelowCount:
     def test_none_below(self):
@@ -179,8 +215,19 @@ class TestDimensionsBelowCount:
 
     def test_all_below(self):
         c = _make_critic()
-        score = _make_score(**{d: 0.0 for d in ["completeness", "consistency", "clarity",
-                                                   "granularity", "relationship_coherence", "domain_alignment"]})
+        score = _make_score(
+            **{
+                d: 0.0
+                for d in [
+                    "completeness",
+                    "consistency",
+                    "clarity",
+                    "granularity",
+                    "relationship_coherence",
+                    "domain_alignment",
+                ]
+            }
+        )
         assert c.dimensions_below_count(score, threshold=0.3) == 6
 
     def test_returns_int(self):
@@ -189,6 +236,7 @@ class TestDimensionsBelowCount:
 
 
 # ── LogicValidator.average_in_degree ──────────────────────────────────────────
+
 
 class TestAverageInDegree:
     def test_empty_returns_zero(self):
@@ -211,6 +259,7 @@ class TestAverageInDegree:
 
 # ── LogicValidator.average_out_degree ─────────────────────────────────────────
 
+
 class TestAverageOutDegree:
     def test_empty_returns_zero(self):
         v = _make_validator()
@@ -231,6 +280,7 @@ class TestAverageOutDegree:
 
 
 # ── OntologyPipeline.run_score_range ──────────────────────────────────────────
+
 
 class TestRunScoreRange:
     def test_no_runs_returns_zeros(self):
@@ -262,6 +312,7 @@ class TestRunScoreRange:
 
 # ── OntologyPipeline.run_score_above_mean_fraction ───────────────────────────
 
+
 class TestRunScoreAboveMeanFraction:
     def test_empty_returns_zero(self):
         p = _make_pipeline()
@@ -281,6 +332,7 @@ class TestRunScoreAboveMeanFraction:
 
 
 # ── OntologyLearningAdapter.feedback_consecutive_positive ────────────────────
+
 
 class TestFeedbackConsecutivePositive:
     def test_empty_returns_zero(self):
@@ -308,6 +360,7 @@ class TestFeedbackConsecutivePositive:
 
 
 # ── OntologyLearningAdapter.feedback_gini ────────────────────────────────────
+
 
 class TestFeedbackGini:
     def test_empty_returns_zero(self):

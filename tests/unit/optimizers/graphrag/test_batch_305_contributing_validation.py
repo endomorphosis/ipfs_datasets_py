@@ -46,22 +46,30 @@ class TestContributingFileStructure:
     def test_has_pr_guidelines_section(self) -> None:
         """Must have PR guidelines section."""
         content = CONTRIBUTING_PATH.read_text()
-        assert "## PR Guidelines" in content or "# PR Guidelines" in content, "Missing PR Guidelines"
+        assert "## PR Guidelines" in content or "# PR Guidelines" in content, (
+            "Missing PR Guidelines"
+        )
 
     def test_has_batch_commit_conventions(self) -> None:
         """Must document batch commit conventions."""
         content = CONTRIBUTING_PATH.read_text()
-        assert "## Batch Commit Conventions" in content or "Batch Commit Conventions" in content, "Missing batch conventions"
+        assert "## Batch Commit Conventions" in content or "Batch Commit Conventions" in content, (
+            "Missing batch conventions"
+        )
 
     def test_has_quality_checks_section(self) -> None:
         """Must have required quality checks section."""
         content = CONTRIBUTING_PATH.read_text()
-        assert "## Required Quality Checks" in content or "Required Quality Checks" in content, "Missing quality checks"
+        assert "## Required Quality Checks" in content or "Required Quality Checks" in content, (
+            "Missing quality checks"
+        )
 
     def test_has_api_stability_section(self) -> None:
         """Must document API stability rules."""
         content = CONTRIBUTING_PATH.read_text()
-        assert "## API Stability Rules" in content or "API Stability Rules" in content, "Missing API stability rules"
+        assert "## API Stability Rules" in content or "API Stability Rules" in content, (
+            "Missing API stability rules"
+        )
 
 
 class TestBatchNamingConventions:
@@ -70,17 +78,23 @@ class TestBatchNamingConventions:
     def test_branch_naming_convention_documented(self) -> None:
         """Branch naming pattern must be documented."""
         content = CONTRIBUTING_PATH.read_text()
-        assert "optimizers/batch-" in content or "batch-<N>" in content, "Branch naming convention not documented"
+        assert "optimizers/batch-" in content or "batch-<N>" in content, (
+            "Branch naming convention not documented"
+        )
 
     def test_commit_subject_format_documented(self) -> None:
         """Commit subject format must be documented."""
         content = CONTRIBUTING_PATH.read_text()
-        assert "optimizers(batch-" in content or "batch-<N>):" in content, "Commit subject format not documented"
+        assert "optimizers(batch-" in content or "batch-<N>):" in content, (
+            "Commit subject format not documented"
+        )
 
     def test_test_file_naming_documented(self) -> None:
         """Test file naming pattern must be documented."""
         content = CONTRIBUTING_PATH.read_text()
-        assert "test_batch_" in content and "<N>_<topic>" in content, "Test file naming not documented"
+        assert "test_batch_" in content and "<N>_<topic>" in content, (
+            "Test file naming not documented"
+        )
 
     def test_batch_number_placeholder_used(self) -> None:
         """Should use <N> or similar placeholder for batch number."""
@@ -120,7 +134,9 @@ class TestApiStabilityDocumentation:
     def test_semantic_versioning_mentioned(self) -> None:
         """Semantic versioning must be mentioned."""
         content = CONTRIBUTING_PATH.read_text()
-        assert "semantic versioning" in content.lower() or "semver" in content.lower(), "Semantic versioning not mentioned"
+        assert "semantic versioning" in content.lower() or "semver" in content.lower(), (
+            "Semantic versioning not mentioned"
+        )
 
     def test_deprecation_policy_documented(self) -> None:
         """Deprecation policy must be documented."""
@@ -135,7 +151,9 @@ class TestApiStabilityDocumentation:
     def test_removal_timeline_documented(self) -> None:
         """Removal timeline must be documented."""
         content = CONTRIBUTING_PATH.read_text()
-        assert "removal" in content.lower() or "timeline" in content.lower(), "Removal timeline not documented"
+        assert "removal" in content.lower() or "timeline" in content.lower(), (
+            "Removal timeline not documented"
+        )
 
 
 class TestDocumentationRules:
@@ -149,7 +167,9 @@ class TestDocumentationRules:
     def test_changelog_update_required(self) -> None:
         """CHANGELOG.md updates must be required for API changes."""
         content = CONTRIBUTING_PATH.read_text()
-        assert "CHANGELOG.md" in content or "changelog" in content.lower(), "Changelog update not required"
+        assert "CHANGELOG.md" in content or "changelog" in content.lower(), (
+            "Changelog update not required"
+        )
 
     def test_todo_update_required(self) -> None:
         """TODO.md updates must be required."""
@@ -167,13 +187,17 @@ class TestConventionPatterns:
         pattern_match = re.search(r"optimizers/batch-<(\w+)>", content)
         if pattern_match:
             placeholder = pattern_match.group(1)
-            assert placeholder in ["N", "n", "batch_number", "number"], f"Unexpected placeholder: {placeholder}"
+            assert placeholder in ["N", "n", "batch_number", "number"], (
+                f"Unexpected placeholder: {placeholder}"
+            )
 
     def test_batch_test_file_pattern_valid(self) -> None:
         """Test file pattern should be valid."""
         content = CONTRIBUTING_PATH.read_text()
         # Look for test_batch_<N> pattern
-        assert re.search(r"test_batch_[<\{\[]?\w+[>\}\[]?_", content), "Test file pattern not properly formatted"
+        assert re.search(r"test_batch_[<\{\[]?\w+[>\}\[]?_", content), (
+            "Test file pattern not properly formatted"
+        )
 
 
 class TestContributingContentQuality:
@@ -197,11 +221,17 @@ class TestContributingContentQuality:
         for section in sections:
             # Find section position
             section_pos = content.find(section)
-            next_section_match = re.search(r"^##+ .+$", content[section_pos + len(section):], re.MULTILINE)
+            next_section_match = re.search(
+                r"^##+ .+$", content[section_pos + len(section) :], re.MULTILINE
+            )
             if next_section_match:
-                section_content = content[section_pos + len(section):section_pos + len(section) + next_section_match.start()]
+                section_content = content[
+                    section_pos + len(section) : section_pos
+                    + len(section)
+                    + next_section_match.start()
+                ]
             else:
-                section_content = content[section_pos + len(section):]
+                section_content = content[section_pos + len(section) :]
             # Strip whitespace and code blocks for length check
             stripped = re.sub(r"```[\s\S]*?```", "", section_content).strip()
             assert len(stripped) > 50, f"Section '{section}' seems too short"

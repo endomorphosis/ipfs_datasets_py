@@ -24,11 +24,13 @@ def test_successful_test_prints_green_checkmark(mock_test_function_success, capt
     """
     expected_substring = "✓"
     test_name = "test_name"
-    
+
     check(test_name, mock_test_function_success)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_successful_test_returns_true(mock_test_function_success):
@@ -46,9 +48,9 @@ def test_successful_test_returns_true(mock_test_function_success):
     """
     expected_result = True
     test_name = "test_name"
-    
+
     actual_result = check(test_name, mock_test_function_success)
-    
+
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
@@ -67,11 +69,13 @@ def test_failed_test_prints_red_x(mock_test_function_failure, captured_output):
     """
     expected_substring = "✗"
     test_name = "test_name"
-    
+
     check(test_name, mock_test_function_failure)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_failed_test_returns_false(mock_test_function_failure):
@@ -89,9 +93,9 @@ def test_failed_test_returns_false(mock_test_function_failure):
     """
     expected_result = False
     test_name = "test_name"
-    
+
     actual_result = check(test_name, mock_test_function_failure)
-    
+
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
@@ -110,11 +114,13 @@ def test_exception_prints_red_x(mock_test_function_exception, captured_output):
     """
     expected_substring = "✗"
     test_name = "test_name"
-    
+
     check(test_name, mock_test_function_exception)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_exception_prints_error_message(mock_test_function_exception, captured_output):
@@ -132,11 +138,13 @@ def test_exception_prints_error_message(mock_test_function_exception, captured_o
     """
     expected_substring = "test error"
     test_name = "test_name"
-    
+
     check(test_name, mock_test_function_exception)
-    
+
     actual_output = captured_output.getvalue()
-    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
+    assert expected_substring in actual_output, (
+        f"expected '{expected_substring}' in output, got {actual_output}"
+    )
 
 
 def test_exception_returns_false(mock_test_function_exception):
@@ -154,10 +162,7 @@ def test_exception_returns_false(mock_test_function_exception):
     """
     expected_result = False
     test_name = "test_name"
-    
+
     actual_result = check(test_name, mock_test_function_exception)
-    
+
     assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
-
-
-

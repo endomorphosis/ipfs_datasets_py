@@ -98,7 +98,9 @@ def summarize_parser_elements(elements: Iterable[Dict[str, Any]]) -> Dict[str, A
     for row in rows:
         warnings.update(str(item) for item in row.get("parser_warnings", []) if item)
         readiness = row.get("export_readiness") or {}
-        formal_targets.update(str(item) for item in readiness.get("formal_logic_targets", []) if item)
+        formal_targets.update(
+            str(item) for item in readiness.get("formal_logic_targets", []) if item
+        )
         if row.get("norm_type"):
             norm_types[str(row["norm_type"])] += 1
         if row.get("deontic_operator"):
@@ -175,9 +177,7 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         capability_profile_records
     )
     prover_summary = summarize_prover_syntax_target_coverage(prover_syntax_records)
-    prover_corpus_summary = summarize_prover_syntax_target_corpus_coverage(
-        prover_syntax_records
-    )
+    prover_corpus_summary = summarize_prover_syntax_target_corpus_coverage(prover_syntax_records)
     provenance_summary = summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
     phase8_quality_summary = (
         _summarize_phase8_quality_source_records(phase8_quality_records)
@@ -211,9 +211,7 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "phase8_decoder_ungrounded_phrase_rate": round(
             float(decoder_summary["mean_ungrounded_decoded_phrase_rate"]), 6
         ),
-        "phase8_decoder_records_with_missing_slots": decoder_summary[
-            "records_with_missing_slots"
-        ],
+        "phase8_decoder_records_with_missing_slots": decoder_summary["records_with_missing_slots"],
         "phase8_parser_capability_profile_count": capability_summary["record_count"],
         "phase8_parser_capability_family_distribution": capability_summary[
             "capability_family_distribution"
@@ -242,9 +240,7 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "phase8_prover_corpus_complete_source_count": prover_corpus_summary[
             "complete_source_count"
         ],
-        "phase8_prover_corpus_source_complete_rate": prover_corpus_summary[
-            "source_complete_rate"
-        ],
+        "phase8_prover_corpus_source_complete_rate": prover_corpus_summary["source_complete_rate"],
         "phase8_prover_corpus_formal_syntax_valid_source_rate": prover_corpus_summary[
             "formal_syntax_valid_source_rate"
         ],
@@ -254,9 +250,7 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "phase8_ir_grounded_slot_rate": provenance_summary["grounded_slot_rate"],
         "phase8_quality_record_count": quality_record_count,
         "phase8_quality_complete_count": quality_complete_count,
-        "phase8_quality_complete_rate": round(
-            quality_complete_count / quality_record_count, 6
-        )
+        "phase8_quality_complete_rate": round(quality_complete_count / quality_record_count, 6)
         if quality_record_count
         else 0.0,
         "phase8_quality_requires_validation_count": quality_requires_validation_count,
@@ -303,9 +297,7 @@ def _build_phase8_quality_records_by_source(
     decoder_by_source = _group_records_by_source(decoder_records)
     prover_by_source = _group_records_by_source(prover_syntax_records)
     provenance_by_source = _group_records_by_source(ir_slot_provenance_records)
-    source_ids = sorted(
-        set(decoder_by_source) | set(prover_by_source) | set(provenance_by_source)
-    )
+    source_ids = sorted(set(decoder_by_source) | set(prover_by_source) | set(provenance_by_source))
     return [
         build_phase8_quality_summary_record(
             source_id,
@@ -348,13 +340,9 @@ def _summarize_phase8_quality_source_records(
     return {
         "source_record_count": record_count,
         "complete_source_count": complete_count,
-        "source_complete_rate": round(complete_count / record_count, 6)
-        if record_count
-        else 0.0,
+        "source_complete_rate": round(complete_count / record_count, 6) if record_count else 0.0,
         "requires_validation_source_count": requires_validation_count,
-        "source_requires_validation_rate": round(
-            requires_validation_count / record_count, 6
-        )
+        "source_requires_validation_rate": round(requires_validation_count / record_count, 6)
         if record_count
         else 0.0,
         "phase8_quality_complete": bool(record_count and complete_count == record_count),

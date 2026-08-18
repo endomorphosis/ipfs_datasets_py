@@ -16,7 +16,15 @@ from .core import (
     stop_daemon,
 )
 from .cli import build_lifecycle_arg_parser, run_lifecycle_cli
-from .specs import env_flag, env_float, env_int, env_path, env_path_in_dir, env_value, repo_root_from_env
+from .specs import (
+    env_flag,
+    env_float,
+    env_int,
+    env_path,
+    env_path_in_dir,
+    env_value,
+    repo_root_from_env,
+)
 
 
 def _env(name: str, default: str) -> str:
@@ -42,7 +50,9 @@ def logic_port_launch_env() -> Dict[str, str]:
     else:
         resolved_provider = ""
 
-    sandbox = _env("WORKTREE_CODEX_SANDBOX", _env("IPFS_DATASETS_PY_CODEX_SANDBOX", "danger-full-access"))
+    sandbox = _env(
+        "WORKTREE_CODEX_SANDBOX", _env("IPFS_DATASETS_PY_CODEX_SANDBOX", "danger-full-access")
+    )
     return {
         "MODEL_NAME": _env("MODEL_NAME", DEFAULT_CODEX_MODEL),
         "LOGIC_PORT_PROVIDER": provider,
@@ -62,8 +72,12 @@ def logic_port_launch_env() -> Dict[str, str]:
             "SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE",
             "1",
         ),
-        "IPFS_DATASETS_PY_CODEX_SANDBOX": _env("IPFS_DATASETS_PY_CODEX_SANDBOX", "danger-full-access"),
-        "IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE": _env("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE", "0"),
+        "IPFS_DATASETS_PY_CODEX_SANDBOX": _env(
+            "IPFS_DATASETS_PY_CODEX_SANDBOX", "danger-full-access"
+        ),
+        "IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE": _env(
+            "IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE", "0"
+        ),
     }
 
 
@@ -79,7 +93,9 @@ def build_logic_port_spec(repo_root: Optional[str] = None) -> ManagedDaemonSpec:
         daemon_dir=daemon_dir,
         runner=("bash", "ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh"),
         status_path=status_path,
-        progress_path=env_path_in_dir("PROGRESS_PATH", daemon_dir, "logic-port-daemon.progress.json"),
+        progress_path=env_path_in_dir(
+            "PROGRESS_PATH", daemon_dir, "logic-port-daemon.progress.json"
+        ),
         result_log_path=env_path_in_dir("RESULT_LOG_PATH", daemon_dir, "logic-port-daemon.jsonl"),
         supervisor_status_path=env_path_in_dir(
             "SUPERVISOR_STATUS_PATH",
@@ -97,8 +113,12 @@ def build_logic_port_spec(repo_root: Optional[str] = None) -> ManagedDaemonSpec:
             daemon_dir,
             "logic-port-daemon-supervisor.out",
         ),
-        ensure_status_path=env_path_in_dir("ENSURE_STATUS_PATH", daemon_dir, "logic-port-daemon-ensure.status.json"),
-        ensure_check_path=env_path_in_dir("CHECK_LOG_PATH", daemon_dir, "logic-port-daemon-ensure-check.json"),
+        ensure_status_path=env_path_in_dir(
+            "ENSURE_STATUS_PATH", daemon_dir, "logic-port-daemon-ensure.status.json"
+        ),
+        ensure_check_path=env_path_in_dir(
+            "CHECK_LOG_PATH", daemon_dir, "logic-port-daemon-ensure-check.json"
+        ),
         supervisor_lock_path=env_path_in_dir(
             "SUPERVISOR_LOCK_PATH",
             daemon_dir,
@@ -109,7 +129,9 @@ def build_logic_port_spec(repo_root: Optional[str] = None) -> ManagedDaemonSpec:
             daemon_dir,
             "logic-port-daemon-supervisor.latest.log",
         ),
-        task_board_path=env_path("TASK_BOARD_PATH", "docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md"),
+        task_board_path=env_path(
+            "TASK_BOARD_PATH", "docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md"
+        ),
         tmux_session_name=_env("TMUX_SESSION_NAME", "logic-port-daemon"),
         worktree_root=worktree_root,
         daemon_process_match_all=(

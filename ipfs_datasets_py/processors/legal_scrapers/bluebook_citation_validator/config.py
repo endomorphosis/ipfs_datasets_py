@@ -32,7 +32,9 @@ class ValidatorConfig:
     citation_dir: Path = field(default_factory=lambda: Path("./citations"))
     document_dir: Path = field(default_factory=lambda: Path("./documents"))
     error_db_path: Path = field(default_factory=lambda: Path("bluebook_errors.duckdb"))
-    error_report_db_path: Path = field(default_factory=lambda: Path("bluebook_error_reports.duckdb"))
+    error_report_db_path: Path = field(
+        default_factory=lambda: Path("bluebook_error_reports.duckdb")
+    )
     output_dir: Path = field(default_factory=lambda: Path("./reports"))
     random_seed: int = 420
     insert_batch_size: int = 5000
@@ -46,8 +48,13 @@ class ValidatorConfig:
 
     def __post_init__(self) -> None:
         # Coerce strings → Path objects to be forgiving of CLI usage.
-        for attr in ("citation_dir", "document_dir", "error_db_path",
-                     "error_report_db_path", "output_dir"):
+        for attr in (
+            "citation_dir",
+            "document_dir",
+            "error_db_path",
+            "error_report_db_path",
+            "output_dir",
+        ):
             value = getattr(self, attr)
             if not isinstance(value, Path):
                 object.__setattr__(self, attr, Path(value))

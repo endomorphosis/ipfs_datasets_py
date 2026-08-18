@@ -3,6 +3,7 @@
 DEMONSTRATION: Migrated Development Tools Working
 This script demonstrates that all migrated tools are functional
 """
+
 import os
 import sys
 
@@ -13,25 +14,25 @@ print("=" * 50)
 tools_dir = "./ipfs_datasets_py/mcp_server/tools/development_tools/"
 if os.path.exists(tools_dir):
     print(f"✅ Development tools directory exists: {tools_dir}")
-    
+
     # List all migrated tools
     tools = [
         "base_tool.py",
-        "test_generator.py", 
+        "test_generator.py",
         "documentation_generator.py",
         "codebase_search.py",
         "linting_tools.py",
-        "test_runner.py"
+        "test_runner.py",
     ]
-    
+
     print("\n📋 MIGRATED TOOLS VERIFICATION:")
     for tool in tools:
         tool_path = os.path.join(tools_dir, tool)
         if os.path.exists(tool_path):
             print(f"✅ {tool}")
-            
+
             # Check if it has the correct class structure
-            with open(tool_path, 'r') as f:
+            with open(tool_path, "r") as f:
                 content = f.read()
                 if "class " in content and "BaseTool" in content:
                     print(f"   └─ ✅ Proper class inheritance structure")
@@ -52,9 +53,9 @@ else:
 config_py = "./ipfs_datasets_py/config.py"
 if os.path.exists(config_py):
     print(f"✅ Config module exists: {config_py}")
-    
+
     # Check for the fixes we applied
-    with open(config_py, 'r') as f:
+    with open(config_py, "r") as f:
         content = f.read()
         if "os.path.dirname" in content:
             print(f"   └─ ✅ Path bug fixed (os.path.dirname)")
@@ -67,10 +68,10 @@ else:
 print(f"\n📊 MIGRATION MAPPING:")
 migration_map = {
     "test_generator": "generate_unittest_test_files_from_json_spec",
-    "documentation_generator": "generate_documentation_from_python_code", 
+    "documentation_generator": "generate_documentation_from_python_code",
     "codebase_search": "codebase_search (advanced pattern matching)",
     "linting_tools": "lint_a_python_codebase",
-    "test_runner": "run_tests_and_save_their_results"
+    "test_runner": "run_tests_and_save_their_results",
 }
 
 for new_name, old_name in migration_map.items():
@@ -86,7 +87,7 @@ print(f"✅ Import system issues identified and resolved")
 
 print(f"\n🚀 READY FOR:")
 print(f"✅ Direct tool usage")
-print(f"✅ MCP server integration") 
+print(f"✅ MCP server integration")
 print(f"✅ VS Code Copilot Chat integration")
 print(f"✅ Production development workflows")
 

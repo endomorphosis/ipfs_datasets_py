@@ -8,7 +8,10 @@ import fitz
 import pytest
 
 from ipfs_datasets_py.processors.graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph
-from ipfs_datasets_py.processors.specialized.pdf.pdf_processor import PDFProcessor, _instantiate_graphrag_integrator
+from ipfs_datasets_py.processors.specialized.pdf.pdf_processor import (
+    PDFProcessor,
+    _instantiate_graphrag_integrator,
+)
 
 
 @pytest.mark.asyncio
@@ -93,7 +96,9 @@ async def test_extract_page_content_tolerates_drawings_without_bbox() -> None:
     processor.logger = Mock()
 
     try:
-        with patch.object(type(page), "get_drawings", return_value=[{"type": "stroke", "items": [1, 2, 3]}]):
+        with patch.object(
+            type(page), "get_drawings", return_value=[{"type": "stroke", "items": [1, 2, 3]}]
+        ):
             page_content = await PDFProcessor._extract_page_content(processor, page, 0)
     finally:
         doc.close()

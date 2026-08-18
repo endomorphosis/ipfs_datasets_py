@@ -65,9 +65,7 @@ class FixedConstructor:
     identity = "FixedCanonicalConstructor@1"
 
     def __init__(self, result: ConstructorResult | None = None) -> None:
-        self.result = result or ConstructorResult(
-            ComponentStatus.SUCCESS, canonical_ir=BASELINE_IR
-        )
+        self.result = result or ConstructorResult(ComponentStatus.SUCCESS, canonical_ir=BASELINE_IR)
         self.requests: list[ConstructorRequest] = []
 
     def construct(self, request: ConstructorRequest) -> ConstructorResult:
@@ -91,12 +89,8 @@ def frozen_guidance(
         state_cid=PINNED_AUTOENCODER_STATE_CID,
         state_sha256=PINNED_AUTOENCODER_STATE_SHA256,
         state_schema=PINNED_AUTOENCODER_STATE_SCHEMA,
-        declared_architecture=(
-            PINNED_AUTOENCODER_DECLARED_ARCHITECTURE
-        ),
-        effective_architecture=(
-            PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE
-        ),
+        declared_architecture=(PINNED_AUTOENCODER_DECLARED_ARCHITECTURE),
+        effective_architecture=(PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE),
         stable_export=stable_export
         or {
             "export_id": "stable-export-1",
@@ -143,9 +137,7 @@ def test_paired_arms_share_base_state_pin_and_common_realizers() -> None:
     )
     assert PINNED_AUTOENCODER_STATE_CID in pair.guidance.identity
     assert PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE in pair.guidance.identity
-    assert pair.guidance.identity.startswith(
-        AUTOENCODER_GUIDED_CANONICAL_CONSTRUCTOR_INTERFACE
-    )
+    assert pair.guidance.identity.startswith(AUTOENCODER_GUIDED_CANONICAL_CONSTRUCTOR_INTERFACE)
     assert isinstance(pair.guidance, RoundTripConstructor)
     assert loader_calls == []
 
@@ -167,15 +159,11 @@ def test_no_guidance_arm_returns_exact_baseline_without_loading_state() -> None:
     construction = constructor.construct_with_diagnostics(request())
 
     assert construction.result.canonical_ir is BASELINE_IR
-    assert construction.diagnostics.composition_status is (
-        AutoencoderCompositionStatus.NO_GUIDANCE
-    )
+    assert construction.diagnostics.composition_status is (AutoencoderCompositionStatus.NO_GUIDANCE)
     assert construction.diagnostics.changed_fields == ()
     assert construction.diagnostics.field_changes == ()
     assert construction.diagnostics.sample_memory_used is False
-    assert (
-        construction.diagnostics.target_embedding_selection_used is False
-    )
+    assert construction.diagnostics.target_embedding_selection_used is False
     assert calls == []
 
 
@@ -216,9 +204,7 @@ def test_guidance_arm_records_exact_canonical_field_changes() -> None:
     assert construction.result.status is ComponentStatus.SUCCESS
     assert construction.result.canonical_ir is not None
     assert construction.result.canonical_ir.rules[0].modality == "F"
-    assert construction.diagnostics.composition_status is (
-        AutoencoderCompositionStatus.APPLIED
-    )
+    assert construction.diagnostics.composition_status is (AutoencoderCompositionStatus.APPLIED)
     assert construction.diagnostics.composition_supported is True
     assert construction.diagnostics.canonical_l1_changed is True
     assert construction.diagnostics.changed_fields == (
@@ -248,15 +234,9 @@ def test_default_guidance_arm_reports_unsupported_causal_composition() -> None:
     construction = constructor.construct_with_diagnostics(request())
 
     assert construction.result.status is ComponentStatus.FAILED
-    assert construction.result.failure_reason is (
-        FailureReason.CAPABILITY_UNAVAILABLE
-    )
-    assert "unsupported composition" in (
-        construction.result.failure_detail or ""
-    )
-    assert construction.diagnostics.composition_status is (
-        AutoencoderCompositionStatus.UNSUPPORTED
-    )
+    assert construction.result.failure_reason is (FailureReason.CAPABILITY_UNAVAILABLE)
+    assert "unsupported composition" in (construction.result.failure_detail or "")
+    assert construction.diagnostics.composition_status is (AutoencoderCompositionStatus.UNSUPPORTED)
     assert construction.diagnostics.composition_supported is False
     assert construction.diagnostics.changed_fields == ()
 
@@ -265,24 +245,16 @@ def test_applicator_can_explicitly_report_unsupported_composition() -> None:
     constructor = AutoencoderGuidedCanonicalConstructor(
         FixedConstructor(),
         guidance_applicator=lambda baseline, vocabulary, guidance: (
-            CausalGuidanceApplication.unsupported(
-                "stable features are annotations only"
-            )
+            CausalGuidanceApplication.unsupported("stable features are annotations only")
         ),
         guidance_loader=lambda path: frozen_guidance(),
     )
 
     construction = constructor.construct_with_diagnostics(request())
 
-    assert construction.result.failure_reason is (
-        FailureReason.CAPABILITY_UNAVAILABLE
-    )
-    assert construction.diagnostics.composition_status is (
-        AutoencoderCompositionStatus.UNSUPPORTED
-    )
-    assert "annotations only" in (
-        construction.result.failure_detail or ""
-    )
+    assert construction.result.failure_reason is (FailureReason.CAPABILITY_UNAVAILABLE)
+    assert construction.diagnostics.composition_status is (AutoencoderCompositionStatus.UNSUPPORTED)
+    assert "annotations only" in (construction.result.failure_detail or "")
 
 
 @pytest.mark.parametrize(
@@ -354,9 +326,7 @@ def test_guided_output_must_remain_nonempty_and_in_vocabulary() -> None:
     ).construct_with_diagnostics(request())
     empty = AutoencoderGuidedCanonicalConstructor(
         FixedConstructor(),
-        guidance_applicator=lambda baseline, vocabulary, guidance: (
-            CanonicalRuleIR(())
-        ),
+        guidance_applicator=lambda baseline, vocabulary, guidance: CanonicalRuleIR(()),
         guidance_loader=lambda path: frozen_guidance(),
     ).construct_with_diagnostics(request())
 
@@ -381,9 +351,7 @@ def test_base_failure_is_preserved_and_guidance_is_not_loaded() -> None:
     construction = constructor.construct_with_diagnostics(request())
 
     assert construction.result is failed
-    assert construction.diagnostics.composition_status is (
-        AutoencoderCompositionStatus.FAILED
-    )
+    assert construction.diagnostics.composition_status is (AutoencoderCompositionStatus.FAILED)
 
 
 def test_state_identity_failure_is_an_explicit_capability_outcome() -> None:
@@ -396,12 +364,8 @@ def test_state_identity_failure_is_an_explicit_capability_outcome() -> None:
         guidance_loader=unavailable,
     ).construct_with_diagnostics(request())
 
-    assert construction.result.failure_reason is (
-        FailureReason.CAPABILITY_UNAVAILABLE
-    )
-    assert "guidance unavailable" in (
-        construction.result.failure_detail or ""
-    )
+    assert construction.result.failure_reason is (FailureReason.CAPABILITY_UNAVAILABLE)
+    assert "guidance unavailable" in (construction.result.failure_detail or "")
     assert construction.diagnostics.field_changes == ()
 
 

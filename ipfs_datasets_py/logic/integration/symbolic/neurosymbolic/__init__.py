@@ -21,9 +21,9 @@ from .embedding_prover import EmbeddingEnhancedProver
 from .hybrid_confidence import HybridConfidenceScorer
 
 __all__ = [
-    'NeuralSymbolicCoordinator',
-    'EmbeddingEnhancedProver',
-    'HybridConfidenceScorer',
+    "NeuralSymbolicCoordinator",
+    "EmbeddingEnhancedProver",
+    "HybridConfidenceScorer",
 ]
 
-__version__ = '0.3.0'  # Phase 3
+__version__ = "0.3.0"  # Phase 3

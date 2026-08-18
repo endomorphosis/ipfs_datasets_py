@@ -54,15 +54,12 @@ Successfully completed 50% of Session 3, creating comprehensive SearchGraphRAGAd
        backend=graph_backend,
        vector_stores={"default": vector_store},
        graph_store=graph_store,
-       llm_processor=llm
+       llm_processor=llm,
    )
-   
+
    # Old API works exactly as before
    results = adapter.hybrid_search(
-       query_embedding=embedding,
-       top_k=10,
-       max_graph_hops=2,
-       max_nodes_visited=1000
+       query_embedding=embedding, top_k=10, max_graph_hops=2, max_nodes_visited=1000
    )
    ```
 

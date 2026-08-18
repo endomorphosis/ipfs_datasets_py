@@ -427,9 +427,7 @@ class TestNormalizeSolverEvidenceProof:
         assert len(ev.proof_steps) == 5
         assert ev.unsat_core is not None
         assert ev.unsat_core.matched_premise_ids == ["premise_p_a", "premise_p_implies_q"]
-        assert any(
-            ref.target_name == "premise_p_implies_q" for ref in ev.translation_map_refs
-        )
+        assert any(ref.target_name == "premise_p_implies_q" for ref in ev.translation_map_refs)
         assert ev.premise_ids == ["premise_p_implies_q", "premise_p_a", "premise_unused"]
         assert ev.translation_ids == ["translation-1"]
 

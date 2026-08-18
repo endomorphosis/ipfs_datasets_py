@@ -1,4 +1,5 @@
 """Session 54: Tests for mcp_p2p_transport.py and dispatch_pipeline.py."""
+
 import json
 import struct
 import pytest
@@ -53,7 +54,14 @@ class TestProtocolConstants:
 class TestP2PSessionState:
     def test_enum_values(self):
         states = {s.value for s in P2PSessionState}
-        assert states == {"disconnected", "connecting", "handshaking", "active", "closing", "closed"}
+        assert states == {
+            "disconnected",
+            "connecting",
+            "handshaking",
+            "active",
+            "closing",
+            "closed",
+        }
 
     def test_active_state(self):
         assert P2PSessionState.ACTIVE.value == "active"
@@ -318,7 +326,9 @@ class TestPipelineResult:
     def test_to_dict(self):
         intent = _make_intent()
         outcome = StageOutcome(stage=PipelineStage.COMPLIANCE, passed=True, reason="ok")
-        result = PipelineResult(allowed=True, stage_outcomes=[outcome], blocking_stage=None, intent=intent)
+        result = PipelineResult(
+            allowed=True, stage_outcomes=[outcome], blocking_stage=None, intent=intent
+        )
         d = result.to_dict()
         assert d["allowed"] is True
         assert d["verdict"] == "allow"
@@ -376,7 +386,10 @@ class TestDefaultPipeline:
 class TestComplianceStage:
     def test_compliance_passes_valid_intent(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
-        cfg = PipelineConfig(enable_compliance=True, compliance_checker=make_default_compliance_checker())
+
+        cfg = PipelineConfig(
+            enable_compliance=True, compliance_checker=make_default_compliance_checker()
+        )
         p = DispatchPipeline(config=cfg)
         # valid tool name, valid actor
         result = p.check(_make_intent(tool="valid_tool", actor="alice"))
@@ -384,7 +397,10 @@ class TestComplianceStage:
 
     def test_compliance_blocks_invalid_tool_name(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
-        cfg = PipelineConfig(enable_compliance=True, compliance_checker=make_default_compliance_checker())
+
+        cfg = PipelineConfig(
+            enable_compliance=True, compliance_checker=make_default_compliance_checker()
+        )
         p = DispatchPipeline(config=cfg)
         # tool name starts with uppercase → violates convention
         result = p.check(_make_intent(tool="InvalidTool", actor="alice"))
@@ -393,14 +409,20 @@ class TestComplianceStage:
 
     def test_compliance_blocks_actor_with_spaces(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
-        cfg = PipelineConfig(enable_compliance=True, compliance_checker=make_default_compliance_checker())
+
+        cfg = PipelineConfig(
+            enable_compliance=True, compliance_checker=make_default_compliance_checker()
+        )
         p = DispatchPipeline(config=cfg)
         result = p.check(_make_intent(tool="good_tool", actor="bad actor"))
         assert result.allowed is False
 
     def test_compliance_stage_in_outcomes(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
-        cfg = PipelineConfig(enable_compliance=True, compliance_checker=make_default_compliance_checker())
+
+        cfg = PipelineConfig(
+            enable_compliance=True, compliance_checker=make_default_compliance_checker()
+        )
         p = DispatchPipeline(config=cfg)
         result = p.check(_make_intent())
         stages = [o.stage for o in result.stage_outcomes]
@@ -410,6 +432,7 @@ class TestComplianceStage:
 class TestRiskStage:
     def test_risk_passes_safe_tool(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer, make_default_risk_policy
+
         cfg = PipelineConfig(
             enable_risk=True,
             risk_scorer=RiskScorer(),
@@ -422,6 +445,7 @@ class TestRiskStage:
 
     def test_risk_blocks_high_risk_tool(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer, RiskScoringPolicy
+
         policy = RiskScoringPolicy(
             tool_risk_overrides={"dangerous_tool": 0.9},
             default_risk=0.3,
@@ -439,6 +463,7 @@ class TestRiskStage:
 
     def test_risk_stage_metadata_has_score(self):
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer, make_default_risk_policy
+
         cfg = PipelineConfig(
             enable_risk=True,
             risk_scorer=RiskScorer(),
@@ -461,6 +486,7 @@ class TestDelegationStage:
 
     def test_delegation_blocks_when_chain_empty(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationEvaluator
+
         evaluator = DelegationEvaluator()  # empty chain
         cfg = PipelineConfig(
             enable_delegation=True,
@@ -474,8 +500,11 @@ class TestDelegationStage:
 
     def test_delegation_allows_valid_chain(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import (
-            DelegationEvaluator, Delegation, Capability,
+            DelegationEvaluator,
+            Delegation,
+            Capability,
         )
+
         evaluator = DelegationEvaluator()
         cap = Capability(resource="some_tool", ability="some_tool")
         deleg = Delegation(
@@ -507,8 +536,10 @@ class TestPolicyStage:
 
     def test_policy_allows_matching_permission(self):
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            PolicyEvaluator, make_simple_permission_policy,
+            PolicyEvaluator,
+            make_simple_permission_policy,
         )
+
         policy = make_simple_permission_policy(actor="alice", action="test_tool")
         cfg = PipelineConfig(
             enable_policy=True,
@@ -521,8 +552,11 @@ class TestPolicyStage:
 
     def test_policy_denies_prohibition(self):
         from ipfs_datasets_py.mcp_server.temporal_policy import (
-            PolicyEvaluator, PolicyObject, PolicyClause,
+            PolicyEvaluator,
+            PolicyObject,
+            PolicyClause,
         )
+
         clause = PolicyClause(clause_type="prohibition", actor="alice", action="bad_tool")
         policy = PolicyObject(clauses=[clause])
         cfg = PipelineConfig(
@@ -539,6 +573,7 @@ class TestPolicyStage:
 class TestNLUCANGateStage:
     def test_nl_ucan_gate_open_by_default(self):
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import UCANPolicyGate
+
         cfg = PipelineConfig(
             enable_nl_ucan_gate=True,
             nl_ucan_gate=UCANPolicyGate(),
@@ -563,10 +598,13 @@ class TestRecordExecution:
         intent = _make_intent()
         receipt = p.record_execution(intent, None, error=ValueError("fail"))
         # On error the decision_cid contains 'error'
-        assert "error" in receipt.decision_cid or receipt.decision_cid.startswith("bafy-mock-pipeline")
+        assert "error" in receipt.decision_cid or receipt.decision_cid.startswith(
+            "bafy-mock-pipeline"
+        )
 
     def test_with_event_dag(self):
         from ipfs_datasets_py.mcp_server.event_dag import EventDAG
+
         dag = EventDAG()
         p = make_default_pipeline()
         p.attach_event_dag(dag)
@@ -591,6 +629,7 @@ class TestMultiStageIntegration:
     def test_compliance_plus_risk_both_pass(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer, make_default_risk_policy
+
         p = DispatchPipeline(
             config=PipelineConfig(
                 enable_compliance=True,
@@ -609,6 +648,7 @@ class TestMultiStageIntegration:
     def test_compliance_short_circuits_before_risk(self):
         from ipfs_datasets_py.mcp_server.compliance_checker import make_default_compliance_checker
         from ipfs_datasets_py.mcp_server.risk_scorer import RiskScorer, make_default_risk_policy
+
         p = DispatchPipeline(
             config=PipelineConfig(
                 enable_compliance=True,
@@ -624,5 +664,3 @@ class TestMultiStageIntegration:
         assert result.blocking_stage == PipelineStage.COMPLIANCE
         stages = [o.stage for o in result.stage_outcomes]
         assert PipelineStage.RISK not in stages
-
-

@@ -153,7 +153,7 @@ from ipfs_accelerate_py.github_cli.wrapper import GitHubCLI
 cli = GitHubCLI()
 
 # All CLI calls automatically use cache
-result = cli.run(['repo', 'list'])  # Cached if called again
+result = cli.run(["repo", "list"])  # Cached if called again
 ```
 
 ---

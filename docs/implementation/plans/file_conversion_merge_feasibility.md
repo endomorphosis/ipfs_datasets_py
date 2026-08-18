@@ -308,22 +308,25 @@ Result with Text
 ```python
 # Unified Interface
 class UnifiedConverter:
-    def __init__(self, backend='auto'):
-        if backend == 'omni':
+    def __init__(self, backend="auto"):
+        if backend == "omni":
             self.converter = OmniConverterAdapter()
-        elif backend == 'markitdown':
+        elif backend == "markitdown":
             self.converter = ConvertToTxtAdapter()
         else:
             self.converter = AutoSelectAdapter()
-    
+
     def convert(self, file_path, **options):
         return self.converter.convert(file_path, **options)
 
+
 # Usage
-converter = UnifiedConverter(backend='auto')
-result = converter.convert('document.pdf', 
-                          metadata=True,  # Uses omni
-                          async_mode=True) # Uses convert_to_txt
+converter = UnifiedConverter(backend="auto")
+result = converter.convert(
+    "document.pdf",
+    metadata=True,  # Uses omni
+    async_mode=True,
+)  # Uses convert_to_txt
 ```
 
 **Pros:**
@@ -360,12 +363,14 @@ result = converter.convert('document.pdf',
 
 # For rich metadata and batch processing:
 from omni_converter_mk2 import convert
-result = convert.this_file('doc.pdf', to='txt')
+
+result = convert.this_file("doc.pdf", to="txt")
 metadata = result.metadata  # Rich metadata
 
 # For async web-scale processing:
 from convert_to_txt_based_on_mime_type import FileUnit, file_converter
-file_unit = FileUnit(file_path='doc.pdf')
+
+file_unit = FileUnit(file_path="doc.pdf")
 result = await file_converter(file_unit)
 text = result.data  # Clean text
 ```
@@ -482,21 +487,21 @@ Reason: Cleaner architecture, production-ready, async-native
 ```python
 class UnifiedFileConverter:
     """Unified converter supporting both backends."""
-    
+
     async def convert(
         self,
         file_path: str | Path | HttpUrl,
         *,
-        backend: Literal['auto', 'omni', 'markitdown'] = 'auto',
+        backend: Literal["auto", "omni", "markitdown"] = "auto",
         extract_metadata: bool = False,
         normalize_text: bool = False,
         batch: bool = False,
         parallel: int = 1,
-        **options
+        **options,
     ) -> ConversionResult:
         """
         Convert file to text.
-        
+
         Backend selection:
         - 'auto': Choose based on requirements
         - 'omni': Use omni_converter (rich metadata)
@@ -521,6 +526,7 @@ async def extract_rich_metadata(file_path: Path) -> dict:
     # Adapt omni's handlers to async
     pass
 
+
 async def normalize_text_advanced(text: str) -> str:
     """Port omni's text normalization."""
     # Adapt omni's normalizer
@@ -531,14 +537,15 @@ async def normalize_text_advanced(text: str) -> str:
 ```python
 class OmniAdapter:
     """Adapter for omni_converter_mk2."""
-    
+
     async def convert(self, file_path: Path) -> FileUnit:
         # Convert sync omni to async FileUnit
         pass
 
+
 class MarkItDownAdapter:
     """Adapter for convert_to_txt_based_on_mime_type."""
-    
+
     async def convert(self, file_path: Path) -> FileUnit:
         # Already async, minimal adaptation
         pass
@@ -548,7 +555,9 @@ class MarkItDownAdapter:
 ```python
 class ConversionError(Exception):
     """Unified error type."""
+
     pass
+
 
 def unify_errors(error: Exception) -> ConversionError:
     """Convert both error types to unified format."""

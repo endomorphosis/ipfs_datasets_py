@@ -72,7 +72,7 @@ class TestCacheHitPotential:
         # Manually add entries to shared cache
         for i in range(128):  # Half of _SHARED_EVAL_CACHE_MAX (256)
             OntologyCritic._SHARED_EVAL_CACHE[f"key_{i}"] = Mock()
-        
+
         potential = critic.cache_hit_potential()
         assert abs(potential - 0.5) < 0.01  # 128/256 = 0.5
 
@@ -81,7 +81,7 @@ class TestCacheHitPotential:
         OntologyCritic.clear_shared_cache()
         for i in range(256):  # Full cache
             OntologyCritic._SHARED_EVAL_CACHE[f"key_{i}"] = Mock()
-        
+
         potential = critic.cache_hit_potential()
         assert abs(potential - 1.0) < 0.01
 
@@ -104,8 +104,10 @@ class TestScoreDimensionVariance:
 
     def test_variance_empty_score(self, critic):
         """Test variance with score having no dimensions."""
+
         class EmptyScore:
             pass
+
         mock_score = EmptyScore()
         # All will be 0.0, variance of identical values = 0.0
         result = critic.score_dimension_variance(mock_score)
@@ -127,8 +129,10 @@ class TestDimensionRange:
 
     def test_range_empty(self, critic):
         """Test range with no dimensions."""
+
         class EmptyScore:
             pass
+
         mock_score = EmptyScore()
         # All will be 0.0, so range = 0.0
         assert critic.dimension_range(mock_score) == 0.0
@@ -143,15 +147,17 @@ class TestWeakestDimension:
 
     def test_weakest_empty(self, critic):
         """Test with no dimensions."""
+
         # Create a custom object with no dimension attributes
         class EmptyScore:
             pass
+
         # Override getattr on the instance to properly handle missing attribs
         mock_score = EmptyScore()
         # Method should handle None by defaulting to 0.0, returning first dimension
         result = critic.weakest_dimension(mock_score)
         # All dimensions will be 0.0, so it returns the first one
-        assert result in critic._DIMENSIONS 
+        assert result in critic._DIMENSIONS
 
 
 class TestStrongestDimension:
@@ -163,8 +169,10 @@ class TestStrongestDimension:
 
     def test_strongest_empty(self, critic):
         """Test with no dimensions."""
+
         class EmptyScore:
             pass
+
         mock_score = EmptyScore()
         result = critic.strongest_dimension(mock_score)
         # All dimensions will be 0.0 (default), returns the first/any one
@@ -238,8 +246,10 @@ class TestOverallVsBestDimension:
 
     def test_overall_vs_best_empty(self, critic):
         """Test with no dimensions."""
+
         class EmptyScore:
             overall = 0.5
+
         mock_score = EmptyScore()
         # overall - max(0.0, 0.0,...) = 0.5 - 0.0 = 0.5
         assert critic.overall_vs_best_dimension(mock_score) == 0.5
@@ -320,7 +330,7 @@ class TestBatch202Integration:
         range_val = critic.dimension_range(imbalanced_score)
         variance = critic.score_dimension_variance(imbalanced_score)
         balance = critic.score_balance_ratio(imbalanced_score)
-        
+
         assert weakest == "consistency"
         assert strongest == "completeness"
         assert range_val > 0.5
@@ -332,7 +342,7 @@ class TestBatch202Integration:
         OntologyCritic.clear_shared_cache()
         cache_util = critic.cache_hit_potential()
         rec_density = critic.recommendation_density(imbalanced_score)
-        
+
         assert cache_util == 0.0  # Empty cache
         assert rec_density == 1.0  # 3 recs / (2 weak + 1)
 

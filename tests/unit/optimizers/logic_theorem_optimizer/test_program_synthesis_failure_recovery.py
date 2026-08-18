@@ -38,9 +38,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.program_synthesis_failu
             FailureCategory.MALFORMED_RESPONSE,
         ),
         (
-            FailureObservation(
-                task_id="empty", patch_status="awaiting_codex_changes", patch=""
-            ),
+            FailureObservation(task_id="empty", patch_status="awaiting_codex_changes", patch=""),
             FailureCategory.EMPTY_PATCH,
         ),
         (
@@ -49,14 +47,17 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.program_synthesis_failu
         ),
         (
             FailureObservation(
-                task_id="stale", base_revision="old", current_revision="new",
+                task_id="stale",
+                base_revision="old",
+                current_revision="new",
                 message="git apply failed",
             ),
             FailureCategory.STALE_BASE,
         ),
         (
             FailureObservation(
-                task_id="scope", changed_files=("private/secret.py",),
+                task_id="scope",
+                changed_files=("private/secret.py",),
                 allowed_paths=("src/",),
             ),
             FailureCategory.SCOPE_VIOLATION,
@@ -92,19 +93,24 @@ def test_classifier_precedence_fails_closed_for_scope_metric_and_stale_base() ->
 
     scope = classifier.classify(
         FailureObservation(
-            task_id="scope-first", exec_status="timeout",
-            changed_files=("unowned.py",), allowed_paths=("owned/**",),
+            task_id="scope-first",
+            exec_status="timeout",
+            changed_files=("unowned.py",),
+            allowed_paths=("owned/**",),
         )
     )
     metric = classifier.classify(
         FailureObservation(
-            task_id="metric-first", metric_status="regressed",
+            task_id="metric-first",
+            metric_status="regressed",
             validation_status="failed",
         )
     )
     stale = classifier.classify(
         FailureObservation(
-            task_id="stale-first", base_revision="a", current_revision="b",
+            task_id="stale-first",
+            base_revision="a",
+            current_revision="b",
             apply_status="failed",
         )
     )
@@ -173,7 +179,9 @@ def test_category_retry_is_bounded_and_every_attempt_preserves_evidence(tmp_path
         max_same_fingerprint=10,
     )
     observation = FailureObservation(
-        task_id="timeout-task", scope="tdfol", exec_status="timeout",
+        task_id="timeout-task",
+        scope="tdfol",
+        exec_status="timeout",
         message="provider timeout",
     )
 
@@ -193,8 +201,7 @@ def test_category_retry_is_bounded_and_every_attempt_preserves_evidence(tmp_path
     evidence_files = sorted((tmp_path / "evidence").rglob("*.json"))
     assert len(evidence_files) == 3
     assert all(
-        json.loads(path.read_text())["classification"]["transient"]
-        for path in evidence_files
+        json.loads(path.read_text())["classification"]["transient"] for path in evidence_files
     )
 
 
@@ -242,9 +249,7 @@ def test_failed_rebase_falls_back_to_rescue(tmp_path: Path) -> None:
     )
 
     outcome = recovery.handle(
-        FailureObservation(
-            task_id="fallback", base_revision="old", current_revision="head"
-        )
+        FailureObservation(task_id="fallback", base_revision="old", current_revision="head")
     )
 
     assert actions == ["rebase", "rescue"]
@@ -259,9 +264,13 @@ def test_failed_evidence_copies_artifacts_before_recovery(tmp_path: Path) -> Non
     store = FailureEvidenceStore(tmp_path / "evidence")
     classifier = ProgramSynthesisFailureClassifier()
     observation = FailureObservation(
-        task_id="artifact-task", scope="kg", exception=ConnectionError("reset"),
-        patch="diff --git a/a.py b/a.py\n", response={"bad": "partial"},
-        artifacts=(log,), evidence={"packet": "packet-1"},
+        task_id="artifact-task",
+        scope="kg",
+        exception=ConnectionError("reset"),
+        patch="diff --git a/a.py b/a.py\n",
+        response={"bad": "partial"},
+        artifacts=(log,),
+        evidence={"packet": "packet-1"},
     )
 
     evidence_path = store.preserve(observation, classifier.classify(observation), sequence=1)
@@ -322,9 +331,7 @@ def test_terminal_failures_never_invoke_mutating_operations(tmp_path: Path, cate
     )
     recovery = ProgramSynthesisFailureRecovery(tmp_path / "evidence", operations=operations)
 
-    outcome = recovery.handle(
-        FailureObservation(task_id=category.value, category_hint=category)
-    )
+    outcome = recovery.handle(FailureObservation(task_id=category.value, category_hint=category))
 
     assert outcome.status is RecoveryStatus.TERMINAL
     assert outcome.reason == "non_retryable_category"
@@ -337,9 +344,7 @@ def test_supervisor_interruption_preserves_without_restart(tmp_path: Path) -> No
         operations=RecoveryOperations(retry=lambda context: pytest.fail("must not restart")),
     )
 
-    outcome = recovery.handle(
-        FailureObservation(task_id="shutdown", supervisor_interrupted=True)
-    )
+    outcome = recovery.handle(FailureObservation(task_id="shutdown", supervisor_interrupted=True))
 
     assert outcome.status is RecoveryStatus.INTERRUPTED
     assert outcome.terminal is False
@@ -362,9 +367,7 @@ def test_scoped_report_separates_transient_and_terminal_rates(tmp_path: Path) ->
             task_id="b", scope="compiler", category_hint=FailureCategory.METRIC_REGRESSION
         )
     )
-    recovery.handle(
-        FailureObservation(task_id="c", scope="kg", validation_status="failed")
-    )
+    recovery.handle(FailureObservation(task_id="c", scope="kg", validation_status="failed"))
     report = recovery.failure_rate_report()
 
     compiler = report["scopes"]["compiler"]

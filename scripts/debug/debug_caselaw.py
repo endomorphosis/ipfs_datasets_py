@@ -12,14 +12,14 @@ def main():
     app.testing = True
     client = app.test_client()
     try:
-        resp = client.get('/mcp/caselaw')
-        print('Status:', resp.status)
-        print('Data head:', resp.data[:500])
+        resp = client.get("/mcp/caselaw")
+        print("Status:", resp.status)
+        print("Data head:", resp.data[:500])
     except Exception:
-        print('Exception during GET /mcp/caselaw:')
+        print("Exception during GET /mcp/caselaw:")
         traceback.print_exc()
         raise
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

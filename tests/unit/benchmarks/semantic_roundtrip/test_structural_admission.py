@@ -266,9 +266,7 @@ def test_local_constraint_reject_without_tool_invocation() -> None:
     assert vacuous.check_receipts == ()
     assert "vacuous" in (vacuous.detail or "")
 
-    cardinality = gate.admit(
-        PRIOR, EXTRA_RULE, allowed_field_paths=(OBJECT_PATH,)
-    )
+    cardinality = gate.admit(PRIOR, EXTRA_RULE, allowed_field_paths=(OBJECT_PATH,))
     assert cardinality.disposition is AdmissionDisposition.VALIDATOR_REJECT
     assert cardinality.admitted_l1 == PRIOR
     assert "cardinality" in (cardinality.detail or "")
@@ -338,9 +336,7 @@ def test_hybrid_entry_point_accept_and_reject() -> None:
 
 
 def test_metrics_include_reject_rate_and_accepted_repair_delta() -> None:
-    accept = _both_pass().admit(
-        PRIOR, CANDIDATE, allowed_field_paths=(OBJECT_PATH,)
-    )
+    accept = _both_pass().admit(PRIOR, CANDIDATE, allowed_field_paths=(OBJECT_PATH,))
     reject = StructuralAdmissionGate(
         StructuralAdmissionPolicy(tools=(StructuralTool.HAMMER_CVC5,)),
         validators=(
@@ -365,9 +361,7 @@ def test_metrics_include_reject_rate_and_accepted_repair_delta() -> None:
     ).admit(PRIOR, CANDIDATE, allowed_field_paths=(OBJECT_PATH,))
     n_a = _lean_pass().admit(PRIOR, None)
 
-    metrics = aggregate_structural_admission_metrics(
-        (accept, reject, timeout, n_a)
-    )
+    metrics = aggregate_structural_admission_metrics((accept, reject, timeout, n_a))
     assert metrics.attempts == 4
     assert metrics.accepted == 1
     assert metrics.rejected == 2
@@ -390,9 +384,7 @@ def test_metrics_include_reject_rate_and_accepted_repair_delta() -> None:
 def test_proof_pass_is_not_end_to_end_loss_by_itself() -> None:
     """A structural pass must not be treated as lower end-to-end loss."""
 
-    result = _both_pass().admit(
-        PRIOR, CANDIDATE, allowed_field_paths=(OBJECT_PATH,)
-    )
+    result = _both_pass().admit(PRIOR, CANDIDATE, allowed_field_paths=(OBJECT_PATH,))
     assert result.disposition is AdmissionDisposition.ACCEPTED
     assert all(receipt.passed for receipt in result.check_receipts)
     # Explicit contract: no end-to-end loss field is derived from proof pass.
@@ -421,9 +413,7 @@ def test_local_constraints_only_gate_can_accept() -> None:
         StructuralAdmissionPolicy(tools=(StructuralTool.HAMMER_CVC5,)),
         validators=(),
     )
-    result = gate.admit(
-        PRIOR, CANDIDATE, allowed_field_paths=(OBJECT_PATH,)
-    )
+    result = gate.admit(PRIOR, CANDIDATE, allowed_field_paths=(OBJECT_PATH,))
     assert result.disposition is AdmissionDisposition.ACCEPTED
     assert result.admitted_l1 == CANDIDATE
     assert result.check_receipts == ()
@@ -437,9 +427,7 @@ def test_policy_rejects_invalid_configuration() -> None:
     with pytest.raises(StructuralAdmissionError):
         StructuralAdmissionPolicy(tools=())
     with pytest.raises(StructuralAdmissionError):
-        StructuralAdmissionPolicy(
-            structural_constraints=("not_a_real_constraint",)
-        )
+        StructuralAdmissionPolicy(structural_constraints=("not_a_real_constraint",))
 
 
 def test_gate_requires_policy_tool_coverage() -> None:

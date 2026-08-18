@@ -154,8 +154,8 @@ class VectorSimilarityCalculator:
         """
         Calculate Euclidean distance between two vectors in n-dimensional space.
 
-        Computes the straight-line distance between two points represented as vectors. 
-        This metric provides an absolute measure of separation between vectors, 
+        Computes the straight-line distance between two points represented as vectors.
+        This metric provides an absolute measure of separation between vectors,
         with larger values indicating greater dissimilarity.
 
         Args:
@@ -192,7 +192,9 @@ class VectorSimilarityCalculator:
             logger.error(f"Euclidean distance calculation failed: {e}")
             return 0.0
 
-    def batch_similarity(self, vectors: List[List[float]], query_vector: List[float]) -> List[float]:
+    def batch_similarity(
+        self, vectors: List[List[float]], query_vector: List[float]
+    ) -> List[float]:
         """
         Calculate cosine similarities between a query vector and multiple target vectors.
 
@@ -225,7 +227,9 @@ class VectorSimilarityCalculator:
             similarities.append(sim)
         return similarities
 
-    def find_most_similar(self, vectors: Dict[str, List[float]], query_vector: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
+    def find_most_similar(
+        self, vectors: Dict[str, List[float]], query_vector: List[float], top_k: int = 5
+    ) -> List[Dict[str, Any]]:
         """
         Find and rank the most similar vectors to a query vector with top-k results.
 
@@ -263,6 +267,7 @@ class VectorSimilarityCalculator:
         # Sort by similarity (descending)
         similarities.sort(key=lambda x: x["similarity"], reverse=True)
         return similarities[:top_k]
+
 
 class VectorStore:
     """
@@ -353,7 +358,9 @@ class VectorStore:
         self.vectors = {}
         self.metadata = {}
 
-    def add_vector(self, vector_id: str, vector: List[float], metadata: Optional[Dict] = None) -> Dict[str, Any]:
+    def add_vector(
+        self, vector_id: str, vector: List[float], metadata: Optional[Dict] = None
+    ) -> Dict[str, Any]:
         """
         Add a vector to the store with optional metadata and dimension validation.
 
@@ -395,7 +402,10 @@ class VectorStore:
         """
         try:
             if len(vector) != self.dimension:
-                return {"status": "error", "message": f"Vector dimension mismatch. Expected {self.dimension}, got {len(vector)}"}
+                return {
+                    "status": "error",
+                    "message": f"Vector dimension mismatch. Expected {self.dimension}, got {len(vector)}",
+                }
 
             self.vectors[vector_id] = np.array(vector)
             self.metadata[vector_id] = metadata or {}
@@ -449,11 +459,13 @@ class VectorStore:
 
             for vector_id, vector in self.vectors.items():
                 similarity = calculator.cosine_similarity(query_vector, vector.tolist())
-                similarities.append({
-                    "id": vector_id,
-                    "similarity": similarity,
-                    "metadata": self.metadata.get(vector_id, {})
-                })
+                similarities.append(
+                    {
+                        "id": vector_id,
+                        "similarity": similarity,
+                        "metadata": self.metadata.get(vector_id, {}),
+                    }
+                )
 
             # Sort by similarity (descending) and return top_k
             similarities.sort(key=lambda x: x["similarity"], reverse=True)
@@ -461,6 +473,7 @@ class VectorStore:
         except Exception as e:
             logger.error(f"Vector search failed: {e}")
             return []
+
 
 # Utility functions
 def create_vector_store(dimension: int = 768) -> VectorStore:
@@ -493,6 +506,7 @@ def create_vector_store(dimension: int = 768) -> VectorStore:
         768
     """
     return VectorStore(dimension)
+
 
 def calculate_similarity(vector1: List[float], vector2: List[float]) -> float:
     """

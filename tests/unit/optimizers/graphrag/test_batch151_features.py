@@ -6,12 +6,14 @@ Methods under test:
   - OntologyCritic.critic_dimension_rank(score)
   - LogicValidator.relationship_type_distribution(ontology)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -26,7 +28,10 @@ def _push_opt(o, avg):
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
@@ -38,9 +43,14 @@ def _push_feedback(a, score):
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -48,17 +58,20 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.history_stability
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryStability:
     @pytest.mark.parametrize(
@@ -92,6 +105,7 @@ class TestHistoryStability:
 # OntologyLearningAdapter.feedback_kurtosis
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackKurtosis:
     @pytest.mark.parametrize(
         "scores,predicate",
@@ -114,23 +128,30 @@ class TestFeedbackKurtosis:
 # OntologyCritic.critic_dimension_rank
 # ---------------------------------------------------------------------------
 
+
 class TestCriticDimensionRank:
     @pytest.mark.parametrize(
         "score,predicate",
         [
             (_make_score(), lambda rank: len(rank) == 6),
-            (_make_score(completeness=0.1, consistency=0.9), lambda rank: rank[0] == "completeness"),
+            (
+                _make_score(completeness=0.1, consistency=0.9),
+                lambda rank: rank[0] == "completeness",
+            ),
             (_make_score(domain_alignment=0.95), lambda rank: rank[-1] == "domain_alignment"),
             (
                 _make_score(),
-                lambda rank: set(rank) == {
-                    "completeness",
-                    "consistency",
-                    "clarity",
-                    "granularity",
-                    "relationship_coherence",
-                    "domain_alignment",
-                },
+                lambda rank: (
+                    set(rank)
+                    == {
+                        "completeness",
+                        "consistency",
+                        "clarity",
+                        "granularity",
+                        "relationship_coherence",
+                        "domain_alignment",
+                    }
+                ),
             ),
         ],
     )
@@ -157,6 +178,7 @@ class TestCriticDimensionRank:
 # ---------------------------------------------------------------------------
 # LogicValidator.relationship_type_distribution
 # ---------------------------------------------------------------------------
+
 
 class TestRelationshipTypeDistribution:
     @pytest.mark.parametrize(

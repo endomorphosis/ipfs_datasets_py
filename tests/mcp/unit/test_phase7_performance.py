@@ -18,6 +18,7 @@ import pytest
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
+
 def _make_category_with_tool():
     """Return a pre-populated ToolCategory with one synchronous tool."""
     from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import ToolCategory
@@ -41,6 +42,7 @@ def _make_category_with_tool():
 
 
 # ─── ToolCategory schema caching ──────────────────────────────────────────────
+
 
 class TestToolCategorySchemaCaching:
     """Tests for Phase 7 schema-result caching in ToolCategory."""
@@ -158,11 +160,13 @@ class TestToolCategorySchemaCaching:
 
 # ─── P2PServiceManager connection pooling ─────────────────────────────────────
 
+
 class TestP2PConnectionPool:
     """Tests for Phase 7 P2P connection pooling in P2PServiceManager."""
 
     def _mgr(self, **kw):
         from ipfs_datasets_py.mcp_server.p2p_service_manager import P2PServiceManager
+
         return P2PServiceManager(enabled=False, **kw)
 
     def test_initial_pool_stats_are_zero(self):
@@ -229,6 +233,7 @@ class TestP2PConnectionPool:
         """
         # GIVEN
         from ipfs_datasets_py.mcp_server.p2p_service_manager import P2PServiceManager
+
         mgr = P2PServiceManager(enabled=False)
         mgr._pool_max_size = 2
 

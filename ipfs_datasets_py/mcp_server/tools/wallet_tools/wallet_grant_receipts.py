@@ -8,7 +8,9 @@ from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
 from ._helpers import default_blob_dir, default_wallet_dir, load
 
 
-@tool_metadata(category="wallet_tools", mcp_description="List wallet grant receipts visible to a recipient.")
+@tool_metadata(
+    category="wallet_tools", mcp_description="List wallet grant receipts visible to a recipient."
+)
 async def wallet_grant_receipts(
     wallet_id: str,
     audience_did: Optional[str] = None,

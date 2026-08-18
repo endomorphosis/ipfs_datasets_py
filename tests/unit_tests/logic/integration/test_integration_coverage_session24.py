@@ -11,6 +11,7 @@ logic/integration package, focusing on:
 Previous sessions brought coverage to 94% (507 uncovered). This session
 covers 72 additional lines, reaching ~94.5% (435 uncovered).
 """
+
 import sys
 import types
 import importlib
@@ -69,6 +70,7 @@ def _reload_with_mocked(module_path: str, mocked: dict):
 #  only covered by instantiating / calling the fallback class)
 # ---------------------------------------------------------------------------
 
+
 class TestFallbackClassMethodBodies:
     """Cover Symbol fallback class bodies in logic_verification, interactive_fol_constructor
     and modal_logic_extension (lines 62-63, 66, 34-35, 44)."""
@@ -76,29 +78,32 @@ class TestFallbackClassMethodBodies:
     def test_logic_verification_fallback_symbol_init_and_query(self):
         """Cover logic_verification.py lines 62, 63, 66: fallback Symbol.__init__ and query()."""
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv
+
         # The fallback Symbol class is defined when symai is NOT installed
         assert not lv.SYMBOLIC_AI_AVAILABLE
         sym = lv.Symbol("test value", semantic=True)
-        assert sym.value == "test value"          # line 62
-        assert sym._semantic is True              # line 63
+        assert sym.value == "test value"  # line 62
+        assert sym._semantic is True  # line 63
         reply = sym.query("a logical prompt")
-        assert "Mock response" in reply           # line 66
+        assert "Mock response" in reply  # line 66
 
     def test_interactive_fol_constructor_fallback_symbol_init(self):
         """Cover interactive_fol_constructor.py lines 34-35: fallback Symbol.__init__."""
         import ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor as ifc
+
         assert not ifc.SYMBOLIC_AI_AVAILABLE
         sym = ifc.Symbol("hello world", semantic=False)
         assert sym.value == "hello world"  # line 34
-        assert sym._semantic is False      # line 35
+        assert sym._semantic is False  # line 35
 
     def test_modal_logic_extension_fallback_symbol_query(self):
         """Cover modal_logic_extension.py line 44: fallback Symbol.query()."""
         import ipfs_datasets_py.logic.integration.converters.modal_logic_extension as mle
+
         assert not mle.SYMBOLIC_AI_AVAILABLE
         sym = mle.Symbol("a modal statement")
         result = sym.query("classify this statement")
-        assert "Mock response" in result   # line 44
+        assert "Mock response" in result  # line 44
 
 
 # ---------------------------------------------------------------------------
@@ -106,12 +111,14 @@ class TestFallbackClassMethodBodies:
 # (lines 293, 300, 335, 342, 379, 388, 425, 436)
 # ---------------------------------------------------------------------------
 
+
 class TestModalLogicNeitherPaths:
     """Cover AdvancedLogicConverter._convert_to_* 'neither' branches
     (lines 293/300, 335/342, 379/388, 425/436)."""
 
     def setup_method(self):
         import ipfs_datasets_py.logic.integration.converters.modal_logic_extension as mle
+
         self.ext = mle.AdvancedLogicConverter()
         self.LogicClassification = mle.LogicClassification
 
@@ -158,6 +165,7 @@ class TestModalLogicNeitherPaths:
 # Group 3: Module import fallbacks (require sys.modules manipulation)
 # ---------------------------------------------------------------------------
 
+
 class TestModuleImportFallbacks:
     """Cover import-error fallback lines by reloading modules with blocked imports."""
 
@@ -166,28 +174,28 @@ class TestModuleImportFallbacks:
         conv_pkg = "ipfs_datasets_py.logic.integration.converters"
         dlc = f"{conv_pkg}.deontic_logic_converter"
         new_mod = _reload_with_mocked(f"{conv_pkg}.__init__", {dlc: None})
-        assert new_mod.DeonticLogicConverter is None   # line 14-15
+        assert new_mod.DeonticLogicConverter is None  # line 14-15
 
     def test_symbolic_init_logic_primitives_import_error(self):
         """Cover symbolic/__init__.py lines 15-16: LogicPrimitives = None."""
         sym_pkg = "ipfs_datasets_py.logic.integration.symbolic"
         slp = f"{sym_pkg}.symbolic_logic_primitives"
         new_mod = _reload_with_mocked(f"{sym_pkg}.__init__", {slp: None})
-        assert new_mod.LogicPrimitives is None          # line 15-16
+        assert new_mod.LogicPrimitives is None  # line 15-16
 
     def test_symbolic_init_neurosymbolic_graphrag_import_error(self):
         """Cover symbolic/__init__.py lines 25-26: NeurosymbolicGraphRAG = None."""
         sym_pkg = "ipfs_datasets_py.logic.integration.symbolic"
         ng = f"{sym_pkg}.neurosymbolic_graphrag"
         new_mod = _reload_with_mocked(f"{sym_pkg}.__init__", {ng: None})
-        assert new_mod.NeurosymbolicGraphRAG is None    # line 25-26
+        assert new_mod.NeurosymbolicGraphRAG is None  # line 25-26
 
     def test_ipfs_proof_cache_ipfs_available_true(self):
         """Cover caching/ipfs_proof_cache.py line 39: IPFS_AVAILABLE = True."""
         cache_pkg = "ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache"
         mock_ipfshttpclient = MagicMock()
         new_mod = _reload_with_mocked(cache_pkg, {"ipfshttpclient": mock_ipfshttpclient})
-        assert new_mod.IPFS_AVAILABLE is True            # line 39
+        assert new_mod.IPFS_AVAILABLE is True  # line 39
 
     def test_ipld_logic_storage_ipld_available_true(self):
         """Cover caching/ipld_logic_storage.py lines 24-25: IPLD_AVAILABLE = True."""
@@ -198,24 +206,27 @@ class TestModuleImportFallbacks:
         mock_storage_mod = MagicMock(IPLDStorage=storage_mock)
         mock_vec_mod = MagicMock(IPLDVectorStore=vec_mock)
         base_path = "ipfs_datasets_py.logic.integration"
-        new_mod = _reload_with_mocked(stor_pkg, {
-            f"{base_path}.data_transformation.ipld.storage": mock_storage_mod,
-            f"{base_path}.data_transformation.ipld.vector_store": mock_vec_mod,
-        })
-        assert new_mod.IPLD_AVAILABLE is True            # lines 24-25
+        new_mod = _reload_with_mocked(
+            stor_pkg,
+            {
+                f"{base_path}.data_transformation.ipld.storage": mock_storage_mod,
+                f"{base_path}.data_transformation.ipld.vector_store": mock_vec_mod,
+            },
+        )
+        assert new_mod.IPLD_AVAILABLE is True  # lines 24-25
 
     def test_cec_bridge_z3_available_true(self):
         """Cover cec_bridge.py line 26: Z3_AVAILABLE = True."""
         cec_pkg = "ipfs_datasets_py.logic.integration.cec_bridge"
         new_mod = _reload_with_mocked(cec_pkg, {"z3": MagicMock()})
-        assert new_mod.Z3_AVAILABLE is True              # line 26
+        assert new_mod.Z3_AVAILABLE is True  # line 26
 
     def test_tdfol_grammar_bridge_import_error(self):
         """Cover bridges/tdfol_grammar_bridge.py lines 35-36: grammar import error."""
         bridge_pkg = "ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge"
         cec_native = "ipfs_datasets_py.logic.CEC.native"
         new_mod = _reload_with_mocked(bridge_pkg, {cec_native: None})
-        assert not new_mod.GRAMMAR_AVAILABLE             # lines 35-36 (except ImportError)
+        assert not new_mod.GRAMMAR_AVAILABLE  # lines 35-36 (except ImportError)
 
     def test_tdfol_shadowprover_bridge_import_error(self):
         """Cover bridges/tdfol_shadowprover_bridge.py lines 40-41: import error."""
@@ -230,12 +241,12 @@ class TestModuleImportFallbacks:
         orig_tableaux_attr = cec_native.__dict__.pop("modal_tableaux", _MISSING)
         orig_shadow_mod = sys.modules.pop(cec_shadow_key, _MISSING)
         orig_tableaux_mod = sys.modules.pop(cec_tableaux_key, _MISSING)
-        sys.modules[cec_shadow_key] = None   # type: ignore[assignment]
+        sys.modules[cec_shadow_key] = None  # type: ignore[assignment]
         sys.modules[cec_tableaux_key] = None  # type: ignore[assignment]
 
         try:
             new_mod = _reload_with_mocked(bridge_pkg, {})
-            assert not new_mod.SHADOWPROVER_AVAILABLE        # lines 40-41
+            assert not new_mod.SHADOWPROVER_AVAILABLE  # lines 40-41
         finally:
             sys.modules.pop(cec_shadow_key, None)
             sys.modules.pop(cec_tableaux_key, None)
@@ -251,10 +262,13 @@ class TestModuleImportFallbacks:
     def test_tdfol_cec_bridge_import_error(self):
         """Cover bridges/tdfol_cec_bridge.py lines 35-36: CEC native import error."""
         bridge_pkg = "ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge"
-        new_mod = _reload_with_mocked(bridge_pkg, {
-            "ipfs_datasets_py.logic.CEC.native": None,
-        })
-        assert not new_mod.CEC_AVAILABLE                 # lines 35-36
+        new_mod = _reload_with_mocked(
+            bridge_pkg,
+            {
+                "ipfs_datasets_py.logic.CEC.native": None,
+            },
+        )
+        assert not new_mod.CEC_AVAILABLE  # lines 35-36
 
     def test_deontic_logic_converter_graphrag_available_true(self):
         """Cover converters/deontic_logic_converter.py line 29: GRAPHRAG_AVAILABLE = True."""
@@ -263,29 +277,37 @@ class TestModuleImportFallbacks:
         kg_mod.Entity = MagicMock
         kg_mod.Relationship = MagicMock
         kg_mod.KnowledgeGraph = MagicMock
-        new_mod = _reload_with_mocked(dlc_pkg, {
-            "ipfs_datasets_py.logic.integration.knowledge_graph_extraction": kg_mod,
-        })
-        assert new_mod.GRAPHRAG_AVAILABLE is True        # line 29
+        new_mod = _reload_with_mocked(
+            dlc_pkg,
+            {
+                "ipfs_datasets_py.logic.integration.knowledge_graph_extraction": kg_mod,
+            },
+        )
+        assert new_mod.GRAPHRAG_AVAILABLE is True  # line 29
 
     def test_temporal_deontic_rag_store_base_class_fallback(self):
         """Cover domain/temporal_deontic_rag_store.py lines 25, 30, 34:
         BaseEmbedding/BaseVectorStore import failure → inline fallback classes."""
         rag_pkg = "ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store"
-        new_mod = _reload_with_mocked(rag_pkg, {
-            "ipfs_datasets_py.logic.integration.vector_stores.base": None,
-            "ipfs_datasets_py.logic.integration.embeddings.base": None,
-        })
+        new_mod = _reload_with_mocked(
+            rag_pkg,
+            {
+                "ipfs_datasets_py.logic.integration.vector_stores.base": None,
+                "ipfs_datasets_py.logic.integration.embeddings.base": None,
+            },
+        )
         # The fallback BaseEmbedding is defined in the except block (line 30/34)
         base_emb = new_mod.BaseEmbedding()
         import numpy as np
-        emb = base_emb.embed_text("hello")        # line 34: return np.random.random(768)
+
+        emb = base_emb.embed_text("hello")  # line 34: return np.random.random(768)
         assert emb.shape == (768,)
 
 
 # ---------------------------------------------------------------------------
 # Group 4: SymbolicAI-gated AVAILABLE=True lines (reload with symai mock)
 # ---------------------------------------------------------------------------
+
 
 def _make_symai_mock():
     """Create a minimal symai mock with Symbol and Expression."""
@@ -306,7 +328,7 @@ def _make_symai_mock():
     symai_mod.Expression = type("Expression", (), {"__init__": lambda s, *a, **k: None})
 
     strat_mod = types.ModuleType("symai.strategy")
-    strat_mod.contract = lambda **kwargs: (lambda cls: cls)
+    strat_mod.contract = lambda **kwargs: lambda cls: cls
     strat_mod.LLMDataModel = type("LLMDataModel", (), {})
     symai_mod.strategy = strat_mod
 
@@ -320,46 +342,59 @@ class TestSymbolicAIGatedLines:
         """Cover _logic_verifier_backends_mixin.py line 26: _SYMBOLIC_AI_AVAILABLE = True."""
         symai_mock, strat_mock = _make_symai_mock()
         pkg = "ipfs_datasets_py.logic.integration.reasoning._logic_verifier_backends_mixin"
-        new_mod = _reload_with_mocked(pkg, {
-            "symai": symai_mock,
-            "symai.strategy": strat_mock,
-        })
-        assert new_mod._SYMBOLIC_AI_AVAILABLE is True    # line 26
+        new_mod = _reload_with_mocked(
+            pkg,
+            {
+                "symai": symai_mock,
+                "symai.strategy": strat_mock,
+            },
+        )
+        assert new_mod._SYMBOLIC_AI_AVAILABLE is True  # line 26
 
     def test_logic_verification_symai_available_true(self):
         """Cover logic_verification.py line 54: SYMBOLIC_AI_AVAILABLE = True."""
         symai_mock, strat_mock = _make_symai_mock()
         pkg = "ipfs_datasets_py.logic.integration.reasoning.logic_verification"
-        new_mod = _reload_with_mocked(pkg, {
-            "symai": symai_mock,
-            "symai.strategy": strat_mock,
-        })
-        assert new_mod.SYMBOLIC_AI_AVAILABLE is True     # line 54
+        new_mod = _reload_with_mocked(
+            pkg,
+            {
+                "symai": symai_mock,
+                "symai.strategy": strat_mock,
+            },
+        )
+        assert new_mod.SYMBOLIC_AI_AVAILABLE is True  # line 54
 
     def test_interactive_fol_constructor_symai_available_true(self):
         """Cover interactive_fol_constructor.py line 27: SYMBOLIC_AI_AVAILABLE = True."""
         symai_mock, strat_mock = _make_symai_mock()
         pkg = "ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor"
-        new_mod = _reload_with_mocked(pkg, {
-            "symai": symai_mock,
-            "symai.strategy": strat_mock,
-        })
-        assert new_mod.SYMBOLIC_AI_AVAILABLE is True     # line 27
+        new_mod = _reload_with_mocked(
+            pkg,
+            {
+                "symai": symai_mock,
+                "symai.strategy": strat_mock,
+            },
+        )
+        assert new_mod.SYMBOLIC_AI_AVAILABLE is True  # line 27
 
     def test_modal_logic_extension_symai_available_true(self):
         """Cover modal_logic_extension.py line 32: SYMBOLIC_AI_AVAILABLE = True."""
         symai_mock, strat_mock = _make_symai_mock()
         pkg = "ipfs_datasets_py.logic.integration.converters.modal_logic_extension"
-        new_mod = _reload_with_mocked(pkg, {
-            "symai": symai_mock,
-            "symai.strategy": strat_mock,
-        })
-        assert new_mod.SYMBOLIC_AI_AVAILABLE is True     # line 32
+        new_mod = _reload_with_mocked(
+            pkg,
+            {
+                "symai": symai_mock,
+                "symai.strategy": strat_mock,
+            },
+        )
+        assert new_mod.SYMBOLIC_AI_AVAILABLE is True  # line 32
 
 
 # ---------------------------------------------------------------------------
 # Group 5: Bridge-specific paths
 # ---------------------------------------------------------------------------
+
 
 class TestGrammarBridgePaths:
     """Cover tdfol_grammar_bridge.py uncovered paths."""
@@ -374,7 +409,7 @@ class TestGrammarBridgePaths:
         with patch.object(mod, "grammar_engine") as mock_ge:
             mock_ge.GrammarEngine.side_effect = RuntimeError("init failed")
             bridge = mod.TDFOLGrammarBridge()
-            assert not bridge.available    # lines 67-69
+            assert not bridge.available  # lines 67-69
 
     def test_grammar_bridge_fallback_parse_cec_success(self):
         """Cover tdfol_grammar_bridge.py lines 236-237: CEC parser returns TDFOL Formula."""
@@ -394,9 +429,11 @@ class TestGrammarBridgePaths:
             mod.nl_converter = mock_nlc  # type: ignore[attr-defined]
 
         orig_parse_dcec_string = getattr(cec_native, "parse_dcec_string", _MISSING)
+
         # Use a simple function (not lambda) for clearer intent
         def _mock_parse_dcec(text):  # noqa: E306
             return pred
+
         cec_native.parse_dcec_string = _mock_parse_dcec  # type: ignore[attr-defined]
         try:
             with patch.object(mod, "nl_converter") as mock_nlc2:
@@ -410,7 +447,7 @@ class TestGrammarBridgePaths:
                 cec_native.parse_dcec_string = orig_parse_dcec_string  # type: ignore[attr-defined]
             if not had_nl and hasattr(mod, "nl_converter"):
                 delattr(mod, "nl_converter")
-        assert result is pred              # lines 236-237
+        assert result is pred  # lines 236-237
 
     def test_grammar_bridge_fallback_parse_atom_exception(self):
         """Cover tdfol_grammar_bridge.py lines 271-272: atom creation raises."""
@@ -419,13 +456,16 @@ class TestGrammarBridgePaths:
 
         bridge = mod.TDFOLGrammarBridge()
         # Make CEC and TDFOL parser both fail, then Predicate creation fail
-        with patch("ipfs_datasets_py.logic.CEC.native.parse_dcec_string",
-                   side_effect=ImportError("no cec")):
-            with patch("ipfs_datasets_py.logic.TDFOL.tdfol_parser.parse_tdfol_safe",
-                       side_effect=ImportError("no parser")):
+        with patch(
+            "ipfs_datasets_py.logic.CEC.native.parse_dcec_string", side_effect=ImportError("no cec")
+        ):
+            with patch(
+                "ipfs_datasets_py.logic.TDFOL.tdfol_parser.parse_tdfol_safe",
+                side_effect=ImportError("no parser"),
+            ):
                 with patch.object(tc, "Predicate", side_effect=ValueError("bad pred")):
                     result = bridge._fallback_parse("simple-atom")
-        assert result is None             # lines 271-272 (exception caught)
+        assert result is None  # lines 271-272 (exception caught)
 
     def test_grammar_bridge_formula_to_natural_language_dcec_none(self):
         """Cover tdfol_grammar_bridge.py line 352: DCEC parsing returned None."""
@@ -443,7 +483,7 @@ class TestGrammarBridgePaths:
 
         # formula_to_natural_language falls back to templates after None
         result = bridge.formula_to_natural_language(formula)
-        assert isinstance(result, str)   # line 352 (DCEC returned None, template used)
+        assert isinstance(result, str)  # line 352 (DCEC returned None, template used)
 
 
 class TestShadowProverBridgePaths:
@@ -452,11 +492,12 @@ class TestShadowProverBridgePaths:
     def test_get_prover_k_logic_default(self):
         """Cover tdfol_shadowprover_bridge.py line 335: return self.k_prover."""
         import ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge as mod
+
         bridge = mod.TDFOLShadowProverBridge()
         bridge.k_prover = MagicMock(name="k_prover")
         # 'K' is the default fallback — any unknown modal type should hit line 335
         prover = bridge._get_prover(mod.ModalLogicType.K)
-        assert prover is bridge.k_prover   # line 335
+        assert prover is bridge.k_prover  # line 335
 
 
 class TestCECBridgePaths:
@@ -486,12 +527,14 @@ class TestCECBridgePaths:
 # Group 6: CECBridge cached proof exception handler
 # ---------------------------------------------------------------------------
 
+
 class TestCECBridgeCachedProofException:
     """Cover cec_bridge.py lines 293-294: exception in _get_cached_proof."""
 
     def test_get_cached_proof_exception_swallowed(self):
         """Cover cec_bridge.py lines 293-294: exception → return None."""
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         bridge = CECBridge()
         # Patch the cache to raise when accessed
         bridge._proof_cache = MagicMock()
@@ -503,6 +546,7 @@ class TestCECBridgeCachedProofException:
 # ---------------------------------------------------------------------------
 # Group 7: DeonticLogicConverter paths
 # ---------------------------------------------------------------------------
+
 
 class TestDeonticLogicConverterPaths:
     """Cover remaining uncovered lines in deontic_logic_converter.py."""
@@ -520,9 +564,12 @@ class TestDeonticLogicConverterPaths:
         # The import happens inside __init__: 'from .legal_symbolic_analyzer import LegalSymbolicAnalyzer'
         mock_lsa_mod = MagicMock()
         mock_lsa_mod.LegalSymbolicAnalyzer = mock_lsa_class
-        with patch.dict(sys.modules, {
-            "ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer": mock_lsa_mod,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer": mock_lsa_mod,
+            },
+        ):
             conv = DeonticLogicConverter(enable_symbolic_ai=True)
         # Verify the analyzer was set (line 129-130 path)
         assert conv.symbolic_analyzer is mock_analyzer  # line 130 logged
@@ -533,6 +580,7 @@ class TestDeonticLogicConverterPaths:
             DeonticLogicConverter,
             ConversionContext,
         )
+
         conv = DeonticLogicConverter()
         entity = MagicMock()
         ctx = ConversionContext(
@@ -553,6 +601,7 @@ class TestDeonticLogicConverterPaths:
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_converter import (
             DeonticLogicConverter,
         )
+
         conv = DeonticLogicConverter()
 
         # Use spec to prevent auto-creation of text_field attrs
@@ -568,6 +617,7 @@ class TestDeonticLogicConverterPaths:
             DeonticLogicConverter,
             ConversionContext,
         )
+
         conv = DeonticLogicConverter()
         ctx = ConversionContext(source_document_path="/test/doc.txt")
         # Need symbolic_analyzer set so we don't bail at line 564
@@ -579,11 +629,12 @@ class TestDeonticLogicConverterPaths:
         f2 = MagicMock()
         f2.agent = MagicMock(identifier="agent_a")
         result = conv._synthesize_complex_rules([f1, f2], MagicMock(), ctx)
-        assert result == []    # lines 590-592
+        assert result == []  # lines 590-592
 
     def test_demonstrate_deontic_conversion_prints_formulas(self, capsys):
         """Cover deontic_logic_converter.py lines 720-725: demonstrate loop."""
         import ipfs_datasets_py.logic.integration.converters.deontic_logic_converter as dlc_mod
+
         mock_formula = MagicMock()
         mock_formula.operator = MagicMock()
         mock_formula.operator.value = "OBLIGATION"
@@ -614,6 +665,7 @@ class TestDeonticLogicConverterPaths:
 # Group 8: DeonticLogicCore demonstrate demo
 # ---------------------------------------------------------------------------
 
+
 class TestDeonticLogicCoreDemo:
     """Cover deontic_logic_core.py lines 498-499, 506-507."""
 
@@ -628,13 +680,14 @@ class TestDeonticLogicCoreDemo:
             with patch.object(dlc.DeonticRuleSet, "check_consistency", return_value=mock_conflicts):
                 dlc.demonstrate_deontic_logic()
         out = capsys.readouterr().out
-        assert "ERROR" in out     # line 498-499
+        assert "ERROR" in out  # line 498-499
         assert "CONFLICT" in out  # line 506-507
 
 
 # ---------------------------------------------------------------------------
 # Group 9: LogicTranslationCore demonstrate errors
 # ---------------------------------------------------------------------------
+
 
 class TestLogicTranslationCoreDemo:
     """Cover logic_translation_core.py line 713: print errors in demonstrate."""
@@ -647,17 +700,24 @@ class TestLogicTranslationCoreDemo:
         mock_result.success = False
         mock_result.errors = ["Parse error"]
         mock_result.translated_formula = ""
-        with patch.object(ltc.LeanTranslator, "translate_deontic_formula", return_value=mock_result):
-            with patch.object(ltc.CoqTranslator, "translate_deontic_formula", return_value=mock_result):
-                with patch.object(ltc.SMTTranslator, "translate_deontic_formula", return_value=mock_result):
+        with patch.object(
+            ltc.LeanTranslator, "translate_deontic_formula", return_value=mock_result
+        ):
+            with patch.object(
+                ltc.CoqTranslator, "translate_deontic_formula", return_value=mock_result
+            ):
+                with patch.object(
+                    ltc.SMTTranslator, "translate_deontic_formula", return_value=mock_result
+                ):
                     ltc.demonstrate_logic_translation()
         out = capsys.readouterr().out
-        assert "Errors" in out    # line 713
+        assert "Errors" in out  # line 713
 
 
 # ---------------------------------------------------------------------------
 # Group 10: Demo temporal deontic rag — no theorems branch
 # ---------------------------------------------------------------------------
+
 
 class TestDemoTemporalDeonticRag:
     """Cover demos/demo_temporal_deontic_rag.py line 371: no theorems found."""
@@ -679,6 +739,7 @@ class TestDemoTemporalDeonticRag:
 # Group 11: CaselawBulkProcessor paths
 # ---------------------------------------------------------------------------
 
+
 class TestCaselawBulkProcessorPaths:
     """Cover caselaw_bulk_processor.py lines 350-351, 368, 601-602."""
 
@@ -687,6 +748,7 @@ class TestCaselawBulkProcessorPaths:
             CaselawBulkProcessor,
             BulkProcessingConfig,
         )
+
         cfg = BulkProcessingConfig()
         return CaselawBulkProcessor(cfg)
 
@@ -714,7 +776,9 @@ class TestCaselawBulkProcessorPaths:
         processor.processing_queue = docs
 
         with patch.object(processor, "_process_single_document", return_value=[]):
-            with patch("ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor.logger") as mock_log:
+            with patch(
+                "ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor.logger"
+            ) as mock_log:
                 loop = asyncio.new_event_loop()
                 loop.run_until_complete(processor._extract_theorems_sequential())
                 loop.close()
@@ -724,6 +788,7 @@ class TestCaselawBulkProcessorPaths:
     def test_validate_unified_system_exception_logged(self):
         """Cover caselaw_bulk_processor.py lines 601-602: validation exception → log."""
         from ipfs_datasets_py.logic.integration.domain import caselaw_bulk_processor as cbp_mod
+
         processor = self._make_processor()
 
         mock_doc = MagicMock()
@@ -747,6 +812,7 @@ class TestCaselawBulkProcessorPaths:
 # Group 12: DeonticQueryEngine paths
 # ---------------------------------------------------------------------------
 
+
 class TestDeonticQueryEnginePaths:
     """Cover deontic_query_engine.py lines 495, 550, 555."""
 
@@ -756,6 +822,7 @@ class TestDeonticQueryEnginePaths:
             DeonticQueryEngine,
             DeonticOperator,
         )
+
         engine = DeonticQueryEngine()
 
         formula = MagicMock()
@@ -777,12 +844,13 @@ class TestDeonticQueryEnginePaths:
             DeonticQueryEngine,
             DeonticOperator,
         )
+
         engine = DeonticQueryEngine()
         formula = MagicMock(operator=DeonticOperator.OBLIGATION)
 
         with patch.object(engine, "_formula_applies_at_time", return_value=False):
             result = engine._apply_context_filter([formula], {"time": "2024-01-01"})
-        assert result == []   # line 550 (continue skips formula)
+        assert result == []  # line 550 (continue skips formula)
 
     def test_apply_context_filter_conditions_continue(self):
         """Cover deontic_query_engine.py line 555: formula skipped by conditions context."""
@@ -790,23 +858,26 @@ class TestDeonticQueryEnginePaths:
             DeonticQueryEngine,
             DeonticOperator,
         )
+
         engine = DeonticQueryEngine()
         formula = MagicMock(operator=DeonticOperator.PERMISSION)
 
         with patch.object(engine, "_formula_conditions_met", return_value=False):
             result = engine._apply_context_filter([formula], {"conditions": ["cond_x"]})
-        assert result == []   # line 555 (continue skips formula)
+        assert result == []  # line 555 (continue skips formula)
 
 
 # ---------------------------------------------------------------------------
 # Group 13: LegalDomainKnowledge lines 406, 409-410
 # ---------------------------------------------------------------------------
 
+
 class TestLegalDomainKnowledgePaths:
     """Cover legal_domain_knowledge.py lines 406, 409-410 (modal verb fallback)."""
 
     def setup_method(self):
         import ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge as ldk
+
         self.ldke = ldk.LegalDomainKnowledge()
         self.DeonticOperator = ldk.DeonticOperator
         # Clear all compiled patterns to force the modal verb fallback path
@@ -817,7 +888,7 @@ class TestLegalDomainKnowledgePaths:
     def test_obligation_via_modal_verb_fallback(self):
         """Cover legal_domain_knowledge.py line 406: best_operator = OBLIGATION."""
         op, _ = self.ldke.classify_legal_statement("the entity shall do something")
-        assert op == self.DeonticOperator.OBLIGATION   # line 406
+        assert op == self.DeonticOperator.OBLIGATION  # line 406
 
     def test_prohibition_via_modal_verb_fallback(self):
         """Cover legal_domain_knowledge.py lines 409-410: best_operator = PROHIBITION."""
@@ -829,6 +900,7 @@ class TestLegalDomainKnowledgePaths:
 # Group 14: MedicalTheoremGenerator exception paths
 # ---------------------------------------------------------------------------
 
+
 class TestMedicalTheoremGeneratorExceptions:
     """Cover medical_theorem_framework.py lines 213-215, 254-256."""
 
@@ -837,6 +909,7 @@ class TestMedicalTheoremGeneratorExceptions:
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
             MedicalTheoremGenerator,
         )
+
         gen = MedicalTheoremGenerator()
         with patch(
             "ipfs_datasets_py.logic.integration.domain.medical_theorem_framework.MedicalEntity",
@@ -848,13 +921,14 @@ class TestMedicalTheoremGeneratorExceptions:
                 outcome={"measure": "Recovery", "time_frame": "12 weeks"},
                 trial_id="NCT001",
             )
-        assert result is None   # lines 213-215
+        assert result is None  # lines 213-215
 
     def test_create_adverse_event_theorem_exception_returns_none(self):
         """Cover medical_theorem_framework.py lines 254-256."""
         from ipfs_datasets_py.logic.integration.domain.medical_theorem_framework import (
             MedicalTheoremGenerator,
         )
+
         gen = MedicalTheoremGenerator()
         with patch(
             "ipfs_datasets_py.logic.integration.domain.medical_theorem_framework.MedicalEntity",
@@ -865,12 +939,13 @@ class TestMedicalTheoremGeneratorExceptions:
                 adverse_event={"event": "Nausea", "frequency": "10%"},
                 trial_id="NCT001",
             )
-        assert result is None   # lines 254-256
+        assert result is None  # lines 254-256
 
 
 # ---------------------------------------------------------------------------
 # Group 15: TemporalDeonticAPI end_date parsing
 # ---------------------------------------------------------------------------
+
 
 class TestTemporalDeonticAPIEndDate:
     """Cover temporal_deontic_api.py lines 274-278."""
@@ -894,10 +969,12 @@ class TestTemporalDeonticAPIEndDate:
             with patch("os.path.exists", return_value=True):
                 loop = asyncio.new_event_loop()
                 loop.run_until_complete(
-                    api.bulk_process_caselaw_from_parameters({
-                        "caselaw_directories": ["/tmp/test"],
-                        "end_date": "2024-12-31",  # valid → lines 275-276
-                    })
+                    api.bulk_process_caselaw_from_parameters(
+                        {
+                            "caselaw_directories": ["/tmp/test"],
+                            "end_date": "2024-12-31",  # valid → lines 275-276
+                        }
+                    )
                 )
                 loop.close()
         # Lines 274-276: end_date parsed without error
@@ -921,10 +998,12 @@ class TestTemporalDeonticAPIEndDate:
             with patch("os.path.exists", return_value=True):
                 loop = asyncio.new_event_loop()
                 result = loop.run_until_complete(
-                    api.bulk_process_caselaw_from_parameters({
-                        "caselaw_directories": ["/tmp/test"],
-                        "end_date": "not-a-date",   # invalid → ValueError → pass (line 278)
-                    })
+                    api.bulk_process_caselaw_from_parameters(
+                        {
+                            "caselaw_directories": ["/tmp/test"],
+                            "end_date": "not-a-date",  # invalid → ValueError → pass (line 278)
+                        }
+                    )
                 )
                 loop.close()
         # Line 278 (pass): no exception raised even with invalid date
@@ -933,6 +1012,7 @@ class TestTemporalDeonticAPIEndDate:
 # ---------------------------------------------------------------------------
 # Group 16: TemporalDeonticRAGStore temporal conflict detection
 # ---------------------------------------------------------------------------
+
 
 class TestTemporalDeonticRAGStorePaths:
     """Cover temporal_deontic_rag_store.py line 298: temporal_conflicts.append."""
@@ -943,6 +1023,7 @@ class TestTemporalDeonticRAGStorePaths:
             TemporalDeonticRAGStore,
         )
         from datetime import datetime
+
         store = TemporalDeonticRAGStore()
 
         mock_formula = MagicMock()
@@ -954,16 +1035,19 @@ class TestTemporalDeonticRAGStorePaths:
             with patch.object(store, "_check_formula_conflict", return_value=None):
                 with patch.object(store, "_check_temporal_conflicts", return_value=conflict):
                     with patch.object(store, "_calculate_consistency_confidence", return_value=0.5):
-                        with patch.object(store, "_generate_consistency_reasoning", return_value="test"):
+                        with patch.object(
+                            store, "_generate_consistency_reasoning", return_value="test"
+                        ):
                             result = store.check_document_consistency(
                                 [mock_formula], temporal_context=temporal_context
                             )
-        assert not result.is_consistent   # temporal_conflicts list was populated (line 298)
+        assert not result.is_consistent  # temporal_conflicts list was populated (line 298)
 
 
 # ---------------------------------------------------------------------------
 # Group 17: _fol_constructor_io export exception
 # ---------------------------------------------------------------------------
+
 
 class TestFolConstructorIOPaths:
     """Cover _fol_constructor_io.py lines 110-112: export exception handler."""
@@ -999,7 +1083,7 @@ class TestFolConstructorIOPaths:
         io.session_statements["stmt1"] = bad_stmt
 
         result = io.export_session()
-        assert "errors" in result           # lines 110-112 (error appended)
+        assert "errors" in result  # lines 110-112 (error appended)
         assert len(result["errors"]) > 0
 
 
@@ -1007,12 +1091,14 @@ class TestFolConstructorIOPaths:
 # Group 18: integration/__init__.py _AVAILABILITY_EXPORTS exception
 # ---------------------------------------------------------------------------
 
+
 class TestIntegrationInitPaths:
     """Cover integration/__init__.py lines 266-267."""
 
     def test_availability_export_exception_returns_false(self):
         """Cover __init__.py lines 266-267: importlib.import_module raises → value=False."""
         import ipfs_datasets_py.logic.integration as pkg
+
         # Trigger the __getattr__ path for an availability export
         with patch("importlib.import_module", side_effect=ImportError("no module")):
             # Find an availability export key
@@ -1022,12 +1108,13 @@ class TestIntegrationInitPaths:
             # Remove it from globals if already cached
             pkg.__dict__.pop(avail_key, None)
             val = getattr(pkg, avail_key)
-        assert val is False   # lines 266-267
+        assert val is False  # lines 266-267
 
 
 # ---------------------------------------------------------------------------
 # Group 19: reasoning/_prover_backend_mixin.py metadata exception
 # ---------------------------------------------------------------------------
+
 
 class TestProverBackendMixinPaths:
     """Cover _prover_backend_mixin.py lines 202-204: metadata exception handler."""
@@ -1045,9 +1132,11 @@ class TestProverBackendMixinPaths:
         prover = ConcreteProver()
 
         translation = MagicMock()
+
         # .metadata is a property that raises AttributeError (using a proper function)
         def _raise_attr_err(self):
             raise AttributeError("no meta")
+
         type(translation).metadata = property(_raise_attr_err)
 
         formula = MagicMock()
@@ -1064,12 +1153,14 @@ class TestProverBackendMixinPaths:
 # Group 20: EmbeddingEnhancedProver logger.info
 # ---------------------------------------------------------------------------
 
+
 class TestEmbeddingProverPaths:
     """Cover embedding_prover.py line 65: logger.info for successful model load."""
 
     def test_embedding_prover_model_load_logs_info(self):
         """Cover embedding_prover.py line 65: logger.info(f'Loaded embedding model: ...')."""
         import sys
+
         mock_st = MagicMock()
         mock_model = MagicMock()
         mock_st.SentenceTransformer.return_value = mock_model
@@ -1078,6 +1169,7 @@ class TestEmbeddingProverPaths:
             from ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover import (
                 EmbeddingEnhancedProver,
             )
+
             prover = EmbeddingEnhancedProver(model_name="test-model")
         assert prover.model is mock_model  # logger.info called at line 65
 
@@ -1085,6 +1177,7 @@ class TestEmbeddingProverPaths:
 # ---------------------------------------------------------------------------
 # Group 21: NeurosymbolicGraphRAG entity count (line 348)
 # ---------------------------------------------------------------------------
+
 
 class TestNeurosymbolicGraphRAGPaths:
     """Cover neurosymbolic_graphrag.py line 348: total_entities += len(d.entities)."""
@@ -1095,6 +1188,7 @@ class TestNeurosymbolicGraphRAGPaths:
             NeurosymbolicGraphRAG,
             PipelineResult,
         )
+
         graphrag = NeurosymbolicGraphRAG()
         doc = PipelineResult(
             doc_id="doc1",
@@ -1116,7 +1210,7 @@ class TestNeurosymbolicGraphRAGPaths:
         orig_ns.ReasoningStrategy = MagicMock(name="ReasoningStrategy")  # type: ignore[attr-defined]
         try:
             new_mod = _reload_with_mocked(mod_path, {})
-            assert new_mod.HAS_NEUROSYMBOLIC is True   # line 29
+            assert new_mod.HAS_NEUROSYMBOLIC is True  # line 29
         finally:
             if not had_rs and hasattr(orig_ns, "ReasoningStrategy"):
                 delattr(orig_ns, "ReasoningStrategy")
@@ -1125,6 +1219,7 @@ class TestNeurosymbolicGraphRAGPaths:
 # ---------------------------------------------------------------------------
 # Group 22: ProverInstaller OSError in sudo check (line 129)
 # ---------------------------------------------------------------------------
+
 
 class TestProverInstallerPaths:
     """Cover prover_installer.py line 129: OSError in nested _sudo_non_interactive_ok."""
@@ -1144,12 +1239,13 @@ class TestProverInstallerPaths:
                     try:
                         result = pi.ensure_coq(yes=True, strict=False)
                     except Exception:
-                        pass   # Some error is fine; we just need line 129 covered
+                        pass  # Some error is fine; we just need line 129 covered
 
 
 # ---------------------------------------------------------------------------
 # Group 23: integration/__init__.py autoconfigure_env path (lines 80-82)
 # ---------------------------------------------------------------------------
+
 
 class TestIntegrationEnableSymbolicAI:
     """Cover integration/__init__.py lines 80-82: autoconfigure_engine_env called."""

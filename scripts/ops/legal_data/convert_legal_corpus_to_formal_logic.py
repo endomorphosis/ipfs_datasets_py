@@ -673,8 +673,8 @@ def _split_long_piece(piece: str, max_chars: int) -> List[str]:
             acc = [w]
         else:
             acc.append(w)
-    if acc: 
-        chunks.append(" ".join(acc).strip()) 
+    if acc:
+        chunks.append(" ".join(acc).strip())
     return [c for c in chunks if c]
 
 
@@ -922,7 +922,9 @@ def _extract_deontic_tag(formula: Optional[str]) -> Optional[str]:
     return (m.group(1) or "").strip() or None
 
 
-def _deontic_inner_has_overlong_predicate(inner_formula: Optional[str], *, max_chars: int = 48) -> bool:
+def _deontic_inner_has_overlong_predicate(
+    inner_formula: Optional[str], *, max_chars: int = 48
+) -> bool:
     if not inner_formula:
         return False
     preds = re.findall(r"([A-Za-z_][A-Za-z0-9_]*)\(", inner_formula)
@@ -1022,7 +1024,9 @@ def _fol_quality_score(result: Any) -> float:
     return score
 
 
-def _build_encoder_retry_texts(base_text: str, prior_texts: List[str], max_attempts: int) -> List[str]:
+def _build_encoder_retry_texts(
+    base_text: str, prior_texts: List[str], max_attempts: int
+) -> List[str]:
     candidates: List[str] = []
     focus = _extract_normative_focus_text(base_text)
     if focus and focus != base_text:
@@ -1079,7 +1083,9 @@ def _formula_tokens_for_overlap(formula: Optional[str]) -> List[str]:
     return [t for t in tokens if t not in stop]
 
 
-def _text_token_overlap_ratio(reference_text: Optional[str], candidate_text: Optional[str]) -> float:
+def _text_token_overlap_ratio(
+    reference_text: Optional[str], candidate_text: Optional[str]
+) -> float:
     if not reference_text or not candidate_text:
         return 0.0
     ref = set(re.findall(r"[a-z0-9]+", reference_text.lower()))
@@ -1446,16 +1452,26 @@ def _decoded_text_quality_score(text: Optional[str]) -> float:
     n = float(len(tokens))
     underscore_ratio = sum(1 for tok in tokens if "_" in tok) / n
     role_tag_ratio = sum(1 for tok in tokens if ":" in tok) / n
-    formulaish_ratio = sum(1 for tok in tokens if tok in {"x", "implies", "forall", "there", "exists"}) / n
+    formulaish_ratio = (
+        sum(1 for tok in tokens if tok in {"x", "implies", "forall", "there", "exists"}) / n
+    )
     dup_adj_ratio = 0.0
     if len(word_tokens) > 1:
         dup_adj = sum(1 for i in range(1, len(word_tokens)) if word_tokens[i] == word_tokens[i - 1])
         dup_adj_ratio = float(dup_adj / max(1, len(word_tokens) - 1))
     bad_connector_hits = len(
-        re.findall(r"\b(?:which|that|who|when|where|we|our|their|his|her)\s+and\b", t, flags=re.IGNORECASE)
+        re.findall(
+            r"\b(?:which|that|who|when|where|we|our|their|his|her)\s+and\b", t, flags=re.IGNORECASE
+        )
     )
     bad_connector_ratio = float(bad_connector_hits / max(1, len(word_tokens) // 6 + 1))
-    trailing_orphan = 1.0 if re.search(r"\b(?:our|their|his|her|which|that|who|when|where|and|or|but|do|does)\.$", t.lower()) else 0.0
+    trailing_orphan = (
+        1.0
+        if re.search(
+            r"\b(?:our|their|his|her|which|that|who|when|where|and|or|but|do|does)\.$", t.lower()
+        )
+        else 0.0
+    )
     # 0..1, higher is better (more fluent English-like surface form).
     score = 1.0 - (
         0.35 * underscore_ratio
@@ -1543,7 +1559,9 @@ def _count_relative_clause_artifacts(text: Optional[str]) -> int:
     return int(bad + dangling)
 
 
-def _enumeration_integrity_ratio(source_text: Optional[str], decoded_text: Optional[str]) -> Optional[float]:
+def _enumeration_integrity_ratio(
+    source_text: Optional[str], decoded_text: Optional[str]
+) -> Optional[float]:
     if not source_text or not decoded_text:
         return None
 
@@ -1552,7 +1570,11 @@ def _enumeration_integrity_ratio(source_text: Optional[str], decoded_text: Optio
         return int(
             len(re.findall(r";", t))
             + len(re.findall(r",\s*(?:and|or)\s", t))
-            + len(re.findall(r"\b(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b", t))
+            + len(
+                re.findall(
+                    r"\b(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b", t
+                )
+            )
         )
 
     src = _marker_count(str(source_text))
@@ -1604,7 +1626,9 @@ def _extract_keyphrase_tokens(text: Optional[str], max_terms: int = 16) -> List[
     return ordered
 
 
-def _keyphrase_retention_ratio(source_text: Optional[str], decoded_text: Optional[str]) -> Optional[float]:
+def _keyphrase_retention_ratio(
+    source_text: Optional[str], decoded_text: Optional[str]
+) -> Optional[float]:
     keyphrases = _extract_keyphrase_tokens(source_text)
     if not keyphrases or not decoded_text:
         return None
@@ -1613,7 +1637,9 @@ def _keyphrase_retention_ratio(source_text: Optional[str], decoded_text: Optiona
     return float(kept / max(1, len(keyphrases)))
 
 
-def _postprocess_final_decoded_text(text: Optional[str]) -> Tuple[Optional[str], bool, Optional[str]]:
+def _postprocess_final_decoded_text(
+    text: Optional[str],
+) -> Tuple[Optional[str], bool, Optional[str]]:
     if not text:
         return text, False, None
     before = str(text)
@@ -1623,7 +1649,12 @@ def _postprocess_final_decoded_text(text: Optional[str]) -> Tuple[Optional[str],
     )
     t = re.sub(r"\b([A-Za-z0-9_]+):[A-Za-z]+\b", r"\1", t)
     t = t.replace("_", " ")
-    t = re.sub(r"\b(?:which|that|who|whom|whose|when|where)\s+(?:and|or|but)\s+", "", t, flags=re.IGNORECASE)
+    t = re.sub(
+        r"\b(?:which|that|who|whom|whose|when|where)\s+(?:and|or|but)\s+",
+        "",
+        t,
+        flags=re.IGNORECASE,
+    )
     t = re.sub(r"\b([A-Za-z]+)\s+\1\b", r"\1", t, flags=re.IGNORECASE)
     t = re.sub(r"\s+,", ",", t)
     t = re.sub(r",\s*(and|or)\s*,", ", ", t, flags=re.IGNORECASE)
@@ -1661,15 +1692,24 @@ def _postprocess_final_decoded_text(text: Optional[str]) -> Tuple[Optional[str],
         t,
         flags=re.IGNORECASE,
     )
-    t = re.sub(r"\bfor\s+which\s+he\s+to\s+be\s+chosen\b", "for which he is chosen", t, flags=re.IGNORECASE)
-    t = re.sub(r"for\s+which\s+he\s+to\s+be\s+chosen", "for which he is chosen", t, flags=re.IGNORECASE)
+    t = re.sub(
+        r"\bfor\s+which\s+he\s+to\s+be\s+chosen\b", "for which he is chosen", t, flags=re.IGNORECASE
+    )
+    t = re.sub(
+        r"for\s+which\s+he\s+to\s+be\s+chosen", "for which he is chosen", t, flags=re.IGNORECASE
+    )
     t = re.sub(
         r"\bfor\s+inhabitant\s+of\s+that\s+state\s+for\s+which\s+he\s+to\s+be\s+chosen\b",
         "for an inhabitant of that state for which he is chosen",
         t,
         flags=re.IGNORECASE,
     )
-    t = re.sub(r"\bit\s+is\s+obligatory\s+for\s+they\s+to\s+be\b", "it is obligatory that they be", t, flags=re.IGNORECASE)
+    t = re.sub(
+        r"\bit\s+is\s+obligatory\s+for\s+they\s+to\s+be\b",
+        "it is obligatory that they be",
+        t,
+        flags=re.IGNORECASE,
+    )
     t = re.sub(
         r"\bit\s+is\s+obligatory\s+for\s+which\s+to\s+be\s+determined\s+by\b",
         "it is obligatory that representation be determined by",
@@ -1683,7 +1723,12 @@ def _postprocess_final_decoded_text(text: Optional[str]) -> Tuple[Optional[str],
         t,
         flags=re.IGNORECASE,
     )
-    t = re.sub(r"\bshall\s+be\s+authorized\s+compel\b", "shall be authorized to compel", t, flags=re.IGNORECASE)
+    t = re.sub(
+        r"\bshall\s+be\s+authorized\s+compel\b",
+        "shall be authorized to compel",
+        t,
+        flags=re.IGNORECASE,
+    )
     # Strip dangling connector/pronoun sentence endings like "... and." or "... do.".
     t = re.sub(orphan_pattern, r"\1", t, flags=re.IGNORECASE)
     # Strip dangling tails that may appear before punctuation is appended, e.g. "... and who".
@@ -1768,10 +1813,19 @@ def _decode_cec_compile_to_text(formula: Optional[str]) -> Optional[str]:
     txt = re.sub(r"\b([A-Za-z0-9_]+):[A-Za-z]+\b", r"\1", txt)
     txt = txt.replace("_", " ")
     txt = re.sub(r"\b(agent|event|state|action)\b", "", txt, flags=re.IGNORECASE)
-    txt = re.sub(r"\b(?:which|that|who|when|where|we|our|their|his|her)\s+and\s+", "", txt, flags=re.IGNORECASE)
+    txt = re.sub(
+        r"\b(?:which|that|who|when|where|we|our|their|his|her)\s+and\s+",
+        "",
+        txt,
+        flags=re.IGNORECASE,
+    )
     # Collapse heading echoes from symbolic decode, e.g. "Section 1 section".
-    txt = re.sub(r"\bsection\s+([0-9ivxlcdm]+)\s+section\b", r"section \1", txt, flags=re.IGNORECASE)
-    txt = re.sub(r"\barticle\s+([0-9ivxlcdm]+)\s+article\b", r"article \1", txt, flags=re.IGNORECASE)
+    txt = re.sub(
+        r"\bsection\s+([0-9ivxlcdm]+)\s+section\b", r"section \1", txt, flags=re.IGNORECASE
+    )
+    txt = re.sub(
+        r"\barticle\s+([0-9ivxlcdm]+)\s+article\b", r"article \1", txt, flags=re.IGNORECASE
+    )
     txt = re.sub(r"\b([A-Za-z]+)\s+\1\b", r"\1", txt, flags=re.IGNORECASE)
     txt = re.sub(r"\b([A-Za-z]+),\s+\1\b", r"\1", txt, flags=re.IGNORECASE)
     txt = re.sub(r"\s+,", ",", txt)
@@ -1779,7 +1833,12 @@ def _decode_cec_compile_to_text(formula: Optional[str]) -> Optional[str]:
     # Remove short dangling duplicate tail sentences commonly emitted by CEC decode.
     txt = re.sub(r"\.\s*(shall|within|section|article)\.\s*$", ".", txt, flags=re.IGNORECASE)
     txt = re.sub(r"\s+", " ", txt).strip(" ,")
-    txt = re.sub(r"\b(?:our|their|his|her|which|that|who|when|where|and|or|but|do|does)\.$", ".", txt, flags=re.IGNORECASE)
+    txt = re.sub(
+        r"\b(?:our|their|his|her|which|that|who|when|where|and|or|but|do|does)\.$",
+        ".",
+        txt,
+        flags=re.IGNORECASE,
+    )
     txt = re.sub(r"\s+\.", ".", txt)
     if txt:
         txt = txt[0].upper() + txt[1:]
@@ -1838,25 +1897,35 @@ def _decode_fol_formula_to_text(formula: Optional[str]) -> Optional[str]:
             return "the executive thereof may make temporary appointments until the next session"
         if lhs_norm.startswith("each house") and ctx.startswith("the rules of its proceedings"):
             return "each house may determine the rules of its proceedings and punish"
-        if "absent members" in lhs_norm and rhs_min == "authorized" and "compel the attendance of absent members" in ctx:
+        if (
+            "absent members" in lhs_norm
+            and rhs_min == "authorized"
+            and "compel the attendance of absent members" in ctx
+        ):
             return "absent members may be authorized to compel the attendance of absent members"
         if ctx:
             # Prefer action-style phrasing and avoid rigid "shall be <verb>" artifacts.
             if ctx.startswith("is permitted"):
-                tail = ctx[len("is permitted"):].strip()
-                tail = re.sub(r"^all\s+" + re.escape(lhs) + r"\b", "", tail, flags=re.IGNORECASE).strip()
+                tail = ctx[len("is permitted") :].strip()
+                tail = re.sub(
+                    r"^all\s+" + re.escape(lhs) + r"\b", "", tail, flags=re.IGNORECASE
+                ).strip()
                 if rhs_min:
                     return f"all {lhs} are permitted to {rhs_min} {tail}".strip()
                 return f"all {lhs} are permitted {tail}".strip()
             if ctx.startswith("is obligatory"):
-                tail = ctx[len("is obligatory"):].strip()
-                tail = re.sub(r"^all\s+" + re.escape(lhs) + r"\b", "", tail, flags=re.IGNORECASE).strip()
+                tail = ctx[len("is obligatory") :].strip()
+                tail = re.sub(
+                    r"^all\s+" + re.escape(lhs) + r"\b", "", tail, flags=re.IGNORECASE
+                ).strip()
                 if rhs_min:
                     return f"all {lhs} are obligated to {rhs_min} {tail}".strip()
                 return f"all {lhs} are obligated {tail}".strip()
             if ctx.startswith("is forbidden"):
-                tail = ctx[len("is forbidden"):].strip()
-                tail = re.sub(r"^all\s+" + re.escape(lhs) + r"\b", "", tail, flags=re.IGNORECASE).strip()
+                tail = ctx[len("is forbidden") :].strip()
+                tail = re.sub(
+                    r"^all\s+" + re.escape(lhs) + r"\b", "", tail, flags=re.IGNORECASE
+                ).strip()
                 if rhs_min:
                     return f"all {lhs} are forbidden to {rhs_min} {tail}".strip()
                 return f"all {lhs} are forbidden {tail}".strip()
@@ -2003,7 +2072,9 @@ def _decompose_action_predicates(action_text: str) -> Tuple[str, Optional[str]]:
 
 def _canonicalize_proposition_text(value: str) -> str:
     text = _humanize_logic_text(value or "").lower()
-    text = re.sub(r"\b(it is|that|there exists|an|a|the|for every entity if|applies|holds)\b", " ", text)
+    text = re.sub(
+        r"\b(it is|that|there exists|an|a|the|for every entity if|applies|holds)\b", " ", text
+    )
     text = re.sub(r"\b(and|or|implies|not)\b", " ", text)
     text = re.sub(r"[^a-z0-9 ]+", " ", text)
     tokens = [t for t in text.split() if len(t) >= 3]
@@ -2035,14 +2106,18 @@ def _extract_structured_role_tuple(text: str) -> Optional[Dict[str, Any]]:
         negated = True
 
     # Keep conjunctions in the core action span to avoid dropping legal constraints.
-    action_raw = re.split(r"(?i)\b(provided\s+that|except\s+that)\b", action_raw, maxsplit=1)[0].strip(" ,;:-")
+    action_raw = re.split(r"(?i)\b(provided\s+that|except\s+that)\b", action_raw, maxsplit=1)[
+        0
+    ].strip(" ,;:-")
     action_words = action_raw.split()
     if len(action_words) > 28:
         action_raw = " ".join(action_words[:28])
 
     # Strip leading coordinators/determiners to improve canonical predicate naming.
     agent_raw = re.sub(r"^(and|or|but)\b\s*", "", agent_raw, flags=re.IGNORECASE).strip()
-    agent_raw = re.sub(r"^(if|when|while|unless)\b[^,]*,\s*", "", agent_raw, flags=re.IGNORECASE).strip()
+    agent_raw = re.sub(
+        r"^(if|when|while|unless)\b[^,]*,\s*", "", agent_raw, flags=re.IGNORECASE
+    ).strip()
     agent_raw = re.sub(r"^(or\s+otherwise,\s*)", "", agent_raw, flags=re.IGNORECASE).strip()
     agent_raw = re.sub(r"^(during\b[^,]*,\s*)", "", agent_raw, flags=re.IGNORECASE).strip()
     if "," in agent_raw:
@@ -2082,14 +2157,12 @@ def _extract_structured_role_tuple(text: str) -> Optional[Dict[str, Any]]:
 def _build_structured_fol_formula(role_tuple: Optional[Dict[str, Any]]) -> Optional[str]:
     if not role_tuple:
         return None
-    agent = _sanitize_symbol_token(str(role_tuple.get("agent") or ""), fallback="Agent", max_words=4, max_chars=28)
+    agent = _sanitize_symbol_token(
+        str(role_tuple.get("agent") or ""), fallback="Agent", max_words=4, max_chars=28
+    )
     action_verb, action_ctx = _decompose_action_predicates(str(role_tuple.get("action") or ""))
     negated = bool(role_tuple.get("negated"))
-    action_rhs = (
-        f"({action_verb}(x) ∧ {action_ctx}(x))"
-        if action_ctx
-        else f"{action_verb}(x)"
-    )
+    action_rhs = f"({action_verb}(x) ∧ {action_ctx}(x))" if action_ctx else f"{action_verb}(x)"
     if negated:
         return f"∀x ({agent}(x) → ¬{action_verb}(x))"
     return f"∀x ({agent}(x) → {action_rhs})"
@@ -2128,11 +2201,7 @@ def _build_grounded_fol_fallback(
     action_verb, action_ctx = _decompose_action_predicates(action_name)
     if not agent or not action_verb:
         return None
-    action_rhs = (
-        f"({action_verb}(x) ∧ {action_ctx}(x))"
-        if action_ctx
-        else f"{action_verb}(x)"
-    )
+    action_rhs = f"({action_verb}(x) ∧ {action_ctx}(x))" if action_ctx else f"{action_verb}(x)"
     if negated:
         return f"∀x ({agent}(x) → ¬{action_verb}(x))"
     return f"∀x ({agent}(x) → {action_rhs})"
@@ -2360,7 +2429,7 @@ def _run_llm_decoder_pass(
         f"cec_compile_formula: {cec_compile_formula or ''}\n"
         f"flogic_formula: {flogic_formula or ''}\n"
         f"baseline_decoded_text: {baseline_decoded_text or ''}\n"
-        "Output example: {\"polished_text\":\"All legislative powers granted herein shall be vested in a Congress of the United States.\"}\n"
+        'Output example: {"polished_text":"All legislative powers granted herein shall be vested in a Congress of the United States."}\n'
     )
 
     provider_candidates = _llm_provider_candidates(provider)
@@ -2489,7 +2558,7 @@ def _run_llm_kg_enrichment(
         f"text: {text}\n"
         f"deontic_formula: {deontic_formula or ''}\n"
         f"fol_formula: {fol_formula or ''}\n"
-        "Output example: {\"agent\":\"Congress\",\"action\":\"levy taxes\",\"object\":\"imports\",\"condition\":\"during wartime\",\"modality\":\"shall\",\"negated\":false}\n"
+        'Output example: {"agent":"Congress","action":"levy taxes","object":"imports","condition":"during wartime","modality":"shall","negated":false}\n'
     )
 
     provider_candidates = _llm_provider_candidates(provider)
@@ -2617,7 +2686,7 @@ def _run_llm_final_pass(
         f"text: {text}\n"
         f"current_deontic_formula: {deontic_formula or ''}\n"
         f"current_fol_formula: {fol_formula or ''}\n"
-        "Output example: {\"deontic_formula\":\"O(∀x (Agent(x) → Act(x)))\",\"fol_formula\":\"∀x (Agent(x) → Act(x))\",\"deontic_roundtrip_text\":\"it is obligatory that...\",\"fol_roundtrip_text\":\"for every entity...\"}\n"
+        'Output example: {"deontic_formula":"O(∀x (Agent(x) → Act(x)))","fol_formula":"∀x (Agent(x) → Act(x))","deontic_roundtrip_text":"it is obligatory that...","fol_roundtrip_text":"for every entity..."}\n'
     )
 
     provider_candidates = _llm_provider_candidates(provider)
@@ -2667,7 +2736,9 @@ def _run_llm_final_pass(
     return None, last_err
 
 
-def _derive_kg_agent_and_proposition(rec: ConversionRecord) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+def _derive_kg_agent_and_proposition(
+    rec: ConversionRecord,
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     if rec.theorem_candidate:
         agent_name = str(rec.theorem_candidate.get("agent_name") or "").strip() or None
         proposition = str(rec.theorem_candidate.get("proposition") or "").strip() or None
@@ -2904,10 +2975,19 @@ def _select_roundtrip_text_with_optimizer(
     selected_candidate_id = selected_pid.split(":", 1)[1] if ":" in selected_pid else selected_pid
     selected_text = candidates.get(selected_candidate_id, baseline_text)
     selected_score = candidate_scores[selected_pid]
-    return selected_text, selected_score, baseline_score, effective_backend, warning, selected_candidate_id
+    return (
+        selected_text,
+        selected_score,
+        baseline_score,
+        effective_backend,
+        warning,
+        selected_candidate_id,
+    )
 
 
-def _roundtrip_similarity(original_text: str, roundtrip_text: Optional[str], dims: int) -> Optional[float]:
+def _roundtrip_similarity(
+    original_text: str, roundtrip_text: Optional[str], dims: int
+) -> Optional[float]:
     if not roundtrip_text:
         return None
     v1 = _sparse_hash_embed(original_text, dims=dims)
@@ -3040,10 +3120,14 @@ def setup_tdfol_cec(enable_tdfol: bool, enable_cec: bool) -> Dict[str, Any]:
         return tools
 
     try:
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            TDFOLGrammarBridge,
+        )
 
         tools["grammar_bridge"] = TDFOLGrammarBridge()
-        tools["tdfol_enabled"] = bool(tools["grammar_bridge"] and tools["grammar_bridge"].is_available())
+        tools["tdfol_enabled"] = bool(
+            tools["grammar_bridge"] and tools["grammar_bridge"].is_available()
+        )
     except Exception as exc:
         tools["setup_errors"].append(f"tdfol_setup_failed: {exc}")
 
@@ -3187,14 +3271,32 @@ def _decode_flogic_output_to_text(
 
     if agent.strip().lower() in relative_or_pronoun_agent:
         clause = action + (f" {obj}" if obj else "")
-        if clause.lower().startswith("be ") and agent.strip().lower() not in {"they", "he", "she", "it", "we"}:
+        if clause.lower().startswith("be ") and agent.strip().lower() not in {
+            "they",
+            "he",
+            "she",
+            "it",
+            "we",
+        }:
             clause = f"it {clause}"
         if polarity == "FORBIDDEN":
-            out = f"it is forbidden that {agent} {clause}" if agent.strip().lower() in {"they", "he", "she", "it", "we"} else f"it is forbidden that {clause}"
+            out = (
+                f"it is forbidden that {agent} {clause}"
+                if agent.strip().lower() in {"they", "he", "she", "it", "we"}
+                else f"it is forbidden that {clause}"
+            )
         elif polarity == "PERMITTED":
-            out = f"it is permitted that {agent} {clause}" if agent.strip().lower() in {"they", "he", "she", "it", "we"} else f"it is permitted that {clause}"
+            out = (
+                f"it is permitted that {agent} {clause}"
+                if agent.strip().lower() in {"they", "he", "she", "it", "we"}
+                else f"it is permitted that {clause}"
+            )
         else:
-            out = f"it is obligatory that {agent} {clause}" if agent.strip().lower() in {"they", "he", "she", "it", "we"} else f"it is obligatory that {clause}"
+            out = (
+                f"it is obligatory that {agent} {clause}"
+                if agent.strip().lower() in {"they", "he", "she", "it", "we"}
+                else f"it is obligatory that {clause}"
+            )
     else:
         if polarity == "FORBIDDEN":
             out = f"it is forbidden for {phrase}"
@@ -3207,8 +3309,15 @@ def _decode_flogic_output_to_text(
             out += f", {cond}"
         else:
             out += f" when {cond}"
-    out = re.sub(r"for\s+which\s+he\s+to\s+be\s+chosen", "for which he is chosen", out, flags=re.IGNORECASE)
-    out = re.sub(r"\bfor\s+inhabitant\s+of\s+that\s+state\b", "for an inhabitant of that state", out, flags=re.IGNORECASE)
+    out = re.sub(
+        r"for\s+which\s+he\s+to\s+be\s+chosen", "for which he is chosen", out, flags=re.IGNORECASE
+    )
+    out = re.sub(
+        r"\bfor\s+inhabitant\s+of\s+that\s+state\b",
+        "for an inhabitant of that state",
+        out,
+        flags=re.IGNORECASE,
+    )
     # Canonical legal rewrites for recurring constitutional patterns.
     out = re.sub(
         r"^it\s+is\s+permitted\s+for\s+congress\s+to\s+make\s+or\s+alter\s+at\s+any\s+time\s+by\s+law\s+such\s+regulations\.?$",
@@ -3321,7 +3430,9 @@ def _augment_flogic_role_components(
         m_obj = re.match(r"(?:be\s+)?([A-Za-z]+)(?:\s+to)?\s+(.+)$", act)
         if m_obj:
             tail = m_obj.group(2).strip(" ,;:-.")
-            if tail and not re.match(r"^(when|if|unless|until|provided|except)\b", tail, flags=re.IGNORECASE):
+            if tail and not re.match(
+                r"^(when|if|unless|until|provided|except)\b", tail, flags=re.IGNORECASE
+            ):
                 obj_out = " ".join(tail.split()[:14])
 
     action_out = " ".join(action_out.split()[:16]).strip()
@@ -3458,7 +3569,7 @@ def run_flogic_conversion(
             ],
             frames=[agent_frame, action_frame, norm_frame],
             rules=[
-                '?N[agent_ref -> ?A, action_ref -> ?Act, polarity -> ?P] :- ?N : LegalNorm.',
+                "?N[agent_ref -> ?A, action_ref -> ?Act, polarity -> ?P] :- ?N : LegalNorm.",
                 '?N[norm_strength -> "high"] :- ?N : ObligationNorm.',
                 '?N[norm_strength -> "medium"] :- ?N : PermissionNorm.',
                 '?N[norm_strength -> "high"] :- ?N : ProhibitionNorm.',
@@ -3472,7 +3583,9 @@ def run_flogic_conversion(
         goal = "?N : LegalNorm"
         out["flogic_query_goal"] = goal
         query_result = wrapper.query(goal)
-        out["flogic_query_status"] = str(getattr(getattr(query_result, "status", None), "value", "unknown"))
+        out["flogic_query_status"] = str(
+            getattr(getattr(query_result, "status", None), "value", "unknown")
+        )
         out["flogic_query_binding_count"] = int(len(getattr(query_result, "bindings", []) or []))
         out["flogic_formula"] = ontology.to_ergo_program()
         out["flogic_decoded_text"] = _decode_flogic_output_to_text(role_tuple=rt, polarity=polarity)
@@ -3558,7 +3671,11 @@ def run_hybrid_ir_conversion(
         out["hybrid_roundtrip_text"] = roundtrip_text
         out["hybrid_ir_success"] = bool(
             out["hybrid_ir_json"]
-            and (out["hybrid_roundtrip_text"] or out["hybrid_dcec_formulas"] or out["hybrid_tdfol_formulas"])
+            and (
+                out["hybrid_roundtrip_text"]
+                or out["hybrid_dcec_formulas"]
+                or out["hybrid_tdfol_formulas"]
+            )
         )
     except Exception as exc:
         out["hybrid_errors"].append(str(exc))
@@ -3615,7 +3732,9 @@ def _focus_text_for_markers(text: str, markers: List[str]) -> str:
     return best
 
 
-def _deontic_polarity(text: str, deontic_formula: Optional[str], focus_text: Optional[str] = None) -> str:
+def _deontic_polarity(
+    text: str, deontic_formula: Optional[str], focus_text: Optional[str] = None
+) -> str:
     scopes = [focus_text, text]
     for scope in scopes:
         if not scope:
@@ -3667,10 +3786,14 @@ def _derive_tdfol_fallback_formula(
     fol_formula: Optional[str],
 ) -> Optional[str]:
     markers = _extract_temporal_markers(text)
-    atom = _temporal_atom_from_logic(text=text, deontic_formula=deontic_formula, fol_formula=fol_formula)
+    atom = _temporal_atom_from_logic(
+        text=text, deontic_formula=deontic_formula, fol_formula=fol_formula
+    )
     role_tuple = _extract_structured_role_tuple(text)
     agent_sym = _sanitize_symbol_token(str((role_tuple or {}).get("agent") or ""), fallback="Agent")
-    action_sym = _sanitize_symbol_token(str((role_tuple or {}).get("action") or ""), fallback="Action")
+    action_sym = _sanitize_symbol_token(
+        str((role_tuple or {}).get("action") or ""), fallback="Action"
+    )
     event = f"EVENT({agent_sym},{action_sym},{atom})"
     focus = _focus_text_for_markers(text, markers)
     polarity = _deontic_polarity(text, deontic_formula, focus_text=focus)
@@ -3699,10 +3822,14 @@ def _derive_cec_bridge_fallback_formula(
     fol_formula: Optional[str],
     tdfol_formula: Optional[str],
 ) -> Optional[str]:
-    atom = _temporal_atom_from_logic(text=text, deontic_formula=deontic_formula, fol_formula=fol_formula)
+    atom = _temporal_atom_from_logic(
+        text=text, deontic_formula=deontic_formula, fol_formula=fol_formula
+    )
     role_tuple = _extract_structured_role_tuple(text)
     agent_sym = _sanitize_symbol_token(str((role_tuple or {}).get("agent") or ""), fallback="Agent")
-    action_sym = _sanitize_symbol_token(str((role_tuple or {}).get("action") or ""), fallback="Action")
+    action_sym = _sanitize_symbol_token(
+        str((role_tuple or {}).get("action") or ""), fallback="Action"
+    )
     tag = "TEMP"
     if tdfol_formula:
         if "PERIODIC(" in tdfol_formula:
@@ -3775,7 +3902,9 @@ def run_tdfol_cec_conversions(
                         out["tdfol_formula"] = formula_text
                         out["tdfol_formula_origin"] = "grammar"
                         try:
-                            out["tdfol_decoded_text"] = grammar_bridge.formula_to_natural_language(formula)
+                            out["tdfol_decoded_text"] = grammar_bridge.formula_to_natural_language(
+                                formula
+                            )
                         except Exception:
                             out["tdfol_decoded_text"] = formula_text
 
@@ -3784,7 +3913,9 @@ def run_tdfol_cec_conversions(
                         out["tdfol_formula"] = str(formula)
                         out["tdfol_formula_origin"] = "grammar"
                         try:
-                            out["tdfol_decoded_text"] = grammar_bridge.formula_to_natural_language(formula)
+                            out["tdfol_decoded_text"] = grammar_bridge.formula_to_natural_language(
+                                formula
+                            )
                         except Exception:
                             out["tdfol_decoded_text"] = str(formula)
             except Exception as exc:
@@ -3801,7 +3932,9 @@ def run_tdfol_cec_conversions(
             out["tdfol_success"] = True
             out["tdfol_formula"] = tdfol_fallback
             out["tdfol_formula_origin"] = "fallback"
-            out["tdfol_decoded_text"] = _humanize_logic_text(_logic_formula_to_text(tdfol_fallback) or tdfol_fallback)
+            out["tdfol_decoded_text"] = _humanize_logic_text(
+                _logic_formula_to_text(tdfol_fallback) or tdfol_fallback
+            )
 
     if tools.get("cec_enabled"):
         if out["tdfol_formula"] is not None and cec_bridge is not None and formula is not None:
@@ -3812,11 +3945,15 @@ def run_tdfol_cec_conversions(
                 try:
                     back = cec_bridge.dcec_string_to_tdfol(out["cec_bridge_formula"])
                     if grammar_bridge is not None:
-                        out["cec_bridge_decoded_text"] = grammar_bridge.formula_to_natural_language(back)
+                        out["cec_bridge_decoded_text"] = grammar_bridge.formula_to_natural_language(
+                            back
+                        )
                     else:
                         out["cec_bridge_decoded_text"] = str(back)
                 except Exception:
-                    out["cec_bridge_decoded_text"] = _logic_formula_to_text(out["cec_bridge_formula"])
+                    out["cec_bridge_decoded_text"] = _logic_formula_to_text(
+                        out["cec_bridge_formula"]
+                    )
             except Exception as exc:
                 out["cec_errors"].append(f"cec_bridge: {exc}")
 
@@ -3963,7 +4100,9 @@ def build_logic_jsonld(records: List[ConversionRecord], summary: Dict[str, Any])
             theorem_canonical = ""
             if rec.theorem_candidate:
                 theorem_canonical = str(rec.theorem_candidate.get("proposition_canonical") or "")
-            prop_key = theorem_canonical or _canonicalize_proposition_text(proposition) or proposition
+            prop_key = (
+                theorem_canonical or _canonicalize_proposition_text(proposition) or proposition
+            )
             if prop_key not in seen_props:
                 prop_id = _id_for("proposition", prop_key)
                 seen_props[prop_key] = prop_id
@@ -4050,7 +4189,9 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
         use_nlp=True,
         enable_monitoring=False,
     )
-    parser_dependency_warnings = _check_parser_dependencies(strict=bool(args.strict_parser_dependencies))
+    parser_dependency_warnings = _check_parser_dependencies(
+        strict=bool(args.strict_parser_dependencies)
+    )
     tdfol_cec_tools = setup_tdfol_cec(
         enable_tdfol=bool(args.enable_tdfol),
         enable_cec=bool(args.enable_cec),
@@ -4159,9 +4300,7 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
     fragment_prior_context: Dict[str, List[str]] = {}
     encoder_stream_context: Dict[str, List[str]] = {}
     allowed_missing_modalities = {
-        x.strip()
-        for x in str(args.allow_missing_semantic_modalities).split(",")
-        if x.strip()
+        x.strip() for x in str(args.allow_missing_semantic_modalities).split(",") if x.strip()
     }
 
     if roundtrip_optimizer_requested:
@@ -4179,7 +4318,9 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                 )
                 roundtrip_optimizer_enabled = True
             except Exception as exc:
-                roundtrip_optimizer_warnings.append(f"roundtrip optimizer initialization failed: {exc}")
+                roundtrip_optimizer_warnings.append(
+                    f"roundtrip optimizer initialization failed: {exc}"
+                )
 
     for seg in segments:
         stream_key_for_context = _segment_stream_key(seg.source_path, seg.source_id)
@@ -4190,8 +4331,12 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
 
         d_formula_initial = d_res.output if d_res.success and d_res.output is not None else None
         f_formula_initial = f_res.output if f_res.success and f_res.output is not None else None
-        d_formula_initial_str = d_formula_initial.to_fol_string() if d_formula_initial is not None else None
-        f_formula_initial_str = f_formula_initial.formula_string if f_formula_initial is not None else None
+        d_formula_initial_str = (
+            d_formula_initial.to_fol_string() if d_formula_initial is not None else None
+        )
+        f_formula_initial_str = (
+            f_formula_initial.formula_string if f_formula_initial is not None else None
+        )
 
         if args.enable_focused_retry_optimizer:
             should_retry = _is_weak_deontic_formula(d_formula_initial_str) or _is_weak_fol_formula(
@@ -4204,10 +4349,18 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                     d_retry = deontic.convert(focused_text)
                     f_retry = fol.convert(focused_text)
 
-                    d_retry_formula = d_retry.output if d_retry.success and d_retry.output is not None else None
-                    f_retry_formula = f_retry.output if f_retry.success and f_retry.output is not None else None
-                    d_retry_formula_str = d_retry_formula.to_fol_string() if d_retry_formula is not None else None
-                    f_retry_formula_str = f_retry_formula.formula_string if f_retry_formula is not None else None
+                    d_retry_formula = (
+                        d_retry.output if d_retry.success and d_retry.output is not None else None
+                    )
+                    f_retry_formula = (
+                        f_retry.output if f_retry.success and f_retry.output is not None else None
+                    )
+                    d_retry_formula_str = (
+                        d_retry_formula.to_fol_string() if d_retry_formula is not None else None
+                    )
+                    f_retry_formula_str = (
+                        f_retry_formula.formula_string if f_retry_formula is not None else None
+                    )
 
                     d_before = d_formula_initial_str
                     f_before = f_formula_initial_str
@@ -4234,7 +4387,7 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
             if weak_deontic or weak_fol:
                 retry_texts = _build_encoder_retry_texts(
                     seg.text,
-                    prior_texts=prior_texts[-max(0, int(args.encoder_context_window_prior)):],
+                    prior_texts=prior_texts[-max(0, int(args.encoder_context_window_prior)) :],
                     max_attempts=int(args.encoder_retry_max_attempts),
                 )
                 if retry_texts:
@@ -4310,9 +4463,13 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                         structured_sparse = _role_tuple_quality(structured_role_tuple) < 4
                         if not (baseline_needs_enrichment or structured_sparse):
                             llm_kg_enrichment_notes = "llm_kg_skipped_strong_baseline"
-                        elif _role_tuple_quality(llm_role_tuple) >= _role_tuple_quality(structured_role_tuple):
+                        elif _role_tuple_quality(llm_role_tuple) >= _role_tuple_quality(
+                            structured_role_tuple
+                        ):
                             min_gain = float(args.llm_kg_enrichment_min_semantic_gain)
-                            old_struct_formula = _build_structured_fol_formula(structured_role_tuple)
+                            old_struct_formula = _build_structured_fol_formula(
+                                structured_role_tuple
+                            )
                             new_struct_formula = _build_structured_fol_formula(llm_role_tuple)
                             old_score = _llm_modality_semantic_score(
                                 source_text=seg.text,
@@ -4333,9 +4490,7 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                                 llm_kg_enrichment_notes = "llm_kg_applied"
                             else:
                                 llm_kg_enrichment_rejected_semantic_regression += 1
-                                llm_kg_enrichment_notes = (
-                                    f"llm_kg_rejected_semantic_regression:{(new_score - old_score):.4f}"
-                                )
+                                llm_kg_enrichment_notes = f"llm_kg_rejected_semantic_regression:{(new_score - old_score):.4f}"
                         else:
                             llm_kg_enrichment_notes = "llm_kg_not_better_than_rule_tuple"
                     else:
@@ -4346,7 +4501,9 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
             and bool(structured_role_tuple.get("negated"))
             and _is_misaligned_negation_fol_formula(fol_formula_string)
         )
-        if structured_fol_fallback and (_is_weak_fol_formula(fol_formula_string) or force_structured_fol):
+        if structured_fol_fallback and (
+            _is_weak_fol_formula(fol_formula_string) or force_structured_fol
+        ):
             fol_formula_string = structured_fol_fallback
 
         if _is_weak_fol_formula(fol_formula_string):
@@ -4490,8 +4647,8 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                             llm_final_pass_applied_count += 1
                             llm_final_pass_notes = "llm_applied:" + ",".join(applied_modalities)
                         elif rejected_notes:
-                            llm_final_pass_notes = (
-                                "llm_rejected_semantic_regression:" + ",".join(rejected_notes)
+                            llm_final_pass_notes = "llm_rejected_semantic_regression:" + ",".join(
+                                rejected_notes
                             )
                         else:
                             llm_final_pass_notes = "llm_no_improvement"
@@ -4516,7 +4673,9 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
             text=seg.text,
             source_id=seg.source_id,
             tools=hybrid_ir_tools,
-            jurisdiction=str(args.hybrid_ir_jurisdiction_fallback or args.jurisdiction or "default"),
+            jurisdiction=str(
+                args.hybrid_ir_jurisdiction_fallback or args.jurisdiction or "default"
+            ),
             canonical_predicates=bool(args.hybrid_ir_canonical_predicates),
         )
         if bool(hybrid_ir.get("hybrid_ir_success")):
@@ -4562,7 +4721,9 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                 deontic_proposition=proposition,
                 deontic_proposition_canonical=proposition_canonical,
                 agent_name=(
-                    d_formula.agent.name if getattr(d_formula, "agent", None) else "Unspecified Party"
+                    d_formula.agent.name
+                    if getattr(d_formula, "agent", None)
+                    else "Unspecified Party"
                 ),
                 deontic_confidence=float(d_res.confidence),
                 min_text_chars=int(args.theorem_min_text_chars),
@@ -4585,9 +4746,7 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
         cec_formula_total += int(tdfol_cec["cec_formula_count"])
 
         deontic_roundtrip_text = _decode_deontic_formula_to_text(deontic_formula_string)
-        fol_roundtrip_text = _decode_fol_formula_to_text(
-            fol_formula_string
-        )
+        fol_roundtrip_text = _decode_fol_formula_to_text(fol_formula_string)
         if (
             deontic_roundtrip_text is None
             and _is_trivial_deontic_formula(deontic_formula_string)
@@ -4640,18 +4799,20 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                     "hybrid": None,
                 }
                 for modality, formula_text, baseline_text in optimized_modalities:
-                    selected_text, selected_score, baseline_score, beff, warn, _ = _select_roundtrip_text_with_optimizer(
-                        original_text=seg.text,
-                        formula=formula_text,
-                        baseline_text=baseline_text,
-                        modality=modality,
-                        prompt_optimizer=roundtrip_optimizer,
-                        optimizer_min_uses=int(args.roundtrip_optimizer_min_uses),
-                        dims=dims,
-                        backend=embedding_backend_effective,
-                        model_name=str(args.embedding_model),
-                        st_state=st_state,
-                        allow_source_conditioning=bool(args.allow_source_conditioned_roundtrip),
+                    selected_text, selected_score, baseline_score, beff, warn, _ = (
+                        _select_roundtrip_text_with_optimizer(
+                            original_text=seg.text,
+                            formula=formula_text,
+                            baseline_text=baseline_text,
+                            modality=modality,
+                            prompt_optimizer=roundtrip_optimizer,
+                            optimizer_min_uses=int(args.roundtrip_optimizer_min_uses),
+                            dims=dims,
+                            backend=embedding_backend_effective,
+                            model_name=str(args.embedding_model),
+                            st_state=st_state,
+                            allow_source_conditioning=bool(args.allow_source_conditioned_roundtrip),
+                        )
                     )
                     embedding_backend_effective = beff
                     if warn and warn not in embedding_backend_warnings:
@@ -4799,9 +4960,9 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                 "flogic": semantic_similarity_flogic,
                 "hybrid": semantic_similarity_hybrid,
             }
-            skip_heading_for_metrics = bool(args.exclude_heading_segments_from_semantic_metrics) and _is_heading_like(
-                seg.source_id, seg.text
-            )
+            skip_heading_for_metrics = bool(
+                args.exclude_heading_segments_from_semantic_metrics
+            ) and _is_heading_like(seg.source_id, seg.text)
             for mod, val in modality_values.items():
                 if val is not None:
                     if skip_heading_for_metrics:
@@ -4828,6 +4989,7 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
         baseline_text: Optional[str] = None
         baseline_similarity: Optional[float] = None
         if baseline_candidates:
+
             def _candidate_retention(text: Optional[str]) -> float:
                 v = _keyphrase_retention_ratio(seg.text, text)
                 return 1.0 if v is None else float(max(0.0, min(1.0, v)))
@@ -4858,7 +5020,7 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                 if _name == "flogic":
                     # Coverage-aware preference for ontology-complete F-logic outputs.
                     cov = max(0.0, min(1.0, flogic_candidate_coverage))
-                    score += (0.015 * cov)
+                    score += 0.015 * cov
                     if cov >= 0.66:
                         score += 0.01
                 return score
@@ -4885,7 +5047,11 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                         and (c_retention + 0.06 >= top_retention)
                         and (flogic_candidate_coverage >= 0.66)
                     ):
-                        baseline_name, baseline_text, baseline_similarity = cand_name, cand_text, cand_sim
+                        baseline_name, baseline_text, baseline_similarity = (
+                            cand_name,
+                            cand_text,
+                            cand_sim,
+                        )
                     break
             # If top candidate is formula-like, prefer a near-equivalent natural text when available.
             if _is_formula_like_text(baseline_text):
@@ -4895,7 +5061,11 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                         continue
                     c_sim = -1.0 if cand_sim is None else float(cand_sim)
                     if c_sim + 0.08 >= top_sim:
-                        baseline_name, baseline_text, baseline_similarity = cand_name, cand_text, cand_sim
+                        baseline_name, baseline_text, baseline_similarity = (
+                            cand_name,
+                            cand_text,
+                            cand_sim,
+                        )
                         break
             # Enforce a minimal naturalness preference when alternatives are close.
             if baseline_text:
@@ -4910,7 +5080,11 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                             continue
                         c_sim = -1.0 if cand_sim is None else float(cand_sim)
                         if c_sim + 0.06 >= top_sim:
-                            baseline_name, baseline_text, baseline_similarity = cand_name, cand_text, cand_sim
+                            baseline_name, baseline_text, baseline_similarity = (
+                                cand_name,
+                                cand_text,
+                                cand_sim,
+                            )
                             break
         final_decoded_text = baseline_text
         final_decoded_text_origin = baseline_name
@@ -4974,11 +5148,11 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                                 llm_decoder_pass_notes = "llm_decoder_applied"
                             else:
                                 llm_decoder_pass_rejected_semantic_regression += 1
-                                llm_decoder_pass_notes = (
-                                    f"llm_decoder_rejected_semantic_regression:{(new_score - old_score):.4f};overlap:{overlap_ratio:.4f}"
-                                )
+                                llm_decoder_pass_notes = f"llm_decoder_rejected_semantic_regression:{(new_score - old_score):.4f};overlap:{overlap_ratio:.4f}"
 
-        cleaned_text, cleaned_applied, cleaned_note = _postprocess_final_decoded_text(final_decoded_text)
+        cleaned_text, cleaned_applied, cleaned_note = _postprocess_final_decoded_text(
+            final_decoded_text
+        )
         if cleaned_applied and cleaned_text:
             keep_cleaned = True
             forced_orphan_tail_cleanup = False
@@ -4990,7 +5164,9 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                 post_cleanup_rel < pre_cleanup_rel
             )
             if semantic_similarity_final_decoded is not None:
-                cleaned_score = _roundtrip_similarity(seg.text, cleaned_text, dims=int(args.embedding_dim))
+                cleaned_score = _roundtrip_similarity(
+                    seg.text, cleaned_text, dims=int(args.embedding_dim)
+                )
                 quality_old = _decoded_text_quality_score(final_decoded_text)
                 quality_new = _decoded_text_quality_score(cleaned_text)
                 quality_gain = quality_new - quality_old
@@ -4998,12 +5174,17 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
                 # Keep deterministic orphan-tail cleanup when it fully removes a lone dangling terminal token.
                 if pre_cleanup_orphans > 0 and post_cleanup_orphans == 0:
                     max_allowed_drop = max(max_allowed_drop, 0.05)
-                keep_cleaned = cleaned_score + max_allowed_drop >= float(semantic_similarity_final_decoded)
+                keep_cleaned = cleaned_score + max_allowed_drop >= float(
+                    semantic_similarity_final_decoded
+                )
                 if not keep_cleaned and pre_cleanup_orphans > 0 and post_cleanup_orphans == 0:
                     old_text = str(final_decoded_text or "")
                     new_text = str(cleaned_text or "")
                     # If cleanup only trims a dangling tail token at the end, keep it deterministically.
-                    if old_text.lower().startswith(new_text.lower()) and (len(old_text) - len(new_text)) <= 24:
+                    if (
+                        old_text.lower().startswith(new_text.lower())
+                        and (len(old_text) - len(new_text)) <= 24
+                    ):
                         keep_cleaned = True
                         forced_orphan_tail_cleanup = True
                 if not keep_cleaned and quality_gain >= 0.08:
@@ -5021,14 +5202,20 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
             if cec_tail_changed and cec_tail_text:
                 keep_cec_tail_cleanup = True
                 if semantic_similarity_final_decoded is not None:
-                    tail_score = _roundtrip_similarity(seg.text, cec_tail_text, dims=int(args.embedding_dim))
+                    tail_score = _roundtrip_similarity(
+                        seg.text, cec_tail_text, dims=int(args.embedding_dim)
+                    )
                     pre_tail_orphans = _count_orphan_terminal_tokens(final_decoded_text)
                     post_tail_orphans = _count_orphan_terminal_tokens(cec_tail_text)
                     pre_tail_rel = _count_relative_clause_artifacts(final_decoded_text)
                     post_tail_rel = _count_relative_clause_artifacts(cec_tail_text)
-                    reduced_artifacts = (post_tail_orphans < pre_tail_orphans) or (post_tail_rel < pre_tail_rel)
+                    reduced_artifacts = (post_tail_orphans < pre_tail_orphans) or (
+                        post_tail_rel < pre_tail_rel
+                    )
                     max_allowed_drop = 0.02 if reduced_artifacts else 0.005
-                    keep_cec_tail_cleanup = tail_score + max_allowed_drop >= float(semantic_similarity_final_decoded)
+                    keep_cec_tail_cleanup = tail_score + max_allowed_drop >= float(
+                        semantic_similarity_final_decoded
+                    )
                     if keep_cec_tail_cleanup:
                         semantic_similarity_final_decoded = float(tail_score)
                 if keep_cec_tail_cleanup:
@@ -5051,8 +5238,12 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
             )
 
         final_decoded_orphan_terminal_count = _count_orphan_terminal_tokens(final_decoded_text)
-        final_decoded_relative_clause_artifact_count = _count_relative_clause_artifacts(final_decoded_text)
-        final_decoded_enumeration_integrity = _enumeration_integrity_ratio(seg.text, final_decoded_text)
+        final_decoded_relative_clause_artifact_count = _count_relative_clause_artifacts(
+            final_decoded_text
+        )
+        final_decoded_enumeration_integrity = _enumeration_integrity_ratio(
+            seg.text, final_decoded_text
+        )
         final_decoded_keyphrase_retention = _keyphrase_retention_ratio(seg.text, final_decoded_text)
 
         theorem_candidate, theorem_filter_reasons = apply_semantic_thresholds(
@@ -5205,7 +5396,8 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
     theorem_candidates_with_canonical = [
         r.theorem_candidate
         for r in records
-        if r.theorem_candidate and str(r.theorem_candidate.get("proposition_canonical") or "").strip()
+        if r.theorem_candidate
+        and str(r.theorem_candidate.get("proposition_canonical") or "").strip()
     ]
     theorem_unique_canonical_props = {
         str(tc.get("proposition_canonical") or "").strip()
@@ -5218,7 +5410,9 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
     deontic_trivial_formula_count = sum(
         1 for r in entropy_records if _is_trivial_deontic_formula(r.deontic_formula)
     )
-    deontic_weak_formula_count = sum(1 for r in entropy_records if _is_weak_deontic_formula(r.deontic_formula))
+    deontic_weak_formula_count = sum(
+        1 for r in entropy_records if _is_weak_deontic_formula(r.deontic_formula)
+    )
     fol_weak_formula_count = sum(1 for r in entropy_records if _is_weak_fol_formula(r.fol_formula))
     overlong_predicate_formula_count = sum(
         1
@@ -5318,13 +5512,18 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
         else None
     )
     flogic_high_coverage_count = sum(
-        1 for r in flogic_records if (r.flogic_relation_coverage is not None and r.flogic_relation_coverage >= 0.66)
+        1
+        for r in flogic_records
+        if (r.flogic_relation_coverage is not None and r.flogic_relation_coverage >= 0.66)
     )
     flogic_high_coverage_rate = (
         float(flogic_high_coverage_count / len(flogic_records)) if flogic_records else None
     )
     flogic_avg_temporal_marker_count = (
-        float(sum(int(r.flogic_temporal_marker_count or 0) for r in flogic_records) / len(flogic_records))
+        float(
+            sum(int(r.flogic_temporal_marker_count or 0) for r in flogic_records)
+            / len(flogic_records)
+        )
         if flogic_records
         else None
     )
@@ -5375,7 +5574,9 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
             "repaired_trivial_deontic_count": repaired_trivial_deontic_count,
             "normalized_deontic_inner_count": normalized_deontic_inner_count,
             "fol_weak_formula_count": fol_weak_formula_count,
-            "fol_weak_formula_rate": _safe_ratio(fol_weak_formula_count, entropy_effective_segment_count),
+            "fol_weak_formula_rate": _safe_ratio(
+                fol_weak_formula_count, entropy_effective_segment_count
+            ),
             "repaired_weak_fol_count": repaired_weak_fol_count,
             "normative_cue_segment_count": normative_cue_segment_count,
             "normative_cue_segment_rate": _safe_ratio(
@@ -5485,7 +5686,9 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
         ),
         "llm_final_pass_rejected_semantic_regression_fol": llm_final_pass_rejected_semantic_regression_fol,
         "llm_final_pass_min_semantic_gain": float(args.llm_final_pass_min_semantic_gain),
-        "llm_final_pass_min_semantic_gain_deontic": float(args.llm_final_pass_min_semantic_gain_deontic),
+        "llm_final_pass_min_semantic_gain_deontic": float(
+            args.llm_final_pass_min_semantic_gain_deontic
+        ),
         "llm_final_pass_min_semantic_gain_fol": float(args.llm_final_pass_min_semantic_gain_fol),
         "exclude_heading_segments_from_semantic_metrics": bool(
             args.exclude_heading_segments_from_semantic_metrics
@@ -5503,9 +5706,7 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
             float(roundtrip_gain_sum / roundtrip_gain_count) if roundtrip_gain_count > 0 else None
         ),
         "roundtrip_optimizer_gain_by_modality": {
-            mod: (
-                float(vals["gain_sum"] / vals["count"]) if vals["count"] > 0 else None
-            )
+            mod: (float(vals["gain_sum"] / vals["count"]) if vals["count"] > 0 else None)
             for mod, vals in roundtrip_gain_by_modality.items()
         },
         "semantic_similarity_thresholds": {
@@ -5544,7 +5745,10 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
             else None
         ),
         "final_decoded_keyphrase_retention_mean": (
-            float(sum(final_decoded_keyphrase_retention_values) / len(final_decoded_keyphrase_retention_values))
+            float(
+                sum(final_decoded_keyphrase_retention_values)
+                / len(final_decoded_keyphrase_retention_values)
+            )
             if final_decoded_keyphrase_retention_values
             else None
         ),
@@ -5563,7 +5767,11 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
         "records": [asdict(r) for r in records],
     }
 
-    if roundtrip_optimizer_enabled and roundtrip_optimizer is not None and args.roundtrip_optimizer_export:
+    if (
+        roundtrip_optimizer_enabled
+        and roundtrip_optimizer is not None
+        and args.roundtrip_optimizer_export
+    ):
         try:
             roundtrip_optimizer.export_library(str(args.roundtrip_optimizer_export))
         except Exception as exc:
@@ -5573,7 +5781,9 @@ async def run(args: argparse.Namespace) -> Dict[str, Any]:
 
     out_json.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     logic_jsonld = build_logic_jsonld(records=records, summary=summary)
-    out_logic_jsonld.write_text(json.dumps(logic_jsonld, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    out_logic_jsonld.write_text(
+        json.dumps(logic_jsonld, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
     return summary
 

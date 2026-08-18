@@ -38,10 +38,12 @@ Added **`AsyncPolicyRegistrar`**:
 
 ```python
 registrar = AsyncPolicyRegistrar(registry)
-await registrar.register_many({
-    "admin_only": "Only admin may call admin_tools.",
-    "read_public": "All users may call read_tools.",
-})
+await registrar.register_many(
+    {
+        "admin_only": "Only admin may call admin_tools.",
+        "read_public": "All users may call read_tools.",
+    }
+)
 ```
 
 ### 2 — Persistent Policy Store ✅ COMPLETE
@@ -60,8 +62,8 @@ Added **`FilePolicyStore`**:
 
 ```python
 store = FilePolicyStore("/var/lib/mcp/policies.json", registry)
-store.save()    # persist on graceful shutdown
-store.load()    # restore on startup
+store.save()  # persist on graceful shutdown
+store.load()  # restore on startup
 ```
 
 ### 3 — PubSubBus ↔ P2PServiceManager Bridge ✅ COMPLETE
@@ -84,7 +86,7 @@ Added **`PubSubBridge`** + **`get_global_bus()`**:
 
 ```python
 bridge = PubSubBridge()
-bridge.connect(p2p_service_manager)   # wired
+bridge.connect(p2p_service_manager)  # wired
 bus = get_global_bus()
 bus.publish(PubSubEventType.INTERFACE_ANNOUNCE.value, {"cid": "bafy-..."})
 # → service_manager.announce_capability("/mcp+p2p/topics/interface_cid/1.0.0", {...})
@@ -138,8 +140,7 @@ Added **`DIDSignedDelegation`**, **`sign_delegation()`**, and
 
 ```python
 cap = Capability(resource="mcp:tool", ability="invoke")
-d = Delegation(cid="cid1", issuer="did:key:z6MkA", audience="did:key:z6MkB",
-               capabilities=[cap])
+d = Delegation(cid="cid1", issuer="did:key:z6MkA", audience="did:key:z6MkB", capabilities=[cap])
 signed = sign_delegation(d, key_manager=manager)
 ok = verify_delegation_signature(signed, key_manager=manager)
 ```

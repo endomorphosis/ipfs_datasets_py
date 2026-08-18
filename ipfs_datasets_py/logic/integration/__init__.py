@@ -82,7 +82,9 @@ def enable_symbolicai(*, autoconfigure_env: bool | None = None) -> bool:
         return True
 
     if autoconfigure_env is None:
-        autoconfigure_env = os.environ.get("IPFS_DATASETS_SYMBOLICAI_AUTOCONFIGURE", "").strip().lower() in {
+        autoconfigure_env = os.environ.get(
+            "IPFS_DATASETS_SYMBOLICAI_AUTOCONFIGURE", ""
+        ).strip().lower() in {
             "1",
             "true",
             "yes",
@@ -103,7 +105,10 @@ def enable_symbolicai(*, autoconfigure_env: bool | None = None) -> bool:
 
         from .interactive.interactive_fol_constructor import InteractiveFOLConstructor
         from .interactive.interactive_fol_types import SessionMetadata, StatementRecord
-        from .interactive.interactive_fol_utils import create_interactive_session, demo_interactive_session
+        from .interactive.interactive_fol_utils import (
+            create_interactive_session,
+            demo_interactive_session,
+        )
 
         SYMBOLIC_AI_AVAILABLE = True
         return True
@@ -138,11 +143,9 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "create_obligation": (".converters.deontic_logic_core", "create_obligation"),
     "create_permission": (".converters.deontic_logic_core", "create_permission"),
     "create_prohibition": (".converters.deontic_logic_core", "create_prohibition"),
-
     "DeonticLogicConverter": (".converters.deontic_logic_converter", "DeonticLogicConverter"),
     "ConversionContext": (".converters.deontic_logic_converter", "ConversionContext"),
     "ConversionResult": (".converters.deontic_logic_converter", "ConversionResult"),
-
     "LogicTranslationTarget": (".converters.logic_translation_core", "LogicTranslationTarget"),
     "TranslationResult": (".converters.logic_translation_core", "TranslationResult"),
     "AbstractLogicFormula": (".converters.logic_translation_core", "AbstractLogicFormula"),
@@ -150,12 +153,10 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "LeanTranslator": (".converters.logic_translation_core", "LeanTranslator"),
     "CoqTranslator": (".converters.logic_translation_core", "CoqTranslator"),
     "SMTTranslator": (".converters.logic_translation_core", "SMTTranslator"),
-
     "ModalLogicSymbol": (".converters.modal_logic_extension", "ModalLogicSymbol"),
     "AdvancedLogicConverter": (".converters.modal_logic_extension", "AdvancedLogicConverter"),
     "ModalFormula": (".converters.modal_logic_extension", "ModalFormula"),
     "LogicClassification": (".converters.modal_logic_extension", "LogicClassification"),
-
     # Caching subsystem
     "LogicIPLDStorage": (".caching.ipld_logic_storage", "LogicIPLDStorage"),
     "LogicProvenanceTracker": (".caching.ipld_logic_storage", "LogicProvenanceTracker"),
@@ -165,14 +166,12 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
         ".caching.ipld_logic_storage",
         "create_logic_storage_with_provenance",
     ),
-
     # Domain subsystem
     "LegalDomainKnowledge": (".domain.legal_domain_knowledge", "LegalDomainKnowledge"),
     "LegalDomain": (".domain.legal_domain_knowledge", "LegalDomain"),
     "LegalConceptType": (".domain.legal_domain_knowledge", "LegalConceptType"),
     "LegalPattern": (".domain.legal_domain_knowledge", "LegalPattern"),
     "AgentPattern": (".domain.legal_domain_knowledge", "AgentPattern"),
-
     "LegalSymbolicAnalyzer": (".domain.legal_symbolic_analyzer", "LegalSymbolicAnalyzer"),
     "LegalReasoningEngine": (".domain.legal_symbolic_analyzer", "LegalReasoningEngine"),
     "LegalAnalysisResult": (".domain.legal_symbolic_analyzer", "LegalAnalysisResult"),
@@ -183,7 +182,6 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
         ".domain.legal_symbolic_analyzer",
         "create_legal_reasoning_engine",
     ),
-
     "DeonticQueryEngine": (".domain.deontic_query_engine", "DeonticQueryEngine"),
     "QueryType": (".domain.deontic_query_engine", "QueryType"),
     "QueryResult": (".domain.deontic_query_engine", "QueryResult"),
@@ -191,7 +189,6 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "LogicConflict": (".domain.deontic_query_engine", "LogicConflict"),
     "create_query_engine": (".domain.deontic_query_engine", "create_query_engine"),
     "query_legal_rules": (".domain.deontic_query_engine", "query_legal_rules"),
-
     # Reasoning subsystem
     "DeontologicalReasoningEngine": (
         ".reasoning.deontological_reasoning",
@@ -204,7 +201,6 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "DeonticExtractor": (".reasoning.deontological_reasoning", "DeonticExtractor"),
     "ConflictDetector": (".reasoning.deontological_reasoning", "ConflictDetector"),
     "DeonticPatterns": (".reasoning.deontological_reasoning", "DeonticPatterns"),
-
     "ProofExecutionEngine": (".reasoning.proof_execution_engine", "ProofExecutionEngine"),
     "ProofResult": (".reasoning.proof_execution_engine", "ProofResult"),
     "ProofStatus": (".reasoning.proof_execution_engine", "ProofStatus"),
@@ -215,29 +211,24 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
         "prove_with_all_provers",
     ),
     "check_consistency": (".reasoning.proof_execution_engine", "check_consistency"),
-
     "LogicVerifier": (".reasoning.logic_verification", "LogicVerifier"),
     "LogicAxiom": (".reasoning.logic_verification", "LogicAxiom"),
     "ConsistencyCheck": (".reasoning.logic_verification", "ConsistencyCheck"),
     "EntailmentResult": (".reasoning.logic_verification", "EntailmentResult"),
-
     # Bridges / primitives
     "SymbolicFOLBridge": (".bridges.symbolic_fol_bridge", "SymbolicFOLBridge"),
     "LogicPrimitives": (".symbolic.symbolic_logic_primitives", "LogicPrimitives"),
     "create_logic_symbol": (".symbolic.symbolic_logic_primitives", "create_logic_symbol"),
-
     # Symbolic contracts (pydantic optional)
     "FOLInput": (".domain.symbolic_contracts", "FOLInput"),
     "FOLOutput": (".domain.symbolic_contracts", "FOLOutput"),
     "ContractedFOLConverter": (".domain.symbolic_contracts", "ContractedFOLConverter"),
     "create_fol_converter": (".domain.symbolic_contracts", "create_fol_converter"),
     "validate_fol_input": (".domain.symbolic_contracts", "validate_fol_input"),
-
     # Optional bridges
     "TDFOLCECBridge": (".bridges.tdfol_cec_bridge", "TDFOLCECBridge"),
     "EnhancedTDFOLProver": (".bridges.tdfol_cec_bridge", "EnhancedTDFOLProver"),
     "create_enhanced_prover": (".bridges.tdfol_cec_bridge", "create_enhanced_prover"),
-
     "TDFOLShadowProverBridge": (
         ".bridges.tdfol_shadowprover_bridge",
         "TDFOLShadowProverBridge",
@@ -251,7 +242,6 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
         ".bridges.tdfol_shadowprover_bridge",
         "create_modal_aware_prover",
     ),
-
     "TDFOLGrammarBridge": (".bridges.tdfol_grammar_bridge", "TDFOLGrammarBridge"),
     "NaturalLanguageTDFOLInterface": (
         ".bridges.tdfol_grammar_bridge",
@@ -259,12 +249,10 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     ),
     "parse_nl": (".bridges.tdfol_grammar_bridge", "parse_nl"),
     "explain_formula": (".bridges.tdfol_grammar_bridge", "explain_formula"),
-
     # Optional neurosymbolic API
     "NeurosymbolicReasoner": (".symbolic.neurosymbolic_api", "NeurosymbolicReasoner"),
     "ReasoningCapabilities": (".symbolic.neurosymbolic_api", "ReasoningCapabilities"),
     "get_reasoner": (".symbolic.neurosymbolic_api", "get_reasoner"),
-
     # Symbolic contracts (re-exported for backward compat)
     "ContractedFOLConverter": (".domain.symbolic_contracts", "ContractedFOLConverter"),
     "FOLQualityContract": (".domain.symbolic_contracts", "FOLQualityContract"),
@@ -273,7 +261,6 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "FOLOutput": (".domain.symbolic_contracts", "FOLOutput"),
     "create_fol_converter": (".domain.symbolic_contracts", "create_fol_converter"),
     "validate_fol_input": (".domain.symbolic_contracts", "validate_fol_input"),
-
     # Symbolic logic primitives
     "LogicPrimitives": (".symbolic.symbolic_logic_primitives", "LogicPrimitives"),
     "create_logic_symbol": (".symbolic.symbolic_logic_primitives", "create_logic_symbol"),
@@ -312,7 +299,9 @@ def __getattr__(name: str):
 
 def __dir__() -> list[str]:
     return sorted(
-        set(list(globals().keys()) + list(_LAZY_EXPORTS.keys()) + list(_AVAILABILITY_EXPORTS.keys()))
+        set(
+            list(globals().keys()) + list(_LAZY_EXPORTS.keys()) + list(_AVAILABILITY_EXPORTS.keys())
+        )
     )
 
 

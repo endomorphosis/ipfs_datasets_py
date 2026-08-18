@@ -193,10 +193,7 @@ Single entry point managing:
 ```python
 # Automatic embedding generation and IPFS storage
 store = IPLDVectorStore(
-    config=UnifiedVectorStoreConfig(
-        use_embeddings_router=True,
-        use_ipfs_router=True
-    )
+    config=UnifiedVectorStoreConfig(use_embeddings_router=True, use_ipfs_router=True)
 )
 
 # Add text - embeddings generated automatically
@@ -209,12 +206,7 @@ cid = await store.export_to_ipld("my_collection")
 ### Cross-Store Migration Example
 ```python
 # Create bridge
-bridge = create_bridge(
-    VectorStoreType.FAISS,
-    VectorStoreType.IPLD,
-    source_store,
-    target_store
-)
+bridge = create_bridge(VectorStoreType.FAISS, VectorStoreType.IPLD, source_store, target_store)
 
 # Migrate entire collection
 count = await bridge.migrate_collection("my_collection")

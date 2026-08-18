@@ -19,7 +19,8 @@ import json
 from typing import Dict, List, Any, Tuple, Optional
 from pathlib import Path
 
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 class MCPToolsTestFramework:
     def __init__(self):
@@ -27,9 +28,16 @@ class MCPToolsTestFramework:
         self.discovered_tools = {}
         self.test_results = {}
         self.tool_categories = [
-            "audit_tools", "dataset_tools", "web_archive_tools",
-            "cli", "functions", "security_tools", "vector_tools",
-            "graph_tools", "provenance_tools", "ipfs_tools"
+            "audit_tools",
+            "dataset_tools",
+            "web_archive_tools",
+            "cli",
+            "functions",
+            "security_tools",
+            "vector_tools",
+            "graph_tools",
+            "provenance_tools",
+            "ipfs_tools",
         ]
 
     def discover_all_tools(self) -> Dict[str, List[str]]:
@@ -48,12 +56,13 @@ class MCPToolsTestFramework:
                 module = importlib.import_module(module_path)
 
                 # Get all exported functions
-                exported_functions = getattr(module, '__all__', [])
+                exported_functions = getattr(module, "__all__", [])
                 if not exported_functions:
                     # If no __all__, get all non-private callables
                     exported_functions = [
-                        name for name in dir(module)
-                        if not name.startswith('_') and callable(getattr(module, name))
+                        name
+                        for name in dir(module)
+                        if not name.startswith("_") and callable(getattr(module, name))
                     ]
 
                 self.discovered_tools[category] = exported_functions
@@ -92,15 +101,17 @@ class MCPToolsTestFramework:
             params = {}
             for param_name, param in sig.parameters.items():
                 params[param_name] = {
-                    'type': str(param.annotation) if param.annotation != inspect.Parameter.empty else 'Any',
-                    'default': param.default if param.default != inspect.Parameter.empty else None,
-                    'required': param.default == inspect.Parameter.empty
+                    "type": str(param.annotation)
+                    if param.annotation != inspect.Parameter.empty
+                    else "Any",
+                    "default": param.default if param.default != inspect.Parameter.empty else None,
+                    "required": param.default == inspect.Parameter.empty,
                 }
 
             return {
-                'is_async': asyncio.iscoroutinefunction(func),
-                'parameters': params,
-                'docstring': func.__doc__
+                "is_async": asyncio.iscoroutinefunction(func),
+                "parameters": params,
+                "docstring": func.__doc__,
             }
         except Exception as e:
             return None
@@ -114,38 +125,38 @@ class MCPToolsTestFramework:
         if not sig_info:
             return {}
 
-        for param_name, param_info in sig_info['parameters'].items():
-            if param_info['required']:
+        for param_name, param_info in sig_info["parameters"].items():
+            if param_info["required"]:
                 # Generate test values based on parameter names
-                if 'id' in param_name.lower():
+                if "id" in param_name.lower():
                     test_params[param_name] = f"test_{param_name}"
-                elif 'path' in param_name.lower():
+                elif "path" in param_name.lower():
                     test_params[param_name] = f"/tmp/test_{param_name}"
-                elif 'url' in param_name.lower():
+                elif "url" in param_name.lower():
                     test_params[param_name] = "https://example.com"
-                elif 'query' in param_name.lower():
+                elif "query" in param_name.lower():
                     test_params[param_name] = "SELECT * LIMIT 5"
-                elif 'command' in param_name.lower():
+                elif "command" in param_name.lower():
                     test_params[param_name] = "echo test"
-                elif 'code' in param_name.lower():
+                elif "code" in param_name.lower():
                     test_params[param_name] = "print('test')"
-                elif 'action' in param_name.lower():
+                elif "action" in param_name.lower():
                     test_params[param_name] = "test.operation"
-                elif 'operation' in param_name.lower():
+                elif "operation" in param_name.lower():
                     test_params[param_name] = "test_operation"
-                elif 'vectors' in param_name.lower():
+                elif "vectors" in param_name.lower():
                     test_params[param_name] = [[1.0, 2.0], [3.0, 4.0]]
-                elif 'data' in param_name.lower():
+                elif "data" in param_name.lower():
                     test_params[param_name] = {"test": "data"}
-                elif param_info['type'] == 'str':
+                elif param_info["type"] == "str":
                     test_params[param_name] = f"test_{param_name}"
-                elif param_info['type'] == 'int':
+                elif param_info["type"] == "int":
                     test_params[param_name] = 1
-                elif param_info['type'] == 'bool':
+                elif param_info["type"] == "bool":
                     test_params[param_name] = True
-                elif 'List' in param_info['type']:
+                elif "List" in param_info["type"]:
                     test_params[param_name] = ["test_item"]
-                elif 'Dict' in param_info['type']:
+                elif "Dict" in param_info["type"]:
                     test_params[param_name] = {"test": "value"}
                 else:
                     test_params[param_name] = f"test_{param_name}"
@@ -170,28 +181,28 @@ class MCPToolsTestFramework:
 
             status = "success"
             if isinstance(result, dict):
-                status = result.get('status', 'success')
-                if status == 'error':
+                status = result.get("status", "success")
+                if status == "error":
                     return {
-                        'success': False,
-                        'status': status,
-                        'result': result,
-                        'test_params': test_params
+                        "success": False,
+                        "status": status,
+                        "result": result,
+                        "test_params": test_params,
                     }
 
             return {
-                'success': True,
-                'status': status,
-                'result': str(result)[:200] + "..." if len(str(result)) > 200 else str(result),
-                'test_params': test_params
+                "success": True,
+                "status": status,
+                "result": str(result)[:200] + "..." if len(str(result)) > 200 else str(result),
+                "test_params": test_params,
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'status': 'error',
-                'error': str(e)[:200] + "..." if len(str(e)) > 200 else str(e),
-                'test_params': self.generate_test_parameters(category, tool_name)
+                "success": False,
+                "status": "error",
+                "error": str(e)[:200] + "..." if len(str(e)) > 200 else str(e),
+                "test_params": self.generate_test_parameters(category, tool_name),
             }
 
     async def run_comprehensive_tests(self) -> Dict[str, Any]:
@@ -199,54 +210,54 @@ class MCPToolsTestFramework:
         print("\n=== Running Comprehensive Tool Tests ===")
 
         results = {
-            'import_tests': {},
-            'execution_tests': {},
-            'summary': {
-                'total_tools': 0,
-                'import_success': 0,
-                'execution_success': 0,
-                'categories': {}
-            }
+            "import_tests": {},
+            "execution_tests": {},
+            "summary": {
+                "total_tools": 0,
+                "import_success": 0,
+                "execution_success": 0,
+                "categories": {},
+            },
         }
 
         for category, tools in self.discovered_tools.items():
             print(f"\n--- Testing {category} ---")
             category_results = {
-                'import_tests': {},
-                'execution_tests': {},
-                'summary': {'total': len(tools), 'import_success': 0, 'execution_success': 0}
+                "import_tests": {},
+                "execution_tests": {},
+                "summary": {"total": len(tools), "import_success": 0, "execution_success": 0},
             }
 
             for tool_name in tools:
-                results['summary']['total_tools'] += 1
+                results["summary"]["total_tools"] += 1
 
                 # Test import
                 import_success, import_message = await self.test_tool_import(category, tool_name)
-                category_results['import_tests'][tool_name] = {
-                    'success': import_success,
-                    'message': import_message
+                category_results["import_tests"][tool_name] = {
+                    "success": import_success,
+                    "message": import_message,
                 }
 
                 if import_success:
-                    results['summary']['import_success'] += 1
-                    category_results['summary']['import_success'] += 1
+                    results["summary"]["import_success"] += 1
+                    category_results["summary"]["import_success"] += 1
 
                     # Test execution
                     execution_result = await self.test_tool_execution(category, tool_name)
-                    category_results['execution_tests'][tool_name] = execution_result
+                    category_results["execution_tests"][tool_name] = execution_result
 
-                    if execution_result['success']:
-                        results['summary']['execution_success'] += 1
-                        category_results['summary']['execution_success'] += 1
+                    if execution_result["success"]:
+                        results["summary"]["execution_success"] += 1
+                        category_results["summary"]["execution_success"] += 1
 
-                    status_symbol = "✓" if execution_result['success'] else "✗"
+                    status_symbol = "✓" if execution_result["success"] else "✗"
                     print(f"  {status_symbol} {tool_name}: {execution_result['status']}")
                 else:
                     print(f"  ✗ {tool_name}: Import failed - {import_message}")
 
-            results['import_tests'][category] = category_results['import_tests']
-            results['execution_tests'][category] = category_results['execution_tests']
-            results['summary']['categories'][category] = category_results['summary']
+            results["import_tests"][category] = category_results["import_tests"]
+            results["execution_tests"][category] = category_results["execution_tests"]
+            results["summary"]["categories"][category] = category_results["summary"]
 
         return results
 
@@ -283,16 +294,20 @@ class MCPToolsTestSuite(unittest.TestCase):
 
 '''
 
-        for category, execution_tests in results['execution_tests'].items():
+        for category, execution_tests in results["execution_tests"].items():
             test_code += f'''
-class {category.title().replace('_', '')}Test(MCPToolsTestSuite):
+class {category.title().replace("_", "")}Test(MCPToolsTestSuite):
     """Tests for {category} tools."""
 '''
 
             for tool_name, test_result in execution_tests.items():
-                test_params = test_result.get('test_params', {})
-                params_str = ', '.join([f'{k}="{v}"' if isinstance(v, str) else f'{k}={v}'
-                                      for k, v in test_params.items()])
+                test_params = test_result.get("test_params", {})
+                params_str = ", ".join(
+                    [
+                        f'{k}="{v}"' if isinstance(v, str) else f"{k}={v}"
+                        for k, v in test_params.items()
+                    ]
+                )
 
                 test_code += f'''
     def test_{tool_name}(self):
@@ -306,53 +321,54 @@ class {category.title().replace('_', '')}Test(MCPToolsTestSuite):
         self.async_test(run_test())
 '''
 
-        test_code += '''
+        test_code += """
 
 if __name__ == '__main__':
     unittest.main()
-'''
+"""
 
         return test_code
 
     def generate_report(self, results: Dict[str, Any]) -> str:
         """Generate a comprehensive test report."""
-        summary = results['summary']
+        summary = results["summary"]
 
         report = f"""
 # MCP Tools Comprehensive Test Report
 
 ## Summary
-- **Total Tools Discovered**: {summary['total_tools']}
-- **Import Success Rate**: {summary['import_success']}/{summary['total_tools']} ({(summary['import_success']/summary['total_tools']*100):.1f}%)
-- **Execution Success Rate**: {summary['execution_success']}/{summary['total_tools']} ({(summary['execution_success']/summary['total_tools']*100):.1f}%)
+- **Total Tools Discovered**: {summary["total_tools"]}
+- **Import Success Rate**: {summary["import_success"]}/{summary["total_tools"]} ({(summary["import_success"] / summary["total_tools"] * 100):.1f}%)
+- **Execution Success Rate**: {summary["execution_success"]}/{summary["total_tools"]} ({(summary["execution_success"] / summary["total_tools"] * 100):.1f}%)
 
 ## Category Breakdown
 """
 
-        for category, cat_summary in summary['categories'].items():
-            total = cat_summary['total']
-            import_success = cat_summary['import_success']
-            exec_success = cat_summary['execution_success']
+        for category, cat_summary in summary["categories"].items():
+            total = cat_summary["total"]
+            import_success = cat_summary["import_success"]
+            exec_success = cat_summary["execution_success"]
 
             report += f"""
-### {category.title().replace('_', ' ')}
+### {category.title().replace("_", " ")}
 - Tools: {total}
-- Import Success: {import_success}/{total} ({(import_success/total*100):.1f}%)
-- Execution Success: {exec_success}/{total} ({(exec_success/total*100):.1f}%)
+- Import Success: {import_success}/{total} ({(import_success / total * 100):.1f}%)
+- Execution Success: {exec_success}/{total} ({(exec_success / total * 100):.1f}%)
 """
 
         report += "\n## Detailed Results\n"
 
-        for category, execution_tests in results['execution_tests'].items():
+        for category, execution_tests in results["execution_tests"].items():
             report += f"\n### {category}\n"
             for tool_name, test_result in execution_tests.items():
-                status = "✅ PASS" if test_result['success'] else "❌ FAIL"
+                status = "✅ PASS" if test_result["success"] else "❌ FAIL"
                 report += f"- **{tool_name}**: {status}\n"
-                if not test_result['success']:
-                    error = test_result.get('error', 'Unknown error')
+                if not test_result["success"]:
+                    error = test_result.get("error", "Unknown error")
                     report += f"  - Error: {error}\n"
 
         return report
+
 
 async def main():
     """Run the comprehensive MCP tools test framework."""
@@ -369,15 +385,15 @@ async def main():
     print(report)
 
     # Save results
-    with open('mcp_tools_comprehensive_test_results.json', 'w') as f:
+    with open("mcp_tools_comprehensive_test_results.json", "w") as f:
         json.dump(results, f, indent=2)
 
-    with open('mcp_tools_test_report.md', 'w') as f:
+    with open("mcp_tools_test_report.md", "w") as f:
         f.write(report)
 
     # Generate missing tests
     test_code = framework.generate_missing_tests(results)
-    with open('generated_mcp_tools_tests.py', 'w') as f:
+    with open("generated_mcp_tools_tests.py", "w") as f:
         f.write(test_code)
 
     print(f"\n📊 Results saved to mcp_tools_comprehensive_test_results.json")
@@ -385,11 +401,12 @@ async def main():
     print(f"🧪 Generated tests saved to generated_mcp_tools_tests.py")
 
     # Print final summary
-    summary = results['summary']
+    summary = results["summary"]
     print(f"\n🎯 FINAL SUMMARY:")
     print(f"   Total Tools: {summary['total_tools']}")
     print(f"   Working Tools: {summary['execution_success']}")
-    print(f"   Success Rate: {(summary['execution_success']/summary['total_tools']*100):.1f}%")
+    print(f"   Success Rate: {(summary['execution_success'] / summary['total_tools'] * 100):.1f}%")
+
 
 if __name__ == "__main__":
     anyio.run(main())

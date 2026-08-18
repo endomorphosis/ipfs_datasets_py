@@ -19,14 +19,14 @@ import asyncio
 
 async def demo_knowledge_base_search():
     """Search the legal entity knowledge base."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 1: Legal Knowledge Base Search")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📚 Knowledge Base (21,334 Entities)")
     print("   Search federal, state, and municipal entities")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.legal_scrapers import (
     KnowledgeBaseLoader,
     BraveLegalSearch
@@ -60,21 +60,21 @@ for entity in results:
     print(f"  Type: {entity['type']}")
     print(f"  URL: {entity.get('url', 'N/A')}")
     print(f"  Jurisdiction: {entity['jurisdiction']}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_natural_language_query():
     """Process natural language legal queries."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 2: Natural Language Query Processing")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🗣️  Natural Language Processing")
     print("   Convert plain English to structured searches")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.legal_scrapers import (
     QueryProcessor,
     BraveLegalSearch
@@ -113,21 +113,21 @@ complaint_types = [
     "securities_fraud", "antitrust_violation", "privacy_violation",
     "accessibility_violation", "general_complaint"
 ]
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_multi_engine_search():
     """Search using multiple engines."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 3: Multi-Engine Legal Search")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🔍 Multi-Engine Search")
     print("   Brave, DuckDuckGo, Google CSE with fallback")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.legal_scrapers import MultiEngineLegalSearch
 
 # Setup multi-engine search
@@ -163,21 +163,21 @@ for result in results.results[:5]:
 print(f"\\nSearch performance:")
 print(f"  Total time: {results.search_time_ms}ms")
 print(f"  Cache hits: {results.cache_hits}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_web_archiving():
     """Archive and search historical legal content."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 4: Web Archiving & Historical Search")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🗄️  Web Archiving")
     print("   Common Crawl, Wayback Machine, parallel retrieval")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.legal_scrapers import (
     LegalWebArchiveSearch,
     ParallelWebArchiver
@@ -216,21 +216,21 @@ print(f"\\nArchived {len(archived)} URLs")
 for url, archive_info in archived.items():
     print(f"  {url}")
     print(f"  Methods: {', '.join(archive_info.methods)}")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_legal_graphrag():
     """Use GraphRAG for legal research."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 5: Legal GraphRAG")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🕸️  Legal GraphRAG")
     print("   Entity extraction and relationship mapping")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.legal_scrapers import LegalGraphRAG
 
 graphrag = LegalGraphRAG()
@@ -280,21 +280,21 @@ await graphrag.visualize_subgraph(
     subgraph=subgraph,
     output_file="ftc_enforcement_graph.html"
 )
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_citation_extraction():
     """Extract and rank legal citations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 6: Citation Extraction & Ranking")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n📖 Citation Extraction")
     print("   Identify and rank legal citations")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.legal_scrapers import (
     SearchResultCitationExtractor
 )
@@ -339,21 +339,21 @@ print(f"  Clusters: {len(network.clusters)}")
 # Export
 await network.export("citations.json", format="json")
 await network.export("citations.graphml", format="graphml")
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_multi_language_support():
     """Search and translate international regulations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 7: Multi-Language Support")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🌍 Multi-Language")
     print("   Search in English, Spanish, French, German, Chinese")
-    
-    example_code = '''
+
+    example_code = """
 from ipfs_datasets_py.processors.legal_scrapers import MultiLanguageLegalSearch
 
 ml_search = MultiLanguageLegalSearch(
@@ -390,20 +390,20 @@ detected = await ml_search.detect_language(
     "Règlement général sur la protection des données"
 )
 print(f"\\nDetected language: {detected}")  # fr (French)
-    '''
-    
+    """
+
     print(example_code)
 
 
 async def demo_complete_workflow():
     """Complete legal research workflow."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DEMO 8: Complete Research Workflow")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n🔄 Complete Workflow")
     print("   End-to-end legal research pipeline")
-    
+
     example_code = '''
 from ipfs_datasets_py.processors.legal_scrapers import LegalResearchWorkflow
 
@@ -451,70 +451,70 @@ await report.save("legal_research_report.pdf", format="pdf")
 # - Full source list
 # - Archived URL references
     '''
-    
+
     print(example_code)
 
 
 def show_tips():
     """Show tips for legal research."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TIPS FOR LEGAL RESEARCH SYSTEM")
-    print("="*70)
-    
+    print("=" * 70)
+
     print("\n1. Knowledge Base:")
     print("   - 21,334 entities (federal, state, municipal)")
     print("   - Update regularly from official sources")
     print("   - Validate entity URLs periodically")
     print("   - Track organizational changes")
-    
+
     print("\n2. Query Processing:")
     print("   - 14 complaint types supported")
     print("   - Use natural language for best results")
     print("   - Include jurisdiction when known")
     print("   - Specify entity types if relevant")
-    
+
     print("\n3. Search Strategy:")
     print("   - Start with Brave (fast, good gov focus)")
     print("   - Use DuckDuckGo as fallback (no API key)")
     print("   - Enable Google CSE for comprehensive results")
     print("   - Filter to .gov domains for official sources")
-    
+
     print("\n4. Web Archiving:")
     print("   - Archive important URLs immediately")
     print("   - Use parallel archiving for speed (10-25x)")
     print("   - Check multiple archives (Common Crawl, Wayback)")
     print("   - Store WARC pointers for large datasets")
-    
+
     print("\n5. GraphRAG:")
     print("   - Build graphs incrementally")
     print("   - Track entity relationships over time")
     print("   - Use for discovering hidden connections")
     print("   - Visualize for presentations")
-    
+
     print("\n6. Citations:")
     print("   - Extract early in workflow")
     print("   - Rank by authority and recency")
     print("   - Build citation networks")
     print("   - Export in standard formats")
-    
+
     print("\n7. Multi-Language:")
     print("   - 5 languages supported (en, es, fr, de, zh)")
     print("   - Auto-detect query language")
     print("   - Translate results as needed")
     print("   - Verify translations with native speakers")
-    
+
     print("\n8. Production Deployment:")
     print("   - Cache search results (configurable TTL)")
     print("   - Rate limit API calls")
     print("   - Monitor for API changes")
     print("   - Backup knowledge base regularly")
-    
+
     print("\n9. Legal Considerations:")
     print("   - Verify information with official sources")
     print("   - Include disclaimers in reports")
     print("   - Respect copyright and terms of service")
     print("   - Consult legal professionals for advice")
-    
+
     print("\n10. Next Steps:")
     print("    - See 10_legal_data_scraping.py for basics")
     print("    - See 11_web_archiving.py for archiving details")
@@ -522,10 +522,10 @@ def show_tips():
 
 async def main():
     """Run all legal knowledge base demonstrations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("IPFS DATASETS PYTHON - LEGAL KNOWLEDGE BASE")
-    print("="*70)
-    
+    print("=" * 70)
+
     await demo_knowledge_base_search()
     await demo_natural_language_query()
     await demo_multi_engine_search()
@@ -534,12 +534,12 @@ async def main():
     await demo_citation_extraction()
     await demo_multi_language_support()
     await demo_complete_workflow()
-    
+
     show_tips()
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("✅ LEGAL KNOWLEDGE BASE EXAMPLES COMPLETE")
-    print("="*70)
+    print("=" * 70)
 
 
 if __name__ == "__main__":

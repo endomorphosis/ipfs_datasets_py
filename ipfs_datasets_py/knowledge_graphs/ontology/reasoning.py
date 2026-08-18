@@ -285,9 +285,7 @@ class OntologySchema:
         self.disjoint_map.setdefault(class_b, set()).add(class_a)
         return self
 
-    def add_property_chain(
-        self, chain: List[str], result_property: str
-    ) -> "OntologySchema":
+    def add_property_chain(self, chain: List[str], result_property: str) -> "OntologySchema":
         """Declare an OWL 2 property chain axiom.
 
         A property chain axiom states that a path of the form
@@ -313,10 +311,7 @@ class OntologySchema:
             schema.add_property_chain(["isPartOf", "isPartOf"], "isPartOf")  # transitive via chain
         """
         if len(chain) < 2:
-            raise ValueError(
-                "Property chain must contain at least two properties; "
-                f"got {chain!r}."
-            )
+            raise ValueError(f"Property chain must contain at least two properties; got {chain!r}.")
         self.property_chains.append((list(chain), result_property))
         return self
 
@@ -483,9 +478,7 @@ class OntologySchema:
         # generates one logical triple per line and never embeds literal dots
         # in the object value, so the trailing `\.\s*$` anchor is safe.
         # Full Turtle files with multi-line statements are not supported.
-        triple_re = re.compile(
-            r"^:(\S+)\s+([\w:]+)\s+(.+?)\s*\.\s*$"
-        )
+        triple_re = re.compile(r"^:(\S+)\s+([\w:]+)\s+(.+?)\s*\.\s*$")
         for raw_line in text.splitlines():
             line = raw_line.strip()
             if not line or line.startswith("#") or line.startswith("@prefix"):
@@ -614,9 +607,7 @@ class OntologyReasoner:
             new_facts += self._apply_property_chains(result_kg, Relationship)
 
             if new_facts == 0:
-                logger.debug(
-                    "Ontology fixpoint reached after %d iteration(s).", iteration + 1
-                )
+                logger.debug("Ontology fixpoint reached after %d iteration(s).", iteration + 1)
                 break
         else:
             logger.warning(
@@ -696,17 +687,19 @@ class OntologyReasoner:
                 new_inferred: List[str] = list((entity.properties or {}).get("inferred_types", []))
                 for t in new_inferred:
                     if t not in old_inferred:
-                        traces.append(InferenceTrace(
-                            rule="subclass",
-                            subject_id=eid,
-                            predicate="rdf:type",
-                            object_id=t,
-                            source_ids=[eid],
-                            description=(
-                                f"Entity '{entity.name}' ({eid}) gains inferred "
-                                f"type '{t}' via subClassOf."
-                            ),
-                        ))
+                        traces.append(
+                            InferenceTrace(
+                                rule="subclass",
+                                subject_id=eid,
+                                predicate="rdf:type",
+                                object_id=t,
+                                source_ids=[eid],
+                                description=(
+                                    f"Entity '{entity.name}' ({eid}) gains inferred "
+                                    f"type '{t}' via subClassOf."
+                                ),
+                            )
+                        )
                         new_facts += 1
 
             # Detect new relationships
@@ -715,18 +708,20 @@ class OntologyReasoner:
                     source_ids: List[str] = [rel.source_id, rel.target_id]
                     props = rel.properties or {}
                     rule = props.get("rule", "unknown")
-                    traces.append(InferenceTrace(
-                        rule=rule,
-                        subject_id=rel.source_id,
-                        predicate=rel.relationship_type,
-                        object_id=rel.target_id,
-                        source_ids=source_ids,
-                        description=(
-                            f"Relationship '{rel.relationship_type}' "
-                            f"({rel.source_id} → {rel.target_id}) "
-                            f"inferred via rule '{rule}'."
-                        ),
-                    ))
+                    traces.append(
+                        InferenceTrace(
+                            rule=rule,
+                            subject_id=rel.source_id,
+                            predicate=rel.relationship_type,
+                            object_id=rel.target_id,
+                            source_ids=source_ids,
+                            description=(
+                                f"Relationship '{rel.relationship_type}' "
+                                f"({rel.source_id} → {rel.target_id}) "
+                                f"inferred via rule '{rule}'."
+                            ),
+                        )
+                    )
                     new_facts += 1
 
             if new_facts == 0:
@@ -764,9 +759,7 @@ class OntologyReasoner:
         for entity in list(kg.entities.values()):
             declared_type = entity.entity_type
             superclasses = self.schema.get_all_superclasses(declared_type)
-            existing_inferred: Set[str] = set(
-                (entity.properties or {}).get("inferred_types", [])
-            )
+            existing_inferred: Set[str] = set((entity.properties or {}).get("inferred_types", []))
             for sc in superclasses:
                 if sc not in existing_inferred:
                     existing_inferred.add(sc)
@@ -809,10 +802,7 @@ class OntologyReasoner:
         """
         new_count = 0
         for prop in self.schema.transitive:
-            rels = [
-                r for r in kg.relationships.values()
-                if r.relationship_type == prop
-            ]
+            rels = [r for r in kg.relationships.values() if r.relationship_type == prop]
             # Build adjacency: source_id → set of target_ids
             adj: Dict[str, Set[str]] = {}
             for r in rels:
@@ -1041,14 +1031,16 @@ class OntologyReasoner:
             for cls_a in entity_classes:
                 for cls_b in self.schema.disjoint_map.get(cls_a, set()):
                     if cls_b in entity_classes:
-                        violations.append(ConsistencyViolation(
-                            violation_type="disjoint_class",
-                            message=(
-                                f"Entity '{entity.name}' ({entity.entity_id}) is typed with "
-                                f"disjoint classes '{cls_a}' and '{cls_b}'."
-                            ),
-                            entity_ids=[entity.entity_id],
-                        ))
+                        violations.append(
+                            ConsistencyViolation(
+                                violation_type="disjoint_class",
+                                message=(
+                                    f"Entity '{entity.name}' ({entity.entity_id}) is typed with "
+                                    f"disjoint classes '{cls_a}' and '{cls_b}'."
+                                ),
+                                entity_ids=[entity.entity_id],
+                            )
+                        )
                         break  # One violation per entity pair is enough
         return violations
 
@@ -1070,16 +1062,18 @@ class OntologyReasoner:
         for key, neg_id in negatives.items():
             pos_id = positives.get(key)
             if pos_id:
-                violations.append(ConsistencyViolation(
-                    violation_type="negative_assertion",
-                    message=(
-                        f"Conflicting positive and negative assertions for "
-                        f"property '{key[2]}' between entities "
-                        f"'{key[0]}' and '{key[1]}'."
-                    ),
-                    entity_ids=list({key[0], key[1]}),
-                    relationship_ids=[pos_id, neg_id],
-                ))
+                violations.append(
+                    ConsistencyViolation(
+                        violation_type="negative_assertion",
+                        message=(
+                            f"Conflicting positive and negative assertions for "
+                            f"property '{key[2]}' between entities "
+                            f"'{key[0]}' and '{key[1]}'."
+                        ),
+                        entity_ids=list({key[0], key[1]}),
+                        relationship_ids=[pos_id, neg_id],
+                    )
+                )
         return violations
 
     # ------------------------------------------------------------------

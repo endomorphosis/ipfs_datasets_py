@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.processors.legal_scrapers import RegulationVersionTracker
+
     _TRACKER_AVAILABLE = True
 except ImportError:
     _TRACKER_AVAILABLE = False
@@ -47,12 +48,18 @@ async def track_regulation_version(
         if not content or not isinstance(content, str):
             return {"status": "error", "message": "content must be a non-empty string"}
         if not effective_date:
-            return {"status": "error", "message": "effective_date is required (ISO format: YYYY-MM-DD)"}
+            return {
+                "status": "error",
+                "message": "effective_date is required (ISO format: YYYY-MM-DD)",
+            }
 
         try:
             effective_dt = datetime.fromisoformat(effective_date)
         except ValueError as exc:
-            return {"status": "error", "message": f"Invalid date format. Use ISO format (YYYY-MM-DD): {exc}"}
+            return {
+                "status": "error",
+                "message": f"Invalid date format. Use ISO format (YYYY-MM-DD): {exc}",
+            }
 
         tracker = RegulationVersionTracker()
         version_result = tracker.add_version(
@@ -250,7 +257,9 @@ async def get_regulation_timeline(
         avg_interval = 0.0
         if len(version_dates) > 1:
             sorted_dates = sorted(version_dates)
-            intervals = [(sorted_dates[i + 1] - sorted_dates[i]).days for i in range(len(sorted_dates) - 1)]
+            intervals = [
+                (sorted_dates[i + 1] - sorted_dates[i]).days for i in range(len(sorted_dates) - 1)
+            ]
             avg_interval = sum(intervals) / len(intervals) if intervals else 0.0
 
         return {

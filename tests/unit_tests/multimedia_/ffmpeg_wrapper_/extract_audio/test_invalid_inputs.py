@@ -10,6 +10,7 @@ Terminology:
 - unsupported_audio_codec: An audio codec name not supported by FFmpeg
 - invalid_bitrate_format: A bitrate specification in incorrect format
 """
+
 import pytest
 import anyio
 from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
@@ -18,7 +19,7 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class TestFFmpegWrapperExtractAudioInvalidInputs:
     """
     Invalid input scenarios for FFmpegWrapper.extract_audio method.
-    
+
     Tests the extract_audio method with invalid parameters to ensure
     proper type checking and error handling.
     """
@@ -31,17 +32,17 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             with pytest.raises((TypeError, NotImplementedError)):
                 await wrapper.extract_audio(
                     input_path=None,  # Invalid type
-                    output_path="extracted_audio.mp3"
+                    output_path="extracted_audio.mp3",
                 )
         except NotImplementedError:
-            # Expected - extract_audio method is documented but not implemented yet  
+            # Expected - extract_audio method is documented but not implemented yet
             assert True
 
     async def test_when_input_path_is_integer_then_raises_type_error(self):
@@ -52,14 +53,14 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             with pytest.raises((TypeError, NotImplementedError)):
                 await wrapper.extract_audio(
                     input_path=123,  # Invalid type
-                    output_path="extracted_audio.mp3"
+                    output_path="extracted_audio.mp3",
                 )
         except NotImplementedError:
             # Expected - extract_audio method is documented but not implemented yet
@@ -73,14 +74,14 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             with pytest.raises((TypeError, NotImplementedError)):
                 await wrapper.extract_audio(
                     input_path="test_video.mp4",
-                    output_path=None  # Invalid type
+                    output_path=None,  # Invalid type
                 )
         except NotImplementedError:
             # Expected - extract_audio method is documented but not implemented yet
@@ -94,14 +95,14 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             with pytest.raises((TypeError, NotImplementedError)):
                 await wrapper.extract_audio(
                     input_path="test_video.mp4",
-                    output_path=["invalid", "list"]  # Invalid type
+                    output_path=["invalid", "list"],  # Invalid type
                 )
         except NotImplementedError:
             # Expected - extract_audio method is documented but not implemented yet
@@ -115,14 +116,14 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             with pytest.raises((ValueError, NotImplementedError)):
                 await wrapper.extract_audio(
                     input_path="",  # Empty string
-                    output_path="extracted_audio.mp3"
+                    output_path="extracted_audio.mp3",
                 )
         except NotImplementedError:
             # Expected - extract_audio method is documented but not implemented yet
@@ -136,14 +137,14 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             with pytest.raises((ValueError, NotImplementedError)):
                 await wrapper.extract_audio(
                     input_path="test_video.mp4",
-                    output_path=""  # Empty string
+                    output_path="",  # Empty string
                 )
         except NotImplementedError:
             # Expected - extract_audio method is documented but not implemented yet
@@ -157,17 +158,19 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.extract_audio(
-                input_path="nonexistent_file.mp4",
-                output_path="extracted_audio.mp3"
+                input_path="nonexistent_file.mp4", output_path="extracted_audio.mp3"
             )
             # This will not execute until extract_audio is implemented
             assert result["status"] == "error"
-            assert "not found" in result.get("message", "").lower() or "not exist" in result.get("message", "").lower()
+            assert (
+                "not found" in result.get("message", "").lower()
+                or "not exist" in result.get("message", "").lower()
+            )
         except NotImplementedError:
             # Expected - extract_audio method is documented but not implemented yet
             assert True

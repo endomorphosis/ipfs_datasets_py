@@ -8,6 +8,7 @@ All production modules under test were created or modified in v18:
 * CM149 — ``DelegationManager.get_metrics()`` ``max_chain_depth`` + ``record_delegation_metrics()``
 * CN150 — ``logic/api.py`` ``evaluate_with_manager`` convenience wrapper
 """
+
 from __future__ import annotations
 
 import importlib
@@ -23,6 +24,7 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _import(module_path: str) -> Any:
     return importlib.import_module(module_path)
 
@@ -30,6 +32,7 @@ def _import(module_path: str) -> Any:
 # ============================================================================
 # CI145 — delegation_chain_ascii MCP tool
 # ============================================================================
+
 
 class TestCI145DelegationChainAsciiTool:
     """delegation_chain_ascii tool returns ASCII tree for leaf CID."""
@@ -93,6 +96,7 @@ class TestCI145DelegationChainAsciiTool:
     def test_chain_length_matches_returned_tokens(self):
         tool = self._tool()
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken
+
         tokens = [
             DelegationToken(issuer="did:a", audience="did:b", capabilities=[]),
             DelegationToken(issuer="did:b", audience="did:c", capabilities=[]),
@@ -113,6 +117,7 @@ class TestCI145DelegationChainAsciiTool:
     def test_ascii_tree_non_empty_for_single_token(self):
         tool = self._tool()
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationToken
+
         tokens = [DelegationToken(issuer="did:a", audience="did:b", capabilities=[])]
         with patch(
             "ipfs_datasets_py.mcp_server.tools.logic_tools.delegation_audit_tool._get_manager"
@@ -131,6 +136,7 @@ class TestCI145DelegationChainAsciiTool:
 # ============================================================================
 # CJ146 — detect_i18n_clauses full clause compilation
 # ============================================================================
+
 
 class TestCJ146DetectI18NClauses:
     """detect_i18n_clauses: full FR/ES/DE clause compilation + conflict detection."""
@@ -178,6 +184,7 @@ class TestCJ146DetectI18NClauses:
     def test_reachable_from_api_module(self):
         try:
             from ipfs_datasets_py.logic.api import detect_i18n_clauses
+
             assert callable(detect_i18n_clauses)
         except ImportError:
             pytest.skip("logic.api not importable in this env")
@@ -187,11 +194,13 @@ class TestCJ146DetectI18NClauses:
 # CK147 — UCANPolicyBridge.evaluate_audited_with_manager
 # ============================================================================
 
+
 class TestCK147EvaluateAuditedWithManager:
     """evaluate_audited_with_manager: wraps evaluate_with_manager + records to audit_log."""
 
     def _bridge(self):
         from ipfs_datasets_py.logic.integration.ucan_policy_bridge import UCANPolicyBridge
+
         return UCANPolicyBridge()
 
     def test_method_exists(self):
@@ -201,8 +210,11 @@ class TestCK147EvaluateAuditedWithManager:
     def test_returns_bridge_evaluation_result(self):
         bridge = self._bridge()
         from ipfs_datasets_py.logic.integration.ucan_policy_bridge import BridgeEvaluationResult
+
         result = bridge.evaluate_audited_with_manager(
-            "pol1", tool="read", actor="alice",
+            "pol1",
+            tool="read",
+            actor="alice",
         )
         assert isinstance(result, BridgeEvaluationResult)
 
@@ -226,17 +238,14 @@ class TestCK147EvaluateAuditedWithManager:
         bad_audit = MagicMock()
         bad_audit.record.side_effect = AttributeError("broken")
         # Should not raise
-        result = bridge.evaluate_audited_with_manager(
-            "pol1", tool="read", audit_log=bad_audit
-        )
+        result = bridge.evaluate_audited_with_manager("pol1", tool="read", audit_log=bad_audit)
         assert result is not None
 
     def test_manager_none_falls_back_to_evaluate(self):
         bridge = self._bridge()
         from ipfs_datasets_py.logic.integration.ucan_policy_bridge import BridgeEvaluationResult
-        result = bridge.evaluate_audited_with_manager(
-            "pol1", tool="read", manager=None
-        )
+
+        result = bridge.evaluate_audited_with_manager("pol1", tool="read", manager=None)
         assert isinstance(result, BridgeEvaluationResult)
 
     def test_manager_revoked_leaf_returns_deny(self):
@@ -252,15 +261,15 @@ class TestCK147EvaluateAuditedWithManager:
     def test_audit_record_gets_correct_policy_cid(self):
         bridge = self._bridge()
         mock_audit = MagicMock()
-        bridge.evaluate_audited_with_manager(
-            "my-policy-cid", tool="read", audit_log=mock_audit
-        )
+        bridge.evaluate_audited_with_manager("my-policy-cid", tool="read", audit_log=mock_audit)
         call_kwargs = mock_audit.record.call_args
         assert call_kwargs is not None
         # Either positional or keyword
         all_args = {**call_kwargs.kwargs}
         if call_kwargs.args:
-            all_args["policy_cid"] = call_kwargs.args[0] if call_kwargs.args else all_args.get("policy_cid")
+            all_args["policy_cid"] = (
+                call_kwargs.args[0] if call_kwargs.args else all_args.get("policy_cid")
+            )
         assert all_args.get("policy_cid") == "my-policy-cid" or any(
             "my-policy-cid" in str(a) for a in call_kwargs.args
         )
@@ -280,23 +289,27 @@ class TestCK147EvaluateAuditedWithManager:
 # CM149 — DelegationManager.get_metrics max_chain_depth + record_delegation_metrics
 # ============================================================================
 
+
 class TestCM149DelegationMetrics:
     """CM149: get_metrics includes max_chain_depth; record_delegation_metrics emits 3 gauges."""
 
     def test_get_metrics_has_max_chain_depth_key(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         metrics = mgr.get_metrics()
         assert "max_chain_depth" in metrics
 
     def test_empty_manager_max_chain_depth_is_zero(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         metrics = mgr.get_metrics()
         assert metrics["max_chain_depth"] == 0
 
     def test_get_metrics_still_has_token_count(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         metrics = mgr.get_metrics()
         assert "token_count" in metrics
@@ -304,16 +317,22 @@ class TestCM149DelegationMetrics:
 
     def test_record_delegation_metrics_function_exists(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import record_delegation_metrics
+
         assert callable(record_delegation_metrics)
 
     def test_record_delegation_metrics_none_manager_no_op(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import record_delegation_metrics
+
         mock_collector = MagicMock()
         record_delegation_metrics(None, mock_collector)
         mock_collector.set_gauge.assert_not_called()
 
     def test_record_delegation_metrics_sets_three_gauges(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, record_delegation_metrics
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            record_delegation_metrics,
+        )
+
         mgr = DelegationManager()
         mock_collector = MagicMock()
         record_delegation_metrics(mgr, mock_collector)
@@ -324,7 +343,11 @@ class TestCM149DelegationMetrics:
         assert "mcp_delegation_chain_depth_max" in gauge_names
 
     def test_record_delegation_metrics_collector_error_no_raise(self):
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, record_delegation_metrics
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            record_delegation_metrics,
+        )
+
         mgr = DelegationManager()
         bad_collector = MagicMock()
         bad_collector.set_gauge.side_effect = RuntimeError("broken gauge")
@@ -333,6 +356,7 @@ class TestCM149DelegationMetrics:
 
     def test_get_metrics_max_chain_depth_int_or_zero(self):
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         metrics = mgr.get_metrics()
         assert isinstance(metrics["max_chain_depth"], int)
@@ -343,12 +367,14 @@ class TestCM149DelegationMetrics:
 # CN150 — logic/api.py evaluate_with_manager convenience wrapper
 # ============================================================================
 
+
 class TestCN150EvaluateWithManagerApi:
     """CN150: logic/api.py evaluate_with_manager convenience wrapper."""
 
     def test_evaluate_with_manager_callable(self):
         try:
             from ipfs_datasets_py.logic.api import evaluate_with_manager
+
             assert callable(evaluate_with_manager)
         except ImportError:
             pytest.skip("anyio/logic.api not importable")

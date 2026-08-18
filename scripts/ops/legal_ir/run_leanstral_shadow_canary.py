@@ -72,9 +72,7 @@ REAL_SHADOW_CANARY_SCHEMA_VERSION = "legal-ir-leanstral-real-shadow-canary-v1"
 DEFAULT_REPORT_PATH = Path("docs/implementation/reports/leanstral_real_shadow_canary.md")
 LEGACY_REPORT_PATH = Path("docs/implementation/reports/leanstral_shadow_canary.md")
 DEFAULT_CANONICAL_PACKET_LOG_DIR = Path("workspace/test-logs")
-DEFAULT_LEAN_PROOF_CACHE_PATH = Path(
-    "workspace/leanstral-audit-worker/lean-proof-cache.json"
-)
+DEFAULT_LEAN_PROOF_CACHE_PATH = Path("workspace/leanstral-audit-worker/lean-proof-cache.json")
 MAX_CANARY_CLUSTERS = 50
 MIN_REAL_CANARY_PACKETS = 25
 DEFAULT_LEAN_MAX_FORMULAS = 12
@@ -316,9 +314,7 @@ class RealShadowCanaryConfig:
             checkpoint_path=self.checkpoint_path or None,
             expected_state_hash=self.expected_state_hash,
             evidence_refresh_policy=self.evidence_refresh_policy,
-            max_evidence_packets_per_item=max(
-                1, int(self.max_evidence_packets_per_item or 1)
-            ),
+            max_evidence_packets_per_item=max(1, int(self.max_evidence_packets_per_item or 1)),
             max_concurrency=self.max_concurrency,
             max_records=self.max_records,
             max_work_items=self.bounded_max_clusters(),
@@ -340,15 +336,9 @@ class RealShadowCanaryConfig:
             canonical_recompile_backend="packet_canonical",
             lean_max_formulas=max(0, int(self.lean_max_formulas or 0)),
             lean_parallel_workers=max(1, int(self.lean_parallel_workers or 1)),
-            lean_proof_cache_max_entries=max(
-                1, int(self.lean_proof_cache_max_entries or 1)
-            ),
-            lean_proof_cache_path=(
-                self.lean_proof_cache_path if self.run_lean else None
-            ),
-            lean_proof_cache_ttl_seconds=max(
-                1, int(self.lean_proof_cache_ttl_seconds or 1)
-            ),
+            lean_proof_cache_max_entries=max(1, int(self.lean_proof_cache_max_entries or 1)),
+            lean_proof_cache_path=(self.lean_proof_cache_path if self.run_lean else None),
+            lean_proof_cache_ttl_seconds=max(1, int(self.lean_proof_cache_ttl_seconds or 1)),
             lean_slice_size=max(0, int(self.lean_slice_size or 0)),
             lean_timeout_seconds=max(0.001, float(self.lean_timeout_seconds or 0.0)),
             modal_bridge_require_proof=self.modal_bridge_require_proof,
@@ -477,9 +467,7 @@ class RealShadowCanaryResult:
                 self.state_to_verified_audit_lag_seconds
             ),
             "status": self.status,
-            "synthetic_promotion_evidence_generated": (
-                self.synthetic_promotion_evidence_generated
-            ),
+            "synthetic_promotion_evidence_generated": (self.synthetic_promotion_evidence_generated),
             "valid_real_packet_count": int(self.valid_real_packet_count),
             "verifier_outcomes": _json_ready(self.verifier_outcomes),
             "worker_summary": _json_ready(self.worker_summary),
@@ -554,7 +542,9 @@ def run_shadow_canary(
         evidence_provenance_summary=_evidence_provenance_summary(audits),
         audit_validity=_audit_validity_summary(audits),
         theorem_outcomes=_theorem_summary(audits),
-        disagreement_categories=dict(Counter(cat for audit in audits for cat in audit.disagreement_categories)),
+        disagreement_categories=dict(
+            Counter(cat for audit in audits for cat in audit.disagreement_categories)
+        ),
         projected_todo_specificity=_specificity_summary(audits),
         runtime_seconds=runtime,
         estimated_compiler_impact=_impact_summary(audits),
@@ -654,8 +644,8 @@ def run_real_shadow_canary(
         )
     elif cfg.resolve_verifier_examples and valid_records:
         try:
-            resolved_verifier_examples, verifier_example_resolution = (
-                _load_hf_verifier_examples(valid_records, config=cfg)
+            resolved_verifier_examples, verifier_example_resolution = _load_hf_verifier_examples(
+                valid_records, config=cfg
             )
         except Exception as exc:  # pragma: no cover - external I/O fail-closed path
             verifier_example_resolution.update(
@@ -751,12 +741,8 @@ def run_real_shadow_canary(
         }
     )
     if stale_rejections:
-        worker_payload["stale_state_rejections"] = [
-            _json_ready(item) for item in stale_rejections
-        ]
-    worker_payload["verifier_example_resolution"] = _json_ready(
-        verifier_example_resolution
-    )
+        worker_payload["stale_state_rejections"] = [_json_ready(item) for item in stale_rejections]
+    worker_payload["verifier_example_resolution"] = _json_ready(verifier_example_resolution)
     blocked = sorted(set(blocked_reasons))
     return RealShadowCanaryResult(
         schema_version=REAL_SHADOW_CANARY_SCHEMA_VERSION,
@@ -831,7 +817,9 @@ def render_markdown_report(result: ShadowCanaryResult | RealShadowCanaryResult) 
         f"- Promotion allowed: `{str(result.promotion_allowed).lower()}`",
     ]
     if result.promotion_blockers:
-        lines.append(f"- Promotion blockers: {', '.join(f'`{item}`' for item in result.promotion_blockers)}")
+        lines.append(
+            f"- Promotion blockers: {', '.join(f'`{item}`' for item in result.promotion_blockers)}"
+        )
     if result.analysis_error:
         lines.append(f"- Analysis error: `{result.analysis_error}`")
     lines.extend(
@@ -916,8 +904,7 @@ def render_real_markdown_report(result: RealShadowCanaryResult) -> str:
     ]
     if result.blocked_reasons:
         lines.append(
-            "- Blocked reasons: "
-            + ", ".join(f"`{reason}`" for reason in result.blocked_reasons)
+            "- Blocked reasons: " + ", ".join(f"`{reason}`" for reason in result.blocked_reasons)
         )
     lines.extend(
         [
@@ -1007,7 +994,11 @@ def load_disagreement_records(paths: Sequence[str | Path]) -> List[Dict[str, Any
         path = Path(raw_path).expanduser()
         if not path.exists():
             raise FileNotFoundError(str(path))
-        files = sorted(path.rglob("*.json")) + sorted(path.rglob("*.jsonl")) if path.is_dir() else [path]
+        files = (
+            sorted(path.rglob("*.json")) + sorted(path.rglob("*.jsonl"))
+            if path.is_dir()
+            else [path]
+        )
         for file_path in files:
             records.extend(_records_from_file(file_path))
     return records
@@ -1115,7 +1106,9 @@ def build_dry_run_fixture_records(count: int = 8) -> List[Dict[str, Any]]:
                         "modal_ir_hash": canonical_sha256({"sample_id": sample_id, "index": index}),
                     },
                     "predicted": {
-                        "family_distribution": {"temporal" if family != "temporal" else "deontic": confidence},
+                        "family_distribution": {
+                            "temporal" if family != "temporal" else "deontic": confidence
+                        },
                         "predicted_family": "temporal" if family != "temporal" else "deontic",
                         "target_family": family,
                     },
@@ -1398,10 +1391,7 @@ def _guardrail_report(
         "schema": schema,
         "verifier": verifier,
         "passed": bool(
-            provenance["passed"]
-            and anti_copy["passed"]
-            and schema["passed"]
-            and verifier["passed"]
+            provenance["passed"] and anti_copy["passed"] and schema["passed"] and verifier["passed"]
         ),
     }
 
@@ -1422,7 +1412,11 @@ def _provenance_guardrail(
     for index, record in enumerate(records):
         hashes = _mapping(record.get("sample_hashes"))
         span_hashes = _mapping(hashes.get("source_span_hashes") or record.get("source_span_hashes"))
-        modal_hash = str(hashes.get("modal_ir_hash") or _mapping(record.get("legal_ir_views")).get("modal_ir_hash") or "")
+        modal_hash = str(
+            hashes.get("modal_ir_hash")
+            or _mapping(record.get("legal_ir_views")).get("modal_ir_hash")
+            or ""
+        )
         if not modal_hash:
             missing.append(f"record[{index}].modal_ir_hash")
         if not span_hashes:
@@ -1480,7 +1474,9 @@ def _verifier_guardrail(
         verifier_ok = bool(_get_attr_or_key(verification, "accepted", False))
         outcome = str(_get_attr_or_key(verification, "outcome", "") or "")
         if not verifier_ok:
-            reasons.extend(str(reason) for reason in _get_attr_or_key(verification, "reasons", ()) or ())
+            reasons.extend(
+                str(reason) for reason in _get_attr_or_key(verification, "reasons", ()) or ()
+            )
     return {
         "audit_validation_verified_by": tuple(audit_result.validation.verified_by),
         "passed": bool(audit_ok and verifier_ok),
@@ -1495,11 +1491,16 @@ def _cluster_theorem_outcomes(
     *,
     verification: Any,
 ) -> Dict[str, Any]:
-    proof_routes = [_mapping(record.get("proof_route_status") or record.get("prover_signal")) for record in records]
+    proof_routes = [
+        _mapping(record.get("proof_route_status") or record.get("prover_signal"))
+        for record in records
+    ]
     attempted = sum(int(_finite_float(route.get("attempted_count"), 0.0)) for route in proof_routes)
     valid = sum(int(_finite_float(route.get("valid_count"), 0.0)) for route in proof_routes)
     failures = sum(1 for route in proof_routes if route and not bool(route.get("compiles", True)))
-    local_checks = _get_attr_or_key(verification, "local_checks", ()) if verification is not None else ()
+    local_checks = (
+        _get_attr_or_key(verification, "local_checks", ()) if verification is not None else ()
+    )
     verifier_outcome = str(_get_attr_or_key(verification, "outcome", "") or "not-run")
     return {
         "cluster_formal_severity": float(cluster.formal_severity),
@@ -1543,7 +1544,9 @@ def _promotion_decision(
 
 
 def _estimated_cluster_impact(cluster: LegalIRGapCluster) -> Dict[str, float]:
-    recurrence_norm = min(1.0, math.log1p(max(1, cluster.recurrence)) / math.log1p(MAX_CANARY_CLUSTERS))
+    recurrence_norm = min(
+        1.0, math.log1p(max(1, cluster.recurrence)) / math.log1p(MAX_CANARY_CLUSTERS)
+    )
     promotion_value = (
         0.45 * float(cluster.heldout_impact)
         + 0.35 * min(1.0, float(cluster.rank_score))
@@ -1564,7 +1567,9 @@ def _impact_summary(audits: Sequence[ShadowClusterAudit]) -> Dict[str, float]:
             "top_promotion_value": 0.0,
             "total_projected_impact": 0.0,
         }
-    values = [float(audit.estimated_compiler_impact.get("promotion_value", 0.0)) for audit in audits]
+    values = [
+        float(audit.estimated_compiler_impact.get("promotion_value", 0.0)) for audit in audits
+    ]
     return {
         "mean_promotion_value": sum(values) / len(values),
         "top_promotion_value": max(values),
@@ -1596,9 +1601,13 @@ def _evidence_provenance_summary(audits: Sequence[ShadowClusterAudit]) -> Dict[s
         for kind, count in _mapping(provenance.get("packet_kind_counts")).items():
             kind_counts[str(kind)] += int(_finite_float(count, 0.0))
         real_record_count += int(_finite_float(provenance.get("real_record_count"), 0.0))
-        synthetic_record_count += int(_finite_float(provenance.get("synthetic_fixture_record_count"), 0.0))
+        synthetic_record_count += int(
+            _finite_float(provenance.get("synthetic_fixture_record_count"), 0.0)
+        )
         cached_real_count += int(_finite_float(provenance.get("cached_real_packet_count"), 0.0))
-        live_canonical_count += int(_finite_float(provenance.get("live_canonical_state_packet_count"), 0.0))
+        live_canonical_count += int(
+            _finite_float(provenance.get("live_canonical_state_packet_count"), 0.0)
+        )
         unknown_count += int(_finite_float(provenance.get("unknown_record_count"), 0.0))
         if bool(provenance.get("provider_or_verified_cache", False)):
             provider_or_verified_cache_count += 1
@@ -1631,10 +1640,18 @@ def _audit_validity_summary(audits: Sequence[ShadowClusterAudit]) -> Dict[str, i
 
 def _theorem_summary(audits: Sequence[ShadowClusterAudit]) -> Dict[str, int]:
     return {
-        "local_checks": sum(int(audit.theorem_outcomes.get("local_check_count", 0)) for audit in audits),
-        "proof_route_attempted": sum(int(audit.theorem_outcomes.get("proof_route_attempted_count", 0)) for audit in audits),
-        "proof_route_failures": sum(int(audit.theorem_outcomes.get("proof_route_failed_records", 0)) for audit in audits),
-        "proof_route_valid": sum(int(audit.theorem_outcomes.get("proof_route_valid_count", 0)) for audit in audits),
+        "local_checks": sum(
+            int(audit.theorem_outcomes.get("local_check_count", 0)) for audit in audits
+        ),
+        "proof_route_attempted": sum(
+            int(audit.theorem_outcomes.get("proof_route_attempted_count", 0)) for audit in audits
+        ),
+        "proof_route_failures": sum(
+            int(audit.theorem_outcomes.get("proof_route_failed_records", 0)) for audit in audits
+        ),
+        "proof_route_valid": sum(
+            int(audit.theorem_outcomes.get("proof_route_valid_count", 0)) for audit in audits
+        ),
     }
 
 
@@ -1733,10 +1750,7 @@ def _select_real_canary_snapshot(
             key: group
             for key, group in groups.items()
             if (not config.expected_state_hash or key[0] == config.expected_state_hash)
-            and (
-                not config.expected_compiler_commit
-                or key[1] == config.expected_compiler_commit
-            )
+            and (not config.expected_compiler_commit or key[1] == config.expected_compiler_commit)
         }
         if expected_pool:
             pool = expected_pool
@@ -1797,9 +1811,7 @@ def _real_snapshot_rank(records: Sequence[Mapping[str, Any]]) -> tuple[float, fl
 
 def _real_record_rank(record: Mapping[str, Any]) -> tuple[float, float, int]:
     context = _mapping(record.get("run_context"))
-    exported_at = _timestamp_rank(
-        context.get("exported_at", record.get("exported_at"))
-    )
+    exported_at = _timestamp_rank(context.get("exported_at", record.get("exported_at")))
     cycle = _finite_float(context.get("cycle"), 0.0)
     frozen_canary = _mapping(context.get("frozen_canary"))
     canary_index = int(_finite_float(frozen_canary.get("index"), 0.0))
@@ -1977,12 +1989,8 @@ def _verify_real_shadow_audits(
                 source_record_hashes=tuple(item.source_record_hashes),
                 cache_hit=bool(result.cache_hit if result is not None else entry is not None),
                 llm_called=bool(result.llm_called if result is not None else False),
-                generation_attempts=int(
-                    result.generation_attempts if result is not None else 0
-                ),
-                repair_reasons=tuple(
-                    result.repair_reasons if result is not None else ()
-                ),
+                generation_attempts=int(result.generation_attempts if result is not None else 0),
+                repair_reasons=tuple(result.repair_reasons if result is not None else ()),
                 audit_valid=audit_valid,
                 audit_verified=audit_verified,
                 response_hash=str(
@@ -1990,26 +1998,15 @@ def _verify_real_shadow_audits(
                     or (result.response_hash if result is not None else "")
                 ),
                 local_verifier_outcome=verifier_outcome,
-                local_verifier_accepted=bool(
-                    _get_attr_or_key(verification, "accepted", False)
-                ),
+                local_verifier_accepted=bool(_get_attr_or_key(verification, "accepted", False)),
                 local_verifier_reasons=tuple(
-                    str(reason)
-                    for reason in (_get_attr_or_key(verification, "reasons", ()) or ())
+                    str(reason) for reason in (_get_attr_or_key(verification, "reasons", ()) or ())
                 ),
                 local_check_count=len(local_checks),
-                lean_cache_hit_count=int(
-                    _finite_float(lean_details.get("cache_hit_count"), 0.0)
-                ),
-                lean_cache_miss_count=int(
-                    _finite_float(lean_details.get("cache_miss_count"), 0.0)
-                ),
-                lean_parallel_workers=int(
-                    _finite_float(lean_details.get("parallel_workers"), 0.0)
-                ),
-                lean_slice_count=int(
-                    _finite_float(lean_details.get("slice_count"), 0.0)
-                ),
+                lean_cache_hit_count=int(_finite_float(lean_details.get("cache_hit_count"), 0.0)),
+                lean_cache_miss_count=int(_finite_float(lean_details.get("cache_miss_count"), 0.0)),
+                lean_parallel_workers=int(_finite_float(lean_details.get("parallel_workers"), 0.0)),
+                lean_slice_count=int(_finite_float(lean_details.get("slice_count"), 0.0)),
                 lean_verified_formula_count=int(
                     _finite_float(lean_details.get("verified_formula_count"), 0.0)
                 ),
@@ -2027,7 +2024,10 @@ def _item_sample_ids(
 ) -> Sequence[str]:
     return tuple(
         dict.fromkeys(
-            str(_mapping(records_by_evidence_id[evidence_id].get("sample_hashes")).get("sample_id") or "")
+            str(
+                _mapping(records_by_evidence_id[evidence_id].get("sample_hashes")).get("sample_id")
+                or ""
+            )
             for evidence_id in evidence_ids
             if evidence_id in records_by_evidence_id
             and str(
@@ -2063,9 +2063,7 @@ def _load_hf_verifier_examples(
     requested_sample_ids: set[str] = set()
     for record in records:
         sample_id = str(_mapping(record.get("sample_hashes")).get("sample_id") or "")
-        raw_index = _mapping(_mapping(record.get("run_context")).get("frozen_canary")).get(
-            "index"
-        )
+        raw_index = _mapping(_mapping(record.get("run_context")).get("frozen_canary")).get("index")
         if not sample_id or raw_index is None:
             failures.append(f"missing_frozen_reference:{sample_id or 'unknown'}")
             continue
@@ -2143,9 +2141,7 @@ def _verifier_reference_from_row(
     digest = hashlib.sha256(
         f"{record.title_number}:{record.section_number}:{normalized_text}".encode("utf-8")
     ).hexdigest()[:16]
-    resolved_sample_id = (
-        f"us-code-{record.title_number}-{record.section_number}-{digest}"
-    )
+    resolved_sample_id = f"us-code-{record.title_number}-{record.section_number}-{digest}"
     failures: List[str] = []
     if resolved_sample_id != expected_sample_id:
         failures.append(f"sample_id_mismatch:{expected_sample_id}")
@@ -2245,9 +2241,7 @@ def _real_cache_summary(
         "provider_disabled_or_missed": sum(
             1 for audit in audits if audit.status == "provider_disabled"
         ),
-        "repair_attempts": sum(
-            max(0, int(audit.generation_attempts) - 1) for audit in audits
-        ),
+        "repair_attempts": sum(max(0, int(audit.generation_attempts) - 1) for audit in audits),
         "repaired_audits": sum(1 for audit in audits if audit.repair_reasons),
         "requests": len(audits),
         "timeouts": sum(1 for audit in audits if audit.status == "timeout"),
@@ -2278,14 +2272,10 @@ def _real_verifier_summary(audits: Sequence[RealShadowAudit]) -> Dict[str, Any]:
             (audit.lean_parallel_workers for audit in audits), default=0
         ),
         "lean_slice_count": sum(audit.lean_slice_count for audit in audits),
-        "lean_verified_formula_count": sum(
-            audit.lean_verified_formula_count for audit in audits
-        ),
+        "lean_verified_formula_count": sum(audit.lean_verified_formula_count for audit in audits),
         "outcomes": dict(sorted(outcomes.items())),
         "reasons": dict(sorted(reasons.items())),
-        "rejected_or_unsupported": sum(
-            1 for audit in audits if not audit.local_verifier_accepted
-        ),
+        "rejected_or_unsupported": sum(1 for audit in audits if not audit.local_verifier_accepted),
     }
 
 
@@ -2372,7 +2362,9 @@ def _lag_summary(values: Sequence[Optional[float]]) -> Dict[str, Any]:
 def _packet_index(records: Sequence[Mapping[str, Any]]) -> Dict[str, Mapping[str, Any]]:
     index: Dict[str, Mapping[str, Any]] = {}
     for record in records:
-        evidence_id = str(record.get("evidence_id") or _mapping(record.get("payload")).get("evidence_id") or "")
+        evidence_id = str(
+            record.get("evidence_id") or _mapping(record.get("payload")).get("evidence_id") or ""
+        )
         if evidence_id:
             index[evidence_id] = record
     return index
@@ -2561,7 +2553,9 @@ def _disagreement_categories(cluster: LegalIRGapCluster) -> tuple[str, ...]:
 
 
 def _schema_record_valid(record: Mapping[str, Any]) -> bool:
-    schema_version = str(record.get("schema_version") or _mapping(record.get("payload")).get("schema_version") or "")
+    schema_version = str(
+        record.get("schema_version") or _mapping(record.get("payload")).get("schema_version") or ""
+    )
     return not schema_version or schema_version == "legal-ir-introspection-packet-v1"
 
 
@@ -2642,10 +2636,16 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument("--cache-dir", default="", help="Leanstral audit cache directory")
-    parser.add_argument("--checkpoint-path", default="", help="Optional Leanstral worker checkpoint path")
+    parser.add_argument(
+        "--checkpoint-path", default="", help="Optional Leanstral worker checkpoint path"
+    )
     parser.add_argument("--report-path", default="")
-    parser.add_argument("--dry-run", action="store_true", help="Do not call Leanstral; use cache-only shadow audit")
-    parser.add_argument("--run-provider", action="store_true", help="Call Leanstral for cache misses")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Do not call Leanstral; use cache-only shadow audit"
+    )
+    parser.add_argument(
+        "--run-provider", action="store_true", help="Call Leanstral for cache misses"
+    )
     parser.add_argument("--provider", default="mistral_vibe")
     parser.add_argument(
         "--provider-fallbacks",
@@ -2705,7 +2705,9 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     )
     parser.add_argument("--verifier-dataset-repo-id", default=HF_USCODE_DATASET_ID)
     parser.add_argument("--verifier-laws-path", default=USCODE_LAWS_PARQUET)
-    parser.add_argument("--require-promotion", action="store_true", help="Exit non-zero when promotion is blocked")
+    parser.add_argument(
+        "--require-promotion", action="store_true", help="Exit non-zero when promotion is blocked"
+    )
     return parser.parse_args(argv)
 
 
@@ -2713,8 +2715,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parse_args(argv)
     explicit_input_requested = bool(args.input)
     legacy_mode = bool(
-        args.legacy_cluster_canary
-        or (not explicit_input_requested and not args.run_provider)
+        args.legacy_cluster_canary or (not explicit_input_requested and not args.run_provider)
     )
     input_paths = resolve_disagreement_input_paths(
         args.input,

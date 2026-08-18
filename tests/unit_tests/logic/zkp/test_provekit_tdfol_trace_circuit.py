@@ -337,7 +337,7 @@ def test_noir_trace_padding_entries_are_zeroed():
     witness = _simple_witness()  # trace_length == 2
     inputs = witness.to_noir_trace_field_inputs()
 
-    for step_dict in inputs["trace_steps"][witness.trace_length:]:
+    for step_dict in inputs["trace_steps"][witness.trace_length :]:
         assert step_dict["kind"] == 0
         assert step_dict["atom_field"] == 0
         assert step_dict["antecedent_field"] == 0
@@ -408,9 +408,7 @@ def test_public_metadata_does_not_contain_private_axiom_text():
     """GIVEN axioms with a distinctive private atom name,
     WHEN to_public_metadata() is called, THEN the raw atom text is absent."""
     private_axioms = ["PrivateAxiomAlpha", "PrivateAxiomAlpha -> Q"]
-    witness = build_tdfol_v1_trace_witness(
-        theorem="Q", private_axioms=private_axioms
-    )
+    witness = build_tdfol_v1_trace_witness(theorem="Q", private_axioms=private_axioms)
     meta_str = str(witness.to_public_metadata())
 
     assert "PrivateAxiomAlpha" not in meta_str
@@ -446,6 +444,4 @@ def test_circuit_version_matches_python_constant():
     """GIVEN main.nr, THEN the circuit's CIRCUIT_VERSION matches TDFOL_TRACE_CIRCUIT_VERSION."""
     code = _nr_code()
 
-    assert (
-        f"global CIRCUIT_VERSION: Field = {TDFOL_TRACE_CIRCUIT_VERSION};" in code
-    )
+    assert f"global CIRCUIT_VERSION: Field = {TDFOL_TRACE_CIRCUIT_VERSION};" in code

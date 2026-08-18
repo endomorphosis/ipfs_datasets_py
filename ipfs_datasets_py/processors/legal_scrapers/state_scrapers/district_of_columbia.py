@@ -24,19 +24,21 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
             if self._DC_SECTION_URL_RE.search(source):
                 filtered.append(statute)
         return filtered
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for District of Columbia's legislative website."""
         return "https://code.dccouncil.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for District of Columbia."""
-        return [{
-            "name": "District of Columbia Official Code",
-            "url": f"{self.get_base_url()}/us/dc/council/code",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "District of Columbia Official Code",
+                "url": f"{self.get_base_url()}/us/dc/council/code",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -44,13 +46,13 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from District of Columbia's legislative website.
-        
+
         DC Code uses JavaScript rendering, so we use Playwright.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """

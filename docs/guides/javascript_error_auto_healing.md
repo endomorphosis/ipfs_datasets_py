@@ -96,11 +96,8 @@ reporter = get_js_error_reporter()
 
 # Process an error report
 result = reporter.process_error_report(
-    error_data={
-        'errors': [{'type': 'error', 'message': 'Test error'}],
-        'sessionId': 'session_123'
-    },
-    create_issue=True
+    error_data={"errors": [{"type": "error", "message": "Test error"}], "sessionId": "session_123"},
+    create_issue=True,
 )
 
 # Get statistics
@@ -310,7 +307,7 @@ python tests/unit_tests/test_js_error_reporter_standalone.py
 from ipfs_datasets_py.admin_dashboard import AdminDashboard, DashboardConfig
 
 config = DashboardConfig(
-    host='127.0.0.1',
+    host="127.0.0.1",
     port=8888,
     # Other configuration...
 )

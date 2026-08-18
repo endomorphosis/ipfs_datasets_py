@@ -205,7 +205,7 @@ class TestBasicQueryExecution:
         assert "text" in alice
         assert "type" in alice
         assert "confidence" in alice
-        assert alice ["age"] == 30  # properties merged in
+        assert alice["age"] == 30  # properties merged in
         assert alice["city"] == "NYC"
 
 
@@ -238,9 +238,7 @@ class TestArgumentFiltering:
 
     def test_filter_by_type(self, executor: OntologyGraphQLExecutor):
         """Test filtering entities by type."""
-        result = executor.execute(
-            '{ Organization(type: "Organization") { text } }'
-        )
+        result = executor.execute('{ Organization(type: "Organization") { text } }')
 
         assert "data" in result
         orgs = result["data"]["Organization"]
@@ -258,7 +256,7 @@ class TestArgumentFiltering:
 
     def test_filter_by_property(self, executor: OntologyGraphQLExecutor):
         """Test filtering entities by properties."""
-        result = executor.execute('{ Person(age: 30) { text } }')
+        result = executor.execute("{ Person(age: 30) { text } }")
 
         assert "data" in result
         persons = result["data"]["Person"]
@@ -267,9 +265,7 @@ class TestArgumentFiltering:
 
     def test_filter_by_multiple_arguments(self, executor: OntologyGraphQLExecutor):
         """Test filtering with multiple argument filters."""
-        result = executor.execute(
-            '{ Person(text: "Alice", confidence: 0.90) { id } }'
-        )
+        result = executor.execute('{ Person(text: "Alice", confidence: 0.90) { id } }')
 
         assert "data" in result
         persons = result["data"]["Person"]
@@ -355,9 +351,7 @@ class TestRelationshipTraversal:
         assert techcorp["text"] == "TechCorp"
         assert techcorp["works_at"] == []  # No outgoing works_at from Organization
 
-    def test_traverse_default_relationship_format(
-        self, executor: OntologyGraphQLExecutor
-    ):
+    def test_traverse_default_relationship_format(self, executor: OntologyGraphQLExecutor):
         """Test relationship traversal returns default format when no specific fields requested."""
         result = executor.execute(
             """
@@ -385,9 +379,7 @@ class TestRelationshipTraversal:
         assert known_person["type"] == "Person"
         assert known_person["confidence"] == 0.85
 
-    def test_relationship_field_projection(
-        self, executor: OntologyGraphQLExecutor
-    ):
+    def test_relationship_field_projection(self, executor: OntologyGraphQLExecutor):
         """Test specific field projection on relationship targets."""
         result = executor.execute(
             """
@@ -458,9 +450,7 @@ class TestFieldProjection:
         result = executor.execute("{ Person { text age city } }")
 
         assert "data" in result
-        alice = next(
-            p for p in result["data"]["Person"] if p["text"] == "Alice"
-        )
+        alice = next(p for p in result["data"]["Person"] if p["text"] == "Alice")
         assert alice["age"] == 30
         assert alice["city"] == "NYC"
 
@@ -473,9 +463,7 @@ class TestFieldProjection:
         result = executor.execute("{ Person { text properties } }")
 
         assert "data" in result
-        alice = next(
-            p for p in result["data"]["Person"] if p["text"] == "Alice"
-        )
+        alice = next(p for p in result["data"]["Person"] if p["text"] == "Alice")
         assert alice["properties"] == {"age": 30, "city": "NYC"}
 
 
@@ -506,9 +494,7 @@ class TestErrorHandling:
         assert result["data"] is None
         assert "errors" in result
 
-    def test_resolution_error_surfaces_in_envelope(
-        self, executor: OntologyGraphQLExecutor
-    ):
+    def test_resolution_error_surfaces_in_envelope(self, executor: OntologyGraphQLExecutor):
         """Test that resolution exceptions are caught and surfaced as GraphQL errors."""
         # Force a resolution error by querying a type that triggers exception
         # (Note: Current implementation is robust, so we'd need to mock for this)
@@ -519,9 +505,7 @@ class TestErrorHandling:
         assert result["data"]["NonexistentType"] == []
         # No errors for simply returning empty results
 
-    def test_case_insensitive_entity_types(
-        self, executor: OntologyGraphQLExecutor
-    ):
+    def test_case_insensitive_entity_types(self, executor: OntologyGraphQLExecutor):
         """Test that entity type matching is case-insensitive."""
         result1 = executor.execute("{ person { text } }")
         result2 = executor.execute("{ PERSON { text } }")
@@ -636,9 +620,7 @@ class TestEdgeCases:
             "relationships": [],
         }
         executor = OntologyGraphQLExecutor(ontology)
-        result = executor.execute(
-            "{ Thing { text context properties source_span } }"
-        )
+        result = executor.execute("{ Thing { text context properties source_span } }")
 
         assert "data" in result
         thing = result["data"]["Thing"][0]
@@ -656,9 +638,7 @@ class TestEdgeCases:
 class TestComplexQueries:
     """Test complex multi-level queries."""
 
-    def test_nested_relationship_traversal(
-        self, executor: OntologyGraphQLExecutor
-    ):
+    def test_nested_relationship_traversal(self, executor: OntologyGraphQLExecutor):
         """Test multi-level relationship traversal."""
         result = executor.execute(
             """
@@ -786,9 +766,7 @@ class TestIntegration:
         assert len(alice["works_at"]) == 1
         assert len(alice["knows"]) == 1
 
-    def test_confidence_threshold_filtering(
-        self, executor: OntologyGraphQLExecutor
-    ):
+    def test_confidence_threshold_filtering(self, executor: OntologyGraphQLExecutor):
         """Test realistic confidence-based filtering scenario."""
         result = executor.execute(
             """

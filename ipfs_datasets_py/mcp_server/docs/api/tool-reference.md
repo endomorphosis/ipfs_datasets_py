@@ -1770,9 +1770,7 @@ Export the message history of a single Discord channel.
 
 ```python
 result = await discord_export_channel(
-    channel_id="123456789",
-    output_path="/data/exports/channel.json",
-    limit=1000
+    channel_id="123456789", output_path="/data/exports/channel.json", limit=1000
 )
 ```
 
@@ -1788,10 +1786,7 @@ result = await discord_export_channel(
 Export all channels in a Discord guild/server.
 
 ```python
-result = await discord_export_guild(
-    guild_id="987654321",
-    output_dir="/data/exports/guild/"
-)
+result = await discord_export_guild(guild_id="987654321", output_dir="/data/exports/guild/")
 ```
 
 **Returns:** `{"status": "success", "guild_id": str, "channels_exported": int}`
@@ -1862,11 +1857,7 @@ Test IMAP connection credentials.
 
 ```python
 result = await email_test_connection(
-    host="imap.gmail.com",
-    port=993,
-    username="user@example.com",
-    password="secret",
-    use_ssl=True
+    host="imap.gmail.com", port=993, username="user@example.com", password="secret", use_ssl=True
 )
 # Returns: {"status": "success", "connected": True, "server_info": {...}}
 ```
@@ -1884,8 +1875,7 @@ List all folders / mailboxes in the account.
 
 ```python
 result = await email_list_folders(
-    host="imap.gmail.com", port=993,
-    username="user@example.com", password="secret"
+    host="imap.gmail.com", port=993, username="user@example.com", password="secret"
 )
 # Returns: {"folders": ["INBOX", "Sent", "Trash", ...]}
 ```
@@ -1896,11 +1886,13 @@ Export all messages in a folder to a JSON or MBOX file.
 
 ```python
 result = await email_export_folder(
-    host="imap.gmail.com", port=993,
-    username="user@example.com", password="secret",
+    host="imap.gmail.com",
+    port=993,
+    username="user@example.com",
+    password="secret",
     folder="INBOX",
     output_path="/data/inbox.json",
-    limit=500
+    limit=500,
 )
 ```
 
@@ -1921,11 +1913,13 @@ Fetch emails matching IMAP search criteria.
 
 ```python
 result = await email_fetch_emails(
-    host="imap.gmail.com", port=993,
-    username="user@example.com", password="secret",
+    host="imap.gmail.com",
+    port=993,
+    username="user@example.com",
+    password="secret",
     folder="INBOX",
     search_criteria="FROM user@domain.com SINCE 01-Jan-2024",
-    limit=100
+    limit=100,
 )
 ```
 
@@ -1976,10 +1970,7 @@ result = await cache_stats()
 Execute a named bespoke workflow by ID.
 
 ```python
-result = await execute_workflow(
-    workflow_id="my_custom_pipeline",
-    params={"input": "/data/source"}
-)
+result = await execute_workflow(workflow_id="my_custom_pipeline", params={"input": "/data/source"})
 ```
 
 **Parameters:**
@@ -2012,7 +2003,7 @@ Create a new named vector store with the specified backend.
 ```python
 result = await create_vector_store(
     name="product_vectors",
-    backend="faiss",          # "faiss" | "qdrant" | "elasticsearch"
-    dimension=768
+    backend="faiss",  # "faiss" | "qdrant" | "elasticsearch"
+    dimension=768,
 )
 ```

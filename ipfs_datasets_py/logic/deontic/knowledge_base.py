@@ -190,7 +190,11 @@ class DeonticKnowledgeBase:
 
     def check_compliance(self, actor: Party, action: Action, at_time: datetime) -> tuple[bool, str]:
         statements = self.derived_statements or self.statements
-        matching = [statement for statement in statements if statement.actor == actor and statement.action == action]
+        matching = [
+            statement
+            for statement in statements
+            if statement.actor == actor and statement.action == action
+        ]
         for statement in matching:
             if statement.modality == KnowledgeDeonticModality.PROHIBITED:
                 return False, f"{actor} violates prohibition against {action}"

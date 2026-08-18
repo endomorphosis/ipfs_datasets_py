@@ -190,9 +190,7 @@ def _query(**overrides: Any) -> ProofApplicabilityQuery:
         "vk_id": "legal_constraint_vk",
         "security_profile": "legal-strict",
         "required_result_authority": AuthorityKind.THEOREM_PROOF,
-        "required_attestation_kinds": (
-            AttestationKind.DIRECT_PROOF_VERIFICATION.value,
-        ),
+        "required_attestation_kinds": (AttestationKind.DIRECT_PROOF_VERIFICATION.value,),
         "domain": "legal",
         "selection_budget": 8,
         "max_candidates": 32,
@@ -211,12 +209,8 @@ def _trust_policy(**overrides: Any) -> ProofTrustPolicy:
         "solver_allowlist": ("solver-z3",),
         "compiler_allowlist": ("compiler-canonical-v1",),
         "security_profile_allowlist": ("legal-strict",),
-        "attestation_kind_allowlist": (
-            AttestationKind.DIRECT_PROOF_VERIFICATION.value,
-        ),
-        "authoritative_attestation_kinds": (
-            AttestationKind.DIRECT_PROOF_VERIFICATION.value,
-        ),
+        "attestation_kind_allowlist": (AttestationKind.DIRECT_PROOF_VERIFICATION.value,),
+        "authoritative_attestation_kinds": (AttestationKind.DIRECT_PROOF_VERIFICATION.value,),
         "required_result_authority": AuthorityKind.THEOREM_PROOF,
         "accept_simulated": False,
         "require_circuit_binding": True,
@@ -347,9 +341,7 @@ def test_hard_filters_run_before_ranking_poisoned_neighbor() -> None:
     assert honest.envelope_cid in result.selected_cids
     # Poisoned was considered then filtered; never ranked.
     poisoned_assessment = next(
-        item
-        for item in result.assessments
-        if item.envelope_cid == poisoned.envelope_cid
+        item for item in result.assessments if item.envelope_cid == poisoned.envelope_cid
     )
     assert poisoned_assessment.disposition is not FilterDisposition.ADMITTED
     assert "tenant_mismatch" in poisoned_assessment.reasons
@@ -414,11 +406,7 @@ def test_selected_must_be_subset_of_admitted() -> None:
             "result_authority_mismatch",
         ),
         (
-            {
-                "required_attestation_kinds": (
-                    AttestationKind.VERIFIER_EXECUTION.value,
-                )
-            },
+            {"required_attestation_kinds": (AttestationKind.VERIFIER_EXECUTION.value,)},
             "attestation_kind_not_required",
         ),
     ],
@@ -434,21 +422,15 @@ def test_hard_filter_rejects_mismatched_dimensions(
 
 def test_effective_expiry_window() -> None:
     envelope = _honest_envelope()
-    before = hard_filter_envelope(
-        envelope, _query(at_time="2025-01-01T00:00:00Z")
-    )
+    before = hard_filter_envelope(envelope, _query(at_time="2025-01-01T00:00:00Z"))
     assert before.disposition is not FilterDisposition.ADMITTED
     assert any("not_yet_effective" in r or "not_effective" in r for r in before.reasons)
 
-    after = hard_filter_envelope(
-        envelope, _query(at_time="2028-01-01T00:00:00Z")
-    )
+    after = hard_filter_envelope(envelope, _query(at_time="2028-01-01T00:00:00Z"))
     assert after.disposition is FilterDisposition.REJECTED
     assert any("expired" in r for r in after.reasons)
 
-    inside = hard_filter_envelope(
-        envelope, _query(at_time="2026-06-15T00:00:00Z")
-    )
+    inside = hard_filter_envelope(envelope, _query(at_time="2026-06-15T00:00:00Z"))
     assert inside.disposition is FilterDisposition.ADMITTED
 
 
@@ -496,9 +478,7 @@ def test_trust_policy_integration_rejects_simulation() -> None:
         required_attestation_kinds=(),
         required_result_authority=None,
     )
-    assessment = hard_filter_envelope(
-        simulated, query, trust_policy=_trust_policy()
-    )
+    assessment = hard_filter_envelope(simulated, query, trust_policy=_trust_policy())
     assert assessment.disposition is FilterDisposition.REJECTED
     assert any("trust_policy" in r for r in assessment.reasons)
 
@@ -536,9 +516,7 @@ def test_max_candidates_truncation_gap() -> None:
         )
         for i in range(5)
     ]
-    result = select_applicable_proofs(
-        envelopes, _query(max_candidates=2, selection_budget=2)
-    )
+    result = select_applicable_proofs(envelopes, _query(max_candidates=2, selection_budget=2))
     assert result.considered_count == 2
     assert "candidate_budget_truncated" in result.gaps
 
@@ -590,9 +568,7 @@ def test_reason_counts_trace_filtered_candidates() -> None:
             "visibility_classes": ["visibility:tenant-internal"],
         },
     )
-    result = select_applicable_proofs(
-        [honest, wrong_jurisdiction], _query()
-    )
+    result = select_applicable_proofs([honest, wrong_jurisdiction], _query())
     assert result.rejected_count == 1
     assert result.reason_counts.get("jurisdiction_mismatch", 0) >= 1
     assert result.filtered_count + result.rejected_count >= 1
@@ -612,9 +588,7 @@ def test_deterministic_ordering() -> None:
     r2 = select_applicable_proofs(envelopes, _query())
     assert r1.selected_cids == r2.selected_cids
     assert r1.result_digest() == r2.result_digest()
-    assert [a.envelope_cid for a in r1.assessments] == [
-        a.envelope_cid for a in r2.assessments
-    ]
+    assert [a.envelope_cid for a in r1.assessments] == [a.envelope_cid for a in r2.assessments]
 
 
 # ---------------------------------------------------------------------------
@@ -669,10 +643,7 @@ def test_audit_receipt_traces_counts_and_events() -> None:
     assert AuditEventKind.QUERY_START in kinds
     assert AuditEventKind.CANDIDATE_CONSIDERED in kinds
     assert AuditEventKind.CANDIDATE_ADMITTED in kinds
-    assert (
-        AuditEventKind.CANDIDATE_FILTERED in kinds
-        or AuditEventKind.CANDIDATE_REJECTED in kinds
-    )
+    assert AuditEventKind.CANDIDATE_FILTERED in kinds or AuditEventKind.CANDIDATE_REJECTED in kinds
     assert AuditEventKind.CANDIDATE_RANKED in kinds
     assert AuditEventKind.CANDIDATE_SELECTED in kinds
     assert AuditEventKind.QUERY_COMPLETE in kinds
@@ -770,9 +741,7 @@ def test_high_rank_cannot_promote_filtered_candidate() -> None:
     )
     assert revoked.envelope_cid not in result.admitted_cids
     assert revoked.envelope_cid not in result.selected_cids
-    assert all(
-        item.envelope_cid != revoked.envelope_cid for item in result.ranked
-    )
+    assert all(item.envelope_cid != revoked.envelope_cid for item in result.ranked)
     receipt = build_proof_query_audit_receipt(result)
     assert receipt.selected_cids == result.selected_cids
     assert "envelope_revoked" in receipt.reason_counts or any(

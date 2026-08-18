@@ -1,5 +1,5 @@
-
 from core.text_normalizer import make_text_normalizer
+
 
 def list_normalizers() -> None:
     """List all available text normalizers."""
@@ -12,4 +12,6 @@ def list_normalizers() -> None:
     print("\nUse --normalizers option to specify which normalizers to apply.")
     print("Example: --normalizers whitespace,line_endings")
     print("NOTE: Not all normalizers are available or applicable for all formats.")
-    print("Check the documentation for more details on each normalizer and which formats they are applied to.")
+    print(
+        "Check the documentation for more details on each normalizer and which formats they are applied to."
+    )

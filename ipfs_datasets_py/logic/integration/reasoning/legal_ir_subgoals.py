@@ -20,9 +20,7 @@ from .legal_ir_view_contracts import LegalIRViewContract, legal_ir_view_contract
 
 
 LEGAL_IR_SUBGOAL_SCHEMA_VERSION = "legal-ir-hammer-subgoal-v1"
-LEGAL_IR_SUBGOAL_DECOMPOSITION_SCHEMA_VERSION = (
-    "legal-ir-hammer-subgoal-decomposition-v1"
-)
+LEGAL_IR_SUBGOAL_DECOMPOSITION_SCHEMA_VERSION = "legal-ir-hammer-subgoal-decomposition-v1"
 DEFAULT_MAX_SUBGOALS_PER_OBLIGATION = 4
 HARD_MAX_SUBGOALS_PER_OBLIGATION = 8
 DEFAULT_SUBGOAL_VALIDATION_COMMAND = (
@@ -144,9 +142,7 @@ class LegalIRSubgoalDecomposition:
 class LegalIRSubgoalDecomposer:
     """Decompose supported failed obligations without consulting a model."""
 
-    def __init__(
-        self, config: LegalIRSubgoalDecompositionConfig | None = None
-    ) -> None:
+    def __init__(self, config: LegalIRSubgoalDecompositionConfig | None = None) -> None:
         self.config = config or LegalIRSubgoalDecompositionConfig()
 
     def decompose(
@@ -188,9 +184,7 @@ class LegalIRSubgoalDecomposer:
                     "subgoal_kind": kind,
                 }
                 subgoal_id = "lir-subgoal-" + _stable_hash(payload)[:20]
-                hints = _unique_strings(
-                    (*template_hints, *obligation.get("premise_hints", ()))
-                )[:8]
+                hints = _unique_strings((*template_hints, *obligation.get("premise_hints", ())))[:8]
                 subgoals.append(
                     LegalIRSubgoal(
                         subgoal_id=subgoal_id,
@@ -227,19 +221,25 @@ class LegalIRSubgoalDecomposer:
         )
 
 
-_SUBGOAL_TEMPLATES: Mapping[
-    str, Sequence[tuple[str, str, Sequence[str]]]
-] = {
+_SUBGOAL_TEMPLATES: Mapping[str, Sequence[tuple[str, str, Sequence[str]]]] = {
     "exception": (
         ("exception_trigger", "exception_trigger_is_typed", ("exception_trigger_identified",)),
         ("exception_scope", "exception_scope_is_bound", ("exception_scope_precedence",)),
-        ("exception_priority", "exception_priority_is_ordered", ("defeasible_priority_orders_exceptions",)),
+        (
+            "exception_priority",
+            "exception_priority_is_ordered",
+            ("defeasible_priority_orders_exceptions",),
+        ),
         ("exception_effect", "exception_effect_is_preserved", ("exception_scope_preserved",)),
     ),
     "temporal": (
         ("temporal_event", "temporal_event_is_typed", ("temporal_event_identity",)),
         ("temporal_anchor", "temporal_anchor_is_bound", ("temporal_anchor_present",)),
-        ("temporal_relation", "temporal_relation_is_ordered", ("temporal_conditions_have_event_order",)),
+        (
+            "temporal_relation",
+            "temporal_relation_is_ordered",
+            ("temporal_conditions_have_event_order",),
+        ),
         ("temporal_bound", "temporal_bound_is_finite", ("temporal_deadline_bound",)),
     ),
     "knowledge_graph": (
@@ -255,13 +255,33 @@ _SUBGOAL_TEMPLATES: Mapping[
         ("cec_timepoint", "cec_timepoint_is_ordered", ("cec_temporal_consistency",)),
     ),
     "decompiler": (
-        ("decompiler_operator", "decompiler_operator_is_retained", ("decompiler_retains_modal_operator",)),
-        ("decompiler_predicate", "decompiler_predicate_signature_is_retained", ("decompiler_preserves_modal_signature",)),
-        ("decompiler_structure", "decompiler_structure_is_reconstructed", ("decompiler_preserves_structural_summary",)),
-        ("decompiler_provenance", "decompiler_provenance_is_hash_only", ("source_copy_guardrail_requires_summary_not_span",)),
+        (
+            "decompiler_operator",
+            "decompiler_operator_is_retained",
+            ("decompiler_retains_modal_operator",),
+        ),
+        (
+            "decompiler_predicate",
+            "decompiler_predicate_signature_is_retained",
+            ("decompiler_preserves_modal_signature",),
+        ),
+        (
+            "decompiler_structure",
+            "decompiler_structure_is_reconstructed",
+            ("decompiler_preserves_structural_summary",),
+        ),
+        (
+            "decompiler_provenance",
+            "decompiler_provenance_is_hash_only",
+            ("source_copy_guardrail_requires_summary_not_span",),
+        ),
     ),
     "generic": (
-        ("contract_local_check", "contract_local_check_is_bounded", ("canonical_contract_required_field",)),
+        (
+            "contract_local_check",
+            "contract_local_check_is_bounded",
+            ("canonical_contract_required_field",),
+        ),
     ),
 }
 
@@ -275,9 +295,7 @@ def build_legal_ir_subgoal_decomposition(
     """Return the complete deterministic decomposition report."""
 
     return LegalIRSubgoalDecomposer(
-        LegalIRSubgoalDecompositionConfig(
-            max_subgoals_per_obligation=max_subgoals_per_obligation
-        )
+        LegalIRSubgoalDecompositionConfig(max_subgoals_per_obligation=max_subgoals_per_obligation)
     ).decompose(obligations, failures)
 
 
@@ -397,8 +415,10 @@ def _failed_hammer_items_by_obligation(value: Any) -> Dict[str, Dict[str, Any]]:
 def _is_failure(item: Mapping[str, Any]) -> bool:
     if item.get("trusted") is True:
         return False
-    if item.get("proved") is True and not item.get("failure_reason") and not item.get(
-        "rejection_reasons"
+    if (
+        item.get("proved") is True
+        and not item.get("failure_reason")
+        and not item.get("rejection_reasons")
     ):
         reconstruction = str(item.get("reconstruction_status") or "").strip().lower()
         return reconstruction in {
@@ -502,9 +522,7 @@ def _unique_strings(value: Any) -> List[str]:
 
 
 def _stable_json(value: Any) -> str:
-    return json.dumps(
-        value, default=str, ensure_ascii=True, separators=(",", ":"), sort_keys=True
-    )
+    return json.dumps(value, default=str, ensure_ascii=True, separators=(",", ":"), sort_keys=True)
 
 
 def _stable_hash(value: Any) -> str:

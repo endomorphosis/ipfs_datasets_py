@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import ModalAutoencoderBaseline
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import ModalProverRouter
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
+    ModalAutoencoderBaseline,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
+    ModalProverRouter,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import ModalSystem
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import build_modal_parser_report
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import (
+    build_modal_parser_report,
+)
 
 
 def test_modal_parser_report_summarizes_samples_losses_and_provers() -> None:

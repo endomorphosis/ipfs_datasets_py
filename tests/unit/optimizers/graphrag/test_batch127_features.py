@@ -5,6 +5,7 @@ Methods under test:
   - ExtractionConfig.is_stricter_than(other)
   - ExtractionConfig.is_looser_than(other)
 """
+
 import pytest
 
 
@@ -12,14 +13,17 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _cfg(threshold):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
     return ExtractionConfig(confidence_threshold=threshold)
 
 
 # ---------------------------------------------------------------------------
 # ExtractionConfig.threshold_distance
 # ---------------------------------------------------------------------------
+
 
 class TestThresholdDistance:
     def test_equal_configs(self):
@@ -49,6 +53,7 @@ class TestThresholdDistance:
 # ExtractionConfig.is_stricter_than
 # ---------------------------------------------------------------------------
 
+
 class TestIsStricterThan:
     def test_true_when_higher_threshold(self):
         a = _cfg(0.8)
@@ -69,6 +74,7 @@ class TestIsStricterThan:
 # ---------------------------------------------------------------------------
 # ExtractionConfig.is_looser_than
 # ---------------------------------------------------------------------------
+
 
 class TestIsLooserThan:
     def test_true_when_lower_threshold(self):

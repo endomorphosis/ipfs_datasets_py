@@ -58,23 +58,21 @@ asyncio.TimeoutError    →  TimeoutError (built-in)
 
 **Before:**
 ```python
-results = await asyncio.gather(
-    task1(), task2(), task3(),
-    return_exceptions=True
-)
+results = await asyncio.gather(task1(), task2(), task3(), return_exceptions=True)
 ```
 
 **After:**
 ```python
 results = []
 async with anyio.create_task_group() as tg:
+
     async def collect_result(task_coro):
         try:
             result = await task_coro
             results.append(result)
         except Exception as e:
             results.append(e)
-    
+
     for task_coro in [task1(), task2(), task3()]:
         tg.start_soon(collect_result, task_coro)
 ```
@@ -97,10 +95,7 @@ async with anyio.create_task_group() as tg:
 
 **Before:**
 ```python
-result = await asyncio.wait_for(
-    some_operation(),
-    timeout=30.0
-)
+result = await asyncio.wait_for(some_operation(), timeout=30.0)
 ```
 
 **After:**
@@ -113,16 +108,12 @@ with anyio.fail_after(30.0):
 
 **Before:**
 ```python
-result = await asyncio.get_event_loop().run_in_executor(
-    None, blocking_function, arg1, arg2
-)
+result = await asyncio.get_event_loop().run_in_executor(None, blocking_function, arg1, arg2)
 ```
 
 **After:**
 ```python
-result = await anyio.to_thread.run_sync(
-    blocking_function, arg1, arg2
-)
+result = await anyio.to_thread.run_sync(blocking_function, arg1, arg2)
 ```
 
 ## Critical Files Manually Fixed
@@ -149,16 +140,18 @@ result = await anyio.to_thread.run_sync(
 
 ### 1. setup.py
 ```python
-install_requires=[
-    # ...existing dependencies...
-    "anyio>=4.0.0",
-    "trio>=0.27.0",
-],
-extras_require={
-    'test': [
-        'pytest>=7.3.1',
-        'pytest-asyncio>=0.21.0',
-        'pytest-trio>=0.8.0',  # NEW
+install_requires = (
+    [
+        # ...existing dependencies...
+        "anyio>=4.0.0",
+        "trio>=0.27.0",
+    ],
+)
+extras_require = {
+    "test": [
+        "pytest>=7.3.1",
+        "pytest-asyncio>=0.21.0",
+        "pytest-trio>=0.8.0",  # NEW
         # ...
     ],
 }
@@ -201,6 +194,7 @@ pytest tests/ -m trio
 ### Mark a test for trio
 ```python
 import pytest
+
 
 @pytest.mark.trio
 async def test_with_trio():
@@ -277,6 +271,7 @@ python migrate_to_anyio.py . --output-json migration_report.json
 ```python
 import anyio
 import trio
+
 print("✅ anyio and trio imported successfully")
 ```
 
@@ -284,11 +279,13 @@ print("✅ anyio and trio imported successfully")
 ```python
 import anyio
 
+
 async def test_anyio():
     await anyio.sleep(0.1)
     async with anyio.create_task_group() as tg:
         tg.start_soon(anyio.sleep, 0.1)
     print("✅ anyio basic functionality works")
+
 
 anyio.run(test_anyio)
 ```
@@ -297,9 +294,11 @@ anyio.run(test_anyio)
 ```python
 import anyio
 
+
 async def test_trio():
     await anyio.sleep(0.1)
     print("✅ trio backend works")
+
 
 anyio.run(test_trio, backend="trio")
 ```

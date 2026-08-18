@@ -157,7 +157,15 @@ class StubVoiceReplyProvider:
 
 def _client(
     tmp_path: Path,
-) -> tuple[TestClient, SmsBridgeStore, StubProvider, StubForwarder, StubCallProvider, StubEmailProvider, StubVoiceReplyProvider]:
+) -> tuple[
+    TestClient,
+    SmsBridgeStore,
+    StubProvider,
+    StubForwarder,
+    StubCallProvider,
+    StubEmailProvider,
+    StubVoiceReplyProvider,
+]:
     store = SmsBridgeStore(str(tmp_path / "sms_bridge.duckdb"))
     provider = StubProvider()
     forwarder = StubForwarder()
@@ -173,7 +181,15 @@ def _client(
         voice_reply_provider=voice_reply_provider,
         public_base_url="https://211-ai.com/messaging",
     )
-    return TestClient(app, raise_server_exceptions=False), store, provider, forwarder, call_provider, email_provider, voice_reply_provider
+    return (
+        TestClient(app, raise_server_exceptions=False),
+        store,
+        provider,
+        forwarder,
+        call_provider,
+        email_provider,
+        voice_reply_provider,
+    )
 
 
 def test_sms_bridge_records_outbound_and_twilio_inbound(tmp_path: Path) -> None:
@@ -504,7 +520,9 @@ def test_remote_voice_proxy_resolves_relative_urls(monkeypatch) -> None:
     assert getattr(provider, "tts_url") == "http://wallet-api:8000/voice/indextts/tts"
 
 
-def test_remote_voice_proxy_uses_configured_tts_reference_instead_of_silent_upload(monkeypatch) -> None:
+def test_remote_voice_proxy_uses_configured_tts_reference_instead_of_silent_upload(
+    monkeypatch,
+) -> None:
     captured: dict[str, object] = {}
 
     def fake_request(url, *, body, headers, timeout_seconds):
@@ -605,14 +623,18 @@ def test_email_bridge_records_outbound_email(tmp_path: Path) -> None:
 
 
 def test_bridge_builders_support_mock_providers_without_external_credentials() -> None:
-    parsed = build_parser().parse_args(["--provider", "mock", "--call-provider", "mock", "--voice-provider", "mock"])
+    parsed = build_parser().parse_args(
+        ["--provider", "mock", "--call-provider", "mock", "--voice-provider", "mock"]
+    )
     assert parsed.provider == "mock"
     assert parsed.call_provider == "mock"
     assert parsed.voice_provider == "mock"
 
     sms_provider = build_sms_provider(provider_kind="mock", from_phone="+15035550100")
     assert sms_provider is not None
-    sms_delivery = sms_provider.send_sms(to_phone="+15035550199", message="Mock SMS", metadata={"case_id": "case-1"})
+    sms_delivery = sms_provider.send_sms(
+        to_phone="+15035550199", message="Mock SMS", metadata={"case_id": "case-1"}
+    )
     assert sms_delivery["provider"] == "mock"
     assert sms_delivery["provider_message_id"].startswith("mock-sms-")
 

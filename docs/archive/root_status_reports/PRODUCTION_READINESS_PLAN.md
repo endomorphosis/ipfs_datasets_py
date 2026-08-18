@@ -67,24 +67,24 @@ tests/unit_tests/logic/TDFOL/
 import pytest
 from ipfs_datasets_py.logic.integration import symbolic_contracts
 
+
 class TestSymbolicContracts:
     """Test symbolic contracts module."""
-    
+
     def test_contract_creation(self):
         """Test creating a contract."""
         contract = symbolic_contracts.create_contract(
-            parties=["Alice", "Bob"],
-            obligations=["Alice pays 100", "Bob delivers goods"]
+            parties=["Alice", "Bob"], obligations=["Alice pays 100", "Bob delivers goods"]
         )
         assert contract is not None
         assert len(contract.obligations) == 2
-    
+
     def test_contract_validation(self):
         """Test validating contract consistency."""
         contract = symbolic_contracts.create_contract(...)
         result = symbolic_contracts.validate(contract)
         assert result.is_valid
-    
+
     def test_contract_violation_detection(self):
         """Test detecting contract violations."""
         contract = symbolic_contracts.create_contract(...)
@@ -99,43 +99,44 @@ class TestSymbolicContracts:
 ```python
 # tests/unit_tests/logic/external_provers/test_z3_integration.py
 
+
 class TestZ3Integration:
     def test_z3_availability(self):
         """Test Z3 is available."""
         assert check_z3_availability()
-    
+
     def test_formula_conversion(self):
         """Test TDFOL → Z3 conversion."""
         formula = parse_tdfol("P -> Q")
         z3_formula = convert_to_z3(formula)
         assert z3_formula is not None
-    
+
     def test_simple_proof(self):
         """Test proving P -> P."""
         prover = Z3ProverBridge()
         result = prover.prove(parse_tdfol("P -> P"))
         assert result.is_valid
-    
+
     def test_with_axioms(self):
         """Test proving with axioms."""
         prover = Z3ProverBridge()
         axioms = [parse_tdfol("P"), parse_tdfol("P -> Q")]
         result = prover.prove(parse_tdfol("Q"), axioms=axioms)
         assert result.is_valid
-    
+
     def test_cache_hit(self):
         """Test cache hit improves performance."""
         prover = Z3ProverBridge(enable_cache=True)
         formula = parse_tdfol("P -> P")
-        
+
         # First call
         result1 = prover.prove(formula)
         time1 = result1.proof_time
-        
+
         # Second call (cache hit)
         result2 = prover.prove(formula)
         time2 = result2.proof_time
-        
+
         assert time2 < time1 / 10  # At least 10x faster
 ```
 
@@ -154,37 +155,36 @@ class TestZ3Integration:
 ```python
 # ipfs_datasets_py/logic/security/input_validation.py
 
+
 class InputValidator:
     """Validate inputs to prevent attacks."""
-    
+
     MAX_TEXT_LENGTH = 10_000
     MAX_FORMULA_DEPTH = 100
     MAX_FORMULA_COMPLEXITY = 1_000
-    
+
     @staticmethod
     def validate_text(text: str) -> str:
         """Validate text input."""
         if not isinstance(text, str):
             raise TypeError(f"Expected str, got {type(text)}")
-        
+
         if len(text) > InputValidator.MAX_TEXT_LENGTH:
-            raise ValueError(
-                f"Input too long: {len(text)} > {InputValidator.MAX_TEXT_LENGTH}"
-            )
-        
+            raise ValueError(f"Input too long: {len(text)} > {InputValidator.MAX_TEXT_LENGTH}")
+
         # Check for suspicious patterns
-        if re.search(r'[^\x00-\x7F]{100,}', text):
+        if re.search(r"[^\x00-\x7F]{100,}", text):
             raise ValueError("Suspicious non-ASCII pattern detected")
-        
+
         return text
-    
+
     @staticmethod
     def validate_formula(formula) -> None:
         """Validate formula complexity."""
         depth = get_formula_depth(formula)
         if depth > InputValidator.MAX_FORMULA_DEPTH:
             raise ValueError(f"Formula too deep: {depth}")
-        
+
         complexity = get_formula_complexity(formula)
         if complexity > InputValidator.MAX_FORMULA_COMPLEXITY:
             raise ValueError(f"Formula too complex: {complexity}")
@@ -198,38 +198,37 @@ from functools import wraps
 from time import time
 from collections import defaultdict
 
+
 class RateLimiter:
     """Simple rate limiter."""
-    
+
     def __init__(self, calls: int, period: int):
         self.calls = calls
         self.period = period
         self.cache = defaultdict(list)
-    
+
     def __call__(self, func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             user_id = get_current_user_id()
             now = time()
-            
+
             # Remove old entries
-            self.cache[user_id] = [
-                t for t in self.cache[user_id]
-                if now - t < self.period
-            ]
-            
+            self.cache[user_id] = [t for t in self.cache[user_id] if now - t < self.period]
+
             # Check rate limit
             if len(self.cache[user_id]) >= self.calls:
                 raise RateLimitExceeded(
                     f"Rate limit exceeded: {self.calls} calls per {self.period}s"
                 )
-            
+
             # Record call
             self.cache[user_id].append(now)
-            
+
             return func(*args, **kwargs)
-        
+
         return wrapper
+
 
 # Usage
 class SecureNeurosymbolicReasoner:
@@ -247,29 +246,30 @@ import logging
 import json
 from datetime import datetime
 
-audit_logger = logging.getLogger('logic.audit')
+audit_logger = logging.getLogger("logic.audit")
+
 
 class AuditLogger:
     """Structured audit logging."""
-    
+
     @staticmethod
     def log_proof_attempt(
-        user_id: str,
-        formula: str,
-        prover: str,
-        success: bool,
-        duration_ms: float
+        user_id: str, formula: str, prover: str, success: bool, duration_ms: float
     ):
         """Log proof attempt for audit."""
-        audit_logger.info(json.dumps({
-            'event': 'proof_attempt',
-            'timestamp': datetime.utcnow().isoformat(),
-            'user_id': user_id,
-            'formula': formula[:100],  # Truncate
-            'prover': prover,
-            'success': success,
-            'duration_ms': duration_ms
-        }))
+        audit_logger.info(
+            json.dumps(
+                {
+                    "event": "proof_attempt",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "user_id": user_id,
+                    "formula": formula[:100],  # Truncate
+                    "prover": prover,
+                    "success": success,
+                    "duration_ms": duration_ms,
+                }
+            )
+        )
 ```
 
 #### Day 3: Deployment Guide
@@ -621,9 +621,11 @@ def test_concurrent_proving():
     """Test 100 concurrent proof requests."""
     pass
 
+
 def test_sustained_load():
     """Test 1000 proofs over 10 minutes."""
     pass
+
 
 def test_memory_stability():
     """Test memory doesn't leak over 10K proofs."""
@@ -642,6 +644,7 @@ pip install opentelemetry-api opentelemetry-sdk
 from opentelemetry import trace
 
 tracer = trace.get_tracer(__name__)
+
 
 class TracedProver:
     def prove(self, formula):

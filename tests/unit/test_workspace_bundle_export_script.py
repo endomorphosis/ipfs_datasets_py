@@ -10,7 +10,13 @@ from ipfs_datasets_py.processors.legal_data import load_packaged_workspace_summa
 
 
 def _load_workspace_bundle_export_module():
-    module_path = Path(__file__).resolve().parents[2] / "scripts" / "ops" / "legal_data" / "export_workspace_dataset_bundle.py"
+    module_path = (
+        Path(__file__).resolve().parents[2]
+        / "scripts"
+        / "ops"
+        / "legal_data"
+        / "export_workspace_dataset_bundle.py"
+    )
     spec = importlib.util.spec_from_file_location("workspace_bundle_export_under_test", module_path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -79,7 +85,9 @@ def _build_google_voice_manifest_json(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     enrichment_path.write_text("Generated Google Voice enrichment transcript.", encoding="utf-8")
-    attachment_text_path.write_text("Inspection notes attached to the Google Voice event.", encoding="utf-8")
+    attachment_text_path.write_text(
+        "Inspection notes attached to the Google Voice event.", encoding="utf-8"
+    )
     source_html_path.write_text("<html><body>voice event</body></html>", encoding="utf-8")
     event_json_path.write_text(
         json.dumps(
@@ -91,9 +99,20 @@ def _build_google_voice_manifest_json(tmp_path: Path) -> Path:
                 "phone_numbers": ["(503) 555-0100"],
                 "attachments": [
                     {"path": str(bundle_dir / "audio.mp3"), "kind": "audio"},
-                    {"path": str(attachment_text_path), "kind": "document", "content_type": "text/plain", "filename": "inspection_notes.txt"},
+                    {
+                        "path": str(attachment_text_path),
+                        "kind": "document",
+                        "content_type": "text/plain",
+                        "filename": "inspection_notes.txt",
+                    },
                 ],
-                "enrichments": [{"path": str(enrichment_path), "kind": "transcription", "source_attachment": str(bundle_dir / "audio.mp3")}],
+                "enrichments": [
+                    {
+                        "path": str(enrichment_path),
+                        "kind": "transcription",
+                        "source_attachment": str(bundle_dir / "audio.mp3"),
+                    }
+                ],
                 "source_kind": "takeout",
                 "source_html_path": str(source_html_path),
             }
@@ -240,7 +259,9 @@ def test_workspace_bundle_export_script_auto_detects_imap_input(tmp_path: Path) 
     assert summary["document_count"] == 2
 
 
-def test_workspace_bundle_export_script_auto_detects_google_voice_materialized_input(tmp_path: Path) -> None:
+def test_workspace_bundle_export_script_auto_detects_google_voice_materialized_input(
+    tmp_path: Path,
+) -> None:
     module = _load_workspace_bundle_export_module()
     manifest_path = _build_google_voice_manifest_json(tmp_path)
     output_dir = tmp_path / "google_voice_package"

@@ -91,10 +91,12 @@ from ipfs_datasets_py.optimizers.common import LLMCache, cached_llm_call
 # Create cache
 cache = LLMCache(max_size=1000, default_ttl=3600)
 
+
 # Apply to any LLM function
 @cached_llm_call(cache=cache)
 def generate_text(prompt, **kwargs):
     return llm.generate(prompt, **kwargs)
+
 
 # First call - executes function
 result1 = generate_text("optimize this code")

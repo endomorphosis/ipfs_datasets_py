@@ -83,9 +83,12 @@ def _cluster(family: str) -> dict[str, Any]:
         "obligation_family": family,
         "target_view": "modal.ir_decompiler",
     }
-    signature = "hammer-failure:" + hashlib.sha256(
-        json.dumps(key, ensure_ascii=True, sort_keys=True).encode("utf-8")
-    ).hexdigest()[:20]
+    signature = (
+        "hammer-failure:"
+        + hashlib.sha256(
+            json.dumps(key, ensure_ascii=True, sort_keys=True).encode("utf-8")
+        ).hexdigest()[:20]
+    )
     return {
         **key,
         "cluster_key": key,
@@ -161,9 +164,7 @@ def test_round_trip_is_stable_under_formula_input_order() -> None:
     first = _document()
     second_formula = ModalIRFormula(
         formula_id="norm-0",
-        operator=ModalIROperator(
-            family="deontic", system="kd", symbol="F", label="prohibition"
-        ),
+        operator=ModalIROperator(family="deontic", system="kd", symbol="F", label="prohibition"),
         predicate=ModalIRPredicate(
             name="disclose_record",
             arguments=["actor:agency", "object:protected_record"],

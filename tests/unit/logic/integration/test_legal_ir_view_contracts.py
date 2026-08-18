@@ -110,20 +110,15 @@ def test_registry_has_exact_canonical_views_and_stable_contract_ids() -> None:
     contracts = legal_ir_view_contracts()
 
     assert tuple(contract.view.value for contract in contracts) == tuple(EXPECTED_IDS)
-    assert {
-        contract.view.value: contract.contract_id for contract in contracts
-    } == EXPECTED_IDS
+    assert {contract.view.value: contract.contract_id for contract in contracts} == EXPECTED_IDS
     assert len(LEGAL_IR_VIEW_CONTRACTS) == 7
     assert all(
-        contract.schema_version == LEGAL_IR_VIEW_CONTRACT_SCHEMA_VERSION
-        for contract in contracts
+        contract.schema_version == LEGAL_IR_VIEW_CONTRACT_SCHEMA_VERSION for contract in contracts
     )
 
 
 def test_registry_resolves_names_components_aliases_enums_and_ids() -> None:
-    assert legal_ir_view_contract(LegalIRView.TDFOL) is legal_ir_view_contract(
-        "TDFOL.prover"
-    )
+    assert legal_ir_view_contract(LegalIRView.TDFOL) is legal_ir_view_contract("TDFOL.prover")
     assert legal_ir_view_contract("tdfol_prover") is legal_ir_view_contract("tdfol")
     assert legal_ir_view_contract("modal.frame_logic").view is LegalIRView.FRAME_LOGIC
     assert legal_ir_view_contract("modal.decompiler").view is LegalIRView.DECOMPILER
@@ -152,9 +147,7 @@ def test_every_contract_is_complete_for_all_downstream_consumers() -> None:
         for lane in contract.repair_lanes:
             assert lane.target_component == contract.target_component
             assert lane.allowed_paths
-            assert all(
-                path.startswith("ipfs_datasets_py/") for path in lane.allowed_paths
-            )
+            assert all(path.startswith("ipfs_datasets_py/") for path in lane.allowed_paths)
             assert lane.validation_commands
 
 
@@ -207,9 +200,7 @@ def test_view_specific_hooks_enforce_semantic_invariants() -> None:
     }
 
     graph = dict(payloads["knowledge_graphs"])
-    graph["relationships"] = [
-        {"source": "agency", "target": "missing", "type": "ACTS_ON"}
-    ]
+    graph["relationships"] = [{"source": "agency", "target": "missing", "type": "ACTS_ON"}]
     assert "unknown_graph_endpoint" in {
         issue.code for issue in validate_legal_ir_view("knowledge_graphs", graph).issues
     }
@@ -230,9 +221,7 @@ def test_manifest_and_consumer_projections_are_deterministic_and_source_free() -
     for contract in legal_ir_view_contracts():
         consumer = contract.consumer_contract()
         assert consumer["contract_id"] == contract.contract_id
-        assert set(consumer["obligation_families"]) == set(
-            contract.all_obligation_families
-        )
+        assert set(consumer["obligation_families"]) == set(contract.all_obligation_families)
         assert consumer["metric_families"] == list(contract.metric_families)
         features = contract.autoencoder_features()
         assert f"contract_id:{contract.contract_id}" in features
@@ -255,9 +244,7 @@ def test_codex_projection_is_lane_bounded_and_contains_stable_contract_id() -> N
         legal_ir_codex_todo_projection("knowledge_graphs", "unbounded-lane")
 
 
-def test_logic_ir_view_envelope_payload_is_accepted_without_envelope_source_text() -> (
-    None
-):
+def test_logic_ir_view_envelope_payload_is_accepted_without_envelope_source_text() -> None:
     payload = _valid_payloads()["frame_logic"]
     envelope = {
         "name": "frame_logic",

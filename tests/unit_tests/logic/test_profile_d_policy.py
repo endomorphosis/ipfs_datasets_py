@@ -28,8 +28,18 @@ def test_explicit_policy_is_content_addressed_and_zkp_statement_is_not_a_proof()
         action="tools.call",
         resource="dataset/a",
         policy=_policy(
-            {"clause_type": "permission", "actor": "did:key:alice", "action": "tools.call", "resource": "dataset/a"},
-            {"clause_type": "obligation", "actor": "did:key:alice", "action": "tools.call", "obligation_deadline": "2030-01-01T00:00:00Z"},
+            {
+                "clause_type": "permission",
+                "actor": "did:key:alice",
+                "action": "tools.call",
+                "resource": "dataset/a",
+            },
+            {
+                "clause_type": "obligation",
+                "actor": "did:key:alice",
+                "action": "tools.call",
+                "obligation_deadline": "2030-01-01T00:00:00Z",
+            },
         ),
         evaluated_at="2026-07-11T00:00:00Z",
         request_zkp_certificate=True,
@@ -61,7 +71,9 @@ def test_managed_adapter_blocks_are_exact_canonical_dag_json_bytes(monkeypatch):
     result = evaluate_execution_policy(
         actor="did:key:alice",
         action="tools.call",
-        policy=_policy({"clause_type": "permission", "actor": "did:key:alice", "action": "tools.call"}),
+        policy=_policy(
+            {"clause_type": "permission", "actor": "did:key:alice", "action": "tools.call"}
+        ),
         evaluated_at="2026-07-12T00:00:00Z",
         request_zkp_certificate=True,
     )
@@ -81,14 +93,31 @@ def test_prohibition_and_missing_scoped_resource_fail_closed():
         action="tools.call",
         resource="dataset/private",
         policy=_policy(
-            {"clause_type": "permission", "actor": "did:key:alice", "action": "tools.call", "resource": "dataset/*"},
-            {"clause_type": "prohibition", "actor": "did:key:alice", "action": "tools.call", "resource": "dataset/private"},
+            {
+                "clause_type": "permission",
+                "actor": "did:key:alice",
+                "action": "tools.call",
+                "resource": "dataset/*",
+            },
+            {
+                "clause_type": "prohibition",
+                "actor": "did:key:alice",
+                "action": "tools.call",
+                "resource": "dataset/private",
+            },
         ),
     )
     missing_resource = evaluate_execution_policy(
         actor="did:key:alice",
         action="tools.call",
-        policy=_policy({"clause_type": "permission", "actor": "did:key:alice", "action": "tools.call", "resource": "dataset/private"}),
+        policy=_policy(
+            {
+                "clause_type": "permission",
+                "actor": "did:key:alice",
+                "action": "tools.call",
+                "resource": "dataset/private",
+            }
+        ),
     )
 
     assert prohibited["decision"] == "deny"
@@ -100,7 +129,14 @@ def test_prefix_resource_scope_matches_in_the_canonical_evaluator():
         actor="did:key:alice",
         action="tools.call",
         resource="dataset/public",
-        policy=_policy({"clause_type": "permission", "actor": "did:key:alice", "action": "tools.call", "resource": "dataset/*"}),
+        policy=_policy(
+            {
+                "clause_type": "permission",
+                "actor": "did:key:alice",
+                "action": "tools.call",
+                "resource": "dataset/*",
+            }
+        ),
     )
 
     assert result["decision"] == "allow"
@@ -122,19 +158,29 @@ def test_profile_d_http_method_rejects_missing_policy_and_evaluates_valid_input(
     from ipfs_datasets_py.mcp_server.fastapi_service import mcp_jsonrpc_handler
 
     async def call(params):
-        body = json.dumps({"jsonrpc": "2.0", "id": 7, "method": "mcp++/policy/evaluate", "params": params}).encode()
+        body = json.dumps(
+            {"jsonrpc": "2.0", "id": 7, "method": "mcp++/policy/evaluate", "params": params}
+        ).encode()
 
         async def receive():
             return {"type": "http.request", "body": body, "more_body": False}
 
-        return await mcp_jsonrpc_handler(Request({"type": "http", "method": "POST", "path": "/mcp", "headers": []}, receive))
+        return await mcp_jsonrpc_handler(
+            Request({"type": "http", "method": "POST", "path": "/mcp", "headers": []}, receive)
+        )
 
     invalid = asyncio.run(call({"actor": "did:key:alice", "action": "tools.call"}))
-    valid = asyncio.run(call({
-        "actor": "did:key:alice",
-        "action": "tools.call",
-        "policy": _policy({"clause_type": "permission", "actor": "did:key:alice", "action": "tools.call"}),
-    }))
+    valid = asyncio.run(
+        call(
+            {
+                "actor": "did:key:alice",
+                "action": "tools.call",
+                "policy": _policy(
+                    {"clause_type": "permission", "actor": "did:key:alice", "action": "tools.call"}
+                ),
+            }
+        )
+    )
 
     assert invalid["error"]["code"] == -32602
     assert valid["result"]["decision"] == "allow"
@@ -150,15 +196,24 @@ def test_profile_d_rest_alias_uses_the_same_fail_closed_evaluator():
             return {"type": "http.request", "body": body, "more_body": False}
 
         return await evaluate_deontic_policy(
-            Request({"type": "http", "method": "POST", "path": "/mcp/policy/evaluate", "headers": []}, receive)
+            Request(
+                {"type": "http", "method": "POST", "path": "/mcp/policy/evaluate", "headers": []},
+                receive,
+            )
         )
 
-    response = asyncio.run(call({
-        "actor": "did:key:alice",
-        "action": "tools.call",
-        "policy": _policy({"clause_type": "prohibition", "actor": "did:key:alice", "action": "tools.call"}),
-        "request_zkp_certificate": True,
-    }))
+    response = asyncio.run(
+        call(
+            {
+                "actor": "did:key:alice",
+                "action": "tools.call",
+                "policy": _policy(
+                    {"clause_type": "prohibition", "actor": "did:key:alice", "action": "tools.call"}
+                ),
+                "request_zkp_certificate": True,
+            }
+        )
+    )
 
     assert response["decision"] == "deny"
     assert response["zkp_certificate"]["status"] == "statement_ready"

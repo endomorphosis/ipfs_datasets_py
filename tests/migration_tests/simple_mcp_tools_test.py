@@ -5,6 +5,7 @@ Simple MCP Tools Test Suite
 This script tests that all MCP tools can be imported and called successfully,
 focusing on functionality rather than mocking specific dependencies.
 """
+
 import anyio
 import os
 import sys
@@ -20,48 +21,25 @@ sys.path.insert(0, str(project_root))
 
 # Expected tool categories and tools
 EXPECTED_TOOLS = {
-    "dataset_tools": [
-        "load_dataset",
-        "save_dataset",
-        "process_dataset",
-        "convert_dataset_format"
-    ],
-    "ipfs_tools": [
-        "get_from_ipfs",
-        "pin_to_ipfs"
-    ],
-    "vector_tools": [
-        "create_vector_index",
-        "search_vector_index"
-    ],
-    "graph_tools": [
-        "query_knowledge_graph"
-    ],
-    "audit_tools": [
-        "record_audit_event",
-        "generate_audit_report"
-    ],
-    "security_tools": [
-        "check_access_permission"
-    ],
-    "provenance_tools": [
-        "record_provenance"
-    ],
+    "dataset_tools": ["load_dataset", "save_dataset", "process_dataset", "convert_dataset_format"],
+    "ipfs_tools": ["get_from_ipfs", "pin_to_ipfs"],
+    "vector_tools": ["create_vector_index", "search_vector_index"],
+    "graph_tools": ["query_knowledge_graph"],
+    "audit_tools": ["record_audit_event", "generate_audit_report"],
+    "security_tools": ["check_access_permission"],
+    "provenance_tools": ["record_provenance"],
     "web_archive_tools": [
         "create_warc",
         "index_warc",
         "extract_dataset_from_cdxj",
         "extract_text_from_warc",
         "extract_links_from_warc",
-        "extract_metadata_from_warc"
+        "extract_metadata_from_warc",
     ],
-    "cli": [
-        "execute_command"
-    ],
-    "functions": [
-        "execute_python_snippet"
-    ]
+    "cli": ["execute_command"],
+    "functions": ["execute_python_snippet"],
 }
+
 
 class SimpleMCPToolsTest(unittest.TestCase):
     """Simple functional tests for MCP tools."""
@@ -82,7 +60,7 @@ class SimpleMCPToolsTest(unittest.TestCase):
         try:
             result = func(*args, **kwargs)
             # If it's a coroutine, run it with asyncio
-            if hasattr(result, '__await__'):
+            if hasattr(result, "__await__"):
                 return anyio.run(result)
             else:
                 return result
@@ -248,7 +226,7 @@ class SimpleMCPToolsTest(unittest.TestCase):
             "user_id": "test_user",
             "action": "test_action",
             "resource": "test_resource",
-            "timestamp": "2025-01-01T00:00:00Z"
+            "timestamp": "2025-01-01T00:00:00Z",
         }
         result = self.run_async_test(tool_func, event)
 
@@ -298,13 +276,13 @@ class SimpleMCPToolsTest(unittest.TestCase):
         result = self.run_async_test(
             tool_func,
             "test_dataset_id",  # dataset_id
-            "test_operation",   # operation
-            ["input1"],         # inputs
-            {"param1": "value1"}, # parameters
-            "Test provenance record", # description
-            "test_agent",       # agent_id
-            "2025-01-01T00:00:00Z", # timestamp
-            ["tag1", "tag2"]    # tags
+            "test_operation",  # operation
+            ["input1"],  # inputs
+            {"param1": "value1"},  # parameters
+            "Test provenance record",  # description
+            "test_agent",  # agent_id
+            "2025-01-01T00:00:00Z",  # timestamp
+            ["tag1", "tag2"],  # tags
         )
 
         # Check basic structure

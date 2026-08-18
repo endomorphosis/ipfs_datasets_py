@@ -45,6 +45,7 @@ def _make_result(entities=None, rels=None) -> EntityExtractionResult:
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     gen = OntologyGenerator()
     crit = OntologyCritic()
     return OntologyMediator(gen, crit)
@@ -53,7 +54,14 @@ def _make_mediator():
 def _make_score(overall_target: float) -> CriticScore:
     # completeness has weight 0.3, let's set all equal for predictable overall
     v = overall_target
-    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, relationship_coherence=v, domain_alignment=v)
+    return CriticScore(
+        completeness=v,
+        consistency=v,
+        clarity=v,
+        granularity=v,
+        relationship_coherence=v,
+        domain_alignment=v,
+    )
 
 
 # ---------------------------------------------------------------------------

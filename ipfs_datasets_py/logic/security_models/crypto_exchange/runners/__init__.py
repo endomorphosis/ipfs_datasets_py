@@ -5,7 +5,7 @@ from .cvc5_runner import CVC5Runner
 from .z3_runner import Z3Runner
 
 __all__ = [
-    'BaseSecurityRunner',
-    'CVC5Runner',
-    'Z3Runner',
+    "BaseSecurityRunner",
+    "CVC5Runner",
+    "Z3Runner",
 ]

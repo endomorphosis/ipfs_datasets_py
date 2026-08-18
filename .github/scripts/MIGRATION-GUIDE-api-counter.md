@@ -19,7 +19,8 @@ This guide shows how to integrate the GitHub API counter into your existing work
 # Add at the top of your script
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '.github', 'scripts'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".github", "scripts"))
 
 from github_api_counter import GitHubAPICounter
 
@@ -28,10 +29,10 @@ self.api_counter = GitHubAPICounter()
 
 # Replace subprocess.run calls:
 # Old:
-result = subprocess.run(['gh', 'pr', 'list'], ...)
+result = subprocess.run(["gh", "pr", "list"], ...)
 
 # New:
-result = self.api_counter.run_gh_command(['gh', 'pr', 'list'], ...)
+result = self.api_counter.run_gh_command(["gh", "pr", "list"], ...)
 
 # At the end (cleanup method or main):
 self.api_counter.save_metrics()
@@ -43,9 +44,11 @@ self.api_counter.save_metrics()
 # Add at the very top of your script
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '.github', 'scripts'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".github", "scripts"))
 
 from github_api_counter_helper import patch_subprocess
+
 patch_subprocess()
 
 # That's it! All subprocess calls are now tracked automatically
@@ -155,6 +158,7 @@ EXISTING_PRS=$(.github/scripts/gh_wrapper.sh pr list --repo ${{ github.repositor
 ```python
 try:
     from github_api_counter_helper import patch_subprocess
+
     patch_subprocess()
 except ImportError:
     pass  # Counter not available, continue without tracking
@@ -207,7 +211,8 @@ python3 .github/scripts/github_api_dashboard.py \
 ```python
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '.github', 'scripts'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".github", "scripts"))
 ```
 
 ### Issue: "Metrics file not created"
@@ -215,6 +220,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '.github', 'scr
 **Solution:** Ensure the script exits cleanly. Add explicit save:
 ```python
 import atexit
+
 counter = GitHubAPICounter()
 atexit.register(counter.save_metrics)
 ```
@@ -294,6 +300,7 @@ prs = gh pr list --json number,title,body
 ```python
 import functools
 import time
+
 
 @functools.lru_cache(maxsize=128)
 def get_pr_list(repo, max_age=300):

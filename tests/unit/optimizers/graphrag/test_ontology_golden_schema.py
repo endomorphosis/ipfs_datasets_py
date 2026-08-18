@@ -28,8 +28,9 @@ class TestOntologySchemaStructure:
     def test_ontology_has_required_top_level_keys(self, golden_ontology: Dict[str, Any]):
         """Ontology dict must have 'entities', 'relationships', 'metadata'."""
         required_keys = {"entities", "relationships", "metadata"}
-        assert required_keys.issubset(golden_ontology.keys()), \
+        assert required_keys.issubset(golden_ontology.keys()), (
             f"Missing keys: {required_keys - set(golden_ontology.keys())}"
+        )
 
     def test_entities_is_list(self, golden_ontology: Dict[str, Any]):
         """Entities must be a list."""
@@ -52,8 +53,9 @@ class TestEntityInvariants:
         """Each entity must have id, type, text, confidence."""
         required_fields = {"id", "type", "text", "confidence"}
         for entity in golden_ontology["entities"]:
-            assert required_fields.issubset(entity.keys()), \
+            assert required_fields.issubset(entity.keys()), (
                 f"Entity {entity.get('id')} missing fields: {required_fields - set(entity.keys())}"
+            )
 
     def test_entity_ids_are_unique_strings(self, golden_ontology: Dict[str, Any]):
         """Entity IDs must be unique, non-empty strings."""
@@ -67,28 +69,32 @@ class TestEntityInvariants:
     def test_entity_type_is_string(self, golden_ontology: Dict[str, Any]):
         """Entity type must be a non-empty string."""
         for entity in golden_ontology["entities"]:
-            assert isinstance(entity["type"], str) and entity["type"], \
+            assert isinstance(entity["type"], str) and entity["type"], (
                 f"Entity {entity.get('id')} has invalid type"
+            )
 
     def test_entity_text_is_string(self, golden_ontology: Dict[str, Any]):
         """Entity text must be a non-empty string."""
         for entity in golden_ontology["entities"]:
-            assert isinstance(entity["text"], str) and entity["text"], \
+            assert isinstance(entity["text"], str) and entity["text"], (
                 f"Entity {entity.get('id')} has invalid text"
+            )
 
     def test_entity_confidence_in_range(self, golden_ontology: Dict[str, Any]):
         """Entity confidence must be between 0.0 and 1.0."""
         for entity in golden_ontology["entities"]:
             conf = entity["confidence"]
-            assert isinstance(conf, (int, float)) and 0.0 <= conf <= 1.0, \
+            assert isinstance(conf, (int, float)) and 0.0 <= conf <= 1.0, (
                 f"Entity {entity.get('id')} has confidence out of range: {conf}"
+            )
 
     def test_entity_properties_is_dict(self, golden_ontology: Dict[str, Any]):
         """Entity properties must be a dict (optional)."""
         for entity in golden_ontology["entities"]:
             if "properties" in entity:
-                assert isinstance(entity["properties"], dict), \
+                assert isinstance(entity["properties"], dict), (
                     f"Entity {entity.get('id')} properties must be dict"
+                )
 
     def test_entity_source_span_valid(self, golden_ontology: Dict[str, Any]):
         """Entity source_span must be null or [int, int] tuple."""
@@ -96,9 +102,11 @@ class TestEntityInvariants:
             if "source_span" in entity:
                 span = entity["source_span"]
                 if span is not None:
-                    assert isinstance(span, list) and len(span) == 2 and \
-                           all(isinstance(x, int) for x in span), \
-                        f"Entity {entity.get('id')} has invalid source_span: {span}"
+                    assert (
+                        isinstance(span, list)
+                        and len(span) == 2
+                        and all(isinstance(x, int) for x in span)
+                    ), f"Entity {entity.get('id')} has invalid source_span: {span}"
 
 
 class TestRelationshipInvariants:
@@ -108,8 +116,9 @@ class TestRelationshipInvariants:
         """Each relationship must have id, source_id, target_id, type, confidence."""
         required_fields = {"id", "source_id", "target_id", "type", "confidence"}
         for rel in golden_ontology["relationships"]:
-            assert required_fields.issubset(rel.keys()), \
+            assert required_fields.issubset(rel.keys()), (
                 f"Relationship {rel.get('id')} missing fields: {required_fields - set(rel.keys())}"
+            )
 
     def test_relationship_ids_are_unique_strings(self, golden_ontology: Dict[str, Any]):
         """Relationship IDs must be unique, non-empty strings."""
@@ -126,30 +135,35 @@ class TestRelationshipInvariants:
         for rel in golden_ontology["relationships"]:
             source = rel["source_id"]
             target = rel["target_id"]
-            assert source in entity_ids, \
+            assert source in entity_ids, (
                 f"Relationship {rel['id']} references non-existent source: {source}"
-            assert target in entity_ids, \
+            )
+            assert target in entity_ids, (
                 f"Relationship {rel['id']} references non-existent target: {target}"
+            )
 
     def test_relationship_type_is_string(self, golden_ontology: Dict[str, Any]):
         """Relationship type must be a non-empty string."""
         for rel in golden_ontology["relationships"]:
-            assert isinstance(rel["type"], str) and rel["type"], \
+            assert isinstance(rel["type"], str) and rel["type"], (
                 f"Relationship {rel.get('id')} has invalid type"
+            )
 
     def test_relationship_confidence_in_range(self, golden_ontology: Dict[str, Any]):
         """Relationship confidence must be between 0.0 and 1.0."""
         for rel in golden_ontology["relationships"]:
             conf = rel["confidence"]
-            assert isinstance(conf, (int, float)) and 0.0 <= conf <= 1.0, \
+            assert isinstance(conf, (int, float)) and 0.0 <= conf <= 1.0, (
                 f"Relationship {rel.get('id')} has confidence out of range: {conf}"
+            )
 
     def test_relationship_properties_is_dict(self, golden_ontology: Dict[str, Any]):
         """Relationship properties must be a dict (optional)."""
         for rel in golden_ontology["relationships"]:
             if "properties" in rel:
-                assert isinstance(rel["properties"], dict), \
+                assert isinstance(rel["properties"], dict), (
                     f"Relationship {rel.get('id')} properties must be dict"
+                )
 
 
 class TestOntologyGlobalInvariants:
@@ -162,7 +176,7 @@ class TestOntologyGlobalInvariants:
         for rel in golden_ontology["relationships"]:
             related_entity_ids.add(rel["source_id"])
             related_entity_ids.add(rel["target_id"])
-        
+
         isolated = entity_ids - related_entity_ids
         if isolated:
             # Don't fail; just note it (isolated entities are sometimes intentional)
@@ -175,16 +189,18 @@ class TestOntologyGlobalInvariants:
             all_confidences.append(entity["confidence"])
         for rel in golden_ontology["relationships"]:
             all_confidences.append(rel["confidence"])
-        
+
         avg_confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0
-        assert avg_confidence >= 0.5, \
+        assert avg_confidence >= 0.5, (
             f"Average confidence too low: {avg_confidence:.2f} (expected >= 0.5)"
+        )
 
     def test_metadata_has_extraction_info(self, golden_ontology: Dict[str, Any]):
         """Metadata should document source and extraction strategy."""
         metadata = golden_ontology["metadata"]
-        assert "source" in metadata or "domain" in metadata, \
+        assert "source" in metadata or "domain" in metadata, (
             "Metadata should have 'source' or 'domain' field"
+        )
 
 
 class TestOntologySerializationRoundtrip:
@@ -194,7 +210,7 @@ class TestOntologySerializationRoundtrip:
         """Ontology should survive JSON roundtrip without data loss."""
         json_str = json.dumps(golden_ontology, indent=2)
         restored = json.loads(json_str)
-        
+
         # Deep equality check
         assert restored == golden_ontology, "Roundtrip changed ontology"
 

@@ -20,7 +20,9 @@ class NorthDakotaScraper(BaseStateScraper):
     _ND_CENCODE_PDF_RE = re.compile(r"/cencode/.*?\.pdf$", re.IGNORECASE)
     _ND_CENCODE_FILE_RE = re.compile(r"t(\d{1,3})c(\d{1,3})\.pdf$", re.IGNORECASE)
 
-    def _filter_non_code_results(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+    def _filter_non_code_results(
+        self, statutes: List[NormalizedStatute]
+    ) -> List[NormalizedStatute]:
         out: List[NormalizedStatute] = []
         for statute in statutes:
             url = str(statute.source_url or "").lower()
@@ -33,19 +35,17 @@ class NorthDakotaScraper(BaseStateScraper):
                 continue
             out.append(statute)
         return out
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for North Dakota's legislative website."""
         return "https://www.legis.nd.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for North Dakota."""
-        return [{
-            "name": "North Dakota Century Code",
-            "url": f"{self.get_base_url()}/",
-            "type": "Code"
-        }]
-    
+        return [
+            {"name": "North Dakota Century Code", "url": f"{self.get_base_url()}/", "type": "Code"}
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -53,11 +53,11 @@ class NorthDakotaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from North Dakota's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -82,7 +82,9 @@ class NorthDakotaScraper(BaseStateScraper):
             return official_pdf_statutes[:return_threshold]
 
         if not self._full_corpus_enabled():
-            direct_pdf_statutes = await self._scrape_seed_cencode_pdfs(code_name, max_statutes=return_threshold)
+            direct_pdf_statutes = await self._scrape_seed_cencode_pdfs(
+                code_name, max_statutes=return_threshold
+            )
             if direct_pdf_statutes:
                 best = list(direct_pdf_statutes)
 
@@ -90,7 +92,9 @@ class NorthDakotaScraper(BaseStateScraper):
             if candidate in seen:
                 continue
             seen.add(candidate)
-            statutes = await self._generic_scrape(code_name, candidate, "N.D. Cent. Code", max_sections=max(10, return_threshold))
+            statutes = await self._generic_scrape(
+                code_name, candidate, "N.D. Cent. Code", max_sections=max(10, return_threshold)
+            )
             statutes = self._filter_non_code_results(statutes)
             if len(statutes) > len(best):
                 best = statutes
@@ -100,12 +104,16 @@ class NorthDakotaScraper(BaseStateScraper):
         if len(best) >= return_threshold:
             return best
 
-        pdf_statutes = await self._scrape_cencode_pdfs(code_name, max_statutes=max(10, return_threshold))
+        pdf_statutes = await self._scrape_cencode_pdfs(
+            code_name, max_statutes=max(10, return_threshold)
+        )
         if pdf_statutes:
             return pdf_statutes
         return best
 
-    async def _scrape_official_index_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_official_index_pdfs(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         discovered = await self._discover_official_cencode_pdfs(limit=max(200, max_statutes * 6))
         if not discovered:
             return []
@@ -142,12 +150,17 @@ class NorthDakotaScraper(BaseStateScraper):
                     legal_area=self._identify_legal_area(label),
                     official_cite=f"N.D. Cent. Code {section_number}",
                     metadata=StatuteMetadata(),
-                    structured_data={"source_kind": "official_modern_index_pdf", "skip_hydrate": True},
+                    structured_data={
+                        "source_kind": "official_modern_index_pdf",
+                        "skip_hydrate": True,
+                    },
                 )
             )
         return statutes
 
-    async def _scrape_seed_cencode_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_seed_cencode_pdfs(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         seeds = [
             "https://www.legis.nd.gov/cencode/t01c01.pdf",
             "https://www.legis.nd.gov/cencode/t12c01.pdf",
@@ -182,7 +195,9 @@ class NorthDakotaScraper(BaseStateScraper):
             )
         return out
 
-    async def _scrape_cencode_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_cencode_pdfs(
+        self, code_name: str, max_statutes: int
+    ) -> List[NormalizedStatute]:
         """Discover and emit Century Code chapter PDF links from legislative homepage."""
         try:
             from bs4 import BeautifulSoup
@@ -193,12 +208,20 @@ class NorthDakotaScraper(BaseStateScraper):
         seen = set()
         candidate_links = []
 
-        official_modern_links = await self._discover_official_cencode_pdfs(limit=max(600, max_statutes * 6))
+        official_modern_links = await self._discover_official_cencode_pdfs(
+            limit=max(600, max_statutes * 6)
+        )
         candidate_links.extend(official_modern_links)
 
-        for homepage in [f"{self.get_base_url()}/cencode/", "https://www.ndlegis.gov/cencode/", f"{self.get_base_url()}/"]:
+        for homepage in [
+            f"{self.get_base_url()}/cencode/",
+            "https://www.ndlegis.gov/cencode/",
+            f"{self.get_base_url()}/",
+        ]:
             try:
-                payload = await self._fetch_page_content_with_archival_fallback(homepage, timeout_seconds=35)
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    homepage, timeout_seconds=35
+                )
             except Exception:
                 continue
             if not payload:
@@ -260,9 +283,13 @@ class NorthDakotaScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        index_url = f"{self.get_base_url()}/general-information/north-dakota-century-code/index.html"
+        index_url = (
+            f"{self.get_base_url()}/general-information/north-dakota-century-code/index.html"
+        )
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=35)
+            payload = await self._fetch_page_content_with_archival_fallback(
+                index_url, timeout_seconds=35
+            )
         except Exception:
             return []
         if not payload:
@@ -315,7 +342,7 @@ class NorthDakotaScraper(BaseStateScraper):
                 original = str(row[2]).strip()
                 if not ts or not original:
                     continue
-                encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+                encoded = urllib.parse.quote(original, safe=":/?=&%.-_")
                 candidate = f"http://web.archive.org/web/{ts}/{encoded}"
                 if candidate in seen:
                     continue
@@ -340,7 +367,9 @@ class NorthDakotaScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
             try:
-                payload = await self._fetch_page_content_with_archival_fallback(candidate, timeout_seconds=timeout)
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    candidate, timeout_seconds=timeout
+                )
                 if payload:
                     return payload
             except Exception:

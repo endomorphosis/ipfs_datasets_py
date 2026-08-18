@@ -314,7 +314,11 @@ def pid_looks_like_worktree_owner(
     normalized_worktree = str(worktree_path.resolve())
     if daemon_process_fragment and daemon_process_fragment in command_line:
         return normalized_repo in command_line or daemon_repo_hint_fragment in command_line
-    if worker_process_fragment and worker_process_fragment in command_line and normalized_worktree in command_line:
+    if (
+        worker_process_fragment
+        and worker_process_fragment in command_line
+        and normalized_worktree in command_line
+    ):
         return True
     return False
 
@@ -509,14 +513,20 @@ def cleanup_stale_daemon_worktrees(
         try:
             resolved = candidate.resolve()
             if not resolved.is_relative_to(root_resolved):
-                result["skipped"].append({"path": str(candidate), "reason": "outside_worktree_root"})
+                result["skipped"].append(
+                    {"path": str(candidate), "reason": "outside_worktree_root"}
+                )
                 continue
             if not candidate.is_dir():
                 result["skipped"].append({"path": str(candidate), "reason": "not_directory"})
                 continue
             owner = read_json_object(candidate / owner_filename)
             owner_pid = owner_pid_from_worktree(candidate, owner)
-            owner_is_alive = bool(owner_pid and owner_alive is not None and owner_alive(owner_pid, repo_root, candidate))
+            owner_is_alive = bool(
+                owner_pid
+                and owner_alive is not None
+                and owner_alive(owner_pid, repo_root, candidate)
+            )
             try:
                 created_at = float(owner.get("created_at_epoch") or candidate.stat().st_mtime)
             except (OSError, TypeError, ValueError):
@@ -574,7 +584,9 @@ def cleanup_stale_daemon_worktrees(
                 result["errors"].append(record)
         except Exception as exc:
             result["valid"] = False
-            result["errors"].append({"path": str(candidate), "exception": f"{type(exc).__name__}: {exc}"})
+            result["errors"].append(
+                {"path": str(candidate), "exception": f"{type(exc).__name__}: {exc}"}
+            )
 
     prune_after = run_command_fn(
         ("git", "worktree", "prune", "--expire", "now"),

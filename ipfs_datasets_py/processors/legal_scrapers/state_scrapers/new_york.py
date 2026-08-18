@@ -14,14 +14,21 @@ from .registry import StateScraperRegistry
 
 class NewYorkScraper(BaseStateScraper):
     """Scraper for New York state laws."""
-    _NY_PUBLIC_LAW_LINK_RE = re.compile(r"https://newyork\.public\.law/laws/n\.y\._[^\s)`]+", re.IGNORECASE)
-    _NY_PUBLIC_LAW_MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https://newyork\.public\.law/laws/[^)]+)\)", re.IGNORECASE)
-    _NY_SENATE_LINK_RE = re.compile(r"\[([^\]]+)\]\((https://www\.nysenate\.gov/legislation/laws/[^)]+)\)", re.IGNORECASE)
-    
+
+    _NY_PUBLIC_LAW_LINK_RE = re.compile(
+        r"https://newyork\.public\.law/laws/n\.y\._[^\s)`]+", re.IGNORECASE
+    )
+    _NY_PUBLIC_LAW_MARKDOWN_LINK_RE = re.compile(
+        r"\[([^\]]+)\]\((https://newyork\.public\.law/laws/[^)]+)\)", re.IGNORECASE
+    )
+    _NY_SENATE_LINK_RE = re.compile(
+        r"\[([^\]]+)\]\((https://www\.nysenate\.gov/legislation/laws/[^)]+)\)", re.IGNORECASE
+    )
+
     def get_base_url(self) -> str:
         """Get base URL for NY Senate."""
         return "https://www.nysenate.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Get list of New York consolidated law sources.
 
@@ -37,7 +44,7 @@ class NewYorkScraper(BaseStateScraper):
                 "type": "NY-LAWS",
             }
         ]
-    
+
     async def scrape_code(
         self,
         code_name: str,
@@ -45,11 +52,11 @@ class NewYorkScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific New York law.
-        
+
         Args:
             code_name: Name of the law
             code_url: URL to the law
-            
+
         Returns:
             List of normalized statutes
         """
@@ -58,10 +65,16 @@ class NewYorkScraper(BaseStateScraper):
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
             return []
-        
+
         statutes = []
-        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(160)
-        public_law_structured = await self._scrape_public_law_structured(code_name, max_sections=max(10, limit))
+        limit = (
+            max(1, int(max_statutes))
+            if max_statutes is not None
+            else self._bounded_return_threshold(160)
+        )
+        public_law_structured = await self._scrape_public_law_structured(
+            code_name, max_sections=max(10, limit)
+        )
         if public_law_structured:
             return public_law_structured[:limit]
         if not self._full_corpus_enabled():
@@ -70,47 +83,51 @@ class NewYorkScraper(BaseStateScraper):
                 statutes.extend(direct[:limit])
         if statutes:
             return statutes[:limit]
-        
+
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(
                 code_url,
                 timeout_seconds=30,
             )
             if not page_bytes:
-                self.logger.warning(f"NY direct request returned empty content for {code_name}; using public.law fallback")
+                self.logger.warning(
+                    f"NY direct request returned empty content for {code_name}; using public.law fallback"
+                )
                 return (await self._scrape_public_law_updates(code_name))[:limit]
 
-            soup = BeautifulSoup(page_bytes, 'html.parser')
-            
+            soup = BeautifulSoup(page_bytes, "html.parser")
+
             # Extract legal area
             legal_area = self._identify_legal_area(code_name)
 
             # Find section/article links from the index page if available.
-            section_href_re = re.compile(r".*/legislation/laws/[A-Za-z0-9\-.]+/[A-Za-z0-9\-.]+$", re.IGNORECASE)
-            section_links = soup.find_all('a', href=section_href_re)
-            
+            section_href_re = re.compile(
+                r".*/legislation/laws/[A-Za-z0-9\-.]+/[A-Za-z0-9\-.]+$", re.IGNORECASE
+            )
+            section_links = soup.find_all("a", href=section_href_re)
+
             seen_sections = set()
             for link in section_links[:limit]:
                 section_text = link.get_text(strip=True)
-                section_url = link.get('href', '')
-                
+                section_url = link.get("href", "")
+
                 if not section_text or len(section_text) < 3:
                     continue
-                
-                if not section_url.startswith('http'):
+
+                if not section_url.startswith("http"):
                     section_url = urljoin(code_url, section_url)
-                
+
                 # Extract section number
                 section_number = self._extract_section_number(section_text)
                 if not section_number:
-                    tail = section_url.rstrip('/').split('/')[-1]
+                    tail = section_url.rstrip("/").split("/")[-1]
                     section_number = tail if re.search(r"\d", tail) else ""
                 if not section_number:
                     continue
                 if section_number in seen_sections:
                     continue
                 seen_sections.add(section_number)
-                
+
                 statute = NormalizedStatute(
                     state_code=self.state_code,
                     state_name=self.state_name,
@@ -122,11 +139,11 @@ class NewYorkScraper(BaseStateScraper):
                     source_url=section_url,
                     legal_area=legal_area,
                     official_cite=f"NY {code_name} § {section_number}",
-                    metadata=StatuteMetadata()
+                    metadata=StatuteMetadata(),
                 )
-                
+
                 statutes.append(statute)
-            
+
             self.logger.info(f"Scraped {len(statutes)} sections from {code_name}")
 
             if statutes:
@@ -134,12 +151,14 @@ class NewYorkScraper(BaseStateScraper):
 
             self.logger.warning("NY primary source returned no sections; using public.law fallback")
             return await self._scrape_public_law_updates(code_name)
-            
+
         except Exception as e:
             self.logger.error(f"Failed to scrape {code_name}: {e}")
             return await self._scrape_public_law_updates(code_name)
 
-    async def _scrape_jina_senate_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
+    async def _scrape_jina_senate_seed_sections(
+        self, code_name: str, max_statutes: int = 1
+    ) -> List[NormalizedStatute]:
         seeds = [
             ("PEN 125.25", "https://www.nysenate.gov/legislation/laws/PEN/125.25"),
             ("CVP 101", "https://www.nysenate.gov/legislation/laws/CVP/101"),
@@ -230,7 +249,9 @@ class NewYorkScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen_urls = set()
         legal_area = self._identify_legal_area(code_name)
-        section_url_re = re.compile(r"/laws/n\.y\._[a-z0-9_'.\-,]+_(section|article|title)_[a-z0-9\-.]+$", re.IGNORECASE)
+        section_url_re = re.compile(
+            r"/laws/n\.y\._[a-z0-9_'.\-,]+_(section|article|title)_[a-z0-9\-.]+$", re.IGNORECASE
+        )
 
         for page_url in seed_pages:
             if len(statutes) >= max_sections:
@@ -246,12 +267,12 @@ class NewYorkScraper(BaseStateScraper):
                 self.logger.warning(f"NY fallback page failed {page_url}: {exc}")
                 continue
 
-            soup = BeautifulSoup(page_bytes, 'html.parser')
-            for link in soup.find_all('a', href=True):
+            soup = BeautifulSoup(page_bytes, "html.parser")
+            for link in soup.find_all("a", href=True):
                 if len(statutes) >= max_sections:
                     break
 
-                href = link.get('href', '').strip()
+                href = link.get("href", "").strip()
                 if not href:
                     continue
 
@@ -262,12 +283,14 @@ class NewYorkScraper(BaseStateScraper):
                     continue
                 seen_urls.add(full_url)
 
-                link_text = link.get_text(' ', strip=True)
+                link_text = link.get_text(" ", strip=True)
                 section_number = self._extract_section_number(link_text)
                 if not section_number:
-                    tail = full_url.rstrip('/').split('/')[-1]
+                    tail = full_url.rstrip("/").split("/")[-1]
                     # Keep the terminal identifier as a stable fallback.
-                    section_number = re.sub(r"^.*_(section|article|title)_", "", tail, flags=re.IGNORECASE)
+                    section_number = re.sub(
+                        r"^.*_(section|article|title)_", "", tail, flags=re.IGNORECASE
+                    )
 
                 section_name = link_text[:200] if link_text else f"Section {section_number}"
                 statutes.append(
@@ -296,11 +319,15 @@ class NewYorkScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         base = "https://newyork.public.law"
         legal_area = self._identify_legal_area(code_name)
-        root_markdown = await self._request_text_direct(f"https://r.jina.ai/http://{base}/laws", timeout=30)
+        root_markdown = await self._request_text_direct(
+            f"https://r.jina.ai/http://{base}/laws", timeout=30
+        )
         if not root_markdown:
             return []
 
-        law_links = self._extract_markdown_links(root_markdown, self._NY_PUBLIC_LAW_MARKDOWN_LINK_RE)
+        law_links = self._extract_markdown_links(
+            root_markdown, self._NY_PUBLIC_LAW_MARKDOWN_LINK_RE
+        )
         if not law_links:
             return []
 
@@ -311,7 +338,9 @@ class NewYorkScraper(BaseStateScraper):
                 break
             if law_url.rstrip("/").endswith("/laws") or law_url.endswith("/latest-updates"):
                 continue
-            container_links = await self._crawl_public_law_sections(law_url, max_sections=max_sections * 2)
+            container_links = await self._crawl_public_law_sections(
+                law_url, max_sections=max_sections * 2
+            )
             for section_label, section_url in container_links:
                 if len(statutes) >= max_sections:
                     break
@@ -344,7 +373,9 @@ class NewYorkScraper(BaseStateScraper):
             if current in visited:
                 continue
             visited.add(current)
-            markdown = await self._request_text_direct(f"https://r.jina.ai/http://{current}", timeout=30)
+            markdown = await self._request_text_direct(
+                f"https://r.jina.ai/http://{current}", timeout=30
+            )
             if not markdown:
                 continue
             links = self._extract_markdown_links(markdown, self._NY_PUBLIC_LAW_MARKDOWN_LINK_RE)
@@ -356,7 +387,11 @@ class NewYorkScraper(BaseStateScraper):
                         seen_sections.add(url)
                         sections.append((label, url))
                     continue
-                if any(token in url.lower() for token in ["_article_", "_part_", "_title_"]) and url not in visited and url not in queue:
+                if (
+                    any(token in url.lower() for token in ["_article_", "_part_", "_title_"])
+                    and url not in visited
+                    and url not in queue
+                ):
                     queue.append(url)
         return sections
 
@@ -368,7 +403,9 @@ class NewYorkScraper(BaseStateScraper):
         section_url: str,
         legal_area: str,
     ) -> Optional[NormalizedStatute]:
-        markdown = await self._request_text_direct(f"https://r.jina.ai/http://{section_url}", timeout=30)
+        markdown = await self._request_text_direct(
+            f"https://r.jina.ai/http://{section_url}", timeout=30
+        )
         markdown = self._clean_jina_markdown(markdown)
         if len(markdown) < 160:
             return None
@@ -381,10 +418,12 @@ class NewYorkScraper(BaseStateScraper):
         section_name = str(section_label or "").strip()
         section_name = re.sub(r"^(SECTION|§)\s*", "", section_name, flags=re.IGNORECASE).strip()
         if section_number and section_name.lower().startswith(section_number.lower()):
-            section_name = section_name[len(section_number):].strip(" -:\u00a0")
+            section_name = section_name[len(section_number) :].strip(" -:\u00a0")
         if not section_name:
             heading_match = re.search(r"#\s+(.+)", markdown)
-            section_name = heading_match.group(1).strip() if heading_match else f"Section {section_number}"
+            section_name = (
+                heading_match.group(1).strip() if heading_match else f"Section {section_number}"
+            )
 
         return NormalizedStatute(
             state_code=self.state_code,

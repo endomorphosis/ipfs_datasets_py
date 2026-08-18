@@ -58,12 +58,8 @@ def _canonical_state() -> dict:
                     -0.5 * value,
                     0.25 + value,
                 ]
-                state[LEGAL_IR_VIEW_LOGIT_HEAD].setdefault(
-                    f"{family}||{slot}", {}
-                )[view] = value
-                state[FAMILY_LOGIT_HEAD].setdefault(f"{slot}||{view}", {})[
-                    family
-                ] = -value
+                state[LEGAL_IR_VIEW_LOGIT_HEAD].setdefault(f"{family}||{slot}", {})[view] = value
+                state[FAMILY_LOGIT_HEAD].setdefault(f"{slot}||{view}", {})[family] = -value
     return state
 
 
@@ -73,7 +69,9 @@ def _semantic_scores() -> dict[str, float]:
     return scores
 
 
-def _quality_packet(*, ce: float, cosine: float, obligation: float = 1.0, proof: float = 1.0) -> dict:
+def _quality_packet(
+    *, ce: float, cosine: float, obligation: float = 1.0, proof: float = 1.0
+) -> dict:
     semantic = _semantic_scores()
     semantic["obligation_equivalence"] = obligation
     return {
@@ -140,7 +138,9 @@ def test_migration_preserves_canonical_logits_and_reduces_both_state_measures_fo
     assert result.report.checkpoint_reduction_ratio >= 4.0
     assert result.report.residual_count == 0
     expected = _canonical_state()[LEGAL_IR_VIEW_LOGIT_HEAD]["family-3||slot-4"]["view-5"]
-    assert result.heads.legal_ir_view_logit("family-3", "slot-4", "view-5") == pytest.approx(expected)
+    assert result.heads.legal_ir_view_logit("family-3", "slot-4", "view-5") == pytest.approx(
+        expected
+    )
 
 
 def test_checkpoint_round_trip_and_legacy_rollback_materialization_are_deterministic() -> None:
@@ -200,10 +200,7 @@ def test_rank_one_migration_recovers_a_true_typed_three_way_interaction() -> Non
     slots = ("s0", "s1", "s2", "s3", "s4")
     views = ("v0", "v1", "v2", "v3", "v4", "v5")
     records = {
-        (family, slot, view): 0.01
-        * (family_index - 1.5)
-        * (slot_index - 2.0)
-        * (view_index - 2.5)
+        (family, slot, view): 0.01 * (family_index - 1.5) * (slot_index - 2.0) * (view_index - 2.5)
         for family_index, family in enumerate(families)
         for slot_index, slot in enumerate(slots)
         for view_index, view in enumerate(views)
@@ -223,9 +220,7 @@ def test_rank_one_migration_recovers_a_true_typed_three_way_interaction() -> Non
     assert head.rank == 1
     assert head.residual_count == 0
     assert report.max_absolute_error <= 1.0e-10
-    assert head.scalar("f3", "s4", "v5") == pytest.approx(
-        records[("f3", "s4", "v5")]
-    )
+    assert head.scalar("f3", "s4", "v5") == pytest.approx(records[("f3", "s4", "v5")])
 
 
 def test_rank_and_residual_ablations_are_explicit_and_non_mutating() -> None:

@@ -28,23 +28,23 @@ from .recap_archive_scraper import scrape_recap_archive, search_recap_documents,
 from .export_utils import export_dataset, export_to_json, export_to_parquet, export_to_csv
 from .state_manager import ScrapingState, list_scraping_jobs, delete_scraping_job
 from .incremental_updates import (
-    IncrementalUpdateTracker, 
-    scrape_recap_incremental, 
+    IncrementalUpdateTracker,
+    scrape_recap_incremental,
     scrape_with_incremental_update,
-    calculate_update_parameters
+    calculate_update_parameters,
 )
 from .ipfs_storage_integration import (
     IPFSStorageManager,
     store_dataset_to_ipfs,
     retrieve_dataset_from_ipfs,
-    list_ipfs_datasets
+    list_ipfs_datasets,
 )
 from .citation_extraction import (
     CitationExtractor,
     Citation,
     extract_citations_from_text,
     analyze_document_citations,
-    create_citation_network
+    create_citation_network,
 )
 from .state_laws_scheduler import (
     StateLawsUpdateScheduler,
@@ -52,7 +52,7 @@ from .state_laws_scheduler import (
     remove_schedule,
     list_schedules,
     run_schedule_now,
-    enable_disable_schedule
+    enable_disable_schedule,
 )
 from .brave_legal_search_tools import (
     BRAVE_LEGAL_SEARCH_TOOLS,
@@ -60,7 +60,7 @@ from .brave_legal_search_tools import (
     brave_legal_search_tool,
     brave_legal_search_generate_terms_tool,
     brave_legal_search_explain_tool,
-    brave_legal_search_entities_tool
+    brave_legal_search_entities_tool,
 )
 from .legal_web_archive_tools import (
     LEGAL_WEB_ARCHIVE_TOOLS,
@@ -68,7 +68,7 @@ from .legal_web_archive_tools import (
     legal_web_archive_search_tool,
     legal_search_archives_only_tool,
     legal_archive_results_tool,
-    legal_get_archive_stats_tool
+    legal_get_archive_stats_tool,
 )
 from .mcp_tools import (
     setup_legal_tools_venv,
@@ -101,60 +101,49 @@ __all__ = [
     "scrape_us_code",
     "get_us_code_titles",
     "search_us_code",
-    
     # Federal Register tools
     "scrape_federal_register",
     "search_federal_register",
-
     # Federal rules + local rules tools
     "scrape_federal_laws",
     "scrape_netherlands_laws",
-    
     # State Laws tools
     "scrape_state_laws",
     "list_state_jurisdictions",
     "scrape_state_admin_rules",
     "list_state_admin_rule_jurisdictions",
-    
     # Municipal Laws tools
     "scrape_municipal_laws",
     "search_municipal_codes",
-    
     # RECAP Archive tools
     "scrape_recap_archive",
     "search_recap_documents",
     "get_recap_document",
-    
     # Export utilities
     "export_dataset",
     "export_to_json",
     "export_to_parquet",
     "export_to_csv",
-    
     # State management
     "ScrapingState",
     "list_scraping_jobs",
     "delete_scraping_job",
-    
     # Incremental updates
     "IncrementalUpdateTracker",
     "scrape_recap_incremental",
     "scrape_with_incremental_update",
     "calculate_update_parameters",
-    
     # IPFS storage integration
     "IPFSStorageManager",
     "store_dataset_to_ipfs",
     "retrieve_dataset_from_ipfs",
     "list_ipfs_datasets",
-    
     # Citation extraction and analysis
     "CitationExtractor",
     "Citation",
     "extract_citations_from_text",
     "analyze_document_citations",
     "create_citation_network",
-    
     # State Laws scheduling
     "StateLawsUpdateScheduler",
     "create_schedule",
@@ -162,7 +151,6 @@ __all__ = [
     "list_schedules",
     "run_schedule_now",
     "enable_disable_schedule",
-    
     # Brave Legal Search tools
     "BRAVE_LEGAL_SEARCH_TOOLS",
     "register_brave_legal_search_tools",
@@ -170,7 +158,6 @@ __all__ = [
     "brave_legal_search_generate_terms_tool",
     "brave_legal_search_explain_tool",
     "brave_legal_search_entities_tool",
-    
     # Legal Web Archive tools (NEW)
     "LEGAL_WEB_ARCHIVE_TOOLS",
     "register_legal_web_archive_tools",
@@ -178,7 +165,6 @@ __all__ = [
     "legal_search_archives_only_tool",
     "legal_archive_results_tool",
     "legal_get_archive_stats_tool",
-
     # CAP vector dataset integration
     "setup_legal_tools_venv",
     "ingest_caselaw_access_vectors",

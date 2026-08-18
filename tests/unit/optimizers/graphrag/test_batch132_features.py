@@ -4,6 +4,7 @@ Methods under test:
   - LogicValidator.shortest_path_length(ontology, source, target)
   - LogicValidator.reachable_from(ontology, source)
 """
+
 import pytest
 
 
@@ -11,8 +12,10 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
@@ -34,6 +37,7 @@ def _rel(src, tgt, rtype="knows"):
 # ---------------------------------------------------------------------------
 # LogicValidator.shortest_path_length
 # ---------------------------------------------------------------------------
+
 
 class TestShortestPathLength:
     def test_same_node(self):
@@ -78,6 +82,7 @@ class TestShortestPathLength:
 # ---------------------------------------------------------------------------
 # LogicValidator.reachable_from
 # ---------------------------------------------------------------------------
+
 
 class TestReachableFrom:
     def test_isolated_node(self):

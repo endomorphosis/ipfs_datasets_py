@@ -44,13 +44,9 @@ SCHEMA_VERSIONS = (
 _HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 _LOCALE_RE = re.compile(r"^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$")
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
-_ALLOWED_CONSENT = frozenset(
-    {"granted", "not_required", "unknown", "denied", "withdrawn"}
-)
+_ALLOWED_CONSENT = frozenset({"granted", "not_required", "unknown", "denied", "withdrawn"})
 _PUBLISHABLE_CONSENT = frozenset({"granted", "not_required"})
-_SEGMENT_KINDS = frozenset(
-    {"response", "template_shell", "slot_value", "vocabulary"}
-)
+_SEGMENT_KINDS = frozenset({"response", "template_shell", "slot_value", "vocabulary"})
 _AGGREGATE_KEYS = frozenset(
     {
         "responses",
@@ -161,9 +157,7 @@ def stable_template_id(
 def stable_audio_id(content_sha256: str, *, segment_kind: str = "response") -> str:
     """Build a deterministic audio ID without embedding mutable storage paths."""
 
-    return _stable_id(
-        "audio", {"content_sha256": content_sha256, "segment_kind": segment_kind}
-    )
+    return _stable_id("audio", {"content_sha256": content_sha256, "segment_kind": segment_kind})
 
 
 def stable_provenance_id(
@@ -206,9 +200,7 @@ def _normalize_row(instance: _VoiceRow) -> None:
     for item in fields(instance):
         value = getattr(instance, item.name)
         if item.name in instance.LIST_FIELDS:
-            object.__setattr__(
-                instance, item.name, _tuple_of_strings(value, item.name)
-            )
+            object.__setattr__(instance, item.name, _tuple_of_strings(value, item.name))
         elif isinstance(value, str):
             object.__setattr__(instance, item.name, value.strip())
 
@@ -252,9 +244,7 @@ class _VoiceRow:
         return result
 
     @classmethod
-    def from_dict(
-        cls: type[_RowT], data: Mapping[str, Any], *, strict: bool = True
-    ) -> _RowT:
+    def from_dict(cls: type[_RowT], data: Mapping[str, Any], *, strict: bool = True) -> _RowT:
         """Construct from one canonical mapping.
 
         Unknown keys are rejected by default so that aggregate manifests and
@@ -272,9 +262,7 @@ class _VoiceRow:
         allowed = set(schema_columns(cls.SCHEMA_VERSION))
         unknown = sorted(set(data) - allowed)
         if strict and unknown:
-            raise AbbyVoiceSchemaError(
-                cls.SCHEMA_VERSION, f"unknown columns: {', '.join(unknown)}"
-            )
+            raise AbbyVoiceSchemaError(cls.SCHEMA_VERSION, f"unknown columns: {', '.join(unknown)}")
         missing = sorted(allowed - set(data))
         if strict and missing:
             raise AbbyVoiceSchemaError(
@@ -384,9 +372,7 @@ class AbbyVoiceTemplate(_VoiceRow):
         if self.spoken_template is None and isinstance(self.template_text, str):
             object.__setattr__(self, "spoken_template", self.template_text)
         if self.content_sha256 is None and isinstance(self.spoken_template, str):
-            object.__setattr__(
-                self, "content_sha256", sha256_text(self.spoken_template.strip())
-            )
+            object.__setattr__(self, "content_sha256", sha256_text(self.spoken_template.strip()))
         super(AbbyVoiceTemplate, self).__post_init__()
 
 
@@ -464,9 +450,7 @@ class AbbyVoiceProvenance(_VoiceRow):
     )
 
 
-VoiceRow: TypeAlias = (
-    AbbyVoiceResponse | AbbyVoiceTemplate | AbbyVoiceAudio | AbbyVoiceProvenance
-)
+VoiceRow: TypeAlias = AbbyVoiceResponse | AbbyVoiceTemplate | AbbyVoiceAudio | AbbyVoiceProvenance
 
 
 def _c(name: str, kind: str = "string", nullable: bool = False) -> ColumnSpec:
@@ -619,9 +603,7 @@ def schema_columns(schema_version: str) -> tuple[str, ...]:
     return get_schema_definition(schema_version).column_names
 
 
-def _validate_string(
-    errors: list[str], name: str, value: Any, *, optional: bool = False
-) -> None:
+def _validate_string(errors: list[str], name: str, value: Any, *, optional: bool = False) -> None:
     if value is None and optional:
         return
     if not isinstance(value, str) or not value.strip():
@@ -634,9 +616,7 @@ def _validate_id(errors: list[str], name: str, value: Any) -> None:
         errors.append(f"{name} contains unsupported characters or is too long")
 
 
-def _validate_hash(
-    errors: list[str], name: str, value: Any, *, optional: bool = False
-) -> None:
+def _validate_hash(errors: list[str], name: str, value: Any, *, optional: bool = False) -> None:
     if value is None and optional:
         return
     if not isinstance(value, str) or not _HASH_RE.fullmatch(value):
@@ -677,24 +657,18 @@ def _validate_instance(row: _VoiceRow) -> list[str]:
     _validate_id(errors, row.ID_FIELD, getattr(row, row.ID_FIELD))
 
     locale = getattr(row, "locale", None)
-    if locale is not None and (
-        not isinstance(locale, str) or not _LOCALE_RE.fullmatch(locale)
-    ):
+    if locale is not None and (not isinstance(locale, str) or not _LOCALE_RE.fullmatch(locale)):
         errors.append("locale must be a BCP-47 language tag such as 'en' or 'en-US'")
 
     license_id = getattr(row, "license_id", None)
     _validate_string(errors, "license_id", license_id)
     consent = getattr(row, "consent_status", None)
     if consent not in _ALLOWED_CONSENT:
-        errors.append(
-            "consent_status must be one of " + ", ".join(sorted(_ALLOWED_CONSENT))
-        )
+        errors.append("consent_status must be one of " + ", ".join(sorted(_ALLOWED_CONSENT)))
 
     for timestamp_name in ("created_at", "generated_at"):
         value = getattr(row, timestamp_name, None)
-        if value is not None and (
-            not isinstance(value, str) or not _valid_timestamp(value)
-        ):
+        if value is not None and (not isinstance(value, str) or not _valid_timestamp(value)):
             errors.append(f"{timestamp_name} must be a timezone-aware RFC 3339 timestamp")
 
     if isinstance(row, AbbyVoiceResponse):
@@ -707,14 +681,8 @@ def _validate_instance(row: _VoiceRow) -> list[str]:
             and row.content_sha256 != sha256_text(row.spoken_text)
         ):
             errors.append("content_sha256 must equal SHA-256(spoken_text UTF-8)")
-        if not (
-            len(row.slot_names)
-            == len(row.slot_values)
-            == len(row.slot_source_cids)
-        ):
-            errors.append(
-                "slot_names, slot_values, and slot_source_cids must have equal lengths"
-            )
+        if not (len(row.slot_names) == len(row.slot_values) == len(row.slot_source_cids)):
+            errors.append("slot_names, slot_values, and slot_source_cids must have equal lengths")
         for name in row.slot_names:
             if not _ID_RE.fullmatch(name):
                 errors.append(f"slot name {name!r} is not a stable identifier")
@@ -736,9 +704,7 @@ def _validate_instance(row: _VoiceRow) -> list[str]:
         if not set(row.factual_slot_names) <= declared:
             errors.append("factual_slot_names must be a subset of slot_names")
         text_slots = _template_placeholders(row.template_text, "template_text", errors)
-        spoken_slots = _template_placeholders(
-            row.spoken_template or "", "spoken_template", errors
-        )
+        spoken_slots = _template_placeholders(row.spoken_template or "", "spoken_template", errors)
         if text_slots != declared:
             errors.append("template_text placeholders must exactly match slot_names")
         if spoken_slots != declared:
@@ -757,9 +723,7 @@ def _validate_instance(row: _VoiceRow) -> list[str]:
         if not row.uri and not row.ipfs_cid:
             errors.append("audio requires at least one of uri or ipfs_cid")
         if not row.response_id and not row.template_id and not row.slot_name:
-            errors.append(
-                "audio requires a response_id, template_id, or slot_name subject"
-            )
+            errors.append("audio requires a response_id, template_id, or slot_name subject")
         if row.segment_kind not in _SEGMENT_KINDS:
             errors.append("segment_kind must be one of " + ", ".join(sorted(_SEGMENT_KINDS)))
         if not isinstance(row.mime_type, str) or not row.mime_type.startswith("audio/"):
@@ -777,9 +741,7 @@ def _validate_instance(row: _VoiceRow) -> list[str]:
         for name in ("sample_rate_hz", "channels"):
             value = getattr(row, name)
             if value is not None and (
-                not isinstance(value, int)
-                or isinstance(value, bool)
-                or value <= 0
+                not isinstance(value, int) or isinstance(value, bool) or value <= 0
             ):
                 errors.append(f"{name} must be a positive integer")
         if row.segment_kind == "slot_value" and (not row.slot_name or not row.slot_value):
@@ -1001,9 +963,7 @@ def get_huggingface_features(schema_version: str) -> Any:
         "list[string]": lambda: HFSequence(Value("string")),
     }
     definition = get_schema_definition(schema_version)
-    return Features(
-        {column.name: converters[column.kind]() for column in definition.columns}
-    )
+    return Features({column.name: converters[column.kind]() for column in definition.columns})
 
 
 def get_pyarrow_schema(schema_version: str) -> Any:
@@ -1037,15 +997,12 @@ get_arrow_schema = get_pyarrow_schema
 
 def _reject_aggregate(record: Mapping[str, Any], schema_version: str) -> None:
     found = sorted(
-        key
-        for key in _AGGREGATE_KEYS
-        if key in record and isinstance(record[key], list | dict)
+        key for key in _AGGREGATE_KEYS if key in record and isinstance(record[key], list | dict)
     )
     if found:
         raise AbbyVoiceSchemaError(
             schema_version,
-            "aggregate manifests/indexes are not rows; found wrapper columns: "
-            + ", ".join(found),
+            "aggregate manifests/indexes are not rows; found wrapper columns: " + ", ".join(found),
         )
 
 
@@ -1079,7 +1036,9 @@ def migrate_legacy_response(
     """Migrate one legacy response item without mutating its source mapping."""
 
     _reject_aggregate(record, ABBY_VOICE_RESPONSE_V2)
-    spoken = str(record.get("spoken_text") or record.get("spokenText") or record.get("text") or "").strip()
+    spoken = str(
+        record.get("spoken_text") or record.get("spokenText") or record.get("text") or ""
+    ).strip()
     originals = record.get("originalTexts")
     text = str(
         record.get("response_text")
@@ -1132,7 +1091,9 @@ def migrate_legacy_template(
     slot_names = _legacy_lists(record, "slot_names", "slotNames", "slots")
     if not slot_names:
         slot_errors: list[str] = []
-        slot_names = tuple(sorted(_template_placeholders(template_text, "template_text", slot_errors)))
+        slot_names = tuple(
+            sorted(_template_placeholders(template_text, "template_text", slot_errors))
+        )
         if slot_errors:
             raise AbbyVoiceSchemaError(ABBY_VOICE_TEMPLATE_V2, slot_errors)
     return AbbyVoiceTemplate(
@@ -1171,10 +1132,7 @@ def migrate_legacy_audio(
     _reject_aggregate(record, ABBY_VOICE_AUDIO_V2)
     spoken = str(spoken_text or record.get("spoken_text") or record.get("text") or "").strip()
     digest = str(
-        record.get("content_sha256")
-        or record.get("audioSha256")
-        or record.get("sha256")
-        or ""
+        record.get("content_sha256") or record.get("audioSha256") or record.get("sha256") or ""
     ).strip()
     # Truncated legacy textHash values are intentionally not accepted as audio
     # integrity hashes.  Callers must hash the bytes before publishing.
@@ -1265,9 +1223,7 @@ def migrate_legacy_provenance(
         source_revision=source_revision,
         source_sha256=record.get("source_sha256") or record.get("sourceSha256"),
         source_cids=_legacy_lists(record, "source_cids", "sourceCids"),
-        parent_provenance_ids=_legacy_lists(
-            record, "parent_provenance_ids", "parentProvenanceIds"
-        ),
+        parent_provenance_ids=_legacy_lists(record, "parent_provenance_ids", "parentProvenanceIds"),
         transformation_version=record.get("transformation_version")
         or record.get("transformationVersion"),
         generated_at=record.get("generated_at")

@@ -1,6 +1,7 @@
 """
 Session P65 — server.py register_tools / register_ipfs_kit_tools / start_stdio / start
 """
+
 import sys
 import asyncio
 from pathlib import Path
@@ -10,6 +11,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # helpers — import server module with mocked dependencies
 # ---------------------------------------------------------------------------
+
 
 def _get_server_mod():
     """Import the server module, mocking mcp if absent."""
@@ -22,14 +24,19 @@ def _get_server_mod():
         sys.modules["mcp.server"] = mcp_stub.server
     return __import__(
         "ipfs_datasets_py.mcp_server.server",
-        fromlist=["IPFSDatasetsMCPServer", "import_tools_from_directory",
-                  "start_stdio_server", "start_server"]
+        fromlist=[
+            "IPFSDatasetsMCPServer",
+            "import_tools_from_directory",
+            "start_stdio_server",
+            "start_server",
+        ],
     )
 
 
 # ---------------------------------------------------------------------------
 # TestRegisterTools
 # ---------------------------------------------------------------------------
+
 
 class TestRegisterTools:
     """Tests for IPFSDatasetsMCPServer.register_tools()"""
@@ -53,14 +60,17 @@ class TestRegisterTools:
         srv.tools = {}
         # Patch hierarchical_tool_manager imports
         dummy_fn = lambda: None
-        with patch.dict(sys.modules, {
-            "ipfs_datasets_py.mcp_server.hierarchical_tool_manager": MagicMock(
-                tools_list_categories=dummy_fn,
-                tools_list_tools=dummy_fn,
-                tools_get_schema=dummy_fn,
-                tools_dispatch=dummy_fn,
-            )
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "ipfs_datasets_py.mcp_server.hierarchical_tool_manager": MagicMock(
+                    tools_list_categories=dummy_fn,
+                    tools_list_tools=dummy_fn,
+                    tools_get_schema=dummy_fn,
+                    tools_dispatch=dummy_fn,
+                )
+            },
+        ):
             await srv.register_tools()
         assert srv.mcp.add_tool.call_count == 4
         assert len(srv.tools) == 4
@@ -73,8 +83,12 @@ class TestRegisterTools:
         srv.tools = {}
         fake_tool = lambda: "result"
         fake_tool.__doc__ = "doc"
-        with patch.object(server_mod, "ERROR_REPORTING_AVAILABLE", False), \
-             patch.object(server_mod, "import_tools_from_directory", return_value={"my_tool": fake_tool}):
+        with (
+            patch.object(server_mod, "ERROR_REPORTING_AVAILABLE", False),
+            patch.object(
+                server_mod, "import_tools_from_directory", return_value={"my_tool": fake_tool}
+            ),
+        ):
             srv._register_tools_from_subdir(Path("/fake"))
         assert "my_tool" in srv.tools
         assert srv.tools["my_tool"] is fake_tool
@@ -88,9 +102,13 @@ class TestRegisterTools:
         fake_tool = lambda: "result"
         fake_tool.__doc__ = "doc"
         wrapped = lambda: "wrapped"
-        with patch.object(server_mod, "ERROR_REPORTING_AVAILABLE", True), \
-             patch.object(server_mod, "import_tools_from_directory", return_value={"my_tool": fake_tool}), \
-             patch.object(srv, "_wrap_tool_with_error_reporting", return_value=wrapped):
+        with (
+            patch.object(server_mod, "ERROR_REPORTING_AVAILABLE", True),
+            patch.object(
+                server_mod, "import_tools_from_directory", return_value={"my_tool": fake_tool}
+            ),
+            patch.object(srv, "_wrap_tool_with_error_reporting", return_value=wrapped),
+        ):
             srv._register_tools_from_subdir(Path("/fake"))
         assert "my_tool" in srv.tools
         assert srv.tools["my_tool"] is wrapped
@@ -99,6 +117,7 @@ class TestRegisterTools:
 # ---------------------------------------------------------------------------
 # TestRegisterIpfsKitTools
 # ---------------------------------------------------------------------------
+
 
 class TestRegisterIpfsKitTools:
     """Tests for register_ipfs_kit_tools() and its helpers."""
@@ -133,9 +152,7 @@ class TestRegisterIpfsKitTools:
         srv.mcp = MagicMock()
         srv.tools = {}
         # Inject ImportError for .client
-        with patch.dict(sys.modules, {
-            "ipfs_datasets_py.mcp_server.client": None
-        }):
+        with patch.dict(sys.modules, {"ipfs_datasets_py.mcp_server.client": None}):
             # Should not raise even if import fails
             try:
                 await srv._register_ipfs_kit_mcp_client("http://localhost:5001")
@@ -171,6 +188,7 @@ class TestRegisterIpfsKitTools:
 # TestStartStdio
 # ---------------------------------------------------------------------------
 
+
 class TestStartStdio:
     """Tests for IPFSDatasetsMCPServer.start_stdio() and start()."""
 
@@ -195,9 +213,7 @@ class TestStartStdio:
         server_mod = _get_server_mod()
         srv = object.__new__(server_mod.IPFSDatasetsMCPServer)
         srv.mcp = MagicMock()
-        srv.mcp.run_stdio_async = AsyncMock(
-            side_effect=server_mod.ServerStartupError("fail")
-        )
+        srv.mcp.run_stdio_async = AsyncMock(side_effect=server_mod.ServerStartupError("fail"))
         srv.tools = {}
         srv.p2p = None
         srv.configs = MagicMock(ipfs_kit_mcp_url=None)
@@ -221,11 +237,14 @@ class TestStartStdio:
         fake_p2p = MagicMock()
         srv.p2p = fake_p2p
         adapter_cls = MagicMock()
-        with patch.dict(sys.modules, {
-            "ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter": MagicMock(
-                P2PMCPRegistryAdapter=adapter_cls
-            )
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter": MagicMock(
+                    P2PMCPRegistryAdapter=adapter_cls
+                )
+            },
+        ):
             await srv.start_stdio()
         fake_p2p.start.assert_called_once()
         fake_p2p.stop.assert_called_once()

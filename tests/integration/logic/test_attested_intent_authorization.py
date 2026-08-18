@@ -24,9 +24,7 @@ import pytest
 
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[3]
-FIXTURE_DIR: Final = (
-    REPO_ROOT / "tests" / "fixtures" / "logic" / "attested_authorization"
-)
+FIXTURE_DIR: Final = REPO_ROOT / "tests" / "fixtures" / "logic" / "attested_authorization"
 MANIFEST_PATH: Final = FIXTURE_DIR / "manifest.json"
 CASES_PATH: Final = FIXTURE_DIR / "cases.json"
 ROLLOUT_CONFIG_PATH: Final = REPO_ROOT / "config" / "intent_authorization_rollout.json"
@@ -51,9 +49,7 @@ REQUIRED_POPULATIONS: Final = (
 
 INVOCATION_KINDS: Final = frozenset({"skillcenter", "prompt", "mcp_tool"})
 WIRE_STATUSES: Final = frozenset({"allow", "reject", "abstain"})
-INTERNAL_STATUSES: Final = frozenset(
-    {"allow", "deny", "review", "indeterminate", "error"}
-)
+INTERNAL_STATUSES: Final = frozenset({"allow", "deny", "review", "indeterminate", "error"})
 
 # Heavy optional modules that must not load on plain package import.
 FORBIDDEN_IMPORT_PREFIXES: Final = (
@@ -170,8 +166,7 @@ def offline_evaluate_case(case: Mapping[str, Any]) -> dict[str, Any]:
     simulated = any(
         bool(a.get("is_simulated"))
         or str(a.get("attestation_kind", "")).lower() in {"simulation", "simulated"}
-        or str(a.get("result_authority", "")).lower()
-        in NON_ALLOWING_AUTHORITY_PATHS
+        or str(a.get("result_authority", "")).lower() in NON_ALLOWING_AUTHORITY_PATHS
         for a in authorities
     )
     if simulated:
@@ -245,14 +240,9 @@ def test_offline_skill_prompt_mcp_reach_exact_decisions(
         assert decision["internal_status"] == exp["internal_status"]
         assert decision["reason_codes"] == list(exp["reason_codes"])
         assert decision["cannot_allow"] is exp["cannot_allow"]
-        assert (
-            decision["grants_dispatch_capability"]
-            is exp["grants_dispatch_capability"]
-        )
+        assert decision["grants_dispatch_capability"] is exp["grants_dispatch_capability"]
         assert decision["filters_applied"] == list(exp["filters_applied"])
-        assert decision["obligations_required"] == list(
-            exp["obligations_required"]
-        )
+        assert decision["obligations_required"] == list(exp["obligations_required"])
 
 
 def test_simulated_zkp_never_authorizes_production(
@@ -296,18 +286,16 @@ def _population_membership(case: Mapping[str, Any]) -> set[str]:
         membership.add("metamorphic")
     if case.get("equivalence_group") or "equivalence" in tags:
         membership.add("differential")
-    if "zkp" in cats or "zkp" in tags or str(case.get("case_id", "")).startswith(
-        "zkp_"
-    ):
-        if "simulated_zkp" in tags or (
-            case.get("zkp") or {}
-        ).get("is_simulated"):
+    if "zkp" in cats or "zkp" in tags or str(case.get("case_id", "")).startswith("zkp_"):
+        if "simulated_zkp" in tags or (case.get("zkp") or {}).get("is_simulated"):
             membership.add("native_zk")  # negative native path
         else:
             membership.add("native_zk")
-    if "cache_substitution" in tags or "revoked" in tags or case.get(
-        "case_id", ""
-    ).startswith("revoked_"):
+    if (
+        "cache_substitution" in tags
+        or "revoked" in tags
+        or case.get("case_id", "").startswith("revoked_")
+    ):
         membership.add("cache_revocation")
     if "wrong_tenant" in tags or case.get("case_id") == "wrong_tenant_scope":
         membership.add("tenant_privacy")
@@ -407,9 +395,7 @@ def test_deterministic_rebuild_of_offline_decisions(
     first = [offline_evaluate_case(c) for c in cases]
     second = [offline_evaluate_case(c) for c in cases]
     assert first == second
-    payload = json.dumps(first, sort_keys=True, separators=(",", ":")).encode(
-        "utf-8"
-    )
+    payload = json.dumps(first, sort_keys=True, separators=(",", ":")).encode("utf-8")
     digest_a = _sha256_hex(payload)
     digest_b = _sha256_hex(
         json.dumps(second, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -434,9 +420,7 @@ def test_native_zk_real_allows_and_mismatch_rejects(
         d = offline_evaluate_case(cases_by_id[cid])
         assert d["status"] in {"reject", "abstain"}
         assert d["cannot_allow"] is True
-        assert "zkp_verify_failed" in d["reason_codes"] or "integrity_failure" in d[
-            "reason_codes"
-        ]
+        assert "zkp_verify_failed" in d["reason_codes"] or "integrity_failure" in d["reason_codes"]
 
 
 # ---------------------------------------------------------------------------
@@ -542,9 +526,7 @@ print("OK")
 
     env = dict(os.environ)
     env["PYTHONPATH"] = (
-        str(REPO_ROOT) + os.pathsep + env["PYTHONPATH"]
-        if env.get("PYTHONPATH")
-        else str(REPO_ROOT)
+        str(REPO_ROOT) + os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else str(REPO_ROOT)
     )
     proc = subprocess.run(
         [sys.executable, "-c", script],
@@ -668,9 +650,7 @@ def test_release_evidence_binding_shape(
         "offline_decision_digest": decision_digest,
         "profile_id": DEFAULT_PROFILE_ID,
         "profile_config_digest": profile.config_digest(),
-        "rollout_config": str(
-            ROLLOUT_CONFIG_PATH.relative_to(REPO_ROOT)
-        ),
+        "rollout_config": str(ROLLOUT_CONFIG_PATH.relative_to(REPO_ROOT)),
         "selected_tests": [
             "tests/unit/logic/admissibility/test_attested_golden_contract.py",
             "tests/integration/logic/test_attested_intent_authorization.py",
@@ -738,11 +718,7 @@ def test_no_network_during_conformance(cases: list[dict[str, Any]]) -> None:
 def test_guide_and_runbook_exist() -> None:
     guide = REPO_ROOT / "docs" / "guides" / "ATTESTED_INTENT_AUTHORIZATION.md"
     runbook = (
-        REPO_ROOT
-        / "docs"
-        / "implementation"
-        / "runbooks"
-        / "logic_intent_legal_gate_rollout.md"
+        REPO_ROOT / "docs" / "implementation" / "runbooks" / "logic_intent_legal_gate_rollout.md"
     )
     assert guide.is_file()
     assert runbook.is_file()

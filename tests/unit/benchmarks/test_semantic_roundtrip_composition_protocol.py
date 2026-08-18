@@ -9,12 +9,7 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-PROTOCOL_PATH = (
-    REPO_ROOT
-    / "docs"
-    / "benchmarks"
-    / "semantic_roundtrip_composition_protocol.md"
-)
+PROTOCOL_PATH = REPO_ROOT / "docs" / "benchmarks" / "semantic_roundtrip_composition_protocol.md"
 INTERFACE = "SemanticRoundTripCompositionProtocol@1"
 
 
@@ -36,10 +31,7 @@ def _primary_loss(
 
     case_means = []
     for repeat_losses in scheduled.values():
-        retained = [
-            failure_loss if value is None else value
-            for value in repeat_losses
-        ]
+        retained = [failure_loss if value is None else value for value in repeat_losses]
         case_means.append(sum(retained) / len(retained))
     return sum(case_means) / len(case_means)
 
@@ -60,14 +52,10 @@ def test_protocol_is_frozen_and_defines_the_complete_crossed_experiment() -> Non
         "l2_canonical_ir",
     ]
     assert (
-        experiment["matrix"]
-        == "all_preregistered_capability_compatible_constructor_realizer_pairs"
+        experiment["matrix"] == "all_preregistered_capability_compatible_constructor_realizer_pairs"
     )
     assert experiment["exclusion_timing"] == "before_case_execution"
-    assert (
-        experiment["exclusion_basis"]
-        == "declared_interface_or_capability_only"
-    )
+    assert experiment["exclusion_basis"] == "declared_interface_or_capability_only"
     assert experiment["coordinate"] == [
         "case",
         "repeat",
@@ -77,10 +65,7 @@ def test_protocol_is_frozen_and_defines_the_complete_crossed_experiment() -> Non
     assert experiment["same_cases_and_repeat_count_for_all_eligible_pairs"]
     assert experiment["minimum_repeats_when_any_component_is_stochastic"] >= 3
     normalized_text = " ".join(text.split())
-    assert (
-        "A result that deviates from this protocol is a new experiment"
-        in normalized_text
-    )
+    assert "A result that deviates from this protocol is a new experiment" in normalized_text
 
 
 def test_protocol_freezes_canonical_ir_and_weighted_semantic_score() -> None:
@@ -105,9 +90,7 @@ def test_protocol_freezes_canonical_ir_and_weighted_semantic_score() -> None:
     ]
 
     score = protocol["semantic_score"]
-    assert score["assignment"] == (
-        "exact_maximum_weight_one_to_one_bipartite"
-    )
+    assert score["assignment"] == ("exact_maximum_weight_one_to_one_bipartite")
     assert score["denominator"] == "max_reference_candidate_rule_count_or_one"
     assert score["scalar_facet_similarity"] == "exact_equality"
     assert score["list_facet_similarity"] == "set_jaccard"
@@ -151,13 +134,8 @@ def test_realizer_boundary_excludes_source_gold_and_native_records() -> None:
         "source_bearing_cache_or_metadata",
         "prior_reconstruction_or_outcome",
     } <= forbidden
-    assert (
-        boundary["only_allowed_gold_derived_execution_input"]
-        == "frozen_allowed_atom_vocabulary"
-    )
-    assert boundary[
-        "gold_ir_available_only_after_terminal_outcome_for_scoring_and_gates"
-    ]
+    assert boundary["only_allowed_gold_derived_execution_input"] == "frozen_allowed_atom_vocabulary"
+    assert boundary["gold_ir_available_only_after_terminal_outcome_for_scoring_and_gates"]
     assert boundary["fresh_second_constructor_call_namespace"]
     assert "same implementation identity, version" in text
 
@@ -183,12 +161,8 @@ def test_primary_loss_failures_and_per_case_first_aggregation_are_frozen() -> No
 
     loss = protocol["loss"]
     assert loss["primary"] == "one_minus_semantic_score_gold_ir_vs_l2"
-    assert loss["forward_diagnostic"] == (
-        "one_minus_semantic_score_gold_ir_vs_l1"
-    )
-    assert loss["cycle_diagnostic"] == (
-        "one_minus_semantic_score_l1_vs_l2"
-    )
+    assert loss["forward_diagnostic"] == ("one_minus_semantic_score_gold_ir_vs_l1")
+    assert loss["cycle_diagnostic"] == ("one_minus_semantic_score_l1_vs_l2")
     assert loss["terminal_failure_loss"] == 1.0
     assert set(loss["failure_outcomes"]) == {
         "timeout",
@@ -206,9 +180,7 @@ def test_primary_loss_failures_and_per_case_first_aggregation_are_frozen() -> No
     aggregation = protocol["aggregation"]
     assert aggregation == {
         "repeat_within_case": "arithmetic_mean_over_all_scheduled_repeats",
-        "case_across_corpus": (
-            "unweighted_arithmetic_mean_over_all_frozen_cases"
-        ),
+        "case_across_corpus": ("unweighted_arithmetic_mean_over_all_frozen_cases"),
         "order": "per_case_first",
         "rule_count_weighting_forbidden": True,
         "failed_repeat_dropping_forbidden": True,
@@ -225,9 +197,7 @@ def test_primary_loss_failures_and_per_case_first_aggregation_are_frozen() -> No
         "short_case": [0.0, None],
         "long_case": [0.2, 0.4],
     }
-    assert _primary_loss(
-        example, failure_loss=loss["terminal_failure_loss"]
-    ) == 0.4
+    assert _primary_loss(example, failure_loss=loss["terminal_failure_loss"]) == 0.4
 
 
 def test_selection_requires_coverage_polarity_and_copy_gates() -> None:
@@ -287,12 +257,8 @@ def test_model_envelope_and_stochastic_order_are_fair() -> None:
 
     order = protocol["order"]
     assert order["planned_before_outcomes"]
-    assert order["algorithm"] == (
-        "seeded_outcome_independent_counterbalanced_blocks"
-    )
-    assert order["scope"] == (
-        "eligible_stochastic_compositions_within_case_repeat_blocks"
-    )
+    assert order["algorithm"] == ("seeded_outcome_independent_counterbalanced_blocks")
+    assert order["scope"] == ("eligible_stochastic_compositions_within_case_repeat_blocks")
     assert order["maximum_ordinal_position_count_imbalance"] == 1
     assert order["record_planned_and_observed_order"]
     assert order["shared_one_slot_model_execution"] == "serial"
@@ -304,20 +270,12 @@ def test_proof_validation_is_post_hoc_and_never_semantic_authority() -> None:
     text, protocol = _load_protocol()
 
     proof = protocol["proof_validation"]
-    assert proof["phase"] == (
-        "post_hoc_after_artifact_and_semantic_score_binding"
-    )
+    assert proof["phase"] == ("post_hoc_after_artifact_and_semantic_score_binding")
     assert proof["role"] == "annotation_only"
     assert proof["nonvacuous_inputs_required"]
     assert proof["semantic_fidelity_authority"] is False
-    assert (
-        proof["may_change_semantic_score_loss_denominator_gates_or_selection"]
-        is False
-    )
-    assert (
-        proof["may_generate_repair_choose_rerank_retry_or_reject_candidate"]
-        is False
-    )
+    assert proof["may_change_semantic_score_loss_denominator_gates_or_selection"] is False
+    assert proof["may_generate_repair_choose_rerank_retry_or_reject_candidate"] is False
     assert proof["validator_failure_remains_visible"]
     assert "Empty/empty identity is vacuous" in text
     assert "does not prove that either IR is faithful to `T0` or gold IR" in text

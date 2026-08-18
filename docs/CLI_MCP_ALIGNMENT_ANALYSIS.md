@@ -195,12 +195,8 @@ python scripts/cli/enhanced_cli.py graph_tools graph_create --name my_graph
 **MCP Tool:** `graph_tools/graph_create.py`
 ```python
 async def graph_create(
-    name: str,
-    graphType: str = "property",
-    storageBackend: str = "neo4j",
-    config: dict = None
-):
-    ...
+    name: str, graphType: str = "property", storageBackend: str = "neo4j", config: dict = None
+): ...
 ```
 
 **Enhanced CLI:**
@@ -385,12 +381,12 @@ async def admin_operation(...):
 class MCPCLIGenerator:
     def generate_cli_for_tool(self, tool_schema):
         """Auto-generate CLI command from MCP tool schema."""
-        parser = argparse.ArgumentParser(tool_schema['description'])
-        
-        for param, schema in tool_schema['parameters'].items():
+        parser = argparse.ArgumentParser(tool_schema["description"])
+
+        for param, schema in tool_schema["parameters"].items():
             cli_param = camel_to_kebab(param)
-            parser.add_argument(f'--{cli_param}', **convert_schema(schema))
-        
+            parser.add_argument(f"--{cli_param}", **convert_schema(schema))
+
         return parser
 ```
 
@@ -412,15 +408,12 @@ class ParameterAdapter:
         args = []
         for key, value in mcp_params.items():
             cli_key = camel_to_kebab(key)
-            args.extend([f'--{cli_key}', str(value)])
+            args.extend([f"--{cli_key}", str(value)])
         return args
-    
+
     def cli_to_mcp(self, cli_args: argparse.Namespace) -> dict:
         """Convert CLI args to MCP JSON params."""
-        return {
-            kebab_to_camel(k): v 
-            for k, v in vars(cli_args).items()
-        }
+        return {kebab_to_camel(k): v for k, v in vars(cli_args).items()}
 ```
 
 ### Priority 3: Shared Error Handling
@@ -438,14 +431,8 @@ class ParameterAdapter:
 class ErrorHandler:
     def format_for_mcp(self, error: Exception) -> dict:
         """Format error for MCP JSON response."""
-        return {
-            "error": {
-                "code": error.code,
-                "message": str(error),
-                "details": error.details
-            }
-        }
-    
+        return {"error": {"code": error.code, "message": str(error), "details": error.details}}
+
     def format_for_cli(self, error: Exception, verbose: bool = False) -> str:
         """Format error for CLI output."""
         if verbose:
@@ -468,12 +455,13 @@ class ErrorHandler:
 # In CLI
 def authenticate(token: Optional[str] = None) -> User:
     """Authenticate user for CLI operations."""
-    token = token or os.getenv('IPFS_DATASETS_TOKEN')
+    token = token or os.getenv("IPFS_DATASETS_TOKEN")
     if not token:
         raise AuthenticationError("No token provided")
-    
+
     # Use same auth system as MCP
     from ipfs_datasets_py.auth import TokenValidator
+
     return TokenValidator().validate(token)
 ```
 

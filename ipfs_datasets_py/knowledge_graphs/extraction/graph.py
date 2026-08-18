@@ -8,21 +8,21 @@ manipulation capabilities.
 Example:
     ```python
     from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph, Entity, Relationship
-    
+
     # Create a knowledge graph
     kg = KnowledgeGraph(name="my_graph")
-    
+
     # Add entities
     person1 = kg.add_entity("person", "Alice", properties={"age": 30})
     person2 = kg.add_entity("person", "Bob", properties={"age": 25})
-    
+
     # Add relationship
     kg.add_relationship("knows", person1, person2, confidence=0.9)
-    
+
     # Query
     people = kg.get_entities_by_type("person")
     knows_rels = kg.get_relationships_by_type("knows")
-    
+
     # Serialize
     kg_dict = kg.to_dict()
     kg_json = kg.to_json()
@@ -56,6 +56,7 @@ class GraphEventType(str, Enum):
     Attach a subscriber via :meth:`KnowledgeGraph.subscribe` to observe
     every structural change to the graph in real time.
     """
+
     ENTITY_ADDED = "entity_added"
     ENTITY_REMOVED = "entity_removed"
     ENTITY_MODIFIED = "entity_modified"
@@ -74,6 +75,7 @@ class GraphEvent:
         relationship_id: ID of the affected relationship (if applicable).
         data: Optional dict with additional context (e.g. entity_type, name).
     """
+
     event_type: GraphEventType
     timestamp: float
     entity_id: Optional[str] = None
@@ -87,7 +89,7 @@ class KnowledgeGraph:
 
     Provides methods for adding, querying, and manipulating entities
     and relationships in the knowledge graph.
-    
+
     Attributes:
         name (str): Name of the knowledge graph
         entities (Dict[str, Entity]): Dictionary of entities by ID
@@ -96,7 +98,7 @@ class KnowledgeGraph:
         entity_names (Dict[str, Set[str]]): Index of entities by name
         relationship_types (Dict[str, Set[str]]): Index of relationships by type
         entity_relationships (Dict[str, Set[str]]): Index of relationships by entity ID
-    
+
     Example:
         ```python
         kg = KnowledgeGraph(name="example")
@@ -153,6 +155,7 @@ class KnowledgeGraph:
             assert is_valid
         """
         from ipfs_datasets_py.knowledge_graphs.extraction.provenance import ProvenanceChain
+
         if self._provenance_chain is None:
             self._provenance_chain = ProvenanceChain()
         return self._provenance_chain
@@ -256,7 +259,9 @@ class KnowledgeGraph:
             name = f"snap_{str(uuid.uuid4())[:8]}"
         self._snapshots[name] = {
             "entities": [e.to_dict() for e in self.entities.values()],
-            "relationships": [r.to_dict(include_entities=False) for r in self.relationships.values()],
+            "relationships": [
+                r.to_dict(include_entities=False) for r in self.relationships.values()
+            ],
         }
         return name
 
@@ -361,13 +366,13 @@ class KnowledgeGraph:
 
         Returns:
             Entity: The added entity
-        
+
         Example:
             ```python
             # Pattern 1: Add existing entity
             entity = Entity(entity_type="person", name="Alice")
             kg.add_entity(entity)
-            
+
             # Pattern 2: Create and add
             entity = kg.add_entity("person", "Bob", properties={"age": 30})
             ```
@@ -383,7 +388,9 @@ class KnowledgeGraph:
         else:
             # Called with parameters: add_entity(entity_type, name, ...)
             if name is None:
-                raise ValueError("name parameter is required when first argument is entity_type string")
+                raise ValueError(
+                    "name parameter is required when first argument is entity_type string"
+                )
 
             entity_kwargs: Dict[str, Any] = {
                 "entity_type": entity_type_or_entity,
@@ -405,12 +412,14 @@ class KnowledgeGraph:
         self.entity_names[entity.name].add(entity.entity_id)
 
         # Emit event
-        self._emit_event(GraphEvent(
-            event_type=GraphEventType.ENTITY_ADDED,
-            timestamp=time.time(),
-            entity_id=entity.entity_id,
-            data={"entity_type": entity.entity_type, "name": entity.name},
-        ))
+        self._emit_event(
+            GraphEvent(
+                event_type=GraphEventType.ENTITY_ADDED,
+                timestamp=time.time(),
+                entity_id=entity.entity_id,
+                data={"entity_type": entity.entity_type, "name": entity.name},
+            )
+        )
 
         # Record provenance
         if self._provenance_chain is not None:
@@ -426,15 +435,15 @@ class KnowledgeGraph:
 
     def add_relationship(
         self,
-        relationship_type_or_relationship: Union[str, 'Relationship'],
+        relationship_type_or_relationship: Union[str, "Relationship"],
         source: Optional[Entity] = None,
         target: Optional[Entity] = None,
         properties: Optional[Dict[str, Any]] = None,
         relationship_id: str = None,
         confidence: float = 1.0,
         source_text: str = None,
-        bidirectional: bool = False
-    ) -> 'Relationship':
+        bidirectional: bool = False,
+    ) -> "Relationship":
         """Add a relationship to the knowledge graph.
 
         Supports two calling patterns:
@@ -453,13 +462,13 @@ class KnowledgeGraph:
 
         Returns:
             Relationship: The added relationship
-        
+
         Example:
             ```python
             # Pattern 1: Add existing relationship
             rel = Relationship.create(entity1, entity2, "knows")
             kg.add_relationship(rel)
-            
+
             # Pattern 2: Create and add
             rel = kg.add_relationship("knows", entity1, entity2, confidence=0.9)
             ```
@@ -471,8 +480,10 @@ class KnowledgeGraph:
         else:
             # Called with parameters: add_relationship(relationship_type, source, target, ...)
             if source is None or target is None:
-                raise ValueError("source and target parameters are required when first argument is relationship_type string")
-            
+                raise ValueError(
+                    "source and target parameters are required when first argument is relationship_type string"
+                )
+
             relationship_kwargs: Dict[str, Any] = {
                 "relationship_type": relationship_type_or_relationship,
                 "source_entity": source,
@@ -492,33 +503,35 @@ class KnowledgeGraph:
 
         # Update indexes - handle both Entity objects and string IDs
         self.relationship_types[relationship.relationship_type].add(relationship.relationship_id)
-        
+
         # Handle source entity
-        if hasattr(relationship.source_entity, 'entity_id'):
+        if hasattr(relationship.source_entity, "entity_id"):
             source_id = relationship.source_entity.entity_id
         elif isinstance(relationship.source_entity, str):
             source_id = relationship.source_entity
         else:
             source_id = str(relationship.source_entity)
-        
+
         # Handle target entity
-        if hasattr(relationship.target_entity, 'entity_id'):
+        if hasattr(relationship.target_entity, "entity_id"):
             target_id = relationship.target_entity.entity_id
         elif isinstance(relationship.target_entity, str):
             target_id = relationship.target_entity
         else:
             target_id = str(relationship.target_entity)
-        
+
         self.entity_relationships[source_id].add(relationship.relationship_id)
         self.entity_relationships[target_id].add(relationship.relationship_id)
 
         # Emit event
-        self._emit_event(GraphEvent(
-            event_type=GraphEventType.RELATIONSHIP_ADDED,
-            timestamp=time.time(),
-            relationship_id=relationship.relationship_id,
-            data={"relationship_type": relationship.relationship_type},
-        ))
+        self._emit_event(
+            GraphEvent(
+                event_type=GraphEventType.RELATIONSHIP_ADDED,
+                timestamp=time.time(),
+                relationship_id=relationship.relationship_id,
+                data={"relationship_type": relationship.relationship_type},
+            )
+        )
 
         # Record provenance
         if self._provenance_chain is not None:
@@ -622,8 +635,11 @@ class KnowledgeGraph:
         result = []
         for rel_id in common_rels:
             rel = self.relationships[rel_id]
-            if (rel.source_id == source.entity_id and rel.target_id == target.entity_id) or \
-               (rel.bidirectional and rel.source_id == target.entity_id and rel.target_id == source.entity_id):
+            if (rel.source_id == source.entity_id and rel.target_id == target.entity_id) or (
+                rel.bidirectional
+                and rel.source_id == target.entity_id
+                and rel.target_id == source.entity_id
+            ):
                 result.append(rel)
 
         return result
@@ -633,7 +649,7 @@ class KnowledgeGraph:
         source: Entity,
         target: Entity,
         max_depth: int = 3,
-        relationship_types: Optional[List[str]] = None
+        relationship_types: Optional[List[str]] = None,
     ) -> List[List[Tuple[Entity, Relationship, Entity]]]:
         """
         Find all paths between two entities up to a maximum depth.
@@ -680,7 +696,11 @@ class KnowledgeGraph:
                     path.pop()
 
                 # Follow incoming relationships if bidirectional
-                elif rel.bidirectional and rel.target_id == current_entity.entity_id and rel.source_id not in visited:
+                elif (
+                    rel.bidirectional
+                    and rel.target_id == current_entity.entity_id
+                    and rel.source_id not in visited
+                ):
                     next_entity = self.entities[rel.source_id]
                     path.append((current_entity, rel, next_entity))
                     dfs(next_entity, path, depth + 1)
@@ -694,9 +714,7 @@ class KnowledgeGraph:
         return all_paths
 
     def query_by_properties(
-        self,
-        entity_type: Optional[str] = None,
-        properties: Optional[Dict[str, Any]] = None
+        self, entity_type: Optional[str] = None, properties: Optional[Dict[str, Any]] = None
     ) -> List[Entity]:
         """
         Query entities by type and properties.
@@ -729,7 +747,7 @@ class KnowledgeGraph:
 
         return entities
 
-    def merge(self, other: 'KnowledgeGraph') -> 'KnowledgeGraph':
+    def merge(self, other: "KnowledgeGraph") -> "KnowledgeGraph":
         """Merge another knowledge graph into this one.
 
         Args:
@@ -744,8 +762,11 @@ class KnowledgeGraph:
         # Add entities from the other graph
         for entity_id, entity in other.entities.items():
             # Check if entity already exists by name and type
-            existing_entities = [e for e in self.get_entities_by_name(entity.name)
-                               if e.entity_type == entity.entity_type]
+            existing_entities = [
+                e
+                for e in self.get_entities_by_name(entity.name)
+                if e.entity_type == entity.entity_type
+            ]
 
             if existing_entities:
                 # Use existing entity
@@ -766,7 +787,7 @@ class KnowledgeGraph:
                     properties=(entity.properties.copy() if entity.properties else {}),
                     entity_id=entity.entity_id,
                     confidence=entity.confidence,
-                    source_text=entity.source_text
+                    source_text=entity.source_text,
                 )
                 entity_id_map[entity_id] = new_entity.entity_id
 
@@ -778,7 +799,9 @@ class KnowledgeGraph:
 
                 # Check if relationship already exists
                 existing_rels = self.get_relationships_between(source_entity, target_entity)
-                rel_exists = any(r.relationship_type == rel.relationship_type for r in existing_rels)
+                rel_exists = any(
+                    r.relationship_type == rel.relationship_type for r in existing_rels
+                )
 
                 if not rel_exists:
                     # Add new relationship
@@ -789,7 +812,7 @@ class KnowledgeGraph:
                         properties=(rel.properties.copy() if rel.properties else {}),
                         confidence=rel.confidence,
                         source_text=rel.source_text,
-                        bidirectional=rel.bidirectional
+                        bidirectional=rel.bidirectional,
                     )
         return self
 
@@ -802,11 +825,13 @@ class KnowledgeGraph:
         return {
             "name": self.name,
             "entities": [entity.to_dict() for entity in self.entities.values()],
-            "relationships": [rel.to_dict(include_entities=False) for rel in self.relationships.values()]
+            "relationships": [
+                rel.to_dict(include_entities=False) for rel in self.relationships.values()
+            ],
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'KnowledgeGraph':
+    def from_dict(cls, data: Dict[str, Any]) -> "KnowledgeGraph":
         """Create a knowledge graph from a dictionary representation.
 
         Args:
@@ -848,7 +873,7 @@ class KnowledgeGraph:
         return json.dumps(self.to_dict(), indent=indent)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'KnowledgeGraph':
+    def from_json(cls, json_str: str) -> "KnowledgeGraph":
         """Create a knowledge graph from a JSON string.
 
         Args:
@@ -948,7 +973,7 @@ class KnowledgeGraph:
         # Serialize to requested format
         return g.serialize(format=format)
 
-    def diff(self, other: 'KnowledgeGraph') -> 'KnowledgeGraphDiff':
+    def diff(self, other: "KnowledgeGraph") -> "KnowledgeGraphDiff":
         """Compute the structural difference between this graph and another.
 
         Entities are matched by (entity_type, name) fingerprint; relationships
@@ -969,6 +994,7 @@ class KnowledgeGraph:
                 kg1.apply_diff(diff)
             ```
         """
+
         def _entity_fp(entity: Entity) -> Tuple[str, str]:
             return (entity.entity_type or "", entity.name or "")
 
@@ -982,21 +1008,15 @@ class KnowledgeGraph:
             tgt_fp = _entity_fp(tgt) if tgt else ("", rel.target_id or "")
             return (rel.relationship_type or "", src_fp, tgt_fp)
 
-        self_ent: Dict[Tuple[str, str], Entity] = {
-            _entity_fp(e): e for e in self.entities.values()
-        }
+        self_ent: Dict[Tuple[str, str], Entity] = {_entity_fp(e): e for e in self.entities.values()}
         other_ent: Dict[Tuple[str, str], Entity] = {
             _entity_fp(e): e for e in other.entities.values()
         }
 
         # Entities added (in other, not in self)
-        added_entities = [
-            e.to_dict() for fp, e in other_ent.items() if fp not in self_ent
-        ]
+        added_entities = [e.to_dict() for fp, e in other_ent.items() if fp not in self_ent]
         # Entities removed (in self, not in other)
-        removed_entity_ids = [
-            self_ent[fp].entity_id for fp in self_ent if fp not in other_ent
-        ]
+        removed_entity_ids = [self_ent[fp].entity_id for fp in self_ent if fp not in other_ent]
         # Entities modified (same fingerprint, different properties)
         modified_entities: List[Dict[str, Any]] = []
         for fp in self_ent:
@@ -1006,25 +1026,21 @@ class KnowledgeGraph:
                 old_props = dict(se.properties or {})
                 new_props = dict(oe.properties or {})
                 if old_props != new_props:
-                    modified_entities.append({
-                        "entity_id": se.entity_id,
-                        "fingerprint": list(fp),
-                        "old_properties": old_props,
-                        "new_properties": new_props,
-                    })
+                    modified_entities.append(
+                        {
+                            "entity_id": se.entity_id,
+                            "fingerprint": list(fp),
+                            "old_properties": old_props,
+                            "new_properties": new_props,
+                        }
+                    )
 
-        self_rel: Dict = {
-            _rel_fp(r, self.entities): r for r in self.relationships.values()
-        }
-        other_rel: Dict = {
-            _rel_fp(r, other.entities): r for r in other.relationships.values()
-        }
+        self_rel: Dict = {_rel_fp(r, self.entities): r for r in self.relationships.values()}
+        other_rel: Dict = {_rel_fp(r, other.entities): r for r in other.relationships.values()}
 
         # Relationships added (in other, not in self)
         added_relationships = [
-            r.to_dict(include_entities=True)
-            for fp, r in other_rel.items()
-            if fp not in self_rel
+            r.to_dict(include_entities=True) for fp, r in other_rel.items() if fp not in self_rel
         ]
         # Relationships removed (in self, not in other)
         removed_relationship_ids = [
@@ -1039,7 +1055,7 @@ class KnowledgeGraph:
             modified_entities=modified_entities,
         )
 
-    def apply_diff(self, diff: 'KnowledgeGraphDiff') -> None:
+    def apply_diff(self, diff: "KnowledgeGraphDiff") -> None:
         """Apply a diff to this graph in-place.
 
         Removes entities/relationships listed in *diff.removed_entity_ids* and
@@ -1072,18 +1088,22 @@ class KnowledgeGraph:
                     other_eid = rel.target_id if rel.source_id == eid else rel.source_id
                     if other_eid and other_eid != eid:
                         self.entity_relationships[other_eid].discard(rid)
-                    self._emit_event(GraphEvent(
-                        event_type=GraphEventType.RELATIONSHIP_REMOVED,
-                        timestamp=time.time(),
-                        relationship_id=rid,
-                    ))
+                    self._emit_event(
+                        GraphEvent(
+                            event_type=GraphEventType.RELATIONSHIP_REMOVED,
+                            timestamp=time.time(),
+                            relationship_id=rid,
+                        )
+                    )
             self.entity_relationships.pop(eid, None)
             del self.entities[eid]
-            self._emit_event(GraphEvent(
-                event_type=GraphEventType.ENTITY_REMOVED,
-                timestamp=time.time(),
-                entity_id=eid,
-            ))
+            self._emit_event(
+                GraphEvent(
+                    event_type=GraphEventType.ENTITY_REMOVED,
+                    timestamp=time.time(),
+                    entity_id=eid,
+                )
+            )
 
         # 2. Remove standalone relationships
         for rid in list(diff.removed_relationship_ids):
@@ -1094,31 +1114,33 @@ class KnowledgeGraph:
             for eid in (rel.source_id, rel.target_id):
                 if eid:
                     self.entity_relationships[eid].discard(rid)
-            self._emit_event(GraphEvent(
-                event_type=GraphEventType.RELATIONSHIP_REMOVED,
-                timestamp=time.time(),
-                relationship_id=rid,
-            ))
+            self._emit_event(
+                GraphEvent(
+                    event_type=GraphEventType.RELATIONSHIP_REMOVED,
+                    timestamp=time.time(),
+                    relationship_id=rid,
+                )
+            )
 
         # 3. Add new entities; track old_id → new entity_id mapping
         entity_id_map: Dict[str, str] = {eid: eid for eid in self.entities}
         for e_dict in diff.added_entities:
             new_entity = self.add_entity(Entity.from_dict(e_dict))
-            entity_id_map[e_dict.get("entity_id", new_entity.entity_id)] = (
-                new_entity.entity_id
-            )
+            entity_id_map[e_dict.get("entity_id", new_entity.entity_id)] = new_entity.entity_id
 
         # 4. Apply property modifications
         for mod in diff.modified_entities:
             eid = mod.get("entity_id", "")
             if eid in self.entities:
                 self.entities[eid].properties = dict(mod.get("new_properties") or {})
-                self._emit_event(GraphEvent(
-                    event_type=GraphEventType.ENTITY_MODIFIED,
-                    timestamp=time.time(),
-                    entity_id=eid,
-                    data={"properties": self.entities[eid].properties},
-                ))
+                self._emit_event(
+                    GraphEvent(
+                        event_type=GraphEventType.ENTITY_MODIFIED,
+                        timestamp=time.time(),
+                        entity_id=eid,
+                        data={"properties": self.entities[eid].properties},
+                    )
+                )
 
         # 5. Add new relationships
         for r_dict in list(diff.added_relationships):
@@ -1132,10 +1154,7 @@ class KnowledgeGraph:
                         return self.entities[mapped]
                     # Fallback: match by name + type
                     for e in self.entities.values():
-                        if (
-                            e.entity_type == data.get("entity_type")
-                            and e.name == data.get("name")
-                        ):
+                        if e.entity_type == data.get("entity_type") and e.name == data.get("name"):
                             return e
                 elif isinstance(data, str):
                     mapped = entity_id_map.get(data, data)
@@ -1154,7 +1173,6 @@ class KnowledgeGraph:
                     bidirectional=bool(r_dict.get("bidirectional", False)),
                 )
 
-
     # ------------------------------------------------------------------
     # Visualization (v4.0+ roadmap — delivered v3.22.27)
     # ------------------------------------------------------------------
@@ -1169,6 +1187,7 @@ class KnowledgeGraph:
         from ipfs_datasets_py.knowledge_graphs.extraction.visualization import (
             KnowledgeGraphVisualizer,
         )
+
         return KnowledgeGraphVisualizer(self).to_dot(**kwargs)
 
     def to_mermaid(self, **kwargs) -> str:
@@ -1181,6 +1200,7 @@ class KnowledgeGraph:
         from ipfs_datasets_py.knowledge_graphs.extraction.visualization import (
             KnowledgeGraphVisualizer,
         )
+
         return KnowledgeGraphVisualizer(self).to_mermaid(**kwargs)
 
     def to_d3_json(self, **kwargs) -> Dict[str, Any]:
@@ -1193,6 +1213,7 @@ class KnowledgeGraph:
         from ipfs_datasets_py.knowledge_graphs.extraction.visualization import (
             KnowledgeGraphVisualizer,
         )
+
         return KnowledgeGraphVisualizer(self).to_d3_json(**kwargs)
 
     def to_ascii(self, **kwargs) -> str:
@@ -1205,6 +1226,7 @@ class KnowledgeGraph:
         from ipfs_datasets_py.knowledge_graphs.extraction.visualization import (
             KnowledgeGraphVisualizer,
         )
+
         return KnowledgeGraphVisualizer(self).to_ascii(**kwargs)
 
 
@@ -1283,7 +1305,7 @@ class KnowledgeGraphDiff:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'KnowledgeGraphDiff':
+    def from_dict(cls, data: Dict[str, Any]) -> "KnowledgeGraphDiff":
         """Reconstruct a :class:`KnowledgeGraphDiff` from a serialized dict.
 
         Args:

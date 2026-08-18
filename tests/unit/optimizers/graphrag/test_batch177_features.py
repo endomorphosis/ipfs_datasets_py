@@ -8,6 +8,7 @@ Methods under test:
   - OntologyMediator.feedback_count_by_action(action)
   - OntologyMediator.action_success_rate(action)
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -26,11 +27,13 @@ class _FakeOntology:
 
 def _make_validator():
     from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
+
     return LogicValidator()
 
 
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -44,10 +47,12 @@ def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyMediator(generator=OntologyGenerator(), critic=OntologyCritic(use_llm=False))
 
 
 # ── LogicValidator.in_degree_distribution ─────────────────────────────────────
+
 
 class TestInDegreeDistribution:
     def test_empty_returns_empty(self):
@@ -75,6 +80,7 @@ class TestInDegreeDistribution:
 
 # ── LogicValidator.out_degree_distribution ────────────────────────────────────
 
+
 class TestOutDegreeDistribution:
     def test_empty_returns_empty(self):
         v = _make_validator()
@@ -101,6 +107,7 @@ class TestOutDegreeDistribution:
 
 # ── OntologyPipeline.run_score_ewma ──────────────────────────────────────────
 
+
 class TestRunScoreEWMA:
     def test_empty_returns_empty(self):
         p = _make_pipeline()
@@ -126,6 +133,7 @@ class TestRunScoreEWMA:
 
 
 # ── OntologyPipeline.run_score_percentile ────────────────────────────────────
+
 
 class TestRunScorePercentile:
     def test_empty_returns_zero(self):
@@ -158,6 +166,7 @@ class TestRunScorePercentile:
 
 # ── OntologyMediator.feedback_count_by_action ────────────────────────────────
 
+
 class TestFeedbackCountByAction:
     def test_unknown_action_returns_zero(self):
         m = _make_mediator()
@@ -170,6 +179,7 @@ class TestFeedbackCountByAction:
 
 
 # ── OntologyMediator.action_success_rate ─────────────────────────────────────
+
 
 class TestActionSuccessRate:
     def test_unknown_action_returns_zero(self):

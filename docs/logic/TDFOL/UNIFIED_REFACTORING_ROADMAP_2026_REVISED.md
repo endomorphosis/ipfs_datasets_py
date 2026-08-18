@@ -349,7 +349,7 @@ from ipfs_datasets_py.logic.TDFOL.nl import LLMNLConverter
 from ipfs_datasets_py.llm_router import get_llm
 
 # Initialize with llm_router
-llm = get_llm(provider='openai')  # or 'gemini', 'claude', etc.
+llm = get_llm(provider="openai")  # or 'gemini', 'claude', etc.
 converter = LLMNLConverter(llm=llm)
 
 # Multi-language support
@@ -361,8 +361,7 @@ formula_fr = converter.convert("Tous les médecins doivent respecter la vie priv
 
 # Domain-specific
 medical_formula = converter.convert(
-    "HIPAA requires healthcare providers to protect patient data",
-    domain='medical'
+    "HIPAA requires healthcare providers to protect patient data", domain="medical"
 )
 ```
 
@@ -457,17 +456,13 @@ from ipfs_datasets_py.logic.external_provers import ProverRouter
 from ipfs_datasets_py.logic.TDFOL import parse
 
 # Existing router - now with TDFOL support!
-router = ProverRouter(
-    enable_z3=True,
-    enable_symbolicai=True,
-    enable_native=True
-)
+router = ProverRouter(enable_z3=True, enable_symbolicai=True, enable_native=True)
 
 # Parse TDFOL formula
 formula = parse("∀x.(Person(x) → O(□PayTax(x)))")
 
 # Automatic prover selection
-result = router.prove(formula, strategy='auto')
+result = router.prove(formula, strategy="auto")
 # Router analyzes: Has temporal (□) and deontic (O) operators
 # Selects: Native TDFOL prover (best for modal logic)
 

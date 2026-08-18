@@ -22,31 +22,35 @@ class TestServerP2PIntegration:
         THEN: Both components initialize and connect properly
         """
         # GIVEN
-        with patch.dict('sys.modules', {
-            'mcp.server.fastmcp': Mock(),
-            'ipfs_datasets_py.mcp_server.p2p_service_manager': Mock()
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "mcp.server.fastmcp": Mock(),
+                "ipfs_datasets_py.mcp_server.p2p_service_manager": Mock(),
+            },
+        ):
             # Import after patching
             import ipfs_datasets_py.mcp_server.server as server_module
-            
+
             mock_fastmcp = Mock()
             mock_fastmcp.return_value = Mock()
             mock_p2p_manager = Mock()
-            mock_p2p_manager.return_value = Mock(
-                start=Mock(return_value=True),
-                enabled=True
-            )
-            
-            with patch.object(server_module, 'FastMCP', mock_fastmcp), \
-                 patch('ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager', mock_p2p_manager):
-                
+            mock_p2p_manager.return_value = Mock(start=Mock(return_value=True), enabled=True)
+
+            with (
+                patch.object(server_module, "FastMCP", mock_fastmcp),
+                patch(
+                    "ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager",
+                    mock_p2p_manager,
+                ),
+            ):
                 # WHEN
-                config = {'p2p_enabled': True, 'host': 'localhost', 'port': 8000}
+                config = {"p2p_enabled": True, "host": "localhost", "port": 8000}
                 server_instance = server_module.IPFSDatasetsMCPServer(config)
-                
+
                 # THEN
                 assert server_instance is not None
-                assert hasattr(server_instance, 'mcp')
+                assert hasattr(server_instance, "mcp")
                 # P2P manager should be created
                 mock_p2p_manager.assert_called_once()
 
@@ -57,36 +61,32 @@ class TestServerP2PIntegration:
         THEN: Tools are available with runtime metadata
         """
         # GIVEN
-        with patch.dict('sys.modules', {
-            'ipfs_datasets_py.mcp_server.p2p_service_manager': Mock()
-        }):
+        with patch.dict("sys.modules", {"ipfs_datasets_py.mcp_server.p2p_service_manager": Mock()}):
             from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import P2PMCPRegistryAdapter
-            
+
             # Create mock host server with tools dict
             mock_host = Mock()
             mock_host.tools = {
-                'tool1': lambda x: x,
-                'tool2': lambda y: y,
-                'tool3': lambda z: z,
-                'tool4': lambda a: a,
-                'tool5': lambda b: b  # >4 tools triggers flat registration
+                "tool1": lambda x: x,
+                "tool2": lambda y: y,
+                "tool3": lambda z: z,
+                "tool4": lambda a: a,
+                "tool5": lambda b: b,  # >4 tools triggers flat registration
             }
-            
+
             # WHEN
             adapter = P2PMCPRegistryAdapter(
-                host_server=mock_host,
-                default_runtime='fastapi',
-                enable_runtime_detection=True
+                host_server=mock_host, default_runtime="fastapi", enable_runtime_detection=True
             )
-            
+
             tools = adapter.tools
-            
+
             # THEN
             assert isinstance(tools, dict)
             assert len(tools) > 0
             # Tools should include runtime metadata
             for tool_name, tool_data in tools.items():
-                assert 'runtime' in tool_data
+                assert "runtime" in tool_data
 
     @pytest.mark.asyncio
     async def test_message_validation_end_to_end(self):
@@ -96,23 +96,18 @@ class TestServerP2PIntegration:
         THEN: Validation works correctly with auth modes
         """
         # GIVEN
-        with patch.dict('sys.modules', {
-            'ipfs_datasets_py.mcp_server.p2p_service_manager': Mock()
-        }):
+        with patch.dict("sys.modules", {"ipfs_datasets_py.mcp_server.p2p_service_manager": Mock()}):
             from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import P2PMCPRegistryAdapter
-            
+
             mock_host = Mock()
             mock_host.tools = {}
-            
-            adapter = P2PMCPRegistryAdapter(
-                host_server=mock_host,
-                default_runtime='fastapi'
-            )
-            
+
+            adapter = P2PMCPRegistryAdapter(host_server=mock_host, default_runtime="fastapi")
+
             # WHEN - Test with token auth mode
-            message = {'auth_mode': 'mcp_token', 'token': 'test_token'}
+            message = {"auth_mode": "mcp_token", "token": "test_token"}
             result = await adapter.validate_p2p_message(message)
-            
+
             # THEN - Should return boolean
             assert isinstance(result, bool)
 
@@ -124,20 +119,18 @@ class TestServerP2PIntegration:
         THEN: Token auth mode works correctly
         """
         # GIVEN
-        with patch.dict('sys.modules', {
-            'ipfs_datasets_py.mcp_server.p2p_service_manager': Mock()
-        }):
+        with patch.dict("sys.modules", {"ipfs_datasets_py.mcp_server.p2p_service_manager": Mock()}):
             from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import P2PMCPRegistryAdapter
-            
+
             mock_host = Mock()
             mock_host.tools = {}
-            
+
             adapter = P2PMCPRegistryAdapter(host_server=mock_host)
-            
+
             # WHEN
-            message = {'auth_mode': 'mcp_token', 'token': 'valid_token'}
+            message = {"auth_mode": "mcp_token", "token": "valid_token"}
             result = await adapter.validate_p2p_message(message)
-            
+
             # THEN
             assert isinstance(result, bool)
 
@@ -149,11 +142,11 @@ class TestServerP2PIntegration:
         """
         # GIVEN - Real P2PServiceManager, not mocked
         from ipfs_datasets_py.mcp_server.p2p_service_manager import P2PServiceManager
-        
+
         # WHEN - Service manager with disabled flag should not start
         manager = P2PServiceManager(enabled=False)
         result = manager.start()
-        
+
         # THEN - Should return False but not crash
         assert result == False
         state = manager.state()
@@ -166,43 +159,42 @@ class TestServerP2PIntegration:
         THEN: All components coordinate properly
         """
         # GIVEN
-        with patch.dict('sys.modules', {
-            'mcp.server.fastmcp': Mock(),
-            'ipfs_datasets_py.mcp_server.p2p_service_manager': Mock()
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "mcp.server.fastmcp": Mock(),
+                "ipfs_datasets_py.mcp_server.p2p_service_manager": Mock(),
+            },
+        ):
             import ipfs_datasets_py.mcp_server.server as server_module
             from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import P2PMCPRegistryAdapter
-            
+
             # Setup mocks
             mock_fastmcp = Mock()
             mock_fastmcp.return_value = Mock(tools={})
-            
-            with patch.object(server_module, 'FastMCP', mock_fastmcp):
-                
+
+            with patch.object(server_module, "FastMCP", mock_fastmcp):
                 # WHEN - Initialize server with P2P
                 config = {
-                    'p2p_enabled': True,
-                    'host': 'localhost',
-                    'port': 8000,
-                    'runtime': 'fastapi'
+                    "p2p_enabled": True,
+                    "host": "localhost",
+                    "port": 8000,
+                    "runtime": "fastapi",
                 }
                 server_instance = server_module.IPFSDatasetsMCPServer(config)
-                
+
                 # Create P2P adapter
                 mock_host = Mock()
                 mock_host.tools = {
-                    'test_tool1': lambda: None,
-                    'test_tool2': lambda: None,
-                    'test_tool3': lambda: None,
-                    'test_tool4': lambda: None,
-                    'test_tool5': lambda: None
+                    "test_tool1": lambda: None,
+                    "test_tool2": lambda: None,
+                    "test_tool3": lambda: None,
+                    "test_tool4": lambda: None,
+                    "test_tool5": lambda: None,
                 }
-                
-                adapter = P2PMCPRegistryAdapter(
-                    host_server=mock_host,
-                    default_runtime='fastapi'
-                )
-                
+
+                adapter = P2PMCPRegistryAdapter(host_server=mock_host, default_runtime="fastapi")
+
                 # THEN - All components should be initialized
                 assert server_instance is not None
                 assert adapter is not None

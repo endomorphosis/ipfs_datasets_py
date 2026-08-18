@@ -2,6 +2,7 @@
 Factory functions for creating and configuring LLM components.
 Provides a unified API for initializing LLM interfaces and resources.
 """
+
 import os
 from pathlib import Path
 from typing import Any, Optional
@@ -21,6 +22,7 @@ from .refactored_prompt_loader import load_prompt_by_name
 from configs import configs
 from dependencies import dependencies
 
+
 def create_llm_resources() -> dict[str, Any]:
     """
     Create a resources dictionary with LLM components.
@@ -30,7 +32,7 @@ def create_llm_resources() -> dict[str, Any]:
         model: Model to use for text generation
         embedding_model: Model to use for embeddings
         embedding_dimensions: Dimensions of embedding vectors
-        
+
     Returns:
         Dictionary of LLM resources
     """
@@ -39,7 +41,7 @@ def create_llm_resources() -> dict[str, Any]:
     _generate_text = None
     _generate_embeddings = None
     _calculate_cost = None
-    
+
     # Check if OpenAI is available
     if not openai_.check_if_available():
         # Create OpenAI async client
@@ -48,7 +50,7 @@ def create_llm_resources() -> dict[str, Any]:
         _generate_embeddings = openai_.generate_embeddings
         _calculate_cost = openai_.calculate_cost
 
-    elif not anthropic_.check_if_available(): 
+    elif not anthropic_.check_if_available():
         _client = anthropic_.create_async_anthropic_client
         _generate_text = anthropic_.generate_text
         # NOTE Anthropic client does not support embedding generation,
@@ -77,22 +79,21 @@ def create_llm_resources() -> dict[str, Any]:
 
 
 def make_llm_interface(
-    configs: Optional[dict[str, Any]] = None,
-    api_key: Optional[str] = None
+    configs: Optional[dict[str, Any]] = None, api_key: Optional[str] = None
 ) -> Optional[AsyncLLMInterface]:
     """
     Create a configured AsyncLLMInterface instance.
-    
+
     Args:
         configs: Configuration parameters
         api_key: OpenAI API key (uses environment variable if not provided)
-        
+
     Returns:
         Configured AsyncLLMInterface instance or None if creation failed
     """
     # Use default configs if none provided
     config_params = configs or {}
-    
+
     # Get model configurations
     model = config_params.get("model", "gpt-3.5-turbo")
     embedding_model = config_params.get("embedding_model", "text-embedding-ada-002")
@@ -103,7 +104,7 @@ def make_llm_interface(
         api_key=api_key,
         model=model,
         embedding_model=embedding_model,
-        embedding_dimensions=embedding_dimensions
+        embedding_dimensions=embedding_dimensions,
     )
 
     # Check if required resources are available
@@ -113,10 +114,7 @@ def make_llm_interface(
 
     try:
         # Create interface with resources and configs
-        interface = create_async_llm_interface(
-            resources=resources,
-            configs=config_params
-        )
+        interface = create_async_llm_interface(resources=resources, configs=config_params)
         return interface
     except Exception as e:
         logger.error(f"Error creating LLM interface: {e}")
@@ -124,39 +122,33 @@ def make_llm_interface(
 
 
 def make_embeddings_manager(
-    configs: Optional[dict[str, Any]] = None,
-    api_key: Optional[str] = None
+    configs: Optional[dict[str, Any]] = None, api_key: Optional[str] = None
 ) -> Optional[EmbeddingsInterface]:
     """
     Create a configured EmbeddingsInterface instance.
-    
+
     Args:
         configs: Configuration parameters
         api_key: OpenAI API key (uses environment variable if not provided)
-        
+
     Returns:
         Configured EmbeddingsInterface instance or None if creation failed
     """
     # Use default configs if none provided
     config_params = configs or {}
-    
+
     # Get embedding configurations
     embedding_model = config_params.get("embedding_model", "text-embedding-ada-002")
     embedding_dimensions = config_params.get("embedding_dimensions", 1536)
-    
+
     # Create resources
     resources = create_llm_resources(
-        api_key=api_key,
-        embedding_model=embedding_model,
-        embedding_dimensions=embedding_dimensions
+        api_key=api_key, embedding_model=embedding_model, embedding_dimensions=embedding_dimensions
     )
-    
+
     try:
         # Create embeddings manager with resources and configs
-        manager = make_embeddings_manager(
-            resources=resources,
-            configs=config_params
-        )
+        manager = make_embeddings_manager(resources=resources, configs=config_params)
         return manager
     except Exception as e:
         logger.error(f"Error creating embeddings manager: {e}")
@@ -164,16 +156,15 @@ def make_embeddings_manager(
 
 
 def create_async_llm_interface(
-    resources: dict[str, Any],
-    configs: Optional[dict[str, Any]] = None
+    resources: dict[str, Any], configs: Optional[dict[str, Any]] = None
 ) -> AsyncLLMInterface:
     """
     Factory function to create an AsyncLLMInterface instance.
-    
+
     Args:
         resources: Dictionary of resources for dependency injection
         configs: Configuration parameters
-        
+
     Returns:
         Configured AsyncLLMInterface instance
     """
@@ -181,16 +172,15 @@ def create_async_llm_interface(
 
 
 def make_embeddings_manager(
-    resources: dict[str, Any],
-    configs: Optional[dict[str, Any]] = None
+    resources: dict[str, Any], configs: Optional[dict[str, Any]] = None
 ) -> EmbeddingsInterface:
     """
     Factory function to create an EmbeddingsInterface instance.
-    
+
     Args:
         resources: Dictionary of resources for dependency injection
         configs: Configuration parameters
-        
+
     Returns:
         Configured EmbeddingsInterface instance
     """
@@ -201,11 +191,11 @@ def _determine_backend_base_on_dependencies(configs: Configs) -> Optional[str]:
     # Try to figure out which libraries are installed.
     for dep in ["openai", "anthropic", "torch"]:
         if dep in dependencies:
-            try: # Try libraries first.
+            try:  # Try libraries first.
                 service = getattr(dependencies, dep)
-                if service is not None: 
+                if service is not None:
                     key = configs.processing.llm_api_key
-                    match key: # See if we have a key for this service.
+                    match key:  # See if we have a key for this service.
                         case None | "" if dep == "torch":
                             return "torch"
                         case key if key.startswith("sk-ant"):
@@ -225,16 +215,16 @@ def _determine_backend_base_on_dependencies(configs: Configs) -> Optional[str]:
 def make_llm_components() -> dict[str, Any]:
     """
     Initialize and return all LLM components.
-    
+
     Args:
         configs: Configuration parameters
         api_key: OpenAI API key (uses environment variable if not provided)
-        
+
     Returns:
         Dictionary with initialized LLM components
     """
     return {
         "llm_interface": make_llm_interface(),
         "embeddings_manager": make_embeddings_manager(),
-        "resources": create_llm_resources()
+        "resources": create_llm_resources(),
     }

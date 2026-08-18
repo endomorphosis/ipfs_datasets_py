@@ -62,7 +62,9 @@ def test_backend_availability_uses_injected_resolver_for_deterministic_probe() -
     assert health.to_dict()["install_command"]
 
 
-def test_default_hammer_subprocess_backends_preserve_unavailable_routes_for_fail_closed_runs() -> None:
+def test_default_hammer_subprocess_backends_preserve_unavailable_routes_for_fail_closed_runs() -> (
+    None
+):
     runners = default_hammer_subprocess_backends()
 
     assert [runner.name for runner in runners] == ["z3", "cvc5", "vampire", "e_prover"]

@@ -34,45 +34,29 @@ from ipfs_datasets_py.utils.cid_utils import (
 )
 
 
-CANONICAL_STRUCTURED_TEXT_COMPILER_INTERFACE: Final = (
-    "CanonicalStructuredTextCompiler@1"
-)
-CANONICAL_STRUCTURED_TEXT_DECOMPILER_INTERFACE: Final = (
-    "CanonicalStructuredTextDecompiler@1"
-)
-CANONICAL_ROUNDTRIP_CONTRACTS_INTERFACE: Final = (
-    "CanonicalRoundTripContracts@1"
-)
+CANONICAL_STRUCTURED_TEXT_COMPILER_INTERFACE: Final = "CanonicalStructuredTextCompiler@1"
+CANONICAL_STRUCTURED_TEXT_DECOMPILER_INTERFACE: Final = "CanonicalStructuredTextDecompiler@1"
+CANONICAL_ROUNDTRIP_CONTRACTS_INTERFACE: Final = "CanonicalRoundTripContracts@1"
 CANONICAL_ROUNDTRIP_IR_INTERFACE: Final = "CanonicalRoundTripIR@1"
-CANONICAL_ROUNDTRIP_IR_SCHEMA_VERSION: Final = (
-    "ipfs-datasets.canonical-roundtrip-ir.v1"
-)
-CANONICAL_ROUNDTRIP_PARITY_POLICY_INTERFACE: Final = (
-    "CanonicalRoundTripParityPolicy@1"
-)
+CANONICAL_ROUNDTRIP_IR_SCHEMA_VERSION: Final = "ipfs-datasets.canonical-roundtrip-ir.v1"
+CANONICAL_ROUNDTRIP_PARITY_POLICY_INTERFACE: Final = "CanonicalRoundTripParityPolicy@1"
 CANONICAL_ROUNDTRIP_PARITY_POLICY_SCHEMA: Final = (
     "ipfs-datasets.semantic-roundtrip-canonical-parity-policy.v1"
 )
+CANONICAL_TYPED_BRIDGE_INTERFACE: Final = "CanonicalTypedBridge@1"
+CANONICAL_TYPED_BRIDGE_SCHEMA_VERSION: Final = "ipfs-datasets.canonical-typed-bridge.v1"
+CANONICAL_TYPED_BRIDGE_MIGRATION_INTERFACE: Final = "CanonicalTypedBridgeMigration@1"
+CANONICAL_TYPED_BRIDGE_CONFORMANCE_INTERFACE: Final = "CanonicalTypedBridgeConformance@1"
 
 # Immutable benchmark-to-design lineage, revalidated by SRT-027.
-SRT014_REPORT_CID: Final = (
-    "baguqeerakqgerwv6npdlqpgrc3bjzuxqog3hiouey3c4giw5vkdgk2jhfbpq"
-)
-SRT014_GATE_CID: Final = (
-    "baguqeeraa7vbts26rxvqujbvgvgplq4xrprcebufol5qqmstc6cbrac2rthq"
-)
+SRT014_REPORT_CID: Final = "baguqeerakqgerwv6npdlqpgrc3bjzuxqog3hiouey3c4giw5vkdgk2jhfbpq"
+SRT014_GATE_CID: Final = "baguqeeraa7vbts26rxvqujbvgvgplq4xrprcebufol5qqmstc6cbrac2rthq"
 SRT014_REMEDIATION_MANIFEST_CID: Final = (
     "baguqeerarr7ebjrzd3argtdekd7er3bqrnvhuzy2ogqzfi7h5nv37dbea52a"
 )
-REPLACEMENT_REPORT_CID: Final = (
-    "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
-)
-REPLACEMENT_GATE_CID: Final = (
-    "baguqeerawhggoyrnacv74kbuq3rhpmz4jikhr3tnv5uahpxcnpghfrwfj6jq"
-)
-CANONICAL_DESIGN_GATE_CID: Final = (
-    "baguqeerab4top4ljgojms7f7p6y4ksdlivfwhyzxzhynnii4zbrfvw4mqtfq"
-)
+REPLACEMENT_REPORT_CID: Final = "baguqeeramdvshi4ynajkvsb72zncgcn2pgvklsglgxwea7za25lndnaf5cga"
+REPLACEMENT_GATE_CID: Final = "baguqeerawhggoyrnacv74kbuq3rhpmz4jikhr3tnv5uahpxcnpghfrwfj6jq"
+CANONICAL_DESIGN_GATE_CID: Final = "baguqeerab4top4ljgojms7f7p6y4ksdlivfwhyzxzhynnii4zbrfvw4mqtfq"
 SELECTION_BASIS: Final = "replacement_bounded_tie_policy"
 SELECTABLE_ARM_IDS: Final = (
     "typed_deontic__no_guidance__no_repair__not_applicable__deterministic",
@@ -119,9 +103,7 @@ SOURCE_WITHHELD_RENDERING_SPEC_CID: Final = (
 
 # Filled from the checked-in policy.  The value is verified again at import
 # boundary by ``load_parity_policy``; it is not trusted merely as a constant.
-CANONICAL_PARITY_POLICY_CID: Final = (
-    "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a"
-)
+CANONICAL_PARITY_POLICY_CID: Final = "baguqeera5g5z4yvncxbn3uk4ftqmnxxmmclwpnwjpdshiy52la2o5bzdk27a"
 
 MAX_TEXT_CHARS: Final = 1_000_000
 MAX_ATOM_CHARS: Final = 4_096
@@ -220,9 +202,7 @@ def _string(
     if not isinstance(value, str):
         raise CanonicalContractError(f"{field} must be a string")
     if len(value) > maximum:
-        raise CanonicalContractError(
-            f"{field} exceeds the {maximum} character bound"
-        )
+        raise CanonicalContractError(f"{field} exceeds the {maximum} character bound")
     if not allow_blank and not value.strip():
         raise CanonicalContractError(f"{field} must be nonblank")
     return value
@@ -232,9 +212,7 @@ def _cid(value: object, field: str, *, codec: str) -> str:
     try:
         return validate_cid(value, codecs=(codec,))
     except (TypeError, ValueError) as exc:
-        raise CanonicalContractError(
-            f"{field} must be a canonical {codec} CIDv1"
-        ) from exc
+        raise CanonicalContractError(f"{field} must be a canonical {codec} CIDv1") from exc
 
 
 def _cid_with_declared_codec(
@@ -255,9 +233,7 @@ def _freeze_json(value: object, field: str, depth: int = 0) -> object:
         return value
     if type(value) is float:
         if not math.isfinite(value):
-            raise CanonicalContractError(
-                f"{field} contains a non-finite number"
-            )
+            raise CanonicalContractError(f"{field} contains a non-finite number")
         return value
     if isinstance(value, Mapping):
         frozen: dict[str, object] = {}
@@ -266,12 +242,9 @@ def _freeze_json(value: object, field: str, depth: int = 0) -> object:
                 raise CanonicalContractError(f"{field} keys must be strings")
             frozen[key] = _freeze_json(item, f"{field}.{key}", depth + 1)
         return MappingProxyType(frozen)
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple(
-            _freeze_json(item, f"{field}[{index}]", depth + 1)
-            for index, item in enumerate(value)
+            _freeze_json(item, f"{field}[{index}]", depth + 1) for index, item in enumerate(value)
         )
     raise CanonicalContractError(f"{field} must contain only JSON values")
 
@@ -297,9 +270,7 @@ def _frozen_object(value: object, field: str) -> Mapping[str, object]:
         allow_nan=False,
     ).encode("utf-8")
     if len(encoded) > MAX_CONFIG_BYTES:
-        raise CanonicalContractError(
-            f"{field} exceeds the {MAX_CONFIG_BYTES} byte bound"
-        )
+        raise CanonicalContractError(f"{field} exceeds the {MAX_CONFIG_BYTES} byte bound")
     return result
 
 
@@ -309,20 +280,11 @@ def _string_items(
     *,
     maximum: int = MAX_QUALIFIERS_PER_FACET,
 ) -> tuple[str, ...]:
-    if not isinstance(value, Sequence) or isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
         raise CanonicalContractError(f"{field} must be a string array")
     if len(value) > maximum:
         raise CanonicalContractError(f"{field} exceeds the {maximum} item bound")
-    return tuple(
-        sorted(
-            {
-                _string(item, f"{field}[{index}]")
-                for index, item in enumerate(value)
-            }
-        )
-    )
+    return tuple(sorted({_string(item, f"{field}[{index}]") for index, item in enumerate(value)}))
 
 
 def _enum(value: object, enum_type: type[Enum], field: str) -> Enum:
@@ -333,25 +295,25 @@ def _enum(value: object, enum_type: type[Enum], field: str) -> Enum:
 
 
 def _normalized_key(key: object) -> str:
-    return re.sub(
-        r"[^a-z0-9]+",
-        "_",
-        re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", str(key).strip()),
-        flags=re.IGNORECASE,
-    ).strip("_").lower()
+    return (
+        re.sub(
+            r"[^a-z0-9]+",
+            "_",
+            re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", str(key).strip()),
+            flags=re.IGNORECASE,
+        )
+        .strip("_")
+        .lower()
+    )
 
 
 def _reject_source_channels(value: object, path: str = "config") -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
             if _normalized_key(key) in _FORBIDDEN_DECOMPILER_KEYS:
-                raise CanonicalContractError(
-                    f"decompiler request may not contain {path}.{key}"
-                )
+                raise CanonicalContractError(f"decompiler request may not contain {path}.{key}")
             _reject_source_channels(item, f"{path}.{key}")
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, item in enumerate(value):
             _reject_source_channels(item, f"{path}[{index}]")
 
@@ -434,6 +396,7 @@ class CanonicalRule:
                 field,
                 _string_items(getattr(self, field), field),
             )
+
     def to_dict(self) -> dict[str, object]:
         """Return the exact open-vocabulary rule payload measured by SRT-026."""
 
@@ -489,12 +452,8 @@ class SourceMapEntry:
     attribution: str = "direct"
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "rule_cid", _cid(self.rule_cid, "rule_cid", codec="dag-json")
-        )
-        object.__setattr__(
-            self, "source_cid", _cid(self.source_cid, "source_cid", codec="raw")
-        )
+        object.__setattr__(self, "rule_cid", _cid(self.rule_cid, "rule_cid", codec="dag-json"))
+        object.__setattr__(self, "source_cid", _cid(self.source_cid, "source_cid", codec="raw"))
         _string(self.field_path, "field_path")
         _string(self.attribution, "attribution")
         if (
@@ -505,9 +464,7 @@ class SourceMapEntry:
             or self.start < 0
             or self.end <= self.start
         ):
-            raise CanonicalContractError(
-                "source-map offsets must form a nonempty half-open span"
-            )
+            raise CanonicalContractError("source-map offsets must form a nonempty half-open span")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -617,14 +574,10 @@ class CanonicalRoundTripIR:
     rules: tuple[CanonicalRule, ...]
 
     def __post_init__(self) -> None:
-        if not isinstance(self.rules, Sequence) or isinstance(
-            self.rules, (str, bytes, bytearray)
-        ):
+        if not isinstance(self.rules, Sequence) or isinstance(self.rules, (str, bytes, bytearray)):
             raise CanonicalContractError("rules must be an array")
         if not 0 < len(self.rules) <= MAX_RULES:
-            raise CanonicalContractError(
-                f"rules must contain between 1 and {MAX_RULES} entries"
-            )
+            raise CanonicalContractError(f"rules must contain between 1 and {MAX_RULES} entries")
         rules = tuple(
             rule if isinstance(rule, CanonicalRule) else CanonicalRule.from_dict(rule)
             for rule in self.rules
@@ -719,20 +672,14 @@ class CanonicalError:
     code: CanonicalErrorCode
     message: str
     retryable: bool = False
-    details: Mapping[str, object] = field(
-        default_factory=lambda: MappingProxyType({})
-    )
+    details: Mapping[str, object] = field(default_factory=lambda: MappingProxyType({}))
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "code", _enum(self.code, CanonicalErrorCode, "error.code")
-        )
+        object.__setattr__(self, "code", _enum(self.code, CanonicalErrorCode, "error.code"))
         _string(self.message, "error.message")
         if not isinstance(self.retryable, bool):
             raise CanonicalContractError("error.retryable must be boolean")
-        object.__setattr__(
-            self, "details", _frozen_object(self.details, "error.details")
-        )
+        object.__setattr__(self, "details", _frozen_object(self.details, "error.details"))
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -803,9 +750,7 @@ class ComponentTrace:
                 ),
             )
         if self.deterministic and self.model_receipt_cid is not None:
-            raise CanonicalContractError(
-                "deterministic trace cannot carry a model receipt"
-            )
+            raise CanonicalContractError("deterministic trace cannot carry a model receipt")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -846,9 +791,7 @@ class CompilerRequest:
     atom_vocabulary: CanonicalAtomVocabulary
     policy_cid: str = CANONICAL_PARITY_POLICY_CID
     allow_explicit_partial: bool = False
-    config: Mapping[str, object] = field(
-        default_factory=lambda: MappingProxyType({})
-    )
+    config: Mapping[str, object] = field(default_factory=lambda: MappingProxyType({}))
 
     def __post_init__(self) -> None:
         _string(
@@ -872,16 +815,10 @@ class CompilerRequest:
                     CanonicalAtomVocabulary.from_dict(self.atom_vocabulary),
                 )
             else:
-                raise CanonicalContractError(
-                    "atom_vocabulary must be CanonicalAtomVocabulary"
-                )
+                raise CanonicalContractError("atom_vocabulary must be CanonicalAtomVocabulary")
         if not isinstance(self.allow_explicit_partial, bool):
-            raise CanonicalContractError(
-                "allow_explicit_partial must be boolean"
-            )
-        object.__setattr__(
-            self, "config", _frozen_object(self.config, "config")
-        )
+            raise CanonicalContractError("allow_explicit_partial must be boolean")
+        object.__setattr__(self, "config", _frozen_object(self.config, "config"))
 
     @property
     def source_cid(self) -> str:
@@ -931,16 +868,15 @@ class CompilerRequest:
             raise CanonicalContractError("compiler request fields changed")
         if value["interface"] != CANONICAL_STRUCTURED_TEXT_COMPILER_INTERFACE:
             raise CanonicalContractError("compiler request interface changed")
-        if value["request_cid_codec"] != "dag-json" or value[
-            "request_cid_scope"
-        ] != "identity_payload_with_source_cid":
+        if (
+            value["request_cid_codec"] != "dag-json"
+            or value["request_cid_scope"] != "identity_payload_with_source_cid"
+        ):
             raise CanonicalContractError("compiler request CID contract changed")
         request = cls(
             source_text=value["source_text"],  # type: ignore[arg-type]
             request_id=value["request_id"],  # type: ignore[arg-type]
-            atom_vocabulary=CanonicalAtomVocabulary.from_dict(
-                value["atom_vocabulary"]
-            ),
+            atom_vocabulary=CanonicalAtomVocabulary.from_dict(value["atom_vocabulary"]),
             policy_cid=value["policy_cid"],  # type: ignore[arg-type]
             allow_explicit_partial=value[  # type: ignore[arg-type]
                 "allow_explicit_partial"
@@ -949,13 +885,8 @@ class CompilerRequest:
         )
         if _cid(value["source_cid"], "source_cid", codec="raw") != request.source_cid:
             raise CanonicalContractError("source_cid does not match source_text")
-        if (
-            _cid(value["request_cid"], "request_cid", codec="dag-json")
-            != request.request_cid
-        ):
-            raise CanonicalContractError(
-                "request_cid does not match compiler request"
-            )
+        if _cid(value["request_cid"], "request_cid", codec="dag-json") != request.request_cid:
+            raise CanonicalContractError("request_cid does not match compiler request")
         return request
 
 
@@ -966,15 +897,11 @@ class DecompilerRequest:
     canonical_ir: CanonicalRoundTripIR
     request_id: str
     policy_cid: str = CANONICAL_PARITY_POLICY_CID
-    config: Mapping[str, object] = field(
-        default_factory=lambda: SOURCE_WITHHELD_DECOMPILER_CONFIG
-    )
+    config: Mapping[str, object] = field(default_factory=lambda: SOURCE_WITHHELD_DECOMPILER_CONFIG)
 
     def __post_init__(self) -> None:
         if not isinstance(self.canonical_ir, CanonicalRoundTripIR):
-            raise CanonicalContractError(
-                "canonical_ir must be CanonicalRoundTripIR"
-            )
+            raise CanonicalContractError("canonical_ir must be CanonicalRoundTripIR")
         _string(self.request_id, "request_id")
         object.__setattr__(
             self,
@@ -990,10 +917,7 @@ class DecompilerRequest:
                 "decompiler config must equal the measured source-withheld "
                 f"profile {SOURCE_WITHHELD_DECOMPILER_CONFIG_CID}"
             )
-        if (
-            cid_for_dag_json(dict(frozen_config))
-            != SOURCE_WITHHELD_DECOMPILER_CONFIG_CID
-        ):
+        if cid_for_dag_json(dict(frozen_config)) != SOURCE_WITHHELD_DECOMPILER_CONFIG_CID:
             raise CanonicalContractError(
                 "decompiler config CID does not match the measured profile"
             )
@@ -1051,9 +975,10 @@ class DecompilerRequest:
             raise CanonicalContractError("decompiler config CID changed")
         if value["rendering_spec_cid"] != SOURCE_WITHHELD_RENDERING_SPEC_CID:
             raise CanonicalContractError("decompiler rendering spec CID changed")
-        if value["request_cid_codec"] != "dag-json" or value[
-            "request_cid_scope"
-        ] != "identity_payload_with_canonical_ir_cid":
+        if (
+            value["request_cid_codec"] != "dag-json"
+            or value["request_cid_scope"] != "identity_payload_with_canonical_ir_cid"
+        ):
             raise CanonicalContractError("decompiler request CID contract changed")
         canonical_ir = CanonicalRoundTripIR.from_dict(value["canonical_ir"])
         if (
@@ -1064,42 +989,29 @@ class DecompilerRequest:
             )
             != canonical_ir.ir_cid
         ):
-            raise CanonicalContractError(
-                "canonical_ir_cid does not match canonical_ir"
-            )
+            raise CanonicalContractError("canonical_ir_cid does not match canonical_ir")
         request = cls(
             canonical_ir=canonical_ir,
             request_id=value["request_id"],  # type: ignore[arg-type]
             policy_cid=value["policy_cid"],  # type: ignore[arg-type]
             config=value["config"],  # type: ignore[arg-type]
         )
-        if (
-            _cid(value["request_cid"], "request_cid", codec="dag-json")
-            != request.request_cid
-        ):
-            raise CanonicalContractError(
-                "request_cid does not match decompiler request"
-            )
+        if _cid(value["request_cid"], "request_cid", codec="dag-json") != request.request_cid:
+            raise CanonicalContractError("request_cid does not match decompiler request")
         return request
 
 
 def _diagnostics(value: object) -> tuple[CanonicalDiagnostic, ...]:
-    if not isinstance(value, Sequence) or isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
         raise CanonicalContractError("diagnostics must be an array")
     return tuple(
-        item
-        if isinstance(item, CanonicalDiagnostic)
-        else CanonicalDiagnostic.from_dict(item)
+        item if isinstance(item, CanonicalDiagnostic) else CanonicalDiagnostic.from_dict(item)
         for item in value
     )
 
 
 def _traces(value: object) -> tuple[ComponentTrace, ...]:
-    if not isinstance(value, Sequence) or isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
         raise CanonicalContractError("component_trace must be an array")
     return tuple(
         item if isinstance(item, ComponentTrace) else ComponentTrace.from_dict(item)
@@ -1116,17 +1028,13 @@ class CompilerResult:
     canonical_ir: CanonicalRoundTripIR | None = None
     source_map: tuple[SourceMapEntry, ...] = ()
     unsupported_semantics: tuple[UnsupportedSemantic, ...] = ()
-    provenance: Mapping[str, object] = field(
-        default_factory=lambda: MappingProxyType({})
-    )
+    provenance: Mapping[str, object] = field(default_factory=lambda: MappingProxyType({}))
     diagnostics: tuple[CanonicalDiagnostic, ...] = ()
     component_trace: tuple[ComponentTrace, ...] = ()
     error: CanonicalError | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "status", _enum(self.status, OperationStatus, "status")
-        )
+        object.__setattr__(self, "status", _enum(self.status, OperationStatus, "status"))
         object.__setattr__(
             self,
             "request_cid",
@@ -1135,27 +1043,17 @@ class CompilerResult:
         if self.canonical_ir is not None and not isinstance(
             self.canonical_ir, CanonicalRoundTripIR
         ):
-            raise CanonicalContractError(
-                "canonical_ir must be CanonicalRoundTripIR or None"
-            )
+            raise CanonicalContractError("canonical_ir must be CanonicalRoundTripIR or None")
         entries = tuple(
-            entry
-            if isinstance(entry, SourceMapEntry)
-            else SourceMapEntry.from_dict(entry)
+            entry if isinstance(entry, SourceMapEntry) else SourceMapEntry.from_dict(entry)
             for entry in self.source_map
         )
         if self.canonical_ir is None and entries:
-            raise CanonicalContractError(
-                "source_map requires a canonical IR result"
-            )
+            raise CanonicalContractError("source_map requires a canonical IR result")
         if self.canonical_ir is not None:
-            known_rule_cids = {
-                rule.rule_cid for rule in self.canonical_ir.rules
-            }
+            known_rule_cids = {rule.rule_cid for rule in self.canonical_ir.rules}
             if any(entry.rule_cid not in known_rule_cids for entry in entries):
-                raise CanonicalContractError(
-                    "source_map references a rule outside this IR"
-                )
+                raise CanonicalContractError("source_map references a rule outside this IR")
         object.__setattr__(
             self,
             "source_map",
@@ -1172,9 +1070,7 @@ class CompilerResult:
             ),
         )
         unsupported = tuple(
-            item
-            if isinstance(item, UnsupportedSemantic)
-            else UnsupportedSemantic.from_dict(item)
+            item if isinstance(item, UnsupportedSemantic) else UnsupportedSemantic.from_dict(item)
             for item in self.unsupported_semantics
         )
         object.__setattr__(
@@ -1198,16 +1094,12 @@ class CompilerResult:
             _frozen_object(self.provenance, "provenance"),
         )
         object.__setattr__(self, "diagnostics", _diagnostics(self.diagnostics))
-        object.__setattr__(
-            self, "component_trace", _traces(self.component_trace)
-        )
+        object.__setattr__(self, "component_trace", _traces(self.component_trace))
         if self.error is not None and not isinstance(self.error, CanonicalError):
             raise CanonicalContractError("error must be CanonicalError or None")
         if self.status is OperationStatus.SUCCESS:
             if self.canonical_ir is None or self.error is not None:
-                raise CanonicalContractError(
-                    "successful compiler result requires IR and no error"
-                )
+                raise CanonicalContractError("successful compiler result requires IR and no error")
             if any(
                 item.disposition is UnsupportedDisposition.ABSTAIN
                 for item in self.unsupported_semantics
@@ -1242,21 +1134,13 @@ class CompilerResult:
             "interface": CANONICAL_STRUCTURED_TEXT_COMPILER_INTERFACE,
             "status": self.status.value,
             "request_cid": self.request_cid,
-            "canonical_ir": (
-                None if self.canonical_ir is None else self.canonical_ir.to_dict()
-            ),
-            "canonical_ir_cid": (
-                None if self.canonical_ir is None else self.canonical_ir.ir_cid
-            ),
+            "canonical_ir": (None if self.canonical_ir is None else self.canonical_ir.to_dict()),
+            "canonical_ir_cid": (None if self.canonical_ir is None else self.canonical_ir.ir_cid),
             "source_map_receipt": self.source_map_receipt(),
-            "unsupported_semantics": [
-                item.to_dict() for item in self.unsupported_semantics
-            ],
+            "unsupported_semantics": [item.to_dict() for item in self.unsupported_semantics],
             "provenance": _thaw_json(self.provenance),
             "diagnostics": [item.to_dict() for item in self.diagnostics],
-            "component_trace": [
-                item.to_dict() for item in self.component_trace
-            ],
+            "component_trace": [item.to_dict() for item in self.component_trace],
             "error": None if self.error is None else self.error.to_dict(),
         }
 
@@ -1299,14 +1183,10 @@ class CompilerResult:
         ):
             raise CanonicalContractError("compiler result CID contract changed")
         raw_ir = value["canonical_ir"]
-        canonical_ir = (
-            None if raw_ir is None else CanonicalRoundTripIR.from_dict(raw_ir)
-        )
+        canonical_ir = None if raw_ir is None else CanonicalRoundTripIR.from_dict(raw_ir)
         if canonical_ir is None:
             if value["canonical_ir_cid"] is not None:
-                raise CanonicalContractError(
-                    "compiler result has CID without canonical IR"
-                )
+                raise CanonicalContractError("compiler result has CID without canonical IR")
         elif (
             _cid(
                 value["canonical_ir_cid"],
@@ -1315,9 +1195,7 @@ class CompilerResult:
             )
             != canonical_ir.ir_cid
         ):
-            raise CanonicalContractError(
-                "compiler result canonical_ir_cid does not match IR"
-            )
+            raise CanonicalContractError("compiler result canonical_ir_cid does not match IR")
         raw_error = value["error"]
         result = cls(
             status=value["status"],  # type: ignore[arg-type]
@@ -1346,18 +1224,11 @@ class CompilerResult:
                 ComponentTrace.from_dict(item)
                 for item in value["component_trace"]  # type: ignore[union-attr]
             ),
-            error=(
-                None
-                if raw_error is None
-                else CanonicalError.from_dict(raw_error)
-            ),
+            error=(None if raw_error is None else CanonicalError.from_dict(raw_error)),
         )
         if result.source_map_receipt() != value["source_map_receipt"]:
             raise CanonicalContractError("source-map receipt does not match result")
-        if (
-            _cid(value["result_cid"], "result_cid", codec="dag-json")
-            != result.result_cid
-        ):
+        if _cid(value["result_cid"], "result_cid", codec="dag-json") != result.result_cid:
             raise CanonicalContractError("result_cid does not match compiler result")
         return result
 
@@ -1375,18 +1246,14 @@ class DecompilerResult:
     error: CanonicalError | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "status", _enum(self.status, OperationStatus, "status")
-        )
+        object.__setattr__(self, "status", _enum(self.status, OperationStatus, "status"))
         object.__setattr__(
             self,
             "request_cid",
             _cid(self.request_cid, "request_cid", codec="dag-json"),
         )
         object.__setattr__(self, "diagnostics", _diagnostics(self.diagnostics))
-        object.__setattr__(
-            self, "component_trace", _traces(self.component_trace)
-        )
+        object.__setattr__(self, "component_trace", _traces(self.component_trace))
         if self.error is not None and not isinstance(self.error, CanonicalError):
             raise CanonicalContractError("error must be CanonicalError or None")
         if self.status is OperationStatus.SUCCESS:
@@ -1398,9 +1265,7 @@ class DecompilerResult:
             supplied = _cid(self.text_cid, "text_cid", codec="raw")
             expected = cid_for_bytes(self.text.encode("utf-8"))
             if supplied != expected:
-                raise CanonicalContractError(
-                    "text_cid does not match reconstructed text"
-                )
+                raise CanonicalContractError("text_cid does not match reconstructed text")
         elif self.text is not None or self.text_cid is not None or self.error is None:
             raise CanonicalContractError(
                 "abstained/failed decompiler result requires an error and no text"
@@ -1414,9 +1279,7 @@ class DecompilerResult:
             "text": self.text,
             "text_cid": self.text_cid,
             "diagnostics": [item.to_dict() for item in self.diagnostics],
-            "component_trace": [
-                item.to_dict() for item in self.component_trace
-            ],
+            "component_trace": [item.to_dict() for item in self.component_trace],
             "error": None if self.error is None else self.error.to_dict(),
             "source_withheld": True,
         }
@@ -1473,19 +1336,10 @@ class DecompilerResult:
                 ComponentTrace.from_dict(item)
                 for item in value["component_trace"]  # type: ignore[union-attr]
             ),
-            error=(
-                None
-                if raw_error is None
-                else CanonicalError.from_dict(raw_error)
-            ),
+            error=(None if raw_error is None else CanonicalError.from_dict(raw_error)),
         )
-        if (
-            _cid(value["result_cid"], "result_cid", codec="dag-json")
-            != result.result_cid
-        ):
-            raise CanonicalContractError(
-                "result_cid does not match decompiler result"
-            )
+        if _cid(value["result_cid"], "result_cid", codec="dag-json") != result.result_cid:
+            raise CanonicalContractError("result_cid does not match decompiler result")
         return result
 
 
@@ -1531,9 +1385,7 @@ class CanonicalParityPolicy:
             "outcome": "exact_tie",
             "selection_basis": SELECTION_BASIS,
             "selectable_arm_ids": list(SELECTABLE_ARM_IDS),
-            "implementation_representative_arm_id": (
-                IMPLEMENTATION_REPRESENTATIVE_ARM_ID
-            ),
+            "implementation_representative_arm_id": (IMPLEMENTATION_REPRESENTATIVE_ARM_ID),
             "representative_semantically_superior": False,
         }:
             raise CanonicalContractError("parity policy selection lineage changed")
@@ -1612,6 +1464,1288 @@ class CanonicalStructuredTextDecompiler(Protocol):
         """Realize canonical IR without consulting its originating source."""
 
 
+class ConstructDisposition(str, Enum):
+    """How one required typed-bridge construct is carried."""
+
+    REPRESENTED = "represented"
+    EXPLICIT_PARTIAL = "explicit_partial"
+    UNSUPPORTED = "unsupported"
+
+
+class RequiredBridgeConstruct(str, Enum):
+    """Closed catalog of constructs every typed-bridge envelope must account for."""
+
+    FAMILY_IDENTITY = "family_identity"
+    SOURCE_REFERENCES = "source_references"
+    ASSUMPTIONS = "assumptions"
+    PROVENANCE = "provenance"
+    UNSUPPORTED_CONSTRUCTS = "unsupported_constructs"
+    SOURCE_TEXT = "source_text"
+    TYPED_SYNTAX = "typed_syntax"
+    CANONICAL_IR = "canonical_ir"
+    DOMAIN_LOGIC_SLICE = "domain_logic_slice"
+    LOGIC_FAMILY_REPRESENTATIONS = "logic_family_representations"
+    FAMILY_EXTENSIONS = "family_extensions"
+    FORMALIZATION_ARTIFACT = "formalization_artifact"
+    LEGAL_IR_DOCUMENT = "legal_ir_document"
+    PROVER_SYNTAX = "prover_syntax"
+    CONTROLLED_NATURAL_LANGUAGE = "controlled_natural_language"
+    PROOF_TRACES = "proof_traces"
+    TACTIC_TRACES = "tactic_traces"
+    COUNTEREXAMPLE_TRACES = "counterexample_traces"
+    TRANSLATION_TRACES = "translation_traces"
+
+
+class BridgeRepresentationKind(str, Enum):
+    """Closed representation kinds aligned with the existing training vocabulary."""
+
+    SOURCE_TEXT = "source_text"
+    CONTROLLED_NATURAL_LANGUAGE = "controlled_natural_language"
+    TYPED_SYNTAX = "typed_syntax"
+    CANONICAL_IR = "canonical_ir"
+    DOMAIN_LOGIC_SLICE = "domain_logic_slice"
+    LOGIC_FAMILY = "logic_family"
+    PROVER_SYNTAX = "prover_syntax"
+    FORMALIZATION_ARTIFACT = "formalization_artifact"
+    LEGAL_IR_DOCUMENT = "legal_ir_document"
+    TRACE = "trace"
+    FAMILY_EXTENSION = "family_extension"
+
+
+class BridgeTraceKind(str, Enum):
+    """Closed trace kinds carried by the typed bridge."""
+
+    PROOF = "proof"
+    TACTIC = "tactic"
+    COUNTEREXAMPLE = "counterexample"
+    TRANSLATION = "translation"
+
+
+REGISTERED_BRIDGE_FAMILY_IDS: Final[frozenset[str]] = frozenset(
+    {
+        "canonical_roundtrip",
+        "legal",
+        "security",
+        "intent",
+        "deontic",
+        "modal",
+        "tdfol",
+        "cec",
+        "zkp",
+        "first_order",
+        "temporal",
+        "policy",
+        "threat_model",
+        "frame_logic",
+        "unspecified",
+        "propositional",
+        "higher_order",
+        "datalog",
+        "hoare",
+        "smt",
+        "linear",
+        "separation",
+    }
+)
+FORBIDDEN_BRIDGE_FAMILY_IDS: Final[frozenset[str]] = frozenset(
+    {
+        "domain_logic_slice",
+        "DomainLogicSlice",
+        "domain-logic-slice",
+        "domainlogic slice",
+    }
+)
+CORE_BRIDGE_VIEW_NAMES: Final[frozenset[str]] = frozenset(
+    {
+        "canonical_roundtrip_ir",
+        "typed_syntax",
+        "source_text",
+        "formalization_artifact",
+        "legal_ir_document",
+        "prover_syntax",
+        "controlled_natural_language",
+        "logic_family",
+        "domain_logic_slice",
+    }
+)
+_DEFAULT_UNSUPPORTED_CONSTRUCT_MESSAGES: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        RequiredBridgeConstruct.DOMAIN_LOGIC_SLICE.value: (
+            "No DomainLogicSlice schema or family exists at the bound authority "
+            "tree; the construct is retained as unsupported rather than invented "
+            "or silently aliased to an existing family AST."
+        ),
+        RequiredBridgeConstruct.CANONICAL_IR.value: (
+            "No CanonicalRoundTripIR view was supplied to this envelope."
+        ),
+        RequiredBridgeConstruct.TYPED_SYNTAX.value: (
+            "No typed-syntax view was supplied to this envelope."
+        ),
+        RequiredBridgeConstruct.SOURCE_TEXT.value: (
+            "No source-text view or source reference was supplied to this envelope."
+        ),
+        RequiredBridgeConstruct.FORMALIZATION_ARTIFACT.value: (
+            "No FormalizationArtifact view was supplied to this envelope."
+        ),
+        RequiredBridgeConstruct.LEGAL_IR_DOCUMENT.value: (
+            "No LegalIRDocument view was supplied to this envelope."
+        ),
+        RequiredBridgeConstruct.PROVER_SYNTAX.value: (
+            "No prover-syntax view was supplied to this envelope."
+        ),
+        RequiredBridgeConstruct.CONTROLLED_NATURAL_LANGUAGE.value: (
+            "No controlled-natural-language view was supplied to this envelope."
+        ),
+        RequiredBridgeConstruct.PROOF_TRACES.value: (
+            "No proof-trace reference was supplied to this envelope."
+        ),
+        RequiredBridgeConstruct.TACTIC_TRACES.value: (
+            "No tactic-trace reference was supplied to this envelope."
+        ),
+        RequiredBridgeConstruct.COUNTEREXAMPLE_TRACES.value: (
+            "No counterexample-trace reference was supplied to this envelope."
+        ),
+        RequiredBridgeConstruct.TRANSLATION_TRACES.value: (
+            "No translation-trace reference was supplied to this envelope."
+        ),
+        RequiredBridgeConstruct.LOGIC_FAMILY_REPRESENTATIONS.value: (
+            "No existing logic-family representation view was supplied."
+        ),
+        RequiredBridgeConstruct.FAMILY_EXTENSIONS.value: (
+            "No family-extension view was supplied to this envelope."
+        ),
+    }
+)
+_CONSTRUCT_VIEW_NAMES: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        RequiredBridgeConstruct.CANONICAL_IR.value: "canonical_roundtrip_ir",
+        RequiredBridgeConstruct.TYPED_SYNTAX.value: "typed_syntax",
+        RequiredBridgeConstruct.SOURCE_TEXT.value: "source_text",
+        RequiredBridgeConstruct.FORMALIZATION_ARTIFACT.value: "formalization_artifact",
+        RequiredBridgeConstruct.LEGAL_IR_DOCUMENT.value: "legal_ir_document",
+        RequiredBridgeConstruct.PROVER_SYNTAX.value: "prover_syntax",
+        RequiredBridgeConstruct.CONTROLLED_NATURAL_LANGUAGE.value: (
+            "controlled_natural_language"
+        ),
+        RequiredBridgeConstruct.LOGIC_FAMILY_REPRESENTATIONS.value: "logic_family",
+    }
+)
+_CONSTRUCT_VIEW_KINDS: Final[Mapping[str, BridgeRepresentationKind]] = MappingProxyType(
+    {
+        RequiredBridgeConstruct.CANONICAL_IR.value: BridgeRepresentationKind.CANONICAL_IR,
+        RequiredBridgeConstruct.TYPED_SYNTAX.value: BridgeRepresentationKind.TYPED_SYNTAX,
+        RequiredBridgeConstruct.SOURCE_TEXT.value: BridgeRepresentationKind.SOURCE_TEXT,
+        RequiredBridgeConstruct.FORMALIZATION_ARTIFACT.value: (
+            BridgeRepresentationKind.FORMALIZATION_ARTIFACT
+        ),
+        RequiredBridgeConstruct.LEGAL_IR_DOCUMENT.value: (
+            BridgeRepresentationKind.LEGAL_IR_DOCUMENT
+        ),
+        RequiredBridgeConstruct.PROVER_SYNTAX.value: BridgeRepresentationKind.PROVER_SYNTAX,
+        RequiredBridgeConstruct.CONTROLLED_NATURAL_LANGUAGE.value: (
+            BridgeRepresentationKind.CONTROLLED_NATURAL_LANGUAGE
+        ),
+        RequiredBridgeConstruct.LOGIC_FAMILY_REPRESENTATIONS.value: (
+            BridgeRepresentationKind.LOGIC_FAMILY
+        ),
+    }
+)
+
+
+def _view_represents_construct(
+    construct: str,
+    views: Mapping[str, "BridgeView"],
+) -> bool:
+    """Return whether a reserved name or matching view kind carries ``construct``."""
+
+    reserved = _CONSTRUCT_VIEW_NAMES.get(construct)
+    if reserved is not None and reserved in views:
+        return True
+    expected_kind = _CONSTRUCT_VIEW_KINDS.get(construct)
+    if expected_kind is None:
+        return False
+    return any(view.kind is expected_kind for view in views.values())
+
+
+_CONSTRUCT_TRACE_KINDS: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        RequiredBridgeConstruct.PROOF_TRACES.value: BridgeTraceKind.PROOF.value,
+        RequiredBridgeConstruct.TACTIC_TRACES.value: BridgeTraceKind.TACTIC.value,
+        RequiredBridgeConstruct.COUNTEREXAMPLE_TRACES.value: (
+            BridgeTraceKind.COUNTEREXAMPLE.value
+        ),
+        RequiredBridgeConstruct.TRANSLATION_TRACES.value: (
+            BridgeTraceKind.TRANSLATION.value
+        ),
+    }
+)
+
+
+def _bridge_family_id(value: object, field: str) -> str:
+    family_id = _string(value, field)
+    if family_id in FORBIDDEN_BRIDGE_FAMILY_IDS or family_id.lower() in {
+        item.lower() for item in FORBIDDEN_BRIDGE_FAMILY_IDS
+    }:
+        raise CanonicalContractError(
+            f"{field} cannot be a DomainLogicSlice family; that name is not a "
+            "logic family and must not alias an existing family AST"
+        )
+    if family_id not in REGISTERED_BRIDGE_FAMILY_IDS:
+        raise CanonicalContractError(
+            f"{field} {family_id!r} is not a registered existing logic family"
+        )
+    return family_id
+
+
+def _optional_raw_cid(value: object, field: str) -> str | None:
+    if value is None or value == "":
+        return None
+    return _cid(value, field, codec="raw")
+
+
+def _optional_dag_cid(value: object, field: str) -> str | None:
+    if value is None or value == "":
+        return None
+    return _cid(value, field, codec="dag-json")
+
+
+def _optional_span(start: object, end: object, field: str) -> tuple[int | None, int | None]:
+    if start is None and end is None:
+        return None, None
+    if (
+        isinstance(start, bool)
+        or not isinstance(start, int)
+        or isinstance(end, bool)
+        or not isinstance(end, int)
+        or start < 0
+        or end <= start
+    ):
+        raise CanonicalContractError(f"{field} offsets must form a nonempty half-open span")
+    return start, end
+
+
+@dataclass(frozen=True, slots=True)
+class BridgeFamilyIdentity:
+    """Existing-family identity retained by one typed-bridge envelope."""
+
+    family_id: str
+    authority_schema: str
+    payload_cid: str
+    payload_codec: str = "dag-json"
+    representation_kind: BridgeRepresentationKind = BridgeRepresentationKind.LOGIC_FAMILY
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "family_id", _bridge_family_id(self.family_id, "family_id"))
+        object.__setattr__(
+            self,
+            "authority_schema",
+            _string(self.authority_schema, "authority_schema"),
+        )
+        object.__setattr__(
+            self,
+            "representation_kind",
+            _enum(
+                self.representation_kind,
+                BridgeRepresentationKind,
+                "representation_kind",
+            ),
+        )
+        if self.representation_kind is BridgeRepresentationKind.DOMAIN_LOGIC_SLICE:
+            raise CanonicalContractError(
+                "family identity cannot use the domain_logic_slice representation "
+                "kind; that kind is a projection role, not a family"
+            )
+        payload_cid, payload_codec = _cid_with_declared_codec(
+            self.payload_cid,
+            self.payload_codec,
+            "payload_cid",
+        )
+        object.__setattr__(self, "payload_cid", payload_cid)
+        object.__setattr__(self, "payload_codec", payload_codec)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "authority_schema": self.authority_schema,
+            "family_id": self.family_id,
+            "payload_cid": self.payload_cid,
+            "payload_codec": self.payload_codec,
+            "representation_kind": self.representation_kind.value,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "BridgeFamilyIdentity":
+        if not isinstance(value, Mapping) or set(value) != {
+            "authority_schema",
+            "family_id",
+            "payload_cid",
+            "payload_codec",
+            "representation_kind",
+        }:
+            raise CanonicalContractError("family identity fields changed")
+        return cls(**value)  # type: ignore[arg-type]
+
+
+@dataclass(frozen=True, slots=True)
+class BridgeSourceReference:
+    """Content-addressed source binding carried beside family payloads."""
+
+    ref_id: str
+    source_cid: str
+    source_uri: str = ""
+    source_revision: str = ""
+    start: int | None = None
+    end: int | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "ref_id", _string(self.ref_id, "source_ref.ref_id"))
+        object.__setattr__(
+            self,
+            "source_cid",
+            _cid(self.source_cid, "source_ref.source_cid", codec="raw"),
+        )
+        object.__setattr__(
+            self,
+            "source_uri",
+            _string(self.source_uri, "source_ref.source_uri", allow_blank=True),
+        )
+        object.__setattr__(
+            self,
+            "source_revision",
+            _string(
+                self.source_revision,
+                "source_ref.source_revision",
+                allow_blank=True,
+            ),
+        )
+        start, end = _optional_span(self.start, self.end, "source_ref")
+        object.__setattr__(self, "start", start)
+        object.__setattr__(self, "end", end)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "end": self.end,
+            "ref_id": self.ref_id,
+            "source_cid": self.source_cid,
+            "source_revision": self.source_revision,
+            "source_uri": self.source_uri,
+            "start": self.start,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "BridgeSourceReference":
+        if not isinstance(value, Mapping) or set(value) != {
+            "end",
+            "ref_id",
+            "source_cid",
+            "source_revision",
+            "source_uri",
+            "start",
+        }:
+            raise CanonicalContractError("source reference fields changed")
+        return cls(**value)  # type: ignore[arg-type]
+
+
+@dataclass(frozen=True, slots=True)
+class BridgeAssumption:
+    """Caller-visible assumption retained with the typed bridge."""
+
+    assumption_id: str
+    statement: str
+    source_ref_ids: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "assumption_id",
+            _string(self.assumption_id, "assumption.assumption_id"),
+        )
+        object.__setattr__(
+            self,
+            "statement",
+            _string(self.statement, "assumption.statement"),
+        )
+        object.__setattr__(
+            self,
+            "source_ref_ids",
+            _string_items(self.source_ref_ids, "assumption.source_ref_ids"),
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "assumption_id": self.assumption_id,
+            "source_ref_ids": list(self.source_ref_ids),
+            "statement": self.statement,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "BridgeAssumption":
+        if not isinstance(value, Mapping) or set(value) != {
+            "assumption_id",
+            "source_ref_ids",
+            "statement",
+        }:
+            raise CanonicalContractError("assumption fields changed")
+        return cls(**value)  # type: ignore[arg-type]
+
+
+@dataclass(frozen=True, slots=True)
+class BridgeUnsupportedConstruct:
+    """Explicit record that a required construct could not be faithfully carried."""
+
+    construct_id: str
+    code: str
+    message: str
+    disposition: UnsupportedDisposition = UnsupportedDisposition.EXPLICIT_PARTIAL
+    family_id: str = ""
+    source_cid: str | None = None
+    start: int | None = None
+    end: int | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "construct_id",
+            _string(self.construct_id, "unsupported.construct_id"),
+        )
+        object.__setattr__(self, "code", _string(self.code, "unsupported.code"))
+        object.__setattr__(self, "message", _string(self.message, "unsupported.message"))
+        object.__setattr__(
+            self,
+            "disposition",
+            _enum(self.disposition, UnsupportedDisposition, "unsupported.disposition"),
+        )
+        if self.family_id:
+            object.__setattr__(
+                self,
+                "family_id",
+                _bridge_family_id(self.family_id, "unsupported.family_id"),
+            )
+        else:
+            object.__setattr__(self, "family_id", "")
+        object.__setattr__(
+            self,
+            "source_cid",
+            _optional_raw_cid(self.source_cid, "unsupported.source_cid"),
+        )
+        start, end = _optional_span(self.start, self.end, "unsupported")
+        object.__setattr__(self, "start", start)
+        object.__setattr__(self, "end", end)
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "code": self.code,
+            "construct_id": self.construct_id,
+            "disposition": self.disposition.value,
+            "end": self.end,
+            "family_id": self.family_id,
+            "message": self.message,
+            "source_cid": self.source_cid,
+            "start": self.start,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "BridgeUnsupportedConstruct":
+        if not isinstance(value, Mapping) or set(value) != {
+            "code",
+            "construct_id",
+            "disposition",
+            "end",
+            "family_id",
+            "message",
+            "source_cid",
+            "start",
+        }:
+            raise CanonicalContractError("unsupported construct fields changed")
+        return cls(**value)  # type: ignore[arg-type]
+
+
+@dataclass(frozen=True, slots=True)
+class BridgeView:
+    """One existing-contract payload retained under its own schema identity."""
+
+    name: str
+    kind: BridgeRepresentationKind
+    schema_id: str
+    family_id: str
+    payload: Mapping[str, object]
+    payload_cid: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "name", _string(self.name, "view.name"))
+        object.__setattr__(
+            self,
+            "kind",
+            _enum(self.kind, BridgeRepresentationKind, "view.kind"),
+        )
+        if self.kind is BridgeRepresentationKind.DOMAIN_LOGIC_SLICE:
+            raise CanonicalContractError(
+                "views cannot carry a domain_logic_slice kind; that role is the "
+                "dedicated DomainLogicSlice projection, not a family view"
+            )
+        object.__setattr__(self, "schema_id", _string(self.schema_id, "view.schema_id"))
+        object.__setattr__(self, "family_id", _bridge_family_id(self.family_id, "view.family_id"))
+        object.__setattr__(self, "payload", _frozen_object(self.payload, "view.payload"))
+        expected = cid_for_dag_json(_thaw_json(self.payload))
+        if self.payload_cid:
+            supplied = _cid(self.payload_cid, "view.payload_cid", codec="dag-json")
+            if supplied != expected:
+                raise CanonicalContractError("view.payload_cid does not match payload")
+            object.__setattr__(self, "payload_cid", supplied)
+        else:
+            object.__setattr__(self, "payload_cid", expected)
+
+    def to_dict(self) -> dict[str, object]:
+        payload = _thaw_json(self.payload)
+        assert isinstance(payload, dict)
+        return {
+            "family_id": self.family_id,
+            "kind": self.kind.value,
+            "name": self.name,
+            "payload": payload,
+            "payload_cid": self.payload_cid,
+            "schema_id": self.schema_id,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "BridgeView":
+        if not isinstance(value, Mapping) or set(value) != {
+            "family_id",
+            "kind",
+            "name",
+            "payload",
+            "payload_cid",
+            "schema_id",
+        }:
+            raise CanonicalContractError("bridge view fields changed")
+        return cls(**value)  # type: ignore[arg-type]
+
+
+@dataclass(frozen=True, slots=True)
+class BridgeTraceRef:
+    """Reference to an existing proof, tactic, counterexample, or translation trace."""
+
+    kind: BridgeTraceKind
+    trace_id: str
+    trace_cid: str | None = None
+    schema_id: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "kind", _enum(self.kind, BridgeTraceKind, "trace.kind"))
+        object.__setattr__(self, "trace_id", _string(self.trace_id, "trace.trace_id"))
+        object.__setattr__(
+            self,
+            "trace_cid",
+            _optional_dag_cid(self.trace_cid, "trace.trace_cid"),
+        )
+        object.__setattr__(
+            self,
+            "schema_id",
+            _string(self.schema_id, "trace.schema_id", allow_blank=True),
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "kind": self.kind.value,
+            "schema_id": self.schema_id,
+            "trace_cid": self.trace_cid,
+            "trace_id": self.trace_id,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "BridgeTraceRef":
+        if not isinstance(value, Mapping) or set(value) != {
+            "kind",
+            "schema_id",
+            "trace_cid",
+            "trace_id",
+        }:
+            raise CanonicalContractError("trace reference fields changed")
+        return cls(**value)  # type: ignore[arg-type]
+
+
+@dataclass(frozen=True, slots=True)
+class DomainLogicSliceRole:
+    """Family-preserving projection role; not a logic family and not a family AST.
+
+    A projected slice references an existing family payload by CID and member
+    identifiers.  It never renames that payload into a DomainLogicSlice family.
+    When no faithful projection exists, the role is explicitly unsupported.
+    """
+
+    disposition: ConstructDisposition
+    family_id: str
+    source_view: str = ""
+    source_schema_id: str = ""
+    source_payload_cid: str | None = None
+    member_ids: tuple[str, ...] = ()
+    projected_payload_cid: str | None = None
+    unsupported: BridgeUnsupportedConstruct | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "disposition",
+            _enum(self.disposition, ConstructDisposition, "slice.disposition"),
+        )
+        object.__setattr__(self, "family_id", _bridge_family_id(self.family_id, "slice.family_id"))
+        object.__setattr__(
+            self,
+            "source_view",
+            _string(self.source_view, "slice.source_view", allow_blank=True),
+        )
+        object.__setattr__(
+            self,
+            "source_schema_id",
+            _string(self.source_schema_id, "slice.source_schema_id", allow_blank=True),
+        )
+        object.__setattr__(
+            self,
+            "source_payload_cid",
+            _optional_dag_cid(self.source_payload_cid, "slice.source_payload_cid"),
+        )
+        object.__setattr__(
+            self,
+            "member_ids",
+            _string_items(self.member_ids, "slice.member_ids"),
+        )
+        object.__setattr__(
+            self,
+            "projected_payload_cid",
+            _optional_dag_cid(
+                self.projected_payload_cid,
+                "slice.projected_payload_cid",
+            ),
+        )
+        if self.unsupported is not None and not isinstance(
+            self.unsupported, BridgeUnsupportedConstruct
+        ):
+            if isinstance(self.unsupported, Mapping):
+                object.__setattr__(
+                    self,
+                    "unsupported",
+                    BridgeUnsupportedConstruct.from_dict(self.unsupported),
+                )
+            else:
+                raise CanonicalContractError(
+                    "slice.unsupported must be BridgeUnsupportedConstruct or None"
+                )
+        if self.disposition is ConstructDisposition.UNSUPPORTED:
+            if self.unsupported is None:
+                raise CanonicalContractError(
+                    "unsupported DomainLogicSlice role requires an explicit record"
+                )
+            if self.projected_payload_cid is not None:
+                raise CanonicalContractError(
+                    "unsupported DomainLogicSlice role cannot carry a projection CID"
+                )
+        elif self.disposition is ConstructDisposition.REPRESENTED:
+            raise CanonicalContractError(
+                "DomainLogicSlice cannot be fully represented; project as "
+                "explicit_partial or retain it as unsupported"
+            )
+        else:
+            if not self.source_view or self.source_payload_cid is None:
+                raise CanonicalContractError(
+                    "projected DomainLogicSlice role requires a source view and payload CID"
+                )
+            expected = cid_for_dag_json(self.projection_payload())
+            if self.projected_payload_cid is None:
+                object.__setattr__(self, "projected_payload_cid", expected)
+            elif self.projected_payload_cid != expected:
+                raise CanonicalContractError(
+                    "slice.projected_payload_cid does not match the projection"
+                )
+
+    def projection_payload(self) -> dict[str, object]:
+        """Return the reference-only projection; never a renamed family AST."""
+
+        return {
+            "family_id": self.family_id,
+            "member_ids": list(self.member_ids),
+            "slice_kind": BridgeRepresentationKind.DOMAIN_LOGIC_SLICE.value,
+            "source_payload_cid": self.source_payload_cid,
+            "source_schema_id": self.source_schema_id,
+            "source_view": self.source_view,
+        }
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "disposition": self.disposition.value,
+            "family_id": self.family_id,
+            "member_ids": list(self.member_ids),
+            "projected_payload_cid": self.projected_payload_cid,
+            "source_payload_cid": self.source_payload_cid,
+            "source_schema_id": self.source_schema_id,
+            "source_view": self.source_view,
+            "unsupported": None if self.unsupported is None else self.unsupported.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "DomainLogicSliceRole":
+        if not isinstance(value, Mapping) or set(value) != {
+            "disposition",
+            "family_id",
+            "member_ids",
+            "projected_payload_cid",
+            "source_payload_cid",
+            "source_schema_id",
+            "source_view",
+            "unsupported",
+        }:
+            raise CanonicalContractError("DomainLogicSlice role fields changed")
+        return cls(**value)  # type: ignore[arg-type]
+
+
+def _bridge_source_references(value: object) -> tuple[BridgeSourceReference, ...]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        raise CanonicalContractError("source_references must be an array")
+    items = tuple(
+        item if isinstance(item, BridgeSourceReference) else BridgeSourceReference.from_dict(item)
+        for item in value
+    )
+    return tuple(sorted(items, key=lambda item: (item.ref_id, item.source_cid)))
+
+
+def _bridge_assumptions(value: object) -> tuple[BridgeAssumption, ...]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        raise CanonicalContractError("assumptions must be an array")
+    items = tuple(
+        item if isinstance(item, BridgeAssumption) else BridgeAssumption.from_dict(item)
+        for item in value
+    )
+    return tuple(sorted(items, key=lambda item: item.assumption_id))
+
+
+def _bridge_unsupported(value: object) -> tuple[BridgeUnsupportedConstruct, ...]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        raise CanonicalContractError("unsupported_constructs must be an array")
+    items = tuple(
+        item
+        if isinstance(item, BridgeUnsupportedConstruct)
+        else BridgeUnsupportedConstruct.from_dict(item)
+        for item in value
+    )
+    return tuple(
+        sorted(
+            items,
+            key=lambda item: (item.construct_id, item.code, item.message),
+        )
+    )
+
+
+def _bridge_views(value: object) -> Mapping[str, BridgeView]:
+    if not isinstance(value, Mapping):
+        raise CanonicalContractError("views must be an object")
+    views: dict[str, BridgeView] = {}
+    for name, item in value.items():
+        view = item if isinstance(item, BridgeView) else BridgeView.from_dict(item)
+        if view.name != name:
+            raise CanonicalContractError("view name does not match views map key")
+        views[name] = view
+    return MappingProxyType(dict(sorted(views.items())))
+
+
+def _bridge_trace_refs(value: object) -> tuple[BridgeTraceRef, ...]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        raise CanonicalContractError("trace_refs must be an array")
+    items = tuple(
+        item if isinstance(item, BridgeTraceRef) else BridgeTraceRef.from_dict(item)
+        for item in value
+    )
+    return tuple(sorted(items, key=lambda item: (item.kind.value, item.trace_id)))
+
+
+def _bridge_dispositions(value: object) -> Mapping[str, ConstructDisposition]:
+    if not isinstance(value, Mapping):
+        raise CanonicalContractError("construct_dispositions must be an object")
+    dispositions: dict[str, ConstructDisposition] = {}
+    for key, item in value.items():
+        if not isinstance(key, str):
+            raise CanonicalContractError("construct_dispositions keys must be strings")
+        dispositions[key] = _enum(  # type: ignore[assignment]
+            item,
+            ConstructDisposition,
+            f"construct_dispositions.{key}",
+        )
+    return MappingProxyType(dict(sorted(dispositions.items())))
+
+
+def _default_unsupported(
+    construct: RequiredBridgeConstruct,
+    *,
+    family_id: str = "",
+) -> BridgeUnsupportedConstruct:
+    return BridgeUnsupportedConstruct(
+        construct_id=construct.value,
+        code=f"gap.{construct.value}",
+        message=_DEFAULT_UNSUPPORTED_CONSTRUCT_MESSAGES[construct.value],
+        disposition=UnsupportedDisposition.EXPLICIT_PARTIAL,
+        family_id=family_id,
+    )
+
+
+def _slice_projection(
+    *,
+    family_id: str,
+    view: BridgeView,
+    member_ids: Sequence[str] = (),
+) -> DomainLogicSliceRole:
+    return DomainLogicSliceRole(
+        disposition=ConstructDisposition.EXPLICIT_PARTIAL,
+        family_id=family_id,
+        source_view=view.name,
+        source_schema_id=view.schema_id,
+        source_payload_cid=view.payload_cid,
+        member_ids=tuple(member_ids),
+        unsupported=BridgeUnsupportedConstruct(
+            construct_id="domain_logic_slice.family",
+            code="gap.domain_logic_slice",
+            message=_DEFAULT_UNSUPPORTED_CONSTRUCT_MESSAGES[
+                RequiredBridgeConstruct.DOMAIN_LOGIC_SLICE.value
+            ],
+            disposition=UnsupportedDisposition.EXPLICIT_PARTIAL,
+            family_id=family_id,
+        ),
+    )
+
+
+def infer_slice_member_ids(payload: Mapping[str, object]) -> tuple[str, ...]:
+    """Extract stable member identifiers from an existing family payload."""
+
+    members: list[str] = []
+    rules = payload.get("rules")
+    if isinstance(rules, Sequence) and not isinstance(rules, (str, bytes, bytearray)):
+        for item in rules:
+            if isinstance(item, Mapping):
+                try:
+                    members.append(CanonicalRule.from_dict(item).rule_cid)
+                except CanonicalContractError:
+                    continue
+    formulas = payload.get("formulas")
+    if isinstance(formulas, Sequence) and not isinstance(formulas, (str, bytes, bytearray)):
+        for item in formulas:
+            if isinstance(item, Mapping):
+                formula_id = item.get("formula_id") or item.get("id")
+                if isinstance(formula_id, str) and formula_id.strip():
+                    members.append(formula_id)
+    views = payload.get("views")
+    if isinstance(views, Mapping):
+        members.extend(str(name) for name in views)
+    return tuple(sorted(set(members)))
+
+
+@dataclass(frozen=True, slots=True)
+class CanonicalTypedBridge:
+    """Versioned composition of existing typed contracts.
+
+    CanonicalRoundTripIR, FormalizationArtifact, and LegalIRDocument remain
+    distinct views.  Family identity is retained.  DomainLogicSlice is a
+    projection role, never a new logic family.
+    """
+
+    family_identity: BridgeFamilyIdentity
+    source_references: tuple[BridgeSourceReference, ...] = ()
+    assumptions: tuple[BridgeAssumption, ...] = ()
+    provenance: Mapping[str, object] = field(default_factory=lambda: MappingProxyType({}))
+    unsupported_constructs: tuple[BridgeUnsupportedConstruct, ...] = ()
+    views: Mapping[str, BridgeView] = field(default_factory=lambda: MappingProxyType({}))
+    trace_refs: tuple[BridgeTraceRef, ...] = ()
+    domain_logic_slice: DomainLogicSliceRole | None = None
+    construct_dispositions: Mapping[str, ConstructDisposition] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
+    adapter_name: str = ""
+    metadata: Mapping[str, object] = field(default_factory=lambda: MappingProxyType({}))
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.family_identity, BridgeFamilyIdentity):
+            if isinstance(self.family_identity, Mapping):
+                object.__setattr__(
+                    self,
+                    "family_identity",
+                    BridgeFamilyIdentity.from_dict(self.family_identity),
+                )
+            else:
+                raise CanonicalContractError(
+                    "family_identity must be BridgeFamilyIdentity"
+                )
+        object.__setattr__(
+            self,
+            "source_references",
+            _bridge_source_references(self.source_references),
+        )
+        object.__setattr__(self, "assumptions", _bridge_assumptions(self.assumptions))
+        object.__setattr__(self, "provenance", _frozen_object(self.provenance, "provenance"))
+        object.__setattr__(
+            self,
+            "unsupported_constructs",
+            _bridge_unsupported(self.unsupported_constructs),
+        )
+        object.__setattr__(self, "views", _bridge_views(self.views))
+        object.__setattr__(self, "trace_refs", _bridge_trace_refs(self.trace_refs))
+        if self.domain_logic_slice is not None and not isinstance(
+            self.domain_logic_slice, DomainLogicSliceRole
+        ):
+            if isinstance(self.domain_logic_slice, Mapping):
+                object.__setattr__(
+                    self,
+                    "domain_logic_slice",
+                    DomainLogicSliceRole.from_dict(self.domain_logic_slice),
+                )
+            else:
+                raise CanonicalContractError(
+                    "domain_logic_slice must be DomainLogicSliceRole or None"
+                )
+        if self.domain_logic_slice is None:
+            raise CanonicalContractError(
+                "domain_logic_slice must be projected or explicitly unsupported"
+            )
+        if self.domain_logic_slice.family_id != self.family_identity.family_id:
+            raise CanonicalContractError(
+                "DomainLogicSlice role family_id must match envelope family identity"
+            )
+        object.__setattr__(
+            self,
+            "construct_dispositions",
+            _bridge_dispositions(self.construct_dispositions),
+        )
+        object.__setattr__(
+            self,
+            "adapter_name",
+            _string(self.adapter_name, "adapter_name", allow_blank=True),
+        )
+        object.__setattr__(self, "metadata", _frozen_object(self.metadata, "metadata"))
+        for view in self.views.values():
+            if view.family_id != self.family_identity.family_id and view.kind not in {
+                BridgeRepresentationKind.FAMILY_EXTENSION,
+                BridgeRepresentationKind.TRACE,
+            }:
+                raise CanonicalContractError(
+                    f"view {view.name!r} family_id {view.family_id!r} collapses or "
+                    "cross-aliases the envelope family identity"
+                )
+        expected = self._expected_dispositions()
+        if dict(self.construct_dispositions) != expected:
+            raise CanonicalContractError("construct_dispositions do not match envelope contents")
+        self._validate_construct_coverage()
+
+    def _expected_dispositions(self) -> dict[str, ConstructDisposition]:
+        dispositions: dict[str, ConstructDisposition] = {
+            RequiredBridgeConstruct.FAMILY_IDENTITY.value: ConstructDisposition.REPRESENTED,
+            RequiredBridgeConstruct.SOURCE_REFERENCES.value: (
+                ConstructDisposition.REPRESENTED
+            ),
+            RequiredBridgeConstruct.ASSUMPTIONS.value: ConstructDisposition.REPRESENTED,
+            RequiredBridgeConstruct.PROVENANCE.value: ConstructDisposition.REPRESENTED,
+            RequiredBridgeConstruct.UNSUPPORTED_CONSTRUCTS.value: (
+                ConstructDisposition.REPRESENTED
+            ),
+        }
+        if self.domain_logic_slice is None:
+            dispositions[RequiredBridgeConstruct.DOMAIN_LOGIC_SLICE.value] = (
+                ConstructDisposition.UNSUPPORTED
+            )
+        else:
+            dispositions[RequiredBridgeConstruct.DOMAIN_LOGIC_SLICE.value] = (
+                self.domain_logic_slice.disposition
+            )
+        for construct in _CONSTRUCT_VIEW_NAMES:
+            dispositions[construct] = (
+                ConstructDisposition.REPRESENTED
+                if _view_represents_construct(construct, self.views)
+                else ConstructDisposition.UNSUPPORTED
+            )
+        extension_views = [
+            view
+            for view in self.views.values()
+            if view.kind is BridgeRepresentationKind.FAMILY_EXTENSION
+            or view.name not in CORE_BRIDGE_VIEW_NAMES
+        ]
+        dispositions[RequiredBridgeConstruct.FAMILY_EXTENSIONS.value] = (
+            ConstructDisposition.REPRESENTED
+            if extension_views
+            else ConstructDisposition.UNSUPPORTED
+        )
+        trace_kinds = {item.kind.value for item in self.trace_refs}
+        for construct, kind in _CONSTRUCT_TRACE_KINDS.items():
+            dispositions[construct] = (
+                ConstructDisposition.REPRESENTED
+                if kind in trace_kinds
+                else ConstructDisposition.UNSUPPORTED
+            )
+        return dict(sorted(dispositions.items()))
+
+    def _validate_construct_coverage(self) -> None:
+        required = {item.value for item in RequiredBridgeConstruct}
+        present = set(self.construct_dispositions)
+        if present != required:
+            missing = ", ".join(sorted(required - present)) or "none"
+            extra = ", ".join(sorted(present - required)) or "none"
+            raise CanonicalContractError(
+                f"construct catalog mismatch; missing={missing}; extra={extra}"
+            )
+        unsupported_ids = {item.construct_id for item in self.unsupported_constructs}
+        for construct, disposition in self.construct_dispositions.items():
+            if disposition is ConstructDisposition.UNSUPPORTED and construct not in {
+                RequiredBridgeConstruct.FAMILY_IDENTITY.value,
+                RequiredBridgeConstruct.SOURCE_REFERENCES.value,
+                RequiredBridgeConstruct.ASSUMPTIONS.value,
+                RequiredBridgeConstruct.PROVENANCE.value,
+                RequiredBridgeConstruct.UNSUPPORTED_CONSTRUCTS.value,
+            }:
+                if construct not in unsupported_ids and not (
+                    construct == RequiredBridgeConstruct.DOMAIN_LOGIC_SLICE.value
+                    and self.domain_logic_slice is not None
+                    and self.domain_logic_slice.unsupported is not None
+                ):
+                    raise CanonicalContractError(
+                        f"unsupported construct {construct!r} lacks an explicit record"
+                    )
+
+    def identity_payload(self) -> dict[str, object]:
+        return {
+            "adapter_name": self.adapter_name,
+            "assumptions": [item.to_dict() for item in self.assumptions],
+            "construct_dispositions": {
+                key: value.value for key, value in self.construct_dispositions.items()
+            },
+            "domain_logic_slice": self.domain_logic_slice.to_dict(),
+            "family_identity": self.family_identity.to_dict(),
+            "interface": CANONICAL_TYPED_BRIDGE_INTERFACE,
+            "metadata": _thaw_json(self.metadata),
+            "provenance": _thaw_json(self.provenance),
+            "schema_version": CANONICAL_TYPED_BRIDGE_SCHEMA_VERSION,
+            "source_references": [item.to_dict() for item in self.source_references],
+            "trace_refs": [item.to_dict() for item in self.trace_refs],
+            "unsupported_constructs": [item.to_dict() for item in self.unsupported_constructs],
+            "views": {name: view.to_dict() for name, view in self.views.items()},
+        }
+
+    @property
+    def bridge_cid(self) -> str:
+        return cid_for_dag_json(self.identity_payload())
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            **self.identity_payload(),
+            "bridge_cid": self.bridge_cid,
+            "bridge_cid_codec": "dag-json",
+            "bridge_cid_scope": "identity_payload",
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> "CanonicalTypedBridge":
+        if not isinstance(value, Mapping) or set(value) != {
+            "adapter_name",
+            "assumptions",
+            "bridge_cid",
+            "bridge_cid_codec",
+            "bridge_cid_scope",
+            "construct_dispositions",
+            "domain_logic_slice",
+            "family_identity",
+            "interface",
+            "metadata",
+            "provenance",
+            "schema_version",
+            "source_references",
+            "trace_refs",
+            "unsupported_constructs",
+            "views",
+        }:
+            raise CanonicalContractError("typed bridge fields changed")
+        if value["interface"] != CANONICAL_TYPED_BRIDGE_INTERFACE:
+            raise CanonicalContractError("typed bridge interface changed")
+        if value["schema_version"] != CANONICAL_TYPED_BRIDGE_SCHEMA_VERSION:
+            raise CanonicalContractError("typed bridge schema version changed")
+        if (
+            value["bridge_cid_codec"] != "dag-json"
+            or value["bridge_cid_scope"] != "identity_payload"
+        ):
+            raise CanonicalContractError("typed bridge CID contract changed")
+        bridge = cls(
+            family_identity=BridgeFamilyIdentity.from_dict(value["family_identity"]),
+            source_references=tuple(
+                BridgeSourceReference.from_dict(item)
+                for item in value["source_references"]  # type: ignore[union-attr]
+            ),
+            assumptions=tuple(
+                BridgeAssumption.from_dict(item)
+                for item in value["assumptions"]  # type: ignore[union-attr]
+            ),
+            provenance=value["provenance"],  # type: ignore[arg-type]
+            unsupported_constructs=tuple(
+                BridgeUnsupportedConstruct.from_dict(item)
+                for item in value["unsupported_constructs"]  # type: ignore[union-attr]
+            ),
+            views={
+                name: BridgeView.from_dict(item)
+                for name, item in value["views"].items()  # type: ignore[union-attr]
+            },
+            trace_refs=tuple(
+                BridgeTraceRef.from_dict(item)
+                for item in value["trace_refs"]  # type: ignore[union-attr]
+            ),
+            domain_logic_slice=DomainLogicSliceRole.from_dict(value["domain_logic_slice"]),
+            construct_dispositions=value["construct_dispositions"],  # type: ignore[arg-type]
+            adapter_name=value["adapter_name"],  # type: ignore[arg-type]
+            metadata=value["metadata"],  # type: ignore[arg-type]
+        )
+        if _cid(value["bridge_cid"], "bridge_cid", codec="dag-json") != bridge.bridge_cid:
+            raise CanonicalContractError("bridge_cid does not match typed bridge")
+        return bridge
+
+    @classmethod
+    def compose(
+        cls,
+        *,
+        family_id: str,
+        authority_schema: str,
+        views: Mapping[str, BridgeView] | Sequence[BridgeView] = (),
+        source_references: Sequence[BridgeSourceReference] = (),
+        assumptions: Sequence[BridgeAssumption] = (),
+        provenance: Mapping[str, object] | None = None,
+        unsupported_constructs: Sequence[BridgeUnsupportedConstruct] = (),
+        trace_refs: Sequence[BridgeTraceRef] = (),
+        domain_logic_slice: DomainLogicSliceRole | None = None,
+        adapter_name: str = "",
+        metadata: Mapping[str, object] | None = None,
+        payload_cid: str | None = None,
+        representation_kind: BridgeRepresentationKind = BridgeRepresentationKind.LOGIC_FAMILY,
+    ) -> "CanonicalTypedBridge":
+        """Build a fail-closed envelope that accounts for every required construct."""
+
+        if isinstance(views, Mapping):
+            view_map = {
+                name: (view if isinstance(view, BridgeView) else BridgeView.from_dict(view))
+                for name, view in views.items()
+            }
+        else:
+            view_map = {}
+            for view in views:
+                item = view if isinstance(view, BridgeView) else BridgeView.from_dict(view)
+                view_map[item.name] = item
+        if not view_map:
+            raise CanonicalContractError("typed bridge compose requires at least one view")
+        authority_view = (
+            view_map.get("canonical_roundtrip_ir")
+            or view_map.get("formalization_artifact")
+            or view_map.get("legal_ir_document")
+            or view_map.get("logic_family")
+            or next(iter(view_map.values()))
+        )
+        family_identity = BridgeFamilyIdentity(
+            family_id=family_id,
+            authority_schema=authority_schema,
+            payload_cid=payload_cid or authority_view.payload_cid,
+            representation_kind=representation_kind,
+        )
+        if domain_logic_slice is None:
+            domain_logic_slice = _slice_projection(
+                family_id=family_id,
+                view=authority_view,
+                member_ids=infer_slice_member_ids(authority_view.payload),
+            )
+        unsupported = {
+            item.construct_id: item
+            for item in (
+                item
+                if isinstance(item, BridgeUnsupportedConstruct)
+                else BridgeUnsupportedConstruct.from_dict(item)
+                for item in unsupported_constructs
+            )
+        }
+        for construct in _CONSTRUCT_VIEW_NAMES:
+            if (
+                not _view_represents_construct(construct, view_map)
+                and construct not in unsupported
+            ):
+                unsupported[construct] = _default_unsupported(
+                    RequiredBridgeConstruct(construct),
+                    family_id=family_id,
+                )
+        extension_present = any(
+            view.kind is BridgeRepresentationKind.FAMILY_EXTENSION
+            or view.name not in CORE_BRIDGE_VIEW_NAMES
+            for view in view_map.values()
+        )
+        if (
+            not extension_present
+            and RequiredBridgeConstruct.FAMILY_EXTENSIONS.value not in unsupported
+        ):
+            unsupported[RequiredBridgeConstruct.FAMILY_EXTENSIONS.value] = (
+                _default_unsupported(
+                    RequiredBridgeConstruct.FAMILY_EXTENSIONS,
+                    family_id=family_id,
+                )
+            )
+        trace_kinds = {
+            (item.kind.value if isinstance(item, BridgeTraceRef) else str(item["kind"]))
+            for item in trace_refs
+        }
+        for construct, kind in _CONSTRUCT_TRACE_KINDS.items():
+            if kind not in trace_kinds and construct not in unsupported:
+                unsupported[construct] = _default_unsupported(
+                    RequiredBridgeConstruct(construct),
+                    family_id=family_id,
+                )
+        if (
+            domain_logic_slice.disposition is ConstructDisposition.UNSUPPORTED
+            and RequiredBridgeConstruct.DOMAIN_LOGIC_SLICE.value not in unsupported
+        ):
+            record = domain_logic_slice.unsupported or _default_unsupported(
+                RequiredBridgeConstruct.DOMAIN_LOGIC_SLICE,
+                family_id=family_id,
+            )
+            unsupported[RequiredBridgeConstruct.DOMAIN_LOGIC_SLICE.value] = record
+        dispositions = {
+            RequiredBridgeConstruct.FAMILY_IDENTITY.value: (
+                ConstructDisposition.REPRESENTED
+            ),
+            RequiredBridgeConstruct.SOURCE_REFERENCES.value: (
+                ConstructDisposition.REPRESENTED
+            ),
+            RequiredBridgeConstruct.ASSUMPTIONS.value: ConstructDisposition.REPRESENTED,
+            RequiredBridgeConstruct.PROVENANCE.value: ConstructDisposition.REPRESENTED,
+            RequiredBridgeConstruct.UNSUPPORTED_CONSTRUCTS.value: (
+                ConstructDisposition.REPRESENTED
+            ),
+            RequiredBridgeConstruct.DOMAIN_LOGIC_SLICE.value: (
+                domain_logic_slice.disposition
+            ),
+        }
+        for construct in _CONSTRUCT_VIEW_NAMES:
+            dispositions[construct] = (
+                ConstructDisposition.REPRESENTED
+                if _view_represents_construct(construct, view_map)
+                else ConstructDisposition.UNSUPPORTED
+            )
+        dispositions[RequiredBridgeConstruct.FAMILY_EXTENSIONS.value] = (
+            ConstructDisposition.REPRESENTED
+            if extension_present
+            else ConstructDisposition.UNSUPPORTED
+        )
+        for construct, kind in _CONSTRUCT_TRACE_KINDS.items():
+            dispositions[construct] = (
+                ConstructDisposition.REPRESENTED
+                if kind in trace_kinds
+                else ConstructDisposition.UNSUPPORTED
+            )
+        return cls(
+            family_identity=family_identity,
+            source_references=tuple(source_references),
+            assumptions=tuple(assumptions),
+            provenance=provenance or {},
+            unsupported_constructs=tuple(unsupported.values()),
+            views=view_map,
+            trace_refs=tuple(trace_refs),
+            domain_logic_slice=domain_logic_slice,
+            construct_dispositions=dispositions,
+            adapter_name=adapter_name,
+            metadata=metadata or {},
+        )
+
+
 __all__ = [
     "CANONICAL_DESIGN_GATE_CID",
     "CANONICAL_PARITY_POLICY_CID",
@@ -1622,7 +2756,14 @@ __all__ = [
     "CANONICAL_ROUNDTRIP_PARITY_POLICY_SCHEMA",
     "CANONICAL_STRUCTURED_TEXT_COMPILER_INTERFACE",
     "CANONICAL_STRUCTURED_TEXT_DECOMPILER_INTERFACE",
+    "CANONICAL_TYPED_BRIDGE_CONFORMANCE_INTERFACE",
+    "CANONICAL_TYPED_BRIDGE_INTERFACE",
+    "CANONICAL_TYPED_BRIDGE_MIGRATION_INTERFACE",
+    "CANONICAL_TYPED_BRIDGE_SCHEMA_VERSION",
+    "CORE_BRIDGE_VIEW_NAMES",
+    "FORBIDDEN_BRIDGE_FAMILY_IDS",
     "IMPLEMENTATION_REPRESENTATIVE_ARM_ID",
+    "REGISTERED_BRIDGE_FAMILY_IDS",
     "IMPLEMENTATION_REPRESENTATIVE_ARM_IDENTITY_CID",
     "REPLACEMENT_GATE_CID",
     "REPLACEMENT_REPORT_CID",
@@ -1650,17 +2791,30 @@ __all__ = [
     "CanonicalRule",
     "CanonicalStructuredTextCompiler",
     "CanonicalStructuredTextDecompiler",
+    "CanonicalTypedBridge",
     "CompilerRequest",
     "CompilerResult",
     "ComponentTrace",
+    "ConstructDisposition",
     "DecompilerRequest",
     "DecompilerResult",
     "DiagnosticSeverity",
+    "DomainLogicSliceRole",
+    "BridgeAssumption",
+    "BridgeFamilyIdentity",
+    "BridgeRepresentationKind",
+    "BridgeSourceReference",
+    "BridgeTraceKind",
+    "BridgeTraceRef",
+    "BridgeUnsupportedConstruct",
+    "BridgeView",
     "OperationStatus",
+    "RequiredBridgeConstruct",
     "SourceMapEntry",
     "UnsupportedDisposition",
     "UnsupportedSemantic",
     "canonical_ir_schema_path",
+    "infer_slice_member_ids",
     "load_canonical_ir_schema",
     "load_parity_policy",
 ]

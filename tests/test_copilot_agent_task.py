@@ -9,8 +9,9 @@ def test_backward_compatible_copilot_wrapper_supports_structured_methods():
 
     from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
 
-    with patch.object(CopilotCLI, "_verify_installation", return_value=True), patch.object(
-        CopilotCLI, "_check_copilot_extension", return_value=True
+    with (
+        patch.object(CopilotCLI, "_verify_installation", return_value=True),
+        patch.object(CopilotCLI, "_check_copilot_extension", return_value=True),
     ):
         cli = CopilotCLI(github_cli_path="/usr/bin/gh", enable_cache=False)
 
@@ -31,12 +32,18 @@ def test_gh_copilot_status_reports_extension_and_agent_task_state():
 
     from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
 
-    with patch.object(CopilotCLI, "_verify_installation", return_value=True), patch.object(
-        CopilotCLI, "_check_copilot_extension", return_value=True
-    ), patch("ipfs_datasets_py.utils.cli_tools.copilot.subprocess.run") as mock_run:
+    with (
+        patch.object(CopilotCLI, "_verify_installation", return_value=True),
+        patch.object(CopilotCLI, "_check_copilot_extension", return_value=True),
+        patch("ipfs_datasets_py.utils.cli_tools.copilot.subprocess.run") as mock_run,
+    ):
         mock_run.side_effect = [
             type("Result", (), {"returncode": 0, "stdout": "gh version 2.0.0\n", "stderr": ""})(),
-            type("Result", (), {"returncode": 1, "stdout": "", "stderr": "unknown command 'agent-task' for 'gh'"})(),
+            type(
+                "Result",
+                (),
+                {"returncode": 1, "stdout": "", "stderr": "unknown command 'agent-task' for 'gh'"},
+            )(),
         ]
 
         cli = CopilotCLI(github_cli_path="/usr/bin/gh", enable_cache=False)
@@ -55,8 +62,9 @@ def test_create_agent_task_returns_structured_unavailable_error():
 
     from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
 
-    with patch.object(CopilotCLI, "_verify_installation", return_value=True), patch.object(
-        CopilotCLI, "_check_copilot_extension", return_value=True
+    with (
+        patch.object(CopilotCLI, "_verify_installation", return_value=True),
+        patch.object(CopilotCLI, "_check_copilot_extension", return_value=True),
     ):
         cli = CopilotCLI(github_cli_path="/usr/bin/gh", enable_cache=False)
 
@@ -72,17 +80,23 @@ def test_create_agent_task_uses_gh_when_available():
 
     from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
 
-    with patch.object(CopilotCLI, "_verify_installation", return_value=True), patch.object(
-        CopilotCLI, "_check_copilot_extension", return_value=True
+    with (
+        patch.object(CopilotCLI, "_verify_installation", return_value=True),
+        patch.object(CopilotCLI, "_check_copilot_extension", return_value=True),
     ):
         cli = CopilotCLI(github_cli_path="/usr/bin/gh", enable_cache=False)
 
-    with patch.object(cli, "has_agent_task_support", return_value=True), patch.object(
-        cli,
-        "_run_command",
-        return_value={"success": True, "stdout": "created\n", "stderr": "", "returncode": 0},
-    ) as mock_run:
-        result = cli.create_agent_task(task_description="Fix issue 123", base_branch="main", follow=True)
+    with (
+        patch.object(cli, "has_agent_task_support", return_value=True),
+        patch.object(
+            cli,
+            "_run_command",
+            return_value={"success": True, "stdout": "created\n", "stderr": "", "returncode": 0},
+        ) as mock_run,
+    ):
+        result = cli.create_agent_task(
+            task_description="Fix issue 123", base_branch="main", follow=True
+        )
 
     assert result["success"] is True
     args = mock_run.call_args.args[0]

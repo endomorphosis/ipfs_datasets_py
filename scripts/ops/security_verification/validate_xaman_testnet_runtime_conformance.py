@@ -34,25 +34,29 @@ from ipfs_datasets_py.logic.security_models.crypto_exchange.reports.xaman_testne
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    payload = json.loads(path.read_text(encoding='utf-8'))
+    payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f'{path} did not contain a JSON object')
+        raise ValueError(f"{path} did not contain a JSON object")
     return payload
 
 
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + '\n', encoding='utf-8')
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
 
 
 def _write_text(path: Path, payload: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(payload, encoding='utf-8')
+    path.write_text(payload, encoding="utf-8")
 
 
-def generate(repo_root: Path, *, out: Path | None = None) -> tuple[dict[str, Any], dict[str, Any], str]:
+def generate(
+    repo_root: Path, *, out: Path | None = None
+) -> tuple[dict[str, Any], dict[str, Any], str]:
     model_payload = _load_json(repo_root / MODEL_PATH)
-    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding='utf-8').strip()
+    model_cid = (repo_root / MODEL_CID_PATH).read_text(encoding="utf-8").strip()
     claim_trace_map = _load_json(repo_root / CLAIM_TRACE_MAP_PATH)
     transaction_trial = _load_json(repo_root / TRANSACTION_TRIAL_PATH)
     public_build_reproduction = _load_json(repo_root / PUBLIC_BUILD_REPRODUCTION_PATH)
@@ -90,11 +94,15 @@ def generate(repo_root: Path, *, out: Path | None = None) -> tuple[dict[str, Any
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--repo-root', default=str(ROOT_DIR), help='Repository root containing security_ir_artifacts.')
     parser.add_argument(
-        '--out',
+        "--repo-root",
+        default=str(ROOT_DIR),
+        help="Repository root containing security_ir_artifacts.",
+    )
+    parser.add_argument(
+        "--out",
         default=RUNTIME_CONFORMANCE_REPORT_PATH,
-        help='Runtime conformance report output path. The trace map and markdown use their standard task paths.',
+        help="Runtime conformance report output path. The trace map and markdown use their standard task paths.",
     )
     args = parser.parse_args(argv)
 
@@ -106,13 +114,15 @@ def main(argv: list[str] | None = None) -> int:
     print(
         json.dumps(
             {
-                'trace_map_path': RUNTIME_CONFORMANCE_TRACE_MAP_PATH,
-                'trace_map_cid': trace_map['artifact_cid'],
-                'report_path': str(out.relative_to(repo_root) if out.is_relative_to(repo_root) else out),
-                'report_cid': report['artifact_cid'],
-                'overall_status': report['overall_status'],
-                'security_decision': report['security_decision'],
-                'doc_path': RUNTIME_CONFORMANCE_DOC_PATH,
+                "trace_map_path": RUNTIME_CONFORMANCE_TRACE_MAP_PATH,
+                "trace_map_cid": trace_map["artifact_cid"],
+                "report_path": str(
+                    out.relative_to(repo_root) if out.is_relative_to(repo_root) else out
+                ),
+                "report_cid": report["artifact_cid"],
+                "overall_status": report["overall_status"],
+                "security_decision": report["security_decision"],
+                "doc_path": RUNTIME_CONFORMANCE_DOC_PATH,
             },
             sort_keys=True,
         )
@@ -120,5 +130,5 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

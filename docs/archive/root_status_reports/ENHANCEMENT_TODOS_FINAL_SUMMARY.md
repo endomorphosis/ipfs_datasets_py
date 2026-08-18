@@ -128,11 +128,7 @@ After (formal): "agent1 is obligated to action"
 
 **CEC Prover Configuration:**
 ```python
-cec_prover = prover_core.Prover(
-    timeout_ms=timeout_ms,
-    max_depth=100,
-    enable_logging=False
-)
+cec_prover = prover_core.Prover(timeout_ms=timeout_ms, max_depth=100, enable_logging=False)
 ```
 
 **Proof Step Extraction:**
@@ -143,7 +139,7 @@ for i, cec_step in enumerate(cec_result.proof_tree.steps):
         formula=goal,
         rule_name=cec_step.rule,
         premises=cec_step.premises,
-        justification=f"CEC rule: {cec_step.rule}"
+        justification=f"CEC rule: {cec_step.rule}",
     )
 ```
 
@@ -392,10 +388,7 @@ print(f"Recommended: {analysis.recommended_provers}")
 from ipfs_datasets_py.logic.integration import TDFOLGrammarBridge
 
 bridge = TDFOLGrammarBridge()
-nl_text = bridge.dcec_to_natural_language(
-    dcec_str="O(laugh(agent1))",
-    style="casual"
-)
+nl_text = bridge.dcec_to_natural_language(dcec_str="O(laugh(agent1))", style="casual")
 # Output: "agent1 must laugh"
 ```
 
@@ -405,11 +398,7 @@ nl_text = bridge.dcec_to_natural_language(
 from ipfs_datasets_py.logic.integration import TDFOLCECBridge
 
 bridge = TDFOLCECBridge()
-result = bridge.prove_with_cec(
-    goal=formula,
-    axioms=[axiom1, axiom2],
-    timeout_ms=10000
-)
+result = bridge.prove_with_cec(goal=formula, axioms=[axiom1, axiom2], timeout_ms=10000)
 
 if result.status == ProofStatus.PROVED:
     print(f"Proved with {len(result.proof_steps)} steps")
@@ -422,9 +411,7 @@ from ipfs_datasets_py.logic.integration import TDFOLShadowProverBridge
 
 bridge = TDFOLShadowProverBridge()
 result = bridge.prove_with_shadowprover(
-    formula=temporal_formula,
-    logic_type=ModalLogicType.S4,
-    timeout_ms=10000
+    formula=temporal_formula, logic_type=ModalLogicType.S4, timeout_ms=10000
 )
 ```
 
@@ -434,10 +421,7 @@ result = bridge.prove_with_shadowprover(
 from ipfs_datasets_py.logic.TDFOL import TDFOLProver
 
 prover = TDFOLProver(knowledge_base)
-result = prover._modal_tableaux_prove(
-    goal=modal_formula,
-    timeout_ms=10000
-)
+result = prover._modal_tableaux_prove(goal=modal_formula, timeout_ms=10000)
 ```
 
 ### CEC Framework
@@ -449,10 +433,7 @@ framework = CECFramework()
 framework.initialize()
 
 result = framework.prove_theorem(
-    conjecture="□(P(x) -> Q(x))",
-    axioms=["P(x)"],
-    use_temporal=True,
-    use_shadow_prover=True
+    conjecture="□(P(x) -> Q(x))", axioms=["P(x)"], use_temporal=True, use_shadow_prover=True
 )
 ```
 

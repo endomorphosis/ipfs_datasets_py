@@ -149,15 +149,9 @@ def _honest_manifest(**overrides: Any) -> ProofCorpusManifest:
         "compiler_registry": (
             _registry(RegistryKind.COMPILER, "compiler-canonical-v1", "compiler-reg"),
         ),
-        "solver_registry": (
-            _registry(RegistryKind.SOLVER, "solver-z3", "solver-reg"),
-        ),
-        "circuit_registry": (
-            _registry(RegistryKind.CIRCUIT, "legal_constraint", "circuit-reg"),
-        ),
-        "vk_registry": (
-            _registry(RegistryKind.VK, "legal_constraint_vk", "vk-reg"),
-        ),
+        "solver_registry": (_registry(RegistryKind.SOLVER, "solver-z3", "solver-reg"),),
+        "circuit_registry": (_registry(RegistryKind.CIRCUIT, "legal_constraint", "circuit-reg"),),
+        "vk_registry": (_registry(RegistryKind.VK, "legal_constraint_vk", "vk-reg"),),
         "index_manifests": (_honest_index(),),
         "revocation_root_cid": "",
         "policy": PolicyBinding(
@@ -519,18 +513,14 @@ def test_oversize_content_rejected() -> None:
     # verify_manifest_bodies also rejects oversize even if entry slipped through
     # with a larger declared max that we lower... construction already rejects.
     small = _honest_manifest(max_entry_bytes=10_000)
-    huge_bodies = {
-        path: b"y" * 20_000 for path in small.body_paths()
-    }
+    huge_bodies = {path: b"y" * 20_000 for path in small.body_paths()}
     # size mismatch / oversize
     with pytest.raises(ProofCorpusManifestIntegrityError):
         verify_manifest_bodies(small, huge_bodies)
 
 
 def test_unapproved_registry_root_rejected() -> None:
-    with pytest.raises(
-        ProofCorpusManifestIntegrityError, match="unapproved registry root"
-    ):
+    with pytest.raises(ProofCorpusManifestIntegrityError, match="unapproved registry root"):
         _honest_manifest(
             approved_registry_roots=(_cid("compiler-reg"),),  # incomplete allowlist
         )
@@ -586,9 +576,7 @@ def test_append_only_lineage_accepts_valid_child() -> None:
 def test_rollback_downgrade_generation_rejected() -> None:
     parent = _honest_manifest(generation=3)
     child = _child_manifest(parent, generation=2)
-    with pytest.raises(
-        ProofCorpusManifestIntegrityError, match="rollback/downgrade"
-    ):
+    with pytest.raises(ProofCorpusManifestIntegrityError, match="rollback/downgrade"):
         check_append_only_lineage(child, parent)
 
 
@@ -627,9 +615,7 @@ def test_registry_version_downgrade_rejected() -> None:
             ),
         ),
     )
-    with pytest.raises(
-        ProofCorpusManifestIntegrityError, match="downgrade"
-    ):
+    with pytest.raises(ProofCorpusManifestIntegrityError, match="downgrade"):
         check_append_only_lineage(child_down, parent_v2)
 
 
@@ -782,9 +768,7 @@ def test_revocation_rollback_rejected() -> None:
         parent_cid=parent.root_cid,
         generation=2,
     )
-    with pytest.raises(
-        ProofRevocationIntegrityError, match="rollback/downgrade"
-    ):
+    with pytest.raises(ProofRevocationIntegrityError, match="rollback/downgrade"):
         check_revocation_lineage(child, parent)
 
 
@@ -799,9 +783,7 @@ def test_revocation_drop_parent_target_rejected() -> None:
         parent_cid=parent.root_cid,
         generation=2,
     )
-    with pytest.raises(
-        ProofRevocationIntegrityError, match="append-only"
-    ):
+    with pytest.raises(ProofRevocationIntegrityError, match="append-only"):
         check_revocation_lineage(child, parent)
 
 
@@ -836,9 +818,7 @@ def test_bind_manifest_revocation_root() -> None:
     snap_m = _honest_revocation(mismatched.root_cid)
     # mismatched.revocation_root_cid != snap_m.root_cid by construction
     assert mismatched.revocation_root_cid != snap_m.root_cid
-    with pytest.raises(
-        ProofRevocationIntegrityError, match="revocation_root_cid"
-    ):
+    with pytest.raises(ProofRevocationIntegrityError, match="revocation_root_cid"):
         bind_manifest_revocation_root(mismatched, snap_m)
 
 
@@ -934,9 +914,5 @@ def test_ordered_entries_are_stable_under_copy() -> None:
     manifest = _honest_manifest()
     payload = copy.deepcopy(manifest.to_dict())
     restored = ProofCorpusManifest.from_dict(payload)
-    assert [e.entry_id for e in restored.entries] == [
-        e.entry_id for e in manifest.entries
-    ]
-    assert [e.ordinal for e in restored.entries] == [
-        e.ordinal for e in manifest.entries
-    ]
+    assert [e.entry_id for e in restored.entries] == [e.entry_id for e in manifest.entries]
+    assert [e.ordinal for e in restored.entries] == [e.ordinal for e in manifest.entries]

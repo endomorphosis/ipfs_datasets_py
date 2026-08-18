@@ -1,0 +1,29 @@
+{
+  "hidden_test_selection": false,
+  "interface": "IRDeterministicToolVersions@1",
+  "learned_inference": false,
+  "network": false,
+  "platform": {
+    "machine": "aarch64",
+    "processor": "aarch64",
+    "release": "6.17.0-1014-nvidia",
+    "system": "Linux"
+  },
+  "python": {
+    "executable": "/home/barberb/.local/bin/python",
+    "implementation": "CPython",
+    "version": "3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]"
+  },
+  "resource": {
+    "elapsed_seconds": 122.2749219199759,
+    "ru_inblock": 8,
+    "ru_majflt": 0,
+    "ru_maxrss": 707908,
+    "ru_maxrss_unit": "kilobytes_on_linux",
+    "ru_minflt": 156662,
+    "ru_oublock": 16,
+    "ru_stime": 0.36584799999999995,
+    "ru_utime": 123.38063199999999
+  },
+  "tool_versions_cid": "baguqeerao4yromhadthwds2tmoa5qgrnxkdo4ifwbeeq3goc2p4lo3vg47pq"
+}

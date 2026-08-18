@@ -194,9 +194,7 @@ def _long_alpha_range_sample_document() -> ModalIRDocument:
     return ModalIRDocument(
         document_id=source_id,
         source="us_code",
-        normalized_text=(
-            "43 U.S.C. 616tttt to 616yyyy. Land management records are retained."
-        ),
+        normalized_text=("43 U.S.C. 616tttt to 616yyyy. Land management records are retained."),
         formulas=[formula],
     )
 
@@ -538,8 +536,7 @@ def _procedural_keyword_fallback_sample_document() -> ModalIRDocument:
         document_id=source_id,
         source="us_code",
         normalized_text=(
-            "Administrative review procedures are established for health care "
-            "collection actions."
+            "Administrative review procedures are established for health care collection actions."
         ),
         formulas=[formula],
     )
@@ -748,9 +745,7 @@ def _compilation_preamble_fallback_surface_sample_document() -> ModalIRDocument:
 
 def _fallback_surface_contextual_modal_cue_sample_document() -> ModalIRDocument:
     source_id = "us-code-6-314-0123abcd4567ef89"
-    normalized_text = (
-        "Sec. 314 - Subject to annual review, effective date requirements apply."
-    )
+    normalized_text = "Sec. 314 - Subject to annual review, effective date requirements apply."
     formula = ModalIRFormula(
         formula_id="f-fallback-surface-contextual-modal-cues",
         operator=ModalIROperator(
@@ -781,9 +776,7 @@ def _fallback_surface_contextual_modal_cue_sample_document() -> ModalIRDocument:
 
 def _frame_fallback_refined_cross_family_cue_sample_document() -> ModalIRDocument:
     source_id = "us-code-49-32916-fallback-aa11bb22cc33dd44"
-    normalized_text = (
-        "Sec. 32916. Reports shall be submitted not later than January 15."
-    )
+    normalized_text = "Sec. 32916. Reports shall be submitted not later than January 15."
     formula = ModalIRFormula(
         formula_id="f-frame-fallback-refined-cross-family-cues",
         operator=ModalIROperator(
@@ -848,9 +841,7 @@ def _temporal_fallback_surface_context_bridge_sample_document() -> ModalIRDocume
 
 def _frame_fallback_structural_chapter_temporal_sample_document() -> ModalIRDocument:
     source_id = "us-code-22-286e-5a-fallback-778899aabbccddee"
-    normalized_text = (
-        "Sec. 286e-5a. Chapter 7 fiscal year 2024 coordination requirements."
-    )
+    normalized_text = "Sec. 286e-5a. Chapter 7 fiscal year 2024 coordination requirements."
     formula = ModalIRFormula(
         formula_id="f-frame-fallback-structural-chapter-temporal",
         operator=ModalIROperator(
@@ -1002,9 +993,7 @@ def _temporal_for_purposes_bridge_sample_document() -> ModalIRDocument:
 
 def _exception_only_condition_proxy_sample_document() -> ModalIRDocument:
     source_id = "us-code-42-1395c.-da5383050c7a2c5e"
-    normalized_text = (
-        "A plan may provide coverage except as such a determination applies."
-    )
+    normalized_text = "A plan may provide coverage except as such a determination applies."
     formula = ModalIRFormula(
         formula_id="f-exception-only-condition-proxy",
         operator=ModalIROperator(
@@ -1550,11 +1539,7 @@ def test_modal_ir_to_flogic_triples_filters_connective_anchor_tokens() -> None:
     triples = modal_ir_to_flogic_triples(_source_anchor_connective_noise_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert "officer" in objects("source_object_anchor")
     assert "for" not in objects("source_object_anchor")
@@ -1576,11 +1561,7 @@ def test_modal_ir_to_flogic_triples_trim_gpo_fragment_from_inferred_conditions()
     triples = modal_ir_to_flogic_triples(_inferred_condition_gpo_fragment_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("condition") == ["with respect to keep open directives"]
     assert objects("condition_scope") == ["keep open directives"]
@@ -1733,11 +1714,7 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     triples = modal_ir_to_flogic_triples(_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation_title_number") == ["21"]
     assert objects("citation_title_token_count") == ["1"]
@@ -1901,12 +1878,8 @@ def test_decode_modal_ir_document_emits_single_component_section_role_slots() ->
     assert slot_map["citation_section_terminal_suffix"] == ["l"]
     assert slot_map["citation_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["citation_section_terminal_component_kind"] == ["alphanumeric"]
-    assert slot_map["citation_section_primary_terminal_component_signature_pair"] == [
-        "N3A1|N3A1"
-    ]
-    assert slot_map["citation_section_primary_terminal_component_signature_match"] == [
-        "true"
-    ]
+    assert slot_map["citation_section_primary_terminal_component_signature_pair"] == ["N3A1|N3A1"]
+    assert slot_map["citation_section_primary_terminal_component_signature_match"] == ["true"]
     assert slot_map["citation_section_primary_terminal_component_kind_pair"] == [
         "alphanumeric|alphanumeric"
     ]
@@ -1932,12 +1905,8 @@ def test_decode_modal_ir_document_emits_single_component_section_role_slots() ->
     assert slot_map["source_id_section_terminal_suffix"] == ["l"]
     assert slot_map["source_id_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["source_id_section_terminal_component_kind"] == ["alphanumeric"]
-    assert slot_map["source_id_section_primary_terminal_component_signature_pair"] == [
-        "N3A1|N3A1"
-    ]
-    assert slot_map["source_id_section_primary_terminal_component_signature_match"] == [
-        "true"
-    ]
+    assert slot_map["source_id_section_primary_terminal_component_signature_pair"] == ["N3A1|N3A1"]
+    assert slot_map["source_id_section_primary_terminal_component_signature_match"] == ["true"]
     assert slot_map["source_id_section_primary_terminal_component_kind_pair"] == [
         "alphanumeric|alphanumeric"
     ]
@@ -1948,11 +1917,7 @@ def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() 
     triples = modal_ir_to_flogic_triples(_single_component_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation_section_terminal") == ["190l"]
     assert objects("citation_section_primary_equals_terminal") == ["true"]
@@ -1974,12 +1939,8 @@ def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() 
     assert objects("citation_section_terminal_suffix") == ["l"]
     assert objects("citation_section_primary_component_kind") == ["alphanumeric"]
     assert objects("citation_section_terminal_component_kind") == ["alphanumeric"]
-    assert objects("citation_section_primary_terminal_component_signature_pair") == [
-        "N3A1|N3A1"
-    ]
-    assert objects("citation_section_primary_terminal_component_signature_match") == [
-        "true"
-    ]
+    assert objects("citation_section_primary_terminal_component_signature_pair") == ["N3A1|N3A1"]
+    assert objects("citation_section_primary_terminal_component_signature_match") == ["true"]
     assert objects("citation_section_primary_terminal_component_kind_pair") == [
         "alphanumeric|alphanumeric"
     ]
@@ -2005,12 +1966,8 @@ def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() 
     assert objects("source_id_section_terminal_suffix") == ["l"]
     assert objects("source_id_section_primary_component_kind") == ["alphanumeric"]
     assert objects("source_id_section_terminal_component_kind") == ["alphanumeric"]
-    assert objects("source_id_section_primary_terminal_component_signature_pair") == [
-        "N3A1|N3A1"
-    ]
-    assert objects("source_id_section_primary_terminal_component_signature_match") == [
-        "true"
-    ]
+    assert objects("source_id_section_primary_terminal_component_signature_pair") == ["N3A1|N3A1"]
+    assert objects("source_id_section_primary_terminal_component_signature_match") == ["true"]
     assert objects("source_id_section_primary_terminal_component_kind_pair") == [
         "alphanumeric|alphanumeric"
     ]
@@ -2044,11 +2001,7 @@ def test_modal_ir_to_flogic_triples_emits_roman_suffix_slots() -> None:
     triples = modal_ir_to_flogic_triples(_roman_suffix_hyphen_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation_section_suffix_kind") == ["roman"]
     assert objects("citation_section_suffix_kind_positioned") == ["1:roman"]
@@ -2090,9 +2043,7 @@ def test_decode_modal_ir_document_emits_section_component_signature_slots() -> N
     assert mixed_slot_map["citation_section_primary_terminal_component_kind_pair"] == [
         "alphanumeric|numeric"
     ]
-    assert mixed_slot_map["citation_section_primary_terminal_component_kind_match"] == [
-        "false"
-    ]
+    assert mixed_slot_map["citation_section_primary_terminal_component_kind_match"] == ["false"]
     assert mixed_slot_map["source_id_section_signature"] == ["N3A3-N1"]
     assert mixed_slot_map["source_id_section_primary_terminal_component_signature_pair"] == [
         "N3A3|N1"
@@ -2103,9 +2054,7 @@ def test_decode_modal_ir_document_emits_section_component_signature_slots() -> N
     assert mixed_slot_map["source_id_section_primary_terminal_component_kind_pair"] == [
         "alphanumeric|numeric"
     ]
-    assert mixed_slot_map["source_id_section_primary_terminal_component_kind_match"] == [
-        "false"
-    ]
+    assert mixed_slot_map["source_id_section_primary_terminal_component_kind_match"] == ["false"]
 
     roman_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_roman_suffix_hyphen_sample_document())
@@ -2132,9 +2081,7 @@ def test_decode_modal_ir_document_emits_section_component_signature_slots() -> N
     assert numeric_slot_map["citation_section_primary_terminal_component_kind_pair"] == [
         "numeric|numeric"
     ]
-    assert numeric_slot_map["citation_section_primary_terminal_component_kind_match"] == [
-        "true"
-    ]
+    assert numeric_slot_map["citation_section_primary_terminal_component_kind_match"] == ["true"]
     assert numeric_slot_map["source_id_section_signature"] == ["N5"]
     assert numeric_slot_map["source_id_section_primary_terminal_component_signature_pair"] == [
         "N5|N5"
@@ -2145,9 +2092,7 @@ def test_decode_modal_ir_document_emits_section_component_signature_slots() -> N
     assert numeric_slot_map["source_id_section_primary_terminal_component_kind_pair"] == [
         "numeric|numeric"
     ]
-    assert numeric_slot_map["source_id_section_primary_terminal_component_kind_match"] == [
-        "true"
-    ]
+    assert numeric_slot_map["source_id_section_primary_terminal_component_kind_match"] == ["true"]
 
 
 def test_modal_ir_to_flogic_triples_emits_section_component_signature_slots() -> None:
@@ -2159,23 +2104,15 @@ def test_modal_ir_to_flogic_triples_emits_section_component_signature_slots() ->
     numeric_triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
 
     def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects(mixed_triples, "citation_section_component_signature") == ["N3A3", "N1"]
     assert objects(
         mixed_triples,
         "citation_section_component_signature_positioned",
     ) == ["1:N3A3", "2:N1"]
-    assert objects(mixed_triples, "citation_section_primary_component_signature") == [
-        "N3A3"
-    ]
-    assert objects(mixed_triples, "citation_section_terminal_component_signature") == [
-        "N1"
-    ]
+    assert objects(mixed_triples, "citation_section_primary_component_signature") == ["N3A3"]
+    assert objects(mixed_triples, "citation_section_terminal_component_signature") == ["N1"]
     assert objects(mixed_triples, "citation_section_signature") == ["N3A3-N1"]
     assert objects(
         mixed_triples,
@@ -2330,11 +2267,7 @@ def test_modal_ir_to_flogic_triples_emits_suffix_alpha_signature_slots() -> None
     range_triples = modal_ir_to_flogic_triples(_range_sample_document())
 
     def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects(sample_triples, "citation_section_suffix_initial") == ["b"]
     assert objects(sample_triples, "citation_section_suffix_terminal") == ["b"]
@@ -2347,9 +2280,7 @@ def test_modal_ir_to_flogic_triples_emits_suffix_alpha_signature_slots() -> None
     assert objects(sample_triples, "citation_section_suffix_unique_char_count") == ["1"]
     assert objects(sample_triples, "citation_section_primary_suffix_initial") == ["b"]
     assert objects(sample_triples, "citation_section_primary_suffix_initial_ordinal") == ["2"]
-    assert objects(sample_triples, "citation_section_primary_suffix_has_consonant") == [
-        "true"
-    ]
+    assert objects(sample_triples, "citation_section_primary_suffix_has_consonant") == ["true"]
 
     assert objects(sample_triples, "source_id_section_suffix_initial") == ["b"]
     assert objects(sample_triples, "source_id_section_suffix_terminal") == ["b"]
@@ -2361,9 +2292,7 @@ def test_modal_ir_to_flogic_triples_emits_suffix_alpha_signature_slots() -> None
     assert objects(sample_triples, "source_id_section_suffix_has_consonant") == ["true"]
     assert objects(sample_triples, "source_id_section_suffix_unique_char_count") == ["1"]
     assert objects(sample_triples, "source_id_section_primary_suffix_initial") == ["b"]
-    assert objects(sample_triples, "source_id_section_primary_suffix_initial_ordinal") == [
-        "2"
-    ]
+    assert objects(sample_triples, "source_id_section_primary_suffix_initial_ordinal") == ["2"]
     assert objects(
         sample_triples,
         "source_id_section_primary_suffix_has_consonant",
@@ -2386,9 +2315,7 @@ def test_modal_ir_to_flogic_triples_emits_suffix_alpha_signature_slots() -> None
         "citation_section_suffix_has_consonant_positioned",
     ) == ["1:false", "2:true"]
     assert objects(range_triples, "citation_section_primary_suffix_has_vowel") == ["true"]
-    assert objects(range_triples, "citation_section_terminal_suffix_has_vowel") == [
-        "false"
-    ]
+    assert objects(range_triples, "citation_section_terminal_suffix_has_vowel") == ["false"]
 
     assert objects(range_triples, "source_id_section_suffix_initial_positioned") == [
         "1:a",
@@ -2406,12 +2333,8 @@ def test_modal_ir_to_flogic_triples_emits_suffix_alpha_signature_slots() -> None
         range_triples,
         "source_id_section_suffix_has_consonant_positioned",
     ) == ["1:false", "2:true"]
-    assert objects(range_triples, "source_id_section_primary_suffix_has_vowel") == [
-        "true"
-    ]
-    assert objects(range_triples, "source_id_section_terminal_suffix_has_vowel") == [
-        "false"
-    ]
+    assert objects(range_triples, "source_id_section_primary_suffix_has_vowel") == ["true"]
+    assert objects(range_triples, "source_id_section_terminal_suffix_has_vowel") == ["false"]
 
 
 def test_decode_modal_ir_document_does_not_misclassify_noncanonical_roman_suffix() -> None:
@@ -2439,11 +2362,7 @@ def test_modal_ir_to_flogic_triples_does_not_misclassify_noncanonical_roman_suff
     triples = modal_ir_to_flogic_triples(_noncanonical_romanlike_suffix_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation_section_suffix_kind") == ["alpha"]
     assert objects("citation_section_primary_suffix_kind") == ["alpha"]
@@ -2487,11 +2406,7 @@ def test_modal_ir_to_flogic_triples_treats_repeat_roman_tokens_as_alpha_suffixes
     triples = modal_ir_to_flogic_triples(_repeat_roman_token_suffix_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation_section_suffix_kind") == ["alpha"]
     assert objects("citation_section_primary_suffix_kind") == ["alpha"]
@@ -2593,11 +2508,7 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
     triples = modal_ir_to_flogic_triples(_range_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation_section_terminal") == ["228c"]
     assert objects("citation_section_primary_equals_terminal") == ["false"]
@@ -2684,92 +2595,58 @@ def test_decode_modal_ir_document_emits_suffix_relation_slots() -> None:
 
     assert range_slot_map["citation_section_primary_terminal_suffix_pair"] == ["a|c"]
     assert range_slot_map["citation_section_primary_terminal_suffix_match"] == ["false"]
-    assert range_slot_map["citation_section_primary_terminal_suffix_presence_match"] == [
-        "true"
-    ]
-    assert range_slot_map["citation_section_primary_terminal_suffix_length_relation"] == [
-        "equal"
-    ]
+    assert range_slot_map["citation_section_primary_terminal_suffix_presence_match"] == ["true"]
+    assert range_slot_map["citation_section_primary_terminal_suffix_length_relation"] == ["equal"]
     assert range_slot_map["citation_section_primary_terminal_suffix_length_span"] == ["0"]
     assert range_slot_map["citation_section_primary_terminal_suffix_alpha_relation"] == [
         "ascending"
     ]
     assert range_slot_map["citation_section_primary_terminal_suffix_alpha_span"] == ["2"]
-    assert range_slot_map["citation_section_range_suffix_alpha_relation"] == [
-        "ascending"
-    ]
+    assert range_slot_map["citation_section_range_suffix_alpha_relation"] == ["ascending"]
     assert range_slot_map["citation_section_range_suffix_alpha_span"] == ["2"]
 
     assert range_slot_map["source_id_section_primary_terminal_suffix_pair"] == ["a|c"]
     assert range_slot_map["source_id_section_primary_terminal_suffix_match"] == ["false"]
-    assert range_slot_map["source_id_section_primary_terminal_suffix_presence_match"] == [
-        "true"
-    ]
-    assert range_slot_map["source_id_section_primary_terminal_suffix_length_relation"] == [
-        "equal"
-    ]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_presence_match"] == ["true"]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_length_relation"] == ["equal"]
     assert range_slot_map["source_id_section_primary_terminal_suffix_length_span"] == ["0"]
     assert range_slot_map["source_id_section_primary_terminal_suffix_alpha_relation"] == [
         "ascending"
     ]
     assert range_slot_map["source_id_section_primary_terminal_suffix_alpha_span"] == ["2"]
-    assert range_slot_map["source_id_section_range_suffix_alpha_relation"] == [
-        "ascending"
-    ]
+    assert range_slot_map["source_id_section_range_suffix_alpha_relation"] == ["ascending"]
     assert range_slot_map["source_id_section_range_suffix_alpha_span"] == ["2"]
 
-    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_pair"] == [
-        "tttt|yyyy"
-    ]
-    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_match"] == [
-        "false"
-    ]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_pair"] == ["tttt|yyyy"]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_match"] == ["false"]
     assert long_alpha_slot_map["citation_section_primary_terminal_suffix_presence_match"] == [
         "true"
     ]
-    assert (
-        long_alpha_slot_map["citation_section_primary_terminal_suffix_length_relation"]
-        == ["equal"]
-    )
-    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_length_span"] == [
-        "0"
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_length_relation"] == [
+        "equal"
     ]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_length_span"] == ["0"]
     assert long_alpha_slot_map["citation_section_primary_terminal_suffix_alpha_relation"] == [
         "ascending"
     ]
-    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_alpha_span"] == [
-        "91395"
-    ]
-    assert long_alpha_slot_map["citation_section_range_suffix_alpha_relation"] == [
-        "ascending"
-    ]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_alpha_span"] == ["91395"]
+    assert long_alpha_slot_map["citation_section_range_suffix_alpha_relation"] == ["ascending"]
     assert long_alpha_slot_map["citation_section_range_suffix_alpha_span"] == ["91395"]
 
-    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_pair"] == [
-        "tttt|yyyy"
-    ]
-    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_match"] == [
-        "false"
-    ]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_pair"] == ["tttt|yyyy"]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_match"] == ["false"]
     assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_presence_match"] == [
         "true"
     ]
-    assert (
-        long_alpha_slot_map["source_id_section_primary_terminal_suffix_length_relation"]
-        == ["equal"]
-    )
-    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_length_span"] == [
-        "0"
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_length_relation"] == [
+        "equal"
     ]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_length_span"] == ["0"]
     assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_alpha_relation"] == [
         "ascending"
     ]
-    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_alpha_span"] == [
-        "91395"
-    ]
-    assert long_alpha_slot_map["source_id_section_range_suffix_alpha_relation"] == [
-        "ascending"
-    ]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_alpha_span"] == ["91395"]
+    assert long_alpha_slot_map["source_id_section_range_suffix_alpha_relation"] == ["ascending"]
     assert long_alpha_slot_map["source_id_section_range_suffix_alpha_span"] == ["91395"]
 
 
@@ -2778,18 +2655,10 @@ def test_modal_ir_to_flogic_triples_emits_suffix_relation_slots() -> None:
     long_alpha_triples = modal_ir_to_flogic_triples(_long_alpha_range_sample_document())
 
     def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
-    assert objects(range_triples, "citation_section_primary_terminal_suffix_pair") == [
-        "a|c"
-    ]
-    assert objects(range_triples, "citation_section_primary_terminal_suffix_match") == [
-        "false"
-    ]
+    assert objects(range_triples, "citation_section_primary_terminal_suffix_pair") == ["a|c"]
+    assert objects(range_triples, "citation_section_primary_terminal_suffix_match") == ["false"]
     assert objects(
         range_triples,
         "citation_section_primary_terminal_suffix_presence_match",
@@ -2810,17 +2679,11 @@ def test_modal_ir_to_flogic_triples_emits_suffix_relation_slots() -> None:
         range_triples,
         "citation_section_primary_terminal_suffix_alpha_span",
     ) == ["2"]
-    assert objects(range_triples, "citation_section_range_suffix_alpha_relation") == [
-        "ascending"
-    ]
+    assert objects(range_triples, "citation_section_range_suffix_alpha_relation") == ["ascending"]
     assert objects(range_triples, "citation_section_range_suffix_alpha_span") == ["2"]
 
-    assert objects(range_triples, "source_id_section_primary_terminal_suffix_pair") == [
-        "a|c"
-    ]
-    assert objects(range_triples, "source_id_section_primary_terminal_suffix_match") == [
-        "false"
-    ]
+    assert objects(range_triples, "source_id_section_primary_terminal_suffix_pair") == ["a|c"]
+    assert objects(range_triples, "source_id_section_primary_terminal_suffix_match") == ["false"]
     assert objects(
         range_triples,
         "source_id_section_primary_terminal_suffix_presence_match",
@@ -2841,9 +2704,7 @@ def test_modal_ir_to_flogic_triples_emits_suffix_relation_slots() -> None:
         range_triples,
         "source_id_section_primary_terminal_suffix_alpha_span",
     ) == ["2"]
-    assert objects(range_triples, "source_id_section_range_suffix_alpha_relation") == [
-        "ascending"
-    ]
+    assert objects(range_triples, "source_id_section_range_suffix_alpha_relation") == ["ascending"]
     assert objects(range_triples, "source_id_section_range_suffix_alpha_span") == ["2"]
 
     assert objects(
@@ -2941,11 +2802,7 @@ def test_modal_ir_to_flogic_triples_emits_numeric_section_range_relation_slots()
     triples = modal_ir_to_flogic_triples(_numeric_range_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation_section_range") == ["1381 to 1398"]
     assert objects("citation_section_is_range") == ["true"]
@@ -2990,11 +2847,7 @@ def test_modal_ir_to_flogic_triples_emits_dot_delimiter_slots() -> None:
     triples = modal_ir_to_flogic_triples(_dot_delimited_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation_section_has_delimiter") == ["true"]
     assert objects("citation_section_delimiter") == ["dot"]
@@ -3043,11 +2896,7 @@ def test_modal_ir_to_flogic_triples_emit_trailing_punct_presence_slots() -> None
     triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation_section_trailing_punct") == ["."]
     assert objects("citation_section_has_trailing_punct") == ["true"]
@@ -3084,14 +2933,10 @@ def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slot
     assert mixed_slot_map["source_id_section_primary_number_suffix_pair"] == ["360|bbb"]
     assert mixed_slot_map["source_id_section_terminal_number_suffix_pair"] == ["0|none"]
     assert mixed_slot_map["citation_section_component_profile"] == ["compound_mixed"]
-    assert mixed_slot_map["citation_section_primary_terminal_number_relation"] == [
-        "descending"
-    ]
+    assert mixed_slot_map["citation_section_primary_terminal_number_relation"] == ["descending"]
     assert mixed_slot_map["citation_section_primary_terminal_number_span"] == ["360"]
     assert mixed_slot_map["source_id_section_component_profile"] == ["compound_mixed"]
-    assert mixed_slot_map["source_id_section_primary_terminal_number_relation"] == [
-        "descending"
-    ]
+    assert mixed_slot_map["source_id_section_primary_terminal_number_relation"] == ["descending"]
     assert mixed_slot_map["source_id_section_primary_terminal_number_span"] == ["360"]
     assert mixed_slot_map["citation_section_has_hyphen_subsection"] == ["true"]
     assert mixed_slot_map["citation_section_hyphen_subsection_primary_number"] == ["360"]
@@ -3108,41 +2953,19 @@ def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slot
         decode_modal_ir_document(_single_component_sample_document())
     )
     assert single_alnum_slot_map["citation_section_number_suffix_pair"] == ["190|l"]
-    assert single_alnum_slot_map["citation_section_number_suffix_pair_positioned"] == [
-        "1:190|l"
-    ]
-    assert single_alnum_slot_map["citation_section_primary_number_suffix_pair"] == [
-        "190|l"
-    ]
-    assert single_alnum_slot_map["citation_section_terminal_number_suffix_pair"] == [
-        "190|l"
-    ]
+    assert single_alnum_slot_map["citation_section_number_suffix_pair_positioned"] == ["1:190|l"]
+    assert single_alnum_slot_map["citation_section_primary_number_suffix_pair"] == ["190|l"]
+    assert single_alnum_slot_map["citation_section_terminal_number_suffix_pair"] == ["190|l"]
     assert single_alnum_slot_map["source_id_section_number_suffix_pair"] == ["190|l"]
-    assert single_alnum_slot_map["source_id_section_number_suffix_pair_positioned"] == [
-        "1:190|l"
-    ]
-    assert single_alnum_slot_map["source_id_section_primary_number_suffix_pair"] == [
-        "190|l"
-    ]
-    assert single_alnum_slot_map["source_id_section_terminal_number_suffix_pair"] == [
-        "190|l"
-    ]
-    assert single_alnum_slot_map["citation_section_component_profile"] == [
-        "single_alphanumeric"
-    ]
-    assert single_alnum_slot_map["citation_section_primary_terminal_number_relation"] == [
-        "equal"
-    ]
+    assert single_alnum_slot_map["source_id_section_number_suffix_pair_positioned"] == ["1:190|l"]
+    assert single_alnum_slot_map["source_id_section_primary_number_suffix_pair"] == ["190|l"]
+    assert single_alnum_slot_map["source_id_section_terminal_number_suffix_pair"] == ["190|l"]
+    assert single_alnum_slot_map["citation_section_component_profile"] == ["single_alphanumeric"]
+    assert single_alnum_slot_map["citation_section_primary_terminal_number_relation"] == ["equal"]
     assert single_alnum_slot_map["citation_section_primary_terminal_number_span"] == ["0"]
-    assert single_alnum_slot_map["source_id_section_component_profile"] == [
-        "single_alphanumeric"
-    ]
-    assert single_alnum_slot_map["source_id_section_primary_terminal_number_relation"] == [
-        "equal"
-    ]
-    assert single_alnum_slot_map["source_id_section_primary_terminal_number_span"] == [
-        "0"
-    ]
+    assert single_alnum_slot_map["source_id_section_component_profile"] == ["single_alphanumeric"]
+    assert single_alnum_slot_map["source_id_section_primary_terminal_number_relation"] == ["equal"]
+    assert single_alnum_slot_map["source_id_section_primary_terminal_number_span"] == ["0"]
     assert single_alnum_slot_map["citation_section_has_hyphen_subsection"] == ["false"]
     assert single_alnum_slot_map["source_id_section_has_hyphen_subsection"] == ["false"]
 
@@ -3153,34 +2976,20 @@ def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slot
     assert single_numeric_slot_map["citation_section_number_suffix_pair_positioned"] == [
         "1:60101|none"
     ]
-    assert single_numeric_slot_map["citation_section_primary_number_suffix_pair"] == [
-        "60101|none"
-    ]
-    assert single_numeric_slot_map["citation_section_terminal_number_suffix_pair"] == [
-        "60101|none"
-    ]
+    assert single_numeric_slot_map["citation_section_primary_number_suffix_pair"] == ["60101|none"]
+    assert single_numeric_slot_map["citation_section_terminal_number_suffix_pair"] == ["60101|none"]
     assert single_numeric_slot_map["source_id_section_number_suffix_pair"] == ["60101|none"]
     assert single_numeric_slot_map["source_id_section_number_suffix_pair_positioned"] == [
         "1:60101|none"
     ]
-    assert single_numeric_slot_map["source_id_section_primary_number_suffix_pair"] == [
-        "60101|none"
-    ]
+    assert single_numeric_slot_map["source_id_section_primary_number_suffix_pair"] == ["60101|none"]
     assert single_numeric_slot_map["source_id_section_terminal_number_suffix_pair"] == [
         "60101|none"
     ]
-    assert single_numeric_slot_map["citation_section_component_profile"] == [
-        "single_numeric"
-    ]
-    assert single_numeric_slot_map["source_id_section_component_profile"] == [
-        "single_numeric"
-    ]
-    assert single_numeric_slot_map["citation_section_has_hyphen_subsection"] == [
-        "false"
-    ]
-    assert single_numeric_slot_map["source_id_section_has_hyphen_subsection"] == [
-        "false"
-    ]
+    assert single_numeric_slot_map["citation_section_component_profile"] == ["single_numeric"]
+    assert single_numeric_slot_map["source_id_section_component_profile"] == ["single_numeric"]
+    assert single_numeric_slot_map["citation_section_has_hyphen_subsection"] == ["false"]
+    assert single_numeric_slot_map["source_id_section_has_hyphen_subsection"] == ["false"]
 
     range_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_range_sample_document())
@@ -3200,14 +3009,10 @@ def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slot
     assert range_slot_map["source_id_section_primary_number_suffix_pair"] == ["228|a"]
     assert range_slot_map["source_id_section_terminal_number_suffix_pair"] == ["228|c"]
     assert range_slot_map["citation_section_component_profile"] == ["range"]
-    assert range_slot_map["citation_section_primary_terminal_number_relation"] == [
-        "equal"
-    ]
+    assert range_slot_map["citation_section_primary_terminal_number_relation"] == ["equal"]
     assert range_slot_map["citation_section_primary_terminal_number_span"] == ["0"]
     assert range_slot_map["source_id_section_component_profile"] == ["range"]
-    assert range_slot_map["source_id_section_primary_terminal_number_relation"] == [
-        "equal"
-    ]
+    assert range_slot_map["source_id_section_primary_terminal_number_relation"] == ["equal"]
     assert range_slot_map["source_id_section_primary_terminal_number_span"] == ["0"]
 
 
@@ -3218,15 +3023,9 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
     range_triples = modal_ir_to_flogic_triples(_range_sample_document())
 
     def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
-    assert objects(mixed_triples, "citation_section_component_profile") == [
-        "compound_mixed"
-    ]
+    assert objects(mixed_triples, "citation_section_component_profile") == ["compound_mixed"]
     assert objects(mixed_triples, "citation_section_number_suffix_pair") == [
         "360|bbb",
         "0|none",
@@ -3235,12 +3034,8 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
         "1:360|bbb",
         "2:0|none",
     ]
-    assert objects(mixed_triples, "citation_section_primary_number_suffix_pair") == [
-        "360|bbb"
-    ]
-    assert objects(mixed_triples, "citation_section_terminal_number_suffix_pair") == [
-        "0|none"
-    ]
+    assert objects(mixed_triples, "citation_section_primary_number_suffix_pair") == ["360|bbb"]
+    assert objects(mixed_triples, "citation_section_terminal_number_suffix_pair") == ["0|none"]
     assert objects(mixed_triples, "source_id_section_number_suffix_pair") == [
         "360|bbb",
         "0|none",
@@ -3249,27 +3044,17 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
         "1:360|bbb",
         "2:0|none",
     ]
-    assert objects(mixed_triples, "source_id_section_primary_number_suffix_pair") == [
-        "360|bbb"
-    ]
-    assert objects(mixed_triples, "source_id_section_terminal_number_suffix_pair") == [
-        "0|none"
-    ]
+    assert objects(mixed_triples, "source_id_section_primary_number_suffix_pair") == ["360|bbb"]
+    assert objects(mixed_triples, "source_id_section_terminal_number_suffix_pair") == ["0|none"]
     assert objects(mixed_triples, "citation_section_primary_terminal_number_relation") == [
         "descending"
     ]
-    assert objects(mixed_triples, "citation_section_primary_terminal_number_span") == [
-        "360"
-    ]
-    assert objects(mixed_triples, "source_id_section_component_profile") == [
-        "compound_mixed"
-    ]
+    assert objects(mixed_triples, "citation_section_primary_terminal_number_span") == ["360"]
+    assert objects(mixed_triples, "source_id_section_component_profile") == ["compound_mixed"]
     assert objects(mixed_triples, "source_id_section_primary_terminal_number_relation") == [
         "descending"
     ]
-    assert objects(mixed_triples, "source_id_section_primary_terminal_number_span") == [
-        "360"
-    ]
+    assert objects(mixed_triples, "source_id_section_primary_terminal_number_span") == ["360"]
     assert objects(mixed_triples, "citation_section_has_hyphen_subsection") == ["true"]
     assert objects(
         mixed_triples,
@@ -3313,9 +3098,7 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
         single_alnum_triples,
         "citation_section_number_suffix_pair_positioned",
     ) == ["1:190|l"]
-    assert objects(single_alnum_triples, "citation_section_primary_number_suffix_pair") == [
-        "190|l"
-    ]
+    assert objects(single_alnum_triples, "citation_section_primary_number_suffix_pair") == ["190|l"]
     assert objects(single_alnum_triples, "citation_section_terminal_number_suffix_pair") == [
         "190|l"
     ]
@@ -3333,31 +3116,21 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
     assert objects(single_alnum_triples, "citation_section_primary_terminal_number_relation") == [
         "equal"
     ]
-    assert objects(single_alnum_triples, "citation_section_primary_terminal_number_span") == [
-        "0"
-    ]
+    assert objects(single_alnum_triples, "citation_section_primary_terminal_number_span") == ["0"]
     assert objects(single_alnum_triples, "source_id_section_component_profile") == [
         "single_alphanumeric"
     ]
     assert objects(single_alnum_triples, "source_id_section_primary_terminal_number_relation") == [
         "equal"
     ]
-    assert objects(single_alnum_triples, "source_id_section_primary_terminal_number_span") == [
-        "0"
-    ]
-    assert objects(single_alnum_triples, "citation_section_has_hyphen_subsection") == [
-        "false"
-    ]
-    assert objects(single_alnum_triples, "source_id_section_has_hyphen_subsection") == [
-        "false"
-    ]
+    assert objects(single_alnum_triples, "source_id_section_primary_terminal_number_span") == ["0"]
+    assert objects(single_alnum_triples, "citation_section_has_hyphen_subsection") == ["false"]
+    assert objects(single_alnum_triples, "source_id_section_has_hyphen_subsection") == ["false"]
 
     assert objects(single_numeric_triples, "citation_section_component_profile") == [
         "single_numeric"
     ]
-    assert objects(single_numeric_triples, "citation_section_number_suffix_pair") == [
-        "60101|none"
-    ]
+    assert objects(single_numeric_triples, "citation_section_number_suffix_pair") == ["60101|none"]
     assert objects(
         single_numeric_triples,
         "citation_section_number_suffix_pair_positioned",
@@ -3368,9 +3141,7 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
     assert objects(single_numeric_triples, "citation_section_terminal_number_suffix_pair") == [
         "60101|none"
     ]
-    assert objects(single_numeric_triples, "source_id_section_number_suffix_pair") == [
-        "60101|none"
-    ]
+    assert objects(single_numeric_triples, "source_id_section_number_suffix_pair") == ["60101|none"]
     assert objects(
         single_numeric_triples,
         "source_id_section_number_suffix_pair_positioned",
@@ -3384,12 +3155,8 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
     assert objects(single_numeric_triples, "source_id_section_component_profile") == [
         "single_numeric"
     ]
-    assert objects(single_numeric_triples, "citation_section_has_hyphen_subsection") == [
-        "false"
-    ]
-    assert objects(single_numeric_triples, "source_id_section_has_hyphen_subsection") == [
-        "false"
-    ]
+    assert objects(single_numeric_triples, "citation_section_has_hyphen_subsection") == ["false"]
+    assert objects(single_numeric_triples, "source_id_section_has_hyphen_subsection") == ["false"]
 
     assert objects(range_triples, "citation_section_component_profile") == ["range"]
     assert objects(range_triples, "citation_section_number_suffix_pair") == [
@@ -3412,19 +3179,11 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
     ]
     assert objects(range_triples, "source_id_section_primary_number_suffix_pair") == ["228|a"]
     assert objects(range_triples, "source_id_section_terminal_number_suffix_pair") == ["228|c"]
-    assert objects(range_triples, "citation_section_primary_terminal_number_relation") == [
-        "equal"
-    ]
-    assert objects(range_triples, "citation_section_primary_terminal_number_span") == [
-        "0"
-    ]
+    assert objects(range_triples, "citation_section_primary_terminal_number_relation") == ["equal"]
+    assert objects(range_triples, "citation_section_primary_terminal_number_span") == ["0"]
     assert objects(range_triples, "source_id_section_component_profile") == ["range"]
-    assert objects(range_triples, "source_id_section_primary_terminal_number_relation") == [
-        "equal"
-    ]
-    assert objects(range_triples, "source_id_section_primary_terminal_number_span") == [
-        "0"
-    ]
+    assert objects(range_triples, "source_id_section_primary_terminal_number_relation") == ["equal"]
+    assert objects(range_triples, "source_id_section_primary_terminal_number_span") == ["0"]
 
 
 def test_decode_modal_ir_document_emits_document_modal_family_count_slots() -> None:
@@ -3477,11 +3236,7 @@ def test_modal_ir_to_flogic_triples_emits_document_modal_family_count_slots() ->
     triples = modal_ir_to_flogic_triples(document)
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("modal_family_count") == ["deontic:2", "temporal:1"]
     assert objects("modal_family_count_ranked") == [
@@ -3516,11 +3271,7 @@ def test_modal_ir_to_flogic_triples_derives_modal_family_count_slots_from_formul
     triples = modal_ir_to_flogic_triples(_single_formula_temporal_family_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("modal_family_count") == ["temporal:1"]
     assert objects("modal_family_count_ranked") == ["1:temporal:1"]
@@ -3535,11 +3286,7 @@ def test_modal_ir_to_flogic_triples_infers_selected_frame_and_candidates_from_me
     triples = modal_ir_to_flogic_triples(_metadata_only_frame_terms_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("selected_ontology_frame") == ["administrative_notice_hearing"]
     assert objects("candidate_ontology_frame") == [
@@ -3597,9 +3344,7 @@ def test_modal_ir_to_flogic_triples_infers_selected_frame_and_candidates_from_me
     assert objects("frame_grounding_profile") == [
         "administrative_notice_hearing|rank:1|terms:6|candidates:3"
     ]
-    assert objects("frame_grounding_selected_frame") == [
-        "administrative_notice_hearing"
-    ]
+    assert objects("frame_grounding_selected_frame") == ["administrative_notice_hearing"]
     assert objects("frame_grounding_selected_rank") == ["1"]
     assert objects("frame_grounding_selected_term_count") == ["6"]
     assert objects("frame_grounding_candidate_count") == ["3"]
@@ -3665,9 +3410,7 @@ def test_decode_modal_ir_document_infers_selected_frame_terms_from_metadata() ->
     assert slot_map["frame_grounding_profile"] == [
         "administrative_notice_hearing|rank:1|terms:5|candidates:3"
     ]
-    assert slot_map["frame_grounding_selected_frame"] == [
-        "administrative_notice_hearing"
-    ]
+    assert slot_map["frame_grounding_selected_frame"] == ["administrative_notice_hearing"]
     assert slot_map["frame_grounding_selected_rank"] == ["1"]
     assert slot_map["frame_grounding_selected_term_count"] == ["5"]
     assert slot_map["frame_grounding_candidate_count"] == ["3"]
@@ -3685,7 +3428,9 @@ def test_decode_modal_ir_document_infers_selected_frame_terms_from_metadata() ->
     ]
 
 
-def test_decode_modal_ir_document_infers_selected_frame_from_metadata_terms_without_frame_logic() -> None:
+def test_decode_modal_ir_document_infers_selected_frame_from_metadata_terms_without_frame_logic() -> (
+    None
+):
     decoded = decode_modal_ir_document(
         _metadata_only_frame_terms_without_selected_frame_sample_document()
     )
@@ -3698,17 +3443,15 @@ def test_decode_modal_ir_document_infers_selected_frame_from_metadata_terms_with
     assert slot_map["selected_frame_modal_family_temporal_parity"] == ["odd"]
 
 
-def test_modal_ir_to_flogic_triples_infers_selected_frame_from_metadata_terms_without_frame_logic() -> None:
+def test_modal_ir_to_flogic_triples_infers_selected_frame_from_metadata_terms_without_frame_logic() -> (
+    None
+):
     triples = modal_ir_to_flogic_triples(
         _metadata_only_frame_terms_without_selected_frame_sample_document()
     )
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("selected_ontology_frame") == ["administrative_notice_hearing"]
     assert objects("selected_frame_modal_family") == ["temporal"]
@@ -3720,11 +3463,7 @@ def test_modal_ir_to_flogic_triples_emits_document_citation_slots_when_no_formul
     triples = modal_ir_to_flogic_triples(_zero_formula_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation") == ["50 U.S.C. 3091."]
     assert objects("citation_canonical") == ["50 U.S.C. 3091"]
@@ -3748,7 +3487,9 @@ def test_modal_ir_to_flogic_triples_emits_document_citation_slots_when_no_formul
     assert objects("citation_source_id_section_trailing_punct_pair") == [".|."]
 
 
-def test_decode_modal_ir_document_emits_document_citation_source_id_alignment_slots_when_no_formulas() -> None:
+def test_decode_modal_ir_document_emits_document_citation_source_id_alignment_slots_when_no_formulas() -> (
+    None
+):
     decoded = decode_modal_ir_document(_zero_formula_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
@@ -3764,7 +3505,9 @@ def test_decode_modal_ir_document_emits_document_citation_source_id_alignment_sl
     assert slot_map["citation_source_id_section_trailing_punct_pair"] == [".|."]
 
 
-def test_decode_modal_ir_document_infers_document_citation_slots_from_source_id_without_metadata() -> None:
+def test_decode_modal_ir_document_infers_document_citation_slots_from_source_id_without_metadata() -> (
+    None
+):
     decoded = decode_modal_ir_document(_zero_formula_source_id_only_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
@@ -3776,15 +3519,13 @@ def test_decode_modal_ir_document_infers_document_citation_slots_from_source_id_
     assert slot_map["citation_source_id_section_raw_pair"] == ["7636|7636"]
 
 
-def test_modal_ir_to_flogic_triples_infers_document_citation_slots_from_source_id_without_metadata() -> None:
+def test_modal_ir_to_flogic_triples_infers_document_citation_slots_from_source_id_without_metadata() -> (
+    None
+):
     triples = modal_ir_to_flogic_triples(_zero_formula_source_id_only_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation") == ["22 U.S.C. 7636"]
     assert objects("citation_derivation") == ["source_id_inferred"]
@@ -3794,7 +3535,9 @@ def test_modal_ir_to_flogic_triples_infers_document_citation_slots_from_source_i
     assert objects("citation_source_id_section_raw_pair") == ["7636|7636"]
 
 
-def test_decode_modal_ir_document_infers_formula_citation_slots_from_source_id_when_missing() -> None:
+def test_decode_modal_ir_document_infers_formula_citation_slots_from_source_id_when_missing() -> (
+    None
+):
     decoded = decode_modal_ir_document(_formula_missing_citation_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
@@ -3806,15 +3549,13 @@ def test_decode_modal_ir_document_infers_formula_citation_slots_from_source_id_w
     assert slot_map["citation_source_id_section_raw_pair"] == ["1719|1719"]
 
 
-def test_modal_ir_to_flogic_triples_infers_formula_citation_slots_from_source_id_when_missing() -> None:
+def test_modal_ir_to_flogic_triples_infers_formula_citation_slots_from_source_id_when_missing() -> (
+    None
+):
     triples = modal_ir_to_flogic_triples(_formula_missing_citation_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation") == ["18 U.S.C. 1719"]
     assert objects("citation_derivation") == ["source_id_inferred"]
@@ -3924,36 +3665,18 @@ def test_decode_modal_ir_document_emits_numeric_signature_slots() -> None:
     assert zero_digit_slot_map["citation_section_number_zero_digit_count"] == ["1"]
     assert zero_digit_slot_map["citation_section_number_has_zero_digit"] == ["true"]
     assert zero_digit_slot_map["citation_section_number_trailing_zero_count"] == ["1"]
-    assert zero_digit_slot_map["citation_section_number_zero_digit_count_positioned"] == [
-        "1:1"
-    ]
-    assert zero_digit_slot_map["citation_section_number_has_zero_digit_positioned"] == [
-        "1:true"
-    ]
-    assert zero_digit_slot_map[
-        "citation_section_number_trailing_zero_count_positioned"
-    ] == ["1:1"]
-    assert zero_digit_slot_map["citation_section_primary_number_zero_digit_count"] == [
-        "1"
-    ]
-    assert zero_digit_slot_map["citation_section_primary_number_has_zero_digit"] == [
-        "true"
-    ]
-    assert zero_digit_slot_map["citation_section_primary_number_trailing_zero_count"] == [
-        "1"
-    ]
+    assert zero_digit_slot_map["citation_section_number_zero_digit_count_positioned"] == ["1:1"]
+    assert zero_digit_slot_map["citation_section_number_has_zero_digit_positioned"] == ["1:true"]
+    assert zero_digit_slot_map["citation_section_number_trailing_zero_count_positioned"] == ["1:1"]
+    assert zero_digit_slot_map["citation_section_primary_number_zero_digit_count"] == ["1"]
+    assert zero_digit_slot_map["citation_section_primary_number_has_zero_digit"] == ["true"]
+    assert zero_digit_slot_map["citation_section_primary_number_trailing_zero_count"] == ["1"]
     assert zero_digit_slot_map["source_id_section_number_zero_digit_count"] == ["1"]
     assert zero_digit_slot_map["source_id_section_number_has_zero_digit"] == ["true"]
     assert zero_digit_slot_map["source_id_section_number_trailing_zero_count"] == ["1"]
-    assert zero_digit_slot_map["source_id_section_primary_number_zero_digit_count"] == [
-        "1"
-    ]
-    assert zero_digit_slot_map["source_id_section_primary_number_has_zero_digit"] == [
-        "true"
-    ]
-    assert zero_digit_slot_map["source_id_section_primary_number_trailing_zero_count"] == [
-        "1"
-    ]
+    assert zero_digit_slot_map["source_id_section_primary_number_zero_digit_count"] == ["1"]
+    assert zero_digit_slot_map["source_id_section_primary_number_has_zero_digit"] == ["true"]
+    assert zero_digit_slot_map["source_id_section_primary_number_trailing_zero_count"] == ["1"]
 
     odd_title_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_sample_document())
@@ -3966,11 +3689,7 @@ def test_modal_ir_to_flogic_triples_emits_numeric_signature_slots() -> None:
     triples = modal_ir_to_flogic_triples(_dot_delimited_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation_title_number_parity") == ["even"]
     assert objects("citation_title_number_leading_digit") == ["4"]
@@ -4070,40 +3789,24 @@ def test_modal_ir_to_flogic_triples_emits_numeric_signature_slots() -> None:
     assert zero_digit_objects("citation_section_number_zero_digit_count") == ["1"]
     assert zero_digit_objects("citation_section_number_has_zero_digit") == ["true"]
     assert zero_digit_objects("citation_section_number_trailing_zero_count") == ["1"]
-    assert zero_digit_objects("citation_section_number_zero_digit_count_positioned") == [
-        "1:1"
-    ]
-    assert zero_digit_objects("citation_section_number_has_zero_digit_positioned") == [
-        "1:true"
-    ]
-    assert zero_digit_objects("citation_section_number_trailing_zero_count_positioned") == [
-        "1:1"
-    ]
+    assert zero_digit_objects("citation_section_number_zero_digit_count_positioned") == ["1:1"]
+    assert zero_digit_objects("citation_section_number_has_zero_digit_positioned") == ["1:true"]
+    assert zero_digit_objects("citation_section_number_trailing_zero_count_positioned") == ["1:1"]
     assert zero_digit_objects("citation_section_primary_number_zero_digit_count") == ["1"]
     assert zero_digit_objects("citation_section_primary_number_has_zero_digit") == ["true"]
-    assert zero_digit_objects("citation_section_primary_number_trailing_zero_count") == [
-        "1"
-    ]
+    assert zero_digit_objects("citation_section_primary_number_trailing_zero_count") == ["1"]
     assert zero_digit_objects("source_id_section_number_zero_digit_count") == ["1"]
     assert zero_digit_objects("source_id_section_number_has_zero_digit") == ["true"]
     assert zero_digit_objects("source_id_section_number_trailing_zero_count") == ["1"]
-    assert zero_digit_objects("source_id_section_primary_number_zero_digit_count") == [
-        "1"
-    ]
-    assert zero_digit_objects("source_id_section_primary_number_has_zero_digit") == [
-        "true"
-    ]
-    assert zero_digit_objects("source_id_section_primary_number_trailing_zero_count") == [
-        "1"
-    ]
+    assert zero_digit_objects("source_id_section_primary_number_zero_digit_count") == ["1"]
+    assert zero_digit_objects("source_id_section_primary_number_has_zero_digit") == ["true"]
+    assert zero_digit_objects("source_id_section_primary_number_trailing_zero_count") == ["1"]
 
     odd_title_triples = modal_ir_to_flogic_triples(_sample_document())
 
     def odd_title_objects(predicate: str) -> list[str]:
         return [
-            triple["object"]
-            for triple in odd_title_triples
-            if triple.get("predicate") == predicate
+            triple["object"] for triple in odd_title_triples if triple.get("predicate") == predicate
         ]
 
     assert odd_title_objects("citation_title_number_parity") == ["odd"]
@@ -4118,9 +3821,7 @@ def test_decode_modal_ir_document_emits_usc_section_marker_variant_slots() -> No
     assert section_marker_slot_map["citation_canonical"] == ["2 U.S.C. 190l"]
     assert section_marker_slot_map["citation_section"] == ["190l"]
     assert section_marker_slot_map["citation_section_primary"] == ["190l"]
-    assert section_marker_slot_map["citation_section_component_profile"] == [
-        "single_alphanumeric"
-    ]
+    assert section_marker_slot_map["citation_section_component_profile"] == ["single_alphanumeric"]
     assert section_marker_slot_map["citation_section_has_delimiter"] == ["false"]
     assert section_marker_slot_map["citation_section_delimiter_count"] == ["0"]
     assert section_marker_slot_map["citation_section_primary_suffix"] == ["l"]
@@ -4149,11 +3850,7 @@ def test_modal_ir_to_flogic_triples_emits_usc_section_marker_variant_slots() -> 
     )
 
     def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects(section_marker_triples, "citation") == ["2 U.S.C. §190l"]
     assert objects(section_marker_triples, "citation_canonical") == ["2 U.S.C. 190l"]
@@ -4168,24 +3865,16 @@ def test_modal_ir_to_flogic_triples_emits_usc_section_marker_variant_slots() -> 
     assert objects(section_marker_triples, "citation_section_suffix_kind") == ["alpha"]
 
     assert objects(plural_marker_triples, "citation") == ["45 U.S.C. §§ 228a to 228c."]
-    assert objects(plural_marker_triples, "citation_canonical") == [
-        "45 U.S.C. 228a to 228c"
-    ]
+    assert objects(plural_marker_triples, "citation_canonical") == ["45 U.S.C. 228a to 228c"]
     assert objects(plural_marker_triples, "citation_section") == ["228a to 228c"]
     assert objects(plural_marker_triples, "citation_section_range") == ["228a to 228c"]
     assert objects(plural_marker_triples, "citation_section_range_start") == ["228a"]
     assert objects(plural_marker_triples, "citation_section_range_end") == ["228c"]
     assert objects(plural_marker_triples, "citation_section_range_connector") == ["to"]
     assert objects(plural_marker_triples, "citation_section_trailing_punct") == ["."]
-    assert objects(plural_marker_triples, "citation_section_has_trailing_punct") == [
-        "true"
-    ]
-    assert objects(plural_marker_triples, "citation_section_trailing_punct_count") == [
-        "1"
-    ]
-    assert objects(plural_marker_triples, "citation_section_trailing_punct_kind") == [
-        "dot"
-    ]
+    assert objects(plural_marker_triples, "citation_section_has_trailing_punct") == ["true"]
+    assert objects(plural_marker_triples, "citation_section_trailing_punct_count") == ["1"]
+    assert objects(plural_marker_triples, "citation_section_trailing_punct_kind") == ["dot"]
 
 
 def test_decode_modal_ir_document_emits_section_heading_tail_for_coarse_fallback() -> None:
@@ -4205,11 +3894,7 @@ def test_modal_ir_to_flogic_triples_emits_section_heading_tail_for_coarse_fallba
     triples = modal_ir_to_flogic_triples(_coarse_heading_tail_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("fallback_rule") == ["uscode_section_heading_coarse_v1"]
     assert objects("section_heading_tail") == ["Student aid program improvements"]
@@ -4229,15 +3914,9 @@ def test_decode_modal_ir_document_normalizes_status_heading_section_label() -> N
     assert slot_map["fallback_surface_text"] == ["transferred"]
     assert slot_map["fallback_surface_text_token"] == ["transferred"]
     assert slot_map["fallback_surface_text_alnum_segment_count"] == ["1"]
-    assert slot_map["fallback_surface_text_alnum_segment_kind_positioned"] == [
-        "1:alpha"
-    ]
-    assert slot_map["fallback_surface_text_modal_signature"] == [
-        "frame:Frame:transferred"
-    ]
-    assert slot_map["fallback_surface_text_modal_bridge_signature"] == [
-        "dynamic:[a]:transferred"
-    ]
+    assert slot_map["fallback_surface_text_alnum_segment_kind_positioned"] == ["1:alpha"]
+    assert slot_map["fallback_surface_text_modal_signature"] == ["frame:Frame:transferred"]
+    assert slot_map["fallback_surface_text_modal_bridge_signature"] == ["dynamic:[a]:transferred"]
     assert slot_map["fallback_surface_text_modal_bridge_family"] == ["dynamic"]
     assert slot_map["fallback_surface_text_modal_bridge_operator"] == ["[a]"]
 
@@ -4246,26 +3925,16 @@ def test_modal_ir_to_flogic_triples_normalizes_status_heading_section_label() ->
     triples = modal_ir_to_flogic_triples(_status_heading_section_label_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("fallback_rule") == ["uscode_transferred_heading_v1"]
     assert objects("status_keyword") == ["transferred"]
     assert objects("fallback_surface_text") == ["transferred"]
     assert objects("fallback_surface_text_token") == ["transferred"]
     assert objects("fallback_surface_text_alnum_segment_count") == ["1"]
-    assert objects("fallback_surface_text_alnum_segment_kind_positioned") == [
-        "1:alpha"
-    ]
-    assert objects("fallback_surface_text_modal_signature") == [
-        "frame:Frame:transferred"
-    ]
-    assert objects("fallback_surface_text_modal_bridge_signature") == [
-        "dynamic:[a]:transferred"
-    ]
+    assert objects("fallback_surface_text_alnum_segment_kind_positioned") == ["1:alpha"]
+    assert objects("fallback_surface_text_modal_signature") == ["frame:Frame:transferred"]
+    assert objects("fallback_surface_text_modal_bridge_signature") == ["dynamic:[a]:transferred"]
     assert objects("fallback_surface_text_modal_bridge_family") == ["dynamic"]
     assert objects("fallback_surface_text_modal_bridge_operator") == ["[a]"]
 
@@ -4284,11 +3953,7 @@ def test_modal_ir_to_flogic_triples_emit_canonical_operator_label_slot() -> None
     triples = modal_ir_to_flogic_triples(_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("modal_operator_label") == ["obligatory"]
     assert objects("modal_operator_label_canonical") == ["obligation"]
@@ -4310,11 +3975,7 @@ def test_modal_ir_to_flogic_triples_avoid_low_information_fallback_surface_text(
     triples = modal_ir_to_flogic_triples(_low_information_fallback_surface_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("status_keyword") == ["repealed"]
     assert objects("fallback_surface_text") == ["repealed"]
@@ -4323,9 +3984,7 @@ def test_modal_ir_to_flogic_triples_avoid_low_information_fallback_surface_text(
 
 
 def test_decode_modal_ir_document_recovers_omitted_codification_status_clause() -> None:
-    decoded = decode_modal_ir_document(
-        _omitted_codification_status_clause_sample_document()
-    )
+    decoded = decode_modal_ir_document(_omitted_codification_status_clause_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     expected_clause = (
@@ -4336,19 +3995,12 @@ def test_decode_modal_ir_document_recovers_omitted_codification_status_clause() 
     assert slot_map["source_status_clause"] == [expected_clause]
     assert "terminated" in slot_map["source_status_clause_legal_semantic_atom"]
     assert "omitted" in slot_map["source_status_clause_legal_semantic_atom"]
-    assert any(
-        expected_clause in text
-        for text in slot_map["typed_ir_surface_reconstruction"]
-    )
-    assert "frame->conditional_normative" in slot_map[
-        "typed_decompiler_family_pair"
-    ]
+    assert any(expected_clause in text for text in slot_map["typed_ir_surface_reconstruction"])
+    assert "frame->conditional_normative" in slot_map["typed_decompiler_family_pair"]
 
 
 def test_decode_modal_ir_document_extends_short_repealed_public_law_status_clause() -> None:
-    decoded = decode_modal_ir_document(
-        _repealed_public_law_status_clause_sample_document()
-    )
+    decoded = decode_modal_ir_document(_repealed_public_law_status_clause_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     expected_clause = (
@@ -4364,9 +4016,7 @@ def test_decode_modal_ir_document_extends_short_repealed_public_law_status_claus
 
 
 def test_decode_modal_ir_document_keeps_status_surface_audit_only() -> None:
-    decoded = decode_modal_ir_document(
-        _omitted_codification_status_clause_sample_document()
-    )
+    decoded = decode_modal_ir_document(_omitted_codification_status_clause_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     expected_clause = (
@@ -4379,16 +4029,10 @@ def test_decode_modal_ir_document_keeps_status_surface_audit_only() -> None:
 
 
 def test_modal_ir_to_flogic_triples_recover_omitted_codification_status_clause() -> None:
-    triples = modal_ir_to_flogic_triples(
-        _omitted_codification_status_clause_sample_document()
-    )
+    triples = modal_ir_to_flogic_triples(_omitted_codification_status_clause_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     expected_clause = (
         "Sections were omitted pursuant to section 5316 of this title which "
@@ -4400,7 +4044,9 @@ def test_modal_ir_to_flogic_triples_recover_omitted_codification_status_clause()
     assert "omitted" in objects("source_status_clause_legal_semantic_atom")
 
 
-def test_decode_modal_ir_document_avoids_single_letter_low_information_fallback_surface_text() -> None:
+def test_decode_modal_ir_document_avoids_single_letter_low_information_fallback_surface_text() -> (
+    None
+):
     decoded = decode_modal_ir_document(
         _single_letter_low_information_fallback_surface_sample_document()
     )
@@ -4412,17 +4058,15 @@ def test_decode_modal_ir_document_avoids_single_letter_low_information_fallback_
     assert "s" not in slot_map["fallback_surface_text_token"]
 
 
-def test_modal_ir_to_flogic_triples_avoid_single_letter_low_information_fallback_surface_text() -> None:
+def test_modal_ir_to_flogic_triples_avoid_single_letter_low_information_fallback_surface_text() -> (
+    None
+):
     triples = modal_ir_to_flogic_triples(
         _single_letter_low_information_fallback_surface_sample_document()
     )
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("status_keyword") == ["repealed"]
     assert objects("fallback_surface_text") == ["repealed"]
@@ -4438,40 +4082,26 @@ def test_decode_modal_ir_document_emits_refined_editorial_status_bridge_slots() 
     assert "frame->frame" in slot_map["fallback_surface_text_refined_modal_family_pair"]
     assert "frame->deontic" in slot_map["fallback_surface_text_refined_modal_family_pair"]
     assert (
-        "frame:Frame:repealed"
-        in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
+        "frame:Frame:repealed" in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
     )
-    assert (
-        "deontic:F:repealed"
-        in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
-    )
+    assert "deontic:F:repealed" in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
 
 
 def test_modal_ir_to_flogic_triples_emit_refined_editorial_status_bridge_slots() -> None:
     triples = modal_ir_to_flogic_triples(_low_information_fallback_surface_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert "repealed" in objects("fallback_surface_text_refined_modal_cue")
     assert "frame->frame" in objects("fallback_surface_text_refined_modal_family_pair")
     assert "frame->deontic" in objects("fallback_surface_text_refined_modal_family_pair")
-    assert "frame:Frame:repealed" in objects(
-        "fallback_surface_text_refined_modal_bridge_signature"
-    )
-    assert "deontic:F:repealed" in objects(
-        "fallback_surface_text_refined_modal_bridge_signature"
-    )
+    assert "frame:Frame:repealed" in objects("fallback_surface_text_refined_modal_bridge_signature")
+    assert "deontic:F:repealed" in objects("fallback_surface_text_refined_modal_bridge_signature")
 
 
 def test_decode_modal_ir_document_trims_compilation_preamble_from_fallback_surface() -> None:
-    decoded = decode_modal_ir_document(
-        _compilation_preamble_fallback_surface_sample_document()
-    )
+    decoded = decode_modal_ir_document(_compilation_preamble_fallback_surface_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     assert slot_map["fallback_surface_text"] == ["Administrative notice and hearing"]
@@ -4483,16 +4113,10 @@ def test_decode_modal_ir_document_trims_compilation_preamble_from_fallback_surfa
 
 
 def test_modal_ir_to_flogic_triples_trim_compilation_preamble_from_fallback_surface() -> None:
-    triples = modal_ir_to_flogic_triples(
-        _compilation_preamble_fallback_surface_sample_document()
-    )
+    triples = modal_ir_to_flogic_triples(_compilation_preamble_fallback_surface_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("fallback_surface_text") == ["Administrative notice and hearing"]
     assert objects("fallback_surface_text_token_prefix") == ["administrative"]
@@ -4503,9 +4127,7 @@ def test_modal_ir_to_flogic_triples_trim_compilation_preamble_from_fallback_surf
 
 
 def test_decode_modal_ir_document_emits_contextual_modal_cues_for_fallback_surface() -> None:
-    decoded = decode_modal_ir_document(
-        _fallback_surface_contextual_modal_cue_sample_document()
-    )
+    decoded = decode_modal_ir_document(_fallback_surface_contextual_modal_cue_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     assert set(slot_map["fallback_surface_text_cue"]) == {
@@ -4524,16 +4146,10 @@ def test_decode_modal_ir_document_emits_contextual_modal_cues_for_fallback_surfa
 
 
 def test_modal_ir_to_flogic_triples_emit_contextual_modal_cues_for_fallback_surface() -> None:
-    triples = modal_ir_to_flogic_triples(
-        _fallback_surface_contextual_modal_cue_sample_document()
-    )
+    triples = modal_ir_to_flogic_triples(_fallback_surface_contextual_modal_cue_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert set(objects("fallback_surface_text_cue")) == {
         "effective_date",
@@ -4550,10 +4166,10 @@ def test_modal_ir_to_flogic_triples_emit_contextual_modal_cues_for_fallback_surf
     }.issubset(set(objects("fallback_surface_text_modal_bridge_signature")))
 
 
-def test_decode_modal_ir_document_emits_refined_cross_family_slots_for_frame_fallback_surface() -> None:
-    decoded = decode_modal_ir_document(
-        _frame_fallback_refined_cross_family_cue_sample_document()
-    )
+def test_decode_modal_ir_document_emits_refined_cross_family_slots_for_frame_fallback_surface() -> (
+    None
+):
+    decoded = decode_modal_ir_document(_frame_fallback_refined_cross_family_cue_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     assert "shall" in slot_map["fallback_surface_text_refined_modal_cue"]
@@ -4568,9 +4184,7 @@ def test_decode_modal_ir_document_emits_refined_cross_family_slots_for_frame_fal
 
 
 def test_decode_modal_ir_document_preserves_frame_semantic_reconstruction_targets() -> None:
-    decoded = decode_modal_ir_document(
-        _frame_fallback_refined_cross_family_cue_sample_document()
-    )
+    decoded = decode_modal_ir_document(_frame_fallback_refined_cross_family_cue_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     assert {
@@ -4578,17 +4192,13 @@ def test_decode_modal_ir_document_preserves_frame_semantic_reconstruction_target
         "deontic",
         "frame",
         "temporal",
-    }.issubset(
-        set(slot_map["frame_typed_decompiler_semantic_reconstruction_target"])
-    )
+    }.issubset(set(slot_map["frame_typed_decompiler_semantic_reconstruction_target"]))
     assert {
         "frame->conditional_normative",
         "frame->deontic",
         "frame->frame",
         "frame->temporal",
-    }.issubset(
-        set(slot_map["typed_decompiler_semantic_reconstruction_family_pair"])
-    )
+    }.issubset(set(slot_map["typed_decompiler_semantic_reconstruction_family_pair"]))
     assert (
         "frame->deontic:shall:uscode:obligation:mandatory"
         in slot_map["typed_decompiler_semantic_reconstruction_signature"]
@@ -4599,39 +4209,31 @@ def test_decode_modal_ir_document_preserves_frame_semantic_reconstruction_target
     )
     assert any(
         "slot:typed-decompiler-semantic-reconstruction:"
-        "frame->temporal:not_later_than:uscode:obligation:conditional||"
-        in value
+        "frame->temporal:not_later_than:uscode:obligation:conditional||" in value
         for value in slot_map["semantic_slot_legal_ir_view_prototype"]
     )
 
 
-def test_modal_ir_to_flogic_triples_emit_refined_cross_family_slots_for_frame_fallback_surface() -> None:
-    triples = modal_ir_to_flogic_triples(
-        _frame_fallback_refined_cross_family_cue_sample_document()
-    )
+def test_modal_ir_to_flogic_triples_emit_refined_cross_family_slots_for_frame_fallback_surface() -> (
+    None
+):
+    triples = modal_ir_to_flogic_triples(_frame_fallback_refined_cross_family_cue_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert "shall" in objects("fallback_surface_text_refined_modal_cue")
     assert "not_later_than" in objects("fallback_surface_text_refined_modal_cue")
     assert "frame->deontic" in objects("fallback_surface_text_refined_modal_family_pair")
     assert "frame->temporal" in objects("fallback_surface_text_refined_modal_family_pair")
     assert "deontic:O:shall" in objects("fallback_surface_text_refined_modal_bridge_signature")
-    assert (
-        "temporal:F:not_later_than"
-        in objects("fallback_surface_text_refined_modal_bridge_signature")
+    assert "temporal:F:not_later_than" in objects(
+        "fallback_surface_text_refined_modal_bridge_signature"
     )
 
 
 def test_decode_modal_ir_document_emits_fallback_surface_context_bridge_slots() -> None:
-    decoded = decode_modal_ir_document(
-        _temporal_fallback_surface_context_bridge_sample_document()
-    )
+    decoded = decode_modal_ir_document(_temporal_fallback_surface_context_bridge_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     assert slot_map["fallback_surface_text"] == ["Authorization of appropriations"]
@@ -4648,11 +4250,7 @@ def test_modal_ir_to_flogic_triples_emit_fallback_surface_context_bridge_slots()
     )
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("fallback_surface_text") == ["Authorization of appropriations"]
     assert objects("fallback_surface_context") == [
@@ -4671,7 +4269,9 @@ def test_decode_modal_ir_document_emits_frame_structural_deontic_bridge_slots() 
     assert "chapter" in slot_map["fallback_surface_text_refined_modal_cue"]
     assert "frame->deontic" in slot_map["fallback_surface_text_refined_modal_family_pair"]
     assert "deontic:O:chapter" in slot_map["fallback_surface_text_refined_modal_bridge_signature"]
-    assert "frame->temporal" in slot_map["fallback_surface_text_refined_temporal_bridge_family_pair"]
+    assert (
+        "frame->temporal" in slot_map["fallback_surface_text_refined_temporal_bridge_family_pair"]
+    )
 
 
 def test_modal_ir_to_flogic_triples_emit_frame_structural_deontic_bridge_slots() -> None:
@@ -4680,21 +4280,17 @@ def test_modal_ir_to_flogic_triples_emit_frame_structural_deontic_bridge_slots()
     )
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert "chapter" in objects("fallback_surface_text_refined_modal_cue")
     assert "frame->deontic" in objects("fallback_surface_text_refined_modal_family_pair")
     assert "deontic:O:chapter" in objects("fallback_surface_text_refined_modal_bridge_signature")
-    assert "frame->temporal" in objects(
-        "fallback_surface_text_refined_temporal_bridge_family_pair"
-    )
+    assert "frame->temporal" in objects("fallback_surface_text_refined_temporal_bridge_family_pair")
 
 
-def test_decode_modal_ir_document_ignores_structural_title_refined_cue_for_non_frame_formula() -> None:
+def test_decode_modal_ir_document_ignores_structural_title_refined_cue_for_non_frame_formula() -> (
+    None
+):
     decoded = decode_modal_ir_document(_non_frame_structural_title_noise_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
@@ -4702,15 +4298,13 @@ def test_decode_modal_ir_document_ignores_structural_title_refined_cue_for_non_f
     assert "temporal:X:title" not in slot_map.get("argument_refined_modal_signature", [])
 
 
-def test_modal_ir_to_flogic_triples_ignore_structural_title_refined_cue_for_non_frame_formula() -> None:
+def test_modal_ir_to_flogic_triples_ignore_structural_title_refined_cue_for_non_frame_formula() -> (
+    None
+):
     triples = modal_ir_to_flogic_triples(_non_frame_structural_title_noise_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert "title" not in objects("argument_refined_modal_cue")
     assert "temporal:X:title" not in objects("argument_refined_modal_signature")
@@ -4721,14 +4315,8 @@ def test_decode_modal_ir_document_emits_temporal_year_refined_bridge_slots() -> 
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     assert "year" in slot_map["modal_source_span_refined_modal_cue"]
-    assert (
-        "temporal->temporal"
-        in slot_map["modal_source_span_refined_temporal_bridge_family_pair"]
-    )
-    assert (
-        "temporal:F:year"
-        in slot_map["modal_source_span_refined_temporal_bridge_signature"]
-    )
+    assert "temporal->temporal" in slot_map["modal_source_span_refined_temporal_bridge_family_pair"]
+    assert "temporal:F:year" in slot_map["modal_source_span_refined_temporal_bridge_signature"]
     assert "year" in slot_map["modal_source_span_refined_temporal_bridge_context"]
 
 
@@ -4747,11 +4335,7 @@ def test_modal_ir_to_flogic_triples_emits_procedural_keyword_slots() -> None:
     triples = modal_ir_to_flogic_triples(_procedural_keyword_fallback_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("procedural_keyword") == ["review"]
     assert objects("procedural_keyword_token_count") == ["1"]
@@ -4789,9 +4373,7 @@ def test_decode_modal_ir_document_emits_condition_exception_scope_slots() -> Non
     assert slot_map["exception_token_count"] == ["7"]
     assert slot_map["exception_prefix"] == ["except as otherwise provided"]
     assert slot_map["exception_prefix_key"] == ["except_as_otherwise_provided"]
-    assert slot_map["exception_modal_signature"] == [
-        "deontic:O:except_as_otherwise_provided"
-    ]
+    assert slot_map["exception_modal_signature"] == ["deontic:O:except_as_otherwise_provided"]
     assert slot_map["exception_modal_family"] == ["deontic"]
     assert slot_map["exception_modal_operator"] == ["O"]
     assert slot_map["exception_modal_lexeme"] == ["except_as_otherwise_provided"]
@@ -4805,11 +4387,7 @@ def test_modal_ir_to_flogic_triples_emits_condition_exception_scope_slots() -> N
     triples = modal_ir_to_flogic_triples(_typed_clause_scope_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("condition") == ["provided that the applicant submits annual reports"]
     assert objects("condition_token_count") == ["7"]
@@ -4836,9 +4414,7 @@ def test_modal_ir_to_flogic_triples_emits_condition_exception_scope_slots() -> N
     assert objects("exception_token_count") == ["7"]
     assert objects("exception_prefix") == ["except as otherwise provided"]
     assert objects("exception_prefix_key") == ["except_as_otherwise_provided"]
-    assert objects("exception_modal_signature") == [
-        "deontic:O:except_as_otherwise_provided"
-    ]
+    assert objects("exception_modal_signature") == ["deontic:O:except_as_otherwise_provided"]
     assert objects("exception_modal_family") == ["deontic"]
     assert objects("exception_modal_operator") == ["O"]
     assert objects("exception_modal_lexeme") == ["except_as_otherwise_provided"]
@@ -4873,11 +4449,7 @@ def test_modal_ir_to_flogic_triples_emit_temporal_for_purposes_bridge_slots() ->
     triples = modal_ir_to_flogic_triples(_temporal_for_purposes_bridge_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("condition_modal_signature") == ["temporal:F:for_purposes_of"]
     assert objects("condition_modal_bridge_signature") == [
@@ -4919,15 +4491,13 @@ def test_decode_modal_ir_document_emits_condition_proxy_slots_for_exception_only
     assert slot_map["condition_conditional_normative"] == ["O|:except_as"]
 
 
-def test_modal_ir_to_flogic_triples_emits_condition_proxy_slots_for_exception_only_formula() -> None:
+def test_modal_ir_to_flogic_triples_emits_condition_proxy_slots_for_exception_only_formula() -> (
+    None
+):
     triples = modal_ir_to_flogic_triples(_exception_only_condition_proxy_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("condition") == ["except as such a determination applies"]
     assert objects("condition_prefix") == ["except as"]
@@ -5011,11 +4581,7 @@ def test_modal_ir_to_flogic_triples_emits_cue_modal_signature_and_temporal_prefi
     triples = modal_ir_to_flogic_triples(_cue_signature_temporal_clause_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("cue_modal_signature") == [
         "deontic:O:shall",
@@ -5102,11 +4668,7 @@ def test_modal_ir_to_flogic_triples_emits_temporal_until_canonical_slots() -> No
     triples = modal_ir_to_flogic_triples(_temporal_until_clause_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("condition_prefix_key") == ["until"]
     assert objects("condition_prefix_temporal_relation") == ["until"]
@@ -5153,16 +4715,10 @@ def test_decode_modal_ir_document_emits_source_anchor_family_pair_slots() -> Non
 
 
 def test_modal_ir_to_flogic_triples_emit_source_anchor_family_pair_slots() -> None:
-    mixed_triples = modal_ir_to_flogic_triples(
-        _cue_signature_temporal_clause_sample_document()
-    )
+    mixed_triples = modal_ir_to_flogic_triples(_cue_signature_temporal_clause_sample_document())
 
     def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     mixed_pairs = objects(mixed_triples, "source_action_family_pair")
     assert {
@@ -5170,16 +4726,12 @@ def test_modal_ir_to_flogic_triples_emit_source_anchor_family_pair_slots() -> No
         "deontic->temporal",
         "temporal->epistemic",
         "temporal->temporal",
-    }.issubset(
-        set(mixed_pairs)
-    )
+    }.issubset(set(mixed_pairs))
     mixed_pair_anchors = objects(mixed_triples, "source_action_family_pair_anchor")
     assert any(value.endswith(":deontic->temporal") for value in mixed_pair_anchors)
     assert any(value.endswith(":temporal->temporal") for value in mixed_pair_anchors)
 
-    frame_triples = modal_ir_to_flogic_triples(
-        _fallback_frame_authority_cue_sample_document()
-    )
+    frame_triples = modal_ir_to_flogic_triples(_fallback_frame_authority_cue_sample_document())
     assert objects(frame_triples, "source_action_family_pair") == ["frame->frame"]
     assert any(
         value.endswith(":frame->frame")
@@ -5212,9 +4764,7 @@ def test_decode_modal_ir_document_emits_alethic_directional_source_anchor_family
             )
         ],
     )
-    slot_map = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(sample_document)
-    )
+    slot_map = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(sample_document))
     source_action_pairs = set(slot_map["source_action_family_pair"])
     assert {
         "alethic->alethic",
@@ -5224,17 +4774,10 @@ def test_decode_modal_ir_document_emits_alethic_directional_source_anchor_family
     }.issubset(source_action_pairs)
     source_action_pair_anchors = slot_map["source_action_family_pair_anchor"]
     assert any(
-        value.endswith(":alethic->conditional_normative")
-        for value in source_action_pair_anchors
+        value.endswith(":alethic->conditional_normative") for value in source_action_pair_anchors
     )
-    assert any(
-        value.endswith(":alethic->deontic")
-        for value in source_action_pair_anchors
-    )
-    assert any(
-        value.endswith(":alethic->temporal")
-        for value in source_action_pair_anchors
-    )
+    assert any(value.endswith(":alethic->deontic") for value in source_action_pair_anchors)
+    assert any(value.endswith(":alethic->temporal") for value in source_action_pair_anchors)
 
 
 def test_modal_ir_to_flogic_triples_emit_alethic_directional_source_anchor_family_pairs() -> None:
@@ -5265,11 +4808,7 @@ def test_modal_ir_to_flogic_triples_emit_alethic_directional_source_anchor_famil
     triples = modal_ir_to_flogic_triples(sample_document)
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     source_action_pairs = set(objects("source_action_family_pair"))
     assert {
@@ -5280,17 +4819,10 @@ def test_modal_ir_to_flogic_triples_emit_alethic_directional_source_anchor_famil
     }.issubset(source_action_pairs)
     source_action_pair_anchors = objects("source_action_family_pair_anchor")
     assert any(
-        value.endswith(":alethic->conditional_normative")
-        for value in source_action_pair_anchors
+        value.endswith(":alethic->conditional_normative") for value in source_action_pair_anchors
     )
-    assert any(
-        value.endswith(":alethic->deontic")
-        for value in source_action_pair_anchors
-    )
-    assert any(
-        value.endswith(":alethic->temporal")
-        for value in source_action_pair_anchors
-    )
+    assert any(value.endswith(":alethic->deontic") for value in source_action_pair_anchors)
+    assert any(value.endswith(":alethic->temporal") for value in source_action_pair_anchors)
 
 
 def test_decode_modal_ir_document_derives_modal_cue_from_fallback_frame_predicate() -> None:
@@ -5310,11 +4842,7 @@ def test_modal_ir_to_flogic_triples_derives_modal_cue_from_fallback_frame_predic
     triples = modal_ir_to_flogic_triples(_fallback_frame_authority_cue_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("modal_cue") == ["__uscode_section_heading_fallback__", "authority"]
     assert objects("modal_cue_signature") == [
@@ -5332,9 +4860,7 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
         decode_modal_ir_document(_provenance_alignment_mismatch_sample_document())
     )
     punct_mismatch_slot_map = decoded_modal_phrase_slot_text_map(
-        decode_modal_ir_document(
-            _provenance_alignment_trailing_punct_mismatch_sample_document()
-        )
+        decode_modal_ir_document(_provenance_alignment_trailing_punct_mismatch_sample_document())
     )
     range_aligned_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_numeric_range_sample_document())
@@ -5358,64 +4884,34 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     ]
     assert aligned_slot_map["citation_source_id_title_number_relation"] == ["equal"]
     assert aligned_slot_map["citation_source_id_title_number_span"] == ["0"]
-    assert (
-        aligned_slot_map[
-            "citation_source_id_title_number_signature_leading_digit_pair"
-        ]
-        == ["2|2"]
-    )
-    assert (
-        aligned_slot_map[
-            "citation_source_id_title_number_signature_leading_digit_match"
-        ]
-        == ["true"]
-    )
-    assert aligned_slot_map["citation_source_id_section_primary_number_relation"] == [
-        "equal"
+    assert aligned_slot_map["citation_source_id_title_number_signature_leading_digit_pair"] == [
+        "2|2"
     ]
-    assert aligned_slot_map["citation_source_id_section_primary_number_span"] == ["0"]
-    assert (
-        aligned_slot_map[
-            "citation_source_id_section_primary_number_signature_zero_digit_count_pair"
-        ]
-        == ["1|1"]
-    )
-    assert (
-        aligned_slot_map[
-            "citation_source_id_section_primary_number_signature_zero_digit_count_match"
-        ]
-        == ["true"]
-    )
-    assert aligned_slot_map["citation_source_id_section_primary_suffix_pair"] == [
-        "bbb|bbb"
-    ]
-    assert aligned_slot_map["citation_source_id_section_primary_suffix_match"] == ["true"]
-    assert (
-        aligned_slot_map["citation_source_id_section_primary_suffix_presence_match"]
-        == ["true"]
-    )
-    assert (
-        aligned_slot_map["citation_source_id_section_primary_component_signature_match"]
-        == ["true"]
-    )
-    assert (
-        aligned_slot_map["citation_source_id_section_primary_component_signature_pair"]
-        == ["N3A3|N3A3"]
-    )
-    assert aligned_slot_map["citation_source_id_section_raw_match"] == ["true"]
-    assert aligned_slot_map["citation_source_id_section_raw_pair"] == [
-        "360bbb-0|360bbb-0"
-    ]
-    assert (
-        aligned_slot_map["citation_source_id_section_trailing_punct_presence_match"]
-        == ["true"]
-    )
-    assert aligned_slot_map["citation_source_id_section_trailing_punct_match"] == [
+    assert aligned_slot_map["citation_source_id_title_number_signature_leading_digit_match"] == [
         "true"
     ]
-    assert aligned_slot_map["citation_source_id_section_trailing_punct_pair"] == [
-        "none|none"
+    assert aligned_slot_map["citation_source_id_section_primary_number_relation"] == ["equal"]
+    assert aligned_slot_map["citation_source_id_section_primary_number_span"] == ["0"]
+    assert aligned_slot_map[
+        "citation_source_id_section_primary_number_signature_zero_digit_count_pair"
+    ] == ["1|1"]
+    assert aligned_slot_map[
+        "citation_source_id_section_primary_number_signature_zero_digit_count_match"
+    ] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_primary_suffix_pair"] == ["bbb|bbb"]
+    assert aligned_slot_map["citation_source_id_section_primary_suffix_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_primary_suffix_presence_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_primary_component_signature_match"] == [
+        "true"
     ]
+    assert aligned_slot_map["citation_source_id_section_primary_component_signature_pair"] == [
+        "N3A3|N3A3"
+    ]
+    assert aligned_slot_map["citation_source_id_section_raw_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_raw_pair"] == ["360bbb-0|360bbb-0"]
+    assert aligned_slot_map["citation_source_id_section_trailing_punct_presence_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_trailing_punct_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_trailing_punct_pair"] == ["none|none"]
     assert aligned_slot_map["citation_source_id_section_style_pair"] == [
         (
             f"{aligned_slot_map['source_id_section_style'][0]}|"
@@ -5423,33 +4919,25 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
         )
     ]
     assert aligned_slot_map["citation_source_id_section_style_match"] == ["true"]
-    assert aligned_slot_map["citation_source_id_section_style_presence_match"] == [
-        "true"
-    ]
+    assert aligned_slot_map["citation_source_id_section_style_presence_match"] == ["true"]
     assert aligned_slot_map["citation_source_id_section_suffix_style_pair"] == [
         (
             f"{aligned_slot_map['source_id_section_suffix_style'][0]}|"
             f"{aligned_slot_map['citation_section_suffix_style'][0]}"
         )
     ]
-    assert aligned_slot_map["citation_source_id_section_suffix_style_match"] == [
-        "true"
-    ]
-    assert aligned_slot_map[
-        "citation_source_id_section_suffix_style_presence_match"
-    ] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_suffix_style_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_suffix_style_presence_match"] == ["true"]
     assert aligned_slot_map["citation_source_id_section_punctuation_style_pair"] == [
         (
             f"{aligned_slot_map['source_id_section_punctuation_style'][0]}|"
             f"{aligned_slot_map['citation_section_punctuation_style'][0]}"
         )
     ]
-    assert aligned_slot_map["citation_source_id_section_punctuation_style_match"] == [
+    assert aligned_slot_map["citation_source_id_section_punctuation_style_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_punctuation_style_presence_match"] == [
         "true"
     ]
-    assert aligned_slot_map[
-        "citation_source_id_section_punctuation_style_presence_match"
-    ] == ["true"]
 
     assert mismatch_slot_map["citation_source_id_alignment"] == ["title_only_match"]
     assert mismatch_slot_map["citation_source_id_title_match"] == ["true"]
@@ -5458,72 +4946,38 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     assert mismatch_slot_map["citation_source_id_canonical_match"] == ["false"]
     assert mismatch_slot_map["citation_source_id_title_pair"] == ["20|20"]
     assert mismatch_slot_map["citation_source_id_section_pair"] == ["1131d|1131e"]
-    assert mismatch_slot_map["citation_source_id_title_section_key_pair"] == [
-        "20:1131d|20:1131e"
-    ]
+    assert mismatch_slot_map["citation_source_id_title_section_key_pair"] == ["20:1131d|20:1131e"]
     assert mismatch_slot_map["citation_source_id_canonical_pair"] == [
         "20 U.S.C. 1131d|20 U.S.C. 1131e"
     ]
     assert mismatch_slot_map["citation_source_id_title_number_relation"] == ["equal"]
     assert mismatch_slot_map["citation_source_id_title_number_span"] == ["0"]
-    assert (
-        mismatch_slot_map[
-            "citation_source_id_title_number_signature_parity_pair"
-        ]
-        == ["even|even"]
-    )
-    assert (
-        mismatch_slot_map[
-            "citation_source_id_title_number_signature_parity_match"
-        ]
-        == ["true"]
-    )
-    assert mismatch_slot_map["citation_source_id_section_primary_number_relation"] == [
-        "equal"
+    assert mismatch_slot_map["citation_source_id_title_number_signature_parity_pair"] == [
+        "even|even"
     ]
+    assert mismatch_slot_map["citation_source_id_title_number_signature_parity_match"] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_primary_number_relation"] == ["equal"]
     assert mismatch_slot_map["citation_source_id_section_primary_number_span"] == ["0"]
-    assert (
-        mismatch_slot_map[
-            "citation_source_id_section_primary_number_signature_has_zero_digit_pair"
-        ]
-        == ["false|false"]
-    )
-    assert (
-        mismatch_slot_map[
-            "citation_source_id_section_primary_number_signature_has_zero_digit_match"
-        ]
-        == ["true"]
-    )
-    assert mismatch_slot_map["citation_source_id_section_primary_suffix_pair"] == [
-        "d|e"
-    ]
-    assert mismatch_slot_map["citation_source_id_section_primary_suffix_match"] == [
-        "false"
-    ]
-    assert (
-        mismatch_slot_map["citation_source_id_section_primary_suffix_presence_match"]
-        == ["true"]
-    )
-    assert (
-        mismatch_slot_map["citation_source_id_section_primary_component_signature_match"]
-        == ["true"]
-    )
-    assert (
-        mismatch_slot_map["citation_source_id_section_primary_component_signature_pair"]
-        == ["N4A1|N4A1"]
-    )
-    assert mismatch_slot_map["citation_source_id_section_raw_match"] == ["false"]
-    assert mismatch_slot_map["citation_source_id_section_raw_pair"] == ["1131d|1131e"]
-    assert (
-        mismatch_slot_map["citation_source_id_section_trailing_punct_presence_match"]
-        == ["true"]
-    )
-    assert mismatch_slot_map["citation_source_id_section_trailing_punct_match"] == [
+    assert mismatch_slot_map[
+        "citation_source_id_section_primary_number_signature_has_zero_digit_pair"
+    ] == ["false|false"]
+    assert mismatch_slot_map[
+        "citation_source_id_section_primary_number_signature_has_zero_digit_match"
+    ] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_primary_suffix_pair"] == ["d|e"]
+    assert mismatch_slot_map["citation_source_id_section_primary_suffix_match"] == ["false"]
+    assert mismatch_slot_map["citation_source_id_section_primary_suffix_presence_match"] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_primary_component_signature_match"] == [
         "true"
     ]
-    assert mismatch_slot_map["citation_source_id_section_trailing_punct_pair"] == [
-        "none|none"
+    assert mismatch_slot_map["citation_source_id_section_primary_component_signature_pair"] == [
+        "N4A1|N4A1"
     ]
+    assert mismatch_slot_map["citation_source_id_section_raw_match"] == ["false"]
+    assert mismatch_slot_map["citation_source_id_section_raw_pair"] == ["1131d|1131e"]
+    assert mismatch_slot_map["citation_source_id_section_trailing_punct_presence_match"] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_trailing_punct_match"] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_trailing_punct_pair"] == ["none|none"]
     assert mismatch_slot_map["citation_source_id_section_style_pair"] == [
         (
             f"{mismatch_slot_map['source_id_section_style'][0]}|"
@@ -5531,40 +4985,30 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
         )
     ]
     assert mismatch_slot_map["citation_source_id_section_style_match"] == ["true"]
-    assert mismatch_slot_map["citation_source_id_section_style_presence_match"] == [
-        "true"
-    ]
+    assert mismatch_slot_map["citation_source_id_section_style_presence_match"] == ["true"]
     assert mismatch_slot_map["citation_source_id_section_suffix_style_pair"] == [
         (
             f"{mismatch_slot_map['source_id_section_suffix_style'][0]}|"
             f"{mismatch_slot_map['citation_section_suffix_style'][0]}"
         )
     ]
-    assert mismatch_slot_map["citation_source_id_section_suffix_style_match"] == [
-        "true"
-    ]
-    assert mismatch_slot_map[
-        "citation_source_id_section_suffix_style_presence_match"
-    ] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_suffix_style_match"] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_suffix_style_presence_match"] == ["true"]
     assert mismatch_slot_map["citation_source_id_section_punctuation_style_pair"] == [
         (
             f"{mismatch_slot_map['source_id_section_punctuation_style'][0]}|"
             f"{mismatch_slot_map['citation_section_punctuation_style'][0]}"
         )
     ]
-    assert mismatch_slot_map["citation_source_id_section_punctuation_style_match"] == [
+    assert mismatch_slot_map["citation_source_id_section_punctuation_style_match"] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_punctuation_style_presence_match"] == [
         "true"
     ]
-    assert mismatch_slot_map[
-        "citation_source_id_section_punctuation_style_presence_match"
-    ] == ["true"]
 
     assert punct_mismatch_slot_map["citation_source_id_alignment"] == ["exact_match"]
     assert punct_mismatch_slot_map["citation_source_id_title_match"] == ["true"]
     assert punct_mismatch_slot_map["citation_source_id_section_match"] == ["true"]
-    assert punct_mismatch_slot_map["citation_source_id_title_section_key_match"] == [
-        "true"
-    ]
+    assert punct_mismatch_slot_map["citation_source_id_title_section_key_match"] == ["true"]
     assert punct_mismatch_slot_map["citation_source_id_canonical_match"] == ["true"]
     assert punct_mismatch_slot_map["citation_source_id_title_pair"] == ["46|46"]
     assert punct_mismatch_slot_map["citation_source_id_section_pair"] == ["10318|10318"]
@@ -5574,212 +5018,114 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     assert punct_mismatch_slot_map["citation_source_id_canonical_pair"] == [
         "46 U.S.C. 10318|46 U.S.C. 10318"
     ]
-    assert punct_mismatch_slot_map["citation_source_id_title_number_relation"] == [
+    assert punct_mismatch_slot_map["citation_source_id_title_number_relation"] == ["equal"]
+    assert punct_mismatch_slot_map["citation_source_id_title_number_span"] == ["0"]
+    assert punct_mismatch_slot_map["citation_source_id_section_primary_number_relation"] == [
         "equal"
     ]
-    assert punct_mismatch_slot_map["citation_source_id_title_number_span"] == ["0"]
-    assert (
-        punct_mismatch_slot_map["citation_source_id_section_primary_number_relation"]
-        == ["equal"]
-    )
-    assert punct_mismatch_slot_map["citation_source_id_section_primary_number_span"] == [
-        "0"
-    ]
-    assert (
-        punct_mismatch_slot_map[
-            "citation_source_id_section_primary_number_signature_magnitude_bucket_pair"
-        ]
-        == ["10k_to_99k|10k_to_99k"]
-    )
-    assert (
-        punct_mismatch_slot_map[
-            "citation_source_id_section_primary_number_signature_magnitude_bucket_match"
-        ]
-        == ["true"]
-    )
+    assert punct_mismatch_slot_map["citation_source_id_section_primary_number_span"] == ["0"]
+    assert punct_mismatch_slot_map[
+        "citation_source_id_section_primary_number_signature_magnitude_bucket_pair"
+    ] == ["10k_to_99k|10k_to_99k"]
+    assert punct_mismatch_slot_map[
+        "citation_source_id_section_primary_number_signature_magnitude_bucket_match"
+    ] == ["true"]
     assert punct_mismatch_slot_map["citation_source_id_section_primary_suffix_pair"] == [
         "none|none"
     ]
-    assert punct_mismatch_slot_map["citation_source_id_section_primary_suffix_match"] == [
+    assert punct_mismatch_slot_map["citation_source_id_section_primary_suffix_match"] == ["true"]
+    assert punct_mismatch_slot_map["citation_source_id_section_primary_suffix_presence_match"] == [
         "true"
     ]
-    assert (
-        punct_mismatch_slot_map[
-            "citation_source_id_section_primary_suffix_presence_match"
-        ]
-        == ["true"]
-    )
-    assert (
-        punct_mismatch_slot_map[
-            "citation_source_id_section_primary_component_signature_match"
-        ]
-        == ["true"]
-    )
-    assert (
-        punct_mismatch_slot_map[
-            "citation_source_id_section_primary_component_signature_pair"
-        ]
-        == ["N5|N5"]
-    )
+    assert punct_mismatch_slot_map[
+        "citation_source_id_section_primary_component_signature_match"
+    ] == ["true"]
+    assert punct_mismatch_slot_map[
+        "citation_source_id_section_primary_component_signature_pair"
+    ] == ["N5|N5"]
     assert punct_mismatch_slot_map["citation_source_id_section_raw_match"] == ["false"]
-    assert punct_mismatch_slot_map["citation_source_id_section_raw_pair"] == [
-        "10318.|10318"
-    ]
-    assert (
-        punct_mismatch_slot_map[
-            "citation_source_id_section_trailing_punct_presence_match"
-        ]
-        == ["false"]
-    )
-    assert punct_mismatch_slot_map["citation_source_id_section_trailing_punct_match"] == [
+    assert punct_mismatch_slot_map["citation_source_id_section_raw_pair"] == ["10318.|10318"]
+    assert punct_mismatch_slot_map["citation_source_id_section_trailing_punct_presence_match"] == [
         "false"
     ]
-    assert punct_mismatch_slot_map["citation_source_id_section_trailing_punct_pair"] == [
-        ".|none"
-    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_trailing_punct_match"] == ["false"]
+    assert punct_mismatch_slot_map["citation_source_id_section_trailing_punct_pair"] == [".|none"]
     assert punct_mismatch_slot_map["citation_source_id_section_style_pair"] == [
         (
             f"{punct_mismatch_slot_map['source_id_section_style'][0]}|"
             f"{punct_mismatch_slot_map['citation_section_style'][0]}"
         )
     ]
-    assert punct_mismatch_slot_map["citation_source_id_section_style_match"] == [
-        "false"
-    ]
-    assert punct_mismatch_slot_map["citation_source_id_section_style_presence_match"] == [
-        "true"
-    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_style_match"] == ["false"]
+    assert punct_mismatch_slot_map["citation_source_id_section_style_presence_match"] == ["true"]
     assert punct_mismatch_slot_map["citation_source_id_section_suffix_style_pair"] == [
         (
             f"{punct_mismatch_slot_map['source_id_section_suffix_style'][0]}|"
             f"{punct_mismatch_slot_map['citation_section_suffix_style'][0]}"
         )
     ]
-    assert punct_mismatch_slot_map["citation_source_id_section_suffix_style_match"] == [
+    assert punct_mismatch_slot_map["citation_source_id_section_suffix_style_match"] == ["true"]
+    assert punct_mismatch_slot_map["citation_source_id_section_suffix_style_presence_match"] == [
         "true"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_punctuation_style_pair"] == [
+        (
+            f"{punct_mismatch_slot_map['source_id_section_punctuation_style'][0]}|"
+            f"{punct_mismatch_slot_map['citation_section_punctuation_style'][0]}"
+        )
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_punctuation_style_match"] == [
+        "false"
     ]
     assert punct_mismatch_slot_map[
-        "citation_source_id_section_suffix_style_presence_match"
+        "citation_source_id_section_punctuation_style_presence_match"
     ] == ["true"]
-    assert (
-        punct_mismatch_slot_map["citation_source_id_section_punctuation_style_pair"]
-        == [
-            (
-                f"{punct_mismatch_slot_map['source_id_section_punctuation_style'][0]}|"
-                f"{punct_mismatch_slot_map['citation_section_punctuation_style'][0]}"
-            )
-        ]
-    )
-    assert (
-        punct_mismatch_slot_map["citation_source_id_section_punctuation_style_match"]
-        == ["false"]
-    )
-    assert (
-        punct_mismatch_slot_map[
-            "citation_source_id_section_punctuation_style_presence_match"
-        ]
-        == ["true"]
-    )
 
-    assert range_aligned_slot_map["citation_source_id_section_is_range_pair"] == [
-        "true|true"
-    ]
-    assert range_aligned_slot_map["citation_source_id_section_is_range_match"] == [
+    assert range_aligned_slot_map["citation_source_id_section_is_range_pair"] == ["true|true"]
+    assert range_aligned_slot_map["citation_source_id_section_is_range_match"] == ["true"]
+    assert range_aligned_slot_map["citation_source_id_section_range_start_pair"] == ["1381|1381"]
+    assert range_aligned_slot_map["citation_source_id_section_range_start_match"] == ["true"]
+    assert range_aligned_slot_map["citation_source_id_section_range_start_presence_match"] == [
         "true"
     ]
-    assert range_aligned_slot_map["citation_source_id_section_range_start_pair"] == [
-        "1381|1381"
-    ]
-    assert range_aligned_slot_map["citation_source_id_section_range_start_match"] == [
+    assert range_aligned_slot_map["citation_source_id_section_range_end_pair"] == ["1398|1398"]
+    assert range_aligned_slot_map["citation_source_id_section_range_end_match"] == ["true"]
+    assert range_aligned_slot_map["citation_source_id_section_range_end_presence_match"] == ["true"]
+    assert range_aligned_slot_map["citation_source_id_section_range_connector_pair"] == ["to|to"]
+    assert range_aligned_slot_map["citation_source_id_section_range_connector_match"] == ["true"]
+    assert range_aligned_slot_map["citation_source_id_section_range_connector_presence_match"] == [
         "true"
     ]
-    assert (
-        range_aligned_slot_map["citation_source_id_section_range_start_presence_match"]
-        == ["true"]
-    )
-    assert range_aligned_slot_map["citation_source_id_section_range_end_pair"] == [
-        "1398|1398"
-    ]
-    assert range_aligned_slot_map["citation_source_id_section_range_end_match"] == [
-        "true"
-    ]
-    assert (
-        range_aligned_slot_map["citation_source_id_section_range_end_presence_match"]
-        == ["true"]
-    )
-    assert range_aligned_slot_map["citation_source_id_section_range_connector_pair"] == [
-        "to|to"
-    ]
-    assert range_aligned_slot_map["citation_source_id_section_range_connector_match"] == [
-        "true"
-    ]
-    assert (
-        range_aligned_slot_map[
-            "citation_source_id_section_range_connector_presence_match"
-        ]
-        == ["true"]
-    )
     assert range_aligned_slot_map["citation_source_id_section_style_match"] == ["true"]
-    assert (
-        range_aligned_slot_map["citation_source_id_section_suffix_style_match"]
-        == ["true"]
-    )
-    assert (
-        range_aligned_slot_map["citation_source_id_section_punctuation_style_match"]
-        == ["true"]
-    )
+    assert range_aligned_slot_map["citation_source_id_section_suffix_style_match"] == ["true"]
+    assert range_aligned_slot_map["citation_source_id_section_punctuation_style_match"] == ["true"]
 
-    assert range_connector_mismatch_slot_map["citation_source_id_alignment"] == [
-        "title_only_match"
+    assert range_connector_mismatch_slot_map["citation_source_id_alignment"] == ["title_only_match"]
+    assert range_connector_mismatch_slot_map["citation_source_id_section_range_start_pair"] == [
+        "4605|4605"
     ]
-    assert (
-        range_connector_mismatch_slot_map[
-            "citation_source_id_section_range_start_pair"
-        ]
-        == ["4605|4605"]
-    )
-    assert (
-        range_connector_mismatch_slot_map[
-            "citation_source_id_section_range_start_match"
-        ]
-        == ["true"]
-    )
-    assert (
-        range_connector_mismatch_slot_map[
-            "citation_source_id_section_range_end_pair"
-        ]
-        == ["4610|4610"]
-    )
-    assert (
-        range_connector_mismatch_slot_map[
-            "citation_source_id_section_range_end_match"
-        ]
-        == ["true"]
-    )
-    assert (
-        range_connector_mismatch_slot_map[
-            "citation_source_id_section_range_connector_pair"
-        ]
-        == ["to|through"]
-    )
-    assert (
-        range_connector_mismatch_slot_map[
-            "citation_source_id_section_range_connector_match"
-        ]
-        == ["false"]
-    )
-    assert (
-        range_connector_mismatch_slot_map[
-            "citation_source_id_section_range_connector_presence_match"
-        ]
-        == ["true"]
-    )
+    assert range_connector_mismatch_slot_map["citation_source_id_section_range_start_match"] == [
+        "true"
+    ]
+    assert range_connector_mismatch_slot_map["citation_source_id_section_range_end_pair"] == [
+        "4610|4610"
+    ]
+    assert range_connector_mismatch_slot_map["citation_source_id_section_range_end_match"] == [
+        "true"
+    ]
+    assert range_connector_mismatch_slot_map["citation_source_id_section_range_connector_pair"] == [
+        "to|through"
+    ]
     assert range_connector_mismatch_slot_map[
-        "citation_source_id_section_style_match"
-    ] == ["true"]
+        "citation_source_id_section_range_connector_match"
+    ] == ["false"]
     assert range_connector_mismatch_slot_map[
-        "citation_source_id_section_suffix_style_match"
+        "citation_source_id_section_range_connector_presence_match"
     ] == ["true"]
+    assert range_connector_mismatch_slot_map["citation_source_id_section_style_match"] == ["true"]
+    assert range_connector_mismatch_slot_map["citation_source_id_section_suffix_style_match"] == [
+        "true"
+    ]
     assert range_connector_mismatch_slot_map[
         "citation_source_id_section_punctuation_style_match"
     ] == ["true"]
@@ -5787,9 +5133,7 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
 
 def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -> None:
     aligned_triples = modal_ir_to_flogic_triples(_sample_document())
-    mismatch_triples = modal_ir_to_flogic_triples(
-        _provenance_alignment_mismatch_sample_document()
-    )
+    mismatch_triples = modal_ir_to_flogic_triples(_provenance_alignment_mismatch_sample_document())
     punct_mismatch_triples = modal_ir_to_flogic_triples(
         _provenance_alignment_trailing_punct_mismatch_sample_document()
     )
@@ -5799,32 +5143,22 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
     )
 
     def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects(aligned_triples, "citation_source_id_alignment") == ["exact_match"]
     assert objects(aligned_triples, "citation_source_id_title_match") == ["true"]
     assert objects(aligned_triples, "citation_source_id_section_match") == ["true"]
-    assert objects(aligned_triples, "citation_source_id_title_section_key_match") == [
-        "true"
-    ]
+    assert objects(aligned_triples, "citation_source_id_title_section_key_match") == ["true"]
     assert objects(aligned_triples, "citation_source_id_canonical_match") == ["true"]
     assert objects(aligned_triples, "citation_source_id_title_pair") == ["21|21"]
-    assert objects(aligned_triples, "citation_source_id_section_pair") == [
-        "360bbb-0|360bbb-0"
-    ]
+    assert objects(aligned_triples, "citation_source_id_section_pair") == ["360bbb-0|360bbb-0"]
     assert objects(aligned_triples, "citation_source_id_title_section_key_pair") == [
         "21:360bbb-0|21:360bbb-0"
     ]
     assert objects(aligned_triples, "citation_source_id_canonical_pair") == [
         "21 U.S.C. 360bbb-0|21 U.S.C. 360bbb-0"
     ]
-    assert objects(aligned_triples, "citation_source_id_title_number_relation") == [
-        "equal"
-    ]
+    assert objects(aligned_triples, "citation_source_id_title_number_relation") == ["equal"]
     assert objects(aligned_triples, "citation_source_id_title_number_span") == ["0"]
     assert objects(
         aligned_triples,
@@ -5838,9 +5172,7 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         aligned_triples,
         "citation_source_id_section_primary_number_relation",
     ) == ["equal"]
-    assert objects(aligned_triples, "citation_source_id_section_primary_number_span") == [
-        "0"
-    ]
+    assert objects(aligned_triples, "citation_source_id_section_primary_number_span") == ["0"]
     assert objects(
         aligned_triples,
         "citation_source_id_section_primary_number_signature_zero_digit_count_pair",
@@ -5849,12 +5181,8 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         aligned_triples,
         "citation_source_id_section_primary_number_signature_zero_digit_count_match",
     ) == ["true"]
-    assert objects(aligned_triples, "citation_source_id_section_primary_suffix_pair") == [
-        "bbb|bbb"
-    ]
-    assert objects(aligned_triples, "citation_source_id_section_primary_suffix_match") == [
-        "true"
-    ]
+    assert objects(aligned_triples, "citation_source_id_section_primary_suffix_pair") == ["bbb|bbb"]
+    assert objects(aligned_triples, "citation_source_id_section_primary_suffix_match") == ["true"]
     assert objects(
         aligned_triples,
         "citation_source_id_section_primary_suffix_presence_match",
@@ -5868,22 +5196,16 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         "citation_source_id_section_primary_component_signature_pair",
     ) == ["N3A3|N3A3"]
     assert objects(aligned_triples, "citation_source_id_section_raw_match") == ["true"]
-    assert objects(aligned_triples, "citation_source_id_section_raw_pair") == [
-        "360bbb-0|360bbb-0"
-    ]
+    assert objects(aligned_triples, "citation_source_id_section_raw_pair") == ["360bbb-0|360bbb-0"]
     assert objects(
         aligned_triples,
         "citation_source_id_section_trailing_punct_presence_match",
     ) == ["true"]
-    assert objects(aligned_triples, "citation_source_id_section_trailing_punct_match") == [
-        "true"
-    ]
+    assert objects(aligned_triples, "citation_source_id_section_trailing_punct_match") == ["true"]
     assert objects(aligned_triples, "citation_source_id_section_trailing_punct_pair") == [
         "none|none"
     ]
-    assert objects(aligned_triples, "citation_source_id_section_style_match") == [
-        "true"
-    ]
+    assert objects(aligned_triples, "citation_source_id_section_style_match") == ["true"]
     assert objects(
         aligned_triples,
         "citation_source_id_section_style_presence_match",
@@ -5905,9 +5227,7 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         "citation_source_id_section_punctuation_style_presence_match",
     ) == ["true"]
 
-    assert objects(mismatch_triples, "citation_source_id_alignment") == [
-        "title_only_match"
-    ]
+    assert objects(mismatch_triples, "citation_source_id_alignment") == ["title_only_match"]
     assert objects(mismatch_triples, "citation_source_id_title_match") == ["true"]
     assert objects(mismatch_triples, "citation_source_id_section_match") == ["false"]
     assert objects(
@@ -5916,9 +5236,7 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
     ) == ["false"]
     assert objects(mismatch_triples, "citation_source_id_canonical_match") == ["false"]
     assert objects(mismatch_triples, "citation_source_id_title_pair") == ["20|20"]
-    assert objects(mismatch_triples, "citation_source_id_section_pair") == [
-        "1131d|1131e"
-    ]
+    assert objects(mismatch_triples, "citation_source_id_section_pair") == ["1131d|1131e"]
     assert objects(
         mismatch_triples,
         "citation_source_id_title_section_key_pair",
@@ -5926,9 +5244,7 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
     assert objects(mismatch_triples, "citation_source_id_canonical_pair") == [
         "20 U.S.C. 1131d|20 U.S.C. 1131e"
     ]
-    assert objects(mismatch_triples, "citation_source_id_title_number_relation") == [
-        "equal"
-    ]
+    assert objects(mismatch_triples, "citation_source_id_title_number_relation") == ["equal"]
     assert objects(mismatch_triples, "citation_source_id_title_number_span") == ["0"]
     assert objects(
         mismatch_triples,
@@ -5975,9 +5291,7 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         "citation_source_id_section_primary_component_signature_pair",
     ) == ["N4A1|N4A1"]
     assert objects(mismatch_triples, "citation_source_id_section_raw_match") == ["false"]
-    assert objects(mismatch_triples, "citation_source_id_section_raw_pair") == [
-        "1131d|1131e"
-    ]
+    assert objects(mismatch_triples, "citation_source_id_section_raw_pair") == ["1131d|1131e"]
     assert objects(
         mismatch_triples,
         "citation_source_id_section_trailing_punct_presence_match",
@@ -5990,9 +5304,7 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         mismatch_triples,
         "citation_source_id_section_trailing_punct_pair",
     ) == ["none|none"]
-    assert objects(mismatch_triples, "citation_source_id_section_style_match") == [
-        "true"
-    ]
+    assert objects(mismatch_triples, "citation_source_id_section_style_match") == ["true"]
     assert objects(
         mismatch_triples,
         "citation_source_id_section_style_presence_match",
@@ -6014,22 +5326,16 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         "citation_source_id_section_punctuation_style_presence_match",
     ) == ["true"]
 
-    assert objects(punct_mismatch_triples, "citation_source_id_alignment") == [
-        "exact_match"
-    ]
+    assert objects(punct_mismatch_triples, "citation_source_id_alignment") == ["exact_match"]
     assert objects(punct_mismatch_triples, "citation_source_id_title_match") == ["true"]
     assert objects(punct_mismatch_triples, "citation_source_id_section_match") == ["true"]
     assert objects(
         punct_mismatch_triples,
         "citation_source_id_title_section_key_match",
     ) == ["true"]
-    assert objects(punct_mismatch_triples, "citation_source_id_canonical_match") == [
-        "true"
-    ]
+    assert objects(punct_mismatch_triples, "citation_source_id_canonical_match") == ["true"]
     assert objects(punct_mismatch_triples, "citation_source_id_title_pair") == ["46|46"]
-    assert objects(punct_mismatch_triples, "citation_source_id_section_pair") == [
-        "10318|10318"
-    ]
+    assert objects(punct_mismatch_triples, "citation_source_id_section_pair") == ["10318|10318"]
     assert objects(
         punct_mismatch_triples,
         "citation_source_id_title_section_key_pair",
@@ -6041,9 +5347,7 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         punct_mismatch_triples,
         "citation_source_id_title_number_relation",
     ) == ["equal"]
-    assert objects(punct_mismatch_triples, "citation_source_id_title_number_span") == [
-        "0"
-    ]
+    assert objects(punct_mismatch_triples, "citation_source_id_title_number_span") == ["0"]
     assert objects(
         punct_mismatch_triples,
         "citation_source_id_section_primary_number_relation",
@@ -6232,92 +5536,56 @@ def test_decode_modal_ir_document_emits_section_structure_composite_slots() -> N
     single_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_single_component_sample_document())
     )
-    assert single_slot_map["citation_section_profile_signature"] == [
-        "single_alphanumeric:N3A1"
-    ]
+    assert single_slot_map["citation_section_profile_signature"] == ["single_alphanumeric:N3A1"]
     assert single_slot_map["citation_section_profile_signature_normalized"] == [
         "single_alphanumeric:n3a1"
     ]
     assert single_slot_map["citation_title_section_signature"] == ["2:N3A1"]
     assert single_slot_map["citation_title_section_signature_normalized"] == ["2:n3a1"]
-    assert single_slot_map["citation_title_section_profile"] == [
-        "2:single_alphanumeric"
-    ]
+    assert single_slot_map["citation_title_section_profile"] == ["2:single_alphanumeric"]
     assert single_slot_map["citation_section_profile_signature_token_count"] == ["3"]
-    assert single_slot_map["citation_section_profile_signature_token_prefix"] == [
-        "single"
-    ]
+    assert single_slot_map["citation_section_profile_signature_token_prefix"] == ["single"]
     assert single_slot_map["citation_title_section_signature_token_count"] == ["2"]
-    assert single_slot_map["citation_title_section_signature_has_mixed_token"] == [
-        "true"
-    ]
-    assert single_slot_map["citation_title_section_profile_token_suffix"] == [
-        "alphanumeric"
-    ]
-    assert single_slot_map["source_id_section_profile_signature"] == [
-        "single_alphanumeric:N3A1"
-    ]
+    assert single_slot_map["citation_title_section_signature_has_mixed_token"] == ["true"]
+    assert single_slot_map["citation_title_section_profile_token_suffix"] == ["alphanumeric"]
+    assert single_slot_map["source_id_section_profile_signature"] == ["single_alphanumeric:N3A1"]
     assert single_slot_map["source_id_title_section_signature"] == ["2:N3A1"]
-    assert single_slot_map["source_id_title_section_profile"] == [
-        "2:single_alphanumeric"
-    ]
+    assert single_slot_map["source_id_title_section_profile"] == ["2:single_alphanumeric"]
     assert single_slot_map["source_id_section_profile_signature_token_count"] == ["3"]
     assert single_slot_map["source_id_title_section_signature_token_count"] == ["2"]
-    assert single_slot_map["source_id_title_section_profile_token_suffix"] == [
-        "alphanumeric"
-    ]
-    assert single_slot_map["citation_source_id_section_signature_pair"] == [
-        "N3A1|N3A1"
-    ]
+    assert single_slot_map["source_id_title_section_profile_token_suffix"] == ["alphanumeric"]
+    assert single_slot_map["citation_source_id_section_signature_pair"] == ["N3A1|N3A1"]
     assert single_slot_map["citation_source_id_section_signature_match"] == ["true"]
     assert single_slot_map["citation_source_id_section_profile_pair"] == [
         "single_alphanumeric|single_alphanumeric"
     ]
     assert single_slot_map["citation_source_id_section_profile_match"] == ["true"]
-    assert single_slot_map["citation_source_id_title_section_signature_pair"] == [
-        "2:n3a1|2:n3a1"
-    ]
-    assert single_slot_map["citation_source_id_title_section_signature_match"] == [
-        "true"
-    ]
+    assert single_slot_map["citation_source_id_title_section_signature_pair"] == ["2:n3a1|2:n3a1"]
+    assert single_slot_map["citation_source_id_title_section_signature_match"] == ["true"]
     assert single_slot_map["citation_source_id_title_section_profile_pair"] == [
         "2:single_alphanumeric|2:single_alphanumeric"
     ]
-    assert single_slot_map["citation_source_id_title_section_profile_match"] == [
-        "true"
-    ]
+    assert single_slot_map["citation_source_id_title_section_profile_match"] == ["true"]
 
     compound_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_compound_alpha_suffix_hyphen_sample_document())
     )
-    assert compound_slot_map["citation_section_profile_signature"] == [
-        "compound_mixed:N3A3-N1"
-    ]
+    assert compound_slot_map["citation_section_profile_signature"] == ["compound_mixed:N3A3-N1"]
     assert compound_slot_map["citation_title_section_signature"] == ["16:N3A3-N1"]
     assert compound_slot_map["citation_title_section_profile"] == ["16:compound_mixed"]
     assert compound_slot_map["citation_title_section_signature_token_count"] == ["3"]
-    assert compound_slot_map["citation_title_section_signature_token_suffix"] == [
-        "n1"
-    ]
-    assert compound_slot_map["citation_title_section_profile_token_suffix"] == [
-        "mixed"
-    ]
-    assert compound_slot_map["source_id_section_profile_signature"] == [
-        "compound_mixed:N3A3-N1"
-    ]
+    assert compound_slot_map["citation_title_section_signature_token_suffix"] == ["n1"]
+    assert compound_slot_map["citation_title_section_profile_token_suffix"] == ["mixed"]
+    assert compound_slot_map["source_id_section_profile_signature"] == ["compound_mixed:N3A3-N1"]
     assert compound_slot_map["source_id_title_section_signature"] == ["16:N3A3-N1"]
     assert compound_slot_map["source_id_title_section_profile"] == ["16:compound_mixed"]
     assert compound_slot_map["source_id_title_section_signature_token_count"] == ["3"]
-    assert compound_slot_map["source_id_title_section_profile_token_suffix"] == [
-        "mixed"
-    ]
+    assert compound_slot_map["source_id_title_section_profile_token_suffix"] == ["mixed"]
 
 
 def test_modal_ir_to_flogic_triples_emits_section_structure_composite_slots() -> None:
     single_triples = modal_ir_to_flogic_triples(_single_component_sample_document())
-    compound_triples = modal_ir_to_flogic_triples(
-        _compound_alpha_suffix_hyphen_sample_document()
-    )
+    compound_triples = modal_ir_to_flogic_triples(_compound_alpha_suffix_hyphen_sample_document())
 
     def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
         return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
@@ -6329,24 +5597,12 @@ def test_modal_ir_to_flogic_triples_emits_section_structure_composite_slots() ->
         "single_alphanumeric:n3a1"
     ]
     assert objects(single_triples, "citation_title_section_signature") == ["2:N3A1"]
-    assert objects(single_triples, "citation_title_section_signature_normalized") == [
-        "2:n3a1"
-    ]
-    assert objects(single_triples, "citation_title_section_profile") == [
-        "2:single_alphanumeric"
-    ]
-    assert objects(single_triples, "citation_section_profile_signature_token_count") == [
-        "3"
-    ]
-    assert objects(single_triples, "citation_section_profile_signature_token_prefix") == [
-        "single"
-    ]
-    assert objects(single_triples, "citation_title_section_signature_token_count") == [
-        "2"
-    ]
-    assert objects(single_triples, "citation_title_section_signature_has_mixed_token") == [
-        "true"
-    ]
+    assert objects(single_triples, "citation_title_section_signature_normalized") == ["2:n3a1"]
+    assert objects(single_triples, "citation_title_section_profile") == ["2:single_alphanumeric"]
+    assert objects(single_triples, "citation_section_profile_signature_token_count") == ["3"]
+    assert objects(single_triples, "citation_section_profile_signature_token_prefix") == ["single"]
+    assert objects(single_triples, "citation_title_section_signature_token_count") == ["2"]
+    assert objects(single_triples, "citation_title_section_signature_has_mixed_token") == ["true"]
     assert objects(single_triples, "citation_title_section_profile_token_suffix") == [
         "alphanumeric"
     ]
@@ -6354,74 +5610,42 @@ def test_modal_ir_to_flogic_triples_emits_section_structure_composite_slots() ->
         "single_alphanumeric:N3A1"
     ]
     assert objects(single_triples, "source_id_title_section_signature") == ["2:N3A1"]
-    assert objects(single_triples, "source_id_title_section_profile") == [
-        "2:single_alphanumeric"
-    ]
-    assert objects(single_triples, "source_id_section_profile_signature_token_count") == [
-        "3"
-    ]
-    assert objects(single_triples, "source_id_title_section_signature_token_count") == [
-        "2"
-    ]
+    assert objects(single_triples, "source_id_title_section_profile") == ["2:single_alphanumeric"]
+    assert objects(single_triples, "source_id_section_profile_signature_token_count") == ["3"]
+    assert objects(single_triples, "source_id_title_section_signature_token_count") == ["2"]
     assert objects(single_triples, "source_id_title_section_profile_token_suffix") == [
         "alphanumeric"
     ]
-    assert objects(single_triples, "citation_source_id_section_signature_pair") == [
-        "N3A1|N3A1"
-    ]
-    assert objects(single_triples, "citation_source_id_section_signature_match") == [
-        "true"
-    ]
+    assert objects(single_triples, "citation_source_id_section_signature_pair") == ["N3A1|N3A1"]
+    assert objects(single_triples, "citation_source_id_section_signature_match") == ["true"]
     assert objects(single_triples, "citation_source_id_section_profile_pair") == [
         "single_alphanumeric|single_alphanumeric"
     ]
-    assert objects(single_triples, "citation_source_id_section_profile_match") == [
-        "true"
-    ]
+    assert objects(single_triples, "citation_source_id_section_profile_match") == ["true"]
     assert objects(single_triples, "citation_source_id_title_section_signature_pair") == [
         "2:n3a1|2:n3a1"
     ]
-    assert objects(single_triples, "citation_source_id_title_section_signature_match") == [
-        "true"
-    ]
+    assert objects(single_triples, "citation_source_id_title_section_signature_match") == ["true"]
     assert objects(single_triples, "citation_source_id_title_section_profile_pair") == [
         "2:single_alphanumeric|2:single_alphanumeric"
     ]
-    assert objects(single_triples, "citation_source_id_title_section_profile_match") == [
-        "true"
-    ]
+    assert objects(single_triples, "citation_source_id_title_section_profile_match") == ["true"]
 
     assert objects(compound_triples, "citation_section_profile_signature") == [
         "compound_mixed:N3A3-N1"
     ]
     assert objects(compound_triples, "citation_title_section_signature") == ["16:N3A3-N1"]
-    assert objects(compound_triples, "citation_title_section_profile") == [
-        "16:compound_mixed"
-    ]
-    assert objects(compound_triples, "citation_title_section_signature_token_count") == [
-        "3"
-    ]
-    assert objects(compound_triples, "citation_title_section_signature_token_suffix") == [
-        "n1"
-    ]
-    assert objects(compound_triples, "citation_title_section_profile_token_suffix") == [
-        "mixed"
-    ]
+    assert objects(compound_triples, "citation_title_section_profile") == ["16:compound_mixed"]
+    assert objects(compound_triples, "citation_title_section_signature_token_count") == ["3"]
+    assert objects(compound_triples, "citation_title_section_signature_token_suffix") == ["n1"]
+    assert objects(compound_triples, "citation_title_section_profile_token_suffix") == ["mixed"]
     assert objects(compound_triples, "source_id_section_profile_signature") == [
         "compound_mixed:N3A3-N1"
     ]
-    assert objects(compound_triples, "source_id_title_section_signature") == [
-        "16:N3A3-N1"
-    ]
-    assert objects(compound_triples, "source_id_title_section_profile") == [
-        "16:compound_mixed"
-    ]
-    assert objects(compound_triples, "source_id_title_section_signature_token_count") == [
-        "3"
-    ]
-    assert objects(compound_triples, "source_id_title_section_profile_token_suffix") == [
-        "mixed"
-    ]
+    assert objects(compound_triples, "source_id_title_section_signature") == ["16:N3A3-N1"]
+    assert objects(compound_triples, "source_id_title_section_profile") == ["16:compound_mixed"]
+    assert objects(compound_triples, "source_id_title_section_signature_token_count") == ["3"]
+    assert objects(compound_triples, "source_id_title_section_profile_token_suffix") == ["mixed"]
 
 
 def test_decode_modal_ir_document_emits_section_style_slots() -> None:
@@ -6435,9 +5659,7 @@ def test_decode_modal_ir_document_emits_section_style_slots() -> None:
         decode_modal_ir_document(_trailing_punct_sample_document())
     )
 
-    assert lower_slot_map["citation_section_style"] == [
-        "single_alphanumeric_alpha_lower_clean"
-    ]
+    assert lower_slot_map["citation_section_style"] == ["single_alphanumeric_alpha_lower_clean"]
     assert lower_slot_map["citation_title_section_style"] == [
         "2:single_alphanumeric_alpha_lower_clean"
     ]
@@ -6446,9 +5668,7 @@ def test_decode_modal_ir_document_emits_section_style_slots() -> None:
     ]
     assert lower_slot_map["citation_section_suffix_style"] == ["alpha_lower"]
     assert lower_slot_map["citation_section_punctuation_style"] == ["clean"]
-    assert lower_slot_map["source_id_section_style"] == [
-        "single_alphanumeric_alpha_lower_clean"
-    ]
+    assert lower_slot_map["source_id_section_style"] == ["single_alphanumeric_alpha_lower_clean"]
     assert lower_slot_map["source_id_title_section_style"] == [
         "2:single_alphanumeric_alpha_lower_clean"
     ]
@@ -6458,9 +5678,7 @@ def test_decode_modal_ir_document_emits_section_style_slots() -> None:
     assert lower_slot_map["source_id_section_suffix_style"] == ["alpha_lower"]
     assert lower_slot_map["source_id_section_punctuation_style"] == ["clean"]
 
-    assert upper_slot_map["citation_section_style"] == [
-        "single_alphanumeric_alpha_upper_clean"
-    ]
+    assert upper_slot_map["citation_section_style"] == ["single_alphanumeric_alpha_upper_clean"]
     assert upper_slot_map["citation_title_section_style"] == [
         "26:single_alphanumeric_alpha_upper_clean"
     ]
@@ -6469,9 +5687,7 @@ def test_decode_modal_ir_document_emits_section_style_slots() -> None:
     ]
     assert upper_slot_map["citation_section_suffix_style"] == ["alpha_upper"]
     assert upper_slot_map["citation_section_punctuation_style"] == ["clean"]
-    assert upper_slot_map["source_id_section_style"] == [
-        "single_alphanumeric_alpha_upper_clean"
-    ]
+    assert upper_slot_map["source_id_section_style"] == ["single_alphanumeric_alpha_upper_clean"]
     assert upper_slot_map["source_id_title_section_style"] == [
         "26:single_alphanumeric_alpha_upper_clean"
     ]
@@ -6482,18 +5698,14 @@ def test_decode_modal_ir_document_emits_section_style_slots() -> None:
     assert upper_slot_map["source_id_section_punctuation_style"] == ["clean"]
 
     assert punct_slot_map["citation_section_style"] == ["single_numeric_trailing_punct"]
-    assert punct_slot_map["citation_title_section_style"] == [
-        "46:single_numeric_trailing_punct"
-    ]
+    assert punct_slot_map["citation_title_section_style"] == ["46:single_numeric_trailing_punct"]
     assert punct_slot_map["citation_title_section_style_canonical"] == [
         "46:single_numeric_none_none_trailing_punct"
     ]
     assert punct_slot_map["citation_section_suffix_style"] == ["none"]
     assert punct_slot_map["citation_section_punctuation_style"] == ["trailing_punct"]
     assert punct_slot_map["source_id_section_style"] == ["single_numeric_trailing_punct"]
-    assert punct_slot_map["source_id_title_section_style"] == [
-        "46:single_numeric_trailing_punct"
-    ]
+    assert punct_slot_map["source_id_title_section_style"] == ["46:single_numeric_trailing_punct"]
     assert punct_slot_map["source_id_title_section_style_canonical"] == [
         "46:single_numeric_none_none_trailing_punct"
     ]
@@ -6507,11 +5719,7 @@ def test_modal_ir_to_flogic_triples_emits_section_style_slots() -> None:
     punct_triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
 
     def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects(lower_triples, "citation_section_style") == [
         "single_alphanumeric_alpha_lower_clean"
@@ -6559,9 +5767,7 @@ def test_modal_ir_to_flogic_triples_emits_section_style_slots() -> None:
     assert objects(upper_triples, "source_id_section_suffix_style") == ["alpha_upper"]
     assert objects(upper_triples, "source_id_section_punctuation_style") == ["clean"]
 
-    assert objects(punct_triples, "citation_section_style") == [
-        "single_numeric_trailing_punct"
-    ]
+    assert objects(punct_triples, "citation_section_style") == ["single_numeric_trailing_punct"]
     assert objects(punct_triples, "citation_title_section_style") == [
         "46:single_numeric_trailing_punct"
     ]
@@ -6569,12 +5775,8 @@ def test_modal_ir_to_flogic_triples_emits_section_style_slots() -> None:
         "46:single_numeric_none_none_trailing_punct"
     ]
     assert objects(punct_triples, "citation_section_suffix_style") == ["none"]
-    assert objects(punct_triples, "citation_section_punctuation_style") == [
-        "trailing_punct"
-    ]
-    assert objects(punct_triples, "source_id_section_style") == [
-        "single_numeric_trailing_punct"
-    ]
+    assert objects(punct_triples, "citation_section_punctuation_style") == ["trailing_punct"]
+    assert objects(punct_triples, "source_id_section_style") == ["single_numeric_trailing_punct"]
     assert objects(punct_triples, "source_id_title_section_style") == [
         "46:single_numeric_trailing_punct"
     ]
@@ -6582,9 +5784,7 @@ def test_modal_ir_to_flogic_triples_emits_section_style_slots() -> None:
         "46:single_numeric_none_none_trailing_punct"
     ]
     assert objects(punct_triples, "source_id_section_suffix_style") == ["none"]
-    assert objects(punct_triples, "source_id_section_punctuation_style") == [
-        "trailing_punct"
-    ]
+    assert objects(punct_triples, "source_id_section_punctuation_style") == ["trailing_punct"]
 
 
 def test_decode_modal_ir_document_emits_suffix_kind_coarse_and_alignment_slots() -> None:
@@ -6616,9 +5816,7 @@ def test_decode_modal_ir_document_emits_suffix_kind_coarse_and_alignment_slots()
     }
 
     for document in _citation_suffix_kind_residual_samples():
-        slot_map = decoded_modal_phrase_slot_text_map(
-            decode_modal_ir_document(document)
-        )
+        slot_map = decoded_modal_phrase_slot_text_map(decode_modal_ir_document(document))
         doc_expected = expected[document.document_id]
         section_primary_kind, section_terminal_kind = doc_expected["section_pair"].split("|")
 
@@ -6644,9 +5842,7 @@ def test_decode_modal_ir_document_emits_suffix_kind_coarse_and_alignment_slots()
             doc_expected["primary_alignment_pair"]
         ]
         assert slot_map["citation_source_id_section_primary_suffix_kind_match"] == ["true"]
-        assert slot_map["citation_source_id_section_primary_suffix_kind_presence_match"] == [
-            "true"
-        ]
+        assert slot_map["citation_source_id_section_primary_suffix_kind_presence_match"] == ["true"]
         assert slot_map["citation_source_id_section_terminal_suffix_kind_pair"] == [
             doc_expected["terminal_alignment_pair"]
         ]
@@ -6690,11 +5886,7 @@ def test_modal_ir_to_flogic_triples_emits_suffix_kind_coarse_and_alignment_slots
         section_primary_kind, section_terminal_kind = doc_expected["section_pair"].split("|")
 
         def objects(predicate: str) -> list[str]:
-            return [
-                triple["object"]
-                for triple in triples
-                if triple.get("predicate") == predicate
-            ]
+            return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
         assert objects("citation_section_primary_suffix_kind_coarse") == [section_primary_kind]
         assert objects("citation_section_terminal_suffix_kind_coarse") == [section_terminal_kind]
@@ -6718,16 +5910,12 @@ def test_modal_ir_to_flogic_triples_emits_suffix_kind_coarse_and_alignment_slots
             doc_expected["primary_alignment_pair"]
         ]
         assert objects("citation_source_id_section_primary_suffix_kind_match") == ["true"]
-        assert objects("citation_source_id_section_primary_suffix_kind_presence_match") == [
-            "true"
-        ]
+        assert objects("citation_source_id_section_primary_suffix_kind_presence_match") == ["true"]
         assert objects("citation_source_id_section_terminal_suffix_kind_pair") == [
             doc_expected["terminal_alignment_pair"]
         ]
         assert objects("citation_source_id_section_terminal_suffix_kind_match") == ["true"]
-        assert objects("citation_source_id_section_terminal_suffix_kind_presence_match") == [
-            "true"
-        ]
+        assert objects("citation_source_id_section_terminal_suffix_kind_presence_match") == ["true"]
 
 
 def test_decode_modal_ir_document_emits_number_distance_profile_slots() -> None:
@@ -6747,37 +5935,25 @@ def test_decode_modal_ir_document_emits_number_distance_profile_slots() -> None:
     assert slot_map["source_id_title_section_terminal_number_distance_profile"] == [
         "ascending_10k_to_99k"
     ]
-    assert slot_map["citation_source_id_title_number_distance_profile"] == [
-        "equal_lt_1k"
-    ]
-    assert slot_map["citation_source_id_section_primary_number_distance_profile"] == [
-        "equal_lt_1k"
-    ]
+    assert slot_map["citation_source_id_title_number_distance_profile"] == ["equal_lt_1k"]
+    assert slot_map["citation_source_id_section_primary_number_distance_profile"] == ["equal_lt_1k"]
     assert slot_map["citation_source_id_section_terminal_number_distance_profile"] == [
         "equal_lt_1k"
     ]
-    assert slot_map["citation_source_id_title_number_span_digit_count_bucket"] == [
+    assert slot_map["citation_source_id_title_number_span_digit_count_bucket"] == ["1_digit"]
+    assert slot_map["citation_source_id_section_primary_number_span_digit_count_bucket"] == [
         "1_digit"
     ]
-    assert (
-        slot_map["citation_source_id_section_primary_number_span_digit_count_bucket"]
-        == ["1_digit"]
-    )
-    assert (
-        slot_map["citation_source_id_section_terminal_number_span_digit_count_bucket"]
-        == ["1_digit"]
-    )
+    assert slot_map["citation_source_id_section_terminal_number_span_digit_count_bucket"] == [
+        "1_digit"
+    ]
 
 
 def test_modal_ir_to_flogic_triples_emits_number_distance_profile_slots() -> None:
     triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("citation_title_section_primary_number_distance_profile") == [
         "ascending_10k_to_99k"
@@ -6791,24 +5967,16 @@ def test_modal_ir_to_flogic_triples_emits_number_distance_profile_slots() -> Non
     assert objects("source_id_title_section_terminal_number_distance_profile") == [
         "ascending_10k_to_99k"
     ]
-    assert objects("citation_source_id_title_number_distance_profile") == [
-        "equal_lt_1k"
-    ]
-    assert objects("citation_source_id_section_primary_number_distance_profile") == [
-        "equal_lt_1k"
-    ]
-    assert objects("citation_source_id_section_terminal_number_distance_profile") == [
-        "equal_lt_1k"
-    ]
-    assert objects("citation_source_id_title_number_span_digit_count_bucket") == [
+    assert objects("citation_source_id_title_number_distance_profile") == ["equal_lt_1k"]
+    assert objects("citation_source_id_section_primary_number_distance_profile") == ["equal_lt_1k"]
+    assert objects("citation_source_id_section_terminal_number_distance_profile") == ["equal_lt_1k"]
+    assert objects("citation_source_id_title_number_span_digit_count_bucket") == ["1_digit"]
+    assert objects("citation_source_id_section_primary_number_span_digit_count_bucket") == [
         "1_digit"
     ]
-    assert objects(
-        "citation_source_id_section_primary_number_span_digit_count_bucket"
-    ) == ["1_digit"]
-    assert objects(
-        "citation_source_id_section_terminal_number_span_digit_count_bucket"
-    ) == ["1_digit"]
+    assert objects("citation_source_id_section_terminal_number_span_digit_count_bucket") == [
+        "1_digit"
+    ]
 
 
 def test_decode_modal_ir_document_emits_span_metric_slots() -> None:
@@ -6835,11 +6003,7 @@ def test_modal_ir_to_flogic_triples_emits_span_metric_slots() -> None:
     triples = modal_ir_to_flogic_triples(_span_metrics_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("modal_formula_count") == ["2"]
     assert objects("source_text_char_count") == ["20"]
@@ -6879,15 +6043,13 @@ def test_decode_modal_ir_document_uses_raw_source_offsets_for_whitespace_preserv
     assert slot_map["modal_span_coverage_bucket"] == ["partial_coverage"]
 
 
-def test_modal_ir_to_flogic_triples_uses_raw_source_offsets_for_whitespace_preserving_spans() -> None:
+def test_modal_ir_to_flogic_triples_uses_raw_source_offsets_for_whitespace_preserving_spans() -> (
+    None
+):
     triples = modal_ir_to_flogic_triples(_whitespace_preserving_span_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("source_text_char_count") == ["29"]
     assert objects("modal_span_count") == ["1"]
@@ -6917,11 +6079,7 @@ def test_modal_ir_to_flogic_triples_emits_numeric_support_span_slots_for_string_
     triples = modal_ir_to_flogic_triples(_string_offset_span_metrics_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("support_span_start_char") == ["46"]
     assert objects("support_span_start_char_trailing_two_digits") == ["46"]
@@ -6937,11 +6095,7 @@ def test_decode_and_triples_emit_no_modal_span_bucket_for_zero_formula_documents
     triples = modal_ir_to_flogic_triples(_zero_formula_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert slot_map["modal_formula_count"] == ["0"]
     assert slot_map["modal_span_count"] == ["0"]
@@ -6958,9 +6112,7 @@ def test_decode_and_triples_emit_no_modal_span_bucket_for_zero_formula_documents
 
 def _frame_unnamed_predicate_cue_force_sample_document() -> ModalIRDocument:
     source_id = "us-code-49-10902-frame-unnamed-cue-force-0a81cc9526fcb917"
-    source_text = (
-        "Subject to subsection (b), the Board may approve the application."
-    )
+    source_text = "Subject to subsection (b), the Board may approve the application."
     formula = ModalIRFormula(
         formula_id="f-frame-unnamed-cue-force",
         operator=ModalIROperator(
@@ -6992,10 +6144,7 @@ def test_decode_modal_ir_document_emits_unnamed_predicate_cue_force_bridge_slots
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     assert "may:permission" in slot_map["typed_decompiler_cue_force"]
-    assert (
-        "cue-force:may:permission"
-        in slot_map["normative_polarity"]
-    )
+    assert "cue-force:may:permission" in slot_map["normative_polarity"]
     assert (
         "may:permission:enabling:frame->conditional_normative"
         in slot_map["typed_decompiler_cue_force_polarity_family_pair"]
@@ -7014,9 +6163,7 @@ def test_decode_modal_ir_document_emits_unnamed_predicate_cue_force_bridge_slots
 
 def _under_scope_deontic_sample_document() -> ModalIRDocument:
     source_id = "us-code-5-552-under-scope-deontic-2dd3178ce4b6af11"
-    source_text = (
-        "Under section 552(a)(1), the Secretary shall submit to Congress a report."
-    )
+    source_text = "Under section 552(a)(1), the Secretary shall submit to Congress a report."
     formula = ModalIRFormula(
         formula_id="f-under-scope-deontic",
         operator=ModalIROperator(
@@ -7078,7 +6225,9 @@ def _under_scope_temporal_sample_document() -> ModalIRDocument:
     )
 
 
-def test_decode_modal_ir_document_treats_under_scope_as_typed_condition_and_skips_under_anchor() -> None:
+def test_decode_modal_ir_document_treats_under_scope_as_typed_condition_and_skips_under_anchor() -> (
+    None
+):
     decoded = decode_modal_ir_document(_under_scope_deontic_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
@@ -7093,15 +6242,13 @@ def test_decode_modal_ir_document_treats_under_scope_as_typed_condition_and_skip
     assert "under" not in slot_map["source_subject_anchor"]
 
 
-def test_modal_ir_to_flogic_triples_surface_under_scope_temporal_cross_family_bridge_pairs() -> None:
+def test_modal_ir_to_flogic_triples_surface_under_scope_temporal_cross_family_bridge_pairs() -> (
+    None
+):
     triples = modal_ir_to_flogic_triples(_under_scope_temporal_sample_document())
 
     def objects(predicate: str) -> list[str]:
-        return [
-            triple["object"]
-            for triple in triples
-            if triple.get("predicate") == predicate
-        ]
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
 
     assert objects("condition_prefix_key") == ["under"]
     assert "temporal->conditional_normative" in objects("condition_modal_bridge_family_pair")
@@ -7151,26 +6298,16 @@ def test_decode_modal_ir_document_bridges_frame_intent_text_to_doxastic_slots() 
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     assert "frame->doxastic" in slot_map["typed_decompiler_family_pair"]
-    assert (
-        "frame->doxastic:with_intent_to"
-        in slot_map["typed_decompiler_family_pair_cue"]
-    )
-    assert (
-        "frame->doxastic"
-        in slot_map["typed-decompiler-target-reconstruction-pair"]
-    )
-    assert (
-        "frame->doxastic"
-        in slot_map["typed_ir_cross_family_semantic_support"]
-    )
+    assert "frame->doxastic:with_intent_to" in slot_map["typed_decompiler_family_pair_cue"]
+    assert "frame->doxastic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->doxastic" in slot_map["typed_ir_cross_family_semantic_support"]
     assert "belief intent knowledge state" in slot_map["typed_ir_reconstruction"][0]
 
 
 def _frame_repealed_status_sample_document() -> ModalIRDocument:
     source_id = "us-code-42-2486j.-frame-repealed-fee27fac375a53cb"
     source_text = (
-        "§2486j. Repealed. Pub. L. 105-362, title XI, §1101(a), "
-        "Nov. 10, 1998, 112 Stat. 3292."
+        "§2486j. Repealed. Pub. L. 105-362, title XI, §1101(a), Nov. 10, 1998, 112 Stat. 3292."
     )
     formula = ModalIRFormula(
         formula_id="f-frame-repealed-status",
@@ -7203,10 +6340,7 @@ def test_decode_modal_ir_document_routes_frame_status_atoms_to_normative_targets
 
     assert slot_map["status_keyword"] == ["repealed"]
     assert "repealed" in slot_map["typed-decompiler-target-semantic-atom"]
-    assert (
-        "frame->conditional_normative"
-        in slot_map["typed-decompiler-target-reconstruction-pair"]
-    )
+    assert "frame->conditional_normative" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "frame->deontic" in slot_map["typed_ir_cross_family_semantic_support"]
 
@@ -7243,20 +6377,17 @@ def _publication_depository_frame_sample_document() -> ModalIRDocument:
     )
 
 
-def test_decode_modal_ir_document_routes_publication_depository_atoms_to_deontic_frame_views() -> None:
-    decoded = decode_modal_ir_document(
-        _publication_depository_frame_sample_document()
-    )
+def test_decode_modal_ir_document_routes_publication_depository_atoms_to_deontic_frame_views() -> (
+    None
+):
+    decoded = decode_modal_ir_document(_publication_depository_frame_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     assert (
         "government_publication_depository_access"
         in slot_map["typed-decompiler-target-semantic-atom"]
     )
-    assert (
-        "publication_disposal_authority"
-        in slot_map["typed-decompiler-target-semantic-atom"]
-    )
+    assert "publication_disposal_authority" in slot_map["typed-decompiler-target-semantic-atom"]
     assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
@@ -7303,14 +6434,8 @@ def test_decode_modal_ir_document_routes_reporting_contents_frame_to_duty_target
     assert "report_contents" in slot_map["typed-decompiler-target-semantic-atom"]
     assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
-    assert (
-        "frame->deontic:reporting"
-        in slot_map["typed-decompiler-family-pair-predicate"]
-    )
-    assert (
-        "frame->deontic:duty"
-        in slot_map["typed-decompiler-family-pair-predicate"]
-    )
+    assert "frame->deontic:reporting" in slot_map["typed-decompiler-family-pair-predicate"]
+    assert "frame->deontic:duty" in slot_map["typed-decompiler-family-pair-predicate"]
     assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
 
@@ -7349,14 +6474,8 @@ def test_decode_modal_ir_document_routes_homestead_entry_surface_to_temporal_fra
     decoded = decode_modal_ir_document(_homestead_temporal_deontic_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert (
-        "homestead_entry_confirmation"
-        in slot_map["typed-decompiler-target-semantic-atom"]
-    )
-    assert (
-        "land_withdrawal_restoration_scope"
-        in slot_map["typed-decompiler-target-semantic-atom"]
-    )
+    assert "homestead_entry_confirmation" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "land_withdrawal_restoration_scope" in slot_map["typed-decompiler-target-semantic-atom"]
     assert "deontic->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
@@ -7400,14 +6519,8 @@ def test_decode_modal_ir_document_surfaces_housing_transfer_certification_target
     decoded = decode_modal_ir_document(_housing_transfer_certification_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert (
-        "agency_certification_determination"
-        in slot_map["typed-decompiler-target-semantic-atom"]
-    )
-    assert (
-        "housing_transfer_authority"
-        in slot_map["typed-decompiler-target-semantic-atom"]
-    )
+    assert "agency_certification_determination" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "housing_transfer_authority" in slot_map["typed-decompiler-target-semantic-atom"]
     assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "frame->epistemic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "frame->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
@@ -7451,8 +6564,7 @@ def test_decode_modal_ir_document_reconstructs_repealed_naval_management_slots()
 
     assert "repealed" in slot_map["typed-decompiler-target-semantic-atom"]
     assert (
-        "naval_officer_management_assignment"
-        in slot_map["typed-decompiler-target-semantic-atom"]
+        "naval_officer_management_assignment" in slot_map["typed-decompiler-target-semantic-atom"]
     )
     assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "frame->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
@@ -7496,14 +6608,11 @@ def test_decode_modal_ir_document_routes_seashore_surface_to_frame_views() -> No
     decoded = decode_modal_ir_document(_national_seashore_deontic_frame_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert (
-        "national_seashore_recreation_area"
-        in slot_map["typed-decompiler-target-semantic-atom"]
-    )
+    assert "national_seashore_recreation_area" in slot_map["typed-decompiler-target-semantic-atom"]
     assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
-    assert "deontic->conditional_normative" in slot_map[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "deontic->conditional_normative" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    )
     assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
     assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
@@ -7545,17 +6654,10 @@ def test_decode_modal_ir_document_routes_air_transportation_frame_to_deontic() -
     decoded = decode_modal_ir_document(_air_transportation_workforce_frame_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "air_carrier_service_duty" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "air_transportation_service_duty" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
+    assert "air_carrier_service_duty" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "air_transportation_service_duty" in slot_map["typed-decompiler-target-semantic-atom"]
     assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
-    assert (
-        "frame->conditional_normative"
-        in slot_map["typed-decompiler-target-reconstruction-pair"]
-    )
+    assert "frame->conditional_normative" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
 
@@ -7597,19 +6699,13 @@ def test_decode_modal_ir_document_reconstructs_program_activity_slots() -> None:
     decoded = decode_modal_ir_document(_program_activity_reconstruction_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "program_activity_implementation" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "sustainable_chemistry_activity_support" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "competitive_award_program" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
+    assert "program_activity_implementation" in slot_map["typed-decompiler-target-semantic-atom"]
     assert (
-        "frame->conditional_normative"
-        in slot_map["typed-decompiler-target-reconstruction-pair"]
+        "sustainable_chemistry_activity_support"
+        in slot_map["typed-decompiler-target-semantic-atom"]
     )
+    assert "competitive_award_program" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "frame->conditional_normative" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "frame->epistemic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "CEC.native" in slot_map["legal_ir_view_prototype"]
     assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
@@ -7650,15 +6746,11 @@ def test_decode_modal_ir_document_reconstructs_education_program_views() -> None
     decoded = decode_modal_ir_document(_education_assistance_program_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "higher_education_student_assistance" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "international_education_program" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "education_assistance_benefit" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
+    assert (
+        "higher_education_student_assistance" in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "international_education_program" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "education_assistance_benefit" in slot_map["typed-decompiler-target-semantic-atom"]
     assert "frame->epistemic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
 
@@ -7699,18 +6791,10 @@ def test_decode_modal_ir_document_reconstructs_administration_enforcement_slots(
     decoded = decode_modal_ir_document(_administration_enforcement_reconstruction_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "customs_administration" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "customs_enforcement_provision" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "tariff_administration" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "deontic->deontic" in slot_map[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "customs_administration" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "customs_enforcement_provision" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "tariff_administration" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "deontic->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
     assert "CEC.native" in slot_map["legal_ir_view_prototype"]
@@ -7751,18 +6835,10 @@ def test_decode_modal_ir_document_reconstructs_effective_date_tax_slots() -> Non
     decoded = decode_modal_ir_document(_effective_date_transition_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "internal_revenue_administration" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "tax_procedure_administration" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "effective_date_transition" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "deontic->temporal" in slot_map[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "internal_revenue_administration" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "tax_procedure_administration" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "effective_date_transition" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "deontic->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
 
 
@@ -7804,20 +6880,11 @@ def test_decode_modal_ir_document_reconstructs_reserved_land_lease_revenue_slots
     decoded = decode_modal_ir_document(_reserved_land_lease_revenue_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "reserved_land_lease_authority" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "rental_rate_authority" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "revenue_disposition" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
+    assert "reserved_land_lease_authority" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "rental_rate_authority" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "revenue_disposition" in slot_map["typed-decompiler-target-semantic-atom"]
     assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
-    assert (
-        "frame->conditional_normative"
-        in slot_map["typed-decompiler-target-reconstruction-pair"]
-    )
+    assert "frame->conditional_normative" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
     assert "knowledge_graphs.neo4j_compat" in slot_map["legal_ir_view_prototype"]
 
@@ -7876,17 +6943,13 @@ def test_decode_modal_ir_document_reconstructs_packet_000158_veterans_assistance
     )
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "philippines_medical_assistance_authority" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "veterans_medical_care" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert (
-        "frame->conditional_normative"
-        in slot_map["typed-decompiler-target-reconstruction-pair"]
+        "philippines_medical_assistance_authority"
+        in slot_map["typed-decompiler-target-semantic-atom"]
     )
+    assert "veterans_medical_care" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "frame->deontic" in slot_map["typed-decompiler-target-reconstruction-pair"]
+    assert "frame->conditional_normative" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "CEC.native" in slot_map["legal_ir_view_prototype"]
     assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
 
@@ -7911,15 +6974,12 @@ def test_decode_modal_ir_document_reconstructs_packet_000158_temporal_budget_fra
     )
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "nato_common_funded_budget_contribution" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "fiscal_year_budget_limitation" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "temporal->frame" in slot_map[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert (
+        "nato_common_funded_budget_contribution"
+        in slot_map["typed-decompiler-target-semantic-atom"]
+    )
+    assert "fiscal_year_budget_limitation" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "temporal->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "temporal->frame" in slot_map["typed_ir_cross_family_semantic_support"]
     assert "modal.frame_logic" in slot_map["legal_ir_view_prototype"]
 
@@ -7962,7 +7022,9 @@ def _packet_005202_document(
     )
 
 
-def test_decode_modal_ir_document_routes_packet_005202_studies_reports_to_frame_and_temporal() -> None:
+def test_decode_modal_ir_document_routes_packet_005202_studies_reports_to_frame_and_temporal() -> (
+    None
+):
     decoded = decode_modal_ir_document(
         _packet_005202_document(
             source_id="us-code-31-6508-8d4680d70c29f16d",
@@ -7982,14 +7044,14 @@ def test_decode_modal_ir_document_routes_packet_005202_studies_reports_to_frame_
 
     assert "study_report_duty" in slot_map["typed-decompiler-target-semantic-atom"]
     assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
-    assert "deontic->temporal" in slot_map[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "deontic->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "deontic.ir" in slot_map["legal_ir_view_prototype"]
     assert "modal.frame_logic" in slot_map["legal_ir_view_prototype"]
 
 
-def test_decode_modal_ir_document_reconstructs_packet_005202_uranium_inventory_deadline_slots() -> None:
+def test_decode_modal_ir_document_reconstructs_packet_005202_uranium_inventory_deadline_slots() -> (
+    None
+):
     decoded = decode_modal_ir_document(
         _packet_005202_document(
             source_id="us-code-42-2296b-ff510ff401bf04bc",
@@ -8006,16 +7068,10 @@ def test_decode_modal_ir_document_reconstructs_packet_005202_uranium_inventory_d
     )
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert "uranium_inventory_study" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
-    assert "inventory_study_report" in slot_map[
-        "typed-decompiler-target-semantic-atom"
-    ]
+    assert "uranium_inventory_study" in slot_map["typed-decompiler-target-semantic-atom"]
+    assert "inventory_study_report" in slot_map["typed-decompiler-target-semantic-atom"]
     assert "deontic->frame" in slot_map["typed-decompiler-target-reconstruction-pair"]
-    assert "deontic->temporal" in slot_map[
-        "typed-decompiler-target-reconstruction-pair"
-    ]
+    assert "deontic->temporal" in slot_map["typed-decompiler-target-reconstruction-pair"]
     assert "TDFOL.prover" in slot_map["legal_ir_view_prototype"]
 
 

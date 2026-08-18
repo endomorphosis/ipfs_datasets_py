@@ -4,6 +4,7 @@ PDF Batch Process Tool - thin MCP wrapper.
 Business logic is in:
     ipfs_datasets_py.processors.specialized.pdf.batch_processing_engine
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Union
@@ -18,6 +19,7 @@ try:
     from ipfs_datasets_py.processors.specialized.pdf.batch_processing_engine import (
         pdf_batch_process as _engine_fn,
     )
+
     _ENGINE_AVAILABLE = True
 except ImportError:
     _engine_fn = None

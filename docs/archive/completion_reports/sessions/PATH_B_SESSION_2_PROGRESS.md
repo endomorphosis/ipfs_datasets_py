@@ -36,12 +36,12 @@ def _get_query_embedding(self, query: str) -> Any:
     """Get embedding for query text with real backend support."""
     if self.vector_store is None:
         return None
-    
+
     try:
         # Try different vector store methods
-        if hasattr(self.vector_store, 'embed_query'):
+        if hasattr(self.vector_store, "embed_query"):
             return self.vector_store.embed_query(query)
-        elif hasattr(self.vector_store, 'get_embedding'):
+        elif hasattr(self.vector_store, "get_embedding"):
             return self.vector_store.get_embedding(query)
         else:
             logger.warning("Vector store does not support embedding")
@@ -57,23 +57,23 @@ def _get_neighbors(self, node_id: str, rel_types: Optional[List[str]] = None) ->
     """Get neighbors from graph backend with real backend support."""
     try:
         # Try backend.get_neighbors()
-        if hasattr(self.backend, 'get_neighbors'):
+        if hasattr(self.backend, "get_neighbors"):
             neighbors = self.backend.get_neighbors(node_id, rel_types=rel_types)
             if isinstance(neighbors, list):
                 return neighbors
-        
+
         # Try backend.get_relationships()
-        if hasattr(self.backend, 'get_relationships'):
+        if hasattr(self.backend, "get_relationships"):
             rels = self.backend.get_relationships(node_id)
             neighbors = []
             for rel in rels:
                 # Filter by type if specified
-                if rel_types is None or rel.get('type') in rel_types:
-                    target = rel.get('target') or rel.get('end_node')
+                if rel_types is None or rel.get("type") in rel_types:
+                    target = rel.get("target") or rel.get("end_node")
                     if target and target != node_id:
                         neighbors.append(target)
             return neighbors
-        
+
         return []
     except Exception as e:
         logger.warning(f"Failed to get neighbors for {node_id}: {e}")
@@ -124,7 +124,7 @@ Bridge the existing GraphRAG processor API to the new unified query engine while
 ```python
 class GraphRAGAdapter:
     """Adapter bridging old GraphRAG API to unified query engine."""
-    
+
     def __init__(
         self,
         backend: Any,
@@ -132,16 +132,16 @@ class GraphRAGAdapter:
         graph_store: Optional[Any] = None,
         llm_processor: Optional[Any] = None,
         enable_cross_document_reasoning: bool = True,
-        default_budget_preset: str = 'safe'
+        default_budget_preset: str = "safe",
     ):
         # Creates UnifiedQueryEngine internally
         self.engine = UnifiedQueryEngine(
             backend=backend,
             vector_store=primary_vector_store,
             llm_processor=llm_processor,
-            default_budgets=default_budget_preset
+            default_budgets=default_budget_preset,
         )
-    
+
     def query(
         self,
         query_text: str,
@@ -157,20 +157,20 @@ class GraphRAGAdapter:
         """Old API - internally uses UnifiedQueryEngine."""
         # Issues deprecation warning
         warnings.warn("Use UnifiedQueryEngine directly", DeprecationWarning)
-        
+
         # Route to appropriate method
         if include_cross_document_reasoning and self.llm_processor:
             result = self.engine.execute_graphrag(...)
         else:
             result = self.engine.execute_hybrid(...)
-        
+
         # Convert to old format
         return {
-            'query_text': query_text,
-            'hybrid_results': result.items,
-            'reasoning_result': result.reasoning,
-            'evidence_chains': result.evidence_chains,
-            'stats': result.stats
+            "query_text": query_text,
+            "hybrid_results": result.items,
+            "reasoning_result": result.reasoning,
+            "evidence_chains": result.evidence_chains,
+            "stats": result.stats,
         }
 ```
 
@@ -178,21 +178,19 @@ class GraphRAGAdapter:
 
 ```python
 def create_graphrag_adapter_from_dataset(
-    dataset: Any,
-    llm_processor: Optional[Any] = None,
-    **kwargs
+    dataset: Any, llm_processor: Optional[Any] = None, **kwargs
 ) -> GraphRAGAdapter:
     """Create adapter from dataset object."""
-    backend = getattr(dataset, 'backend', None) or getattr(dataset, 'graph_backend', None)
-    vector_stores = getattr(dataset, 'vector_stores', {})
-    graph_store = getattr(dataset, 'graph_store', None)
-    
+    backend = getattr(dataset, "backend", None) or getattr(dataset, "graph_backend", None)
+    vector_stores = getattr(dataset, "vector_stores", {})
+    graph_store = getattr(dataset, "graph_store", None)
+
     return GraphRAGAdapter(
         backend=backend,
         vector_stores=vector_stores,
         graph_store=graph_store,
         llm_processor=llm_processor,
-        **kwargs
+        **kwargs,
     )
 ```
 

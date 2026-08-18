@@ -14,6 +14,7 @@ Smoke tests for pre-existing Batch 210 items:
 - OntologyPipeline.worst_run_index()
 - LogicValidator.leaf_node_count(ontology)
 """
+
 from __future__ import annotations
 
 import pytest
@@ -41,6 +42,7 @@ from ipfs_datasets_py.optimizers.graphrag.logic_validator import LogicValidator
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _report(score: float) -> OptimizationReport:
     return OptimizationReport(average_score=score, trend="stable")
 
@@ -61,8 +63,12 @@ def _adapter_with(scores: list[float]) -> OntologyLearningAdapter:
 
 def _make_critic_score(**kwargs) -> CriticScore:
     defaults = dict(
-        completeness=0.8, consistency=0.7, clarity=0.6,
-        granularity=0.5, relationship_coherence=0.4, domain_alignment=0.3,
+        completeness=0.8,
+        consistency=0.7,
+        clarity=0.6,
+        granularity=0.5,
+        relationship_coherence=0.4,
+        domain_alignment=0.3,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -70,8 +76,7 @@ def _make_critic_score(**kwargs) -> CriticScore:
 
 def _make_result_with_entity_types(types: list[str]) -> EntityExtractionResult:
     entities = [
-        Entity(id=f"e{i}", text=f"T{i}", type=t, confidence=0.9)
-        for i, t in enumerate(types)
+        Entity(id=f"e{i}", text=f"T{i}", type=t, confidence=0.9) for i, t in enumerate(types)
     ]
     return EntityExtractionResult(entities=entities, relationships=[], confidence=0.8)
 
@@ -105,6 +110,7 @@ def ontology_builder(ontology_dict_factory):
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.above_target_rate
 # ---------------------------------------------------------------------------
+
 
 class TestAboveTargetRate:
     def test_empty_history_returns_zero(self):
@@ -145,12 +151,11 @@ class TestAboveTargetRate:
 # OntologyOptimizer.score_above_target_fraction (alias)
 # ---------------------------------------------------------------------------
 
+
 class TestScoreAboveTargetFraction:
     def test_alias_matches_above_target_rate(self):
         opt = _optimizer_with([0.2, 0.7, 0.8, 0.9])
-        assert opt.score_above_target_fraction(0.7) == pytest.approx(
-            opt.above_target_rate(0.7)
-        )
+        assert opt.score_above_target_fraction(0.7) == pytest.approx(opt.above_target_rate(0.7))
 
     def test_alias_uses_default_target(self):
         opt = _optimizer_with([0.6, 0.8])
@@ -160,6 +165,7 @@ class TestScoreAboveTargetFraction:
 # ---------------------------------------------------------------------------
 # OntologyCritic.dimension_trend_slope
 # ---------------------------------------------------------------------------
+
 
 class TestDimensionTrendSlope:
     def setup_method(self):
@@ -217,6 +223,7 @@ class TestDimensionTrendSlope:
 # OntologyGenerator.entity_type_count
 # ---------------------------------------------------------------------------
 
+
 class TestEntityTypeCount:
     def setup_method(self):
         self.gen = OntologyGenerator()
@@ -250,6 +257,7 @@ class TestEntityTypeCount:
 # OntologyLearningAdapter.feedback_above_mean_ratio
 # ---------------------------------------------------------------------------
 
+
 class TestFeedbackAboveMeanRatio:
     def test_empty_feedback_returns_zero(self):
         adapter = OntologyLearningAdapter(domain="test")
@@ -282,6 +290,7 @@ class TestFeedbackAboveMeanRatio:
 # ---------------------------------------------------------------------------
 # LogicValidator.betweenness_centrality_approx
 # ---------------------------------------------------------------------------
+
 
 class TestBetweennessCentralityApprox:
     def setup_method(self):
@@ -339,6 +348,7 @@ class TestBetweennessCentralityApprox:
 # ---------------------------------------------------------------------------
 # Smoke tests for pre-existing Batch 210 items
 # ---------------------------------------------------------------------------
+
 
 class TestExistingBatch210Methods:
     def test_history_range_returns_float(self):

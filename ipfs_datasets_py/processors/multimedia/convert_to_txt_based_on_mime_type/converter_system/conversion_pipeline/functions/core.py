@@ -6,7 +6,17 @@ import logging
 from queue import Queue
 import time
 import threading
-from typing import Any, AsyncGenerator, AsyncIterator, AsyncIterable, Generator, Iterator, Iterable, Optional, TypeVar
+from typing import (
+    Any,
+    AsyncGenerator,
+    AsyncIterator,
+    AsyncIterable,
+    Generator,
+    Iterator,
+    Iterable,
+    Optional,
+    TypeVar,
+)
 
 from utils.common.anyio_queues import AnyioQueue
 
@@ -15,18 +25,17 @@ from pydantic_models.resource.resource import Resource
 from utils.common.monads.async_ import Async
 from logger.logger import Logger
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 logger = Logger(__name__)
 
 
 class AsyncStreamProcessor:
     """Processes a stream of resources in parallel with controlled concurrency"""
-    
+
     def __init__(self, max_workers: int, queue_size: int = 100):
         self.executor = cf.ThreadPoolExecutor(
-            max_workers=max_workers,
-            thread_name_prefix='stream_worker'
+            max_workers=max_workers, thread_name_prefix="stream_worker"
         )
         self.queue: AnyioQueue = AnyioQueue(maxsize=queue_size)
         self.processing = set()
@@ -40,12 +49,12 @@ class AsyncStreamProcessor:
         finally:
             await self.queue.put(None)  # Sentinel to signal end of stream
 
-    async def process_stream(self, 
-                           source: Iterator[T],
-                           processor: callable) -> AsyncGenerator[Counter, None]:
+    async def process_stream(
+        self, source: Iterator[T], processor: callable
+    ) -> AsyncGenerator[Counter, None]:
         """Process items from the stream with parallel execution"""
         results: list = []
-        
+
         async def _feed_and_process() -> None:
             # Feed queue in background while consuming in the same task group
             async with anyio.create_task_group() as tg:
@@ -79,27 +88,28 @@ class AsyncStreamProcessor:
         for r in results:
             yield r
 
+
 class ResourceGenerator:
     """Simulates a source of resources being generated"""
-    
+
     def __init__(self, total_resources: int, delay: float = 0.1):
         self.total = total_resources
         self.delay = delay
         self.queue = Queue()
         self.thread = None
-        
+
     def generate_resources(self):
         """Generate resources in a separate thread"""
         for i in range(self.total):
             time.sleep(self.delay)  # Simulate work
             resource = Resource(thread=i)
             self.queue.put(resource)
-    
+
     def start(self):
         """Start the resource generation thread"""
         self.thread = threading.Thread(target=self.generate_resources)
         self.thread.start()
-    
+
     def __iter__(self):
         """Make this an iterator that yields resources as they're generated"""
         remaining = self.total
@@ -108,12 +118,13 @@ class ResourceGenerator:
             yield resource
             remaining -= 1
 
+
 from converter_system.file_path_queue.file_path_queue import FilePathQueue
 from converter_system.core_error_manager.core_error_manager import CoreErrorManager
 from converter_system.core_resource_manager.core_resource_manager import CoreResourceManager
 
-class Core:
 
+class Core:
     def __init__(self, configs: Configs):
 
         self.file_path_queue = FilePathQueue(configs)
@@ -123,18 +134,18 @@ class Core:
         self.semaphore = anyio.Semaphore(configs.concurrency_limit)
 
         self.stream_processor = AsyncStreamProcessor(
-            max_workers=configs.concurrency_limit # TODO
+            max_workers=configs.concurrency_limit  # TODO
         )
 
     async def run_pipelines_in_parallel(self, resource_stream: AsyncIterable[Resource]):
         """
         Run a stream of pipelines in parallel using both process and thread pools with just-in-time scheduling.
-        
+
         Args:
             resource_stream: AsyncGenerator yielding resources to process
             process_concurrency: Max number of concurrent processes
             thread_concurrency: Max number of concurrent threads
-        
+
         Yields:
             Tuples of (input, output) as processing completes
         """
@@ -157,22 +168,16 @@ class Core:
         iter_inputs = iter(resource_stream)
 
         with cf.ProcessPoolExecutor() as executor:
-
             # Schedule the first N futures.  We don't want to schedule them all
             # at once, to avoid consuming excessive amounts of memory.
             futures = {
-                executor.submit(
-                    input.resource.pipeline.run(), 
-                    input.resource
-                ): input
+                executor.submit(input.resource.pipeline.run(), input.resource): input
                 for input in itertools.islice(iter_inputs, self.core_resource_manager.free_workers)
             }
 
-            # Wait for the next future to complete. 
+            # Wait for the next future to complete.
             while futures:
-                done, pending = cf.wait(
-                    futures, return_when=cf.FIRST_COMPLETED
-                )
+                done, pending = cf.wait(futures, return_when=cf.FIRST_COMPLETED)
 
                 for future in done:
                     original_input = futures.pop(future)
@@ -181,17 +186,12 @@ class Core:
                 # Schedule the next set of futures.  We don't want more than N futures
                 # in the pool at a time, to keep memory consumption down.
                 for input in itertools.islice(iter_inputs, len(done)):
-                    future = executor.submit(
-                        input.resource.pipeline.run(), 
-                        input.resource
-                    )
+                    future = executor.submit(input.resource.pipeline.run(), input.resource)
                     futures[future] = input
 
-
-    async def run_pipeline_in_thread_pool(self, 
-                resource_stream: AsyncIterable[Resource], 
-                loop: AbstractEventLoop
-            ):
+    async def run_pipeline_in_thread_pool(
+        self, resource_stream: AsyncIterable[Resource], loop: AbstractEventLoop
+    ):
         """
         Calls the function ``handler`` on the values ``inputs``.
 
@@ -210,18 +210,12 @@ class Core:
 
         with cf.ThreadPoolExecutor() as executor:
             futures = {
-                loop.run_in_executor(
-                    executor, 
-                    input.resource.pipeline.run(), 
-                    input.resource
-                ): input
+                loop.run_in_executor(executor, input.resource.pipeline.run(), input.resource): input
                 for input in itertools.islice(iter_inputs, self.core_resource_manager.free_workers)
             }
 
             while futures:
-                done, _ = cf.wait(
-                    futures, return_when=cf.FIRST_COMPLETED
-                )
+                done, _ = cf.wait(futures, return_when=cf.FIRST_COMPLETED)
 
                 for fut in done:
                     original_input = futures.pop(fut)
@@ -229,23 +223,20 @@ class Core:
 
                 for input in itertools.islice(iter_inputs, len(done)):
                     fut = loop.run_in_executor(
-                        executor, input.resource.pipeline.run(), 
-                        self.core_resource_manager.free_workers
+                        executor,
+                        input.resource.pipeline.run(),
+                        self.core_resource_manager.free_workers,
                     )
                     futures[fut] = input
-
-
 
     async def process_stream(self, resource_stream: Iterator[Resource]) -> AsyncIterator[Counter]:
         """
         Process a stream of resources in parallel
         """
         async for result in self.stream_processor.process_stream(
-            resource_stream,
-            lambda r: self.loop.run_until_complete(self.process_resource(r))
+            resource_stream, lambda r: self.loop.run_until_complete(self.process_resource(r))
         ):
             yield result
-
 
     async def optimize(resources: Iterable[Resource], *, batch_size=1024) -> AsyncGenerator:
 
@@ -264,20 +255,15 @@ class Core:
                 yield output
 
 
-
-
-
-
-
 # Usage example:
 if __name__ == "__main__":
     configs = Configs(concurrency_limit=10)
     core = Core(configs)
-    
+
     # Create resource generator
     generator = ResourceGenerator(total_resources=100)
     generator.start()
-    
+
     async def main():
         results = []
         async for result in core.process_stream(generator):

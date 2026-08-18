@@ -35,6 +35,7 @@ def _make_context(domain: str = "general"):
         ExtractionStrategy,
         DataType,
     )
+
     return OntologyGenerationContext(
         domain=domain,
         data_source="inline",
@@ -50,6 +51,7 @@ def _make_harness():
         OntologyCritic,
         OntologyMediator,
     )
+
     g = OntologyGenerator()
     c = OntologyCritic(use_llm=False)
     m = OntologyMediator(generator=g, critic=c)
@@ -60,11 +62,13 @@ def _make_harness():
 # OntologyPipelineHarness.run() tests
 # ---------------------------------------------------------------------------
 
+
 class TestOntologyPipelineHarnessRun:
     """Tests for run() method — returns a BaseSession."""
 
     def test_run_returns_base_session(self):
         from ipfs_datasets_py.optimizers.common import BaseSession
+
         harness, *_ = _make_harness()
         ctx = _make_context()
         session = harness.run(data=FIXTURE_TEXTS["simple"], context=ctx)
@@ -106,6 +110,7 @@ class TestOntologyPipelineHarnessRun:
 # OntologyPipelineHarness.run_and_report() tests
 # ---------------------------------------------------------------------------
 
+
 class TestOntologyPipelineHarnessReport:
     """Tests for run_and_report() — returns a structured dict."""
 
@@ -146,6 +151,7 @@ class TestOntologyPipelineHarnessReport:
 
     def test_report_session_is_base_session(self):
         from ipfs_datasets_py.optimizers.common import BaseSession
+
         harness, *_ = _make_harness()
         ctx = _make_context()
         report = harness.run_and_report(data=FIXTURE_TEXTS["simple"], context=ctx)
@@ -164,6 +170,7 @@ class TestOntologyPipelineHarnessReport:
 # ---------------------------------------------------------------------------
 # Full pipeline component interaction tests
 # ---------------------------------------------------------------------------
+
 
 class TestPipelineComponentInteraction:
     """Verify Generator → Critic → Mediator interaction is correctly wired."""
@@ -195,6 +202,7 @@ class TestPipelineComponentInteraction:
             OntologyCritic,
             OntologyMediator,
         )
+
         g = OntologyGenerator()
         c = OntologyCritic(use_llm=False)
         m = OntologyMediator(generator=g, critic=c)

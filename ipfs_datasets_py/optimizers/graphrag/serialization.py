@@ -62,19 +62,16 @@ def save_learning_state_payload(
 
     try:
         serializable_state = numpy_json_serializable(state)
-        
+
         # Validate output path
         base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
         safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
-        
+
         with open(safe_filepath, "w", encoding="utf-8") as f:
             json.dump(serializable_state, f, indent=2)
         return filepath
     except (TypeError, ValueError, RuntimeError, OSError, json.JSONDecodeError) as error:
-        error_message = (
-            "Error serializing learning state to JSON: "
-            f"{safe_error_text(error)}"
-        )
+        error_message = f"Error serializing learning state to JSON: {safe_error_text(error)}"
 
         fallback_state = {
             "error": error_message,
@@ -89,7 +86,7 @@ def save_learning_state_payload(
             # Validate output path
             base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
             safe_filepath = validate_output_path(filepath, allow_overwrite=True, base_dir=base_dir)
-            
+
             with open(safe_filepath, "w", encoding="utf-8") as f:
                 json.dump(fallback_state, f, indent=2)
             return filepath
@@ -116,13 +113,18 @@ def load_learning_state_payload(
         # Validate input path
         base_dir = _Path(filepath).parent if _Path(filepath).is_absolute() else None
         safe_filepath = validate_input_path(filepath, must_exist=True, base_dir=base_dir)
-        
+
         with open(safe_filepath, "r", encoding="utf-8") as f:
             state = json.load(f)
         return True, state
-    except (OSError, json.JSONDecodeError, ValueError, TypeError, KeyError, AttributeError) as error:
+    except (
+        OSError,
+        json.JSONDecodeError,
+        ValueError,
+        TypeError,
+        KeyError,
+        AttributeError,
+    ) as error:
         if logger is not None:
-            logger.error(
-                f"Error loading learning state: {safe_error_text(error)}"
-            )
+            logger.error(f"Error loading learning state: {safe_error_text(error)}")
         return False, {}

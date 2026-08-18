@@ -28,6 +28,7 @@ from typing import Any, Optional
 
 from mcp_server.utils import python_builtins
 
+
 ### Utility Functions ###
 def _type_name(obj: Any) -> str:
     """Get the __name__ attribute of an object."""
@@ -37,8 +38,7 @@ def _type_name(obj: Any) -> str:
 
 
 class _AstToJson:
-
-    def __init__(self, builtins=None): 
+    def __init__(self, builtins=None):
         # Lazy loading since we don't need to import them until we call the tool.
         self.ast = builtins.ast
         self.AST = self.ast.AST
@@ -50,8 +50,8 @@ class _AstToJson:
 
     def _decode_bytes(self, value: bytes | bytearray) -> str:
         """Decode bytes to a string using various encodings and codecs."""
-        encoders = ('utf-8', 'latin-1', 'ascii')
-        codecs = ('hex_codec', 'base64_codec', 'utf-16', 'utf-32')
+        encoders = ("utf-8", "latin-1", "ascii")
+        codecs = ("hex_codec", "base64_codec", "utf-16", "utf-32")
         for encoder in encoders:
             try:
                 return value.decode(encoder)
@@ -60,7 +60,7 @@ class _AstToJson:
         # If the value fails to decode, try re-encoding them THEN decoding them.
         for codec in codecs:
             try:
-                return self.getencoder(codec)(value)[0].decode('utf-8')
+                return self.getencoder(codec)(value)[0].decode("utf-8")
             except UnicodeDecodeError:
                 continue
         raise ValueError(
@@ -88,7 +88,7 @@ class _AstToJson:
             for attr in dir(node)
             if not attr.startswith("_")
         }
-        to_return['_type'] = node.__class__.__name__
+        to_return["_type"] = node.__class__.__name__
 
         return self._fix_complex_kinds(to_return)
 
@@ -118,23 +118,25 @@ class _AstToJson:
             case list():
                 return [self._get_value(x) for x in attr_value]
             case self.AST():
-                return self._ast2json(attr_value) # Recursively convert AST nodes
+                return self._ast2json(attr_value)  # Recursively convert AST nodes
             case _ if isinstance(attr_value, type(Ellipsis)):
-                return '...'
+                return "..."
             case _:
-                raise TypeError(f"Could not identify type of attribute '{attr_value}', got '{_type_name(attr_value)}'")
+                raise TypeError(
+                    f"Could not identify type of attribute '{attr_value}', got '{_type_name(attr_value)}'"
+                )
 
     def _fix_complex_kinds(self, obj: Any) -> Any:
         """
-        Recursively walk through the JSON structure and fix 'kind' values 
+        Recursively walk through the JSON structure and fix 'kind' values
         that should represent complex numbers.
         """
         if isinstance(obj, dict):
             result = {}
             for key, value in obj.items():
-                if key == 'kind' and isinstance(value, str):
+                if key == "kind" and isinstance(value, str):
                     if self._is_complex_literal(value.strip()):
-                        result[key] = 'complex'
+                        result[key] = "complex"
                     else:
                         result[key] = value
                 else:
@@ -148,10 +150,10 @@ class _AstToJson:
     def _is_complex_literal(self, value: str) -> bool:
         """
         Check if a string represents a valid Python complex number literal.
-        
+
         Args:
             value (str): String to check
-            
+
         Returns:
             bool: True if it's a valid complex number literal
         """
@@ -168,11 +170,8 @@ class _AstToJson:
         """Get the JSON representation of a Python source code string."""
         return self._ast2json(self.ast.parse(string))
 
-def python_file_to_json(
-        python_file: str,
-        is_path: bool,
-        save_path: Optional[str] = None
-        ) -> str:
+
+def python_file_to_json(python_file: str, is_path: bool, save_path: Optional[str] = None) -> str:
     """
     Convert a python file or python source code into a JSON-like dictionary representation.
     If save_path is provided, the JSON representation will also be saved to that path.
@@ -183,7 +182,7 @@ def python_file_to_json(
         save_path(Optional[str]): Optional path to save the JSON representation to a json file.
 
     Returns:
-        str: JSON-like string representation of the AST. 
+        str: JSON-like string representation of the AST.
             If the JSON representation is over 20,000 characters, a truncated string of the first 19,000 characters is returned.
 
     Raises:
@@ -194,7 +193,9 @@ def python_file_to_json(
     """
     # Type and value check the arguments.
     if not isinstance(python_file, str):
-        raise TypeError(f"Expected python file path to be a string, got '{_type_name(python_file)}'")
+        raise TypeError(
+            f"Expected python file path to be a string, got '{_type_name(python_file)}'"
+        )
 
     if not python_file:
         raise ValueError("Expected python file path to be a non-empty string.")
@@ -203,14 +204,16 @@ def python_file_to_json(
 
     if is_path:
         path = python_builtins.pathlib.Path(python_file)
-        if path.exists() and path.is_file() and path.suffix.lower() == '.py':
+        if path.exists() and path.is_file() and path.suffix.lower() == ".py":
             try:
-                with open(path.resolve(), 'r', encoding='utf-8') as file:
+                with open(path.resolve(), "r", encoding="utf-8") as file:
                     content: str = file.read()
             except Exception as e:
-                raise IOError(f"{_type_name(e)} writing JSON to '{save_path}': {e}") from e 
+                raise IOError(f"{_type_name(e)} writing JSON to '{save_path}': {e}") from e
         else:
-            raise FileNotFoundError(f"File '{python_file}' does not exist or is not a valid Python file.")
+            raise FileNotFoundError(
+                f"File '{python_file}' does not exist or is not a valid Python file."
+            )
     else:
         content = python_file
 
@@ -220,8 +223,10 @@ def python_file_to_json(
     if save_path is not None:
         if not isinstance(save_path, str):
             raise TypeError(f"Expected save path to be a string, got '{type(save_path).__name__}'")
-        if not save_path.endswith('.json'):
-            raise ValueError(f"Save path does not end with '.json'. Got '{save_path.split('.')[-1]}'.")
+        if not save_path.endswith(".json"):
+            raise ValueError(
+                f"Save path does not end with '.json'. Got '{save_path.split('.')[-1]}'."
+            )
         save_path = python_builtins.pathlib.Path(save_path)
 
     # Turn the python file content into a JSON object.
@@ -229,16 +234,17 @@ def python_file_to_json(
         json_dict = _AstToJson(builtins=python_builtins).str2json(content)
     except Exception as e:
         import traceback
+
         print(traceback.format_exc())
         raise ValueError(f"{_type_name(e)} parsing content with ast_to_json: {e}") from e
 
-    if save_path: # Save the file if input.
+    if save_path:  # Save the file if input.
         try:
-            with open(save_path.resolve(), 'w', encoding='utf-8') as file:
+            with open(save_path.resolve(), "w", encoding="utf-8") as file:
                 python_builtins.json.dump(json_dict, file, indent=4)
             print(f"JSON saved to '{save_path}'")
         except Exception as e:
-            raise IOError(f"{_type_name(e)} writing JSON to '{save_path}': {e}") from e 
+            raise IOError(f"{_type_name(e)} writing JSON to '{save_path}': {e}") from e
 
     # If the JSON string is over 20,000 characters, return a truncated version of 19,000 instead.
     json_str = python_builtins.json.dumps(json_dict)

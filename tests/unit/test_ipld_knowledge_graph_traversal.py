@@ -11,7 +11,9 @@ def test_traverse_from_entities_with_depths_reports_hops():
     kg.add_relationship("rel", a, b)
     kg.add_relationship("rel", b, c)
 
-    traversed = kg.traverse_from_entities_with_depths([a.id], relationship_types=["rel"], max_depth=2)
+    traversed = kg.traverse_from_entities_with_depths(
+        [a.id], relationship_types=["rel"], max_depth=2
+    )
     by_name = {e.name: d for e, d in traversed}
 
     assert by_name["A"] == 0

@@ -55,7 +55,9 @@ def _coverage(rows: Iterable[Dict[str, object]]) -> Dict[str, object]:
     partial_states: List[str] = []
     for state, families in sorted(by_state.items()):
         has_civil = "civil_procedure" in families or "civil_and_criminal_procedure" in families
-        has_criminal = "criminal_procedure" in families or "civil_and_criminal_procedure" in families
+        has_criminal = (
+            "criminal_procedure" in families or "civil_and_criminal_procedure" in families
+        )
         if has_civil and has_criminal:
             full += 1
         elif has_civil or has_criminal:
@@ -104,7 +106,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", default=str(default_in), help="Input merged JSONL")
     parser.add_argument("--output", default=str(default_out), help="Output cleaned JSONL")
     parser.add_argument("--report-json", default="", help="Optional report JSON path")
-    parser.add_argument("--in-place", action="store_true", help="Replace input file with cleaned output")
+    parser.add_argument(
+        "--in-place", action="store_true", help="Replace input file with cleaned output"
+    )
     parser.add_argument("--backup", default="", help="Backup path used when --in-place is set")
     parser.add_argument(
         "--require-equal-coverage",
@@ -119,7 +123,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _coverage_regression(source: Dict[str, object], cleaned: Dict[str, object]) -> Dict[str, object]:
+def _coverage_regression(
+    source: Dict[str, object], cleaned: Dict[str, object]
+) -> Dict[str, object]:
     source_full = int(source.get("full_both", 0))
     source_partial = int(source.get("partial", 0))
     source_none = int(source.get("none", 0))
@@ -128,9 +134,7 @@ def _coverage_regression(source: Dict[str, object], cleaned: Dict[str, object]) 
     cleaned_none = int(cleaned.get("none", 0))
 
     regressed = (
-        cleaned_full < source_full
-        or cleaned_partial > source_partial
-        or cleaned_none > source_none
+        cleaned_full < source_full or cleaned_partial > source_partial or cleaned_none > source_none
     )
     return {
         "regressed": regressed,
@@ -185,7 +189,11 @@ def main() -> int:
     blocked_in_place = bool(args.in_place and enforce_coverage and coverage_check["regressed"])
 
     if args.in_place and not blocked_in_place:
-        backup_path = Path(args.backup).expanduser().resolve() if args.backup else input_path.with_suffix(".pre_cleanup_backup.jsonl")
+        backup_path = (
+            Path(args.backup).expanduser().resolve()
+            if args.backup
+            else input_path.with_suffix(".pre_cleanup_backup.jsonl")
+        )
         backup_path.parent.mkdir(parents=True, exist_ok=True)
         backup_path.write_text(input_path.read_text(encoding="utf-8"), encoding="utf-8")
         input_path.write_text(output_path.read_text(encoding="utf-8"), encoding="utf-8")
@@ -206,7 +214,11 @@ def main() -> int:
         "removed_examples": removed_examples,
     }
 
-    report_path = Path(args.report_json).expanduser().resolve() if args.report_json else output_path.with_suffix(".cleanup_report.json")
+    report_path = (
+        Path(args.report_json).expanduser().resolve()
+        if args.report_json
+        else output_path.with_suffix(".cleanup_report.json")
+    )
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
 

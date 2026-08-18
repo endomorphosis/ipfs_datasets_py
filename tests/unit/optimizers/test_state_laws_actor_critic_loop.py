@@ -48,7 +48,14 @@ def test_critic_score_prefers_healthy_diagnostics():
         "fetch": {
             "success_ratio": 0.2,
             "no_attempt_states": ["IN", "LA"],
-            "weak_states": [{"state": "OK", "scaffold_ratio": 0.0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0}],
+            "weak_states": [
+                {
+                    "state": "OK",
+                    "scaffold_ratio": 0.0,
+                    "nav_like_ratio": 0.0,
+                    "fallback_section_ratio": 0.0,
+                }
+            ],
         },
         "etl_readiness": {
             "ready_for_kg_etl": False,
@@ -58,7 +65,12 @@ def test_critic_score_prefers_healthy_diagnostics():
         },
         "quality": {
             "weak_states": [
-                {"state": "OK", "scaffold_ratio": 0.6, "nav_like_ratio": 0.2, "fallback_section_ratio": 0.2}
+                {
+                    "state": "OK",
+                    "scaffold_ratio": 0.6,
+                    "nav_like_ratio": 0.2,
+                    "fallback_section_ratio": 0.2,
+                }
             ]
         },
     }
@@ -326,8 +338,22 @@ def test_execute_apply_plan_builds_queue_and_prechecks(tmp_path: Path):
     tasks_file.write_text(
         "\n".join(
             [
-                json.dumps({"task_id": "patch-task-001", "path": str(target_file), "reasons": ["etl_not_ready"], "states": []}),
-                json.dumps({"task_id": "patch-task-002", "path": "ipfs_datasets_py/does_not_exist.py", "reasons": [], "states": []}),
+                json.dumps(
+                    {
+                        "task_id": "patch-task-001",
+                        "path": str(target_file),
+                        "reasons": ["etl_not_ready"],
+                        "states": [],
+                    }
+                ),
+                json.dumps(
+                    {
+                        "task_id": "patch-task-002",
+                        "path": "ipfs_datasets_py/does_not_exist.py",
+                        "reasons": [],
+                        "states": [],
+                    }
+                ),
             ]
         )
         + "\n",
@@ -396,7 +422,9 @@ def test_resolve_auto_patch_strategy_respects_allow_and_deny_policies():
         states=["OK"],
         loop_config=LoopConfig(
             max_rounds=1,
-            auto_patch_allow_globs=["ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py"],
+            auto_patch_allow_globs=[
+                "ipfs_datasets_py/processors/legal_scrapers/state_scrapers/oklahoma.py"
+            ],
             auto_patch_deny_globs=["*state_laws_scraper.py"],
             wayback_allow_globs=["*oklahoma.py"],
             wayback_deny_globs=["*hawaii.py"],

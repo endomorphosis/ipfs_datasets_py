@@ -65,7 +65,7 @@ version = cli.get_version()
 print(f"VSCode CLI Version: {version}")
 
 # Execute a command
-result = cli.execute(['--version'])
+result = cli.execute(["--version"])
 print(result.stdout)
 ```
 
@@ -82,12 +82,12 @@ for ext in extensions:
     print(f"- {ext}")
 
 # Install an extension
-success = cli.install_extension('ms-python.python')
+success = cli.install_extension("ms-python.python")
 if success:
     print("Python extension installed")
 
 # Uninstall an extension
-success = cli.uninstall_extension('ms-python.python')
+success = cli.uninstall_extension("ms-python.python")
 if success:
     print("Python extension uninstalled")
 ```
@@ -102,14 +102,14 @@ from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
 cli = VSCodeCLI()
 
 # Method 1: Configure authentication (requires prior installation)
-result = cli.configure_auth(provider='github')
-if result['success']:
+result = cli.configure_auth(provider="github")
+if result["success"]:
     print("Authentication successful!")
-    print(result['stdout'])  # Contains OAuth instructions
+    print(result["stdout"])  # Contains OAuth instructions
 
 # Method 2: Install and authenticate in one step
-result = cli.install_with_auth(provider='github')
-if result['install_success'] and result['auth_success']:
+result = cli.install_with_auth(provider="github")
+if result["install_success"] and result["auth_success"]:
     print("VSCode CLI ready for remote development!")
 ```
 
@@ -121,12 +121,12 @@ from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
 cli = VSCodeCLI()
 
 # Login to tunnel service (GitHub authentication)
-result = cli.tunnel_user_login(provider='github')
+result = cli.tunnel_user_login(provider="github")
 if result.returncode == 0:
     print("Logged in successfully")
 
 # Install tunnel as a service
-result = cli.tunnel_service_install(name='my-tunnel')
+result = cli.tunnel_service_install(name="my-tunnel")
 if result.returncode == 0:
     print("Tunnel service installed")
 ```
@@ -137,7 +137,7 @@ if result.returncode == 0:
 from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
 
 # Use custom installation directory
-cli = VSCodeCLI(install_dir='/opt/vscode-cli')
+cli = VSCodeCLI(install_dir="/opt/vscode-cli")
 cli.download_and_install()
 ```
 
@@ -310,7 +310,7 @@ By default, VSCode CLI is installed to `~/.vscode-cli`. You can customize this:
 ```python
 from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
 
-cli = VSCodeCLI(install_dir='/custom/path')
+cli = VSCodeCLI(install_dir="/custom/path")
 ```
 
 Or via CLI:
@@ -324,7 +324,7 @@ ipfs-datasets vscode install --install-dir /custom/path
 By default, the stable version is installed. You can specify a specific commit:
 
 ```python
-cli = VSCodeCLI(commit='7d842fb85a0275a4a8e4d7e040d2625abbf7f084')
+cli = VSCodeCLI(commit="7d842fb85a0275a4a8e4d7e040d2625abbf7f084")
 ```
 
 Or via CLI:
@@ -402,7 +402,7 @@ print(f"Architecture: {status['architecture']}")
 
 # Install Python extension
 print("Installing Python extension...")
-if cli.install_extension('ms-python.python'):
+if cli.install_extension("ms-python.python"):
     print("Python extension installed")
 
 # List all extensions
@@ -412,7 +412,7 @@ for ext in extensions:
     print(f"  - {ext}")
 
 # Execute a custom command
-result = cli.execute(['--version'])
+result = cli.execute(["--version"])
 if result.returncode == 0:
     print(f"VSCode CLI version:\n{result.stdout}")
 ```

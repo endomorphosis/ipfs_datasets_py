@@ -75,16 +75,22 @@ extraction/
 **New (Recommended):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.extraction import (
-    Entity, Relationship, KnowledgeGraph,
-    KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
+    Entity,
+    Relationship,
+    KnowledgeGraph,
+    KnowledgeGraphExtractor,
+    KnowledgeGraphExtractorWithValidation,
 )
 ```
 
 **Old (Still Supported):**
 ```python
 from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
-    Entity, Relationship, KnowledgeGraph,
-    KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
+    Entity,
+    Relationship,
+    KnowledgeGraph,
+    KnowledgeGraphExtractor,
+    KnowledgeGraphExtractorWithValidation,
 )
 ```
 

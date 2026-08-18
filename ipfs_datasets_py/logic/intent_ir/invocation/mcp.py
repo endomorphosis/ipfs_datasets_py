@@ -154,8 +154,7 @@ class MCPInvocationPolicyError(MCPInvocationError):
     def __init__(self, decision: MCPToolSourcePolicyDecision) -> None:
         self.decision = decision
         super().__init__(
-            "MCP tool is not eligible for invocation adaptation: "
-            f"{decision.allowed_use.value}"
+            f"MCP tool is not eligible for invocation adaptation: {decision.allowed_use.value}"
         )
 
 
@@ -193,12 +192,8 @@ class ResolvedScopeClaim:
             )
         if description is None:
             description = ""
-        if not isinstance(description, str) or (
-            description and description != description.strip()
-        ):
-            raise MCPInvocationError(
-                f"scope claim description is invalid for {entry_id}"
-            )
+        if not isinstance(description, str) or (description and description != description.strip()):
+            raise MCPInvocationError(f"scope claim description is invalid for {entry_id}")
         self.entry_id = entry_id
         self.value = value
         self.description = description
@@ -267,9 +262,7 @@ class MCPInvocationContext:
         object.__setattr__(
             self, "envelope_id", _require_identifier(self.envelope_id, "envelope_id")
         )
-        object.__setattr__(
-            self, "tenant_id", _require_identifier(self.tenant_id, "tenant_id")
-        )
+        object.__setattr__(self, "tenant_id", _require_identifier(self.tenant_id, "tenant_id"))
         if not isinstance(self.actor, ActorBinding):
             raise MCPInvocationError("actor must be an ActorBinding")
         if not isinstance(self.audience, AudienceBinding):
@@ -278,20 +271,14 @@ class MCPInvocationContext:
             raise MCPInvocationError("environment must be an EnvironmentBinding")
         if not isinstance(self.redacted_arguments, Mapping):
             raise MCPInvocationError("redacted_arguments must be a mapping")
-        object.__setattr__(
-            self, "server_id", _require_identifier(self.server_id, "server_id")
-        )
+        object.__setattr__(self, "server_id", _require_identifier(self.server_id, "server_id"))
         object.__setattr__(
             self,
             "transport_peer",
             _optional_text(self.transport_peer, "transport_peer"),
         )
-        object.__setattr__(
-            self, "tool_version", _optional_text(self.tool_version, "tool_version")
-        )
-        object.__setattr__(
-            self, "server_name", _optional_text(self.server_name, "server_name")
-        )
+        object.__setattr__(self, "tool_version", _optional_text(self.tool_version, "tool_version"))
+        object.__setattr__(self, "server_name", _optional_text(self.server_name, "server_name"))
         authority = self.dispatcher_authority
         if isinstance(authority, str):
             try:
@@ -301,9 +288,7 @@ class MCPInvocationContext:
                     f"unsupported dispatcher_authority: {self.dispatcher_authority!r}"
                 ) from exc
         if not isinstance(authority, DispatcherAuthority):
-            raise MCPInvocationDispatcherError(
-                "dispatcher_authority must be a DispatcherAuthority"
-            )
+            raise MCPInvocationDispatcherError("dispatcher_authority must be a DispatcherAuthority")
         object.__setattr__(self, "dispatcher_authority", authority)
         object.__setattr__(
             self,
@@ -362,23 +347,15 @@ class MCPInvocationContext:
             raise MCPInvocationError("purpose must be a PurposeContext")
         if not isinstance(self.policy, PolicyRequirements):
             raise MCPInvocationError("policy must be PolicyRequirements")
-        object.__setattr__(
-            self, "nonce", _require_identifier(self.nonce, "nonce")
-        )
-        object.__setattr__(
-            self, "created_at", _require_text(self.created_at, "created_at")
-        )
-        object.__setattr__(
-            self, "deadline", _require_text(self.deadline, "deadline")
-        )
+        object.__setattr__(self, "nonce", _require_identifier(self.nonce, "nonce"))
+        object.__setattr__(self, "created_at", _require_text(self.created_at, "created_at"))
+        object.__setattr__(self, "deadline", _require_text(self.deadline, "deadline"))
         object.__setattr__(
             self,
             "trust_domain",
             _optional_identifier(self.trust_domain, "trust_domain"),
         )
-        object.__setattr__(
-            self, "trace_id", _optional_identifier(self.trace_id, "trace_id")
-        )
+        object.__setattr__(self, "trace_id", _optional_identifier(self.trace_id, "trace_id"))
         for name in (
             "expected_tool_name",
             "expected_tool_id",
@@ -439,9 +416,7 @@ class MCPInvocationAdapter:
         max_argument_depth: int = MAX_JSON_DEPTH,
         max_argument_chars: int = MAX_STRING_CHARS,
     ) -> None:
-        if source_adapter is not None and not isinstance(
-            source_adapter, MCPToolIntentAdapter
-        ):
+        if source_adapter is not None and not isinstance(source_adapter, MCPToolIntentAdapter):
             raise TypeError("source_adapter must be an MCPToolIntentAdapter")
         if policy is not None and not isinstance(policy, MCPToolSourcePolicy):
             raise TypeError("policy must be an MCPToolSourcePolicy")
@@ -512,9 +487,7 @@ class MCPInvocationAdapter:
 
         self._validate_identity(record, context)
         self._validate_dispatcher(context)
-        input_schema = self._parse_and_bound_schema(
-            record.input_schema_json, "input_schema"
-        )
+        input_schema = self._parse_and_bound_schema(record.input_schema_json, "input_schema")
         output_schema = (
             self._parse_and_bound_schema(record.output_schema_json, "output_schema")
             if record.output_schema_json
@@ -536,9 +509,7 @@ class MCPInvocationAdapter:
         annotations_unsupported, annotation_diagnostics, annotation_assumptions = (
             self._record_annotations_as_untrusted(record)
         )
-        requested_output_fields = self._bind_requested_output(
-            record, context, output_schema
-        )
+        requested_output_fields = self._bind_requested_output(record, context, output_schema)
         unsupported = annotations_unsupported + requested_output_fields.unsupported
         diagnostics = (
             (
@@ -567,8 +538,7 @@ class MCPInvocationAdapter:
             InvocationAssumption(
                 assumption_id=_stable_assumption_id(record, "no-side-effect"),
                 statement=(
-                    "Adaptation performed no network I/O and did not invoke "
-                    "the described MCP tool"
+                    "Adaptation performed no network I/O and did not invoke the described MCP tool"
                 ),
                 source_ref=source.source_ref,
             ),
@@ -665,18 +635,14 @@ class MCPInvocationAdapter:
                     f"context attribute {forbidden!r} would trigger a side effect"
                 )
 
-    def _validate_identity(
-        self, record: MCPToolRecord, context: MCPInvocationContext
-    ) -> None:
+    def _validate_identity(self, record: MCPToolRecord, context: MCPInvocationContext) -> None:
         if context.expected_tool_name and context.expected_tool_name != record.name:
             raise MCPInvocationIdentityError(
-                f"tool name mismatch: expected {context.expected_tool_name!r}, "
-                f"got {record.name!r}"
+                f"tool name mismatch: expected {context.expected_tool_name!r}, got {record.name!r}"
             )
         if context.expected_tool_id and context.expected_tool_id != record.tool_id:
             raise MCPInvocationIdentityError(
-                f"tool id mismatch: expected {context.expected_tool_id!r}, "
-                f"got {record.tool_id!r}"
+                f"tool id mismatch: expected {context.expected_tool_id!r}, got {record.tool_id!r}"
             )
         if (
             context.expected_content_sha256
@@ -699,10 +665,7 @@ class MCPInvocationAdapter:
                 f"got {context.server_id!r}"
             )
         bound_server_name = context.server_name or record.server_name
-        if (
-            context.expected_server_name
-            and context.expected_server_name != bound_server_name
-        ):
+        if context.expected_server_name and context.expected_server_name != bound_server_name:
             raise MCPInvocationIdentityError(
                 f"server_name mismatch: expected {context.expected_server_name!r}, "
                 f"got {bound_server_name!r}"
@@ -745,8 +708,7 @@ class MCPInvocationAdapter:
         ):
             if _is_caller_dispatcher_marker(candidate):
                 raise MCPInvocationDispatcherError(
-                    "caller-controlled dispatcher audience is rejected "
-                    f"({label}={candidate!r})"
+                    f"caller-controlled dispatcher audience is rejected ({label}={candidate!r})"
                 )
         for key, value in audience.attributes.items():
             if isinstance(value, str) and _is_caller_dispatcher_marker(value):
@@ -754,21 +716,15 @@ class MCPInvocationAdapter:
                     "caller-controlled dispatcher audience is rejected "
                     f"(attributes.{key}={value!r})"
                 )
-            if key in {"authority", "controlled_by", "source"} and isinstance(
-                value, str
-            ):
+            if key in {"authority", "controlled_by", "source"} and isinstance(value, str):
                 if value.lower() in _CALLER_DISPATCHER_MARKERS:
                     raise MCPInvocationDispatcherError(
                         "audience.attributes.authority must not be caller-controlled"
                     )
         if audience.attributes.get("caller_controlled") is True:
-            raise MCPInvocationDispatcherError(
-                "caller_controlled audience attribute is forbidden"
-            )
+            raise MCPInvocationDispatcherError("caller_controlled audience attribute is forbidden")
 
-    def _parse_and_bound_schema(
-        self, schema_json: str, label: str
-    ) -> dict[str, Any]:
+    def _parse_and_bound_schema(self, schema_json: str, label: str) -> dict[str, Any]:
         if not schema_json:
             return {}
         try:
@@ -791,9 +747,7 @@ class MCPInvocationAdapter:
         if isinstance(value, Mapping):
             for key, item in value.items():
                 if not isinstance(key, str):
-                    raise MCPInvocationSchemaError(
-                        f"{path} contains a non-string schema key"
-                    )
+                    raise MCPInvocationSchemaError(f"{path} contains a non-string schema key")
                 if key in _DYNAMIC_SCHEMA_KEYS:
                     raise MCPInvocationSchemaError(
                         f"{path}: dynamic schema feature {key!r} is rejected "
@@ -826,15 +780,10 @@ class MCPInvocationAdapter:
         # Lightweight required-key check without evaluating JSON Schema as code.
         required = input_schema.get("required")
         if isinstance(required, list):
-            missing = [
-                key
-                for key in required
-                if isinstance(key, str) and key not in arguments
-            ]
+            missing = [key for key in required if isinstance(key, str) and key not in arguments]
             if missing:
                 raise MCPInvocationSchemaError(
-                    "arguments missing required input fields: "
-                    + ", ".join(sorted(missing))
+                    "arguments missing required input fields: " + ", ".join(sorted(missing))
                 )
         properties = input_schema.get("properties")
         if isinstance(properties, Mapping) and properties:
@@ -844,8 +793,7 @@ class MCPInvocationAdapter:
             if extras and properties:
                 # Keep fail-closed for undeclared parameters.
                 raise MCPInvocationSchemaError(
-                    "arguments contain undeclared input fields: "
-                    + ", ".join(extras)
+                    "arguments contain undeclared input fields: " + ", ".join(extras)
                 )
 
     def _reject_dynamic_arguments(self, value: Any, *, path: str) -> None:
@@ -863,9 +811,7 @@ class MCPInvocationAdapter:
                     raise MCPInvocationBoundError(f"{path}: argument keys must be strings")
                 self._reject_dynamic_arguments(item, path=f"{path}.{key}")
             return
-        if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
             for index, item in enumerate(value):
                 self._reject_dynamic_arguments(item, path=f"{path}[{index}]")
 
@@ -884,17 +830,11 @@ class MCPInvocationAdapter:
             counter = [0]
         counter[0] += 1
         if counter[0] > max_nodes:
-            raise MCPInvocationBoundError(
-                f"{name} exceeds maximum of {max_nodes} JSON nodes"
-            )
+            raise MCPInvocationBoundError(f"{name} exceeds maximum of {max_nodes} JSON nodes")
         if depth > max_depth:
-            raise MCPInvocationBoundError(
-                f"{name} exceeds maximum JSON depth of {max_depth}"
-            )
+            raise MCPInvocationBoundError(f"{name} exceeds maximum JSON depth of {max_depth}")
         if isinstance(value, str) and len(value) > max_chars:
-            raise MCPInvocationBoundError(
-                f"{name} string exceeds maximum length of {max_chars}"
-            )
+            raise MCPInvocationBoundError(f"{name} string exceeds maximum length of {max_chars}")
         if isinstance(value, Mapping):
             if len(value) > MAX_COLLECTION_ITEMS:
                 raise MCPInvocationBoundError(
@@ -912,9 +852,7 @@ class MCPInvocationAdapter:
                     counter=counter,
                 )
             return
-        if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
             if len(value) > MAX_COLLECTION_ITEMS:
                 raise MCPInvocationBoundError(
                     f"{name} sequence exceeds maximum of {MAX_COLLECTION_ITEMS} items"
@@ -930,9 +868,7 @@ class MCPInvocationAdapter:
                     counter=counter,
                 )
 
-    def _commit_arguments(
-        self, context: MCPInvocationContext
-    ) -> ArgumentCommitment:
+    def _commit_arguments(self, context: MCPInvocationContext) -> ArgumentCommitment:
         try:
             return ArgumentCommitment.from_redacted(
                 dict(context.redacted_arguments),
@@ -1011,9 +947,7 @@ class MCPInvocationAdapter:
             },
         )
 
-    def _build_scope(
-        self, record: MCPToolRecord, context: MCPInvocationContext
-    ) -> InvocationScope:
+    def _build_scope(self, record: MCPToolRecord, context: MCPInvocationContext) -> InvocationScope:
         known = set(context.known_capabilities)
         capability_entries: list[ScopeEntry] = []
         for claim in context.resolved_capabilities:
@@ -1043,26 +977,17 @@ class MCPInvocationAdapter:
             effects=_claims_to_entries(context.resolved_effects, ScopeKind.EFFECT),
             capabilities=tuple(capability_entries),
             assets=_claims_to_entries(context.resolved_assets, ScopeKind.ASSET),
-            resources=_claims_to_entries(
-                context.resolved_resources, ScopeKind.RESOURCE
-            ),
-            data_classes=_claims_to_entries(
-                context.resolved_data_classes, ScopeKind.DATA
-            ),
+            resources=_claims_to_entries(context.resolved_resources, ScopeKind.RESOURCE),
+            data_classes=_claims_to_entries(context.resolved_data_classes, ScopeKind.DATA),
             network=_claims_to_entries(context.resolved_network, ScopeKind.NETWORK),
-            filesystem=_claims_to_entries(
-                context.resolved_filesystem, ScopeKind.FILESYSTEM
-            ),
-            subprocess=_claims_to_entries(
-                context.resolved_subprocess, ScopeKind.SUBPROCESS
-            ),
+            filesystem=_claims_to_entries(context.resolved_filesystem, ScopeKind.FILESYSTEM),
+            subprocess=_claims_to_entries(context.resolved_subprocess, ScopeKind.SUBPROCESS),
             secret_refs=tuple(
                 ScopeEntry(
                     # Avoid embedding the word "secret" + ":" in entry_id; the
                     # envelope rejects raw secret-like patterns in identifiers.
                     entry_id=(
-                        f"scope:sref:{index}:"
-                        f"{hashlib.sha256(ref.encode('utf-8')).hexdigest()[:16]}"
+                        f"scope:sref:{index}:{hashlib.sha256(ref.encode('utf-8')).hexdigest()[:16]}"
                     ),
                     kind=ScopeKind.SECRET_REF,
                     value=ref,
@@ -1121,9 +1046,7 @@ class MCPInvocationAdapter:
                 diagnostics.append(
                     InvocationDiagnostic(
                         code="invocation.mcp.annotation_authority_ignored",
-                        message=(
-                            f"Ignored untrusted annotation authority key {key_text!r}"
-                        ),
+                        message=(f"Ignored untrusted annotation authority key {key_text!r}"),
                         severity=DiagnosticSeverity.WARNING,
                         field_path=field_path,
                     )
@@ -1179,9 +1102,7 @@ class MCPInvocationAdapter:
         if requested is None:
             if output_schema:
                 digest = _sha256_hex_of_text(record.output_schema_json)
-                postcondition = (
-                    f"response conforms to bound output schema sha256:{digest}"
-                )
+                postcondition = f"response conforms to bound output schema sha256:{digest}"
                 verification = VerificationStep(
                     step_id="verify:mcp-output-schema",
                     description="Validate tool result against bound output schema id",
@@ -1271,9 +1192,7 @@ class MCPInvocationAdapter:
             diagnostics=tuple(diagnostics),
         )
 
-    def _source_maps(
-        self, record: MCPToolRecord, source_ref: str
-    ) -> tuple[SourceMapEntry, ...]:
+    def _source_maps(self, record: MCPToolRecord, source_ref: str) -> tuple[SourceMapEntry, ...]:
         name_end = len(record.name)
         return (
             SourceMapEntry(
@@ -1335,9 +1254,7 @@ def _optional_identifier(value: Any, name: str) -> str:
     return _require_identifier(value, name)
 
 
-def _unique_strings(
-    values: Sequence[str] | Iterable[str] | None, name: str
-) -> tuple[str, ...]:
+def _unique_strings(values: Sequence[str] | Iterable[str] | None, name: str) -> tuple[str, ...]:
     if values is None:
         return ()
     if isinstance(values, (str, bytes, bytearray)):
@@ -1356,9 +1273,7 @@ def _unique_strings(
     return tuple(result)
 
 
-def _unique_identifiers(
-    values: Sequence[str] | Iterable[str] | None, name: str
-) -> tuple[str, ...]:
+def _unique_identifiers(values: Sequence[str] | Iterable[str] | None, name: str) -> tuple[str, ...]:
     items = _unique_strings(values, name)
     for item in items:
         if not _ID_RE.fullmatch(item):
@@ -1446,8 +1361,9 @@ def _domain_digest(domain: str, payload: Mapping[str, Any]) -> str:
         "payload": payload,
     }
     digest = hashlib.sha256(
-        json.dumps(material, ensure_ascii=True, separators=(",", ":"), sort_keys=True)
-        .encode("utf-8")
+        json.dumps(material, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode(
+            "utf-8"
+        )
     ).hexdigest()
     return f"sha256:{digest}"
 

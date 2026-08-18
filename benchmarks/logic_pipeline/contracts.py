@@ -28,33 +28,15 @@ from .content_addressing import (
 from . import BENCHMARK_ID
 
 
-PROTOCOL_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.protocol.v1"
-)
-PROTOCOL_RECORD_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.protocol-record.v1"
-)
-TELEMETRY_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.telemetry.v1"
-)
-STAGE_PROVENANCE_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.stage-provenance.v1"
-)
-STAGE_RECORD_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.stage-record.v1"
-)
-CASE_RESULT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.case-result.v2"
-)
-CASE_RESULT_RECEIPT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.case-result-receipt.v1"
-)
-RUN_CONTRACT_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.run-contract.v1"
-)
-OUTCOME_RECORD_SCHEMA: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.outcome.v1"
-)
+PROTOCOL_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.protocol.v1"
+PROTOCOL_RECORD_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.protocol-record.v1"
+TELEMETRY_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.telemetry.v1"
+STAGE_PROVENANCE_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.stage-provenance.v1"
+STAGE_RECORD_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.stage-record.v1"
+CASE_RESULT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.case-result.v2"
+CASE_RESULT_RECEIPT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.case-result-receipt.v1"
+RUN_CONTRACT_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.run-contract.v1"
+OUTCOME_RECORD_SCHEMA: Final = "ipfs-datasets.logic-pipeline-benchmark.outcome.v1"
 PROTOCOL_ID: Final = "hammer-symai-spacy-leanstral-preregistered-v1"
 PROTOCOL_VERSION: Final = 1
 BASELINE_VARIANT: Final = "A0"
@@ -229,9 +211,7 @@ def HSSLEV0357C0D() -> str:
 _EnumT = TypeVar("_EnumT", bound=Enum)
 
 
-def _enum(
-    enum_type: type[_EnumT], value: object, field: str
-) -> _EnumT:
+def _enum(enum_type: type[_EnumT], value: object, field: str) -> _EnumT:
     if not isinstance(value, str):
         raise ProtocolContractError(f"{field} must be a string")
     try:
@@ -242,9 +222,7 @@ def _enum(
 
 def _safe_id(value: object, field: str) -> str:
     if not isinstance(value, str) or not _SAFE_ID.fullmatch(value):
-        raise ProtocolContractError(
-            f"{field} must be a safe 1-128 character identifier"
-        )
+        raise ProtocolContractError(f"{field} must be a safe 1-128 character identifier")
     if value in {".", ".."}:
         raise ProtocolContractError(f"{field} must not be path traversal")
     return value
@@ -301,9 +279,7 @@ def _mapping(value: object, field: str) -> Mapping[str, object]:
     return value
 
 
-def _exact_keys(
-    value: Mapping[str, object], expected: set[str], field: str
-) -> None:
+def _exact_keys(value: Mapping[str, object], expected: set[str], field: str) -> None:
     actual = set(value)
     missing = expected - actual
     unknown = actual - expected
@@ -346,9 +322,7 @@ class HypothesisSpec:
     @classmethod
     def from_dict(cls, value: object) -> Self:
         data = _mapping(value, "hypothesis")
-        _exact_keys(
-            data, {"hypothesis_id", "statement", "null_statement"}, "hypothesis"
-        )
+        _exact_keys(data, {"hypothesis_id", "statement", "null_statement"}, "hypothesis")
         return cls(
             hypothesis_id=_safe_id(data["hypothesis_id"], "hypothesis_id"),
             statement=_nonempty(data["statement"], "statement"),
@@ -374,9 +348,7 @@ class VariantSpec:
         _bool(self.primary_candidate, "primary_candidate")
         _bool(self.safety_diagnostic_only, "safety_diagnostic_only")
         if self.safety_diagnostic_only and self.primary_candidate:
-            raise ProtocolContractError(
-                "a safety diagnostic cannot be a primary candidate"
-            )
+            raise ProtocolContractError("a safety diagnostic cannot be a primary candidate")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -409,9 +381,7 @@ class VariantSpec:
             purpose=_nonempty(data["purpose"], "purpose"),
             paired_against=paired,
             primary_candidate=_bool(data["primary_candidate"], "primary_candidate"),
-            safety_diagnostic_only=_bool(
-                data["safety_diagnostic_only"], "safety_diagnostic_only"
-            ),
+            safety_diagnostic_only=_bool(data["safety_diagnostic_only"], "safety_diagnostic_only"),
         )
 
 
@@ -470,10 +440,13 @@ class MaterialityThresholds:
     shortlist_candidate_max: int = 4
 
     def __post_init__(self) -> None:
-        if _integer(
-            self.invalid_control_verified_max,
-            "invalid_control_verified_max",
-        ) != 0:
+        if (
+            _integer(
+                self.invalid_control_verified_max,
+                "invalid_control_verified_max",
+            )
+            != 0
+        ):
             raise ProtocolContractError(
                 "invalid-control verification tolerance is permanently zero"
             )
@@ -515,10 +488,7 @@ class MaterialityThresholds:
         _integer(self.shortlist_candidate_max, "shortlist_candidate_max", minimum=1)
 
     def to_dict(self) -> dict[str, object]:
-        return {
-            name: getattr(self, name)
-            for name in self.__dataclass_fields__
-        }
+        return {name: getattr(self, name) for name in self.__dataclass_fields__}
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
@@ -577,15 +547,10 @@ class SafetyInvariants:
     def __post_init__(self) -> None:
         for name in self.__dataclass_fields__:
             if _bool(getattr(self, name), name) is not True:
-                raise ProtocolContractError(
-                    f"safety invariant {name} cannot be relaxed"
-                )
+                raise ProtocolContractError(f"safety invariant {name} cannot be relaxed")
 
     def to_dict(self) -> dict[str, bool]:
-        return {
-            name: getattr(self, name)
-            for name in self.__dataclass_fields__
-        }
+        return {name: getattr(self, name) for name in self.__dataclass_fields__}
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
@@ -610,10 +575,7 @@ class HoldoutRules:
                 raise ProtocolContractError(f"holdout rule {name} cannot be relaxed")
 
     def to_dict(self) -> dict[str, bool]:
-        return {
-            name: getattr(self, name)
-            for name in self.__dataclass_fields__
-        }
+        return {name: getattr(self, name) for name in self.__dataclass_fields__}
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
@@ -652,9 +614,7 @@ class StopCondition:
         keys = {"failure_code", "consecutive_occurrences", "reason"}
         _exact_keys(data, keys, "stop_condition")
         return cls(
-            failure_code=_enum(
-                FailureCode, data["failure_code"], "failure_code"
-            ),  # type: ignore[arg-type]
+            failure_code=_enum(FailureCode, data["failure_code"], "failure_code"),  # type: ignore[arg-type]
             consecutive_occurrences=_integer(
                 data["consecutive_occurrences"],
                 "consecutive_occurrences",
@@ -665,9 +625,7 @@ class StopCondition:
 
 
 _REQUIRED_HYPOTHESES = frozenset(f"H{i}" for i in range(1, 8))
-_REQUIRED_VARIANTS = frozenset(
-    [*(f"A{i}" for i in range(13)), "S1"]
-)
+_REQUIRED_VARIANTS = frozenset([*(f"A{i}" for i in range(13)), "S1"])
 _REQUIRED_PRIMARY_METRICS = frozenset(
     {
         "kernel_verified_completion_rate",
@@ -703,13 +661,8 @@ class BenchmarkProtocol:
             raise ProtocolContractError(f"unsupported protocol schema {self.schema!r}")
         if self.protocol_id != PROTOCOL_ID:
             raise ProtocolContractError(f"unsupported protocol id {self.protocol_id!r}")
-        if (
-            isinstance(self.protocol_version, bool)
-            or self.protocol_version != PROTOCOL_VERSION
-        ):
-            raise ProtocolContractError(
-                f"unsupported protocol version {self.protocol_version!r}"
-            )
+        if isinstance(self.protocol_version, bool) or self.protocol_version != PROTOCOL_VERSION:
+            raise ProtocolContractError(f"unsupported protocol version {self.protocol_version!r}")
         if _bool(self.frozen, "frozen") is not True:
             raise ProtocolContractError("protocol must be frozen")
         if _bool(self.pilot_results_inspected, "pilot_results_inspected"):
@@ -749,25 +702,17 @@ class BenchmarkProtocol:
         for variant in self.variants:
             if variant.variant_id != BASELINE_VARIANT:
                 if variant.paired_against != BASELINE_VARIANT:
-                    raise ProtocolContractError(
-                        f"{variant.variant_id} must be paired against A0"
-                    )
+                    raise ProtocolContractError(f"{variant.variant_id} must be paired against A0")
         if not variants["S1"].safety_diagnostic_only:
             raise ProtocolContractError("S1 must remain safety-diagnostic only")
         primary_metrics = {
-            metric.metric_id
-            for metric in self.metrics
-            if metric.category is MetricCategory.PRIMARY
+            metric.metric_id for metric in self.metrics if metric.category is MetricCategory.PRIMARY
         }
         if not _REQUIRED_PRIMARY_METRICS.issubset(primary_metrics):
             raise ProtocolContractError("required primary metrics are missing")
-        if not any(
-            metric.category is MetricCategory.RESOURCE for metric in self.metrics
-        ):
+        if not any(metric.category is MetricCategory.RESOURCE for metric in self.metrics):
             raise ProtocolContractError("at least one resource metric is required")
-        if not any(
-            metric.category is MetricCategory.ROUTING for metric in self.metrics
-        ):
+        if not any(metric.category is MetricCategory.ROUTING for metric in self.metrics):
             raise ProtocolContractError("at least one routing metric is required")
         if tuple(self.failure_taxonomy) != tuple(FailureCode):
             raise ProtocolContractError(
@@ -775,8 +720,7 @@ class BenchmarkProtocol:
             )
         if set(self.exclusion_failure_codes) != EXCLUSION_FAILURE_CODES:
             raise ProtocolContractError(
-                "only preregistered capability and invalid-fixture exclusions "
-                "are allowed"
+                "only preregistered capability and invalid-fixture exclusions are allowed"
             )
         expected_stops = {
             **{code: 1 for code in IMMEDIATE_STOP_CODES},
@@ -784,15 +728,11 @@ class BenchmarkProtocol:
             FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE: 3,
         }
         actual_stops = {
-            item.failure_code: item.consecutive_occurrences
-            for item in self.stop_conditions
+            item.failure_code: item.consecutive_occurrences for item in self.stop_conditions
         }
         if actual_stops != expected_stops:
             raise ProtocolContractError("stop-condition thresholds cannot be changed")
-        if (
-            _FROZEN_PROTOCOL_SHA256 is not None
-            and protocol_sha256(self) != _FROZEN_PROTOCOL_SHA256
-        ):
+        if _FROZEN_PROTOCOL_SHA256 is not None and protocol_sha256(self) != _FROZEN_PROTOCOL_SHA256:
             raise ProtocolContractError(
                 "protocol revision 1 content is frozen; create a new schema "
                 "and version for amendments"
@@ -802,9 +742,7 @@ class BenchmarkProtocol:
     def variant_map(self) -> Mapping[str, VariantSpec]:
         """Read-only lookup without exposing mutable protocol state."""
 
-        return MappingProxyType(
-            {variant.variant_id: variant for variant in self.variants}
-        )
+        return MappingProxyType({variant.variant_id: variant for variant in self.variants})
 
     @property
     def digest(self) -> str:
@@ -823,9 +761,7 @@ class BenchmarkProtocol:
             "thresholds": self.thresholds.to_dict(),
             "safety_invariants": self.safety_invariants.to_dict(),
             "holdout_rules": self.holdout_rules.to_dict(),
-            "exclusion_failure_codes": [
-                item.value for item in self.exclusion_failure_codes
-            ],
+            "exclusion_failure_codes": [item.value for item in self.exclusion_failure_codes],
             "failure_taxonomy": [item.value for item in self.failure_taxonomy],
             "stop_conditions": [item.to_dict() for item in self.stop_conditions],
         }
@@ -863,51 +799,36 @@ class BenchmarkProtocol:
         return cls(
             schema=_nonempty(data["schema"], "schema"),
             protocol_id=_nonempty(data["protocol_id"], "protocol_id"),
-            protocol_version=_integer(
-                data["protocol_version"], "protocol_version", minimum=1
-            ),
+            protocol_version=_integer(data["protocol_version"], "protocol_version", minimum=1),
             frozen=_bool(data["frozen"], "frozen"),
             pilot_results_inspected=_bool(
                 data["pilot_results_inspected"], "pilot_results_inspected"
             ),
-            hypotheses=tuple(
-                HypothesisSpec.from_dict(item) for item in arrays["hypotheses"]
-            ),
-            variants=tuple(
-                VariantSpec.from_dict(item) for item in arrays["variants"]
-            ),
+            hypotheses=tuple(HypothesisSpec.from_dict(item) for item in arrays["hypotheses"]),
+            variants=tuple(VariantSpec.from_dict(item) for item in arrays["variants"]),
             metrics=tuple(MetricSpec.from_dict(item) for item in arrays["metrics"]),
             thresholds=MaterialityThresholds.from_dict(data["thresholds"]),
-            safety_invariants=SafetyInvariants.from_dict(
-                data["safety_invariants"]
-            ),
+            safety_invariants=SafetyInvariants.from_dict(data["safety_invariants"]),
             holdout_rules=HoldoutRules.from_dict(data["holdout_rules"]),
             exclusion_failure_codes=tuple(
-                _enum(FailureCode, item, "exclusion_failure_codes[]")
-                for item in exclusions
+                _enum(FailureCode, item, "exclusion_failure_codes[]") for item in exclusions
             ),
             failure_taxonomy=tuple(
-                _enum(FailureCode, item, "failure_taxonomy[]")
-                for item in taxonomy
+                _enum(FailureCode, item, "failure_taxonomy[]") for item in taxonomy
             ),
             stop_conditions=tuple(
                 StopCondition.from_dict(item) for item in arrays["stop_conditions"]
             ),
         )
 
-    def stop_required(
-        self, failure_code: FailureCode, *, consecutive_occurrences: int = 1
-    ) -> bool:
+    def stop_required(self, failure_code: FailureCode, *, consecutive_occurrences: int = 1) -> bool:
         """Return whether the preregistered stop threshold has been met."""
 
         if not isinstance(failure_code, FailureCode):
             raise ProtocolContractError("failure_code must be a FailureCode")
-        count = _integer(
-            consecutive_occurrences, "consecutive_occurrences", minimum=1
-        )
+        count = _integer(consecutive_occurrences, "consecutive_occurrences", minimum=1)
         thresholds = {
-            item.failure_code: item.consecutive_occurrences
-            for item in self.stop_conditions
+            item.failure_code: item.consecutive_occurrences for item in self.stop_conditions
         }
         threshold = thresholds.get(failure_code)
         return threshold is not None and count >= threshold
@@ -930,9 +851,7 @@ def _hypotheses() -> tuple[HypothesisSpec, ...]:
         ),
         ("H7", "Unverified proved-claim gains disappear under kernel verification."),
     )
-    return tuple(
-        HypothesisSpec(item, statement, null) for item, statement in statements
-    )
+    return tuple(HypothesisSpec(item, statement, null) for item, statement in statements)
 
 
 def _variants() -> tuple[VariantSpec, ...]:
@@ -978,9 +897,7 @@ def _variants() -> tuple[VariantSpec, ...]:
                 variant_id,
                 configuration,
                 purpose,
-                paired_against=(
-                    None if variant_id == BASELINE_VARIANT else BASELINE_VARIANT
-                ),
+                paired_against=(None if variant_id == BASELINE_VARIANT else BASELINE_VARIANT),
             )
         )
     variants.append(
@@ -1203,24 +1120,14 @@ def _semantic_cid(
         raise ProtocolContractError(f"{field} is not a canonical CID") from exc
 
 
-SEMANTIC_PROTOCOL_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.semantic-protocol.v2"
-)
-SEMANTIC_PROTOCOL_ID_V2: Final = (
-    "hammer-symai-spacy-leanstral-source-only-semantics-v2"
-)
+SEMANTIC_PROTOCOL_SCHEMA_V2: Final = "ipfs-datasets.logic-pipeline-benchmark.semantic-protocol.v2"
+SEMANTIC_PROTOCOL_ID_V2: Final = "hammer-symai-spacy-leanstral-source-only-semantics-v2"
 SEMANTIC_PROJECTION_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.semantic-projection.v2"
 )
-SEMANTIC_PROMPT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.symai-prompt.v2"
-)
-SEMANTIC_RESPONSE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.symai-response.v2"
-)
-SEMANTIC_FAILURE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark.semantic-failure.v2"
-)
+SEMANTIC_PROMPT_SCHEMA_V2: Final = "ipfs-datasets.logic-pipeline-benchmark.symai-prompt.v2"
+SEMANTIC_RESPONSE_SCHEMA_V2: Final = "ipfs-datasets.logic-pipeline-benchmark.symai-response.v2"
+SEMANTIC_FAILURE_SCHEMA_V2: Final = "ipfs-datasets.logic-pipeline-benchmark.semantic-failure.v2"
 SEMANTIC_FAILURE_CODES_V2: Final = (
     "semantic_input_leakage",
     "semantic_schema_incompatible",
@@ -1278,16 +1185,13 @@ SEMANTIC_PRODUCER_IDS_V2: Final = (
     "symai",
 )
 SEMANTIC_CALIBRATION_ROUTE_MANIFEST_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "semantic-calibration-routes.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-calibration-routes.v2"
 )
 SEMANTIC_CALIBRATION_METRIC_SPEC_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "semantic-calibration-metrics.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-calibration-metrics.v2"
 )
 SEMANTIC_REVIEWED_TARGET_SOURCE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "semantic-reviewed-target-source.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.semantic-reviewed-target-source.v2"
 )
 
 
@@ -1298,9 +1202,7 @@ def semantic_calibration_route_manifest_v2() -> dict[str, object]:
         "schema": SEMANTIC_CALIBRATION_ROUTE_MANIFEST_SCHEMA_V2,
         "cache_mode": CacheMode.COLD.value,
         "coordinate_count": SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2,
-        "cases_per_producer": (
-            SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
-        ),
+        "cases_per_producer": (SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2),
         "routes": [
             {
                 "producer_id": "compiler",
@@ -1350,9 +1252,7 @@ def semantic_calibration_route_manifest_v2() -> dict[str, object]:
         "post_hoc_route_or_cache_selection": False,
         "proof_stages_permitted": False,
         "measurement_unit": "integrated_frontend_stage_prefix",
-        "quality_attribution": (
-            "terminal_projection_with_required_upstream_dependencies"
-        ),
+        "quality_attribution": ("terminal_projection_with_required_upstream_dependencies"),
         "cost_attribution": "complete_selected_stage_prefix",
         "standalone_producer_claims_permitted": False,
     }
@@ -1368,27 +1268,17 @@ def semantic_calibration_metric_spec_v2() -> dict[str, object]:
 
     return {
         "schema": SEMANTIC_CALIBRATION_METRIC_SPEC_SCHEMA_V2,
-        "cases_per_producer": (
-            SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
-        ),
+        "cases_per_producer": (SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2),
         "primary_quality": {
             "name": "all_five_semantic_fields_exact",
-            "fields": list(
-                SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
-            ),
-            "minimum_rate_millionths": (
-                SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
-            ),
+            "fields": list(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2),
+            "minimum_rate_millionths": (SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2),
             "minimum_successes": 15,
         },
         "uncertainty": {
             "method": "wilson_score_interval",
-            "confidence_millionths": (
-                SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2
-            ),
-            "minimum_lower_bound_millionths": (
-                SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2
-            ),
+            "confidence_millionths": (SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2),
+            "minimum_lower_bound_millionths": (SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2),
         },
         "eligibility": {
             "requires_all_coordinates_measured": True,
@@ -1437,12 +1327,8 @@ def semantic_reviewed_target_source_v2() -> dict[str, object]:
             "58b9122c24e4d9d4cc2ad01c7437dfeb45c80ad2535df769d81a89acbda24a26"
         ),
         "split_manifest_sha256": {
-            "pilot": (
-                "a050371dae1248deecfb17f2d9e610124c6e493a1a227ec3c161008891ce1881"
-            ),
-            "development": (
-                "530860019b164c9750083ec5affd6ae71202b695c8c8042400d0f02488436b74"
-            ),
+            "pilot": ("a050371dae1248deecfb17f2d9e610124c6e493a1a227ec3c161008891ce1881"),
+            "development": ("530860019b164c9750083ec5affd6ae71202b695c8c8042400d0f02488436b74"),
         },
         "case_count": SEMANTIC_CALIBRATION_CASE_COUNT_V2,
         "case_identity": [
@@ -1469,9 +1355,7 @@ def semantic_reviewed_target_source_v2() -> dict[str, object]:
 SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID: Final = cid_for_dag_json(
     semantic_reviewed_target_source_v2()
 )
-_SEMANTIC_VACUOUS_TERMS: Final = frozenset(
-    {"", "none", "null", "unknown", "unspecified"}
-)
+_SEMANTIC_VACUOUS_TERMS: Final = frozenset({"", "none", "null", "unknown", "unspecified"})
 _SEMANTIC_LOGIC_ALIASES: Final = MappingProxyType(
     {
         "first_order": "fol",
@@ -1483,9 +1367,7 @@ _SEMANTIC_LOGIC_ALIASES: Final = MappingProxyType(
         "temporal_logic": "temporal",
     }
 )
-_SEMANTIC_TERM_SCHEMA_PATTERN: Final = (
-    r"^[^\W_][\w.:-]{0,255}$"
-)
+_SEMANTIC_TERM_SCHEMA_PATTERN: Final = r"^[^\W_][\w.:-]{0,255}$"
 _SEMANTIC_TERM = re.compile(
     r"[^\W_][\w.:-]{0,255}\Z",
     flags=re.UNICODE,
@@ -1557,9 +1439,7 @@ def normalize_semantic_term(value: object) -> str:
         "".join(
             (
                 character
-                if character.isalnum()
-                or character
-                in _SEMANTIC_TERM_PRESERVED_PUNCTUATION_V2
+                if character.isalnum() or character in _SEMANTIC_TERM_PRESERVED_PUNCTUATION_V2
                 else " "
             )
             for character in normalized
@@ -1636,9 +1516,7 @@ def semantic_response_json_schema_v2() -> dict[str, object]:
             "completeness": {
                 "type": "object",
                 "additionalProperties": False,
-                "required": list(
-                    SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
-                ),
+                "required": list(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2),
                 "properties": {
                     field: {"type": "boolean"}
                     for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
@@ -1666,9 +1544,7 @@ def semantic_producer_registry_v2() -> dict[str, object]:
                 "stage": StageName.COMPILER.value,
                 "mode": "current_modal_codec",
                 "adapter_version": "2",
-                "evidence_schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"
-                ),
+                "evidence_schema": ("ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"),
                 "projection_evidence": "modal_ir",
                 "evidence_cid_codec": "dag-json",
             },
@@ -1677,9 +1553,7 @@ def semantic_producer_registry_v2() -> dict[str, object]:
                 "stage": StageName.SPACY.value,
                 "mode": "full_model",
                 "adapter_version": "2",
-                "evidence_schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
-                ),
+                "evidence_schema": ("ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"),
                 "projection_evidence": "modal_ir",
                 "evidence_cid_codec": "dag-json",
             },
@@ -1688,9 +1562,7 @@ def semantic_producer_registry_v2() -> dict[str, object]:
                 "stage": StageName.SPACY.value,
                 "mode": "regex_legal",
                 "adapter_version": "2",
-                "evidence_schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
-                ),
+                "evidence_schema": ("ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"),
                 "projection_evidence": "modal_ir",
                 "evidence_cid_codec": "dag-json",
             },
@@ -1699,9 +1571,7 @@ def semantic_producer_registry_v2() -> dict[str, object]:
                 "stage": StageName.SPACY.value,
                 "mode": "blank_model",
                 "adapter_version": "2",
-                "evidence_schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"
-                ),
+                "evidence_schema": ("ipfs-datasets.logic-pipeline-benchmark.spacy-evidence.v2"),
                 "projection_evidence": "modal_ir",
                 "evidence_cid_codec": "dag-json",
             },
@@ -1710,9 +1580,7 @@ def semantic_producer_registry_v2() -> dict[str, object]:
                 "stage": StageName.SYMAI.value,
                 "mode": "structured_source_only",
                 "adapter_version": "2",
-                "evidence_schema": (
-                    "ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"
-                ),
+                "evidence_schema": ("ipfs-datasets.logic-pipeline-benchmark.symai-evidence.v2"),
                 "projection_evidence": "validated_response",
                 "evidence_cid_codec": "dag-json",
                 "raw_output_cid_codec": "raw",
@@ -1777,9 +1645,7 @@ def semantic_projection_json_schema_v2() -> dict[str, object]:
             "completeness": {
                 "type": "object",
                 "additionalProperties": False,
-                "required": list(
-                    SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
-                ),
+                "required": list(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2),
                 "properties": {
                     field: {"type": "boolean"}
                     for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
@@ -1816,16 +1682,12 @@ def semantic_normalization_spec_v2() -> dict[str, object]:
             "unicode": _SEMANTIC_TERM_UNICODE_FORM_V2,
             "case": _SEMANTIC_TERM_CASE_RULE_V2,
             "token_separator": _SEMANTIC_TERM_SEPARATOR_V2,
-            "preserved_punctuation": list(
-                _SEMANTIC_TERM_PRESERVED_PUNCTUATION_V2
-            ),
+            "preserved_punctuation": list(_SEMANTIC_TERM_PRESERVED_PUNCTUATION_V2),
             "other_characters": "replace_with_space",
             "whitespace": "split_collapse",
             "maximum_length": _SEMANTIC_TERM_MAX_LENGTH_V2,
             "alphanumeric_profile": "python_str_isalnum_unicode",
-            "persisted_term_schema_pattern": (
-                _SEMANTIC_TERM_SCHEMA_PATTERN
-            ),
+            "persisted_term_schema_pattern": (_SEMANTIC_TERM_SCHEMA_PATTERN),
             "authoritative_validation": (
                 "exact_normalization_fixed_point_and_leading_and_body_"
                 "characters_checked_with_unicode_isalnum"
@@ -1839,9 +1701,7 @@ def semantic_normalization_spec_v2() -> dict[str, object]:
                 "formulas_field": _SEMANTIC_MODAL_IR_FORMULAS_FIELD_V2,
             },
             "formulas": {
-                "accepted_container": (
-                    "sequence_excluding_string_bytes_bytearray"
-                ),
+                "accepted_container": ("sequence_excluding_string_bytes_bytearray"),
                 "accepted_item_shape": "mapping",
                 "invalid_container_result": "empty",
                 "invalid_items": "ignore",
@@ -1850,48 +1710,33 @@ def semantic_normalization_spec_v2() -> dict[str, object]:
             "operator": {
                 "field": _SEMANTIC_MODAL_IR_OPERATOR_FIELD_V2,
                 "accepted_shapes": ["mapping", "string"],
-                "mapping_family_field": (
-                    _SEMANTIC_MODAL_IR_OPERATOR_FAMILY_FIELD_V2
-                ),
+                "mapping_family_field": (_SEMANTIC_MODAL_IR_OPERATOR_FAMILY_FIELD_V2),
                 "string_value_is_family": True,
                 "unsupported_or_non_string_family_result": "missing",
             },
             "predicate": {
                 "field": _SEMANTIC_MODAL_IR_PREDICATE_FIELD_V2,
                 "accepted_shapes": ["mapping", "string"],
-                "mapping_name_field": (
-                    _SEMANTIC_MODAL_IR_PREDICATE_NAME_FIELD_V2
-                ),
-                "mapping_arguments_field": (
-                    _SEMANTIC_MODAL_IR_PREDICATE_ARGUMENTS_FIELD_V2
-                ),
-                "mapping_role_field": (
-                    _SEMANTIC_MODAL_IR_PREDICATE_ROLE_FIELD_V2
-                ),
+                "mapping_name_field": (_SEMANTIC_MODAL_IR_PREDICATE_NAME_FIELD_V2),
+                "mapping_arguments_field": (_SEMANTIC_MODAL_IR_PREDICATE_ARGUMENTS_FIELD_V2),
+                "mapping_role_field": (_SEMANTIC_MODAL_IR_PREDICATE_ROLE_FIELD_V2),
                 "string_value_is_name": True,
                 "unsupported_or_non_string_name_result": "missing",
             },
             "arguments": {
-                "accepted_container": (
-                    "sequence_excluding_string_bytes_bytearray"
-                ),
+                "accepted_container": ("sequence_excluding_string_bytes_bytearray"),
                 "accepted_item_type": "string",
                 "invalid_container_result": "empty",
                 "invalid_items": "ignore",
                 "entity_values": [
                     "exact_argument",
-                    (
-                        "suffix_after_final_"
-                        + _SEMANTIC_MODAL_IR_ENTITY_QUALIFIER_V2
-                    ),
+                    ("suffix_after_final_" + _SEMANTIC_MODAL_IR_ENTITY_QUALIFIER_V2),
                 ],
                 "suffix_only_when_qualifier_present": True,
                 "empty_normalized_values": "omit",
                 "normalization": "term_normalization",
                 "canonicalization": "sorted_unique",
-                "maximum_persisted_items": (
-                    _SEMANTIC_PROJECTION_MAX_TERMS_V2
-                ),
+                "maximum_persisted_items": (_SEMANTIC_PROJECTION_MAX_TERMS_V2),
                 "overflow": "reject_projection",
             },
             "primary_formula_selection": {
@@ -1901,9 +1746,7 @@ def semantic_normalization_spec_v2() -> dict[str, object]:
                         _SEMANTIC_MODAL_IR_PREDICATE_FIELD_V2,
                         _SEMANTIC_MODAL_IR_PREDICATE_ROLE_FIELD_V2,
                     ],
-                    "normalized_value": (
-                        _SEMANTIC_MODAL_IR_PRIMARY_ROLE_V2
-                    ),
+                    "normalized_value": (_SEMANTIC_MODAL_IR_PRIMARY_ROLE_V2),
                     "missing_or_non_string": "not_preferred",
                 },
                 "ordered_tiebreakers": [
@@ -1936,18 +1779,14 @@ def semantic_normalization_spec_v2() -> dict[str, object]:
                 "empty_result": "no_primary_formula",
             },
             "projection_fields": {
-                "logic_family": (
-                    "primary_formula.operator.family"
-                ),
+                "logic_family": ("primary_formula.operator.family"),
                 "target": "primary_formula.predicate.name",
                 "predicates": "all_accepted_formula_predicate_names",
                 "entities": "all_accepted_predicate_arguments",
                 "normalization": "term_normalization",
                 "predicate_and_entity_canonicalization": "sorted_unique",
                 "empty_normalized_values": "omit",
-                "maximum_persisted_items": (
-                    _SEMANTIC_PROJECTION_MAX_TERMS_V2
-                ),
+                "maximum_persisted_items": (_SEMANTIC_PROJECTION_MAX_TERMS_V2),
                 "overflow": "reject_projection",
                 "missing_term": _SEMANTIC_MISSING_TERM_V2,
             },
@@ -1964,9 +1803,7 @@ def semantic_normalization_spec_v2() -> dict[str, object]:
             "conflicting_distinct_signal_classes": {
                 "class": "unsupported",
                 "validation_error": _SEMANTIC_CLASS_CONFLICT_ERROR_V2,
-                "confidence_millionths": (
-                    _SEMANTIC_CONFIDENCE_UNSUPPORTED_V2
-                ),
+                "confidence_millionths": (_SEMANTIC_CONFIDENCE_UNSUPPORTED_V2),
             },
             "ordered_explicit_signals": [
                 {
@@ -1974,27 +1811,21 @@ def semantic_normalization_spec_v2() -> dict[str, object]:
                     "pattern": _SEMANTIC_SOURCE_UNCERTAINTY_PATTERN_V2,
                     "class": "ambiguous",
                     "ambiguity_flag": "source_uncertainty",
-                    "confidence_millionths": (
-                        _SEMANTIC_CONFIDENCE_EXPLICIT_SIGNAL_V2
-                    ),
+                    "confidence_millionths": (_SEMANTIC_CONFIDENCE_EXPLICIT_SIGNAL_V2),
                 },
                 {
                     "id": "source_disproof",
                     "pattern": _SEMANTIC_SOURCE_DISPROOF_PATTERN_V2,
                     "class": "disproved",
                     "ambiguity_flag": None,
-                    "confidence_millionths": (
-                        _SEMANTIC_CONFIDENCE_EXPLICIT_SIGNAL_V2
-                    ),
+                    "confidence_millionths": (_SEMANTIC_CONFIDENCE_EXPLICIT_SIGNAL_V2),
                 },
             ],
             "proved_signals": [],
             "default": {
                 "class": "unsupported",
                 "reason": "no_explicit_source_derived_class_evidence",
-                "confidence_millionths": (
-                    _SEMANTIC_CONFIDENCE_UNSUPPORTED_V2
-                ),
+                "confidence_millionths": (_SEMANTIC_CONFIDENCE_UNSUPPORTED_V2),
             },
         },
         "validation": {
@@ -2011,9 +1842,7 @@ def semantic_normalization_spec_v2() -> dict[str, object]:
                 for field, error in _SEMANTIC_VALIDATION_ERROR_BY_FIELD_V2.items()
             },
             "validation_error_class": "unsupported",
-            "validation_error_confidence_millionths": (
-                _SEMANTIC_CONFIDENCE_UNSUPPORTED_V2
-            ),
+            "validation_error_confidence_millionths": (_SEMANTIC_CONFIDENCE_UNSUPPORTED_V2),
             "validation_errors_take_precedence_over_ambiguity": True,
             "canonicalization": "sorted_unique",
         },
@@ -2054,18 +1883,10 @@ def semantic_normalization_spec_v2() -> dict[str, object]:
     }
 
 
-SEMANTIC_PROJECTION_SCHEMA_V2_CID: Final = cid_for_dag_json(
-    semantic_projection_json_schema_v2()
-)
-SEMANTIC_NORMALIZATION_V2_CID: Final = cid_for_dag_json(
-    semantic_normalization_spec_v2()
-)
-SEMANTIC_RESPONSE_SCHEMA_V2_CID: Final = cid_for_dag_json(
-    semantic_response_json_schema_v2()
-)
-SEMANTIC_PRODUCER_REGISTRY_V2_CID: Final = cid_for_dag_json(
-    semantic_producer_registry_v2()
-)
+SEMANTIC_PROJECTION_SCHEMA_V2_CID: Final = cid_for_dag_json(semantic_projection_json_schema_v2())
+SEMANTIC_NORMALIZATION_V2_CID: Final = cid_for_dag_json(semantic_normalization_spec_v2())
+SEMANTIC_RESPONSE_SCHEMA_V2_CID: Final = cid_for_dag_json(semantic_response_json_schema_v2())
+SEMANTIC_PRODUCER_REGISTRY_V2_CID: Final = cid_for_dag_json(semantic_producer_registry_v2())
 
 
 def semantic_prompt_spec_v2() -> dict[str, object]:
@@ -2077,14 +1898,10 @@ def semantic_prompt_spec_v2() -> dict[str, object]:
         "instruction_template": SEMANTIC_PROMPT_INSTRUCTION_V2,
         "input_fields": ["text", "optional_producer_evidence"],
         "response_schema_cid": SEMANTIC_RESPONSE_SCHEMA_V2_CID,
-        "required_projection_fields": list(
-            SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
-        ),
+        "required_projection_fields": list(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2),
         "validation_error_precedence": True,
         "proof_authority": False,
-        "forbidden_input_fields": list(
-            SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2
-        ),
+        "forbidden_input_fields": list(SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2),
     }
 
 
@@ -2129,28 +1946,19 @@ class SemanticProtocolSpec:
         if self.frozen is not True:
             raise ProtocolContractError("semantic protocol must be frozen")
         if (
-            self.calibration_case_count
-            != SEMANTIC_CALIBRATION_CASE_COUNT_V2
-            or self.calibration_coordinate_count
-            != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
-            or self.calibration_cases_per_producer
-            != SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
-            or self.absolute_quality_min_millionths
-            != SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
-            or self.wilson_confidence_millionths
-            != SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2
+            self.calibration_case_count != SEMANTIC_CALIBRATION_CASE_COUNT_V2
+            or self.calibration_coordinate_count != SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
+            or self.calibration_cases_per_producer != SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
+            or self.absolute_quality_min_millionths != SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
+            or self.wilson_confidence_millionths != SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2
             or self.wilson_lower_bound_min_millionths
             != SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2
         ):
-            raise ProtocolContractError(
-                "semantic calibration policy drifted"
-            )
+            raise ProtocolContractError("semantic calibration policy drifted")
         if self.calibration_coordinate_count != (
             self.calibration_case_count * len(SEMANTIC_PRODUCER_IDS_V2)
         ):
-            raise ProtocolContractError(
-                "semantic calibration coordinate count is inconsistent"
-            )
+            raise ProtocolContractError("semantic calibration coordinate count is inconsistent")
         if self.projection_schema != SEMANTIC_PROJECTION_SCHEMA_V2:
             raise ProtocolContractError("semantic projection schema drifted")
         for field in (
@@ -2174,39 +1982,22 @@ class SemanticProtocolSpec:
                 codecs=("dag-json",),
             )
         if (
-            self.parent_protocol_sha256
-            != SEMANTIC_PARENT_PROTOCOL_SHA256_V1
-            or self.parent_variant_registry_sha256
-            != SEMANTIC_PARENT_VARIANT_REGISTRY_SHA256_V1
-            or self.projection_schema_cid
-            != SEMANTIC_PROJECTION_SCHEMA_V2_CID
+            self.parent_protocol_sha256 != SEMANTIC_PARENT_PROTOCOL_SHA256_V1
+            or self.parent_variant_registry_sha256 != SEMANTIC_PARENT_VARIANT_REGISTRY_SHA256_V1
+            or self.projection_schema_cid != SEMANTIC_PROJECTION_SCHEMA_V2_CID
             or self.normalization_cid != SEMANTIC_NORMALIZATION_V2_CID
             or self.response_schema_cid != SEMANTIC_RESPONSE_SCHEMA_V2_CID
             or self.prompt_cid != SEMANTIC_PROMPT_V2_CID
-            or self.producer_registry_cid
-            != SEMANTIC_PRODUCER_REGISTRY_V2_CID
-            or self.calibration_route_manifest_cid
-            != SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-            or self.calibration_metric_spec_cid
-            != SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
-            or self.reviewed_target_source_cid
-            != SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
+            or self.producer_registry_cid != SEMANTIC_PRODUCER_REGISTRY_V2_CID
+            or self.calibration_route_manifest_cid != SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
+            or self.calibration_metric_spec_cid != SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID
+            or self.reviewed_target_source_cid != SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID
         ):
-            raise ProtocolContractError(
-                "semantic protocol component identity drifted"
-            )
-        if self.required_projection_fields != (
-            SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
-        ):
-            raise ProtocolContractError(
-                "semantic protocol required fields drifted"
-            )
-        if self.forbidden_producer_input_fields != (
-            SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2
-        ):
-            raise ProtocolContractError(
-                "semantic protocol leakage boundary drifted"
-            )
+            raise ProtocolContractError("semantic protocol component identity drifted")
+        if self.required_projection_fields != (SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2):
+            raise ProtocolContractError("semantic protocol required fields drifted")
+        if self.forbidden_producer_input_fields != (SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2):
+            raise ProtocolContractError("semantic protocol leakage boundary drifted")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -2218,43 +2009,21 @@ class SemanticProtocolSpec:
             "projection_schema_cid": self.projection_schema_cid,
             "normalization_cid": self.normalization_cid,
             "parent_protocol_sha256": self.parent_protocol_sha256,
-            "parent_variant_registry_sha256": (
-                self.parent_variant_registry_sha256
-            ),
+            "parent_variant_registry_sha256": (self.parent_variant_registry_sha256),
             "response_schema_cid": self.response_schema_cid,
             "prompt_cid": self.prompt_cid,
             "producer_registry_cid": self.producer_registry_cid,
-            "calibration_route_manifest_cid": (
-                self.calibration_route_manifest_cid
-            ),
-            "calibration_metric_spec_cid": (
-                self.calibration_metric_spec_cid
-            ),
-            "reviewed_target_source_cid": (
-                self.reviewed_target_source_cid
-            ),
+            "calibration_route_manifest_cid": (self.calibration_route_manifest_cid),
+            "calibration_metric_spec_cid": (self.calibration_metric_spec_cid),
+            "reviewed_target_source_cid": (self.reviewed_target_source_cid),
             "calibration_case_count": self.calibration_case_count,
-            "calibration_coordinate_count": (
-                self.calibration_coordinate_count
-            ),
-            "calibration_cases_per_producer": (
-                self.calibration_cases_per_producer
-            ),
-            "absolute_quality_min_millionths": (
-                self.absolute_quality_min_millionths
-            ),
-            "wilson_confidence_millionths": (
-                self.wilson_confidence_millionths
-            ),
-            "wilson_lower_bound_min_millionths": (
-                self.wilson_lower_bound_min_millionths
-            ),
-            "required_projection_fields": list(
-                self.required_projection_fields
-            ),
-            "forbidden_producer_input_fields": list(
-                self.forbidden_producer_input_fields
-            ),
+            "calibration_coordinate_count": (self.calibration_coordinate_count),
+            "calibration_cases_per_producer": (self.calibration_cases_per_producer),
+            "absolute_quality_min_millionths": (self.absolute_quality_min_millionths),
+            "wilson_confidence_millionths": (self.wilson_confidence_millionths),
+            "wilson_lower_bound_min_millionths": (self.wilson_lower_bound_min_millionths),
+            "required_projection_fields": list(self.required_projection_fields),
+            "forbidden_producer_input_fields": list(self.forbidden_producer_input_fields),
         }
 
 
@@ -2267,41 +2036,23 @@ SEMANTIC_PROTOCOL_V2: Final = SemanticProtocolSpec(
     projection_schema_cid=SEMANTIC_PROJECTION_SCHEMA_V2_CID,
     normalization_cid=SEMANTIC_NORMALIZATION_V2_CID,
     parent_protocol_sha256=SEMANTIC_PARENT_PROTOCOL_SHA256_V1,
-    parent_variant_registry_sha256=(
-        SEMANTIC_PARENT_VARIANT_REGISTRY_SHA256_V1
-    ),
+    parent_variant_registry_sha256=(SEMANTIC_PARENT_VARIANT_REGISTRY_SHA256_V1),
     response_schema_cid=SEMANTIC_RESPONSE_SCHEMA_V2_CID,
     prompt_cid=SEMANTIC_PROMPT_V2_CID,
     producer_registry_cid=SEMANTIC_PRODUCER_REGISTRY_V2_CID,
-    calibration_route_manifest_cid=(
-        SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID
-    ),
+    calibration_route_manifest_cid=(SEMANTIC_CALIBRATION_ROUTE_MANIFEST_V2_CID),
     calibration_metric_spec_cid=SEMANTIC_CALIBRATION_METRIC_SPEC_V2_CID,
     reviewed_target_source_cid=SEMANTIC_REVIEWED_TARGET_SOURCE_V2_CID,
     calibration_case_count=SEMANTIC_CALIBRATION_CASE_COUNT_V2,
-    calibration_coordinate_count=(
-        SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2
-    ),
-    calibration_cases_per_producer=(
-        SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2
-    ),
-    absolute_quality_min_millionths=(
-        SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2
-    ),
-    wilson_confidence_millionths=(
-        SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2
-    ),
-    wilson_lower_bound_min_millionths=(
-        SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2
-    ),
+    calibration_coordinate_count=(SEMANTIC_CALIBRATION_COORDINATE_COUNT_V2),
+    calibration_cases_per_producer=(SEMANTIC_CALIBRATION_CASES_PER_PRODUCER_V2),
+    absolute_quality_min_millionths=(SEMANTIC_ABSOLUTE_QUALITY_MIN_MILLIONTHS_V2),
+    wilson_confidence_millionths=(SEMANTIC_WILSON_CONFIDENCE_MILLIONTHS_V2),
+    wilson_lower_bound_min_millionths=(SEMANTIC_WILSON_LOWER_BOUND_MIN_MILLIONTHS_V2),
     required_projection_fields=SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2,
-    forbidden_producer_input_fields=(
-        SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2
-    ),
+    forbidden_producer_input_fields=(SEMANTIC_FORBIDDEN_PRODUCER_INPUT_FIELDS_V2),
 )
-SEMANTIC_PROTOCOL_V2_CID: Final = cid_for_dag_json(
-    SEMANTIC_PROTOCOL_V2.to_dict()
-)
+SEMANTIC_PROTOCOL_V2_CID: Final = cid_for_dag_json(SEMANTIC_PROTOCOL_V2.to_dict())
 
 
 def HSSLEV2007A42() -> str:
@@ -2316,34 +2067,23 @@ def HSSLEV2007A42() -> str:
 CAUSAL_PROOF_PROTOCOL_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.causal-proof-protocol.v2"
 )
-CAUSAL_PROOF_PROTOCOL_ID_V2: Final = (
-    "hammer-symai-spacy-leanstral-causal-proof-v2"
-)
+CAUSAL_PROOF_PROTOCOL_ID_V2: Final = "hammer-symai-spacy-leanstral-causal-proof-v2"
 CAUSAL_PROOF_PROTOCOL_VERSION_V2: Final = 2
 CAUSAL_PROOF_VARIANT_PROFILE_SCHEMA_V2: Final = (
     "ipfs-datasets.logic-pipeline-benchmark.causal-proof-variant-profile.v2"
 )
 CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "causal-proof-selection-receipt.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.causal-proof-selection-receipt.v2"
 )
-CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA: Final = (
-    CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2
-)
+CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA: Final = CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2
 CAUSAL_PROOF_SELECTION_SPEC_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "causal-proof-selection-spec.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.causal-proof-selection-spec.v2"
 )
 CAUSAL_PROOF_RESCUE_POPULATION_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "causal-proof-rescue-population-policy.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.causal-proof-rescue-population-policy.v2"
 )
-CAUSAL_PROOF_PARENT_PROTOCOL_SHA256_V1: Final = (
-    SEMANTIC_PARENT_PROTOCOL_SHA256_V1
-)
-CAUSAL_PROOF_PARENT_SEMANTIC_PROTOCOL_CID_V2: Final = (
-    SEMANTIC_PROTOCOL_V2_CID
-)
+CAUSAL_PROOF_PARENT_PROTOCOL_SHA256_V1: Final = SEMANTIC_PARENT_PROTOCOL_SHA256_V1
+CAUSAL_PROOF_PARENT_SEMANTIC_PROTOCOL_CID_V2: Final = SEMANTIC_PROTOCOL_V2_CID
 CAUSAL_PROOF_CANDIDATE_SOURCES_V2: Final = (
     "compiler",
     "hammer",
@@ -2376,10 +2116,7 @@ CAUSAL_PROOF_LEANSTRAL_FAILURE_CODES_V2: Final = (
 def HSSLEV2108F34() -> str:
     """Return AST-verifiable evidence for causal proof attribution."""
 
-    return (
-        "equal compiler-kernel exposure and distinct optional-component "
-        "rescue attribution"
-    )
+    return "equal compiler-kernel exposure and distinct optional-component rescue attribution"
 
 
 def causal_proof_variant_profile_v2() -> dict[str, object]:
@@ -2512,9 +2249,7 @@ def causal_proof_variant_profile_v2() -> dict[str, object]:
     for variant_id, stages, optional_order in routes:
         optional: list[dict[str, object]] = []
         for route_index, source in enumerate(optional_order):
-            predecessor = (
-                "compiler" if route_index == 0 else optional_order[route_index - 1]
-            )
+            predecessor = "compiler" if route_index == 0 else optional_order[route_index - 1]
             optional.append(
                 {
                     "source": source,
@@ -2533,9 +2268,7 @@ def causal_proof_variant_profile_v2() -> dict[str, object]:
             {
                 "variant_id": variant_id,
                 "effective_stages": list(stages),
-                "compiler_reference_kernel_policy": (
-                    "identical_independent_check"
-                ),
+                "compiler_reference_kernel_policy": ("identical_independent_check"),
                 "optional_order": list(optional_order),
                 "optional_routes": optional,
                 "symai_can_receive_proof_credit": False,
@@ -2547,18 +2280,14 @@ def causal_proof_variant_profile_v2() -> dict[str, object]:
         "protocol_scope": "pilot_and_development_only",
         "variant_ids": [f"A{index}" for index in range(13)],
         "profiles": profiles,
-        "compiler_reference_population": (
-            "identical_valid_compiled_obligations_for_every_variant"
-        ),
+        "compiler_reference_population": ("identical_valid_compiled_obligations_for_every_variant"),
         "optional_producers_are_lazy": True,
         "post_hoc_trigger_selection": False,
         "holdout_included": False,
     }
 
 
-CAUSAL_PROOF_VARIANT_PROFILE_V2_CID: Final = cid_for_dag_json(
-    causal_proof_variant_profile_v2()
-)
+CAUSAL_PROOF_VARIANT_PROFILE_V2_CID: Final = cid_for_dag_json(causal_proof_variant_profile_v2())
 
 
 def causal_proof_selection_spec_v2() -> dict[str, object]:
@@ -2598,9 +2327,7 @@ def causal_proof_selection_spec_v2() -> dict[str, object]:
         },
         "continuation_rule": {
             "producer_failure_is_recovery": False,
-            "later_route_after_model_failure": (
-                "post_model_failure_continuation"
-            ),
+            "later_route_after_model_failure": ("post_model_failure_continuation"),
             "accepted_later_candidate_credit_millionths": 0,
         },
         "proof_authority": "native_kernel",
@@ -2620,15 +2347,11 @@ def causal_proof_selection_spec_v2() -> dict[str, object]:
             "overlap",
             "unnecessary_work",
         ],
-        "leanstral_failure_codes": list(
-            CAUSAL_PROOF_LEANSTRAL_FAILURE_CODES_V2
-        ),
+        "leanstral_failure_codes": list(CAUSAL_PROOF_LEANSTRAL_FAILURE_CODES_V2),
     }
 
 
-CAUSAL_PROOF_SELECTION_SPEC_V2_CID: Final = cid_for_dag_json(
-    causal_proof_selection_spec_v2()
-)
+CAUSAL_PROOF_SELECTION_SPEC_V2_CID: Final = cid_for_dag_json(causal_proof_selection_spec_v2())
 
 
 def causal_proof_rescue_population_policy_v2() -> dict[str, object]:
@@ -2697,30 +2420,20 @@ class CausalProofProtocolSpec:
         ):
             _semantic_cid(getattr(self, field), field, codecs=("dag-json",))
         if (
-            self.parent_protocol_sha256
-            != CAUSAL_PROOF_PARENT_PROTOCOL_SHA256_V1
-            or self.parent_semantic_protocol_cid
-            != CAUSAL_PROOF_PARENT_SEMANTIC_PROTOCOL_CID_V2
-            or self.variant_profile_cid
-            != CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
-            or self.selection_spec_cid
-            != CAUSAL_PROOF_SELECTION_SPEC_V2_CID
-            or self.rescue_population_policy_cid
-            != CAUSAL_PROOF_RESCUE_POPULATION_V2_CID
+            self.parent_protocol_sha256 != CAUSAL_PROOF_PARENT_PROTOCOL_SHA256_V1
+            or self.parent_semantic_protocol_cid != CAUSAL_PROOF_PARENT_SEMANTIC_PROTOCOL_CID_V2
+            or self.variant_profile_cid != CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
+            or self.selection_spec_cid != CAUSAL_PROOF_SELECTION_SPEC_V2_CID
+            or self.rescue_population_policy_cid != CAUSAL_PROOF_RESCUE_POPULATION_V2_CID
         ):
-            raise ProtocolContractError(
-                "causal proof protocol component identity drifted"
-            )
+            raise ProtocolContractError("causal proof protocol component identity drifted")
         if (
-            self.selection_receipt_schema
-            != CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2
+            self.selection_receipt_schema != CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2
             or self.candidate_sources != CAUSAL_PROOF_CANDIDATE_SOURCES_V2
             or self.proof_authority != "native_kernel"
             or self.holdout_permitted is not False
         ):
-            raise ProtocolContractError(
-                "causal proof protocol trust boundary drifted"
-            )
+            raise ProtocolContractError("causal proof protocol trust boundary drifted")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -2729,14 +2442,10 @@ class CausalProofProtocolSpec:
             "protocol_version": self.protocol_version,
             "frozen": self.frozen,
             "parent_protocol_sha256": self.parent_protocol_sha256,
-            "parent_semantic_protocol_cid": (
-                self.parent_semantic_protocol_cid
-            ),
+            "parent_semantic_protocol_cid": (self.parent_semantic_protocol_cid),
             "variant_profile_cid": self.variant_profile_cid,
             "selection_spec_cid": self.selection_spec_cid,
-            "rescue_population_policy_cid": (
-                self.rescue_population_policy_cid
-            ),
+            "rescue_population_policy_cid": (self.rescue_population_policy_cid),
             "selection_receipt_schema": self.selection_receipt_schema,
             "candidate_sources": list(self.candidate_sources),
             "proof_authority": self.proof_authority,
@@ -2750,9 +2459,7 @@ CAUSAL_PROOF_PROTOCOL_V2: Final = CausalProofProtocolSpec(
     protocol_version=CAUSAL_PROOF_PROTOCOL_VERSION_V2,
     frozen=True,
     parent_protocol_sha256=CAUSAL_PROOF_PARENT_PROTOCOL_SHA256_V1,
-    parent_semantic_protocol_cid=(
-        CAUSAL_PROOF_PARENT_SEMANTIC_PROTOCOL_CID_V2
-    ),
+    parent_semantic_protocol_cid=(CAUSAL_PROOF_PARENT_SEMANTIC_PROTOCOL_CID_V2),
     variant_profile_cid=CAUSAL_PROOF_VARIANT_PROFILE_V2_CID,
     selection_spec_cid=CAUSAL_PROOF_SELECTION_SPEC_V2_CID,
     rescue_population_policy_cid=CAUSAL_PROOF_RESCUE_POPULATION_V2_CID,
@@ -2761,9 +2468,7 @@ CAUSAL_PROOF_PROTOCOL_V2: Final = CausalProofProtocolSpec(
     proof_authority="native_kernel",
     holdout_permitted=False,
 )
-CAUSAL_PROOF_PROTOCOL_V2_CID: Final = cid_for_dag_json(
-    CAUSAL_PROOF_PROTOCOL_V2.to_dict()
-)
+CAUSAL_PROOF_PROTOCOL_V2_CID: Final = cid_for_dag_json(CAUSAL_PROOF_PROTOCOL_V2.to_dict())
 
 
 def validate_causal_proof_selection_receipt(
@@ -2804,49 +2509,31 @@ def validate_causal_proof_selection_receipt(
     }
     _exact_keys(data, expected_top, "causal proof selection receipt")
     if data["schema"] != CAUSAL_PROOF_SELECTION_RECEIPT_SCHEMA_V2:
-        raise ProtocolContractError(
-            "unsupported causal proof selection receipt schema"
-        )
+        raise ProtocolContractError("unsupported causal proof selection receipt schema")
     if data["protocol_cid"] != CAUSAL_PROOF_PROTOCOL_V2_CID:
-        raise ProtocolContractError(
-            "causal proof selection protocol CID drifted"
-        )
-    if (
-        data["variant_profile_cid"]
-        != CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
-    ):
-        raise ProtocolContractError(
-            "causal proof selection profile CID drifted"
-        )
+        raise ProtocolContractError("causal proof selection protocol CID drifted")
+    if data["variant_profile_cid"] != CAUSAL_PROOF_VARIANT_PROFILE_V2_CID:
+        raise ProtocolContractError("causal proof selection profile CID drifted")
     if data["proof_authority"] != "native_kernel":
-        raise ProtocolContractError(
-            "causal proof selection changed proof authority"
-        )
+        raise ProtocolContractError("causal proof selection changed proof authority")
     _nonempty(data["run_id"], "causal proof run_id")
     _nonempty(data["case_id"], "causal proof case_id")
     variant_id = _nonempty(data["variant_id"], "causal proof variant_id")
     if variant_id not in {f"A{index}" for index in range(13)}:
-        raise ProtocolContractError(
-            "causal proof variant is outside A0-A12"
-        )
-    source_cid = _semantic_cid(
-        data["source_cid"], "causal proof source_cid", codecs=("raw",)
-    )
+        raise ProtocolContractError("causal proof variant is outside A0-A12")
+    source_cid = _semantic_cid(data["source_cid"], "causal proof source_cid", codecs=("raw",))
 
     profiles = causal_proof_variant_profile_v2()["profiles"]
     assert isinstance(profiles, list)
     profile = next(
         item
         for item in profiles
-        if isinstance(item, Mapping)
-        and item.get("variant_id") == variant_id
+        if isinstance(item, Mapping) and item.get("variant_id") == variant_id
     )
     expected_optional = profile["optional_order"]
     assert isinstance(expected_optional, list)
 
-    compiler = _mapping(
-        data["compiler_reference"], "causal compiler reference"
-    )
+    compiler = _mapping(data["compiler_reference"], "causal compiler reference")
     _exact_keys(
         compiler,
         {
@@ -2878,9 +2565,7 @@ def validate_causal_proof_selection_receipt(
                 ("accepted", False),
             )
         ):
-            raise ProtocolContractError(
-                "absent causal compiler reference has execution evidence"
-            )
+            raise ProtocolContractError("absent causal compiler reference has execution evidence")
     else:
         compiler_candidate_cid = _semantic_cid(
             compiler["candidate_cid"],
@@ -2901,9 +2586,7 @@ def validate_causal_proof_selection_receipt(
             or compiler["kernel_checked"] is not True
             or compiler["accepted"] is not (state == "accepted")
         ):
-            raise ProtocolContractError(
-                "causal compiler state disagrees with its kernel check"
-            )
+            raise ProtocolContractError("causal compiler state disagrees with its kernel check")
 
     raw_optional = data["optional_candidates"]
     if (
@@ -2911,19 +2594,13 @@ def validate_causal_proof_selection_receipt(
         or isinstance(raw_optional, (str, bytes, bytearray))
         or len(raw_optional) != len(expected_optional)
     ):
-        raise ProtocolContractError(
-            "causal optional candidate route is incomplete"
-        )
+        raise ProtocolContractError("causal optional candidate route is incomplete")
     optional: list[Mapping[str, object]] = []
-    seen_candidate_cids = (
-        set() if compiler_candidate_cid is None else {compiler_candidate_cid}
-    )
+    seen_candidate_cids = set() if compiler_candidate_cid is None else {compiler_candidate_cid}
     predecessor = "compiler"
     predecessor_accepted = compiler["accepted"] is True
     prior_model_failure = False
-    accepted_source: str | None = (
-        "compiler" if predecessor_accepted else None
-    )
+    accepted_source: str | None = "compiler" if predecessor_accepted else None
     for index, raw in enumerate(raw_optional):
         record = _mapping(raw, "causal optional candidate")
         _exact_keys(
@@ -2955,19 +2632,11 @@ def validate_causal_proof_selection_receipt(
             "hammer",
             "leanstral",
         }:
-            raise ProtocolContractError(
-                "causal optional source/order differs from its profile"
-            )
+            raise ProtocolContractError("causal optional source/order differs from its profile")
         if record["route_index"] != index:
-            raise ProtocolContractError(
-                "causal optional route index changed"
-            )
-        if record["trigger_condition"] != (
-            f"after_{predecessor}_not_accepted"
-        ):
-            raise ProtocolContractError(
-                "causal optional trigger condition changed"
-            )
+            raise ProtocolContractError("causal optional route index changed")
+        if record["trigger_condition"] != (f"after_{predecessor}_not_accepted"):
+            raise ProtocolContractError("causal optional trigger condition changed")
         for field in (
             "trigger_eligible",
             "causal_credit_eligible",
@@ -2979,30 +2648,17 @@ def validate_causal_proof_selection_receipt(
         ):
             _bool(record[field], f"causal optional {field}")
         if predecessor_accepted:
-            if (
-                record["trigger_eligible"] is not False
-                or record["invoked"] is not False
-            ):
+            if record["trigger_eligible"] is not False or record["invoked"] is not False:
                 raise ProtocolContractError(
-                "causal optional producer ran after an accepted predecessor"
-            )
-        elif (
-            record["trigger_eligible"] is not True
-            or record["invoked"] is not True
-        ):
+                    "causal optional producer ran after an accepted predecessor"
+                )
+        elif record["trigger_eligible"] is not True or record["invoked"] is not True:
             raise ProtocolContractError(
                 "causal optional producer was suppressed after a failure trigger"
             )
-        expected_credit_eligibility = bool(
-            not predecessor_accepted and not prior_model_failure
-        )
-        if (
-            record["causal_credit_eligible"]
-            is not expected_credit_eligibility
-        ):
-            raise ProtocolContractError(
-                "causal optional credit eligibility is not route-derived"
-            )
+        expected_credit_eligibility = bool(not predecessor_accepted and not prior_model_failure)
+        if record["causal_credit_eligible"] is not expected_credit_eligibility:
+            raise ProtocolContractError("causal optional credit eligibility is not route-derived")
         candidate_cid = record["candidate_cid"]
         if candidate_cid is not None:
             candidate_cid = _semantic_cid(
@@ -3015,9 +2671,7 @@ def validate_causal_proof_selection_receipt(
                 "causal optional artifact_cid",
             )
         elif record["artifact_cid"] is not None:
-            raise ProtocolContractError(
-                "causal optional artifact lacks a candidate CID"
-            )
+            raise ProtocolContractError("causal optional artifact lacks a candidate CID")
         receipt_cid = record["kernel_receipt_cid"]
         if receipt_cid is not None:
             _semantic_cid(
@@ -3026,14 +2680,11 @@ def validate_causal_proof_selection_receipt(
                 codecs=("dag-json",),
             )
         if (
-            record["kernel_checked"]
-            is not (receipt_cid is not None)
+            record["kernel_checked"] is not (receipt_cid is not None)
             or record["accepted"] is True
             and record["kernel_checked"] is not True
         ):
-            raise ProtocolContractError(
-                "causal optional kernel fields disagree"
-            )
+            raise ProtocolContractError("causal optional kernel fields disagree")
         overlap = record["overlap"]
         duplicate_of = record["duplicate_of_candidate_cid"]
         if overlap:
@@ -3048,9 +2699,7 @@ def validate_causal_proof_selection_receipt(
                     "causal duplicate-certificate classification is invalid"
                 )
         elif duplicate_of is not None:
-            raise ProtocolContractError(
-                "non-overlap causal candidate has a duplicate binding"
-            )
+            raise ProtocolContractError("non-overlap causal candidate has a duplicate binding")
         rescue = bool(
             compiler["accepted"] is False
             and record["causal_credit_eligible"] is True
@@ -3063,13 +2712,10 @@ def validate_causal_proof_selection_receipt(
         )
         if (
             record["causal_rescue"] is not rescue
-            or record["marginal_credit_millionths"]
-            != (1_000_000 if rescue else 0)
+            or record["marginal_credit_millionths"] != (1_000_000 if rescue else 0)
             or (record["zero_credit_reason"] is None) is not rescue
         ):
-            raise ProtocolContractError(
-                "causal rescue or marginal credit is inconsistent"
-            )
+            raise ProtocolContractError("causal rescue or marginal credit is inconsistent")
         failure_code = record["failure_code"]
         if failure_code is not None:
             allowed = (
@@ -3084,17 +2730,13 @@ def validate_causal_proof_selection_receipt(
                 else set(CAUSAL_PROOF_LEANSTRAL_FAILURE_CODES_V2)
             )
             if failure_code not in allowed:
-                raise ProtocolContractError(
-                    "causal optional failure code is not preregistered"
-                )
+                raise ProtocolContractError("causal optional failure code is not preregistered")
             if (
                 candidate_cid is not None
                 or record["accepted"] is True
                 or record["causal_rescue"] is True
             ):
-                raise ProtocolContractError(
-                    "failed causal producer received candidate credit"
-                )
+                raise ProtocolContractError("failed causal producer received candidate credit")
         if record["invoked"] is False:
             if any(
                 record[field] != expected
@@ -3115,13 +2757,9 @@ def validate_causal_proof_selection_receipt(
                     "suppressed causal producer contains execution evidence"
                 )
         elif candidate_cid is None and failure_code is None:
-            raise ProtocolContractError(
-                "invoked causal producer has neither candidate nor failure"
-            )
+            raise ProtocolContractError("invoked causal producer has neither candidate nor failure")
         elif candidate_cid is not None and failure_code is not None:
-            raise ProtocolContractError(
-                "causal producer has both a candidate and failure"
-            )
+            raise ProtocolContractError("causal producer has both a candidate and failure")
         if record["invoked"] is False:
             expected_continuation = "suppressed"
             expected_zero_credit = (
@@ -3150,22 +2788,16 @@ def validate_causal_proof_selection_receipt(
                 else "selected_causal_rescue"
             )
             expected_zero_credit = (
-                "post_model_failure_continuation"
-                if prior_model_failure
-                else None
+                "post_model_failure_continuation" if prior_model_failure else None
             )
         else:
-            expected_continuation = (
-                "post_kernel_rejection_continuation"
-            )
+            expected_continuation = "post_kernel_rejection_continuation"
             expected_zero_credit = "kernel_rejected"
         if (
             record["continuation_kind"] != expected_continuation
             or record["zero_credit_reason"] != expected_zero_credit
         ):
-            raise ProtocolContractError(
-                "causal continuation or zero-credit reason is inconsistent"
-            )
+            raise ProtocolContractError("causal continuation or zero-credit reason is inconsistent")
         if candidate_cid is not None:
             seen_candidate_cids.add(candidate_cid)
         optional.append(record)
@@ -3174,15 +2806,10 @@ def validate_causal_proof_selection_receipt(
         predecessor = str(source)
         if record["accepted"] is True:
             accepted_source = str(source)
-        predecessor_accepted = bool(
-            predecessor_accepted or record["accepted"] is True
-        )
+        predecessor_accepted = bool(predecessor_accepted or record["accepted"] is True)
 
     raw_sidecars = data["kernel_receipts"]
-    if (
-        not isinstance(raw_sidecars, Sequence)
-        or isinstance(raw_sidecars, (str, bytes, bytearray))
-    ):
+    if not isinstance(raw_sidecars, Sequence) or isinstance(raw_sidecars, (str, bytes, bytearray)):
         raise ProtocolContractError("causal kernel sidecars must be an array")
     sidecars: dict[str, Mapping[str, object]] = {}
     for raw in raw_sidecars:
@@ -3213,12 +2840,9 @@ def validate_causal_proof_selection_receipt(
             for field in ("run_id", "case_id", "variant_id", "source_cid")
         ) or (
             sidecar["protocol_cid"] != CAUSAL_PROOF_PROTOCOL_V2_CID
-            or sidecar["variant_profile_cid"]
-            != CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
+            or sidecar["variant_profile_cid"] != CAUSAL_PROOF_VARIANT_PROFILE_V2_CID
         ):
-            raise ProtocolContractError(
-                "causal kernel sidecar coordinate binding changed"
-            )
+            raise ProtocolContractError("causal kernel sidecar coordinate binding changed")
         candidate_cid = _semantic_cid(
             sidecar["candidate_cid"],
             "causal sidecar candidate_cid",
@@ -3232,17 +2856,13 @@ def validate_causal_proof_selection_receipt(
             or isinstance(candidate_length, bool)
             or candidate_length <= 0
         ):
-            raise ProtocolContractError(
-                "causal sidecar candidate bytes are invalid"
-            )
+            raise ProtocolContractError("causal sidecar candidate bytes are invalid")
         candidate_bytes = candidate_text.encode("utf-8")
         if (
             len(candidate_bytes) != candidate_length
             or cid_for_bytes(candidate_bytes) != candidate_cid
         ):
-            raise ProtocolContractError(
-                "causal sidecar raw candidate CID changed from exact bytes"
-            )
+            raise ProtocolContractError("causal sidecar raw candidate CID changed from exact bytes")
         receipt_cid = _semantic_cid(
             sidecar["receipt_cid"],
             "causal sidecar receipt_cid",
@@ -3250,12 +2870,8 @@ def validate_causal_proof_selection_receipt(
         )
         receipt = _mapping(sidecar["receipt"], "causal native receipt")
         if cid_for_dag_json(dict(receipt)) != receipt_cid:
-            raise ProtocolContractError(
-                "causal native receipt CID changed from its body"
-            )
-        accepted = _bool(
-            sidecar["kernel_accepted"], "causal sidecar kernel_accepted"
-        )
+            raise ProtocolContractError("causal native receipt CID changed from its body")
+        accepted = _bool(sidecar["kernel_accepted"], "causal sidecar kernel_accepted")
         if (
             receipt.get("independent") is not True
             or receipt.get("accepted") is not accepted
@@ -3263,12 +2879,8 @@ def validate_causal_proof_selection_receipt(
             or receipt.get("case_id") != data["case_id"]
             or receipt.get("variant_id") != data["variant_id"]
         ):
-            raise ProtocolContractError(
-                "causal native receipt body is not source-coordinate bound"
-            )
-        status = _enum(
-            StageStatus, sidecar["stage_status"], "causal sidecar stage_status"
-        )
+            raise ProtocolContractError("causal native receipt body is not source-coordinate bound")
+        status = _enum(StageStatus, sidecar["stage_status"], "causal sidecar stage_status")
         failure_code = sidecar["failure_code"]
         if failure_code is not None:
             _enum(
@@ -3277,23 +2889,14 @@ def validate_causal_proof_selection_receipt(
                 "causal sidecar failure_code",
             )
         if accepted is not (status is StageStatus.SUCCESS):
-            raise ProtocolContractError(
-                "causal sidecar status disagrees with kernel acceptance"
-            )
+            raise ProtocolContractError("causal sidecar status disagrees with kernel acceptance")
         consumed = sidecar["consumed_artifact_sha256s"]
-        if (
-            not isinstance(consumed, Sequence)
-            or isinstance(consumed, (str, bytes, bytearray))
-        ):
-            raise ProtocolContractError(
-                "causal sidecar consumed artifacts must be an array"
-            )
+        if not isinstance(consumed, Sequence) or isinstance(consumed, (str, bytes, bytearray)):
+            raise ProtocolContractError("causal sidecar consumed artifacts must be an array")
         for digest in consumed:
             _digest(digest, "causal sidecar consumed artifact")
         if candidate_cid in sidecars:
-            raise ProtocolContractError(
-                "causal candidate was checked more than once"
-            )
+            raise ProtocolContractError("causal candidate was checked more than once")
         sidecars[candidate_cid] = sidecar
 
     checked_candidate_cids: list[str] = []
@@ -3302,12 +2905,9 @@ def validate_causal_proof_selection_receipt(
         checked_candidate_cids.append(compiler_candidate_cid)
         if (
             compiler_candidate_cid not in sidecars
-            or sidecars[compiler_candidate_cid]["receipt_cid"]
-            != compiler["kernel_receipt_cid"]
+            or sidecars[compiler_candidate_cid]["receipt_cid"] != compiler["kernel_receipt_cid"]
         ):
-            raise ProtocolContractError(
-                "causal compiler check lacks its native sidecar"
-            )
+            raise ProtocolContractError("causal compiler check lacks its native sidecar")
     for record in optional:
         if record["kernel_checked"]:
             candidate_cid = record["candidate_cid"]
@@ -3315,16 +2915,11 @@ def validate_causal_proof_selection_receipt(
             checked_candidate_cids.append(candidate_cid)
             if (
                 candidate_cid not in sidecars
-                or sidecars[candidate_cid]["receipt_cid"]
-                != record["kernel_receipt_cid"]
+                or sidecars[candidate_cid]["receipt_cid"] != record["kernel_receipt_cid"]
             ):
-                raise ProtocolContractError(
-                    "causal optional check lacks its native sidecar"
-                )
+                raise ProtocolContractError("causal optional check lacks its native sidecar")
     if set(checked_candidate_cids) != set(sidecars):
-        raise ProtocolContractError(
-            "causal kernel sidecar collection has an orphan"
-        )
+        raise ProtocolContractError("causal kernel sidecar collection has an orphan")
 
     accepted_entries: list[tuple[str, object, object]] = []
     if compiler["accepted"]:
@@ -3345,50 +2940,32 @@ def validate_causal_proof_selection_receipt(
         if record["accepted"] is True
     )
     if len(accepted_entries) > 1:
-        raise ProtocolContractError(
-            "causal graph continued after an accepted candidate"
-        )
-    selected = (
-        (None, None, None)
-        if not accepted_entries
-        else accepted_entries[0]
-    )
+        raise ProtocolContractError("causal graph continued after an accepted candidate")
+    selected = (None, None, None) if not accepted_entries else accepted_entries[0]
     if (
         data["selected_source"],
         data["selected_candidate_cid"],
         data["selected_kernel_receipt_cid"],
     ) != selected:
-        raise ProtocolContractError(
-            "causal selected candidate differs from kernel evidence"
-        )
+        raise ProtocolContractError("causal selected candidate differs from kernel evidence")
 
-    denominators = _mapping(
-        data["denominators"], "causal proof denominators"
-    )
+    denominators = _mapping(data["denominators"], "causal proof denominators")
     expected_denominators = {
         "compiler_reference": True,
         "compiler_candidate_present": compiler_candidate_cid is not None,
         "hammer_optional_route": "hammer" in expected_optional,
         "leanstral_optional_route": "leanstral" in expected_optional,
         "hammer_escalation": any(
-            item["source"] == "hammer"
-            and item["trigger_eligible"] is True
-            for item in optional
+            item["source"] == "hammer" and item["trigger_eligible"] is True for item in optional
         ),
         "leanstral_escalation": any(
-            item["source"] == "leanstral"
-            and item["trigger_eligible"] is True
-            for item in optional
+            item["source"] == "leanstral" and item["trigger_eligible"] is True for item in optional
         ),
         "hammer_suppression": any(
-            item["source"] == "hammer"
-            and item["trigger_eligible"] is False
-            for item in optional
+            item["source"] == "hammer" and item["trigger_eligible"] is False for item in optional
         ),
         "leanstral_suppression": any(
-            item["source"] == "leanstral"
-            and item["trigger_eligible"] is False
-            for item in optional
+            item["source"] == "leanstral" and item["trigger_eligible"] is False for item in optional
         ),
         "hammer_unique_rescue": any(
             item["source"] == "hammer"
@@ -3406,15 +2983,11 @@ def validate_causal_proof_selection_receipt(
         ),
         "overlap": any(item["overlap"] is True for item in optional),
         "unnecessary_work": any(
-            item["invoked"] is True
-            and item["causal_rescue"] is False
-            for item in optional
+            item["invoked"] is True and item["causal_rescue"] is False for item in optional
         ),
     }
     if dict(denominators) != expected_denominators:
-        raise ProtocolContractError(
-            "causal proof denominators are not recomputable"
-        )
+        raise ProtocolContractError("causal proof denominators are not recomputable")
 
     receipt_cid = _semantic_cid(
         data["receipt_cid"],
@@ -3423,9 +2996,7 @@ def validate_causal_proof_selection_receipt(
     )
     body = {key: item for key, item in data.items() if key != "receipt_cid"}
     if cid_for_dag_json(body) != receipt_cid:
-        raise ProtocolContractError(
-            "causal proof receipt CID changed from its body"
-        )
+        raise ProtocolContractError("causal proof receipt CID changed from its body")
     return dict(data)
 
 
@@ -3452,22 +3023,16 @@ class SemanticProjection:
 
     def __post_init__(self) -> None:
         if self.schema != SEMANTIC_PROJECTION_SCHEMA_V2:
-            raise ProtocolContractError(
-                "unsupported semantic projection schema"
-            )
+            raise ProtocolContractError("unsupported semantic projection schema")
         _semantic_cid(
             self.semantic_protocol_cid,
             "semantic_protocol_cid",
             codecs=("dag-json",),
         )
         if self.semantic_protocol_cid != SEMANTIC_PROTOCOL_V2_CID:
-            raise ProtocolContractError(
-                "semantic projection protocol identity drifted"
-            )
+            raise ProtocolContractError("semantic projection protocol identity drifted")
         if self.producer_id not in SEMANTIC_PRODUCER_IDS_V2:
-            raise ProtocolContractError(
-                "semantic projection producer is not registered"
-            )
+            raise ProtocolContractError("semantic projection producer is not registered")
         _semantic_cid(self.source_cid, "source_cid", codecs=("raw",))
         _semantic_cid(
             self.evidence_cid,
@@ -3476,21 +3041,12 @@ class SemanticProjection:
         )
         for field in ("logic_family", "target"):
             value = getattr(self, field)
-            if (
-                not isinstance(value, str)
-                or not _is_semantic_term(value)
-            ):
-                raise ProtocolContractError(
-                    f"semantic projection {field} is not normalized"
-                )
+            if not isinstance(value, str) or not _is_semantic_term(value):
+                raise ProtocolContractError(f"semantic projection {field} is not normalized")
         if _normalize_logic_family(self.logic_family) != self.logic_family:
-            raise ProtocolContractError(
-                "semantic projection logic_family is not canonical"
-            )
+            raise ProtocolContractError("semantic projection logic_family is not canonical")
         if self.semantic_class not in SEMANTIC_PROJECTION_CLASSES_V2:
-            raise ProtocolContractError(
-                "semantic projection class is unsupported"
-            )
+            raise ProtocolContractError("semantic projection class is unsupported")
         for field in (
             "predicates",
             "entities",
@@ -3503,23 +3059,16 @@ class SemanticProjection:
                 or len(values) > _SEMANTIC_PROJECTION_MAX_TERMS_V2
                 or tuple(sorted(set(values))) != values
                 or any(
-                    not isinstance(value, str)
-                    or not _is_semantic_term(value)
-                    for value in values
+                    not isinstance(value, str) or not _is_semantic_term(value) for value in values
                 )
             ):
-                raise ProtocolContractError(
-                    f"semantic projection {field} is not canonical"
-                )
+                raise ProtocolContractError(f"semantic projection {field} is not canonical")
         if (
             not isinstance(self.completeness, Mapping)
-            or set(self.completeness)
-            != set(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
+            or set(self.completeness) != set(SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
             or any(type(value) is not bool for value in self.completeness.values())
         ):
-            raise ProtocolContractError(
-                "semantic projection completeness fields are invalid"
-            )
+            raise ProtocolContractError("semantic projection completeness fields are invalid")
         object.__setattr__(
             self,
             "completeness",
@@ -3553,9 +3102,7 @@ class SemanticProjection:
                 codecs=("dag-json",),
             )
         if self.semantic_content_cid != expected_semantic:
-            raise ProtocolContractError(
-                "semantic projection semantic-content identity changed"
-            )
+            raise ProtocolContractError("semantic projection semantic-content identity changed")
         expected_projection = cid_for_dag_json(self._projection_content())
         if self.projection_cid is None:
             object.__setattr__(
@@ -3570,9 +3117,7 @@ class SemanticProjection:
                 codecs=("dag-json",),
             )
         if self.projection_cid != expected_projection:
-            raise ProtocolContractError(
-                "semantic projection provenance identity changed"
-            )
+            raise ProtocolContractError("semantic projection provenance identity changed")
 
     @classmethod
     def create(
@@ -3592,9 +3137,7 @@ class SemanticProjection:
         evidence_cid: str,
     ) -> Self:
         if not isinstance(source_text, str) or not source_text.strip():
-            raise ProtocolContractError(
-                "semantic projection requires nonempty source text"
-            )
+            raise ProtocolContractError("semantic projection requires nonempty source text")
 
         def terms(values: Sequence[str]) -> tuple[str, ...]:
             return tuple(
@@ -3620,10 +3163,7 @@ class SemanticProjection:
             predicates=terms(predicates),
             entities=terms(entities),
             completeness=(
-                {
-                    field: True
-                    for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
-                }
+                {field: True for field in SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2}
                 if completeness is None
                 else dict(completeness)
             ),
@@ -3712,13 +3252,8 @@ class SemanticProjection:
         ):
             raw = data[field]
             if not isinstance(raw, list):
-                raise ProtocolContractError(
-                    f"semantic_projection.{field} must be an array"
-                )
-            arrays[field] = tuple(
-                _nonempty(item, f"semantic_projection.{field}[]")
-                for item in raw
-            )
+                raise ProtocolContractError(f"semantic_projection.{field} must be an array")
+            arrays[field] = tuple(_nonempty(item, f"semantic_projection.{field}[]") for item in raw)
         return cls(
             schema=_nonempty(data["schema"], "semantic_projection.schema"),
             semantic_protocol_cid=_semantic_cid(
@@ -3726,28 +3261,18 @@ class SemanticProjection:
                 "semantic_projection.semantic_protocol_cid",
                 codecs=("dag-json",),
             ),
-            producer_id=_nonempty(
-                data["producer_id"], "semantic_projection.producer_id"
-            ),
+            producer_id=_nonempty(data["producer_id"], "semantic_projection.producer_id"),
             source_cid=_semantic_cid(
                 data["source_cid"],
                 "semantic_projection.source_cid",
                 codecs=("raw",),
             ),
-            logic_family=_nonempty(
-                data["logic_family"], "semantic_projection.logic_family"
-            ),
-            target=_nonempty(
-                data["target"], "semantic_projection.target"
-            ),
-            semantic_class=_nonempty(
-                data["class"], "semantic_projection.class"
-            ),
+            logic_family=_nonempty(data["logic_family"], "semantic_projection.logic_family"),
+            target=_nonempty(data["target"], "semantic_projection.target"),
+            semantic_class=_nonempty(data["class"], "semantic_projection.class"),
             predicates=arrays["predicates"],
             entities=arrays["entities"],
-            completeness=_mapping(
-                data["completeness"], "semantic_projection.completeness"
-            ),  # type: ignore[arg-type]
+            completeness=_mapping(data["completeness"], "semantic_projection.completeness"),  # type: ignore[arg-type]
             ambiguity_flags=arrays["ambiguity_flags"],
             confidence_millionths=data["confidence_millionths"],  # type: ignore[arg-type]
             validation_errors=arrays["validation_errors"],
@@ -3793,17 +3318,12 @@ def _freeze_bounded_json(value: object, field: str, *, depth: int = 0) -> object
         for key, item in value.items():
             if not isinstance(key, str):
                 raise ProtocolContractError(f"{field} keys must be strings")
-            frozen[key] = _freeze_bounded_json(
-                item, f"{field}.{key}", depth=depth + 1
-            )
+            frozen[key] = _freeze_bounded_json(item, f"{field}.{key}", depth=depth + 1)
         return MappingProxyType(frozen)
     if isinstance(value, (list, tuple)):
         if len(value) > _MAX_BOUNDED_JSON_ITEMS:
             raise ProtocolContractError(f"{field} contains too many array items")
-        return tuple(
-            _freeze_bounded_json(item, f"{field}[]", depth=depth + 1)
-            for item in value
-        )
+        return tuple(_freeze_bounded_json(item, f"{field}[]", depth=depth + 1) for item in value)
     raise ProtocolContractError(f"{field} must contain JSON-compatible values")
 
 
@@ -3874,9 +3394,7 @@ class ProtocolRecord:
         )
         return cls(
             schema=_nonempty(data["schema"], "schema"),
-            protocol_sha256=_digest(
-                data["protocol_sha256"], "protocol_sha256"
-            ),
+            protocol_sha256=_digest(data["protocol_sha256"], "protocol_sha256"),
             protocol=BenchmarkProtocol.from_dict(data["protocol"]),
         )
 
@@ -3896,9 +3414,7 @@ class CacheScope:
         _digest(self.protocol_sha256, "protocol_sha256")
         _safe_id(self.variant_id, "variant_id")
         if self.variant_id not in _REQUIRED_VARIANTS:
-            raise ProtocolContractError(
-                f"variant_id is not registered: {self.variant_id!r}"
-            )
+            raise ProtocolContractError(f"variant_id is not registered: {self.variant_id!r}")
         if not isinstance(self.split, Split):
             raise ProtocolContractError("split must be a Split")
         if not isinstance(self.mode, CacheMode):
@@ -3938,20 +3454,14 @@ class RunContract:
         if self.schema != RUN_CONTRACT_SCHEMA:
             raise ProtocolContractError("unsupported run-contract schema")
         _digest(self.protocol_sha256, "protocol_sha256")
-        if (
-            _FROZEN_PROTOCOL_SHA256 is not None
-            and self.protocol_sha256 != _FROZEN_PROTOCOL_SHA256
-        ):
-            raise ProtocolContractError(
-                "run contract does not bind frozen protocol revision 1"
-            )
+        if _FROZEN_PROTOCOL_SHA256 is not None and self.protocol_sha256 != _FROZEN_PROTOCOL_SHA256:
+            raise ProtocolContractError("run contract does not bind frozen protocol revision 1")
         _safe_id(self.run_id, "run_id")
         _safe_id(self.requested_variant_id, "requested_variant_id")
         _safe_id(self.effective_variant_id, "effective_variant_id")
         if self.requested_variant_id not in _REQUIRED_VARIANTS:
             raise ProtocolContractError(
-                f"requested variant is not registered: "
-                f"{self.requested_variant_id!r}"
+                f"requested variant is not registered: {self.requested_variant_id!r}"
             )
         if self.requested_variant_id != self.effective_variant_id:
             raise ProtocolContractError(
@@ -3999,9 +3509,7 @@ class RunContract:
                 )
             _safe_id(self.holdout_access_log_id, "holdout_access_log_id")
         elif self.holdout_access_log_id is not None:
-            raise ProtocolContractError(
-                "holdout_access_log_id is only valid for holdout records"
-            )
+            raise ProtocolContractError("holdout_access_log_id is only valid for holdout records")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -4032,42 +3540,24 @@ class RunContract:
             schema=_nonempty(data["schema"], "schema"),
             protocol_sha256=_digest(data["protocol_sha256"], "protocol_sha256"),
             run_id=_safe_id(data["run_id"], "run_id"),
-            requested_variant_id=_safe_id(
-                data["requested_variant_id"], "requested_variant_id"
-            ),
-            effective_variant_id=_safe_id(
-                data["effective_variant_id"], "effective_variant_id"
-            ),
+            requested_variant_id=_safe_id(data["requested_variant_id"], "requested_variant_id"),
+            effective_variant_id=_safe_id(data["effective_variant_id"], "effective_variant_id"),
             split=_enum(Split, data["split"], "split"),  # type: ignore[arg-type]
-            cache_mode=_enum(
-                CacheMode, data["cache_mode"], "cache_mode"
-            ),  # type: ignore[arg-type]
-            cache_namespace=_nonempty(
-                data["cache_namespace"], "cache_namespace"
-            ),
-            case_manifest_sha256=_digest(
-                data["case_manifest_sha256"], "case_manifest_sha256"
-            ),
-            configuration_sha256=_digest(
-                data["configuration_sha256"], "configuration_sha256"
-            ),
+            cache_mode=_enum(CacheMode, data["cache_mode"], "cache_mode"),  # type: ignore[arg-type]
+            cache_namespace=_nonempty(data["cache_namespace"], "cache_namespace"),
+            case_manifest_sha256=_digest(data["case_manifest_sha256"], "case_manifest_sha256"),
+            configuration_sha256=_digest(data["configuration_sha256"], "configuration_sha256"),
             prompts_frozen=_bool(data["prompts_frozen"], "prompts_frozen"),
             policy_frozen=_bool(data["policy_frozen"], "policy_frozen"),
             model_identities_frozen=_bool(
                 data["model_identities_frozen"], "model_identities_frozen"
             ),
-            thresholds_frozen=_bool(
-                data["thresholds_frozen"], "thresholds_frozen"
-            ),
-            tuning_permitted=_bool(
-                data["tuning_permitted"], "tuning_permitted"
-            ),
+            thresholds_frozen=_bool(data["thresholds_frozen"], "thresholds_frozen"),
+            tuning_permitted=_bool(data["tuning_permitted"], "tuning_permitted"),
             holdout_access_log_id=(
                 None
                 if data["holdout_access_log_id"] is None
-                else _safe_id(
-                    data["holdout_access_log_id"], "holdout_access_log_id"
-                )
+                else _safe_id(data["holdout_access_log_id"], "holdout_access_log_id")
             ),
         )
 
@@ -4096,21 +3586,14 @@ class OutcomeRecord:
         if self.schema != OUTCOME_RECORD_SCHEMA:
             raise ProtocolContractError("unsupported outcome schema")
         _digest(self.protocol_sha256, "protocol_sha256")
-        if (
-            _FROZEN_PROTOCOL_SHA256 is not None
-            and self.protocol_sha256 != _FROZEN_PROTOCOL_SHA256
-        ):
-            raise ProtocolContractError(
-                "outcome does not bind frozen protocol revision 1"
-            )
+        if _FROZEN_PROTOCOL_SHA256 is not None and self.protocol_sha256 != _FROZEN_PROTOCOL_SHA256:
+            raise ProtocolContractError("outcome does not bind frozen protocol revision 1")
         _safe_id(self.run_id, "run_id")
         _safe_id(self.case_id, "case_id")
         _digest(self.case_manifest_sha256, "case_manifest_sha256")
         _safe_id(self.variant_id, "variant_id")
         if self.variant_id not in _REQUIRED_VARIANTS:
-            raise ProtocolContractError(
-                f"variant_id is not registered: {self.variant_id!r}"
-            )
+            raise ProtocolContractError(f"variant_id is not registered: {self.variant_id!r}")
         if not isinstance(self.split, Split):
             raise ProtocolContractError("split must be a Split")
         if not isinstance(self.cache_mode, CacheMode):
@@ -4118,14 +3601,10 @@ class OutcomeRecord:
         if not isinstance(self.status, OutcomeStatus):
             raise ProtocolContractError("status must be an OutcomeStatus")
         if not isinstance(self.verification_authority, VerificationAuthority):
-            raise ProtocolContractError(
-                "verification_authority must be a VerificationAuthority"
-            )
+            raise ProtocolContractError("verification_authority must be a VerificationAuthority")
         _bool(self.invalid_control, "invalid_control")
         _bool(self.kernel_accepted, "kernel_accepted")
-        if self.failure_code is not None and not isinstance(
-            self.failure_code, FailureCode
-        ):
+        if self.failure_code is not None and not isinstance(self.failure_code, FailureCode):
             raise ProtocolContractError("failure_code must be a FailureCode")
         if self.failure_detail is not None:
             _nonempty(self.failure_detail, "failure_detail")
@@ -4135,19 +3614,13 @@ class OutcomeRecord:
                 or not self.kernel_accepted
                 or self.kernel_receipt_sha256 is None
             ):
-                raise ProtocolContractError(
-                    "verified requires an accepted native-kernel receipt"
-                )
+                raise ProtocolContractError("verified requires an accepted native-kernel receipt")
             _digest(self.kernel_receipt_sha256, "kernel_receipt_sha256")
             if self.failure_code is not None:
-                raise ProtocolContractError(
-                    "a verified outcome cannot also carry a failure code"
-                )
+                raise ProtocolContractError("a verified outcome cannot also carry a failure code")
         else:
             if self.kernel_accepted or self.kernel_receipt_sha256 is not None:
-                raise ProtocolContractError(
-                    "non-verified outcomes cannot claim kernel acceptance"
-                )
+                raise ProtocolContractError("non-verified outcomes cannot claim kernel acceptance")
         if self.status is OutcomeStatus.INFRASTRUCTURE_FAILURE:
             if self.failure_code not in INFRASTRUCTURE_FAILURE_CODES:
                 raise ProtocolContractError(
@@ -4165,9 +3638,7 @@ class OutcomeRecord:
                 )
         if self.status in {OutcomeStatus.NOT_VERIFIED, OutcomeStatus.REJECTED}:
             if self.failure_code in EXCLUSION_FAILURE_CODES:
-                raise ProtocolContractError(
-                    "an exclusion code cannot hide a logical outcome"
-                )
+                raise ProtocolContractError("an exclusion code cannot hide a logical outcome")
 
     @property
     def eligible_for_paired_statistics(self) -> bool:
@@ -4198,9 +3669,7 @@ class OutcomeRecord:
             "verification_authority": self.verification_authority.value,
             "kernel_accepted": self.kernel_accepted,
             "kernel_receipt_sha256": self.kernel_receipt_sha256,
-            "failure_code": (
-                None if self.failure_code is None else self.failure_code.value
-            ),
+            "failure_code": (None if self.failure_code is None else self.failure_code.value),
             "failure_detail": self.failure_detail,
         }
 
@@ -4217,17 +3686,11 @@ class OutcomeRecord:
             protocol_sha256=_digest(data["protocol_sha256"], "protocol_sha256"),
             run_id=_safe_id(data["run_id"], "run_id"),
             case_id=_safe_id(data["case_id"], "case_id"),
-            case_manifest_sha256=_digest(
-                data["case_manifest_sha256"], "case_manifest_sha256"
-            ),
+            case_manifest_sha256=_digest(data["case_manifest_sha256"], "case_manifest_sha256"),
             variant_id=_safe_id(data["variant_id"], "variant_id"),
             split=_enum(Split, data["split"], "split"),  # type: ignore[arg-type]
-            cache_mode=_enum(
-                CacheMode, data["cache_mode"], "cache_mode"
-            ),  # type: ignore[arg-type]
-            status=_enum(
-                OutcomeStatus, data["status"], "status"
-            ),  # type: ignore[arg-type]
+            cache_mode=_enum(CacheMode, data["cache_mode"], "cache_mode"),  # type: ignore[arg-type]
+            status=_enum(OutcomeStatus, data["status"], "status"),  # type: ignore[arg-type]
             invalid_control=_bool(data["invalid_control"], "invalid_control"),
             verification_authority=_enum(
                 VerificationAuthority,
@@ -4239,13 +3702,9 @@ class OutcomeRecord:
                 None if receipt is None else _digest(receipt, "kernel_receipt_sha256")
             ),
             failure_code=(
-                None
-                if failure_code is None
-                else _enum(FailureCode, failure_code, "failure_code")
+                None if failure_code is None else _enum(FailureCode, failure_code, "failure_code")
             ),  # type: ignore[arg-type]
-            failure_detail=(
-                None if detail is None else _nonempty(detail, "failure_detail")
-            ),
+            failure_detail=(None if detail is None else _nonempty(detail, "failure_detail")),
         )
 
 
@@ -4305,10 +3764,7 @@ class TelemetryRecord:
                 raise ProtocolContractError(f"{field} exceeds the bound")
 
     def to_dict(self) -> dict[str, object]:
-        return {
-            name: getattr(self, name)
-            for name in self.__dataclass_fields__
-        }
+        return {name: getattr(self, name) for name in self.__dataclass_fields__}
 
     @classmethod
     def from_dict(cls, value: object) -> Self:
@@ -4485,7 +3941,10 @@ class StageRecord:
         else:
             if self.output_sha256 is not None:
                 raise ProtocolContractError("unavailable stages cannot carry output")
-            if self.status is StageStatus.UNAVAILABLE and self.failure_code is not FailureCode.CAPABILITY_UNAVAILABLE:
+            if (
+                self.status is StageStatus.UNAVAILABLE
+                and self.failure_code is not FailureCode.CAPABILITY_UNAVAILABLE
+            ):
                 raise ProtocolContractError("unavailable stages require capability_unavailable")
             if self.failure_code is None:
                 raise ProtocolContractError("non-success stages require a failure code")
@@ -4526,9 +3985,7 @@ class StageRecord:
         payload = {} if data is None else data
         output_digest = None
         if status is StageStatus.SUCCESS:
-            output_digest = hashlib.sha256(
-                canonical_json(payload).encode("utf-8")
-            ).hexdigest()
+            output_digest = hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
         return cls(
             schema=STAGE_RECORD_SCHEMA,
             protocol_sha256=protocol_sha256,
@@ -4598,11 +4055,25 @@ class StageRecord:
             provenance=StageProvenance.from_dict(data["provenance"]),
             telemetry=TelemetryRecord.from_dict(data["telemetry"]),
             data=data["data"],
-            output_sha256=(None if data["output_sha256"] is None else _digest(data["output_sha256"], "output_sha256")),
-            failure_code=(None if failure_code is None else _enum(FailureCode, failure_code, "failure_code")),  # type: ignore[arg-type]
-            failure_detail=(None if data["failure_detail"] is None else _nonempty(data["failure_detail"], "failure_detail")),
+            output_sha256=(
+                None
+                if data["output_sha256"] is None
+                else _digest(data["output_sha256"], "output_sha256")
+            ),
+            failure_code=(
+                None if failure_code is None else _enum(FailureCode, failure_code, "failure_code")
+            ),  # type: ignore[arg-type]
+            failure_detail=(
+                None
+                if data["failure_detail"] is None
+                else _nonempty(data["failure_detail"], "failure_detail")
+            ),
             kernel_accepted=_bool(data["kernel_accepted"], "kernel_accepted"),
-            kernel_receipt_sha256=(None if data["kernel_receipt_sha256"] is None else _digest(data["kernel_receipt_sha256"], "kernel_receipt_sha256")),
+            kernel_receipt_sha256=(
+                None
+                if data["kernel_receipt_sha256"] is None
+                else _digest(data["kernel_receipt_sha256"], "kernel_receipt_sha256")
+            ),
         )
 
 
@@ -4669,9 +4140,7 @@ _NATIVE_KERNEL_CANDIDATE_SOURCES: Final = frozenset(
 _NATIVE_KERNEL_SAFE_COMPLETION_REASONS: Final = frozenset(
     {"completed", "completed_with_descendant_cleanup"}
 )
-_NATIVE_KERNEL_PROCESS_ERROR_REASONS: Final = frozenset(
-    {"monitor_error", "spawn_error"}
-)
+_NATIVE_KERNEL_PROCESS_ERROR_REASONS: Final = frozenset({"monitor_error", "spawn_error"})
 _NATIVE_KERNEL_TERMINATION_REASONS: Final = frozenset(
     {
         *_NATIVE_KERNEL_SAFE_COMPLETION_REASONS,
@@ -4683,24 +4152,18 @@ _NATIVE_KERNEL_TERMINATION_REASONS: Final = frozenset(
         "wall_clock_deadline",
     }
 )
-_NATIVE_KERNEL_OUTER_ATTACHMENT_FIELDS: Final = frozenset(
-    {"routing_policy"}
-)
+_NATIVE_KERNEL_OUTER_ATTACHMENT_FIELDS: Final = frozenset({"routing_policy"})
 
 
 def _native_kernel_process_count(value: object, field: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        raise ProtocolContractError(
-            f"{field} must be a nonnegative integer"
-        )
+        raise ProtocolContractError(f"{field} must be a nonnegative integer")
     return value
 
 
 def _native_kernel_candidate_source(value: object, field: str) -> str:
     if value not in _NATIVE_KERNEL_CANDIDATE_SOURCES:
-        raise ProtocolContractError(
-            f"{field} is not a native-kernel candidate source"
-        )
+        raise ProtocolContractError(f"{field} is not a native-kernel candidate source")
     return str(value)
 
 
@@ -4717,15 +4180,11 @@ def _validate_native_kernel_attempt_lifecycle(
         "native kernel attempt termination_reason",
     )
     if reason not in _NATIVE_KERNEL_TERMINATION_REASONS:
-        raise ProtocolContractError(
-            "native kernel attempt termination reason is not reviewed"
-        )
+        raise ProtocolContractError("native kernel attempt termination reason is not reviewed")
     returncode = attempt["returncode"]
     if reason in {"spawn_error", "cancelled_before_start"}:
         if returncode is not None:
-            raise ProtocolContractError(
-                "native kernel pre-spawn returncode must be null"
-            )
+            raise ProtocolContractError("native kernel pre-spawn returncode must be null")
     elif isinstance(returncode, bool) or not isinstance(returncode, int):
         raise ProtocolContractError(
             "native kernel attempt returncode must be an integer after spawn"
@@ -4740,19 +4199,12 @@ def _validate_native_kernel_attempt_lifecycle(
             and lifecycle_flags == (False, False, False)
             and process_group_reaped
         )
-        or (
-            reason == "wall_clock_deadline"
-            and lifecycle_flags == (True, False, False)
-        )
+        or (reason == "wall_clock_deadline" and lifecycle_flags == (True, False, False))
         or (
             reason in {"cancelled", "cancelled_before_start"}
             and lifecycle_flags == (False, True, False)
         )
-        or (
-            reason == "resource_deadline"
-            and not timed_out
-            and cancelled is not resource_exhausted
-        )
+        or (reason == "resource_deadline" and not timed_out and cancelled is not resource_exhausted)
         or (
             reason in _NATIVE_KERNEL_PROCESS_ERROR_REASONS
             and lifecycle_flags == (False, False, False)
@@ -4765,8 +4217,7 @@ def _validate_native_kernel_attempt_lifecycle(
     )
     if not flags_match:
         raise ProtocolContractError(
-            "native kernel attempt termination reason disagrees with "
-            "lifecycle flags"
+            "native kernel attempt termination reason disagrees with lifecycle flags"
         )
     process_accepted = (
         reason in _NATIVE_KERNEL_SAFE_COMPLETION_REASONS
@@ -4776,8 +4227,7 @@ def _validate_native_kernel_attempt_lifecycle(
     )
     if attempt["accepted"] is not process_accepted:
         raise ProtocolContractError(
-            "native kernel attempt acceptance disagrees with its reviewed "
-            "process outcome"
+            "native kernel attempt acceptance disagrees with its reviewed process outcome"
         )
 
 
@@ -4796,41 +4246,27 @@ def _validate_native_kernel_outer_attachments(
     """
 
     if "routing_policy" in data:
-        policy = _mapping(
-            data["routing_policy"], "native kernel routing_policy"
-        )
+        policy = _mapping(data["routing_policy"], "native kernel routing_policy")
         decision_sha256 = _digest(
             policy.get("decision_sha256"),
             "native kernel routing_policy decision_sha256",
         )
-        _nonempty(
-            policy.get("schema"), "native kernel routing_policy schema"
-        )
-        _nonempty(
-            policy.get("decision"), "native kernel routing_policy decision"
-        )
+        _nonempty(policy.get("schema"), "native kernel routing_policy schema")
+        _nonempty(policy.get("decision"), "native kernel routing_policy decision")
         policy_body = {
             key: _thaw_bounded_json(value)
             for key, value in policy.items()
             if key != "decision_sha256"
         }
         if _record_digest(policy_body) != decision_sha256:
-            raise ProtocolContractError(
-                "native kernel routing-policy self-digest changed"
-            )
+            raise ProtocolContractError("native kernel routing-policy self-digest changed")
 
     diagnostic_only = data.get("diagnostic_only")
     authority_withheld = data.get("authority_withheld")
     if diagnostic_only is None and authority_withheld is None:
         return False
-    if (
-        variant_id != "S1"
-        or diagnostic_only is not True
-        or authority_withheld is not True
-    ):
-        raise ProtocolContractError(
-            "native kernel diagnostic authority attachment is invalid"
-        )
+    if variant_id != "S1" or diagnostic_only is not True or authority_withheld is not True:
+        raise ProtocolContractError("native kernel diagnostic authority attachment is invalid")
     return True
 
 
@@ -4842,8 +4278,7 @@ def _validate_native_kernel_attempts(
     missing = _NATIVE_KERNEL_EXECUTED_RECEIPT_FIELDS - set(data)
     if missing:
         raise ProtocolContractError(
-            "executed native-kernel receipt is incomplete: "
-            + ", ".join(sorted(missing))
+            "executed native-kernel receipt is incomplete: " + ", ".join(sorted(missing))
         )
     for field in (
         "compiled_obligation_sha256",
@@ -4857,16 +4292,12 @@ def _validate_native_kernel_attempts(
         "candidate_attempts_sha256",
     ):
         _digest(data[field], f"native kernel {field}")
-    _native_kernel_candidate_source(
-        data["candidate_source"], "native kernel candidate_source"
-    )
+    _native_kernel_candidate_source(data["candidate_source"], "native kernel candidate_source")
     semantic_artifacts = data["semantic_artifact_sha256s"]
     if not isinstance(semantic_artifacts, Sequence) or isinstance(
         semantic_artifacts, (str, bytes, bytearray)
     ):
-        raise ProtocolContractError(
-            "native kernel semantic_artifact_sha256s must be an array"
-        )
+        raise ProtocolContractError("native kernel semantic_artifact_sha256s must be an array")
     for value in semantic_artifacts:
         _digest(value, "native kernel semantic_artifact_sha256s[]")
 
@@ -4882,20 +4313,11 @@ def _validate_native_kernel_attempts(
         )
     attempts: list[dict[str, object]] = []
     for index, raw_attempt in enumerate(attempts_value):
-        attempt = _mapping(
-            raw_attempt, f"native kernel candidate_attempts[{index}]"
-        )
+        attempt = _mapping(raw_attempt, f"native kernel candidate_attempts[{index}]")
         if set(attempt) != _NATIVE_KERNEL_ATTEMPT_FIELDS:
-            raise ProtocolContractError(
-                "native kernel candidate attempt has an invalid shape"
-            )
-        if (
-            isinstance(attempt["attempt_index"], bool)
-            or attempt["attempt_index"] != index
-        ):
-            raise ProtocolContractError(
-                "native kernel candidate attempt index changed"
-            )
+            raise ProtocolContractError("native kernel candidate attempt has an invalid shape")
+        if isinstance(attempt["attempt_index"], bool) or attempt["attempt_index"] != index:
+            raise ProtocolContractError("native kernel candidate attempt index changed")
         _native_kernel_candidate_source(
             attempt["candidate_source"],
             "native kernel attempt candidate_source",
@@ -4930,66 +4352,35 @@ def _validate_native_kernel_attempts(
             if key != "attempt_sha256"
         }
         if _record_digest(attempt_body) != attempt["attempt_sha256"]:
-            raise ProtocolContractError(
-                "native kernel candidate attempt self-digest changed"
-            )
+            raise ProtocolContractError("native kernel candidate attempt self-digest changed")
         _validate_native_kernel_attempt_lifecycle(
             attempt,
             active_process_count=active_process_count,
-            process_group_reaped=(
-                attempt["process_group_reaped"] is True
-            ),
+            process_group_reaped=(attempt["process_group_reaped"] is True),
         )
-        attempts.append(
-            {
-                key: _thaw_bounded_json(value)
-                for key, value in attempt.items()
-            }
-        )
+        attempts.append({key: _thaw_bounded_json(value) for key, value in attempt.items()})
     if _record_digest(attempts) != data["candidate_attempts_sha256"]:
-        raise ProtocolContractError(
-            "native kernel candidate-attempt collection changed"
-        )
-    if any(
-        attempt["accepted"] is True
-        for attempt in attempts[:-1]
-    ):
-        raise ProtocolContractError(
-            "native kernel continued after an accepted candidate"
-        )
+        raise ProtocolContractError("native kernel candidate-attempt collection changed")
+    if any(attempt["accepted"] is True for attempt in attempts[:-1]):
+        raise ProtocolContractError("native kernel continued after an accepted candidate")
     if any(
         attempt["timed_out"] is True
         or attempt["cancelled"] is True
         or attempt["resource_exhausted"] is True
         or attempt["process_group_reaped"] is not True
         or attempt["active_process_count"] != 0
-        or attempt["termination_reason"]
-        in _NATIVE_KERNEL_PROCESS_ERROR_REASONS
+        or attempt["termination_reason"] in _NATIVE_KERNEL_PROCESS_ERROR_REASONS
         for attempt in attempts[:-1]
     ):
-        raise ProtocolContractError(
-            "native kernel continued after an unsafe process outcome"
-        )
+        raise ProtocolContractError("native kernel continued after an unsafe process outcome")
 
-    selected = _mapping(
-        data["selected_attempt"], "native kernel selected_attempt"
-    )
+    selected = _mapping(data["selected_attempt"], "native kernel selected_attempt")
     if set(selected) != _NATIVE_KERNEL_SELECTED_ATTEMPT_FIELDS:
-        raise ProtocolContractError(
-            "native kernel selected attempt has an invalid shape"
-        )
+        raise ProtocolContractError("native kernel selected attempt has an invalid shape")
     last = attempts[-1]
-    expected_selected = {
-        key: last[key]
-        for key in _NATIVE_KERNEL_SELECTED_ATTEMPT_FIELDS
-    }
-    if {
-        key: _thaw_bounded_json(value)
-        for key, value in selected.items()
-    } != expected_selected:
-        raise ProtocolContractError(
-            "native kernel selected attempt changed"
-        )
+    expected_selected = {key: last[key] for key in _NATIVE_KERNEL_SELECTED_ATTEMPT_FIELDS}
+    if {key: _thaw_bounded_json(value) for key, value in selected.items()} != expected_selected:
+        raise ProtocolContractError("native kernel selected attempt changed")
     selected_bindings = {
         "candidate_source": "candidate_source",
         "candidate_artifact_sha256": "candidate_artifact_sha256",
@@ -5010,9 +4401,7 @@ def _validate_native_kernel_attempts(
         data[receipt_field] != last[attempt_field]
         for receipt_field, attempt_field in selected_bindings.items()
     ):
-        raise ProtocolContractError(
-            "native kernel receipt differs from its selected attempt"
-        )
+        raise ProtocolContractError("native kernel receipt differs from its selected attempt")
     return selected["accepted"] is True
 
 
@@ -5048,23 +4437,16 @@ def validate_native_kernel_receipt(
         or data.get("independent") is not True
         or type(data.get("accepted")) is not bool
     ):
-        raise ProtocolContractError(
-            "kernel stage lacks an independent native receipt"
-        )
-    receipt_sha256 = _digest(
-        data.get("receipt_sha256"), "native kernel receipt_sha256"
-    )
-    diagnostic_authority_withheld = (
-        _validate_native_kernel_outer_attachments(
-            data,
-            variant_id=variant_id,
-        )
+        raise ProtocolContractError("kernel stage lacks an independent native receipt")
+    receipt_sha256 = _digest(data.get("receipt_sha256"), "native kernel receipt_sha256")
+    diagnostic_authority_withheld = _validate_native_kernel_outer_attachments(
+        data,
+        variant_id=variant_id,
     )
     body = {
         key: _thaw_bounded_json(value)
         for key, value in data.items()
-        if key != "receipt_sha256"
-        and key not in _NATIVE_KERNEL_OUTER_ATTACHMENT_FIELDS
+        if key != "receipt_sha256" and key not in _NATIVE_KERNEL_OUTER_ATTACHMENT_FIELDS
     }
     if _record_digest(body) != receipt_sha256:
         # Immutable S1 evidence predates normalized diagnostic rejection
@@ -5081,33 +4463,17 @@ def validate_native_kernel_receipt(
             or data["accepted"] is not True
             or _record_digest(legacy_diagnostic_body) != receipt_sha256
         ):
-            raise ProtocolContractError(
-                "native-kernel receipt self-digest changed"
-            )
+            raise ProtocolContractError("native-kernel receipt self-digest changed")
     if not isinstance(split, Split) or not isinstance(cache_mode, CacheMode):
-        raise ProtocolContractError(
-            "native-kernel receipt split/cache binding is invalid"
-        )
+        raise ProtocolContractError("native-kernel receipt split/cache binding is invalid")
     if not isinstance(stage_status, StageStatus):
-        raise ProtocolContractError(
-            "native-kernel receipt stage status is invalid"
-        )
-    if failure_code is not None and not isinstance(
-        failure_code, FailureCode
+        raise ProtocolContractError("native-kernel receipt stage status is invalid")
+    if failure_code is not None and not isinstance(failure_code, FailureCode):
+        raise ProtocolContractError("native-kernel receipt failure code is invalid")
+    if (stage_status is StageStatus.SUCCESS and failure_code is not None) or (
+        stage_status is not StageStatus.SUCCESS and failure_code is None
     ):
-        raise ProtocolContractError(
-            "native-kernel receipt failure code is invalid"
-        )
-    if (
-        stage_status is StageStatus.SUCCESS
-        and failure_code is not None
-    ) or (
-        stage_status is not StageStatus.SUCCESS
-        and failure_code is None
-    ):
-        raise ProtocolContractError(
-            "native-kernel stage status and failure code disagree"
-        )
+        raise ProtocolContractError("native-kernel stage status and failure code disagree")
     _bool(kernel_accepted, "native kernel stage authority")
     expected_identity = {
         "protocol_sha256": protocol_sha256,
@@ -5120,13 +4486,8 @@ def validate_native_kernel_receipt(
         "input_sha256": input_sha256,
         "environment_sha256": environment_sha256,
     }
-    if any(
-        data.get(field) != expected
-        for field, expected in expected_identity.items()
-    ):
-        raise ProtocolContractError(
-            "native-kernel receipt coordinate or source binding changed"
-        )
+    if any(data.get(field) != expected for field, expected in expected_identity.items()):
+        raise ProtocolContractError("native-kernel receipt coordinate or source binding changed")
     active_process_count = _native_kernel_process_count(
         data.get("active_process_count"),
         "native kernel active_process_count",
@@ -5138,9 +4499,7 @@ def validate_native_kernel_receipt(
         if not isinstance(consumed_artifact_sha256s, Sequence) or isinstance(
             consumed_artifact_sha256s, (str, bytes, bytearray)
         ):
-            raise ProtocolContractError(
-                "native-kernel consumed-artifact binding is invalid"
-            )
+            raise ProtocolContractError("native-kernel consumed-artifact binding is invalid")
         consumed = tuple(
             _digest(
                 item,
@@ -5149,15 +4508,11 @@ def validate_native_kernel_receipt(
             for item in consumed_artifact_sha256s
         )
     if accepted and not executed:
-        raise ProtocolContractError(
-            "accepted native-kernel receipt lacks executed Lean evidence"
-        )
+        raise ProtocolContractError("accepted native-kernel receipt lacks executed Lean evidence")
     if executed:
         selected_accepted = _validate_native_kernel_attempts(data)
         if selected_accepted is not accepted:
-            raise ProtocolContractError(
-                "native kernel decision differs from its selected attempt"
-            )
+            raise ProtocolContractError("native kernel decision differs from its selected attempt")
         if consumed is None:
             raise ProtocolContractError(
                 "executed native-kernel receipt lacks consumed-artifact binding"
@@ -5166,22 +4521,14 @@ def validate_native_kernel_receipt(
             raise ProtocolContractError(
                 "native kernel candidate is not one of the consumed artifacts"
             )
-    elif (
-        accepted
-        or not isinstance(data.get("reason"), str)
-        or not str(data["reason"]).strip()
-    ):
-        raise ProtocolContractError(
-            "pre-execution native-kernel rejection lacks a bounded reason"
-        )
+    elif accepted or not isinstance(data.get("reason"), str) or not str(data["reason"]).strip():
+        raise ProtocolContractError("pre-execution native-kernel rejection lacks a bounded reason")
     if diagnostic_authority_withheld and not accepted:
         if (
             data.get("reason") != "diagnostic_only_authority_withheld"
             or data.get("diagnostic_kernel_accepted") is not True
         ):
-            raise ProtocolContractError(
-                "normalized S1 diagnostic rejection is incomplete"
-            )
+            raise ProtocolContractError("normalized S1 diagnostic rejection is incomplete")
         diagnostic_receipt_sha256 = _digest(
             data.get("diagnostic_receipt_sha256"),
             "native kernel diagnostic_receipt_sha256",
@@ -5191,14 +4538,11 @@ def validate_native_kernel_receipt(
             "native kernel diagnostic_receipt",
         )
         if (
-            diagnostic_receipt.get("receipt_sha256")
-            != diagnostic_receipt_sha256
+            diagnostic_receipt.get("receipt_sha256") != diagnostic_receipt_sha256
             or diagnostic_receipt.get("accepted") is not True
             or diagnostic_receipt.get("diagnostic_receipt") is not None
         ):
-            raise ProtocolContractError(
-                "normalized S1 diagnostic receipt binding is invalid"
-            )
+            raise ProtocolContractError("normalized S1 diagnostic receipt binding is invalid")
         if not validate_native_kernel_receipt(
             diagnostic_receipt,
             protocol_sha256=protocol_sha256,
@@ -5216,62 +4560,35 @@ def validate_native_kernel_receipt(
             consumed_artifact_sha256s=consumed,
             failure_code=None,
         ):
-            raise ProtocolContractError(
-                "normalized S1 diagnostic receipt was not accepted"
-            )
-    if (
-        not diagnostic_authority_withheld
-        and kernel_accepted is not accepted
-    ):
-        raise ProtocolContractError(
-            "kernel stage authority differs from its native receipt"
-        )
+            raise ProtocolContractError("normalized S1 diagnostic receipt was not accepted")
+    if not diagnostic_authority_withheld and kernel_accepted is not accepted:
+        raise ProtocolContractError("kernel stage authority differs from its native receipt")
     if diagnostic_authority_withheld and kernel_accepted:
-        raise ProtocolContractError(
-            "native kernel diagnostic receipt retained stage authority"
-        )
+        raise ProtocolContractError("native kernel diagnostic receipt retained stage authority")
     if accepted:
         if (
             stage_status is not StageStatus.SUCCESS
             or data["process_group_reaped"] is not True
             or active_process_count != 0
-            or (
-                diagnostic_authority_withheld
-                and kernel_receipt_sha256 is not None
-            )
-            or (
-                not diagnostic_authority_withheld
-                and kernel_receipt_sha256 != receipt_sha256
-            )
+            or (diagnostic_authority_withheld and kernel_receipt_sha256 is not None)
+            or (not diagnostic_authority_withheld and kernel_receipt_sha256 != receipt_sha256)
         ):
-            raise ProtocolContractError(
-                "accepted native-kernel receipt lacks stage authority"
-            )
+            raise ProtocolContractError("accepted native-kernel receipt lacks stage authority")
     elif executed:
         expected_failure_code = (
             FailureCode.ORPHANED_CHILD
-            if (
-                active_process_count
-                or data["process_group_reaped"] is not True
-            )
+            if (active_process_count or data["process_group_reaped"] is not True)
             else (
                 FailureCode.OUT_OF_MEMORY
                 if data["resource_exhausted"] is True
                 else (
                     FailureCode.RESOURCE_LEASE_CANCELLATION
-                    if (
-                        data["timed_out"] is True
-                        or data["cancelled"] is True
-                    )
+                    if (data["timed_out"] is True or data["cancelled"] is True)
                     else (
                         FailureCode.BENCHMARK_INFRASTRUCTURE_FAILURE
                         if (
-                            data["termination_reason"]
-                            in {"spawn_error", "monitor_error"}
-                            or (
-                                isinstance(data["returncode"], int)
-                                and data["returncode"] < 0
-                            )
+                            data["termination_reason"] in {"spawn_error", "monitor_error"}
+                            or (isinstance(data["returncode"], int) and data["returncode"] < 0)
                         )
                         else FailureCode.KERNEL_REJECTION
                     )
@@ -5284,20 +4601,15 @@ def validate_native_kernel_receipt(
             or kernel_receipt_sha256 is not None
         ):
             raise ProtocolContractError(
-                "rejected native-kernel execution has invalid lifecycle "
-                "failure authority"
+                "rejected native-kernel execution has invalid lifecycle failure authority"
             )
     elif active_process_count != 0:
-        raise ProtocolContractError(
-            "pre-execution native-kernel rejection left active processes"
-        )
+        raise ProtocolContractError("pre-execution native-kernel rejection left active processes")
     elif (
         stage_status not in {StageStatus.SUCCESS, StageStatus.FAILED}
         or kernel_receipt_sha256 is not None
     ):
-        raise ProtocolContractError(
-            "rejected native-kernel receipt has invalid stage authority"
-        )
+        raise ProtocolContractError("rejected native-kernel receipt has invalid stage authority")
     return accepted
 
 
@@ -5310,12 +4622,8 @@ def validate_native_kernel_stage_receipt(stage: StageRecord) -> bool:
     """
 
     if not isinstance(stage, StageRecord) or stage.stage is not StageName.KERNEL:
-        raise ProtocolContractError(
-            "native-kernel receipt validation requires a kernel stage"
-        )
-    consumed = stage.provenance.effective_identity.get(
-        "consumed_artifact_sha256"
-    )
+        raise ProtocolContractError("native-kernel receipt validation requires a kernel stage")
+    consumed = stage.provenance.effective_identity.get("consumed_artifact_sha256")
     accepted = validate_native_kernel_receipt(
         stage.data,
         protocol_sha256=stage.protocol_sha256,
@@ -5332,8 +4640,7 @@ def validate_native_kernel_stage_receipt(stage: StageRecord) -> bool:
         kernel_receipt_sha256=stage.kernel_receipt_sha256,
         consumed_artifact_sha256s=(
             consumed
-            if isinstance(consumed, Sequence)
-            and not isinstance(consumed, (str, bytes, bytearray))
+            if isinstance(consumed, Sequence) and not isinstance(consumed, (str, bytes, bytearray))
             else None
         ),
         failure_code=stage.failure_code,
@@ -5400,55 +4707,38 @@ def _validate_hammer_stage_evidence(stage: StageRecord) -> str | None:
 
     if stage.stage is not StageName.HAMMER or not isinstance(stage.data, Mapping):
         return None
-    if (
-        stage.data.get("schema")
-        != "ipfs-datasets.logic-pipeline-benchmark.hammer-evidence.v1"
-    ):
+    if stage.data.get("schema") != "ipfs-datasets.logic-pipeline-benchmark.hammer-evidence.v1":
         return None
 
     request = _mapping(stage.data.get("request"), "hammer.request")
     portfolio = _mapping(stage.data.get("portfolio"), "hammer.portfolio")
-    candidate = _optional_mapping_member(
-        stage.data, "proof_candidate", "hammer.proof_candidate"
-    )
-    reconstruction = _optional_mapping_member(
-        stage.data, "reconstruction", "hammer.reconstruction"
-    )
+    candidate = _optional_mapping_member(stage.data, "proof_candidate", "hammer.proof_candidate")
+    reconstruction = _optional_mapping_member(stage.data, "reconstruction", "hammer.reconstruction")
     environment = _optional_mapping_member(
         stage.data, "environment_lock", "hammer.environment_lock"
     )
     request_id = _nonempty(request.get("request_id"), "hammer.request.request_id")
     if portfolio.get("request_id") != request_id:
-        raise ProtocolContractError(
-            "Hammer portfolio and request identities do not match"
-        )
+        raise ProtocolContractError("Hammer portfolio and request identities do not match")
     if candidate is not None and candidate.get("request_id") != request_id:
-        raise ProtocolContractError(
-            "Hammer candidate and request identities do not match"
-        )
+        raise ProtocolContractError("Hammer candidate and request identities do not match")
     if reconstruction is not None:
         if reconstruction.get("request_id") != request_id:
-            raise ProtocolContractError(
-                "Hammer reconstruction and request identities do not match"
-            )
-        if candidate is None or reconstruction.get("candidate_id") != candidate.get(
-            "candidate_id"
-        ):
+            raise ProtocolContractError("Hammer reconstruction and request identities do not match")
+        if candidate is None or reconstruction.get("candidate_id") != candidate.get("candidate_id"):
             raise ProtocolContractError(
                 "Hammer reconstruction and candidate identities do not match"
             )
-        if environment is None or reconstruction.get(
-            "environment_lock_id"
-        ) != environment.get("lock_id"):
+        if environment is None or reconstruction.get("environment_lock_id") != environment.get(
+            "lock_id"
+        ):
             raise ProtocolContractError(
                 "Hammer reconstruction and environment identities do not match"
             )
 
     evidence_id = _digest(stage.data.get("evidence_id"), "hammer.evidence_id")
     evidence_payload = {
-        key: _thaw_bounded_json(value)
-        for key, value in stage.data.items()
-        if key != "evidence_id"
+        key: _thaw_bounded_json(value) for key, value in stage.data.items() if key != "evidence_id"
     }
     if evidence_id != _record_digest(evidence_payload):
         raise ProtocolContractError("Hammer evidence_id does not match its payload")
@@ -5496,15 +4786,9 @@ class CaseResultReceipt:
         _digest(self.case_manifest_sha256, "case_manifest_sha256")
         _safe_id(self.variant_id, "variant_id")
         if self.variant_id not in _REQUIRED_VARIANTS:
-            raise ProtocolContractError(
-                f"variant_id is not registered: {self.variant_id!r}"
-            )
-        if not isinstance(self.split, Split) or not isinstance(
-            self.cache_mode, CacheMode
-        ):
-            raise ProtocolContractError(
-                "receipt split and cache_mode must use protocol enums"
-            )
+            raise ProtocolContractError(f"variant_id is not registered: {self.variant_id!r}")
+        if not isinstance(self.split, Split) or not isinstance(self.cache_mode, CacheMode):
+            raise ProtocolContractError("receipt split and cache_mode must use protocol enums")
         for field in (
             "route",
             "stage_digests",
@@ -5519,9 +4803,7 @@ class CaseResultReceipt:
         if any(not isinstance(stage, StageName) for stage in self.route):
             raise ProtocolContractError("receipt route must contain stage names")
         positions = tuple(tuple(StageName).index(stage) for stage in self.route)
-        if tuple(sorted(positions)) != positions or len(set(self.route)) != len(
-            self.route
-        ):
+        if tuple(sorted(positions)) != positions or len(set(self.route)) != len(self.route):
             raise ProtocolContractError(
                 "receipt route must be a unique canonical-order subsequence"
             )
@@ -5535,9 +4817,7 @@ class CaseResultReceipt:
             "resource_lanes",
         ):
             if len(getattr(self, field)) != size:
-                raise ProtocolContractError(
-                    f"receipt {field} must align with every route stage"
-                )
+                raise ProtocolContractError(f"receipt {field} must align with every route stage")
         for field in (
             "stage_digests",
             "provenance_digests",
@@ -5562,28 +4842,20 @@ class CaseResultReceipt:
         has_kernel = self.route[-1] is StageName.KERNEL
         if has_kernel:
             if self.kernel_stage_digest is None:
-                raise ProtocolContractError(
-                    "terminal kernel route requires its stage digest"
-                )
+                raise ProtocolContractError("terminal kernel route requires its stage digest")
             _digest(self.kernel_stage_digest, "kernel_stage_digest")
             if self.kernel_stage_digest != self.stage_digests[-1]:
                 raise ProtocolContractError(
                     "kernel stage digest does not match the terminal route stage"
                 )
         elif self.kernel_stage_digest is not None:
-            raise ProtocolContractError(
-                "kernel stage digest requires a terminal kernel route"
-            )
+            raise ProtocolContractError("kernel stage digest requires a terminal kernel route")
         if self.kernel_accepted:
             if not has_kernel or self.kernel_receipt_sha256 is None:
-                raise ProtocolContractError(
-                    "accepted receipt requires a terminal kernel receipt"
-                )
+                raise ProtocolContractError("accepted receipt requires a terminal kernel receipt")
             _digest(self.kernel_receipt_sha256, "kernel_receipt_sha256")
         elif self.kernel_receipt_sha256 is not None:
-            raise ProtocolContractError(
-                "an unaccepted kernel outcome cannot carry a receipt"
-            )
+            raise ProtocolContractError("an unaccepted kernel outcome cannot carry a receipt")
 
     @classmethod
     def from_stages(cls, stages: tuple[StageRecord, ...]) -> Self:
@@ -5602,9 +4874,7 @@ class CaseResultReceipt:
             if (digest := _validate_hammer_stage_evidence(stage)) is not None
         )
         if len(reconstruction_digests) > 1:
-            raise ProtocolContractError(
-                "case result contains multiple reconstruction records"
-            )
+            raise ProtocolContractError("case result contains multiple reconstruction records")
         kernel = stages[-1] if stages[-1].stage is StageName.KERNEL else None
         accepted = bool(kernel is not None and kernel.kernel_accepted)
         return cls(
@@ -5622,18 +4892,12 @@ class CaseResultReceipt:
                 _record_digest(stage.provenance.to_dict()) for stage in stages
             ),
             telemetry_digests=tuple(stage.telemetry.digest for stage in stages),
-            resource_lanes=tuple(
-                stage.telemetry.resource_lane for stage in stages
-            ),
+            resource_lanes=tuple(stage.telemetry.resource_lane for stage in stages),
             environment_sha256=environment,
-            reconstruction_sha256=(
-                reconstruction_digests[0] if reconstruction_digests else None
-            ),
+            reconstruction_sha256=(reconstruction_digests[0] if reconstruction_digests else None),
             kernel_stage_digest=kernel.digest if kernel else None,
             kernel_accepted=accepted,
-            kernel_receipt_sha256=(
-                kernel.kernel_receipt_sha256 if accepted and kernel else None
-            ),
+            kernel_receipt_sha256=(kernel.kernel_receipt_sha256 if accepted and kernel else None),
         )
 
     @property
@@ -5676,41 +4940,29 @@ class CaseResultReceipt:
         ):
             member = data[field]
             if not isinstance(member, list):
-                raise ProtocolContractError(
-                    f"case_result_receipt.{field} must be an array"
-                )
+                raise ProtocolContractError(f"case_result_receipt.{field} must be an array")
             arrays[field] = member
         return cls(
             schema=_nonempty(data["schema"], "schema"),
             protocol_sha256=_digest(data["protocol_sha256"], "protocol_sha256"),
             run_id=_safe_id(data["run_id"], "run_id"),
             case_id=_safe_id(data["case_id"], "case_id"),
-            case_manifest_sha256=_digest(
-                data["case_manifest_sha256"], "case_manifest_sha256"
-            ),
+            case_manifest_sha256=_digest(data["case_manifest_sha256"], "case_manifest_sha256"),
             variant_id=_safe_id(data["variant_id"], "variant_id"),
             split=_enum(Split, data["split"], "split"),  # type: ignore[arg-type]
-            cache_mode=_enum(
-                CacheMode, data["cache_mode"], "cache_mode"
-            ),  # type: ignore[arg-type]
-            route=tuple(
-                _enum(StageName, item, "route[]") for item in arrays["route"]
-            ),  # type: ignore[arg-type]
+            cache_mode=_enum(CacheMode, data["cache_mode"], "cache_mode"),  # type: ignore[arg-type]
+            route=tuple(_enum(StageName, item, "route[]") for item in arrays["route"]),  # type: ignore[arg-type]
             stage_digests=tuple(
-                _digest(item, "stage_digests[]")
-                for item in arrays["stage_digests"]
+                _digest(item, "stage_digests[]") for item in arrays["stage_digests"]
             ),
             provenance_digests=tuple(
-                _digest(item, "provenance_digests[]")
-                for item in arrays["provenance_digests"]
+                _digest(item, "provenance_digests[]") for item in arrays["provenance_digests"]
             ),
             telemetry_digests=tuple(
-                _digest(item, "telemetry_digests[]")
-                for item in arrays["telemetry_digests"]
+                _digest(item, "telemetry_digests[]") for item in arrays["telemetry_digests"]
             ),
             resource_lanes=tuple(
-                _enum(ResourceLane, item, "resource_lanes[]")
-                for item in arrays["resource_lanes"]
+                _enum(ResourceLane, item, "resource_lanes[]") for item in arrays["resource_lanes"]
             ),  # type: ignore[arg-type]
             environment_sha256=(
                 None
@@ -5720,9 +4972,7 @@ class CaseResultReceipt:
             reconstruction_sha256=(
                 None
                 if data["reconstruction_sha256"] is None
-                else _digest(
-                    data["reconstruction_sha256"], "reconstruction_sha256"
-                )
+                else _digest(data["reconstruction_sha256"], "reconstruction_sha256")
             ),
             kernel_stage_digest=(
                 None
@@ -5733,9 +4983,7 @@ class CaseResultReceipt:
             kernel_receipt_sha256=(
                 None
                 if data["kernel_receipt_sha256"] is None
-                else _digest(
-                    data["kernel_receipt_sha256"], "kernel_receipt_sha256"
-                )
+                else _digest(data["kernel_receipt_sha256"], "kernel_receipt_sha256")
             ),
         )
 
@@ -5790,7 +5038,15 @@ class CaseResultRecord:
                 raise ProtocolContractError("case result contains duplicate stages")
             names.add(stage.stage)
             positions.append(tuple(StageName).index(stage.stage))
-            for field in ("protocol_sha256", "run_id", "case_id", "case_manifest_sha256", "variant_id", "split", "cache_mode"):
+            for field in (
+                "protocol_sha256",
+                "run_id",
+                "case_id",
+                "case_manifest_sha256",
+                "variant_id",
+                "split",
+                "cache_mode",
+            ):
                 if getattr(stage, field) != getattr(self, field):
                     raise ProtocolContractError("stage and case identities do not match")
             if stage.telemetry.resource_lane is not _STAGE_RESOURCE_LANES[stage.stage]:
@@ -5801,9 +5057,7 @@ class CaseResultRecord:
                 input_sha256 = stage.provenance.input_sha256
             environments.add(stage.provenance.environment_sha256)
         if positions != sorted(positions):
-            raise ProtocolContractError(
-                "case result route must follow canonical stage order"
-            )
+            raise ProtocolContractError("case result route must follow canonical stage order")
         if StageName.KERNEL in names and self.stages[-1].stage is not StageName.KERNEL:
             raise ProtocolContractError("kernel must be the terminal route stage")
         if not isinstance(self.status, OutcomeStatus):
@@ -5819,26 +5073,20 @@ class CaseResultRecord:
         )
         if has_native_kernel_receipt:
             assert kernel is not None
-            graph_invoked = kernel.provenance.effective_identity.get(
-                "graph_invoked"
-            )
+            graph_invoked = kernel.provenance.effective_identity.get("graph_invoked")
             if graph_invoked is not True:
                 raise ProtocolContractError(
                     "native kernel receipt requires an explicit graph invocation"
                 )
             validate_native_kernel_stage_receipt(kernel)
         elif kernel is not None and kernel.kernel_accepted:
-            graph_invoked = kernel.provenance.effective_identity.get(
-                "graph_invoked"
-            )
+            graph_invoked = kernel.provenance.effective_identity.get("graph_invoked")
             if graph_invoked is False:
                 raise ProtocolContractError(
                     "kernel authority cannot come from a suppressed graph stage"
                 )
             if graph_invoked is not None and type(graph_invoked) is not bool:
-                raise ProtocolContractError(
-                    "kernel graph invocation marker must be boolean"
-                )
+                raise ProtocolContractError("kernel graph invocation marker must be boolean")
         blocking_stage_failure = next(
             (
                 item
@@ -5849,11 +5097,7 @@ class CaseResultRecord:
             None,
         )
         if self.status is OutcomeStatus.VERIFIED:
-            if (
-                blocking_stage_failure is not None
-                or kernel is None
-                or not kernel.kernel_accepted
-            ):
+            if blocking_stage_failure is not None or kernel is None or not kernel.kernel_accepted:
                 raise ProtocolContractError(
                     "verified case results require kernel acceptance without "
                     "a blocking stage failure"
@@ -5865,9 +5109,7 @@ class CaseResultRecord:
                         "verified case result has a broken upstream stage digest chain"
                     )
                 if stage.provenance.input_sha256 != input_sha256:
-                    raise ProtocolContractError(
-                        "verified case result mixes stage input identities"
-                    )
+                    raise ProtocolContractError("verified case result mixes stage input identities")
                 expected_upstream = (*expected_upstream, stage.digest)
             if None in environments or len(environments) != 1:
                 raise ProtocolContractError(
@@ -5884,17 +5126,23 @@ class CaseResultRecord:
                 raise ProtocolContractError("verified case results cannot carry failures")
         else:
             if self.kernel_accepted or self.kernel_receipt_sha256 is not None:
-                raise ProtocolContractError("non-verified case results cannot claim kernel acceptance")
+                raise ProtocolContractError(
+                    "non-verified case results cannot claim kernel acceptance"
+                )
             if self.failure_detail is not None:
                 _nonempty(self.failure_detail, "failure_detail")
         if self.failure_code is not None and not isinstance(self.failure_code, FailureCode):
             raise ProtocolContractError("failure_code must be a FailureCode")
         if self.status in {OutcomeStatus.UNAVAILABLE, OutcomeStatus.EXCLUDED}:
             if self.failure_code not in EXCLUSION_FAILURE_CODES:
-                raise ProtocolContractError("unavailable/excluded case results require an exclusion code")
+                raise ProtocolContractError(
+                    "unavailable/excluded case results require an exclusion code"
+                )
         if self.status is OutcomeStatus.INFRASTRUCTURE_FAILURE:
             if self.failure_code not in INFRASTRUCTURE_FAILURE_CODES:
-                raise ProtocolContractError("infrastructure case results require an infrastructure code")
+                raise ProtocolContractError(
+                    "infrastructure case results require an infrastructure code"
+                )
             _nonempty(self.failure_detail, "failure_detail")
         if self.status in {OutcomeStatus.NOT_VERIFIED, OutcomeStatus.REJECTED}:
             if self.failure_code in EXCLUSION_FAILURE_CODES:
@@ -5912,9 +5160,7 @@ class CaseResultRecord:
             self.receipt.kernel_accepted != self.kernel_accepted
             or self.receipt.kernel_receipt_sha256 != self.kernel_receipt_sha256
         ):
-            raise ProtocolContractError(
-                "case and provenance-receipt kernel outcomes do not match"
-            )
+            raise ProtocolContractError("case and provenance-receipt kernel outcomes do not match")
 
     @classmethod
     def from_stages(cls, stages: tuple[StageRecord, ...] | list[StageRecord]) -> Self:
@@ -5923,56 +5169,31 @@ class CaseResultRecord:
             raise ProtocolContractError("cannot build a case result without stages")
         first = records[0]
         unavailable = next(
-            (
-                item
-                for item in records
-                if item.status is StageStatus.UNAVAILABLE
-            ),
+            (item for item in records if item.status is StageStatus.UNAVAILABLE),
             None,
         )
         failed = tuple(
-            item
-            for item in records
-            if item.status in {StageStatus.FAILED, StageStatus.SKIPPED}
+            item for item in records if item.status in {StageStatus.FAILED, StageStatus.SKIPPED}
         )
         immediate_stop = next(
-            (
-                item
-                for item in failed
-                if item.failure_code in IMMEDIATE_STOP_CODES
-            ),
+            (item for item in failed if item.failure_code in IMMEDIATE_STOP_CODES),
             None,
         )
         infrastructure_failure = next(
-            (
-                item
-                for item in failed
-                if item.failure_code in INFRASTRUCTURE_FAILURE_CODES
-            ),
+            (item for item in failed if item.failure_code in INFRASTRUCTURE_FAILURE_CODES),
             None,
         )
         blocking_failure = next(
-            (
-                item
-                for item in failed
-                if not _is_recoverable_proof_attempt_failure(item)
-            ),
+            (item for item in failed if not _is_recoverable_proof_attempt_failure(item)),
             None,
         )
         recovered_candidate_failure = next(
-            (
-                item
-                for item in failed
-                if _is_recoverable_proof_attempt_failure(item)
-            ),
+            (item for item in failed if _is_recoverable_proof_attempt_failure(item)),
             None,
         )
         kernel = next((item for item in records if item.stage is StageName.KERNEL), None)
         terminal_failure = (
-            immediate_stop
-            or infrastructure_failure
-            or unavailable
-            or blocking_failure
+            immediate_stop or infrastructure_failure or unavailable or blocking_failure
         )
         if terminal_failure is not None:
             if terminal_failure.status is StageStatus.UNAVAILABLE:
@@ -6008,9 +5229,15 @@ class CaseResultRecord:
             cache_mode=first.cache_mode,
             stages=records,
             status=status,
-            verification_authority=(VerificationAuthority.NATIVE_KERNEL if status is OutcomeStatus.VERIFIED else VerificationAuthority.NONE),
+            verification_authority=(
+                VerificationAuthority.NATIVE_KERNEL
+                if status is OutcomeStatus.VERIFIED
+                else VerificationAuthority.NONE
+            ),
             kernel_accepted=bool(status is OutcomeStatus.VERIFIED),
-            kernel_receipt_sha256=(None if kernel is None else kernel.kernel_receipt_sha256) if status is OutcomeStatus.VERIFIED else None,
+            kernel_receipt_sha256=(None if kernel is None else kernel.kernel_receipt_sha256)
+            if status is OutcomeStatus.VERIFIED
+            else None,
             failure_code=failure_code,
             failure_detail=detail,
             receipt=None,
@@ -6026,11 +5253,7 @@ class CaseResultRecord:
 
         if self.status is not OutcomeStatus.VERIFIED:
             return ()
-        return tuple(
-            stage
-            for stage in self.stages
-            if _is_recoverable_proof_attempt_failure(stage)
-        )
+        return tuple(stage for stage in self.stages if _is_recoverable_proof_attempt_failure(stage))
 
     @property
     def recovered_failure_codes(self) -> tuple[FailureCode, ...]:
@@ -6052,18 +5275,12 @@ class CaseResultRecord:
         """
 
         kernel = next(
-            (
-                stage
-                for stage in self.stages
-                if stage.stage is StageName.KERNEL
-            ),
+            (stage for stage in self.stages if stage.stage is StageName.KERNEL),
             None,
         )
         if kernel is None:
             return False
-        graph_invoked = kernel.provenance.effective_identity.get(
-            "graph_invoked"
-        )
+        graph_invoked = kernel.provenance.effective_identity.get("graph_invoked")
         if graph_invoked is False:
             return False
         if graph_invoked is True:
@@ -6084,9 +5301,7 @@ class CaseResultRecord:
             raise ProtocolContractError("case result has no provenance receipt")
         return self.receipt.digest
 
-    def validate_provenance(
-        self, *, expected_environment_sha256: str | None = None
-    ) -> None:
+    def validate_provenance(self, *, expected_environment_sha256: str | None = None) -> None:
         """Revalidate this result and, when supplied, its pinned environment."""
 
         restored = type(self).from_dict(self.to_dict())
@@ -6098,53 +5313,34 @@ class CaseResultRecord:
         expected_input = self.stages[0].provenance.input_sha256
         for stage in self.stages:
             if stage.provenance.upstream_stage_digests != expected_upstream:
-                raise ProtocolContractError(
-                    "case result has a broken upstream stage digest chain"
-                )
+                raise ProtocolContractError("case result has a broken upstream stage digest chain")
             if stage.provenance.input_sha256 != expected_input:
-                raise ProtocolContractError(
-                    "case result mixes stage input identities"
-                )
+                raise ProtocolContractError("case result mixes stage input identities")
             expected_upstream = (*expected_upstream, stage.digest)
         kernel = next(
-            (
-                stage
-                for stage in self.stages
-                if stage.stage is StageName.KERNEL
-            ),
+            (stage for stage in self.stages if stage.stage is StageName.KERNEL),
             None,
         )
         if kernel is not None:
-            graph_invoked = kernel.provenance.effective_identity.get(
-                "graph_invoked"
-            )
+            graph_invoked = kernel.provenance.effective_identity.get("graph_invoked")
             has_native_receipt = (
                 isinstance(kernel.data, Mapping)
-                and kernel.data.get("schema")
-                == NATIVE_KERNEL_RECEIPT_SCHEMA
+                and kernel.data.get("schema") == NATIVE_KERNEL_RECEIPT_SCHEMA
             )
-            if graph_invoked is True and (
-                kernel.kernel_accepted or has_native_receipt
-            ):
+            if graph_invoked is True and (kernel.kernel_accepted or has_native_receipt):
                 validate_native_kernel_stage_receipt(kernel)
-            elif graph_invoked is False and (
-                kernel.kernel_accepted or has_native_receipt
-            ):
+            elif graph_invoked is False and (kernel.kernel_accepted or has_native_receipt):
                 raise ProtocolContractError(
                     "suppressed kernel stage contains native receipt authority"
                 )
             elif graph_invoked is not None and type(graph_invoked) is not bool:
-                raise ProtocolContractError(
-                    "kernel graph invocation marker must be boolean"
-                )
+                raise ProtocolContractError("kernel graph invocation marker must be boolean")
             elif graph_invoked is None and has_native_receipt:
                 raise ProtocolContractError(
                     "native kernel receipt lacks an explicit graph invocation"
                 )
         if expected_environment_sha256 is not None:
-            expected = _digest(
-                expected_environment_sha256, "expected_environment_sha256"
-            )
+            expected = _digest(expected_environment_sha256, "expected_environment_sha256")
             if (
                 self.status is OutcomeStatus.VERIFIED
                 and self.receipt is not None
@@ -6190,9 +5386,7 @@ class CaseResultRecord:
             "kernel_receipt_sha256": self.kernel_receipt_sha256,
             "failure_code": None if self.failure_code is None else self.failure_code.value,
             "failure_detail": self.failure_detail,
-            "receipt": (
-                None if self.receipt is None else self.receipt.to_dict()
-            ),
+            "receipt": (None if self.receipt is None else self.receipt.to_dict()),
         }
 
     @classmethod
@@ -6214,15 +5408,25 @@ class CaseResultRecord:
             cache_mode=_enum(CacheMode, data["cache_mode"], "cache_mode"),  # type: ignore[arg-type]
             stages=tuple(StageRecord.from_dict(item) for item in stages),
             status=_enum(OutcomeStatus, data["status"], "status"),  # type: ignore[arg-type]
-            verification_authority=_enum(VerificationAuthority, data["verification_authority"], "verification_authority"),  # type: ignore[arg-type]
+            verification_authority=_enum(
+                VerificationAuthority, data["verification_authority"], "verification_authority"
+            ),  # type: ignore[arg-type]
             kernel_accepted=_bool(data["kernel_accepted"], "kernel_accepted"),
-            kernel_receipt_sha256=(None if data["kernel_receipt_sha256"] is None else _digest(data["kernel_receipt_sha256"], "kernel_receipt_sha256")),
-            failure_code=(None if failure_code is None else _enum(FailureCode, failure_code, "failure_code")),  # type: ignore[arg-type]
-            failure_detail=(None if data["failure_detail"] is None else _nonempty(data["failure_detail"], "failure_detail")),
-            receipt=(
+            kernel_receipt_sha256=(
                 None
-                if data["receipt"] is None
-                else CaseResultReceipt.from_dict(data["receipt"])
+                if data["kernel_receipt_sha256"] is None
+                else _digest(data["kernel_receipt_sha256"], "kernel_receipt_sha256")
+            ),
+            failure_code=(
+                None if failure_code is None else _enum(FailureCode, failure_code, "failure_code")
+            ),  # type: ignore[arg-type]
+            failure_detail=(
+                None
+                if data["failure_detail"] is None
+                else _nonempty(data["failure_detail"], "failure_detail")
+            ),
+            receipt=(
+                None if data["receipt"] is None else CaseResultReceipt.from_dict(data["receipt"])
             ),
         )
         if len(canonical_json(result.to_dict()).encode("utf-8")) > _MAX_CASE_RESULT_BYTES:
@@ -6244,14 +5448,16 @@ def validate_paired_outcomes(
 ) -> None:
     """Validate the identity and eligibility boundary for a paired comparison."""
 
-    if not isinstance(baseline, OutcomeRecord) or not isinstance(
-        candidate, OutcomeRecord
-    ):
+    if not isinstance(baseline, OutcomeRecord) or not isinstance(candidate, OutcomeRecord):
         raise ProtocolContractError("pair members must be OutcomeRecord values")
-    if protocol.digest not in {
-        baseline.protocol_sha256,
-        candidate.protocol_sha256,
-    } or baseline.protocol_sha256 != candidate.protocol_sha256:
+    if (
+        protocol.digest
+        not in {
+            baseline.protocol_sha256,
+            candidate.protocol_sha256,
+        }
+        or baseline.protocol_sha256 != candidate.protocol_sha256
+    ):
         raise ProtocolContractError("pair members must bind the same protocol")
     if baseline.variant_id != BASELINE_VARIANT:
         raise ProtocolContractError("the first pair member must be A0")
@@ -6269,13 +5475,8 @@ def validate_paired_outcomes(
         raise ProtocolContractError(
             "paired outcomes must share run, case, manifest, split, and cache mode"
         )
-    if (
-        baseline.eligible_for_paired_statistics
-        != candidate.eligible_for_paired_statistics
-    ):
-        raise ProtocolContractError(
-            "an incomplete pair cannot support a quality claim"
-        )
+    if baseline.eligible_for_paired_statistics != candidate.eligible_for_paired_statistics:
+        raise ProtocolContractError("an incomplete pair cannot support a quality claim")
 
 
 class GateStatus(str, Enum):
@@ -6360,9 +5561,7 @@ def evaluate_candidate_gate(
     """Apply the frozen materiality and safety gates to aggregate evidence."""
 
     if not isinstance(observation, CandidateGateObservation):
-        raise ProtocolContractError(
-            "observation must be a CandidateGateObservation"
-        )
+        raise ProtocolContractError("observation must be a CandidateGateObservation")
     thresholds = protocol.thresholds
     if observation.infrastructure_failure_count:
         return GateDecision(
@@ -6370,20 +5569,13 @@ def evaluate_candidate_gate(
             ("infrastructure failures require repair or an explicit rerun",),
         )
     reasons: list[str] = []
-    if (
-        observation.invalid_control_verified_count
-        > thresholds.invalid_control_verified_max
-    ):
+    if observation.invalid_control_verified_count > thresholds.invalid_control_verified_max:
         reasons.append("invalid-control verification tolerance exceeded")
     if observation.paired_interval_low < thresholds.paired_regression_floor:
         reasons.append("paired confidence interval crosses regression floor")
-    quality_gain = (
-        observation.hard_case_verified_gain
-        >= thresholds.hard_case_verified_gain_min
-    )
+    quality_gain = observation.hard_case_verified_gain >= thresholds.hard_case_verified_gain_min
     efficient_near_best = (
-        observation.quality_gap_from_best
-        <= thresholds.near_best_quality_margin_max
+        observation.quality_gap_from_best <= thresholds.near_best_quality_margin_max
         and max(
             observation.p95_latency_reduction,
             observation.model_usage_reduction,
@@ -6392,10 +5584,7 @@ def evaluate_candidate_gate(
     )
     if not (quality_gain or efficient_near_best):
         reasons.append("neither hard-case gain nor near-best efficiency gate passed")
-    if (
-        observation.baseline_solved_regression_rate
-        > thresholds.baseline_solved_regression_rate_max
-    ):
+    if observation.baseline_solved_regression_rate > thresholds.baseline_solved_regression_rate_max:
         reasons.append("A0-solved regression rate exceeded")
     if (
         observation.unexplained_baseline_regressions

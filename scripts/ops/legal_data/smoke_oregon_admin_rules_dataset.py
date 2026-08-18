@@ -15,7 +15,9 @@ from typing import Any, Dict, List
 from datasets import load_dataset
 from huggingface_hub import hf_hub_url, list_repo_files
 
-from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
+from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import (
+    get_canonical_legal_corpus,
+)
 
 
 OAR_RULE_RE = re.compile(r"\b\d{3}-\d{3}-\d{4}\b")
@@ -23,7 +25,13 @@ _STATE_ADMIN_RULES_CORPUS = get_canonical_legal_corpus("state_admin_rules")
 
 
 def _default_local_dir() -> Path:
-    return Path(__file__).resolve().parents[3] / "data" / "state_administrative_rules" / "OR" / "parsed"
+    return (
+        Path(__file__).resolve().parents[3]
+        / "data"
+        / "state_administrative_rules"
+        / "OR"
+        / "parsed"
+    )
 
 
 def _validate_records(records: List[Dict[str, Any]], source: str) -> Dict[str, Any]:
@@ -73,7 +81,9 @@ def _validate_records(records: List[Dict[str, Any]], source: str) -> Dict[str, A
 def _load_local_records(local_dir: Path, max_rows: int) -> List[Dict[str, Any]]:
     parquet_path = local_dir / "oregon_administrative_rules.parquet"
     if parquet_path.exists():
-        ds = load_dataset("parquet", data_files={"train": str(parquet_path)}, split=f"train[:{max_rows}]")
+        ds = load_dataset(
+            "parquet", data_files={"train": str(parquet_path)}, split=f"train[:{max_rows}]"
+        )
         return [dict(row) for row in ds]
 
     json_path = local_dir / "oregon_administrative_rules.json"
@@ -105,9 +115,7 @@ def _find_remote_parquet(repo_id: str, path_prefix: str) -> str:
     files = list_repo_files(repo_id=repo_id, repo_type="dataset")
     prefix = path_prefix.strip("/")
     candidates = sorted(
-        f
-        for f in files
-        if f.endswith(".parquet") and (f == prefix or f.startswith(prefix + "/"))
+        f for f in files if f.endswith(".parquet") and (f == prefix or f.startswith(prefix + "/"))
     )
     if not candidates:
         raise RuntimeError(f"No parquet files found under '{prefix}' in {repo_id}")
@@ -134,8 +142,12 @@ async def _main(args: argparse.Namespace) -> int:
         report = _validate_records(records, source=f"local:{local_dir}")
         report["local_dir"] = str(local_dir)
     else:
-        remote = _load_remote_records(repo_id=args.repo_id, path_prefix=args.path_prefix, max_rows=args.max_rows)
-        report = _validate_records(remote["records"], source=f"hf:{args.repo_id}/{remote['parquet_file']}")
+        remote = _load_remote_records(
+            repo_id=args.repo_id, path_prefix=args.path_prefix, max_rows=args.max_rows
+        )
+        report = _validate_records(
+            remote["records"], source=f"hf:{args.repo_id}/{remote['parquet_file']}"
+        )
         report["repo_id"] = args.repo_id
         report["parquet_file"] = remote["parquet_file"]
 

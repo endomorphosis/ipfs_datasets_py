@@ -5,6 +5,7 @@ Legal Dataset MCP Tools — standalone function wrappers.
 
 Business logic is in ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api.
 """
+
 from __future__ import annotations
 
 import json
@@ -12,7 +13,9 @@ import logging
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 
-from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import get_canonical_legal_corpus
+from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import (
+    get_canonical_legal_corpus,
+)
 from ipfs_datasets_py.processors.legal_data import (
     load_packaged_docket_dataset,
     load_packaged_workspace_dataset,
@@ -49,6 +52,7 @@ async def scrape_recap_archive(parameters: Dict[str, Any]) -> Dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         scrape_recap_archive_from_parameters,
     )
+
     return await scrape_recap_archive_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -57,6 +61,7 @@ async def search_recap_documents(parameters: Dict[str, Any]) -> Dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_recap_documents_from_parameters,
     )
+
     return await search_recap_documents_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -65,6 +70,7 @@ async def scrape_state_laws(parameters: Dict[str, Any]) -> Dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         scrape_state_laws_from_parameters,
     )
+
     return await scrape_state_laws_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -73,6 +79,7 @@ async def scrape_state_admin_rules(parameters: Dict[str, Any]) -> Dict[str, Any]
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         scrape_state_admin_rules_from_parameters,
     )
+
     return await scrape_state_admin_rules_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -81,6 +88,7 @@ async def list_scraping_jobs(parameters: Dict[str, Any]) -> Dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         list_scraping_jobs_from_parameters,
     )
+
     return await list_scraping_jobs_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -89,6 +97,7 @@ async def scrape_us_code(parameters: Dict[str, Any]) -> Dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         scrape_us_code_from_parameters,
     )
+
     return await scrape_us_code_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -97,6 +106,7 @@ async def scrape_federal_laws(parameters: Dict[str, Any]) -> Dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         scrape_federal_laws_from_parameters,
     )
+
     return await scrape_federal_laws_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -105,6 +115,7 @@ async def scrape_netherlands_laws(parameters: Dict[str, Any]) -> Dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         scrape_netherlands_laws_from_parameters,
     )
+
     return await scrape_netherlands_laws_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -113,6 +124,7 @@ async def scrape_municipal_codes(parameters: Dict[str, Any]) -> Dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         scrape_municipal_codes_from_parameters,
     )
+
     return await scrape_municipal_codes_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -121,6 +133,7 @@ async def setup_legal_tools_venv(parameters: Dict[str, Any]) -> Dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         setup_legal_tools_venv_from_parameters,
     )
+
     return await setup_legal_tools_venv_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -129,7 +142,10 @@ async def ingest_caselaw_access_vectors(parameters: Dict[str, Any]) -> Dict[str,
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         ingest_caselaw_access_vectors_from_parameters,
     )
-    return await ingest_caselaw_access_vectors_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await ingest_caselaw_access_vectors_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
 async def search_caselaw_access_vectors(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -137,7 +153,10 @@ async def search_caselaw_access_vectors(parameters: Dict[str, Any]) -> Dict[str,
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_caselaw_access_vectors_from_parameters,
     )
-    return await search_caselaw_access_vectors_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await search_caselaw_access_vectors_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
 async def search_caselaw_access_cases(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -145,6 +164,7 @@ async def search_caselaw_access_cases(parameters: Dict[str, Any]) -> Dict[str, A
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_caselaw_access_cases_from_parameters,
     )
+
     return await search_caselaw_access_cases_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -153,6 +173,7 @@ async def search_us_code_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_us_code_corpus_from_parameters,
     )
+
     return await search_us_code_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -166,6 +187,7 @@ async def search_state_law_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_state_law_corpus_from_parameters,
     )
+
     return await search_state_law_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -174,6 +196,7 @@ async def search_court_rules_corpus(parameters: Dict[str, Any]) -> Dict[str, Any
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_court_rules_corpus_from_parameters,
     )
+
     return await search_court_rules_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
@@ -182,7 +205,10 @@ async def search_federal_register_corpus(parameters: Dict[str, Any]) -> Dict[str
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_federal_register_corpus_from_parameters,
     )
-    return await search_federal_register_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await search_federal_register_corpus_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
 async def search_netherlands_law_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -190,7 +216,10 @@ async def search_netherlands_law_corpus(parameters: Dict[str, Any]) -> Dict[str,
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_netherlands_law_corpus_from_parameters,
     )
-    return await search_netherlands_law_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await search_netherlands_law_corpus_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
 async def search_workspace_dataset(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -292,7 +321,9 @@ async def search_docket_dataset(parameters: Dict[str, Any]) -> Dict[str, Any]:
     resolved_input_path = Path(input_path)
     resolved_input_kind = input_kind
     if resolved_input_kind == "auto":
-        resolved_input_kind = "packaged" if resolved_input_path.name == "bundle_manifest.json" else "dataset"
+        resolved_input_kind = (
+            "packaged" if resolved_input_path.name == "bundle_manifest.json" else "dataset"
+        )
 
     dataset = (
         json.loads(resolved_input_path.read_text(encoding="utf-8"))
@@ -302,7 +333,9 @@ async def search_docket_dataset(parameters: Dict[str, Any]) -> Dict[str, Any]:
     result = (
         search_docket_dataset_bm25(dataset, query, top_k=top_k)
         if backend == "bm25"
-        else search_docket_dataset_vector(dataset, query, top_k=top_k, vector_dimension=vector_dimension)
+        else search_docket_dataset_vector(
+            dataset, query, top_k=top_k, vector_dimension=vector_dimension
+        )
     )
     return {
         "status": "success",
@@ -320,15 +353,23 @@ async def recover_missing_legal_citation_source(parameters: Dict[str, Any]) -> D
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         recover_missing_legal_citation_source_from_parameters,
     )
-    return await recover_missing_legal_citation_source_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await recover_missing_legal_citation_source_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
-async def promote_recovery_manifest_to_canonical_bundle(parameters: Dict[str, Any]) -> Dict[str, Any]:
+async def promote_recovery_manifest_to_canonical_bundle(
+    parameters: Dict[str, Any],
+) -> Dict[str, Any]:
     """Promote a saved recovery manifest into a structured canonical row bundle."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         promote_recovery_manifest_to_canonical_bundle_from_parameters,
     )
-    return await promote_recovery_manifest_to_canonical_bundle_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await promote_recovery_manifest_to_canonical_bundle_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
 async def preview_recovery_manifest_release_plan(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -336,23 +377,36 @@ async def preview_recovery_manifest_release_plan(parameters: Dict[str, Any]) -> 
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         preview_recovery_manifest_release_plan_from_parameters,
     )
-    return await preview_recovery_manifest_release_plan_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await preview_recovery_manifest_release_plan_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
-async def merge_recovery_manifest_into_canonical_dataset(parameters: Dict[str, Any]) -> Dict[str, Any]:
+async def merge_recovery_manifest_into_canonical_dataset(
+    parameters: Dict[str, Any],
+) -> Dict[str, Any]:
     """Merge promoted recovery rows into the target canonical parquet dataset."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         merge_recovery_manifest_into_canonical_dataset_from_parameters,
     )
-    return await merge_recovery_manifest_into_canonical_dataset_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await merge_recovery_manifest_into_canonical_dataset_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
-async def collect_packaged_docket_citation_recovery_candidates(parameters: Dict[str, Any]) -> Dict[str, Any]:
+async def collect_packaged_docket_citation_recovery_candidates(
+    parameters: Dict[str, Any],
+) -> Dict[str, Any]:
     """Collect unresolved citation recovery candidates from a packaged docket manifest without executing recovery."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         collect_packaged_docket_citation_recovery_candidates_from_parameters,
     )
-    return await collect_packaged_docket_citation_recovery_candidates_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await collect_packaged_docket_citation_recovery_candidates_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
 async def recover_packaged_docket_missing_authorities(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -360,23 +414,36 @@ async def recover_packaged_docket_missing_authorities(parameters: Dict[str, Any]
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         recover_packaged_docket_missing_authorities_from_parameters,
     )
-    return await recover_packaged_docket_missing_authorities_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await recover_packaged_docket_missing_authorities_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
-async def plan_packaged_docket_missing_authority_follow_up(parameters: Dict[str, Any]) -> Dict[str, Any]:
+async def plan_packaged_docket_missing_authority_follow_up(
+    parameters: Dict[str, Any],
+) -> Dict[str, Any]:
     """Recover unresolved packaged-docket citations and emit downstream follow-up work items."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         plan_packaged_docket_missing_authority_follow_up_from_parameters,
     )
-    return await plan_packaged_docket_missing_authority_follow_up_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await plan_packaged_docket_missing_authority_follow_up_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
-async def execute_packaged_docket_missing_authority_follow_up(parameters: Dict[str, Any]) -> Dict[str, Any]:
+async def execute_packaged_docket_missing_authority_follow_up(
+    parameters: Dict[str, Any],
+) -> Dict[str, Any]:
     """Recover unresolved packaged-docket citations and execute promote/merge follow-up work items."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         execute_packaged_docket_missing_authority_follow_up_from_parameters,
     )
-    return await execute_packaged_docket_missing_authority_follow_up_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await execute_packaged_docket_missing_authority_follow_up_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
 async def search_federal_register_hf_index(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -384,7 +451,10 @@ async def search_federal_register_hf_index(parameters: Dict[str, Any]) -> Dict[s
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_federal_register_hf_index_from_parameters,
     )
-    return await search_federal_register_hf_index_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await search_federal_register_hf_index_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
 async def list_caselaw_access_vector_files(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -392,15 +462,23 @@ async def list_caselaw_access_vector_files(parameters: Dict[str, Any]) -> Dict[s
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         list_caselaw_access_vector_files_from_parameters,
     )
-    return await list_caselaw_access_vector_files_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await list_caselaw_access_vector_files_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
-async def search_caselaw_access_vectors_with_centroids(parameters: Dict[str, Any]) -> Dict[str, Any]:
+async def search_caselaw_access_vectors_with_centroids(
+    parameters: Dict[str, Any],
+) -> Dict[str, Any]:
     """Run centroid-first two-stage retrieval against CAP vectors."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         search_caselaw_access_vectors_with_centroids_from_parameters,
     )
-    return await search_caselaw_access_vectors_with_centroids_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await search_caselaw_access_vectors_with_centroids_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
 async def ingest_caselaw_access_vector_bundle(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -408,7 +486,10 @@ async def ingest_caselaw_access_vector_bundle(parameters: Dict[str, Any]) -> Dic
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
         ingest_caselaw_access_vector_bundle_from_parameters,
     )
-    return await ingest_caselaw_access_vector_bundle_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+    return await ingest_caselaw_access_vector_bundle_from_parameters(
+        parameters, tool_version=_TOOL_VERSION
+    )
 
 
 async def legal_search_brave(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -583,6 +664,7 @@ async def legal_get_archive_stats(parameters: Dict[str, Any]) -> Dict[str, Any]:
 # Import patent tools for backward compatibility
 try:
     from .patent_dataset_mcp_tools import PATENT_DATASET_MCP_TOOLS
+
     _patent_tools_available = True
 except ImportError:
     _patent_tools_available = False
@@ -734,7 +816,10 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "local_case_parquet_file": {"type": "string", "required": False},
             "chunk_lookup_enabled": {"type": "boolean", "default": True},
             "chunk_hf_dataset_id": {"type": "string", "default": DEFAULT_CAP_HF_DATASET_ID},
-            "chunk_hf_parquet_file": {"type": "string", "default": DEFAULT_CAP_CHUNK_HF_PARQUET_FILE},
+            "chunk_hf_parquet_file": {
+                "type": "string",
+                "default": DEFAULT_CAP_CHUNK_HF_PARQUET_FILE,
+            },
             "local_chunk_parquet_file": {"type": "string", "required": False},
             "chunk_snippet_chars": {"type": "integer", "default": 1000},
             "auto_setup_venv": {"type": "boolean", "default": True},
@@ -830,7 +915,10 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
             "hf_dataset_id": {"type": "string", "default": DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID},
-            "hf_parquet_file": {"type": "string", "default": _FEDERAL_REGISTER_CORPUS.combined_parquet_filename},
+            "hf_parquet_file": {
+                "type": "string",
+                "default": _FEDERAL_REGISTER_CORPUS.combined_parquet_filename,
+            },
             "hf_parquet_prefix": {"type": "string", "required": False},
             "cid_metadata_field": {"type": "string", "default": "ipfs_cid"},
             "cid_column": {"type": "string", "default": "ipfs_cid"},
@@ -857,7 +945,10 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
             "hf_dataset_id": {"type": "string", "default": DEFAULT_NETHERLANDS_LAWS_HF_DATASET_ID},
-            "hf_parquet_file": {"type": "string", "default": _NETHERLANDS_CORPUS.combined_parquet_filename},
+            "hf_parquet_file": {
+                "type": "string",
+                "default": _NETHERLANDS_CORPUS.combined_parquet_filename,
+            },
             "hf_parquet_prefix": {"type": "string", "required": False},
             "cid_metadata_field": {"type": "string", "default": "ipfs_cid"},
             "cid_column": {"type": "string", "default": "ipfs_cid"},
@@ -1021,7 +1112,10 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "top_k": {"type": "integer", "default": 10},
             "hf_dataset_id": {"type": "string", "default": DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID},
             "hf_index_file": {"type": "string", "default": "federal_register_gte_small.faiss"},
-            "hf_metadata_file": {"type": "string", "default": "federal_register_gte_small_metadata.parquet"},
+            "hf_metadata_file": {
+                "type": "string",
+                "default": "federal_register_gte_small_metadata.parquet",
+            },
             "model_name": {"type": "string", "default": "thenlper/gte-small"},
             "snippet_chars": {"type": "integer", "default": 320},
             "hf_cache_dir": {"type": "string", "required": False},
@@ -1161,6 +1255,7 @@ def register_cap_legal_dataset_tools(tool_registry: Any) -> None:
             tool_registry.register_tool(fn)
         except Exception:
             continue
+
 
 if _patent_tools_available:
     LEGAL_DATASET_MCP_TOOLS.extend(PATENT_DATASET_MCP_TOOLS)

@@ -18,10 +18,7 @@ def evaluate_granularity(ontology: Dict[str, Any], context: Any) -> float:
 
     # Target: ~3 properties per entity is "good granularity"
     target_props = 3.0
-    prop_counts = [
-        len(e.get("properties", {}))
-        for e in entities if isinstance(e, dict)
-    ]
+    prop_counts = [len(e.get("properties", {})) for e in entities if isinstance(e, dict)]
     avg_props = sum(prop_counts) / max(len(prop_counts), 1)
     prop_score = min(avg_props / target_props, 1.0)
 

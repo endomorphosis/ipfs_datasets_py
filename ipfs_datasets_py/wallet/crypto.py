@@ -70,7 +70,9 @@ def decrypt_bytes(blob: EncryptedBlob, key: bytes, aad: Dict[str, Any]) -> bytes
     if blob.suite != ENCRYPTION_SUITE:
         raise DecryptionError(f"Unsupported encryption suite: {blob.suite}")
     try:
-        return AESGCM(key).decrypt(b64decode(blob.nonce), b64decode(blob.ciphertext), canonical_bytes(aad))
+        return AESGCM(key).decrypt(
+            b64decode(blob.nonce), b64decode(blob.ciphertext), canonical_bytes(aad)
+        )
     except InvalidTag as exc:
         raise DecryptionError("Unable to authenticate encrypted wallet data") from exc
 

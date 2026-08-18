@@ -6,6 +6,7 @@ Test suite for timestamp field validation.
 Tests validation of creation_timestamp (float) and created_at (ISO string) fields
 including format validation, range validation, and consistency checks.
 """
+
 import pytest
 from pydantic import ValidationError
 from typing import Literal
@@ -13,9 +14,12 @@ from datetime import datetime
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunkMetadata
 from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_factory import (
-    LLMChunkMetadataTestDataFactory as DataFactory
+    LLMChunkMetadataTestDataFactory as DataFactory,
 )
-from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_test_utils import all_words_are_present_in_error_msg
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chunk_metadata_test_utils import (
+    all_words_are_present_in_error_msg,
+)
+
 
 class TestLLMChunkMetadataTimestampValidation:
     """Test suite for timestamp field validation."""
@@ -29,17 +33,17 @@ class TestLLMChunkMetadataTimestampValidation:
         # Constants
         FIELD_NAME = "creation_timestamp"
         VALID_VALUE = 1640995200.123
-        
+
         # Given - create matching timestamp and ISO string
         data = DataFactory.create_valid_baseline_data()
         data[FIELD_NAME] = VALID_VALUE
         # Convert to matching ISO string to avoid consistency error
         matching_iso = datetime.fromtimestamp(VALID_VALUE).isoformat()
         data["created_at"] = matching_iso
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         assert metadata.creation_timestamp == VALID_VALUE
 
@@ -52,17 +56,17 @@ class TestLLMChunkMetadataTimestampValidation:
         # Constants
         FIELD_NAME = "creation_timestamp"
         VALID_VALUE = 0.0
-        
+
         # Given - create matching timestamp and ISO string
         data = DataFactory.create_valid_baseline_data()
         data[FIELD_NAME] = VALID_VALUE
         # Convert to matching ISO string to avoid consistency error
         matching_iso = datetime.fromtimestamp(VALID_VALUE).isoformat()
         data["created_at"] = matching_iso
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         assert metadata.creation_timestamp == VALID_VALUE
 
@@ -77,14 +81,14 @@ class TestLLMChunkMetadataTimestampValidation:
         INVALID_VALUE = -123.45
         # Update error words to match actual Pydantic error messages
         ERROR_WORDS = ["creation_timestamp", "greater", "equal"]
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValidationError) as exc_info:
             LLMChunkMetadata(**data)
-        
+
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS) == True
 
     def test_creation_timestamp_invalid_string_representation(self):
@@ -98,16 +102,15 @@ class TestLLMChunkMetadataTimestampValidation:
         INVALID_VALUE = "not-a-number"  # Use a string that cannot be converted to float
         # Update error words to match actual Pydantic error messages
         ERROR_WORDS = ["creation_timestamp", "input", "float"]
-        
+
         # Given
         data = DataFactory.create_data_with_invalid_type(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValidationError) as exc_info:
             LLMChunkMetadata(**data)
-        
-        assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS) == True
 
+        assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS) == True
 
     def test_creation_timestamp_invalid_none_value(self):
         """
@@ -120,14 +123,14 @@ class TestLLMChunkMetadataTimestampValidation:
         INVALID_VALUE = None
         # Update error words to match actual Pydantic error messages
         ERROR_WORDS = ["creation_timestamp", "none", "float"]
-        
+
         # Given
         data = DataFactory.create_data_with_invalid_type(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValidationError) as exc_info:
             LLMChunkMetadata(**data)
-        
+
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS) == True
 
     def test_created_at_valid_basic_iso_format(self):
@@ -139,17 +142,17 @@ class TestLLMChunkMetadataTimestampValidation:
         # Constants
         FIELD_NAME = "created_at"
         VALID_VALUE = "2025-01-15T10:30:45"
-        
+
         # Given - create matching timestamp and ISO string
         data = DataFactory.create_valid_baseline_data()
         data[FIELD_NAME] = VALID_VALUE
         # Convert to matching timestamp to avoid consistency error
         matching_timestamp = datetime.fromisoformat(VALID_VALUE).timestamp()
         data["creation_timestamp"] = matching_timestamp
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         assert metadata.created_at == VALID_VALUE
 
@@ -162,17 +165,17 @@ class TestLLMChunkMetadataTimestampValidation:
         # Constants
         FIELD_NAME = "created_at"
         VALID_VALUE = "2025-01-15T10:30:45.123Z"
-        
+
         # Given - create matching timestamp and ISO string
         data = DataFactory.create_valid_baseline_data()
         data[FIELD_NAME] = VALID_VALUE
         # Convert to matching timestamp to avoid consistency error
-        matching_timestamp = datetime.fromisoformat(VALID_VALUE.replace('Z', '+00:00')).timestamp()
+        matching_timestamp = datetime.fromisoformat(VALID_VALUE.replace("Z", "+00:00")).timestamp()
         data["creation_timestamp"] = matching_timestamp
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         assert metadata.created_at == VALID_VALUE
 
@@ -185,17 +188,17 @@ class TestLLMChunkMetadataTimestampValidation:
         # Constants
         FIELD_NAME = "created_at"
         VALID_VALUE = "2025-01-15T10:30:45+00:00"
-        
+
         # Given - create matching timestamp and ISO string
         data = DataFactory.create_valid_baseline_data()
         data[FIELD_NAME] = VALID_VALUE
         # Convert to matching timestamp to avoid consistency error
         matching_timestamp = datetime.fromisoformat(VALID_VALUE).timestamp()
         data["creation_timestamp"] = matching_timestamp
-        
+
         # When
         metadata = LLMChunkMetadata(**data)
-        
+
         # Then
         assert metadata.created_at == VALID_VALUE
 
@@ -210,16 +213,15 @@ class TestLLMChunkMetadataTimestampValidation:
         INVALID_VALUE = "2025-13-01T10:30:45"
         # Update error words to match actual Pydantic error messages
         ERROR_WORDS = ["created_at", "iso", "8601", "format"]
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValidationError) as exc_info:
             LLMChunkMetadata(**data)
 
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS) == True
-
 
     def test_created_at_invalid_non_timestamp_string(self):
         """
@@ -232,14 +234,14 @@ class TestLLMChunkMetadataTimestampValidation:
         INVALID_VALUE = "not-a-timestamp"
         # Update error words to match actual Pydantic error messages
         ERROR_WORDS = ["created_at", "iso", "8601", "format"]
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValidationError) as exc_info:
             LLMChunkMetadata(**data)
-        
+
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS) == True
 
     def test_created_at_invalid_empty_string(self):
@@ -253,7 +255,7 @@ class TestLLMChunkMetadataTimestampValidation:
         INVALID_VALUE = ""
         # Update error words to match actual Pydantic error messages
         ERROR_WORDS = ["created_at", "string", "least", "character"]
-        
+
         # Given
         data = DataFactory.make_boundary_value_data(FIELD_NAME, INVALID_VALUE)
 
@@ -262,7 +264,6 @@ class TestLLMChunkMetadataTimestampValidation:
             LLMChunkMetadata(**data)
 
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS) == True
-
 
     def test_created_at_invalid_none_value(self):
         """
@@ -275,12 +276,12 @@ class TestLLMChunkMetadataTimestampValidation:
         INVALID_VALUE = None
         # Update error words to match actual Pydantic error messages
         ERROR_WORDS = ["created_at", "none", "string"]
-        
+
         # Given
         data = DataFactory.create_data_with_invalid_type(FIELD_NAME, INVALID_VALUE)
-        
+
         # When/Then
         with pytest.raises(ValidationError) as exc_info:
             LLMChunkMetadata(**data)
-        
+
         assert all_words_are_present_in_error_msg(exc_info, ERROR_WORDS) == True

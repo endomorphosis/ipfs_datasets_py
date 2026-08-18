@@ -11,14 +11,14 @@ unified interface.
 from __future__ import annotations
 
 __all__ = [
-    'PDFProcessorAdapter',
-    'GraphRAGProcessorAdapter',
-    'MultimediaProcessorAdapter',
-    'FileConverterProcessorAdapter',
-    'BatchProcessorAdapter',
-    'IPFSProcessorAdapter',
-    'WebArchiveProcessorAdapter',
-    'SpecializedScraperAdapter',
+    "PDFProcessorAdapter",
+    "GraphRAGProcessorAdapter",
+    "MultimediaProcessorAdapter",
+    "FileConverterProcessorAdapter",
+    "BatchProcessorAdapter",
+    "IPFSProcessorAdapter",
+    "WebArchiveProcessorAdapter",
+    "SpecializedScraperAdapter",
 ]
 
 # Optional imports with graceful fallback

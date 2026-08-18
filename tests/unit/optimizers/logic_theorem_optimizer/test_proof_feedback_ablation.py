@@ -165,18 +165,29 @@ def test_ablation_runs_all_matched_arms_and_gates_trainer_writes() -> None:
     assert all(result.training_sample_ids == (train.sample_id,) for result in report.arm_results)
     assert all(result.heldout_sample_ids == (holdout.sample_id,) for result in report.arm_results)
     assert train.sample_id not in report.heldout_sample_ids
-    assert report.per_family_deltas[VERIFIED_LEANSTRAL_HAMMER_ARM]["deontic"][
-        "learned_ir"
-    ]["score_delta"] > 0.0
-    assert set(
-        report.per_family_deltas[VERIFIED_LEANSTRAL_HAMMER_ARM]["deontic"]
-    ) == {"anti_copy", "compiler_ir", "learned_ir", "proof", "reconstruction"}
-    assert report.repeat_control_margins[0][
-        f"{VERIFIED_LEANSTRAL_HAMMER_ARM}_vs_{HAMMER_ONLY_ARM}"
-    ] > 0.02
-    assert report.repeat_control_margins[0][
-        f"{VERIFIED_LEANSTRAL_HAMMER_ARM}_vs_{SHUFFLED_LABEL_CONTROL_ARM}"
-    ] > 0.02
+    assert (
+        report.per_family_deltas[VERIFIED_LEANSTRAL_HAMMER_ARM]["deontic"]["learned_ir"][
+            "score_delta"
+        ]
+        > 0.0
+    )
+    assert set(report.per_family_deltas[VERIFIED_LEANSTRAL_HAMMER_ARM]["deontic"]) == {
+        "anti_copy",
+        "compiler_ir",
+        "learned_ir",
+        "proof",
+        "reconstruction",
+    }
+    assert (
+        report.repeat_control_margins[0][f"{VERIFIED_LEANSTRAL_HAMMER_ARM}_vs_{HAMMER_ONLY_ARM}"]
+        > 0.02
+    )
+    assert (
+        report.repeat_control_margins[0][
+            f"{VERIFIED_LEANSTRAL_HAMMER_ARM}_vs_{SHUFFLED_LABEL_CONTROL_ARM}"
+        ]
+        > 0.02
+    )
 
     trainer = TrustedFeedbackTrainer(
         AdaptiveModalAutoencoder(),
@@ -207,9 +218,7 @@ def test_ablation_blocks_when_correct_labels_do_not_beat_shuffled_control() -> N
         metrics = dict(_evaluator(autoencoder, holdout_samples, arm, repeat_index))
         if arm == SHUFFLED_LABEL_CONTROL_ARM:
             metrics["legal_ir_view_cross_entropy_loss"] = 0.54 + repeat_index * 0.01
-            metrics["autoencoder_cross_entropy_loss"] = metrics[
-                "legal_ir_view_cross_entropy_loss"
-            ]
+            metrics["autoencoder_cross_entropy_loss"] = metrics["legal_ir_view_cross_entropy_loss"]
         return metrics
 
     report = run_proof_feedback_ablation(

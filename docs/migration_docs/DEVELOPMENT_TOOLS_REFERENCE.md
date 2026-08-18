@@ -22,7 +22,7 @@ test_gen = TestGeneratorTool()
 spec = {
     "test_file": "test_example.py",
     "class_name": "TestExample",
-    "functions": ["test_basic_functionality", "test_edge_cases"]
+    "functions": ["test_basic_functionality", "test_edge_cases"],
 }
 result = test_gen.execute("generate_test", spec)
 ```
@@ -36,11 +36,7 @@ result = test_gen.execute("generate_test", spec)
 from documentation_generator import DocumentationGeneratorTool
 
 doc_gen = DocumentationGeneratorTool()
-config = {
-    "source_file": "my_module.py",
-    "output_format": "markdown",
-    "include_private": False
-}
+config = {"source_file": "my_module.py", "output_format": "markdown", "include_private": False}
 result = doc_gen.execute("generate_docs", config)
 ```
 
@@ -53,11 +49,7 @@ result = doc_gen.execute("generate_docs", config)
 from codebase_search import CodebaseSearchEngine
 
 search = CodebaseSearchEngine()
-query = {
-    "pattern": "def.*test.*",
-    "file_types": [".py"],
-    "include_context": True
-}
+query = {"pattern": "def.*test.*", "file_types": [".py"], "include_context": True}
 result = search.execute("search_code", query)
 ```
 
@@ -70,11 +62,7 @@ result = search.execute("search_code", query)
 from linting_tools import LintingTools
 
 linter = LintingTools()
-config = {
-    "target_path": "./src",
-    "auto_fix": True,
-    "tools": ["flake8", "black"]
-}
+config = {"target_path": "./src", "auto_fix": True, "tools": ["flake8", "black"]}
 result = linter.execute("lint_code", config)
 ```
 
@@ -87,11 +75,7 @@ result = linter.execute("lint_code", config)
 from test_runner import TestRunner
 
 runner = TestRunner()
-config = {
-    "test_path": "./tests",
-    "framework": "unittest",
-    "verbose": True
-}
+config = {"test_path": "./tests", "framework": "unittest", "verbose": True}
 result = runner.execute("run_tests", config)
 ```
 
@@ -101,7 +85,8 @@ For optimal performance, use direct imports:
 
 ```python
 import sys
-sys.path.insert(0, './ipfs_datasets_py/mcp_server/tools/development_tools/')
+
+sys.path.insert(0, "./ipfs_datasets_py/mcp_server/tools/development_tools/")
 
 # Now import any tool
 from test_generator import TestGeneratorTool
@@ -145,6 +130,7 @@ Start the server:
 Or programmatically:
 ```python
 from ipfs_datasets_py.mcp_server import MCPServer
+
 server = MCPServer()
 server.run(host="localhost", port=8080)
 ```

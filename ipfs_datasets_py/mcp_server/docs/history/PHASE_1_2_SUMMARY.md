@@ -101,17 +101,15 @@ Phases 1 and 2A of the MCP server refactoring are now complete. The repository i
 from ipfs_datasets_py.mcp_server.tool_wrapper import wrap_function_as_tool
 from ipfs_datasets_py.core_module import CoreService
 
+
 @wrap_function_as_tool(
-    name="tool_name",
-    description="What it does",
-    category="category",
-    tags=["tags"]
+    name="tool_name", description="What it does", category="category", tags=["tags"]
 )
 async def tool_name(param: str) -> dict:
     """Docstring."""
     if not param:
         return {"status": "error", "message": "required"}
-    
+
     service = CoreService()
     result = await service.work(param)
     return {"status": "success", "result": result}

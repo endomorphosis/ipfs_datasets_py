@@ -4,11 +4,13 @@ Test stubs for monitoring_example module.
 Feature: Monitoring Example
   Example implementation of monitoring features
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def alert_example():
@@ -83,6 +85,7 @@ def performance_tracking_example():
 
 
 # Test scenarios
+
 
 def test_run_basic_monitoring_example():
     """
@@ -173,6 +176,7 @@ def test_demonstrate_monitoring_integration():
 
 
 # Step definitions
+
 
 # Given steps
 @given("alert example")
@@ -322,4 +326,3 @@ def performance_is_tracked_and_displayed():
     """Step: Then performance is tracked and displayed"""
     # TODO: Implement step
     pass
-

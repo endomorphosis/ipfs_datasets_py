@@ -48,12 +48,8 @@ from ipfs_datasets_py.logic.security_ir.xaman.config import (
 )
 
 
-FIXTURES = (
-    Path(__file__).resolve().parents[3] / "fixtures" / "security_ir" / "constraint_cache"
-)
-V1_FIXTURES = (
-    Path(__file__).resolve().parents[3] / "fixtures" / "security_ir" / "v1"
-)
+FIXTURES = Path(__file__).resolve().parents[3] / "fixtures" / "security_ir" / "constraint_cache"
+V1_FIXTURES = Path(__file__).resolve().parents[3] / "fixtures" / "security_ir" / "v1"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -85,9 +81,7 @@ def _xaman_declaration() -> SecurityIR:
 
 
 def _unknown_declaration() -> SecurityIR:
-    return SecurityIR.from_dict(
-        _load_json(FIXTURES / "unknown_extension_declaration.json")
-    )
+    return SecurityIR.from_dict(_load_json(FIXTURES / "unknown_extension_declaration.json"))
 
 
 def _policy_decision_for(declaration: SecurityIR) -> PolicyDecision:
@@ -109,9 +103,7 @@ def _policy_decision_for(declaration: SecurityIR) -> PolicyDecision:
         ),
         declaration_id=declaration.declaration_id,
         obligation_id="obligation:constraint-cache-policy",
-        obligation_digest=stable_digest(
-            {"obligation_id": "obligation:constraint-cache-policy"}
-        ),
+        obligation_digest=stable_digest({"obligation_id": "obligation:constraint-cache-policy"}),
         assumption_ids=(),
         logic_family="security_policy",
         bounds=bounds,
@@ -152,9 +144,7 @@ def _policy_decision_for(declaration: SecurityIR) -> PolicyDecision:
 def test_interface_constants_are_stable() -> None:
     assert SECURITY_CONSTRAINT_CACHE_INTERFACE == "SecurityConstraintCache@1"
     assert SECURITY_CONSTRAINT_CACHE_SCHEMA_VERSION == "security-constraint-cache/v1"
-    assert (
-        SECURITY_CONSTRAINT_RECORD_SCHEMA_VERSION == "security-constraint-record/v1"
-    )
+    assert SECURITY_CONSTRAINT_RECORD_SCHEMA_VERSION == "security-constraint-record/v1"
     assert EXCHANGE_VOCABULARY in KNOWN_SECURITY_EXTENSION_VOCABULARIES
     assert XAMAN_VOCABULARY in KNOWN_SECURITY_EXTENSION_VOCABULARIES
 
@@ -165,9 +155,7 @@ def test_fixture_manifest_describes_exchange_and_xaman_samples() -> None:
     assert set(manifest["samples"]) == {"exchange", "xaman"}
     for name in ("exchange", "xaman"):
         sample = manifest["samples"][name]
-        record = SecurityConstraintRecord.from_dict(
-            _load_json(FIXTURES / sample["record_path"])
-        )
+        record = SecurityConstraintRecord.from_dict(_load_json(FIXTURES / sample["record_path"]))
         assert record.profile == sample["profile"]
         assert record.declaration_id == sample["declaration_id"]
         assert record.declaration_digest == sample["declaration_digest"]
@@ -205,9 +193,7 @@ def test_exchange_and_xaman_constraints_cache_and_reload(
     assert record.profile == profile
     assert record.content_cid == sample["content_cid"]
     assert record.content_digest == sample["content_digest"]
-    assert set(record.extension_vocabularies) <= set(
-        KNOWN_SECURITY_EXTENSION_VOCABULARIES
-    )
+    assert set(record.extension_vocabularies) <= set(KNOWN_SECURITY_EXTENSION_VOCABULARIES)
 
     loaded = cache.get(record.content_cid)
     assert loaded.content_cid == record.content_cid
@@ -253,9 +239,7 @@ def test_fixture_records_round_trip_through_disk_cache(tmp_path: Path) -> None:
     cache = SecurityConstraintCache(root=tmp_path / "fixture-cache")
     for name in ("exchange", "xaman"):
         sample = _manifest()["samples"][name]
-        record = SecurityConstraintRecord.from_dict(
-            _load_json(FIXTURES / sample["record_path"])
-        )
+        record = SecurityConstraintRecord.from_dict(_load_json(FIXTURES / sample["record_path"]))
         stored = cache.put(record)
         assert stored.content_cid == sample["content_cid"]
 
@@ -376,9 +360,7 @@ def test_registering_extra_vocabulary_allows_put(tmp_path: Path) -> None:
 
 
 def test_put_finished_record_rejects_conflicting_profile(tmp_path: Path) -> None:
-    record = SecurityConstraintRecord.from_dict(
-        _load_json(FIXTURES / "exchange_record.json")
-    )
+    record = SecurityConstraintRecord.from_dict(_load_json(FIXTURES / "exchange_record.json"))
     cache = SecurityConstraintCache(root=tmp_path / "conflict")
     with pytest.raises(SecurityConstraintCacheError, match="profile argument"):
         cache.put(record, profile="other-profile")

@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import prometheus_client as prom  # type: ignore[import]
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     prom = None  # type: ignore[assignment]
@@ -303,12 +304,8 @@ class PrometheusExporter:
             status:          ``"success"`` or ``"error"``.
             latency_seconds: Wall-clock duration of the call.
         """
-        self.tool_calls_total.labels(
-            category=category, tool=tool, status=status
-        ).inc()
-        self.tool_latency_seconds.labels(category=category, tool=tool).observe(
-            latency_seconds
-        )
+        self.tool_calls_total.labels(category=category, tool=tool, status=status).inc()
+        self.tool_latency_seconds.labels(category=category, tool=tool).observe(latency_seconds)
 
     # ------------------------------------------------------------------
     # Introspection

@@ -212,15 +212,15 @@ tests/unit_tests/logic/TDFOL/test_visualization.py  (10 tests, 197 LOC)
 def test_modus_ponens_basic_application(self):
     """Test modus ponens: P, P → Q ⊢ Q"""
     # GIVEN predicates P and Q, and formulas P and P → Q
-    p = Predicate('P', [])
-    q = Predicate('Q', [])
+    p = Predicate("P", [])
+    q = Predicate("Q", [])
     p_implies_q = BinaryFormula(LogicOperator.IMPLIES, p, q)
     rule = ModusPonensRule()
-    
+
     # WHEN applying modus ponens
     can_apply = rule.can_apply(p, p_implies_q)
     result = rule.apply(p, p_implies_q) if can_apply else None
-    
+
     # THEN it should return Q
     assert can_apply is True
     assert result == q
@@ -231,15 +231,15 @@ def test_modus_ponens_basic_application(self):
 def test_modus_ponens_chain(self):
     """Test chaining multiple modus ponens applications"""
     # GIVEN P, P→Q, Q→R
-    p, q, r = Predicate('P', []), Predicate('Q', []), Predicate('R', [])
+    p, q, r = Predicate("P", []), Predicate("Q", []), Predicate("R", [])
     p_implies_q = create_implication(p, q)
     q_implies_r = create_implication(q, r)
     rule = ModusPonensRule()
-    
+
     # WHEN applying modus ponens twice
     result1 = rule.apply(p, p_implies_q)  # Get Q
     result2 = rule.apply(result1, q_implies_r)  # Get R from Q
-    
+
     # THEN we should derive R
     assert result2 == r
 ```
@@ -249,14 +249,14 @@ def test_modus_ponens_chain(self):
 def test_formula_creation_speed(self):
     """Test that formula creation is reasonably fast"""
     # GIVEN predicates
-    p, q = Predicate('P', []), Predicate('Q', [])
-    
+    p, q = Predicate("P", []), Predicate("Q", [])
+
     # WHEN creating 1000 implications
     start = time.time()
     for _ in range(1000):
         create_implication(p, q)
     elapsed = time.time() - start
-    
+
     # THEN it should complete quickly
     assert elapsed < 1.0  # <1ms per formula
 ```

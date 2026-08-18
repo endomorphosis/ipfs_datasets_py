@@ -11,7 +11,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Union
 
-from ipfs_datasets_py.mcp_server.tools.embedding_tools.embedding_tools import shard_embeddings as _simple_shard_embeddings
+from ipfs_datasets_py.mcp_server.tools.embedding_tools.embedding_tools import (
+    shard_embeddings as _simple_shard_embeddings,
+)
 from ipfs_datasets_py.mcp_server.tools.embedding_tools.shard_embeddings import (
     merge_embedding_shards as _merge_embedding_shards,
     shard_embeddings_by_cluster as _shard_embeddings_by_cluster,
@@ -41,7 +43,9 @@ async def shard_embeddings_from_parameters(
 
     if embeddings_data is not None or output_directory is not None:
         if embeddings_data is None or output_directory is None:
-            raise ValueError("embeddings_data and output_directory are required for file-backed sharding")
+            raise ValueError(
+                "embeddings_data and output_directory are required for file-backed sharding"
+            )
 
         if strategy in ("dimension", "by_dimension"):
             return await _shard_embeddings_by_dimension(
@@ -66,7 +70,9 @@ async def shard_embeddings_from_parameters(
     if embeddings is None:
         raise ValueError("embeddings is required for in-memory sharding")
 
-    return await _simple_shard_embeddings(embeddings=embeddings, shard_count=shard_count, strategy=strategy)
+    return await _simple_shard_embeddings(
+        embeddings=embeddings, shard_count=shard_count, strategy=strategy
+    )
 
 
 async def merge_shards_from_parameters(
@@ -108,7 +114,11 @@ async def shard_info_from_parameters(
     shards = shards or []
     counts = []
     for shard in shards:
-        if isinstance(shard, dict) and "embeddings" in shard and isinstance(shard["embeddings"], list):
+        if (
+            isinstance(shard, dict)
+            and "embeddings" in shard
+            and isinstance(shard["embeddings"], list)
+        ):
             counts.append(len(shard["embeddings"]))
         elif isinstance(shard, list):
             counts.append(len(shard))

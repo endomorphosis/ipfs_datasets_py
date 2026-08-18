@@ -28,7 +28,7 @@ result = await generate_embeddings(
     texts=["hello world", "IPFS is decentralized storage"],
     model="sentence-transformers/all-MiniLM-L6-v2",  # or "text-embedding-ada-002"
     batch_size=32,
-    normalize=True
+    normalize=True,
 )
 # Returns: {"status": "success", "embeddings": [[0.1, 0.2, ...], ...], "model": "...", "dim": 384}
 ```
@@ -40,9 +40,9 @@ from ipfs_datasets_py.mcp_server.tools.embedding_tools import semantic_search
 
 result = await semantic_search(
     query="decentralized AI training",
-    index_name="my_embeddings",     # Name of an existing vector index
+    index_name="my_embeddings",  # Name of an existing vector index
     top_k=10,
-    threshold=0.75                  # Minimum similarity score
+    threshold=0.75,  # Minimum similarity score
 )
 # Returns: {"status": "success", "results": [{"text": "...", "score": 0.92, "id": "..."}]}
 ```
@@ -54,9 +54,9 @@ from ipfs_datasets_py.mcp_server.tools.embedding_tools import shard_embeddings
 
 result = await shard_embeddings(
     embedding_source="my_embeddings",
-    shard_size=10000,              # Embeddings per shard
+    shard_size=10000,  # Embeddings per shard
     output_format="parquet",
-    pin_to_ipfs=True
+    pin_to_ipfs=True,
 )
 # Returns: {"status": "success", "shards": [{"cid": "Qm...", "count": 10000}], ...}
 ```

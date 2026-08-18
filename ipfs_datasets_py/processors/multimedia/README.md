@@ -154,18 +154,11 @@ ffmpeg = FFmpegWrapper()
 
 # Convert video format
 await ffmpeg.convert_video(
-    input_path="input.mp4",
-    output_path="output.webm",
-    quality="high",
-    codec="vp9"
+    input_path="input.mp4", output_path="output.webm", quality="high", codec="vp9"
 )
 
 # Extract frames for analysis
-frames = await ffmpeg.extract_frames(
-    video_path="video.mp4",
-    fps=1.0,
-    output_format="jpg"
-)
+frames = await ffmpeg.extract_frames(video_path="video.mp4", fps=1.0, output_format="jpg")
 ```
 
 ### Content Downloading
@@ -176,15 +169,12 @@ downloader = YtDlpWrapper()
 
 # Download single video
 result = await downloader.download_video(
-    url="https://youtube.com/watch?v=example",
-    quality="720p",
-    output_dir="downloads/"
+    url="https://youtube.com/watch?v=example", quality="720p", output_dir="downloads/"
 )
 
 # Process playlist
 playlist_results = await downloader.download_playlist(
-    url="https://youtube.com/playlist?list=example",
-    max_videos=10
+    url="https://youtube.com/playlist?list=example", max_videos=10
 )
 ```
 
@@ -192,10 +182,7 @@ playlist_results = await downloader.download_playlist(
 ```python
 from ipfs_datasets_py.data_transformation.multimedia import MediaProcessor
 
-processor = MediaProcessor(
-    max_workers=4,
-    temp_dir="/tmp/media_processing"
-)
+processor = MediaProcessor(max_workers=4, temp_dir="/tmp/media_processing")
 
 # Process multiple files
 results = await processor.process_batch(
@@ -203,8 +190,8 @@ results = await processor.process_batch(
     operations=[
         {"type": "convert", "format": "mp4", "quality": "720p"},
         {"type": "extract_audio", "format": "mp3"},
-        {"type": "generate_thumbnail"}
-    ]
+        {"type": "generate_thumbnail"},
+    ],
 )
 ```
 
@@ -216,9 +203,7 @@ utils = MediaUtils()
 
 # Analyze media properties
 info = utils.analyze_media(
-    file_path="video.mp4",
-    include_technical=True,
-    include_quality_metrics=True
+    file_path="video.mp4", include_technical=True, include_quality_metrics=True
 )
 
 print(f"Duration: {info.duration}")
@@ -231,37 +216,37 @@ print(f"Quality score: {info.quality_score}")
 from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 import asyncio
 
+
 async def export_discord_data():
     # Initialize wrapper with Discord token
     wrapper = DiscordWrapper(
-        token="YOUR_DISCORD_TOKEN",
-        default_format="Json",
-        default_output_dir="/exports/discord"
+        token="YOUR_DISCORD_TOKEN", default_format="Json", default_output_dir="/exports/discord"
     )
-    
+
     # List all accessible servers
     guilds = await wrapper.list_guilds()
     print(f"Found {guilds['count']} servers")
-    
+
     # Export a specific channel
     result = await wrapper.export_channel(
         channel_id="123456789",
         format="Json",
         download_media=True,  # Download attachments
-        after="2024-01-01",   # Messages after this date
-        filter_text="from:username has:image"  # Optional filtering
+        after="2024-01-01",  # Messages after this date
+        filter_text="from:username has:image",  # Optional filtering
     )
-    
+
     print(f"Exported to: {result['output_path']}")
-    
+
     # Export entire server
     server_result = await wrapper.export_guild(
         guild_id="987654321",
         include_threads="all",  # Include all threads
-        include_vc=True         # Include voice channels
+        include_vc=True,  # Include voice channels
     )
-    
+
     print(f"Exported {server_result['channels_exported']} channels")
+
 
 asyncio.run(export_discord_data())
 ```
@@ -270,40 +255,37 @@ asyncio.run(export_discord_data())
 ```python
 from ipfs_datasets_py.data_transformation.multimedia.convert_to_txt_based_on_mime_type import (
     FileUnit,
-    file_converter
+    file_converter,
 )
 from ipfs_kit_py.ipld_knowledge_graph import GraphRAG
 import asyncio
 
+
 async def convert_files_for_graphrag():
     # Initialize GraphRAG system
     graph = GraphRAG()
-    
+
     # Convert a single file
     file_unit = FileUnit(file_path="document.pdf")
     converted = await file_converter(file_unit)
     text_content = converted.data
-    
+
     # Process with GraphRAG
     embeddings = await graph.process_document(text_content)
     print(f"Generated {len(embeddings)} embeddings")
-    
+
     # Batch convert multiple files
-    file_paths = [
-        "report.docx",
-        "presentation.pptx",
-        "data.xlsx",
-        "article.html"
-    ]
-    
+    file_paths = ["report.docx", "presentation.pptx", "data.xlsx", "article.html"]
+
     for file_path in file_paths:
         file_unit = FileUnit(file_path=file_path)
         converted = await file_converter(file_unit)
         await graph.add_document(converted.data, metadata={"source": file_path})
-    
+
     # Query the knowledge graph
     results = await graph.query("What are the main findings?")
     print(f"Found {len(results)} relevant passages")
+
 
 asyncio.run(convert_files_for_graphrag())
 ```
@@ -312,31 +294,33 @@ asyncio.run(convert_files_for_graphrag())
 ```python
 from ipfs_datasets_py.mcp_server.tools.discord_tools import (
     discord_analyze_channel,
-    discord_analyze_export
+    discord_analyze_export,
 )
 import asyncio
+
 
 async def analyze_discord():
     # Analyze a channel (exports automatically)
     analysis = await discord_analyze_channel(
         channel_id="123456789",
         token="YOUR_TOKEN",
-        analysis_types=['message_stats', 'user_activity', 'content_patterns']
+        analysis_types=["message_stats", "user_activity", "content_patterns"],
     )
-    
+
     # Print analysis results
-    if analysis['status'] == 'success':
-        stats = analysis['analyses']['message_stats']
+    if analysis["status"] == "success":
+        stats = analysis["analyses"]["message_stats"]
         print(f"Total messages: {stats['total_messages']}")
-        
-        activity = analysis['analyses']['user_activity']
+
+        activity = analysis["analyses"]["user_activity"]
         print(f"Active users: {activity['total_users']}")
         print(f"Top user: {activity['most_active_user']}")
-    
+
     # Analyze a previously exported file
     file_analysis = await discord_analyze_export(
         export_path="/exports/discord/channel_123456789.json"
     )
+
 
 asyncio.run(analyze_discord())
 ```
@@ -352,8 +336,8 @@ ffmpeg_config = {
     "quality_presets": {
         "high": {"crf": 18, "preset": "slow"},
         "medium": {"crf": 23, "preset": "medium"},
-        "low": {"crf": 28, "preset": "fast"}
-    }
+        "low": {"crf": 28, "preset": "fast"},
+    },
 }
 ```
 
@@ -365,7 +349,7 @@ ytdlp_config = {
     "extract_info": True,
     "write_subtitles": True,
     "write_description": True,
-    "max_downloads": 100
+    "max_downloads": 100,
 }
 ```
 
@@ -376,7 +360,7 @@ processor_config = {
     "chunk_size": 10,
     "timeout_per_file": 600,
     "retry_attempts": 3,
-    "quality_threshold": 0.8
+    "quality_threshold": 0.8,
 }
 ```
 

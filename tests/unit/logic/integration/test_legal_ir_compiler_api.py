@@ -39,7 +39,10 @@ def test_compile_validate_decompile_and_explain_emit_stable_json_surfaces() -> N
     assert payload["successful"] is True
     assert payload["payload"]["compiled"]["learned_guidance"]["active"] is False
     assert payload["payload"]["compiled"]["learned_guidance"]["production_default"] is True
-    assert payload["payload"]["compiled"]["proof_obligations"][0]["statement"] == SOURCE["raw_document"]
+    assert (
+        payload["payload"]["compiled"]["proof_obligations"][0]["statement"]
+        == SOURCE["raw_document"]
+    )
     assert payload["source_map"]["source_map_id"]
 
     validate_result = validate_legal_ir(payload)

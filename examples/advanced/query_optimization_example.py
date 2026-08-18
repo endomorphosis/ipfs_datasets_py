@@ -21,10 +21,14 @@ sys.path.append(parent_dir)
 
 # Import the query optimizer
 from ipfs_datasets_py.search.query_optimizer import (
-    create_query_optimizer, QueryOptimizer, VectorIndexOptimizer,
-    KnowledgeGraphQueryOptimizer, HybridQueryOptimizer
+    create_query_optimizer,
+    QueryOptimizer,
+    VectorIndexOptimizer,
+    KnowledgeGraphQueryOptimizer,
+    HybridQueryOptimizer,
 )
 from ipfs_datasets_py.embeddings.ipfs_knn_index import IPFSKnnIndex
+
 
 # For demo purposes, let's create a simple mock knowledge graph class
 class SimpleKnowledgeGraph:
@@ -37,7 +41,9 @@ class SimpleKnowledgeGraph:
         entity_types = ["person", "organization", "location", "concept", "document"]
         relationship_types = ["knows", "works_for", "located_in", "related_to", "mentions"]
 
-        print(f"Creating mock knowledge graph with {num_entities} entities and {num_relationships} relationships...")
+        print(
+            f"Creating mock knowledge graph with {num_entities} entities and {num_relationships} relationships..."
+        )
 
         # Create entities
         for i in range(num_entities):
@@ -47,7 +53,7 @@ class SimpleKnowledgeGraph:
                 "id": entity_id,
                 "type": entity_type,
                 "name": f"{entity_type.capitalize()} {i}",
-                "created_at": time.time() - random.randint(0, 1000000)
+                "created_at": time.time() - random.randint(0, 1000000),
             }
 
         # Create relationships
@@ -57,12 +63,9 @@ class SimpleKnowledgeGraph:
             target_id = random.choice(entity_ids)
             if source_id != target_id:
                 rel_type = random.choice(relationship_types)
-                self.relationships.append({
-                    "id": f"rel_{i}",
-                    "type": rel_type,
-                    "source": source_id,
-                    "target": target_id
-                })
+                self.relationships.append(
+                    {"id": f"rel_{i}", "type": rel_type, "source": source_id, "target": target_id}
+                )
 
     def query(self, params):
         """Execute a graph query with the given parameters."""
@@ -101,17 +104,10 @@ class SimpleKnowledgeGraph:
             results = []
             for start_entity in start_entities[:limit]:
                 # Find connected entities up to max_depth
-                connected = self._find_connected(
-                    start_entity["id"],
-                    relationship_types,
-                    max_depth
-                )
+                connected = self._find_connected(start_entity["id"], relationship_types, max_depth)
 
                 if connected:
-                    results.append({
-                        "start_entity": start_entity,
-                        "connected_entities": connected
-                    })
+                    results.append({"start_entity": start_entity, "connected_entities": connected})
 
                 if len(results) >= limit:
                     break
@@ -138,26 +134,22 @@ class SimpleKnowledgeGraph:
             return []
 
         # Find relationships from this entity
-        outgoing = [r for r in self.relationships
-                  if r["source"] == entity_id
-                  and (not relationship_types or r["type"] in relationship_types)]
+        outgoing = [
+            r
+            for r in self.relationships
+            if r["source"] == entity_id
+            and (not relationship_types or r["type"] in relationship_types)
+        ]
 
         connected = []
         for rel in outgoing:
             target_id = rel["target"]
             if target_id in self.entities:
-                connected.append({
-                    "relationship": rel,
-                    "entity": self.entities[target_id]
-                })
+                connected.append({"relationship": rel, "entity": self.entities[target_id]})
 
                 # Recurse for next level if needed
                 if max_depth > 1:
-                    next_level = self._find_connected(
-                        target_id,
-                        relationship_types,
-                        max_depth - 1
-                    )
+                    next_level = self._find_connected(target_id, relationship_types, max_depth - 1)
                     for item in next_level:
                         if item not in connected:
                             connected.append(item)
@@ -176,7 +168,7 @@ def run_example():
         collect_statistics=True,
         optimize_vectors=True,
         optimize_graphs=True,
-        optimize_hybrid=True
+        optimize_hybrid=True,
     )
 
     base_optimizer = optimizers["base"]
@@ -190,21 +182,18 @@ def run_example():
         name="vector_index_768",
         index_type="vector",
         fields=["vector"],
-        metadata={"dimension": 768, "metric": "cosine"}
+        metadata={"dimension": 768, "metric": "cosine"},
     )
 
     base_optimizer.index_registry.register_index(
-        name="entity_type_index",
-        index_type="btree",
-        fields=["type"],
-        metadata={"cardinality": 5}
+        name="entity_type_index", index_type="btree", fields=["type"], metadata={"cardinality": 5}
     )
 
     base_optimizer.index_registry.register_index(
         name="relationship_index",
         index_type="graph",
         fields=["source", "target", "type"],
-        metadata={"bidirectional": True}
+        metadata={"bidirectional": True},
     )
 
     # Create our data sources
@@ -234,30 +223,24 @@ def run_example():
     vector_results = vector_index.search(query_vector, top_k=10)
     basic_time = time.time() - start_time
 
-    print(f"Found {len(vector_results)} results in {basic_time*1000:.2f} ms")
+    print(f"Found {len(vector_results)} results in {basic_time * 1000:.2f} ms")
 
     # 2. Optimized vector search
     print("\n2. Optimized vector search:")
-    query_params = {
-        "query_vector": query_vector,
-        "top_k": 10,
-        "dimension": 768
-    }
+    query_params = {"query_vector": query_vector, "top_k": 10, "dimension": 768}
 
     # First, get an optimized plan
     vector_plan = vector_optimizer.optimize_vector_search(query_params)
     print("Vector search optimization plan:")
-    print(json.dumps(vector_plan, indent=2, default=str)[:500] + "...") # Truncated for readability
+    print(json.dumps(vector_plan, indent=2, default=str)[:500] + "...")  # Truncated for readability
 
     # Execute the optimized query
     optimized_search_func = lambda params: vector_index.search(
-        params["query_vector"],
-        top_k=params.get("top_k", 10)
+        params["query_vector"], top_k=params.get("top_k", 10)
     )
 
     vector_result, vector_metrics = vector_optimizer.execute_vector_search(
-        query_params=query_params,
-        search_func=optimized_search_func
+        query_params=query_params, search_func=optimized_search_func
     )
 
     print(f"Found {len(vector_result)} results in {vector_metrics.duration_ms:.2f} ms")
@@ -271,12 +254,12 @@ def run_example():
         "start_entity_type": "person",
         "relationship_types": ["knows", "works_for"],
         "max_depth": 2,
-        "limit": 5
+        "limit": 5,
     }
     basic_graph_result = knowledge_graph.query(basic_graph_params)
     basic_graph_time = time.time() - start_time
 
-    print(f"Found {len(basic_graph_result)} paths in {basic_graph_time*1000:.2f} ms")
+    print(f"Found {len(basic_graph_result)} paths in {basic_graph_time * 1000:.2f} ms")
 
     # 4. Optimized graph query
     print("\n4. Optimized graph query:")
@@ -285,18 +268,17 @@ def run_example():
         "start_entity_type": "person",
         "relationship_types": ["knows", "works_for"],
         "max_depth": 2,
-        "limit": 5
+        "limit": 5,
     }
 
     # Get an optimized plan
     graph_plan = graph_optimizer.optimize_graph_query(graph_params)
     print("Graph query optimization plan:")
-    print(json.dumps(graph_plan, indent=2, default=str)[:500] + "...") # Truncated for readability
+    print(json.dumps(graph_plan, indent=2, default=str)[:500] + "...")  # Truncated for readability
 
     # Execute the optimized query
     graph_result, graph_metrics = graph_optimizer.execute_graph_query(
-        query_params=graph_params,
-        query_func=knowledge_graph.query
+        query_params=graph_params, query_func=knowledge_graph.query
     )
 
     print(f"Found {len(graph_result)} paths in {graph_metrics.duration_ms:.2f} ms")
@@ -304,26 +286,22 @@ def run_example():
     # 5. Hybrid query (combining vector and graph)
     print("\n5. Hybrid query (vector + graph):")
     hybrid_params = {
-        "vector_component": {
-            "query_vector": query_vector,
-            "top_k": 10,
-            "dimension": 768
-        },
+        "vector_component": {"query_vector": query_vector, "top_k": 10, "dimension": 768},
         "graph_component": {
             "query_type": "traverse",
             "start_entity_type": "person",
             "relationship_types": ["knows", "works_for"],
             "max_depth": 2,
-            "limit": 5
+            "limit": 5,
         },
         "vector_weight": 0.6,
-        "graph_weight": 0.4
+        "graph_weight": 0.4,
     }
 
     # Get an optimized plan
     hybrid_plan = hybrid_optimizer.optimize_hybrid_query(hybrid_params)
     print("Hybrid query optimization plan:")
-    print(json.dumps(hybrid_plan, indent=2, default=str)[:500] + "...") # Truncated for readability
+    print(json.dumps(hybrid_plan, indent=2, default=str)[:500] + "...")  # Truncated for readability
 
     # Execute the optimized query
     def merge_results(vector_results, graph_results, vector_weight, graph_weight):
@@ -333,22 +311,14 @@ def run_example():
 
         # Process vector results
         for i, result in enumerate(vector_results):
-            score = result.score if hasattr(result, 'score') else 0.9 - (i * 0.1)
-            merged.append({
-                "source": "vector",
-                "score": score * vector_weight,
-                "data": result
-            })
+            score = result.score if hasattr(result, "score") else 0.9 - (i * 0.1)
+            merged.append({"source": "vector", "score": score * vector_weight, "data": result})
 
         # Process graph results
         for i, result in enumerate(graph_results):
             # Assign decreasing scores to graph results
             score = 0.9 - (i * 0.1)
-            merged.append({
-                "source": "graph",
-                "score": score * graph_weight,
-                "data": result
-            })
+            merged.append({"source": "graph", "score": score * graph_weight, "data": result})
 
         # Sort by combined score
         merged.sort(key=lambda x: x["score"], reverse=True)
@@ -360,11 +330,13 @@ def run_example():
         query_params=hybrid_params,
         vector_func=optimized_search_func,
         graph_func=knowledge_graph.query,
-        merge_func=merge_results
+        merge_func=merge_results,
     )
 
     print(f"Found {len(hybrid_result)} combined results in {hybrid_metrics.duration_ms:.2f} ms")
-    print(f"Combined metrics: {json.dumps(hybrid_metrics.execution_plan.get('component_metrics', {}), indent=2)}")
+    print(
+        f"Combined metrics: {json.dumps(hybrid_metrics.execution_plan.get('component_metrics', {}), indent=2)}"
+    )
 
     # 6. Multiple queries to demonstrate statistics
     print("\n6. Running multiple queries to collect statistics...")
@@ -374,7 +346,7 @@ def run_example():
         random_vector = np.random.rand(768).astype(np.float32)
         vector_optimizer.execute_vector_search(
             query_params={"query_vector": random_vector, "top_k": 10, "dimension": 768},
-            search_func=optimized_search_func
+            search_func=optimized_search_func,
         )
 
         # Random graph query
@@ -387,9 +359,9 @@ def run_example():
                 "start_entity_type": random.choice(entity_types),
                 "relationship_types": random.sample(rel_types, k=min(2, len(rel_types))),
                 "max_depth": random.randint(1, 3),
-                "limit": 5
+                "limit": 5,
             },
-            query_func=knowledge_graph.query
+            query_func=knowledge_graph.query,
         )
 
     # 7. Get statistics and recommendations

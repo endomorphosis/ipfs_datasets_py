@@ -10,6 +10,7 @@ Terminology:
 - very_short_audio: A video file with audio duration less than one second
 - encrypted_audio_track: A video file with DRM-protected audio streams
 """
+
 import pytest
 import anyio
 from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
@@ -18,12 +19,14 @@ from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpe
 class TestFFmpegWrapperExtractAudioEdgeCases:
     """
     Edge case scenarios for FFmpegWrapper.extract_audio method.
-    
+
     Tests the extract_audio method with edge cases including
     missing audio streams, multi-track files, and unusual content.
     """
 
-    async def test_when_video_has_no_audio_streams_then_returns_error_response_with_no_audio_message(self):
+    async def test_when_video_has_no_audio_streams_then_returns_error_response_with_no_audio_message(
+        self,
+    ):
         """
         GIVEN input video file containing no audio streams
         WHEN extract_audio is called with video file without audio
@@ -31,13 +34,12 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.extract_audio(
-                input_path="video_without_audio.mp4",
-                output_path="extracted_audio.mp3"
+                input_path="video_without_audio.mp4", output_path="extracted_audio.mp3"
             )
             # This will not execute until extract_audio is implemented
             assert result["status"] == "error"
@@ -54,13 +56,12 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.extract_audio(
-                input_path="multi_track_video.mp4",
-                output_path="extracted_audio.mp3"
+                input_path="multi_track_video.mp4", output_path="extracted_audio.mp3"
             )
             # This will not execute until extract_audio is implemented
             assert result["status"] == "success"
@@ -69,7 +70,9 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
             # Expected - extract_audio method is documented but not implemented
             assert True
 
-    async def test_when_extracting_specific_audio_track_from_multi_track_video_then_extracts_specified_track(self):
+    async def test_when_extracting_specific_audio_track_from_multi_track_video_then_extracts_specified_track(
+        self,
+    ):
         """
         GIVEN input video file with multiple audio tracks and track_index parameter
         WHEN extract_audio is called with specific track index
@@ -77,19 +80,21 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.extract_audio(
                 input_path="multi_track_video.mp4",
                 output_path="track_2_audio.mp3",
-                track_index=2  # Specific track selection
+                track_index=2,  # Specific track selection
             )
             # This will not execute until extract_audio is implemented
             assert result["status"] == "success"
             assert result["audio_metadata"]["track_index"] == 2
-            assert result["audio_metadata"]["source_tracks_count"] >= 3  # At least 3 tracks to select track 2
+            assert (
+                result["audio_metadata"]["source_tracks_count"] >= 3
+            )  # At least 3 tracks to select track 2
         except NotImplementedError:
             # Expected - extract_audio method is documented but not implemented
             assert True
@@ -102,13 +107,13 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.extract_audio(
                 input_path="very_short_video.mp4",  # Less than 1 second
-                output_path="short_audio.mp3"
+                output_path="short_audio.mp3",
             )
             # This will not execute until extract_audio is implemented
             assert result["status"] == "success"
@@ -127,17 +132,17 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             # Simulate existing file scenario
             existing_output = "existing_audio.mp3"
-            
+
             result = await wrapper.extract_audio(
                 input_path="source_video.mp4",
                 output_path=existing_output,
-                overwrite=True  # Explicit overwrite flag
+                overwrite=True,  # Explicit overwrite flag
             )
             # This will not execute until extract_audio is implemented
             assert result["status"] == "success"
@@ -147,32 +152,39 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
             # Expected - extract_audio method is documented but not implemented
             assert True
 
-    async def test_when_extracting_with_time_range_beyond_video_duration_then_returns_error_response(self):
+    async def test_when_extracting_with_time_range_beyond_video_duration_then_returns_error_response(
+        self,
+    ):
         """
         GIVEN start_time and duration parameters exceeding video length
         WHEN extract_audio is called with time range beyond video duration
         THEN returns dict with status 'error' and message indicating time range exceeds video duration
         """
-        # NOTE: extract_audio is documented but not implemented in FFmpegWrapper 
+        # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.extract_audio(
                 input_path="test_video.mp4",
                 output_path="extracted_audio.mp3",
                 start_time="02:00:00",  # Beyond typical video duration
-                duration="01:00:00"
+                duration="01:00:00",
             )
             # This will not execute until extract_audio is implemented
             assert result["status"] == "error"
-            assert "time range" in result.get("message", "").lower() or "duration" in result.get("message", "").lower()
+            assert (
+                "time range" in result.get("message", "").lower()
+                or "duration" in result.get("message", "").lower()
+            )
         except NotImplementedError:
             # Expected - extract_audio method is documented but not implemented yet
             assert True
 
-    async def test_when_audio_is_corrupted_but_video_is_valid_then_returns_error_response_with_corruption_message(self):
+    async def test_when_audio_is_corrupted_but_video_is_valid_then_returns_error_response_with_corruption_message(
+        self,
+    ):
         """
         GIVEN input video file with corrupted audio streams but valid video
         WHEN extract_audio is called with file having corrupted audio
@@ -180,17 +192,19 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
         from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
-        
+
         wrapper = FFmpegWrapper()
-        
+
         try:
             result = await wrapper.extract_audio(
-                input_path="corrupted_audio_video.mp4",
-                output_path="extracted_audio.mp3"
+                input_path="corrupted_audio_video.mp4", output_path="extracted_audio.mp3"
             )
             # This will not execute until extract_audio is implemented
             assert result["status"] == "error"
-            assert "corrupt" in result.get("message", "").lower() or "invalid" in result.get("message", "").lower()
+            assert (
+                "corrupt" in result.get("message", "").lower()
+                or "invalid" in result.get("message", "").lower()
+            )
         except NotImplementedError:
             # Expected - extract_audio method is documented but not implemented yet
             assert True

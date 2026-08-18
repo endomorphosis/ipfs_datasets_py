@@ -26,12 +26,20 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipel
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _cfg(**kw) -> ExtractionConfig:
     return ExtractionConfig(**kw)
 
 
 def _score(v: float) -> CriticScore:
-    return CriticScore(completeness=v, consistency=v, clarity=v, granularity=v, relationship_coherence=v, domain_alignment=v)
+    return CriticScore(
+        completeness=v,
+        consistency=v,
+        clarity=v,
+        granularity=v,
+        relationship_coherence=v,
+        domain_alignment=v,
+    )
 
 
 def _entity(eid="e1", text="Alice", etype="Person") -> Entity:
@@ -55,6 +63,7 @@ def _critic() -> OntologyCritic:
 # ---------------------------------------------------------------------------
 # ExtractionConfig.to_toml / from_toml
 # ---------------------------------------------------------------------------
+
 
 class TestExtractionConfigToml:
     def test_to_toml_returns_string(self):
@@ -94,6 +103,7 @@ class TestExtractionConfigToml:
 # EntityExtractionResult.summary
 # ---------------------------------------------------------------------------
 
+
 class TestEntityExtractionResultSummary:
     def test_returns_string(self):
         r = _result(_entity())
@@ -127,6 +137,7 @@ class TestEntityExtractionResultSummary:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.anonymize_entities
 # ---------------------------------------------------------------------------
+
 
 class TestAnonymizeEntities:
     def test_returns_new_result(self):
@@ -170,6 +181,7 @@ class TestAnonymizeEntities:
 # OntologyPipeline.with_domain
 # ---------------------------------------------------------------------------
 
+
 class TestPipelineWithDomain:
     def test_returns_pipeline(self):
         p = OntologyPipeline(domain="general")
@@ -200,6 +212,7 @@ class TestPipelineWithDomain:
 # OntologyCritic.emit_dimension_histogram
 # ---------------------------------------------------------------------------
 
+
 class TestEmitDimensionHistogram:
     def test_returns_dict(self):
         result = _critic().emit_dimension_histogram([_score(0.5)], bins=5)
@@ -207,7 +220,14 @@ class TestEmitDimensionHistogram:
 
     def test_all_dims_present(self):
         result = _critic().emit_dimension_histogram([_score(0.5)])
-        expected_keys = {"completeness", "consistency", "clarity", "granularity", "relationship_coherence", "domain_alignment"}
+        expected_keys = {
+            "completeness",
+            "consistency",
+            "clarity",
+            "granularity",
+            "relationship_coherence",
+            "domain_alignment",
+        }
         assert set(result.keys()) == expected_keys
 
     def test_correct_bin_count(self):

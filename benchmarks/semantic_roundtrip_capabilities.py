@@ -45,12 +45,9 @@ import urllib.request
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT: Final = (
-    REPO_ROOT
-    / "workspace/benchmarks/semantic-roundtrip-compositions/capabilities.json"
+    REPO_ROOT / "workspace/benchmarks/semantic-roundtrip-compositions/capabilities.json"
 )
-SCHEMA_VERSION: Final = (
-    "ipfs-datasets.semantic-roundtrip-capability-inventory.v1"
-)
+SCHEMA_VERSION: Final = "ipfs-datasets.semantic-roundtrip-capability-inventory.v1"
 INTERFACE_VERSION: Final = "SemanticRoundTripCapabilityInventory@1"
 DEFAULT_RUN_ID: Final = "semantic-roundtrip-compositions-2026-07-26"
 
@@ -74,14 +71,10 @@ SPACY_REQUIRED_ANNOTATIONS: Final = (
     "SENT_START",
     "TAG",
 )
-SPACY_SMOKE_TEXT: Final = (
-    "Ada Lovelace reviews the blue report in London."
-)
+SPACY_SMOKE_TEXT: Final = "Ada Lovelace reviews the blue report in London."
 
 LEANSTRAL_ENDPOINT: Final = "http://127.0.0.1:8080/v1"
-LEANSTRAL_MODEL: Final = (
-    "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
-)
+LEANSTRAL_MODEL: Final = "Frosty40/Leanstral-1.5-119B-A6B-GGUF-NVFP4:NVFP4"
 LEANSTRAL_PROVIDER: Final = "leanstral_local"
 LEANSTRAL_BACKEND: Final = "llama.cpp"
 LEANSTRAL_BACKEND_OWNER: Final = "llamacpp"
@@ -91,38 +84,24 @@ SYMAI_VERSION: Final = "1.14.0"
 SYMAI_PROVIDER: Final = "ipfs_accelerate_py"
 SYMAI_MODEL_ALIAS: Final = "Leanstral-119B"
 SYMAI_CONFIG_MODEL: Final = "ipfs:Leanstral-119B"
-SYMAI_ENGINE: Final = (
-    "ipfs_datasets_py.utils.symai_ipfs_engine."
-    "IPFSSyMAINeurosymbolicEngine"
-)
+SYMAI_ENGINE: Final = "ipfs_datasets_py.utils.symai_ipfs_engine.IPFSSyMAINeurosymbolicEngine"
 SYMAI_ROUTER_MODULE: Final = "ipfs_datasets_py.llm_router"
 SYMAI_ROUTE_CONTRACT_VALIDATOR: Final = (
-    "ipfs_accelerate_py.llm_router."
-    "validate_pinned_symai_request_contract"
+    "ipfs_accelerate_py.llm_router.validate_pinned_symai_request_contract"
 )
-SYMAI_CANONICAL_SCHEMA_NAME: Final = (
-    "semantic_roundtrip_canonical_ir_v1"
-)
-SYMAI_REALIZATION_SCHEMA_NAME: Final = (
-    "semantic_roundtrip_realization_v1"
-)
+SYMAI_CANONICAL_SCHEMA_NAME: Final = "semantic_roundtrip_canonical_ir_v1"
+SYMAI_REALIZATION_SCHEMA_NAME: Final = "semantic_roundtrip_realization_v1"
 
 AUTOENCODER_STATE_RELATIVE_PATH: Final = Path(
     "archive/workspace/todo-queues/"
     "legal-ir-daemon-restart12-20260608T075001Z-"
     "best-8h-autoencoder.state.json"
 )
-AUTOENCODER_STATE_SHA256: Final = (
-    "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
-)
-AUTOENCODER_STATE_CID: Final = (
-    "bafkreiaui3frqwo56twub62vo33ogihozzgoyjukacgfyb5772xzlhgy3u"
-)
+AUTOENCODER_STATE_SHA256: Final = "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+AUTOENCODER_STATE_CID: Final = "bafkreiaui3frqwo56twub62vo33ogihozzgoyjukacgfyb5772xzlhgy3u"
 AUTOENCODER_STATE_SCHEMA: Final = "modal-autoencoder-state-v1"
 AUTOENCODER_DECLARED_ARCHITECTURE: Final = "legacy_dense_v1"
-AUTOENCODER_EFFECTIVE_ARCHITECTURE: Final = (
-    "proof_aware_auxiliary_heads_v2"
-)
+AUTOENCODER_EFFECTIVE_ARCHITECTURE: Final = "proof_aware_auxiliary_heads_v2"
 MAX_AUTOENCODER_STATE_BYTES: Final = 64 * 1024 * 1024
 
 CAPABILITY_IDS: Final = (
@@ -187,9 +166,7 @@ def _json_copy(value: Any) -> Any:
 
 def _freeze(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _freeze(item) for key, item in value.items()}
-        )
+        return MappingProxyType({str(key): _freeze(item) for key, item in value.items()})
     if isinstance(value, list | tuple):
         return tuple(_freeze(item) for item in value)
     return value
@@ -212,42 +189,26 @@ class CapabilityRecord:
         if self.id not in CAPABILITY_IDS:
             raise CapabilityProbeError(f"unknown capability id: {self.id!r}")
         if self.status not in {"available", "unavailable"}:
-            raise CapabilityProbeError(
-                f"unsupported capability status: {self.status!r}"
-            )
+            raise CapabilityProbeError(f"unsupported capability status: {self.status!r}")
         requested = _json_copy(dict(self.requested_identity))
         effective = (
-            None
-            if self.effective_identity is None
-            else _json_copy(dict(self.effective_identity))
+            None if self.effective_identity is None else _json_copy(dict(self.effective_identity))
         )
         checks = _json_copy(dict(self.checks))
         substitute = (
-            None
-            if self.substitute_identity is None
-            else _json_copy(dict(self.substitute_identity))
+            None if self.substitute_identity is None else _json_copy(dict(self.substitute_identity))
         )
         if not requested:
-            raise CapabilityProbeError(
-                f"{self.id} must retain a requested identity"
-            )
+            raise CapabilityProbeError(f"{self.id} must retain a requested identity")
         if self.status == "available":
             if not effective:
-                raise CapabilityProbeError(
-                    f"{self.id} is available without an effective identity"
-                )
+                raise CapabilityProbeError(f"{self.id} is available without an effective identity")
             if self.reason is not None:
-                raise CapabilityProbeError(
-                    f"{self.id} is available but has an unavailable reason"
-                )
+                raise CapabilityProbeError(f"{self.id} is available but has an unavailable reason")
         elif not isinstance(self.reason, str) or not self.reason.strip():
-            raise CapabilityProbeError(
-                f"{self.id} is unavailable without an explicit reason"
-            )
+            raise CapabilityProbeError(f"{self.id} is unavailable without an explicit reason")
         if self.substitute_used or substitute is not None:
-            raise CapabilityProbeError(
-                f"{self.id} cannot use or advertise a substitute"
-            )
+            raise CapabilityProbeError(f"{self.id} cannot use or advertise a substitute")
         object.__setattr__(self, "requested_identity", _freeze(requested))
         object.__setattr__(
             self,
@@ -298,9 +259,7 @@ class CapabilityRecord:
             "status": self.status,
             "requested_identity": _json_copy(self.requested_identity),
             "effective_identity": (
-                None
-                if self.effective_identity is None
-                else _json_copy(self.effective_identity)
+                None if self.effective_identity is None else _json_copy(self.effective_identity)
             ),
             "checks": _json_copy(self.checks),
             "reason": self.reason,
@@ -317,8 +276,7 @@ class CapabilityRecord:
             missing = sorted(_RECORD_KEYS - keys)
             unknown = sorted(keys - _RECORD_KEYS)
             raise CapabilityProbeError(
-                f"capability record fields differ; missing={missing}, "
-                f"unknown={unknown}"
+                f"capability record fields differ; missing={missing}, unknown={unknown}"
             )
         requested = value["requested_identity"]
         effective = value["effective_identity"]
@@ -327,15 +285,11 @@ class CapabilityRecord:
         if not isinstance(requested, Mapping):
             raise CapabilityProbeError("requested_identity must be an object")
         if effective is not None and not isinstance(effective, Mapping):
-            raise CapabilityProbeError(
-                "effective_identity must be an object or null"
-            )
+            raise CapabilityProbeError("effective_identity must be an object or null")
         if not isinstance(checks, Mapping):
             raise CapabilityProbeError("checks must be an object")
         if substitute is not None and not isinstance(substitute, Mapping):
-            raise CapabilityProbeError(
-                "substitute_identity must be an object or null"
-            )
+            raise CapabilityProbeError("substitute_identity must be an object or null")
         return cls(
             id=value["id"],  # type: ignore[arg-type]
             status=value["status"],  # type: ignore[arg-type]
@@ -367,13 +321,9 @@ class CapabilityInventory:
         if not self.run_id or len(self.run_id) > 160:
             raise CapabilityProbeError("run_id must be a bounded string")
         try:
-            observed = datetime.fromisoformat(
-                self.captured_at_utc.replace("Z", "+00:00")
-            )
+            observed = datetime.fromisoformat(self.captured_at_utc.replace("Z", "+00:00"))
         except (TypeError, ValueError) as exc:
-            raise CapabilityProbeError(
-                "captured_at_utc must be an ISO-8601 timestamp"
-            ) from exc
+            raise CapabilityProbeError("captured_at_utc must be an ISO-8601 timestamp") from exc
         if observed.tzinfo is None:
             raise CapabilityProbeError("captured_at_utc must include UTC")
         ids = tuple(record.id for record in self.capabilities)
@@ -393,16 +343,12 @@ class CapabilityInventory:
         if set(bindings) != required_bindings:
             raise CapabilityProbeError("inventory bindings are incomplete")
         if bindings["shared_model_capacity"] != 1:
-            raise CapabilityProbeError(
-                "Leanstral shared model capacity must remain one"
-            )
+            raise CapabilityProbeError("Leanstral shared model capacity must remain one")
         object.__setattr__(self, "bindings", _freeze(bindings))
 
     @property
     def by_id(self) -> Mapping[str, CapabilityRecord]:
-        return MappingProxyType(
-            {record.id: record for record in self.capabilities}
-        )
+        return MappingProxyType({record.id: record for record in self.capabilities})
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -422,9 +368,7 @@ class CapabilityInventory:
                 "model_inference_smoke": True,
             },
             "bindings": _json_copy(self.bindings),
-            "capabilities": [
-                record.to_dict() for record in self.capabilities
-            ],
+            "capabilities": [record.to_dict() for record in self.capabilities],
         }
 
     @classmethod
@@ -465,10 +409,7 @@ class CapabilityInventory:
             interface_version=value["interface_version"],  # type: ignore[arg-type]
             run_id=value["run_id"],  # type: ignore[arg-type]
             captured_at_utc=value["captured_at_utc"],  # type: ignore[arg-type]
-            capabilities=tuple(
-                CapabilityRecord.from_dict(item)
-                for item in raw_capabilities
-            ),
+            capabilities=tuple(CapabilityRecord.from_dict(item) for item in raw_capabilities),
             bindings=bindings,
         )
 
@@ -478,9 +419,7 @@ class ProbeConfig:
     """Frozen requested identities; override callables, not these identities."""
 
     repository_root: Path = REPO_ROOT
-    autoencoder_state_path: Path = (
-        REPO_ROOT / AUTOENCODER_STATE_RELATIVE_PATH
-    )
+    autoencoder_state_path: Path = REPO_ROOT / AUTOENCODER_STATE_RELATIVE_PATH
     leanstral_endpoint: str = LEANSTRAL_ENDPOINT
     leanstral_model: str = LEANSTRAL_MODEL
     command_timeout_seconds: float = 5.0
@@ -508,9 +447,7 @@ class CommandResult:
             "timed_out": self.timed_out,
             "output_truncated": self.output_truncated,
             "output": " ".join(retained.split()),
-            "retained_output_sha256": hashlib.sha256(
-                self.output
-            ).hexdigest(),
+            "retained_output_sha256": hashlib.sha256(self.output).hexdigest(),
         }
 
 
@@ -528,9 +465,7 @@ HEALTH_ONLY_NOT_SCHEDULABLE_REASON: Final = (
     "live construct-or-realize smoke with model_inference_performed "
     "is required"
 )
-LIVE_SMOKE_ACCEPT_REASON: Final = (
-    "matrix_schema_construct_or_realize_smoke_accepted"
-)
+LIVE_SMOKE_ACCEPT_REASON: Final = "matrix_schema_construct_or_realize_smoke_accepted"
 
 
 def _distribution_version(distribution: str) -> str | None:
@@ -724,21 +659,25 @@ def probe_multiformats(
             reason=f"multiformats CID smoke failed: {type(exc).__name__}",
         )
     effective["module"] = "multiformats"
-    return CapabilityRecord.available(
-        "multiformats",
-        requested,
-        effective,
-        {
-            "cid_round_trip": encoded == AUTOENCODER_STATE_CID,
-            "smoke_cid": AUTOENCODER_STATE_CID,
-            "version_requirement_met": True,
-        },
-    ) if encoded == AUTOENCODER_STATE_CID else CapabilityRecord.unavailable(
-        "multiformats",
-        requested,
-        effective=effective,
-        checks={"cid_round_trip": False, "smoke_cid": AUTOENCODER_STATE_CID},
-        reason="multiformats did not preserve the frozen CID identity",
+    return (
+        CapabilityRecord.available(
+            "multiformats",
+            requested,
+            effective,
+            {
+                "cid_round_trip": encoded == AUTOENCODER_STATE_CID,
+                "smoke_cid": AUTOENCODER_STATE_CID,
+                "version_requirement_met": True,
+            },
+        )
+        if encoded == AUTOENCODER_STATE_CID
+        else CapabilityRecord.unavailable(
+            "multiformats",
+            requested,
+            effective=effective,
+            checks={"cid_round_trip": False, "smoke_cid": AUTOENCODER_STATE_CID},
+            reason="multiformats did not preserve the frozen CID identity",
+        )
     )
 
 
@@ -790,9 +729,7 @@ def probe_spacy(
         pipeline = tuple(nlp.pipe_names)
         doc = nlp(SPACY_SMOKE_TEXT)
         missing_annotations = [
-            name
-            for name in SPACY_REQUIRED_ANNOTATIONS
-            if not doc.has_annotation(name)
+            name for name in SPACY_REQUIRED_ANNOTATIONS if not doc.has_annotation(name)
         ]
         language = str(getattr(nlp, "lang", ""))
     except Exception as exc:
@@ -815,9 +752,7 @@ def probe_spacy(
         "annotations_present": not missing_annotations,
         "missing_annotations": missing_annotations,
         "fallback_used": False,
-        "smoke_text_sha256": hashlib.sha256(
-            SPACY_SMOKE_TEXT.encode("utf-8")
-        ).hexdigest(),
+        "smoke_text_sha256": hashlib.sha256(SPACY_SMOKE_TEXT.encode("utf-8")).hexdigest(),
     }
     if pipeline != SPACY_PIPELINE or missing_annotations or language != "en":
         return CapabilityRecord.unavailable(
@@ -837,8 +772,7 @@ def probe_spacy(
 
 def _default_state_loader(value: Mapping[str, Any]) -> Any:
     module = importlib.import_module(
-        "ipfs_datasets_py.optimizers.logic_theorem_optimizer."
-        "modal_autoencoder"
+        "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder"
     )
     return module.ModalAutoencoderTrainingState.from_dict(value)
 
@@ -965,13 +899,10 @@ def probe_autoencoder_state(
         {
             "state_schema_version": AUTOENCODER_STATE_SCHEMA,
             "declared_architecture_version": str(
-                payload.get("architecture_version")
-                or AUTOENCODER_DECLARED_ARCHITECTURE
+                payload.get("architecture_version") or AUTOENCODER_DECLARED_ARCHITECTURE
             ),
             "effective_architecture_version": architecture,
-            "loader_class": (
-                f"{type(loaded).__module__}.{type(loaded).__qualname__}"
-            ),
+            "loader_class": (f"{type(loaded).__module__}.{type(loaded).__qualname__}"),
         }
     )
     checks = {
@@ -1039,27 +970,17 @@ def _smoke_receipt(
         raise CapabilityProbeError(f"invalid smoke receipt status: {status!r}")
     if status == "accepted":
         if not accept_reason or reject_reason is not None:
-            raise CapabilityProbeError(
-                "accepted smoke receipt requires accept_reason only"
-            )
+            raise CapabilityProbeError("accepted smoke receipt requires accept_reason only")
         if not model_inference_performed or not request_performed:
-            raise CapabilityProbeError(
-                "accepted smoke receipt requires real model inference"
-            )
+            raise CapabilityProbeError("accepted smoke receipt requires real model inference")
     elif status == "rejected":
         if not reject_reason or accept_reason is not None:
-            raise CapabilityProbeError(
-                "rejected smoke receipt requires reject_reason only"
-            )
+            raise CapabilityProbeError("rejected smoke receipt requires reject_reason only")
     else:
         if accept_reason is not None or reject_reason is None:
-            raise CapabilityProbeError(
-                "not_attempted smoke receipt requires reject_reason only"
-            )
+            raise CapabilityProbeError("not_attempted smoke receipt requires reject_reason only")
         if model_inference_performed or request_performed:
-            raise CapabilityProbeError(
-                "not_attempted smoke receipt cannot claim inference"
-            )
+            raise CapabilityProbeError("not_attempted smoke receipt cannot claim inference")
     receipt: dict[str, Any] = {
         "status": status,
         "role": role,
@@ -1075,9 +996,7 @@ def _smoke_receipt(
     if extra:
         for key, value in extra.items():
             if key in receipt:
-                raise CapabilityProbeError(
-                    f"smoke receipt extra key collides: {key!r}"
-                )
+                raise CapabilityProbeError(f"smoke receipt extra key collides: {key!r}")
             receipt[key] = value
     return receipt
 
@@ -1196,10 +1115,7 @@ def _run_construct_or_realize_smoke(
             route=route,
             model=expected_model,
             accept_reason=None,
-            reject_reason=(
-                f"live construct-or-realize smoke failed: "
-                f"{type(exc).__name__}: {exc}"
-            ),
+            reject_reason=(f"live construct-or-realize smoke failed: {type(exc).__name__}: {exc}"),
             model_identity_match=None,
             model_inference_performed=True,
             request_performed=True,
@@ -1234,9 +1150,7 @@ def _run_construct_or_realize_smoke(
             route=route,
             model=response_model,
             accept_reason=None,
-            reject_reason=(
-                "live construct-or-realize smoke returned a non-object payload"
-            ),
+            reject_reason=("live construct-or-realize smoke returned a non-object payload"),
             model_identity_match=response_model == expected_model,
             model_inference_performed=True,
             request_performed=True,
@@ -1301,9 +1215,7 @@ def _run_construct_or_realize_smoke(
         extra={
             **evidence,
             "response_object_keys": sorted(str(k) for k in value),
-            "response_text_sha256": hashlib.sha256(
-                text.encode("utf-8")
-            ).hexdigest(),
+            "response_text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
             "response_text_chars": len(text),
         },
     )
@@ -1350,16 +1262,11 @@ def _apply_live_smoke_checks(
     accepted = receipt.get("status") == "accepted" and inference
     checks["smoke_receipt"] = receipt
     checks["model_inference_performed"] = inference
-    checks["live_model_request_performed"] = bool(
-        receipt.get("request_performed")
-    )
+    checks["live_model_request_performed"] = bool(receipt.get("request_performed"))
     checks["health_only"] = bool(
-        receipt.get("health_only")
-        or (not inference and receipt.get("status") == "not_attempted")
+        receipt.get("health_only") or (not inference and receipt.get("status") == "not_attempted")
     )
-    checks["schedulable_for_scored_matrix"] = accepted and not checks[
-        "health_only"
-    ]
+    checks["schedulable_for_scored_matrix"] = accepted and not checks["health_only"]
     if accepted:
         checks["smoke_accept_reason"] = receipt.get("accept_reason")
         checks["smoke_reject_reason"] = None
@@ -1411,10 +1318,7 @@ def probe_leanstral_direct(
         "endpoint": config.leanstral_endpoint,
         "model": None,
     }
-    if (
-        config.leanstral_endpoint != LEANSTRAL_ENDPOINT
-        or config.leanstral_model != LEANSTRAL_MODEL
-    ):
+    if config.leanstral_endpoint != LEANSTRAL_ENDPOINT or config.leanstral_model != LEANSTRAL_MODEL:
         return CapabilityRecord.unavailable(
             "leanstral_direct",
             requested,
@@ -1445,10 +1349,7 @@ def probe_leanstral_direct(
         if not isinstance(data, list):
             raise CapabilityProbeError("models response has no data array")
         selected = [
-            item
-            for item in data
-            if isinstance(item, Mapping)
-            and item.get("id") == LEANSTRAL_MODEL
+            item for item in data if isinstance(item, Mapping) and item.get("id") == LEANSTRAL_MODEL
         ]
         if len(selected) != 1:
             raise CapabilityProbeError("exact Leanstral model is absent or ambiguous")
@@ -1461,9 +1362,7 @@ def probe_leanstral_direct(
                 "health": str(health.get("status") or "").lower(),
                 "model": str(model_entry.get("id")),
                 "served_models": [
-                    str(item.get("id"))
-                    for item in data
-                    if isinstance(item, Mapping)
+                    str(item.get("id")) for item in data if isinstance(item, Mapping)
                 ],
                 "backend": LEANSTRAL_BACKEND,
                 "backend_owner": model_entry.get("owned_by"),
@@ -1510,9 +1409,7 @@ def probe_leanstral_direct(
         "models_get": effective["model"] == LEANSTRAL_MODEL,
         "props_get": True,
         "backend_match": effective["backend_owner"] == LEANSTRAL_BACKEND_OWNER,
-        "one_slot_capacity": (
-            effective["capacity"]["parallel_slots"] == LEANSTRAL_CAPACITY
-        ),
+        "one_slot_capacity": (effective["capacity"]["parallel_slots"] == LEANSTRAL_CAPACITY),
         "model_inference_performed": False,
         "live_model_request_performed": False,
         "health_only": True,
@@ -1555,10 +1452,7 @@ def probe_leanstral_direct(
             route="direct",
             model=LEANSTRAL_MODEL,
             accept_reason=None,
-            reject_reason=(
-                f"live construct-or-realize smoke raised "
-                f"{type(exc).__name__}: {exc}"
-            ),
+            reject_reason=(f"live construct-or-realize smoke raised {type(exc).__name__}: {exc}"),
             model_identity_match=None,
             model_inference_performed=True,
             request_performed=True,
@@ -1566,9 +1460,7 @@ def probe_leanstral_direct(
         )
     checks = _apply_live_smoke_checks(checks, smoke)
     if not checks["schedulable_for_scored_matrix"]:
-        reject = checks.get("smoke_reject_reason") or (
-            HEALTH_ONLY_NOT_SCHEDULABLE_REASON
-        )
+        reject = checks.get("smoke_reject_reason") or (HEALTH_ONLY_NOT_SCHEDULABLE_REASON)
         return CapabilityRecord.unavailable(
             "leanstral_direct",
             requested,
@@ -1594,14 +1486,11 @@ def _load_symai_route_contract_validator() -> RouteContractValidator:
         None,
     )
     if not callable(validator):
-        raise RuntimeError(
-            "canonical router has no pinned SyMAI contract validator"
-        )
+        raise RuntimeError("canonical router has no pinned SyMAI contract validator")
     return validator
 
 
-def _symai_route_generation_contracts(
-) -> dict[str, dict[str, object]]:
+def _symai_route_generation_contracts() -> dict[str, dict[str, object]]:
     """Build the exact model-facing contracts used by both SyMAI roles."""
 
     from benchmarks.semantic_roundtrip.contracts import (
@@ -1744,9 +1633,7 @@ def probe_symai_leanstral_route(
     get_version = version_getter or _distribution_version
     find_module = module_finder or _module_spec
     version = get_version("symbolicai")
-    engine_spec = find_module(
-        "ipfs_datasets_py.utils.symai_ipfs_engine"
-    )
+    engine_spec = find_module("ipfs_datasets_py.utils.symai_ipfs_engine")
     router_spec = find_module(SYMAI_ROUTER_MODULE)
     effective: dict[str, Any] = {
         "route": "symai_router",
@@ -1885,10 +1772,7 @@ def probe_symai_leanstral_route(
             requested,
             effective=effective,
             checks=checks,
-            reason=(
-                "SyMAI side-effect-free route-contract validator is "
-                "unavailable"
-            ),
+            reason=("SyMAI side-effect-free route-contract validator is unavailable"),
         )
     checks["route_contract_validator_present"] = callable(validator)
     if not callable(validator):
@@ -1901,10 +1785,7 @@ def probe_symai_leanstral_route(
             requested,
             effective=effective,
             checks=checks,
-            reason=(
-                "SyMAI side-effect-free route-contract validator is "
-                "unavailable"
-            ),
+            reason=("SyMAI side-effect-free route-contract validator is unavailable"),
         )
 
     try:
@@ -1940,18 +1821,12 @@ def probe_symai_leanstral_route(
         except Exception:
             normalized[role] = None
         else:
-            normalized[role] = (
-                _json_copy(dict(result))
-                if isinstance(result, Mapping)
-                else None
-            )
+            normalized[role] = _json_copy(dict(result)) if isinstance(result, Mapping) else None
 
         expected = _normalized_symai_generation_options(options)
         observed = normalized[role]
         schema_matches = bool(
-            observed is not None
-            and observed.get("response_format")
-            == expected["response_format"]
+            observed is not None and observed.get("response_format") == expected["response_format"]
         )
         settings_matches = bool(
             observed is not None
@@ -1964,48 +1839,38 @@ def probe_symai_leanstral_route(
         )
         checks[f"{role}_schema_exact_match"] = schema_matches
         checks[f"{role}_settings_exact_match"] = settings_matches
-        checks[f"{role}_request_contract_accepted"] = bool(
-            schema_matches and settings_matches
-        )
+        checks[f"{role}_request_contract_accepted"] = bool(schema_matches and settings_matches)
 
-    checks["model_alias_mismatch_rejected"] = (
-        _route_contract_mismatch_rejected(
-            validator,
-            model_name=SYMAI_MODEL_ALIAS + "-drifted",
-            route_binding=route_binding,
-            generation_options=contracts["canonical"],
-        )
+    checks["model_alias_mismatch_rejected"] = _route_contract_mismatch_rejected(
+        validator,
+        model_name=SYMAI_MODEL_ALIAS + "-drifted",
+        route_binding=route_binding,
+        generation_options=contracts["canonical"],
     )
     drifted_binding = _json_copy(route_binding)
     drifted_binding["routing_backend"] = "drifted"
-    checks["route_binding_mismatch_rejected"] = (
-        _route_contract_mismatch_rejected(
-            validator,
-            model_name=SYMAI_MODEL_ALIAS,
-            route_binding=drifted_binding,
-            generation_options=contracts["canonical"],
-        )
+    checks["route_binding_mismatch_rejected"] = _route_contract_mismatch_rejected(
+        validator,
+        model_name=SYMAI_MODEL_ALIAS,
+        route_binding=drifted_binding,
+        generation_options=contracts["canonical"],
     )
     for role in ("canonical", "realization"):
         drifted_schema = _json_copy(contracts[role])
         drifted_schema["response_format"]["json_schema"]["strict"] = False
-        checks[f"{role}_schema_mismatch_rejected"] = (
-            _route_contract_mismatch_rejected(
-                validator,
-                model_name=SYMAI_MODEL_ALIAS,
-                route_binding=route_binding,
-                generation_options=drifted_schema,
-            )
+        checks[f"{role}_schema_mismatch_rejected"] = _route_contract_mismatch_rejected(
+            validator,
+            model_name=SYMAI_MODEL_ALIAS,
+            route_binding=route_binding,
+            generation_options=drifted_schema,
         )
         drifted_settings = _json_copy(contracts[role])
         drifted_settings["max_tokens"] += 1
-        checks[f"{role}_settings_mismatch_rejected"] = (
-            _route_contract_mismatch_rejected(
-                validator,
-                model_name=SYMAI_MODEL_ALIAS,
-                route_binding=route_binding,
-                generation_options=drifted_settings,
-            )
+        checks[f"{role}_settings_mismatch_rejected"] = _route_contract_mismatch_rejected(
+            validator,
+            model_name=SYMAI_MODEL_ALIAS,
+            route_binding=route_binding,
+            generation_options=drifted_settings,
         )
 
     contract_checks = (
@@ -2022,9 +1887,7 @@ def probe_symai_leanstral_route(
         "realization_schema_mismatch_rejected",
         "realization_settings_mismatch_rejected",
     )
-    checks["route_contract_validation_passed"] = all(
-        checks[key] is True for key in contract_checks
-    )
+    checks["route_contract_validation_passed"] = all(checks[key] is True for key in contract_checks)
     effective["validated_request_contracts"] = normalized
     if not checks["route_contract_validation_passed"]:
         failed = [key for key in contract_checks if checks[key] is not True]
@@ -2038,8 +1901,7 @@ def probe_symai_leanstral_route(
             effective=effective,
             checks=checks,
             reason=(
-                "SyMAI side-effect-free route-contract validation failed: "
-                + ", ".join(failed)
+                "SyMAI side-effect-free route-contract validation failed: " + ", ".join(failed)
             ),
         )
 
@@ -2058,10 +1920,7 @@ def probe_symai_leanstral_route(
             route="symai",
             model=LEANSTRAL_MODEL,
             accept_reason=None,
-            reject_reason=(
-                f"live construct-or-realize smoke raised "
-                f"{type(exc).__name__}: {exc}"
-            ),
+            reject_reason=(f"live construct-or-realize smoke raised {type(exc).__name__}: {exc}"),
             model_identity_match=None,
             model_inference_performed=True,
             request_performed=True,
@@ -2069,9 +1928,7 @@ def probe_symai_leanstral_route(
         )
     checks = _apply_live_smoke_checks(checks, smoke)
     if not checks["schedulable_for_scored_matrix"]:
-        reject = checks.get("smoke_reject_reason") or (
-            HEALTH_ONLY_NOT_SCHEDULABLE_REASON
-        )
+        reject = checks.get("smoke_reject_reason") or (HEALTH_ONLY_NOT_SCHEDULABLE_REASON)
         return CapabilityRecord.unavailable(
             "symai_leanstral_route",
             requested,
@@ -2149,10 +2006,7 @@ def probe_hammer_cvc5(
             config.max_command_output_bytes,
         )
         smoke_input = (
-            b"(set-logic QF_UF)\n"
-            b"(declare-const p Bool)\n"
-            b"(assert (or p (not p)))\n"
-            b"(check-sat)\n"
+            b"(set-logic QF_UF)\n(declare-const p Bool)\n(assert (or p (not p)))\n(check-sat)\n"
         )
         smoke_result = run(
             (executable, "--lang=smt2", "--tlimit=1000"),
@@ -2179,9 +2033,7 @@ def probe_hammer_cvc5(
         }
     )
     output = smoke_result.output.decode("utf-8", "replace").strip()
-    solver_version = _version_from_output(
-        version_result.output, r"\bversion\s+([0-9][^\s]*)"
-    )
+    solver_version = _version_from_output(version_result.output, r"\bversion\s+([0-9][^\s]*)")
     solver_version_numbers = _numeric_version(solver_version)
     version_requirement_met = bool(
         solver_version_numbers
@@ -2246,10 +2098,7 @@ def probe_lean(
             checks={"bounded_smoke_passed": False},
             reason="Lean executable is unavailable",
         )
-    source = (
-        "theorem srt_identity (n : Nat) : n = n := by\n"
-        "  rfl\n"
-    ).encode("utf-8")
+    source = ("theorem srt_identity (n : Nat) : n = n := by\n  rfl\n").encode("utf-8")
     try:
         version_result = run(
             (executable, "--version"),
@@ -2257,9 +2106,7 @@ def probe_lean(
             config.command_timeout_seconds,
             config.max_command_output_bytes,
         )
-        with tempfile.TemporaryDirectory(
-            prefix="srt-lean-capability-"
-        ) as temporary:
+        with tempfile.TemporaryDirectory(prefix="srt-lean-capability-") as temporary:
             smoke_path = Path(temporary) / "Smoke.lean"
             smoke_path.write_bytes(source)
             smoke_result = run(
@@ -2279,9 +2126,7 @@ def probe_lean(
     effective.update(
         {
             "executable_sha256": _file_sha256(Path(executable)),
-            "version": _version_from_output(
-                version_result.output, r"Lean \(version\s+([^,\s]+)"
-            ),
+            "version": _version_from_output(version_result.output, r"Lean \(version\s+([^,\s]+)"),
             "version_probe": version_result.to_check(),
             "smoke": {
                 **smoke_result.to_check(),
@@ -2352,16 +2197,10 @@ def _bindings(
             "route": symai.effective_identity.get("route"),
             "provider": symai.effective_identity.get("provider"),
             "model_alias": symai.effective_identity.get("model_alias"),
-            "resolved_provider": symai.effective_identity.get(
-                "resolved_provider"
-            ),
-            "resolved_endpoint": symai.effective_identity.get(
-                "resolved_endpoint"
-            ),
+            "resolved_provider": symai.effective_identity.get("resolved_provider"),
+            "resolved_endpoint": symai.effective_identity.get("resolved_endpoint"),
             "resolved_model": symai.effective_identity.get("resolved_model"),
-            "resolved_backend": symai.effective_identity.get(
-                "resolved_backend"
-            ),
+            "resolved_backend": symai.effective_identity.get("resolved_backend"),
         }
     )
     same = (
@@ -2409,9 +2248,7 @@ def capture_capability_inventory(
         try:
             record = injected.get(capability_id, default)()
             if record.id != capability_id:
-                raise CapabilityProbeError(
-                    f"probe for {capability_id} returned {record.id}"
-                )
+                raise CapabilityProbeError(f"probe for {capability_id} returned {record.id}")
             return record
         except Exception as exc:
             return _probe_failure(capability_id, requested, exc)
@@ -2454,9 +2291,7 @@ def capture_capability_inventory(
     )
     records["symai_leanstral_route"] = invoke(
         "symai_leanstral_route",
-        lambda: probe_symai_leanstral_route(
-            records["leanstral_direct"]
-        ),
+        lambda: probe_symai_leanstral_route(records["leanstral_direct"]),
         {
             "route": "symai_router",
             "distribution": "symbolicai",
@@ -2480,9 +2315,7 @@ def capture_capability_inventory(
         {"toolchain": "Lean 4", "executable": "lean"},
     )
     timestamp = captured_at_utc or (
-        datetime.now(timezone.utc)
-        .isoformat(timespec="seconds")
-        .replace("+00:00", "Z")
+        datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     )
     direct = records["leanstral_direct"]
     symai = records["symai_leanstral_route"]
@@ -2495,13 +2328,16 @@ def capture_capability_inventory(
 
 
 def canonical_inventory_json(inventory: CapabilityInventory) -> str:
-    return json.dumps(
-        inventory.to_dict(),
-        allow_nan=False,
-        ensure_ascii=True,
-        indent=2,
-        sort_keys=True,
-    ) + "\n"
+    return (
+        json.dumps(
+            inventory.to_dict(),
+            allow_nan=False,
+            ensure_ascii=True,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
 
 
 def write_inventory(
@@ -2513,9 +2349,7 @@ def write_inventory(
     destination = output.resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
     rendered = canonical_inventory_json(inventory)
-    temporary = destination.with_name(
-        f".{destination.name}.tmp-{os.getpid()}"
-    )
+    temporary = destination.with_name(f".{destination.name}.tmp-{os.getpid()}")
     try:
         temporary.write_text(rendered, encoding="utf-8")
         os.replace(temporary, destination)
@@ -2545,19 +2379,11 @@ def require_available(
     unknown = sorted(set(capability_ids) - set(CAPABILITY_IDS))
     if unknown:
         raise CapabilityProbeError(f"unknown required capabilities: {unknown}")
-    unavailable = [
-        item
-        for item in capability_ids
-        if inventory.by_id[item].status != "available"
-    ]
+    unavailable = [item for item in capability_ids if inventory.by_id[item].status != "available"]
     if unavailable:
-        reasons = "; ".join(
-            f"{item}: {inventory.by_id[item].reason}"
-            for item in unavailable
-        )
+        reasons = "; ".join(f"{item}: {inventory.by_id[item].reason}" for item in unavailable)
         raise CapabilityProbeError(
-            "required capabilities are unavailable; no substitutes permitted: "
-            + reasons
+            "required capabilities are unavailable; no substitutes permitted: " + reasons
         )
 
 
@@ -2587,15 +2413,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             inventory = capture_capability_inventory(run_id=args.run_id)
             write_inventory(inventory, args.output)
         unavailable = [
-            record.id
-            for record in inventory.capabilities
-            if record.status == "unavailable"
+            record.id for record in inventory.capabilities if record.status == "unavailable"
         ]
         sys.stdout.write(canonical_inventory_json(inventory))
         if unavailable:
             print(
-                "explicitly unavailable capabilities: "
-                + ", ".join(unavailable),
+                "explicitly unavailable capabilities: " + ", ".join(unavailable),
                 file=sys.stderr,
             )
         return 0

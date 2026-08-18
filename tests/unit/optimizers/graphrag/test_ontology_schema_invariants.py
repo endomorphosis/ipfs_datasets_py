@@ -26,13 +26,17 @@ from typing import Any, Dict, List
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_context(domain: str = "legal"):
     ctx = MagicMock()
     ctx.domain = domain
     ctx.data_source = "test_doc"
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-        ExtractionStrategy, DataType, ExtractionConfig,
+        ExtractionStrategy,
+        DataType,
+        ExtractionConfig,
     )
+
     ctx.data_type = DataType.TEXT
     ctx.extraction_strategy = ExtractionStrategy.RULE_BASED
     ctx.config = ExtractionConfig()
@@ -70,9 +74,7 @@ def _assert_ontology_invariants(ontology: Dict[str, Any]) -> None:
         entity_ids.add(ent["id"])
 
     # No duplicate entity IDs
-    assert len(entity_ids) == len(ontology["entities"]), (
-        "Duplicate entity IDs detected in ontology"
-    )
+    assert len(entity_ids) == len(ontology["entities"]), "Duplicate entity IDs detected in ontology"
 
     for i, rel in enumerate(ontology["relationships"]):
         _assert_relationship_schema(rel, i)
@@ -101,9 +103,12 @@ MINIMAL_VALID_ONTOLOGY = {
     ],
     "relationships": [
         {
-            "id": "r1", "type": "obligates",
-            "source_id": "e1", "target_id": "e2",
-            "properties": {}, "confidence": 0.8,
+            "id": "r1",
+            "type": "obligates",
+            "source_id": "e1",
+            "target_id": "e2",
+            "properties": {},
+            "confidence": 0.8,
         }
     ],
     "metadata": {"domain": "legal"},
@@ -114,9 +119,11 @@ MINIMAL_VALID_ONTOLOGY = {
 # Tests: generate_ontology()
 # ---------------------------------------------------------------------------
 
+
 class TestGenerateOntologySchema:
     def test_generates_valid_schema_for_fixture_text(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+
         gen = OntologyGenerator()
         ctx = _make_context()
         ontology = gen.generate_ontology(FIXTURE_TEXT, ctx)
@@ -124,6 +131,7 @@ class TestGenerateOntologySchema:
 
     def test_empty_input_produces_valid_schema(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+
         gen = OntologyGenerator()
         ctx = _make_context()
         ontology = gen.generate_ontology("", ctx)
@@ -133,6 +141,7 @@ class TestGenerateOntologySchema:
 
     def test_relationships_only_reference_valid_entities(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+
         gen = OntologyGenerator()
         ctx = _make_context()
         ontology = gen.generate_ontology(FIXTURE_TEXT, ctx)
@@ -143,6 +152,7 @@ class TestGenerateOntologySchema:
 
     def test_no_duplicate_entity_ids(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+
         gen = OntologyGenerator()
         ctx = _make_context()
         # Run extraction twice and merge: IDs should still be unique
@@ -155,19 +165,27 @@ class TestGenerateOntologySchema:
 # Tests: refine_ontology() preserves schema
 # ---------------------------------------------------------------------------
 
+
 class TestRefineOntologySchema:
     def _make_mediator(self):
-        from ipfs_datasets_py.optimizers.graphrag import OntologyMediator, OntologyGenerator, OntologyCritic
+        from ipfs_datasets_py.optimizers.graphrag import (
+            OntologyMediator,
+            OntologyGenerator,
+            OntologyCritic,
+        )
+
         return OntologyMediator(generator=OntologyGenerator(), critic=OntologyCritic())
 
     def _make_critic_score(self, recommendations=None):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
         return CriticScore(
             completeness=0.7,
             consistency=0.9,
             clarity=0.6,
             granularity=0.5,
-            relationship_coherence=0.8, domain_alignment=0.8,
+            relationship_coherence=0.8,
+            domain_alignment=0.8,
             recommendations=recommendations or ["Add more entity properties"],
         )
 
@@ -197,9 +215,11 @@ class TestRefineOntologySchema:
 # Tests: OntologyCritic score ranges
 # ---------------------------------------------------------------------------
 
+
 class TestCriticScoreInvariants:
     def test_all_dimension_scores_in_unit_interval(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyCritic
+
         critic = OntologyCritic()
         ctx = _make_context()
         score = critic.evaluate_ontology(MINIMAL_VALID_ONTOLOGY, ctx)
@@ -210,6 +230,7 @@ class TestCriticScoreInvariants:
 
     def test_overall_score_in_unit_interval(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyCritic
+
         critic = OntologyCritic()
         ctx = _make_context()
         score = critic.evaluate_ontology(MINIMAL_VALID_ONTOLOGY, ctx)
@@ -217,29 +238,38 @@ class TestCriticScoreInvariants:
 
     def test_empty_ontology_gives_low_score(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyCritic
+
         critic = OntologyCritic()
         ctx = _make_context()
         score = critic.evaluate_ontology({"entities": [], "relationships": []}, ctx)
-        assert score.completeness < 0.5, (
-            "Empty ontology should have low completeness score"
-        )
+        assert score.completeness < 0.5, "Empty ontology should have low completeness score"
 
 
 # ---------------------------------------------------------------------------
 # Tests: merge_ontologies dedup invariant
 # ---------------------------------------------------------------------------
 
+
 class TestMergeOntologiesInvariants:
     def test_merged_ontology_has_no_duplicate_ids(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+
         gen = OntologyGenerator()
         base = {
-            "entities": [{"id": "e1", "type": "Person", "text": "Alice", "properties": {}, "confidence": 1.0}],
+            "entities": [
+                {"id": "e1", "type": "Person", "text": "Alice", "properties": {}, "confidence": 1.0}
+            ],
             "relationships": [],
         }
         ext = {
             "entities": [
-                {"id": "e1", "type": "Person", "text": "Alice", "properties": {"age": 30}, "confidence": 0.9},
+                {
+                    "id": "e1",
+                    "type": "Person",
+                    "text": "Alice",
+                    "properties": {"age": 30},
+                    "confidence": 0.9,
+                },
                 {"id": "e2", "type": "Org", "text": "Corp", "properties": {}, "confidence": 1.0},
             ],
             "relationships": [],
@@ -251,15 +281,28 @@ class TestMergeOntologiesInvariants:
 
     def test_merged_ontology_satisfies_schema(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+
         gen = OntologyGenerator()
         base = {
-            "entities": [{"id": "e1", "type": "Person", "text": "Alice", "properties": {}, "confidence": 1.0}],
+            "entities": [
+                {"id": "e1", "type": "Person", "text": "Alice", "properties": {}, "confidence": 1.0}
+            ],
             "relationships": [],
         }
         ext = {
-            "entities": [{"id": "e2", "type": "Org", "text": "Corp", "properties": {}, "confidence": 1.0}],
-            "relationships": [{"id": "r1", "type": "works_for", "source_id": "e1", "target_id": "e2",
-                               "properties": {}, "confidence": 0.8}],
+            "entities": [
+                {"id": "e2", "type": "Org", "text": "Corp", "properties": {}, "confidence": 1.0}
+            ],
+            "relationships": [
+                {
+                    "id": "r1",
+                    "type": "works_for",
+                    "source_id": "e1",
+                    "target_id": "e2",
+                    "properties": {},
+                    "confidence": 0.8,
+                }
+            ],
         }
         merged = gen._merge_ontologies(base, ext)
         _assert_ontology_invariants(merged)

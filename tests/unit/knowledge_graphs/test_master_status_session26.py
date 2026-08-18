@@ -32,14 +32,17 @@ import pytest
 # 1. neo4j_compat/connection_pool.py  (95% → 100%)
 # ---------------------------------------------------------------------------
 
+
 class TestConnectionPoolUncoveredPaths:
     """GIVEN a ConnectionPool, test the three remaining uncovered branches."""
 
     def test_release_on_closed_pool_returns_early(self):
         """GIVEN a closed pool WHEN release is called THEN it returns silently."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.connection_pool import (
-            ConnectionPool, PooledConnection,
+            ConnectionPool,
+            PooledConnection,
         )
+
         pool = ConnectionPool(max_size=2)
         conn = PooledConnection(connection_id="c1", backend=None)
         pool.close()
@@ -51,8 +54,10 @@ class TestConnectionPoolUncoveredPaths:
     def test_release_expired_connection_not_returned_to_pool(self):
         """GIVEN an expired connection WHEN released THEN it is discarded and not pooled."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.connection_pool import (
-            ConnectionPool, PooledConnection,
+            ConnectionPool,
+            PooledConnection,
         )
+
         pool = ConnectionPool(max_size=2, max_connection_lifetime=1)
         conn = PooledConnection(connection_id="c2", backend=None)
         # Force expiry
@@ -64,6 +69,7 @@ class TestConnectionPoolUncoveredPaths:
     def test_close_on_already_closed_pool_is_noop(self):
         """GIVEN a closed pool WHEN close is called again THEN it is a no-op."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.connection_pool import ConnectionPool
+
         pool = ConnectionPool(max_size=2)
         pool.close()
         assert pool._closed is True
@@ -75,14 +81,19 @@ class TestConnectionPoolUncoveredPaths:
 # 2. transactions/types.py  (96% → 100%)
 # ---------------------------------------------------------------------------
 
+
 class TestTransactionTypesUncoveredPaths:
     """GIVEN a Transaction, test WRITE_RELATIONSHIP write-set tracking and PREPARING commit."""
 
     def test_add_operation_write_relationship_adds_rel_id_to_write_set(self):
         """GIVEN a WRITE_RELATIONSHIP operation WHEN add_operation is called THEN rel_id is in write_set."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Transaction, TransactionState, OperationType, Operation,
+            Transaction,
+            TransactionState,
+            OperationType,
+            Operation,
         )
+
         txn = Transaction(txn_id=uuid.uuid4(), isolation_level="READ_COMMITTED")
         op = Operation(type=OperationType.WRITE_RELATIONSHIP, rel_id="rel-abc")
         txn.add_operation(op)
@@ -91,8 +102,12 @@ class TestTransactionTypesUncoveredPaths:
     def test_add_operation_write_relationship_dedup(self):
         """GIVEN the same rel_id WHEN add_operation called twice THEN write_set has it once."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Transaction, TransactionState, OperationType, Operation,
+            Transaction,
+            TransactionState,
+            OperationType,
+            Operation,
         )
+
         txn = Transaction(txn_id=uuid.uuid4(), isolation_level="READ_COMMITTED")
         op = Operation(type=OperationType.WRITE_RELATIONSHIP, rel_id="rel-dup")
         txn.add_operation(op)
@@ -102,8 +117,10 @@ class TestTransactionTypesUncoveredPaths:
     def test_can_commit_in_preparing_state(self):
         """GIVEN a transaction in PREPARING state WHEN can_commit is called THEN it returns True."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Transaction, TransactionState,
+            Transaction,
+            TransactionState,
         )
+
         txn = Transaction(txn_id=uuid.uuid4(), isolation_level="READ_COMMITTED")
         txn.state = TransactionState.PREPARING
         assert txn.can_commit() is True
@@ -113,12 +130,14 @@ class TestTransactionTypesUncoveredPaths:
 # 3. neo4j_compat/bookmarks.py  (97% → 100%)
 # ---------------------------------------------------------------------------
 
+
 class TestBookmarksUncoveredPaths:
     """GIVEN Bookmark/Bookmarks objects, test __hash__ and __repr__."""
 
     def test_bookmark_hash_is_integer(self):
         """GIVEN a Bookmark WHEN hash() is called THEN an integer is returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.bookmarks import Bookmark
+
         b = Bookmark(transaction_id="tx1", database="neo4j", timestamp=1000.0)
         h = hash(b)
         assert isinstance(h, int)
@@ -126,6 +145,7 @@ class TestBookmarksUncoveredPaths:
     def test_bookmarks_repr_includes_bookmark_str(self):
         """GIVEN a Bookmarks with one bookmark WHEN repr() is called THEN output contains bracket delimited list."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.bookmarks import Bookmark, Bookmarks
+
         b = Bookmark(transaction_id="tx1", database="neo4j", timestamp=1000.0)
         bs = Bookmarks([b])
         r = repr(bs)
@@ -135,6 +155,7 @@ class TestBookmarksUncoveredPaths:
     def test_bookmarks_repr_empty_is_empty_list(self):
         """GIVEN an empty Bookmarks WHEN repr() is called THEN output is Bookmarks([])."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.bookmarks import Bookmarks
+
         bs = Bookmarks()
         r = repr(bs)
         assert r == "Bookmarks([])"
@@ -144,18 +165,21 @@ class TestBookmarksUncoveredPaths:
 # 4. neo4j_compat/result.py  (98% → 100%)
 # ---------------------------------------------------------------------------
 
+
 class TestResultUncoveredPaths:
     """GIVEN a Result, test keys() on empty result and __repr__."""
 
     def test_keys_on_empty_result_returns_empty_list(self):
         """GIVEN an empty Result WHEN keys() is called THEN an empty list is returned."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result
+
         result = Result(records=[])
         assert result.keys() == []
 
     def test_repr_shows_record_count_and_consumed(self):
         """GIVEN a Result WHEN repr() is called THEN it shows record count and consumed status."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Result
+
         result = Result(records=[])
         r = repr(result)
         assert "Result(" in r
@@ -167,11 +191,13 @@ class TestResultUncoveredPaths:
 # 5. neo4j_compat/session.py  (98% → 100%)
 # ---------------------------------------------------------------------------
 
+
 class TestSessionUncoveredPaths:
     """GIVEN an IPFSSession, test retry-exhausted None return and close with open transaction."""
 
     def _make_session(self):
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.session import IPFSSession
+
         mock_driver = MagicMock()
         mock_backend = MagicMock()
         return IPFSSession(driver=mock_driver, backend=mock_backend)
@@ -204,16 +230,20 @@ class TestSessionUncoveredPaths:
 # 6. transactions/manager.py  (91% → 97%)
 # ---------------------------------------------------------------------------
 
+
 class TestTransactionManagerUncoveredPaths:
     """GIVEN a TransactionManager, test TransactionAbortedError re-raise, WRITE_RELATIONSHIP, snapshot."""
 
     def _make_manager(self):
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
+
         mock_engine = MagicMock()
         mock_engine._nodes = {}
         mock_engine._enable_persistence = False
         mock_backend = MagicMock()
-        with patch("ipfs_datasets_py.knowledge_graphs.transactions.manager.WriteAheadLog") as mock_wal_cls:
+        with patch(
+            "ipfs_datasets_py.knowledge_graphs.transactions.manager.WriteAheadLog"
+        ) as mock_wal_cls:
             mock_wal = MagicMock()
             mock_wal.wal_head_cid = None
             mock_wal.append.return_value = "cid-wal"
@@ -229,6 +259,7 @@ class TestTransactionManagerUncoveredPaths:
         from ipfs_datasets_py.knowledge_graphs.transactions.manager import TransactionManager
         from ipfs_datasets_py.knowledge_graphs.transactions.types import TransactionState
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionAbortedError
+
         mgr = self._make_manager()
         txn = mgr.begin()
         # Make _apply_operations raise TransactionAbortedError
@@ -239,14 +270,23 @@ class TestTransactionManagerUncoveredPaths:
     def test_apply_operations_write_relationship(self):
         """GIVEN a WRITE_RELATIONSHIP operation WHEN _apply_operations is called THEN create_relationship is invoked."""
         from ipfs_datasets_py.knowledge_graphs.transactions.types import (
-            Transaction, TransactionState, OperationType, Operation,
+            Transaction,
+            TransactionState,
+            OperationType,
+            Operation,
         )
+
         mgr = self._make_manager()
         txn = Transaction(txn_id=uuid.uuid4(), isolation_level="READ_COMMITTED")
         txn.state = TransactionState.PREPARING
         op = Operation(
             type=OperationType.WRITE_RELATIONSHIP,
-            data={"start_node_id": "n1", "end_node_id": "n2", "rel_type": "KNOWS", "properties": {}},
+            data={
+                "start_node_id": "n1",
+                "end_node_id": "n2",
+                "rel_type": "KNOWS",
+                "properties": {},
+            },
         )
         txn.operations.append(op)
         mgr._apply_operations(txn)
@@ -278,6 +318,7 @@ class TestTransactionManagerUncoveredPaths:
     def test_capture_snapshot_reraises_transaction_error(self):
         """GIVEN a TransactionError on save_graph WHEN _capture_snapshot is called THEN it propagates."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import TransactionError
+
         mgr = self._make_manager()
         mgr.graph_engine._enable_persistence = True
         mgr.graph_engine.storage = MagicMock()
@@ -290,11 +331,13 @@ class TestTransactionManagerUncoveredPaths:
 # 7. query/unified_engine.py  (89% → 100%)
 # ---------------------------------------------------------------------------
 
+
 class TestUnifiedEngineUncoveredPaths:
     """GIVEN a UnifiedQueryEngine, test lazy-load ImportError paths for all 4 lazy properties."""
 
     def _make_engine(self):
         from ipfs_datasets_py.knowledge_graphs.query.unified_engine import UnifiedQueryEngine
+
         return UnifiedQueryEngine(backend=MagicMock())
 
     def test_cypher_compiler_import_error_propagates(self):
@@ -330,16 +373,19 @@ class TestUnifiedEngineUncoveredPaths:
 # 8. query/hybrid_search.py  (83% → 93%)
 # ---------------------------------------------------------------------------
 
+
 class TestHybridSearchUncoveredPaths:
     """GIVEN a HybridSearchEngine, test error-handler branches and LRU cache eviction."""
 
     def _make_engine(self, vector_store=None, backend=None):
         from ipfs_datasets_py.knowledge_graphs.query.hybrid_search import HybridSearchEngine
+
         return HybridSearchEngine(backend=backend or MagicMock(), vector_store=vector_store)
 
     def test_vector_search_kgerror_is_reraised(self):
         """GIVEN KnowledgeGraphError from vector_store.search WHEN vector_search is called THEN it propagates."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import KnowledgeGraphError
+
         mock_vs = MagicMock()
         mock_vs.search.side_effect = KnowledgeGraphError("index error")
         eng = self._make_engine(vector_store=mock_vs)
@@ -357,6 +403,7 @@ class TestHybridSearchUncoveredPaths:
     def test_expand_graph_neighbor_error_is_logged_and_skipped(self):
         """GIVEN AttributeError from _get_neighbors WHEN expand_graph is called THEN the node is skipped gracefully."""
         from ipfs_datasets_py.knowledge_graphs.query.hybrid_search import HybridSearchEngine
+
         mock_backend = MagicMock()
         eng = HybridSearchEngine(backend=mock_backend, vector_store=None)
         # Make _get_neighbors raise AttributeError
@@ -368,6 +415,7 @@ class TestHybridSearchUncoveredPaths:
     def test_get_query_embedding_kgerror_is_reraised(self):
         """GIVEN KnowledgeGraphError from embed_query WHEN _get_query_embedding is called THEN it propagates."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import KnowledgeGraphError
+
         mock_vs = MagicMock()
         mock_vs.embed_query.side_effect = KnowledgeGraphError("embed error")
         eng = self._make_engine(vector_store=mock_vs)
@@ -393,6 +441,7 @@ class TestHybridSearchUncoveredPaths:
     def test_get_neighbors_kgerror_is_reraised(self):
         """GIVEN KnowledgeGraphError from backend WHEN _get_neighbors is called THEN it propagates."""
         from ipfs_datasets_py.knowledge_graphs.exceptions import KnowledgeGraphError
+
         mock_backend = MagicMock()
         mock_backend.get_neighbors.side_effect = KnowledgeGraphError("no neighbors")
         eng = self._make_engine(backend=mock_backend)
@@ -418,6 +467,7 @@ class TestHybridSearchUncoveredPaths:
     def test_search_lru_cache_evicts_oldest_entry(self):
         """GIVEN cache_size=2 WHEN 3 unique queries are searched THEN the oldest is evicted."""
         from ipfs_datasets_py.knowledge_graphs.query.hybrid_search import HybridSearchEngine
+
         mock_backend = MagicMock()
         mock_backend.get_neighbors.return_value = []
         mock_vs = MagicMock()
@@ -440,6 +490,7 @@ class TestHybridSearchUncoveredPaths:
 # 9. query/distributed.py  (94% → 99%)
 # ---------------------------------------------------------------------------
 
+
 class TestDistributedUncoveredPaths:
     """GIVEN GraphPartitioner / FederatedQueryExecutor, test orphan rel, worker error, dedup, filter, _normalise_result."""
 
@@ -447,6 +498,7 @@ class TestDistributedUncoveredPaths:
         from ipfs_datasets_py.knowledge_graphs.query.distributed import GraphPartitioner
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         kg = KnowledgeGraph()
         e1 = Entity(entity_id="e1", name="Alice", entity_type="person")
         kg.add_entity(e1)
@@ -457,6 +509,7 @@ class TestDistributedUncoveredPaths:
         from ipfs_datasets_py.knowledge_graphs.query.distributed import GraphPartitioner
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Relationship
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         kg = KnowledgeGraph()
         e1 = Entity(entity_id="e1", name="Alice", entity_type="person")
         kg.add_entity(e1)
@@ -472,6 +525,7 @@ class TestDistributedUncoveredPaths:
     def test_execute_cypher_parallel_worker_error_recorded(self):
         """GIVEN an error on every partition WHEN execute_cypher_parallel is called THEN errors dict is populated."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import FederatedQueryExecutor
+
         dist = self._make_simple_dist()
         executor = FederatedQueryExecutor(distributed_graph=dist, dedup=True)
         with patch.object(executor, "_execute_on_partition", side_effect=RuntimeError("boom")):
@@ -482,6 +536,7 @@ class TestDistributedUncoveredPaths:
     def test_execute_cypher_streaming_dedup_removes_duplicates(self):
         """GIVEN duplicate records from two partitions WHEN execute_cypher_streaming is called THEN only one is yielded."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import FederatedQueryExecutor
+
         dist = self._make_simple_dist()
         executor = FederatedQueryExecutor(distributed_graph=dist, dedup=True)
         dup = {"id": "n1", "name": "Alice"}
@@ -495,13 +550,18 @@ class TestDistributedUncoveredPaths:
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _KGBackend
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Relationship
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         kg = KnowledgeGraph()
         e1 = Entity(entity_id="e1", name="A", entity_type="person")
         e2 = Entity(entity_id="e2", name="B", entity_type="person")
         kg.add_entity(e1)
         kg.add_entity(e2)
-        r1 = Relationship(relationship_id="r1", source_entity=e1, target_entity=e2, relationship_type="KNOWS")
-        r2 = Relationship(relationship_id="r2", source_entity=e2, target_entity=e1, relationship_type="KNOWS")
+        r1 = Relationship(
+            relationship_id="r1", source_entity=e1, target_entity=e2, relationship_type="KNOWS"
+        )
+        r2 = Relationship(
+            relationship_id="r2", source_entity=e2, target_entity=e1, relationship_type="KNOWS"
+        )
         kg.relationships["r1"] = r1
         kg.relationships["r2"] = r2
         backend = _KGBackend(kg)
@@ -513,13 +573,18 @@ class TestDistributedUncoveredPaths:
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _KGBackend
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Relationship
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         kg = KnowledgeGraph()
         e1 = Entity(entity_id="e1", name="A", entity_type="person")
         e2 = Entity(entity_id="e2", name="B", entity_type="person")
         kg.add_entity(e1)
         kg.add_entity(e2)
-        r1 = Relationship(relationship_id="r1", source_entity=e1, target_entity=e2, relationship_type="KNOWS")
-        r2 = Relationship(relationship_id="r2", source_entity=e1, target_entity=e2, relationship_type="LIKES")
+        r1 = Relationship(
+            relationship_id="r1", source_entity=e1, target_entity=e2, relationship_type="KNOWS"
+        )
+        r2 = Relationship(
+            relationship_id="r2", source_entity=e1, target_entity=e2, relationship_type="LIKES"
+        )
         kg.relationships["r1"] = r1
         kg.relationships["r2"] = r2
         backend = _KGBackend(kg)
@@ -531,6 +596,7 @@ class TestDistributedUncoveredPaths:
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _KGBackend
         from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph, Relationship
         from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+
         kg = KnowledgeGraph()
         e1 = Entity(entity_id="e1", name="A", entity_type="person")
         e2 = Entity(entity_id="e2", name="B", entity_type="person")
@@ -538,7 +604,10 @@ class TestDistributedUncoveredPaths:
         kg.add_entity(e2)
         for i in range(5):
             r = Relationship(
-                relationship_id=f"r{i}", source_entity=e1, target_entity=e2, relationship_type="KNOWS",
+                relationship_id=f"r{i}",
+                source_entity=e1,
+                target_entity=e2,
+                relationship_type="KNOWS",
             )
             kg.relationships[f"r{i}"] = r
         backend = _KGBackend(kg)
@@ -572,6 +641,7 @@ class TestDistributedUncoveredPaths:
     def test_normalise_result_non_iterable_is_stringified(self):
         """GIVEN a non-iterable scalar WHEN _normalise_result THEN it is wrapped as {'value': str}."""
         from ipfs_datasets_py.knowledge_graphs.query.distributed import _normalise_result
+
         result = _normalise_result([42])
         assert result == [{"value": "42"}]
 
@@ -579,6 +649,7 @@ class TestDistributedUncoveredPaths:
 # ---------------------------------------------------------------------------
 # 10. cypher/ast.py  (99% → 100%)
 # ---------------------------------------------------------------------------
+
 
 class TestASTUncoveredPaths:
     """GIVEN AST visitor infrastructure, test generic_visit and ASTPrettyPrinter visiting a nested ASTNode field."""
@@ -598,8 +669,13 @@ class TestASTUncoveredPaths:
     def test_astprettyprinter_visits_nested_astnode_field(self):
         """GIVEN a node with an ASTNode-typed field WHEN ASTPrettyPrinter.print is called THEN nested node is visited."""
         from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
-            ASTPrettyPrinter, QueryNode, MatchClause, WhereClause, LiteralNode,
+            ASTPrettyPrinter,
+            QueryNode,
+            MatchClause,
+            WhereClause,
+            LiteralNode,
         )
+
         # WhereClause.expression is a direct ASTNode field (not a list) — triggers line 731
         literal = LiteralNode(value=True)
         where = WhereClause(expression=literal)
@@ -616,15 +692,24 @@ class TestASTUncoveredPaths:
 # 11. cypher/compiler.py  (98% → 100%)
 # ---------------------------------------------------------------------------
 
+
 class TestCompilerUncoveredPaths:
     """GIVEN the Cypher compiler, test CREATE-rel-not-followed-by-node raises and other branch coverage."""
 
     def test_compile_create_rel_not_followed_by_node_raises(self):
         """GIVEN a CREATE with a trailing relationship not followed by a node WHEN compile THEN CypherCompileError."""
-        from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler, CypherCompileError
-        from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
-            QueryNode, CreateClause, PatternNode, NodePattern, RelationshipPattern,
+        from ipfs_datasets_py.knowledge_graphs.cypher.compiler import (
+            CypherCompiler,
+            CypherCompileError,
         )
+        from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
+            QueryNode,
+            CreateClause,
+            PatternNode,
+            NodePattern,
+            RelationshipPattern,
+        )
+
         compiler = CypherCompiler()
         np = NodePattern(variable="n", labels=[])
         rp = RelationshipPattern(types=["KNOWS"], direction="right")
@@ -638,6 +723,7 @@ class TestCompilerUncoveredPaths:
         """GIVEN a simple MATCH WHEN compile is called THEN a ScanAll operation is in the ops list."""
         from ipfs_datasets_py.knowledge_graphs.cypher.compiler import CypherCompiler
         from ipfs_datasets_py.knowledge_graphs.cypher.parser import CypherParser
+
         compiler = CypherCompiler()
         parser = CypherParser()
         ast = parser.parse("MATCH (n) RETURN n")
@@ -649,12 +735,14 @@ class TestCompilerUncoveredPaths:
 # 12. indexing/btree.py  (87% → 98%)
 # ---------------------------------------------------------------------------
 
+
 class TestBTreeUncoveredPaths:
     """GIVEN a BTreeIndex, test internal node split and range search through an internal node."""
 
     def _make_index(self, max_keys=3):
         from ipfs_datasets_py.knowledge_graphs.indexing.btree import BTreeIndex
         from ipfs_datasets_py.knowledge_graphs.indexing.types import IndexDefinition, IndexType
+
         defn = IndexDefinition(name="test_btree", index_type=IndexType.PROPERTY, properties=["key"])
         return BTreeIndex(definition=defn, max_keys=max_keys)
 

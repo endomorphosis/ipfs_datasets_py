@@ -123,6 +123,7 @@ def _make_key(self, text: str, provider: str, prompt_hash: str) -> str:
 ```python
 from multiformats import CID, multihash
 
+
 def _make_key(self, text: str, provider: str, prompt_hash: str) -> str:
     """Create IPFS CID cache key using multiformats."""
     # Create deterministic JSON structure
@@ -130,23 +131,20 @@ def _make_key(self, text: str, provider: str, prompt_hash: str) -> str:
         "text": text,
         "provider": provider,
         "prompt_hash": prompt_hash,
-        "version": "1.0"  # For future schema evolution
+        "version": "1.0",  # For future schema evolution
     }
-    
+
     # Serialize to canonical JSON bytes
     json_bytes = json.dumps(
-        cache_obj,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False
+        cache_obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False
     ).encode("utf-8")
-    
+
     # Generate multihash
     mh = multihash.digest(json_bytes, "sha2-256")
-    
+
     # Create CIDv1
     cid = CID("base32", 1, "raw", mh)
-    
+
     return str(cid)
 ```
 
@@ -166,15 +164,13 @@ from multiformats import CID, multihash
 import json
 from typing import Dict, Any
 
+
 def create_cache_cid(data: Dict[str, Any]) -> str:
     """Create IPFS CID for cache key using multiformats."""
-    json_bytes = json.dumps(
-        data, 
-        sort_keys=True, 
-        separators=(",", ":"),
-        ensure_ascii=False
-    ).encode("utf-8")
-    
+    json_bytes = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8"
+    )
+
     mh = multihash.digest(json_bytes, "sha2-256")
     cid = CID("base32", 1, "raw", mh)
     return str(cid)
@@ -221,16 +217,18 @@ def test_cache_key_is_ipfs_cid():
     """Verify cache keys are valid IPFS CIDs."""
     cache = LLMResponseCache()
     key = cache._make_key("test", "openai", "hash1")
-    
+
     # Should be CIDv1 (starts with 'bafk' in base32)
     assert key.startswith("bafk")
     assert len(key) > 50  # CIDs are longer than sha256 hex
-    
+
     # Should be parseable as CID
     from multiformats import CID
+
     cid = CID.decode(key)
     assert cid.version == 1
     assert cid.codec == "raw"
+
 
 def test_cache_key_determinism():
     """Verify same inputs produce same CID."""
@@ -238,6 +236,7 @@ def test_cache_key_determinism():
     key1 = cache._make_key("test", "openai", "hash1")
     key2 = cache._make_key("test", "openai", "hash1")
     assert key1 == key2
+
 
 def test_cache_key_uniqueness():
     """Verify different inputs produce different CIDs."""
@@ -283,24 +282,22 @@ from abc import ABC, abstractmethod
 from typing import Optional, List
 from ..tdfol_core import Formula, TDFOLKnowledgeBase
 
+
 class ProverStrategy(ABC):
     """Abstract base class for proving strategies."""
-    
+
     @abstractmethod
     def can_handle(self, formula: Formula, kb: TDFOLKnowledgeBase) -> bool:
         """Check if this strategy can handle the given formula."""
         pass
-    
+
     @abstractmethod
     def prove(
-        self, 
-        formula: Formula, 
-        kb: TDFOLKnowledgeBase,
-        timeout: Optional[float] = None
+        self, formula: Formula, kb: TDFOLKnowledgeBase, timeout: Optional[float] = None
     ) -> ProofResult:
         """Attempt to prove the formula."""
         pass
-    
+
     @abstractmethod
     def get_priority(self) -> int:
         """Get strategy priority (higher = try first)."""
@@ -337,45 +334,48 @@ from dataclasses import dataclass
 from typing import List, Optional
 from ..tdfol_core import Formula
 
+
 @dataclass
 class ValidationResult:
     """Result of formula validation."""
+
     valid: bool
     errors: List[str]
     warnings: List[str]
     security_issues: List[str]
 
+
 class FormulaValidator:
     """Unified formula validation."""
-    
+
     def __init__(self, max_size: int = 10000, max_depth: int = 100):
         self.max_size = max_size
         self.max_depth = max_depth
-    
+
     def validate(self, formula: Formula) -> ValidationResult:
         """Validate formula (syntax, security, complexity)."""
         errors = []
         warnings = []
         security_issues = []
-        
+
         # Size checks
         formula_str = str(formula)
         if len(formula_str) > self.max_size:
             errors.append(f"Formula too large: {len(formula_str)} > {self.max_size}")
-        
+
         # Depth checks
         depth = self._compute_depth(formula)
         if depth > self.max_depth:
             errors.append(f"Formula too deep: {depth} > {self.max_depth}")
-        
+
         # Security checks
         security_issues.extend(self._check_security(formula))
-        
+
         return ValidationResult(
             valid=len(errors) == 0 and len(security_issues) == 0,
             errors=errors,
             warnings=warnings,
-            security_issues=security_issues
+            security_issues=security_issues,
         )
 ```
 
@@ -450,27 +450,34 @@ TOTAL: 675+ tests (currently ~100)
 # New file: ipfs_datasets_py/logic/TDFOL/visualization/renderers.py
 from abc import ABC, abstractmethod
 
+
 class Renderer(ABC):
     """Abstract base class for renderers."""
-    
+
     @abstractmethod
     def render(self, data: Any) -> str:
         pass
 
+
 class ASCIIRenderer(Renderer):
     """ASCII text rendering."""
+
     def render(self, data: Any) -> str:
         # Shared ASCII rendering logic
         pass
 
+
 class HTMLRenderer(Renderer):
     """HTML rendering with templates."""
+
     def render(self, data: Any) -> str:
         # Shared HTML rendering logic
         pass
 
+
 class SVGRenderer(Renderer):
     """SVG vector graphics rendering."""
+
     def render(self, data: Any) -> str:
         # Shared SVG rendering logic
         pass
@@ -525,9 +532,9 @@ class SVGRenderer(Renderer):
 **Problem:** Hardcoded values in multiple files:
 ```python
 max_formula_size = 10000  # In tdfol_parser.py
-max_proof_time = 30.0     # In tdfol_prover.py
-max_depth = 100           # In security_validator.py
-cache_size = 1000         # In llm_nl_converter.py
+max_proof_time = 30.0  # In tdfol_prover.py
+max_depth = 100  # In security_validator.py
+cache_size = 1000  # In llm_nl_converter.py
 ```
 
 **Solution:** Centralized configuration
@@ -537,27 +544,28 @@ cache_size = 1000         # In llm_nl_converter.py
 from dataclasses import dataclass
 import os
 
+
 @dataclass
 class TDFOLConfig:
     """Centralized TDFOL configuration."""
-    
+
     # Parser limits
     max_formula_size: int = 10000
     max_parse_depth: int = 100
-    
+
     # Prover settings
     max_proof_time: float = 30.0
     max_proof_steps: int = 10000
     default_strategy: str = "auto"
-    
+
     # Cache settings
     cache_size: int = 1000
     enable_ipfs_cache: bool = True
-    
+
     # Security settings
     enable_validation: bool = True
     max_nested_depth: int = 50
-    
+
     @classmethod
     def from_env(cls) -> "TDFOLConfig":
         """Load config from environment variables."""
@@ -566,6 +574,7 @@ class TDFOLConfig:
             max_proof_time=float(os.getenv("TDFOL_MAX_PROOF_TIME", "30.0")),
             # ... etc
         )
+
 
 # Global config instance
 config = TDFOLConfig.from_env()
@@ -589,33 +598,37 @@ config = TDFOLConfig.from_env()
 1. **Replace `Any` with specific types**
    ```python
    # Before
-   def process(data: Any) -> Any:
-       ...
-   
+   def process(data: Any) -> Any: ...
+
+
    # After
    from typing import Union, Dict, List
-   def process(data: Union[Formula, str]) -> Dict[str, List[str]]:
-       ...
+
+
+   def process(data: Union[Formula, str]) -> Dict[str, List[str]]: ...
    ```
 
 2. **Add `@overload` for polymorphic functions**
    ```python
    from typing import overload
-   
+
+
    @overload
    def parse(text: str) -> Formula: ...
-   
+
+
    @overload
    def parse(text: str, options: ParseOptions) -> ParseResult: ...
-   
-   def parse(text: str, options: Optional[ParseOptions] = None):
-       ...
+
+
+   def parse(text: str, options: Optional[ParseOptions] = None): ...
    ```
 
 3. **Use TypedDict for dictionaries**
    ```python
    from typing import TypedDict
-   
+
+
    class ProofResult(TypedDict):
        success: bool
        formula: Formula

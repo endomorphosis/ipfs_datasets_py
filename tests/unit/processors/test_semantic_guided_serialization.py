@@ -24,9 +24,7 @@ def test_serialized_graph_guided_paths_use_canonical_semantic_traversal():
     nodes["wrong"].add_edge("NEXT", nodes["dead"], {"relevance": 1.0})
     nodes["right"].add_edge("NEXT", nodes["goal"], {"relevance": 1.0})
     dataset.nodes = nodes
-    dataset._node_to_vector_idx = {
-        node_id: index for index, node_id in enumerate(nodes)
-    }
+    dataset._node_to_vector_idx = {node_id: index for index, node_id in enumerate(nodes)}
 
     class VectorIndex:
         _faiss_available = False

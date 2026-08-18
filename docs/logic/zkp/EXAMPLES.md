@@ -35,10 +35,7 @@ verifier = ZKPVerifier()
 
 # Generate proof for theorem with private axioms
 theorem = "All humans are mortal"
-private_axioms = [
-    "Socrates is human",
-    "If X is human, then X is mortal"
-]
+private_axioms = ["Socrates is human", "If X is human, then X is mortal"]
 proof = prover.generate_proof(theorem, private_axioms)
 
 # Verify without learning the axioms
@@ -141,7 +138,7 @@ w1 = circuit.add_wire()  # secret1 (private)
 w2 = circuit.add_wire()  # secret2 (private)
 w3 = circuit.add_wire()  # result (public)
 
-circuit.add_gate('AND', [w1, w2], w3)
+circuit.add_gate("AND", [w1, w2], w3)
 circuit.set_private_input(w1)
 circuit.set_private_input(w2)
 circuit.set_public_input(w3)
@@ -175,8 +172,8 @@ circuit.set_private_input(s3)
 # Two public outputs: (s1 AND s2), (s2 OR s3)
 out1 = circuit.add_wire()
 out2 = circuit.add_wire()
-circuit.add_gate('AND', [s1, s2], out1)
-circuit.add_gate('OR', [s2, s3], out2)
+circuit.add_gate("AND", [s1, s2], out1)
+circuit.add_gate("OR", [s2, s3], out2)
 circuit.set_public_input(out1)
 circuit.set_public_input(out2)
 
@@ -199,30 +196,32 @@ Implement XOR using AND, OR, NOT gates.
 ```python
 from ipfs_datasets_py.logic.zkp import BooleanCircuit, ZKPProver, ZKPVerifier
 
+
 def build_xor_circuit():
     """Build XOR circuit: a XOR b = (a OR b) AND NOT(a AND b)"""
     circuit = BooleanCircuit()
-    
+
     # Inputs
     a = circuit.add_wire()
     b = circuit.add_wire()
     circuit.set_private_input(a)
     circuit.set_private_input(b)
-    
+
     # Intermediate wires
     a_or_b = circuit.add_wire()
     a_and_b = circuit.add_wire()
     not_a_and_b = circuit.add_wire()
     result = circuit.add_wire()
-    
+
     # Gates
-    circuit.add_gate('OR', [a, b], a_or_b)
-    circuit.add_gate('AND', [a, b], a_and_b)
-    circuit.add_gate('NOT', [a_and_b], not_a_and_b)
-    circuit.add_gate('AND', [a_or_b, not_a_and_b], result)
-    
+    circuit.add_gate("OR", [a, b], a_or_b)
+    circuit.add_gate("AND", [a, b], a_and_b)
+    circuit.add_gate("NOT", [a_and_b], not_a_and_b)
+    circuit.add_gate("AND", [a_or_b, not_a_and_b], result)
+
     circuit.set_public_input(result)
     return circuit
+
 
 # Test XOR circuit
 circuit = build_xor_circuit()
@@ -232,9 +231,9 @@ verifier = ZKPVerifier(prover.get_verification_key())
 # Test cases: XOR truth table
 test_cases = [
     ({0: False, 1: False}, [False]),  # 0 XOR 0 = 0
-    ({0: False, 1: True}, [True]),    # 0 XOR 1 = 1
-    ({0: True, 1: False}, [True]),    # 1 XOR 0 = 1
-    ({0: True, 1: True}, [False]),    # 1 XOR 1 = 0
+    ({0: False, 1: True}, [True]),  # 0 XOR 1 = 1
+    ({0: True, 1: False}, [True]),  # 1 XOR 0 = 1
+    ({0: True, 1: True}, [False]),  # 1 XOR 1 = 0
 ]
 
 for witness, expected_output in test_cases:
@@ -250,10 +249,11 @@ Build a 2-to-1 multiplexer: output = select ? b : a
 ```python
 from ipfs_datasets_py.logic.zkp import BooleanCircuit, ZKPProver, ZKPVerifier
 
+
 def build_mux_circuit():
     """Build 2-to-1 MUX: out = sel ? b : a"""
     circuit = BooleanCircuit()
-    
+
     # Inputs (all private)
     a = circuit.add_wire()
     b = circuit.add_wire()
@@ -261,20 +261,21 @@ def build_mux_circuit():
     circuit.set_private_input(a)
     circuit.set_private_input(b)
     circuit.set_private_input(sel)
-    
+
     # Implementation: (sel AND b) OR (NOT(sel) AND a)
     not_sel = circuit.add_wire()
     sel_and_b = circuit.add_wire()
     not_sel_and_a = circuit.add_wire()
     output = circuit.add_wire()
-    
-    circuit.add_gate('NOT', [sel], not_sel)
-    circuit.add_gate('AND', [sel, b], sel_and_b)
-    circuit.add_gate('AND', [not_sel, a], not_sel_and_a)
-    circuit.add_gate('OR', [sel_and_b, not_sel_and_a], output)
-    
+
+    circuit.add_gate("NOT", [sel], not_sel)
+    circuit.add_gate("AND", [sel, b], sel_and_b)
+    circuit.add_gate("AND", [not_sel, a], not_sel_and_a)
+    circuit.add_gate("OR", [sel_and_b, not_sel_and_a], output)
+
     circuit.set_public_input(output)
     return circuit
+
 
 # Test MUX
 circuit = build_mux_circuit()
@@ -303,20 +304,20 @@ from ipfs_datasets_py.logic.zkp import ArithmeticCircuit, ZKPProver, ZKPVerifier
 
 # Build circuit: x * y = 15
 circuit = ArithmeticCircuit()
-x = circuit.create_variable('x', is_public=False)
-y = circuit.create_variable('y', is_public=False)
-result = circuit.create_variable('result', is_public=True)
+x = circuit.create_variable("x", is_public=False)
+y = circuit.create_variable("y", is_public=False)
+result = circuit.create_variable("result", is_public=True)
 
 # Constraint: x * y = result
 circuit.add_constraint(
-    a={'x': 1},           # a = x
-    b={'y': 1},           # b = y
-    c={'result': 1}       # c = result, so x * y = result
+    a={"x": 1},  # a = x
+    b={"y": 1},  # b = y
+    c={"result": 1},  # c = result, so x * y = result
 )
 
 # Prove we know x=3, y=5 such that 3 * 5 = 15
 prover = ZKPProver(circuit)
-witness = {'x': 3, 'y': 5, 'result': 15}
+witness = {"x": 3, "y": 5, "result": 15}
 proof = prover.generate_proof(witness, public_inputs=[15])
 
 verifier = ZKPVerifier(prover.get_verification_key())
@@ -333,40 +334,31 @@ from ipfs_datasets_py.logic.zkp import ArithmeticCircuit, ZKPProver, ZKPVerifier
 
 # Build circuit for x² + 3x - 10 = 0
 circuit = ArithmeticCircuit()
-x = circuit.create_variable('x', is_public=False)
-x_squared = circuit.create_variable('x_squared', is_public=False)
-three_x = circuit.create_variable('three_x', is_public=False)
-result = circuit.create_variable('result', is_public=True)
+x = circuit.create_variable("x", is_public=False)
+x_squared = circuit.create_variable("x_squared", is_public=False)
+three_x = circuit.create_variable("three_x", is_public=False)
+result = circuit.create_variable("result", is_public=True)
 
 # Constraint 1: x * x = x_squared
-circuit.add_constraint(
-    a={'x': 1},
-    b={'x': 1},
-    c={'x_squared': 1}
-)
+circuit.add_constraint(a={"x": 1}, b={"x": 1}, c={"x_squared": 1})
 
 # Constraint 2: 3 * x = three_x
 circuit.add_constraint(
-    a={'x': 3},
+    a={"x": 3},
     b={},  # b = 1 (implicit)
-    c={'three_x': 1}
+    c={"three_x": 1},
 )
 
 # Constraint 3: x_squared + three_x - 10 = result (should be 0)
 circuit.add_constraint(
-    a={'x_squared': 1, 'three_x': 1},
+    a={"x_squared": 1, "three_x": 1},
     b={},  # b = 1
-    c={'result': 1, 'ONE': 10}  # result + 10 = x² + 3x
+    c={"result": 1, "ONE": 10},  # result + 10 = x² + 3x
 )
 
 # Solution: x = 2 (since 2² + 3*2 - 10 = 4 + 6 - 10 = 0)
 prover = ZKPProver(circuit)
-witness = {
-    'x': 2,
-    'x_squared': 4,
-    'three_x': 6,
-    'result': 0
-}
+witness = {"x": 2, "x_squared": 4, "three_x": 6, "result": 0}
 proof = prover.generate_proof(witness, public_inputs=[0])
 
 verifier = ZKPVerifier(prover.get_verification_key())
@@ -382,20 +374,22 @@ Prove a value is within range [0, 15] without revealing it.
 ```python
 from ipfs_datasets_py.logic.zkp import BooleanCircuit, ZKPProver, ZKPVerifier
 
+
 def build_range_proof_circuit(num_bits=4):
     """Prove value fits in num_bits (range [0, 2^num_bits - 1])"""
     circuit = BooleanCircuit()
-    
+
     # Binary representation bits (private)
     bits = []
     for i in range(num_bits):
         bit = circuit.add_wire()
         circuit.set_private_input(bit)
         bits.append(bit)
-    
+
     # Just proving structure exists (simplified)
     # Real range proof would reconstruct value and check
     return circuit, bits
+
 
 # Prove value 7 is in range [0, 15]
 circuit, bits = build_range_proof_circuit(num_bits=4)
@@ -404,10 +398,10 @@ verifier = ZKPVerifier(prover.get_verification_key())
 
 # 7 in binary: 0111
 witness = {
-    bits[0]: True,   # LSB
+    bits[0]: True,  # LSB
     bits[1]: True,
     bits[2]: True,
-    bits[3]: False   # MSB
+    bits[3]: False,  # MSB
 }
 
 proof = prover.generate_proof(witness, public_inputs=[])
@@ -429,8 +423,8 @@ result1, result2 = [circuit.add_wire() for _ in range(2)]
 for w in [a, b, c, d]:
     circuit.set_private_input(w)
 
-circuit.add_gate('AND', [a, b], result1)
-circuit.add_gate('OR', [c, d], result2)
+circuit.add_gate("AND", [a, b], result1)
+circuit.add_gate("OR", [c, d], result2)
 circuit.set_public_input(result1)
 circuit.set_public_input(result2)
 
@@ -454,7 +448,7 @@ from ipfs_datasets_py.logic.zkp import BooleanCircuit, ZKPProver, ZKPVerifier
 # Create reusable circuit
 circuit = BooleanCircuit()
 w1, w2, w3 = [circuit.add_wire() for _ in range(3)]
-circuit.add_gate('AND', [w1, w2], w3)
+circuit.add_gate("AND", [w1, w2], w3)
 circuit.set_private_input(w1)
 circuit.set_private_input(w2)
 circuit.set_public_input(w3)
@@ -493,7 +487,7 @@ import json
 # Generate proof
 circuit = BooleanCircuit()
 w1, w2, w3 = [circuit.add_wire() for _ in range(3)]
-circuit.add_gate('AND', [w1, w2], w3)
+circuit.add_gate("AND", [w1, w2], w3)
 circuit.set_private_input(w1)
 circuit.set_private_input(w2)
 circuit.set_public_input(w3)
@@ -505,25 +499,25 @@ proof = prover.generate_proof(witness, [True])
 # Store proof in IPFS
 try:
     from ipfs_datasets_py import IPFSDatasets
-    
+
     ipfs_ds = IPFSDatasets()
-    
+
     # Serialize proof
     proof_json = json.dumps(proof)
-    
+
     # Add to IPFS
     result = ipfs_ds.ipfs_client.add_json(proof_json)
-    cid = result['Hash']
+    cid = result["Hash"]
     print(f"Proof stored at: {cid}")
-    
+
     # Retrieve and verify
     retrieved_proof_json = ipfs_ds.ipfs_client.get_json(cid)
     retrieved_proof = json.loads(retrieved_proof_json)
-    
+
     verifier = ZKPVerifier(prover.get_verification_key())
     is_valid = verifier.verify_proof(retrieved_proof, [True])
     print(f"Retrieved proof valid: {is_valid}")
-    
+
 except ImportError:
     print("IPFS integration requires ipfs_datasets_py configured")
 ```
@@ -538,27 +532,29 @@ Convert First-Order Logic to ZKP circuit.
 
 from ipfs_datasets_py.logic.zkp import BooleanCircuit, ZKPProver, ZKPVerifier
 
+
 def fol_to_circuit(formula):
     """
     Convert simple FOL formula to circuit.
     Example: "P AND Q" -> circuit with AND gate
     """
     circuit = BooleanCircuit()
-    
+
     if "AND" in formula:
         # Parse "P AND Q"
         p_wire = circuit.add_wire()
         q_wire = circuit.add_wire()
         result_wire = circuit.add_wire()
-        
+
         circuit.set_private_input(p_wire)
         circuit.set_private_input(q_wire)
-        circuit.add_gate('AND', [p_wire, q_wire], result_wire)
+        circuit.add_gate("AND", [p_wire, q_wire], result_wire)
         circuit.set_public_input(result_wire)
-        
+
         return circuit, [p_wire, q_wire]
-    
+
     raise NotImplementedError("Only simple AND supported")
+
 
 # Use FOL formula
 formula = "P AND Q"
@@ -582,7 +578,7 @@ from ipfs_datasets_py.logic.zkp import BooleanCircuit, ZKPProver
 
 circuit = BooleanCircuit()
 w1, w2, w3 = [circuit.add_wire() for _ in range(3)]
-circuit.add_gate('AND', [w1, w2], w3)
+circuit.add_gate("AND", [w1, w2], w3)
 circuit.set_private_input(w1)
 circuit.set_private_input(w2)
 circuit.set_public_input(w3)
@@ -607,7 +603,7 @@ from ipfs_datasets_py.logic.zkp import BooleanCircuit, ZKPProver, ZKPVerifier
 
 circuit = BooleanCircuit()
 w1, w2, w3 = [circuit.add_wire() for _ in range(3)]
-circuit.add_gate('AND', [w1, w2], w3)
+circuit.add_gate("AND", [w1, w2], w3)
 circuit.set_private_input(w1)
 circuit.set_private_input(w2)
 circuit.set_public_input(w3)
@@ -636,6 +632,7 @@ import logging
 # Enable logging
 logging.basicConfig(level=logging.WARNING)
 
+
 def safe_verify(verifier, proof, public_inputs):
     """Verify with error handling."""
     try:
@@ -649,6 +646,7 @@ def safe_verify(verifier, proof, public_inputs):
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
         return False
+
 
 # Test with various inputs
 circuit = BooleanCircuit()
@@ -664,7 +662,7 @@ print(f"Valid proof: {safe_verify(verifier, proof, [True])}")
 
 # Corrupted proof
 corrupted_proof = proof.copy()
-del corrupted_proof['proof_a']
+del corrupted_proof["proof_a"]
 print(f"Corrupted proof: {safe_verify(verifier, corrupted_proof, [True])}")
 ```
 
@@ -676,43 +674,45 @@ print(f"Corrupted proof: {safe_verify(verifier, corrupted_proof, [True])}")
 import time
 from ipfs_datasets_py.logic.zkp import BooleanCircuit, ZKPProver, ZKPVerifier
 
+
 def profile_zkp_performance(num_gates):
     """Profile ZKP performance vs circuit size."""
-    
+
     # Build circuit with num_gates AND gates
     circuit = BooleanCircuit()
     wires = [circuit.add_wire() for _ in range(num_gates + 1)]
-    
+
     for w in wires[:-1]:
         circuit.set_private_input(w)
-    
+
     for i in range(num_gates):
-        circuit.add_gate('AND', [wires[i], wires[i]], wires[-1])
-    
+        circuit.add_gate("AND", [wires[i], wires[i]], wires[-1])
+
     circuit.set_public_input(wires[-1])
-    
+
     # Profile proving
     prover = ZKPProver(circuit)
     witness = {w: True for w in wires[:-1]}
-    
+
     start = time.time()
     proof = prover.generate_proof(witness, [True])
     prove_time = time.time() - start
-    
+
     # Profile verification
     verifier = ZKPVerifier(prover.get_verification_key())
     start = time.time()
     verifier.verify_proof(proof, [True])
     verify_time = time.time() - start
-    
+
     return prove_time, verify_time, len(json.dumps(proof))
+
 
 # Test different circuit sizes
 print("Gates | Prove (ms) | Verify (ms) | Proof Size (bytes)")
 print("-" * 60)
 for num_gates in [10, 50, 100, 500, 1000]:
     prove_t, verify_t, size = profile_zkp_performance(num_gates)
-    print(f"{num_gates:5d} | {prove_t*1000:10.2f} | {verify_t*1000:11.2f} | {size:11d}")
+    print(f"{num_gates:5d} | {prove_t * 1000:10.2f} | {verify_t * 1000:11.2f} | {size:11d}")
 ```
 
 ## Best Practices
@@ -729,6 +729,7 @@ def validate_witness(circuit, witness):
         print(f"Invalid witness: {e}")
         return False
 
+
 if validate_witness(circuit, witness):
     proof = prover.generate_proof(witness, public_inputs)
 ```
@@ -742,8 +743,9 @@ verification_key = prover.get_verification_key()
 
 # Save for later
 import pickle
-with open('keys.pkl', 'wb') as f:
-    pickle.dump({'proving': proving_key, 'verification': verification_key}, f)
+
+with open("keys.pkl", "wb") as f:
+    pickle.dump({"proving": proving_key, "verification": verification_key}, f)
 ```
 
 ### ✅ DO: Use Batch Verification

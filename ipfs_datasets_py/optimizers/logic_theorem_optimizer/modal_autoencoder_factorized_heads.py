@@ -256,8 +256,12 @@ class FactorizedSemanticInteractionHead:
             raise ValueError("head name must be non-empty")
         self.config = config or FactorizedHeadConfig()
         raw_families = tuple(TypedParameterKey.family(str(value)).value for value in families)
-        raw_slots = tuple(TypedParameterKey.semantic_slot(str(value)).value for value in semantic_slots)
-        raw_views = tuple(TypedParameterKey.legal_ir_view(str(value)).value for value in legal_ir_views)
+        raw_slots = tuple(
+            TypedParameterKey.semantic_slot(str(value)).value for value in semantic_slots
+        )
+        raw_views = tuple(
+            TypedParameterKey.legal_ir_view(str(value)).value for value in legal_ir_views
+        )
         if len(set(raw_families)) != len(raw_families):
             raise ValueError("families must be unique")
         if len(set(raw_slots)) != len(raw_slots):
@@ -282,7 +286,10 @@ class FactorizedSemanticInteractionHead:
         output_width = len(self.output_labels)
         rank = self.config.effective_rank
         zeros = lambda shape: np.zeros(shape, dtype=np.float64)
-        self.bias = _finite_array(zeros((output_width,)) if bias is None else bias, (output_width,), "bias")
+        self.bias = _finite_array(
+            zeros((output_width,)) if bias is None else bias, (output_width,), "bias"
+        )
+
         def ordered_rows(value: Any, raw: tuple[str, ...], ordered: tuple[str, ...]) -> Any:
             if value is None:
                 return None
@@ -293,38 +300,59 @@ class FactorizedSemanticInteractionHead:
             return array[[index[name] for name in ordered]]
 
         family_embeddings = ordered_rows(family_embeddings, raw_families, self.families)
-        semantic_slot_embeddings = ordered_rows(semantic_slot_embeddings, raw_slots, self.semantic_slots)
-        legal_ir_view_embeddings = ordered_rows(legal_ir_view_embeddings, raw_views, self.legal_ir_views)
+        semantic_slot_embeddings = ordered_rows(
+            semantic_slot_embeddings, raw_slots, self.semantic_slots
+        )
+        legal_ir_view_embeddings = ordered_rows(
+            legal_ir_view_embeddings, raw_views, self.legal_ir_views
+        )
         family_factors = ordered_rows(family_factors, raw_families, self.families)
         semantic_slot_factors = ordered_rows(semantic_slot_factors, raw_slots, self.semantic_slots)
         legal_ir_view_factors = ordered_rows(legal_ir_view_factors, raw_views, self.legal_ir_views)
         self.family_embeddings = _finite_array(
-            zeros((len(self.families), output_width)) if family_embeddings is None else family_embeddings,
-            (len(self.families), output_width), "family_embeddings",
+            zeros((len(self.families), output_width))
+            if family_embeddings is None
+            else family_embeddings,
+            (len(self.families), output_width),
+            "family_embeddings",
         )
         self.semantic_slot_embeddings = _finite_array(
-            zeros((len(self.semantic_slots), output_width)) if semantic_slot_embeddings is None else semantic_slot_embeddings,
-            (len(self.semantic_slots), output_width), "semantic_slot_embeddings",
+            zeros((len(self.semantic_slots), output_width))
+            if semantic_slot_embeddings is None
+            else semantic_slot_embeddings,
+            (len(self.semantic_slots), output_width),
+            "semantic_slot_embeddings",
         )
         self.legal_ir_view_embeddings = _finite_array(
-            zeros((len(self.legal_ir_views), output_width)) if legal_ir_view_embeddings is None else legal_ir_view_embeddings,
-            (len(self.legal_ir_views), output_width), "legal_ir_view_embeddings",
+            zeros((len(self.legal_ir_views), output_width))
+            if legal_ir_view_embeddings is None
+            else legal_ir_view_embeddings,
+            (len(self.legal_ir_views), output_width),
+            "legal_ir_view_embeddings",
         )
         self.family_factors = _finite_array(
             zeros((len(self.families), rank)) if family_factors is None else family_factors,
-            (len(self.families), rank), "family_factors",
+            (len(self.families), rank),
+            "family_factors",
         )
         self.semantic_slot_factors = _finite_array(
-            zeros((len(self.semantic_slots), rank)) if semantic_slot_factors is None else semantic_slot_factors,
-            (len(self.semantic_slots), rank), "semantic_slot_factors",
+            zeros((len(self.semantic_slots), rank))
+            if semantic_slot_factors is None
+            else semantic_slot_factors,
+            (len(self.semantic_slots), rank),
+            "semantic_slot_factors",
         )
         self.legal_ir_view_factors = _finite_array(
-            zeros((len(self.legal_ir_views), rank)) if legal_ir_view_factors is None else legal_ir_view_factors,
-            (len(self.legal_ir_views), rank), "legal_ir_view_factors",
+            zeros((len(self.legal_ir_views), rank))
+            if legal_ir_view_factors is None
+            else legal_ir_view_factors,
+            (len(self.legal_ir_views), rank),
+            "legal_ir_view_factors",
         )
         self.output_factors = _finite_array(
             zeros((rank, output_width)) if output_factors is None else output_factors,
-            (rank, output_width), "output_factors",
+            (rank, output_width),
+            "output_factors",
         )
         self._residuals: Dict[tuple[str, str, str], VerifiedResidual] = {}
         for residual in residuals:
@@ -366,7 +394,9 @@ class FactorizedSemanticInteractionHead:
             self.legal_ir_view_factors,
             self.output_factors,
         )
-        return sum(int(array.size) for array in arrays) + sum(len(item.values) for item in self._residuals.values())
+        return sum(int(array.size) for array in arrays) + sum(
+            len(item.values) for item in self._residuals.values()
+        )
 
     @property
     def parameter_bytes(self) -> int:
@@ -381,7 +411,9 @@ class FactorizedSemanticInteractionHead:
                 self._view_index[triple[2]],
             )
         except KeyError as exc:
-            raise KeyError(f"unknown typed interaction key for {self.name}: {exc.args[0]!r}") from exc
+            raise KeyError(
+                f"unknown typed interaction key for {self.name}: {exc.args[0]!r}"
+            ) from exc
 
     def forward_base(self, family: str, semantic_slot: str, legal_ir_view: str) -> np.ndarray:
         """Evaluate additive and low-rank terms without the sparse residual."""
@@ -430,7 +462,10 @@ class FactorizedSemanticInteractionHead:
         self._indices(*key)
         if len(residual.values) != len(self.output_labels):
             raise ValueError("residual width does not match head output width")
-        if key not in self._residuals and len(self._residuals) >= self.config.effective_residual_capacity:
+        if (
+            key not in self._residuals
+            and len(self._residuals) >= self.config.effective_residual_capacity
+        ):
             raise ResidualCapacityError(
                 f"head {self.name!r} residual capacity {self.config.effective_residual_capacity} exceeded"
             )
@@ -480,7 +515,9 @@ class FactorizedSemanticInteractionHead:
             semantic_slot_factors=arrays.get("semantic_slot_factors", ()),
             legal_ir_view_factors=arrays.get("legal_ir_view_factors", ()),
             output_factors=arrays.get("output_factors", ()),
-            residuals=tuple(VerifiedResidual.from_dict(item) for item in value.get("residuals", ())),
+            residuals=tuple(
+                VerifiedResidual.from_dict(item) for item in value.get("residuals", ())
+            ),
         )
 
     @property
@@ -628,13 +665,51 @@ def _fit_cp_interaction(
             family_vector, slot_vector, view_vector, output_vector = vectors
             for _ in range(max(12, min(100, int(config.fitting_steps)))):
                 prior = (
-                    family_vector.copy(), slot_vector.copy(),
-                    view_vector.copy(), output_vector.copy(),
+                    family_vector.copy(),
+                    slot_vector.copy(),
+                    view_vector.copy(),
+                    output_vector.copy(),
                 )
-                family_vector = unit(np.einsum("fsvo,s,v,o->f", working, slot_vector, view_vector, output_vector, optimize=True))
-                slot_vector = unit(np.einsum("fsvo,f,v,o->s", working, family_vector, view_vector, output_vector, optimize=True))
-                view_vector = unit(np.einsum("fsvo,f,s,o->v", working, family_vector, slot_vector, output_vector, optimize=True))
-                output_vector = unit(np.einsum("fsvo,f,s,v->o", working, family_vector, slot_vector, view_vector, optimize=True))
+                family_vector = unit(
+                    np.einsum(
+                        "fsvo,s,v,o->f",
+                        working,
+                        slot_vector,
+                        view_vector,
+                        output_vector,
+                        optimize=True,
+                    )
+                )
+                slot_vector = unit(
+                    np.einsum(
+                        "fsvo,f,v,o->s",
+                        working,
+                        family_vector,
+                        view_vector,
+                        output_vector,
+                        optimize=True,
+                    )
+                )
+                view_vector = unit(
+                    np.einsum(
+                        "fsvo,f,s,o->v",
+                        working,
+                        family_vector,
+                        slot_vector,
+                        output_vector,
+                        optimize=True,
+                    )
+                )
+                output_vector = unit(
+                    np.einsum(
+                        "fsvo,f,s,v->o",
+                        working,
+                        family_vector,
+                        slot_vector,
+                        view_vector,
+                        optimize=True,
+                    )
+                )
                 change = max(
                     min(float(np.linalg.norm(current - old)), float(np.linalg.norm(current + old)))
                     for current, old in zip(
@@ -643,18 +718,27 @@ def _fit_cp_interaction(
                 )
                 if change <= 1.0e-12:
                     break
-            coefficient = float(np.einsum(
-                "fsvo,f,s,v,o->", working,
-                family_vector, slot_vector, view_vector, output_vector,
-                optimize=True,
-            ))
+            coefficient = float(
+                np.einsum(
+                    "fsvo,f,s,v,o->",
+                    working,
+                    family_vector,
+                    slot_vector,
+                    view_vector,
+                    output_vector,
+                    optimize=True,
+                )
+            )
             family_result[:, component] = family_vector
             slot_result[:, component] = slot_vector
             view_result[:, component] = view_vector
             output_result[component, :] = coefficient * output_vector
             working -= coefficient * np.einsum(
                 "f,s,v,o->fsvo",
-                family_vector, slot_vector, view_vector, output_vector,
+                family_vector,
+                slot_vector,
+                view_vector,
+                output_vector,
                 optimize=True,
             )
             if float(np.max(np.abs(working))) <= config.tolerance * 0.2:
@@ -691,11 +775,18 @@ def _fit_cp_interaction(
         projected = difference @ output.T
         gradients = [np.zeros_like(family), np.zeros_like(slot), np.zeros_like(view)]
         np.add.at(gradients[0], family_indices, projected * slot[slot_indices] * view[view_indices])
-        np.add.at(gradients[1], slot_indices, projected * family[family_indices] * view[view_indices])
-        np.add.at(gradients[2], view_indices, projected * family[family_indices] * slot[slot_indices])
+        np.add.at(
+            gradients[1], slot_indices, projected * family[family_indices] * view[view_indices]
+        )
+        np.add.at(
+            gradients[2], view_indices, projected * family[family_indices] * slot[slot_indices]
+        )
         gradients.append(latent.T @ difference)
         # Normalize gathered gradients by observations rather than vocabulary.
-        gradients = [gradient / denominator + config.regularization * parameter for gradient, parameter in zip(gradients, factors)]
+        gradients = [
+            gradient / denominator + config.regularization * parameter
+            for gradient, parameter in zip(gradients, factors)
+        ]
         learning_rate = float(config.learning_rate) * min(1.0, 20.0 / math.sqrt(step + 19.0))
         for index, gradient in enumerate(gradients):
             np.clip(gradient, -10.0, 10.0, out=gradient)
@@ -727,7 +818,11 @@ def factorize_interaction_records(
     normalized: Dict[tuple[str, str, str], tuple[float, ...]] = {}
     for raw_key, raw_value in records.items():
         key = _triple(raw_key)
-        values = (float(raw_value),) if isinstance(raw_value, (int, float, np.number)) else tuple(float(item) for item in raw_value)
+        values = (
+            (float(raw_value),)
+            if isinstance(raw_value, (int, float, np.number))
+            else tuple(float(item) for item in raw_value)
+        )
         if not values or not all(math.isfinite(item) for item in values):
             raise ValueError(f"record {key!r} must contain a non-empty finite value vector")
         if key in normalized:
@@ -746,23 +841,33 @@ def factorize_interaction_records(
     f_index = {value: index for index, value in enumerate(families)}
     s_index = {value: index for index, value in enumerate(slots)}
     v_index = {value: index for index, value in enumerate(views)}
-    ordered = sorted(normalized, key=lambda key: (
-        TypedParameterKey.family(key[0]).stable_id,
-        TypedParameterKey.semantic_slot(key[1]).stable_id,
-        TypedParameterKey.legal_ir_view(key[2]).stable_id,
-    ))
+    ordered = sorted(
+        normalized,
+        key=lambda key: (
+            TypedParameterKey.family(key[0]).stable_id,
+            TypedParameterKey.semantic_slot(key[1]).stable_id,
+            TypedParameterKey.legal_ir_view(key[2]).stable_id,
+        ),
+    )
     family_indices = np.asarray([f_index[key[0]] for key in ordered], dtype=np.int64)
     slot_indices = np.asarray([s_index[key[1]] for key in ordered], dtype=np.int64)
     view_indices = np.asarray([v_index[key[2]] for key in ordered], dtype=np.int64)
-    targets = np.ascontiguousarray(np.asarray([normalized[key] for key in ordered], dtype=np.float64).reshape((-1, width)))
+    targets = np.ascontiguousarray(
+        np.asarray([normalized[key] for key in ordered], dtype=np.float64).reshape((-1, width))
+    )
+
     def fit_head(mask: np.ndarray) -> FactorizedSemanticInteractionHead:
         selected_targets = targets[mask]
         selected_families = family_indices[mask]
         selected_slots = slot_indices[mask]
         selected_views = view_indices[mask]
         bias, family_add, slot_add, view_add = _fit_additive(
-            selected_targets, selected_families, selected_slots, selected_views,
-            (len(families), len(slots), len(views)), effective.additive_enabled,
+            selected_targets,
+            selected_families,
+            selected_slots,
+            selected_views,
+            (len(families), len(slots), len(views)),
+            effective.additive_enabled,
         )
         additive_prediction = (
             bias
@@ -772,22 +877,39 @@ def factorize_interaction_records(
         )
         factors = _fit_cp_interaction(
             selected_targets - additive_prediction,
-            selected_families, selected_slots, selected_views,
-            (len(families), len(slots), len(views)), width, effective,
+            selected_families,
+            selected_slots,
+            selected_views,
+            (len(families), len(slots), len(views)),
+            width,
+            effective,
         )
         return FactorizedSemanticInteractionHead(
-            name=name, families=families, semantic_slots=slots, legal_ir_views=views,
-            output_labels=labels, config=effective, bias=bias,
-            family_embeddings=family_add, semantic_slot_embeddings=slot_add,
-            legal_ir_view_embeddings=view_add, family_factors=factors[0],
-            semantic_slot_factors=factors[1], legal_ir_view_factors=factors[2],
+            name=name,
+            families=families,
+            semantic_slots=slots,
+            legal_ir_views=views,
+            output_labels=labels,
+            config=effective,
+            bias=bias,
+            family_embeddings=family_add,
+            semantic_slot_embeddings=slot_add,
+            legal_ir_view_embeddings=view_add,
+            family_factors=factors[0],
+            semantic_slot_factors=factors[1],
+            legal_ir_view_factors=factors[2],
             output_factors=factors[3],
         )
 
     active_mask = np.ones(len(ordered), dtype=np.bool_)
     head = fit_head(active_mask)
-    source_digest = _digest({"name": name, "records": [[*key, list(normalized[key])] for key in ordered]})
-    exception_receipts = {_triple(key): str(value) for key, value in (verified_exceptions or {}).items()}
+    source_digest = _digest(
+        {"name": name, "records": [[*key, list(normalized[key])] for key in ordered]}
+    )
+    exception_receipts = {
+        _triple(key): str(value) for key, value in (verified_exceptions or {}).items()
+    }
+
     def measured_errors() -> list[tuple[tuple[str, str, str], np.ndarray, float]]:
         result = []
         for key in ordered:
@@ -806,7 +928,8 @@ def factorize_interaction_records(
     # still re-measured and receipt-bound below; they never silently disappear.
     if len(base_errors) > capacity and capacity > 0:
         excluded = {
-            key for key, _difference, _error in sorted(
+            key
+            for key, _difference, _error in sorted(
                 base_errors, key=lambda item: (-item[2], item[0])
             )[:capacity]
         }
@@ -826,17 +949,32 @@ def factorize_interaction_records(
         if verified_exceptions is not None:
             receipt = exception_receipts.get(key, "")
             if not receipt:
-                raise UnverifiedResidualError(f"interaction exception {key!r} is not externally verified")
+                raise UnverifiedResidualError(
+                    f"interaction exception {key!r} is not externally verified"
+                )
         else:
-            receipt = "migration-verification-" + _digest({
-                "error": error, "key": key, "source_digest": source_digest,
-                "tolerance": effective.tolerance,
-            })[:32]
-        head.add_verified_residual(VerifiedResidual(
-            family=key[0], semantic_slot=key[1], legal_ir_view=key[2],
-            values=tuple(float(item) for item in difference),
-            verification_id=receipt, observed_error=error, tolerance=effective.tolerance,
-        ))
+            receipt = (
+                "migration-verification-"
+                + _digest(
+                    {
+                        "error": error,
+                        "key": key,
+                        "source_digest": source_digest,
+                        "tolerance": effective.tolerance,
+                    }
+                )[:32]
+            )
+        head.add_verified_residual(
+            VerifiedResidual(
+                family=key[0],
+                semantic_slot=key[1],
+                legal_ir_view=key[2],
+                values=tuple(float(item) for item in difference),
+                verification_id=receipt,
+                observed_error=error,
+                tolerance=effective.tolerance,
+            )
+        )
     final_errors = [
         float(np.max(np.abs(head.forward(*key) - np.asarray(normalized[key], dtype=np.float64))))
         for key in ordered
@@ -876,7 +1014,9 @@ class FactorizedSemanticInteractionHeads:
 
     def __post_init__(self) -> None:
         normalized = {str(name): head for name, head in self.heads.items()}
-        if any(not isinstance(head, FactorizedSemanticInteractionHead) for head in normalized.values()):
+        if any(
+            not isinstance(head, FactorizedSemanticInteractionHead) for head in normalized.values()
+        ):
             raise TypeError("all heads must be FactorizedSemanticInteractionHead instances")
         object.__setattr__(self, "heads", dict(sorted(normalized.items())))
         object.__setattr__(self, "migration_reports", dict(sorted(self.migration_reports.items())))
@@ -908,16 +1048,28 @@ class FactorizedSemanticInteractionHeads:
         return self.heads[FAMILY_LOGIT_HEAD].scalar(family, semantic_slot, legal_ir_view)
 
     def legal_ir_view_logits(
-        self, family: str, semantic_slot: str, legal_ir_views: Optional[Sequence[str]] = None,
+        self,
+        family: str,
+        semantic_slot: str,
+        legal_ir_views: Optional[Sequence[str]] = None,
     ) -> Dict[str, float]:
         head = self.heads[LEGAL_IR_VIEW_LOGIT_HEAD]
-        return {view: head.scalar(family, semantic_slot, view) for view in (legal_ir_views or head.legal_ir_views)}
+        return {
+            view: head.scalar(family, semantic_slot, view)
+            for view in (legal_ir_views or head.legal_ir_views)
+        }
 
     def family_logits(
-        self, semantic_slot: str, legal_ir_view: str, families: Optional[Sequence[str]] = None,
+        self,
+        semantic_slot: str,
+        legal_ir_view: str,
+        families: Optional[Sequence[str]] = None,
     ) -> Dict[str, float]:
         head = self.heads[FAMILY_LOGIT_HEAD]
-        return {family: head.scalar(family, semantic_slot, legal_ir_view) for family in (families or head.families)}
+        return {
+            family: head.scalar(family, semantic_slot, legal_ir_view)
+            for family in (families or head.families)
+        }
 
     def to_dict(self, *, include_reports: bool = True) -> Dict[str, Any]:
         result: Dict[str, Any] = {
@@ -927,7 +1079,9 @@ class FactorizedSemanticInteractionHeads:
             "source_state_digest": self.source_state_digest,
         }
         if include_reports:
-            result["migration_reports"] = {name: report.to_dict() for name, report in self.migration_reports.items()}
+            result["migration_reports"] = {
+                name: report.to_dict() for name, report in self.migration_reports.items()
+            }
         return result
 
     @classmethod
@@ -940,7 +1094,10 @@ class FactorizedSemanticInteractionHeads:
         # Reports are audit output and are intentionally not trusted on load;
         # callers can recompute verification against canonical observations.
         return cls(
-            heads={str(name): FactorizedSemanticInteractionHead.from_dict(head) for name, head in raw_heads.items()},
+            heads={
+                str(name): FactorizedSemanticInteractionHead.from_dict(head)
+                for name, head in raw_heads.items()
+            },
             source_state_digest=str(value.get("source_state_digest") or ""),
             metadata=dict(value.get("metadata") or {}),
         )
@@ -999,7 +1156,11 @@ class FactorizedHeadQualityReport:
 
     @property
     def disagreement(self) -> bool:
-        return self.ce_or_cosine_improved and bool(self.protected_regressions or self.missing_categories or self.semantic_equivalence.get("accepted") is False)
+        return self.ce_or_cosine_improved and bool(
+            self.protected_regressions
+            or self.missing_categories
+            or self.semantic_equivalence.get("accepted") is False
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1009,29 +1170,39 @@ class FactorizedHeadQualityReport:
             "disagreement": self.disagreement,
             "missing_categories": list(self.missing_categories),
             "objective_improvements": dict(self.objective_improvements),
-            "protected_regressions": {key: dict(value) for key, value in self.protected_regressions.items()},
+            "protected_regressions": {
+                key: dict(value) for key, value in self.protected_regressions.items()
+            },
             "semantic_equivalence": dict(self.semantic_equivalence),
         }
 
 
 _CATEGORY_METRICS: Mapping[str, Mapping[str, int]] = {
     "proof_validity": {
-        "hammer_proof_success_rate": 1, "proof_validity_rate": 1,
-        "symbolic_validity_success_rate": 1, "symbolic_validity_penalty": -1,
+        "hammer_proof_success_rate": 1,
+        "proof_validity_rate": 1,
+        "symbolic_validity_success_rate": 1,
+        "symbolic_validity_penalty": -1,
     },
     "provenance": {
-        "provenance_alignment_success_rate": 1, "provenance_consistency_success_rate": 1,
-        "provenance_coverage": 1, "missing_provenance_id_penalty": -1,
+        "provenance_alignment_success_rate": 1,
+        "provenance_consistency_success_rate": 1,
+        "provenance_coverage": 1,
+        "missing_provenance_id_penalty": -1,
         "provenance_regression_penalty": -1,
     },
     "round_trip": {
-        "round_trip_reconstruction_success_rate": 1, "hammer_reconstruction_success_rate": 1,
-        "reconstruction_success_rate": 1, "round_trip_loss": -1,
+        "round_trip_reconstruction_success_rate": 1,
+        "hammer_reconstruction_success_rate": 1,
+        "reconstruction_success_rate": 1,
+        "round_trip_loss": -1,
         "structural_text_reconstruction_loss": -1,
     },
     "anti_copy": {
-        "anti_copy_success_rate": 1, "source_copy_penalty": -1,
-        "source_copy_reward_hack_penalty": -1, "round_trip_source_copy_guardrail_loss": -1,
+        "anti_copy_success_rate": 1,
+        "source_copy_penalty": -1,
+        "source_copy_reward_hack_penalty": -1,
+        "round_trip_source_copy_guardrail_loss": -1,
     },
 }
 _OBJECTIVE_DIRECTIONS = {
@@ -1058,7 +1229,9 @@ def _flatten_metrics(value: Mapping[str, Any], prefix: str = "") -> Dict[str, fl
     return result
 
 
-def _matching_metrics(flat: Mapping[str, float], names: Mapping[str, int]) -> Dict[str, tuple[float, int]]:
+def _matching_metrics(
+    flat: Mapping[str, float], names: Mapping[str, int]
+) -> Dict[str, tuple[float, int]]:
     result: Dict[str, tuple[float, int]] = {}
     for path, value in flat.items():
         leaf = path.rsplit(".", 1)[-1]
@@ -1109,9 +1282,11 @@ def evaluate_factorized_head_quality(
             SemanticEquivalenceConfig,
             compare_legal_ir_semantic_equivalence,
         )
+
         families = effective.semantic_families or tuple(LEGAL_IR_EVALUATION_FAMILIES)
         semantic = compare_legal_ir_semantic_equivalence(
-            baseline_metrics, candidate_metrics,
+            baseline_metrics,
+            candidate_metrics,
             config=SemanticEquivalenceConfig(
                 families=families,
                 regression_tolerance=effective.tolerance,
@@ -1128,7 +1303,9 @@ def evaluate_factorized_head_quality(
     return FactorizedHeadQualityReport(
         accepted=not reasons,
         objective_improvements=dict(sorted(improvements.items())),
-        protected_regressions={key: dict(sorted(value.items())) for key, value in sorted(regressions.items())},
+        protected_regressions={
+            key: dict(sorted(value.items())) for key, value in sorted(regressions.items())
+        },
         missing_categories=tuple(sorted(missing)),
         semantic_equivalence=semantic_payload,
         block_reasons=tuple(reasons),
@@ -1143,7 +1320,9 @@ def require_factorized_head_quality(
 ) -> FactorizedHeadQualityReport:
     report = evaluate_factorized_head_quality(baseline_metrics, candidate_metrics, config=config)
     if not report.accepted:
-        raise FactorizedQualityGateError("factorized head candidate rejected: " + ", ".join(report.block_reasons))
+        raise FactorizedQualityGateError(
+            "factorized head candidate rejected: " + ", ".join(report.block_reasons)
+        )
     return report
 
 
@@ -1162,11 +1341,17 @@ def factorized_head_ablation_configs(
         if value < 0:
             raise ValueError("ablation ranks must be non-negative")
         result[f"rank_{value}_residual_on"] = replace(
-            source, rank=value, low_rank_enabled=value > 0, residual_enabled=True,
+            source,
+            rank=value,
+            low_rank_enabled=value > 0,
+            residual_enabled=True,
         )
         if include_residual_ablation:
             result[f"rank_{value}_residual_off"] = replace(
-                source, rank=value, low_rank_enabled=value > 0, residual_enabled=False,
+                source,
+                rank=value,
+                low_rank_enabled=value > 0,
+                residual_enabled=False,
             )
     return result
 

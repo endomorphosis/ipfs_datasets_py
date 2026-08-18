@@ -73,4 +73,3 @@ def test_pipeline_records_score_delta_from_second_run(monkeypatch: Any) -> None:
     assert delta_labels is not None
     assert delta_labels["domain"] == "general"
     assert delta_labels["pipeline"] == "graphrag"
-

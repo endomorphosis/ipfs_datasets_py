@@ -21,7 +21,9 @@ def test_retrieve_from_rag_handles_typed_query_error() -> None:
     rag = RAGIntegration()
     rag.rag_system = _FailingRAG()
 
-    context = rag._retrieve_from_rag("All drivers must have licenses", num_documents=2, num_examples=1)
+    context = rag._retrieve_from_rag(
+        "All drivers must have licenses", num_documents=2, num_examples=1
+    )
 
     assert context.query == "All drivers must have licenses"
     assert context.confidence == 0.0

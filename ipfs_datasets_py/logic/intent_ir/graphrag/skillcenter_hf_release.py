@@ -41,24 +41,12 @@ from .skillcenter_corpus import SkillCenterCorpusIndex
 from .skillcenter_corpus_bm25 import SkillCenterCorpusBM25Index
 
 
-SKILLCENTER_HF_RELEASE_SCHEMA_VERSION_V2: Final = (
-    "skillcenter-huggingface-release/v2"
-)
-SKILLCENTER_HF_RELEASE_SCHEMA_VERSION: Final = (
-    "skillcenter-huggingface-release/v3"
-)
-SKILLCENTER_HF_BM25_POSTING_SCHEMA_VERSION: Final = (
-    "skillcenter-hf-bm25-posting/v1"
-)
-SKILLCENTER_HF_VECTOR_CHUNK_SCHEMA_VERSION: Final = (
-    "skillcenter-hf-vector-chunk/v2"
-)
-SKILLCENTER_HF_GRAPH_ADJACENCY_SCHEMA_VERSION: Final = (
-    "skillcenter-hf-graph-adjacency/v1"
-)
-SKILLCENTER_HF_META_SCHEMA_VERSION: Final = (
-    "skillcenter-hf-shard-meta/v1"
-)
+SKILLCENTER_HF_RELEASE_SCHEMA_VERSION_V2: Final = "skillcenter-huggingface-release/v2"
+SKILLCENTER_HF_RELEASE_SCHEMA_VERSION: Final = "skillcenter-huggingface-release/v3"
+SKILLCENTER_HF_BM25_POSTING_SCHEMA_VERSION: Final = "skillcenter-hf-bm25-posting/v1"
+SKILLCENTER_HF_VECTOR_CHUNK_SCHEMA_VERSION: Final = "skillcenter-hf-vector-chunk/v2"
+SKILLCENTER_HF_GRAPH_ADJACENCY_SCHEMA_VERSION: Final = "skillcenter-hf-graph-adjacency/v1"
+SKILLCENTER_HF_META_SCHEMA_VERSION: Final = "skillcenter-hf-shard-meta/v1"
 DEFAULT_RELEASE_REPO_ID: Final = "Publicus/skillcenter-ir"
 RELEASE_CHUNK_ROWS: Final = 4096
 BM25_TERMS_PER_SHARD: Final = 4096
@@ -70,9 +58,7 @@ FTS5_B: Final = 0.75
 VECTOR_TRAINING_ROWS: Final = 65_536
 VECTOR_COARSE_CLUSTERS: Final = 64
 VECTOR_MAX_SHARDS_PER_CENTROID: Final = 2
-VECTOR_MAX_ROWS_PER_CENTROID: Final = (
-    VECTOR_MAX_SHARDS_PER_CENTROID * RELEASE_CHUNK_ROWS
-)
+VECTOR_MAX_ROWS_PER_CENTROID: Final = VECTOR_MAX_SHARDS_PER_CENTROID * RELEASE_CHUNK_ROWS
 VECTOR_DEFAULT_PROBE_CENTROIDS: Final = 4
 VECTOR_KMEANS_SEED: Final = 0x5C11C3
 GRAPH_ADJACENCY_POINTERS_PER_ROW: Final = 4096
@@ -100,9 +86,7 @@ def _semantic_traversal_source(
         )
     )
     if not source.is_file():
-        raise SkillCenterHFReleaseError(
-            f"semantic traversal module does not exist: {source}"
-        )
+        raise SkillCenterHFReleaseError(f"semantic traversal module does not exist: {source}")
     return source
 
 
@@ -193,9 +177,7 @@ def build_skillcenter_hf_release(
 
     repo_id = str(dataset_repo_id or "").strip()
     if "/" not in repo_id or repo_id.startswith("/") or repo_id.endswith("/"):
-        raise SkillCenterHFReleaseError(
-            "dataset_repo_id must have the form namespace/repository"
-        )
+        raise SkillCenterHFReleaseError("dataset_repo_id must have the form namespace/repository")
     output = Path(output_dir).expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
     complete_manifest = output / "manifest.json"
@@ -203,13 +185,8 @@ def build_skillcenter_hf_release(
         try:
             existing_manifest = json.loads(complete_manifest.read_bytes())
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-            raise SkillCenterHFReleaseError(
-                "existing release manifest is malformed"
-            ) from exc
-        if (
-            existing_manifest.get("schema_version")
-            != SKILLCENTER_HF_RELEASE_SCHEMA_VERSION
-        ):
+            raise SkillCenterHFReleaseError("existing release manifest is malformed") from exc
+        if existing_manifest.get("schema_version") != SKILLCENTER_HF_RELEASE_SCHEMA_VERSION:
             raise SkillCenterHFReleaseError(
                 "existing release uses an older vector layout; use "
                 "--rebalance-from with a separate v2 output directory"
@@ -241,9 +218,7 @@ def build_skillcenter_hf_release(
         vectors.summary.dataset_revision,
     }
     if len(revisions) != 1:
-        raise SkillCenterHFReleaseError(
-            f"input dataset revisions differ: {sorted(revisions)}"
-        )
+        raise SkillCenterHFReleaseError(f"input dataset revisions differ: {sorted(revisions)}")
     dataset_revision = next(iter(revisions))
     expected_rows = corpus.summary.source_records
     if {
@@ -252,9 +227,7 @@ def build_skillcenter_hf_release(
         graph.summary.skill_nodes,
         vectors.summary.vector_count,
     } != {expected_rows}:
-        raise SkillCenterHFReleaseError(
-            "corpus, BM25, graph, and vector coverage differs"
-        )
+        raise SkillCenterHFReleaseError("corpus, BM25, graph, and vector coverage differs")
 
     corpus_meta = _export_corpus(
         corpus,
@@ -331,16 +304,12 @@ def build_skillcenter_hf_release(
     if query_script is not None:
         source = Path(query_script).expanduser().resolve()
         if not source.is_file():
-            raise SkillCenterHFReleaseError(
-                f"query script does not exist: {source}"
-            )
+            raise SkillCenterHFReleaseError(f"query script does not exist: {source}")
         target = output / "scripts" / "query_skillcenter_hf.py"
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
         copied_files["query_script"] = _file_descriptor(target, root=output)
-        semantic_source = _semantic_traversal_source(
-            semantic_traversal_module
-        )
+        semantic_source = _semantic_traversal_source(semantic_traversal_module)
         semantic_target = output / "scripts" / "semantic_traversal.py"
         shutil.copy2(semantic_source, semantic_target)
         copied_files["semantic_traversal"] = _file_descriptor(
@@ -350,9 +319,7 @@ def build_skillcenter_hf_release(
     if skill_dir is not None:
         source = Path(skill_dir).expanduser().resolve()
         if not (source / "SKILL.md").is_file():
-            raise SkillCenterHFReleaseError(
-                f"skill directory is incomplete: {source}"
-            )
+            raise SkillCenterHFReleaseError(f"skill directory is incomplete: {source}")
         target = output / "skill" / source.name
         target.parent.mkdir(parents=True, exist_ok=True)
         _copy_skill_tree(source, target)
@@ -362,17 +329,11 @@ def build_skillcenter_hf_release(
         "bm25_manifest_sha256": _sha256_file(bm25.root / "manifest.json"),
         "bm25_sqlite_cid": bm25.summary.sqlite_cid,
         "corpus_cid": corpus.summary.corpus_cid,
-        "corpus_manifest_sha256": _sha256_file(
-            corpus.root / "manifest.json"
-        ),
+        "corpus_manifest_sha256": _sha256_file(corpus.root / "manifest.json"),
         "graph_cid": graph.summary.graph_cid,
-        "graph_manifest_sha256": _sha256_file(
-            graph.root / "manifest.json"
-        ),
+        "graph_manifest_sha256": _sha256_file(graph.root / "manifest.json"),
         "vector_faiss_cid": vectors.summary.faiss_cid,
-        "vector_manifest_sha256": _sha256_file(
-            vectors.root / "manifest.json"
-        ),
+        "vector_manifest_sha256": _sha256_file(vectors.root / "manifest.json"),
     }
     counts = {
         "bm25_document_chunks": len(document_meta),
@@ -387,20 +348,12 @@ def build_skillcenter_hf_release(
         "graph_edges": sum(int(row["row_count"]) for row in graph_edge_meta),
         "graph_node_chunks": len(graph_node_meta),
         "graph_nodes": sum(int(row["row_count"]) for row in graph_node_meta),
-        "graph_outgoing_adjacency_rows": int(
-            graph_outgoing_stats["row_count"]
-        ),
+        "graph_outgoing_adjacency_rows": int(graph_outgoing_stats["row_count"]),
         "graph_outgoing_adjacency_shards": len(graph_outgoing_meta),
-        "graph_outgoing_adjacency_edges": int(
-            graph_outgoing_stats["adjacency_count"]
-        ),
-        "graph_incoming_adjacency_rows": int(
-            graph_incoming_stats["row_count"]
-        ),
+        "graph_outgoing_adjacency_edges": int(graph_outgoing_stats["adjacency_count"]),
+        "graph_incoming_adjacency_rows": int(graph_incoming_stats["row_count"]),
         "graph_incoming_adjacency_shards": len(graph_incoming_meta),
-        "graph_incoming_adjacency_edges": int(
-            graph_incoming_stats["adjacency_count"]
-        ),
+        "graph_incoming_adjacency_edges": int(graph_incoming_stats["adjacency_count"]),
         "vector_chunks": len(vector_meta),
         "vector_rows": sum(int(row["row_count"]) for row in vector_meta),
     }
@@ -409,9 +362,7 @@ def build_skillcenter_hf_release(
         counts["bm25_documents"],
         counts["vector_rows"],
     } != {expected_rows}:
-        raise SkillCenterHFReleaseError(
-            f"release row coverage differs: {counts}"
-        )
+        raise SkillCenterHFReleaseError(f"release row coverage differs: {counts}")
     if counts["graph_nodes"] != graph.summary.graph_nodes:
         raise SkillCenterHFReleaseError("graph node export is incomplete")
     if counts["graph_edges"] != graph.summary.graph_edges:
@@ -420,15 +371,11 @@ def build_skillcenter_hf_release(
         counts["graph_outgoing_adjacency_edges"],
         counts["graph_incoming_adjacency_edges"],
     } != {graph.summary.graph_edges}:
-        raise SkillCenterHFReleaseError(
-            "graph adjacency export is incomplete"
-        )
+        raise SkillCenterHFReleaseError("graph adjacency export is incomplete")
 
     manifest = {
         "bm25": {
-            "average_document_length": bm25_stats[
-                "average_document_length"
-            ],
+            "average_document_length": bm25_stats["average_document_length"],
             "b": FTS5_B,
             "body_weight": bm25.config.body_weight,
             "k1": FTS5_K1,
@@ -446,12 +393,8 @@ def build_skillcenter_hf_release(
         "indexes": index_descriptors,
         "input_bindings": input_bindings,
         "graph": {
-            "adjacency_pointers_per_row": (
-                GRAPH_ADJACENCY_POINTERS_PER_ROW
-            ),
-            "adjacency_pointers_per_shard": (
-                GRAPH_ADJACENCY_POINTERS_PER_SHARD
-            ),
+            "adjacency_pointers_per_row": (GRAPH_ADJACENCY_POINTERS_PER_ROW),
+            "adjacency_pointers_per_shard": (GRAPH_ADJACENCY_POINTERS_PER_SHARD),
             "directions": ["incoming", "outgoing"],
             "max_remote_walk_depth": 8,
             "ordering": "score_desc_nulls_last",
@@ -467,9 +410,7 @@ def build_skillcenter_hf_release(
         "vector": _vector_manifest_config(
             dimension=vectors.summary.dimension,
             model_name=vectors.summary.model_name,
-            centroid_count=len(
-                {int(row["cluster_id"]) for row in vector_meta}
-            ),
+            centroid_count=len({int(row["cluster_id"]) for row in vector_meta}),
             shard_count=len(vector_meta),
         ),
     }
@@ -506,25 +447,17 @@ def refresh_skillcenter_hf_release_support(
     try:
         manifest = json.loads(manifest_path.read_bytes())
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise SkillCenterHFReleaseError(
-            "completed release manifest is malformed"
-        ) from exc
+        raise SkillCenterHFReleaseError("completed release manifest is malformed") from exc
     source_script = Path(query_script).expanduser().resolve()
     source_skill = Path(skill_dir).expanduser().resolve()
     if not source_script.is_file():
-        raise SkillCenterHFReleaseError(
-            f"query script does not exist: {source_script}"
-        )
+        raise SkillCenterHFReleaseError(f"query script does not exist: {source_script}")
     if not (source_skill / "SKILL.md").is_file():
-        raise SkillCenterHFReleaseError(
-            f"skill directory is incomplete: {source_skill}"
-        )
+        raise SkillCenterHFReleaseError(f"skill directory is incomplete: {source_skill}")
     target_script = release_root / "scripts" / "query_skillcenter_hf.py"
     target_script.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source_script, target_script)
-    semantic_source = _semantic_traversal_source(
-        semantic_traversal_module
-    )
+    semantic_source = _semantic_traversal_source(semantic_traversal_module)
     semantic_target = release_root / "scripts" / "semantic_traversal.py"
     shutil.copy2(semantic_source, semantic_target)
     target_skill = release_root / "skill" / source_skill.name
@@ -572,28 +505,20 @@ def retarget_skillcenter_hf_release(
 
     repo_id = str(dataset_repo_id or "").strip()
     if "/" not in repo_id or repo_id.startswith("/") or repo_id.endswith("/"):
-        raise SkillCenterHFReleaseError(
-            "dataset_repo_id must have the form namespace/repository"
-        )
+        raise SkillCenterHFReleaseError("dataset_repo_id must have the form namespace/repository")
     source = Path(source_release).expanduser().resolve()
     output = Path(output_dir).expanduser().resolve()
     if source == output:
-        raise SkillCenterHFReleaseError(
-            "retarget output must differ from the source release"
-        )
+        raise SkillCenterHFReleaseError("retarget output must differ from the source release")
     if output.exists():
         if (output / "manifest.json").is_file():
             return validate_skillcenter_hf_release(output)
-        raise SkillCenterHFReleaseError(
-            f"retarget output already exists: {output}"
-        )
+        raise SkillCenterHFReleaseError(f"retarget output already exists: {output}")
     try:
         manifest_bytes = (source / "manifest.json").read_bytes()
         manifest = json.loads(manifest_bytes)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise SkillCenterHFReleaseError(
-            "source release manifest is missing or malformed"
-        ) from exc
+        raise SkillCenterHFReleaseError("source release manifest is missing or malformed") from exc
     if (
         not isinstance(manifest, Mapping)
         or manifest.get("schema_version")
@@ -603,16 +528,12 @@ def retarget_skillcenter_hf_release(
         }
         or manifest.get("primary_key") != "entry_cid"
     ):
-        raise SkillCenterHFReleaseError(
-            "retarget requires a supported CID-keyed source release"
-        )
+        raise SkillCenterHFReleaseError("retarget requires a supported CID-keyed source release")
 
     source_script = Path(query_script).expanduser().resolve()
     source_skill = Path(skill_dir).expanduser().resolve()
     if not source_script.is_file() or not (source_skill / "SKILL.md").is_file():
-        raise SkillCenterHFReleaseError(
-            "current query script or agent skill is missing"
-        )
+        raise SkillCenterHFReleaseError("current query script or agent skill is missing")
 
     output.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(
@@ -633,12 +554,8 @@ def retarget_skillcenter_hf_release(
         for root_name in ("data", "indexes"):
             source_root = source / root_name
             if not source_root.is_dir():
-                raise SkillCenterHFReleaseError(
-                    f"source release is missing {root_name}/"
-                )
-            for source_path in sorted(
-                path for path in source_root.rglob("*") if path.is_file()
-            ):
+                raise SkillCenterHFReleaseError(f"source release is missing {root_name}/")
+            for source_path in sorted(path for path in source_root.rglob("*") if path.is_file()):
                 relative = source_path.relative_to(source)
                 target = staging.joinpath(*relative.parts)
                 target.parent.mkdir(parents=True, exist_ok=True)
@@ -650,9 +567,7 @@ def retarget_skillcenter_hf_release(
         target_script = staging / "scripts" / "query_skillcenter_hf.py"
         target_script.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_script, target_script)
-        semantic_source = _semantic_traversal_source(
-            semantic_traversal_module
-        )
+        semantic_source = _semantic_traversal_source(semantic_traversal_module)
         semantic_target = staging / "scripts" / "semantic_traversal.py"
         shutil.copy2(semantic_source, semantic_target)
         target_skill = staging / "skill" / source_skill.name
@@ -673,12 +588,8 @@ def retarget_skillcenter_hf_release(
             "skill": _tree_descriptor(target_skill, root=staging),
         }
         retargeted["publication"] = {
-            "source_dataset_repo_id": str(
-                manifest.get("dataset_repo_id") or ""
-            ),
-            "source_manifest_sha256": hashlib.sha256(
-                manifest_bytes
-            ).hexdigest(),
+            "source_dataset_repo_id": str(manifest.get("dataset_repo_id") or ""),
+            "source_manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
             "target_dataset_repo_id": repo_id,
         }
         _atomic_write_bytes(
@@ -748,15 +659,11 @@ def rebalance_skillcenter_hf_release_vectors(
     if output.exists():
         if (output / "manifest.json").is_file():
             return validate_skillcenter_hf_release(output)
-        raise SkillCenterHFReleaseError(
-            f"vector rebalance output already exists: {output}"
-        )
+        raise SkillCenterHFReleaseError(f"vector rebalance output already exists: {output}")
     try:
         manifest = json.loads((source / "manifest.json").read_bytes())
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise SkillCenterHFReleaseError(
-            "source release manifest is missing or malformed"
-        ) from exc
+        raise SkillCenterHFReleaseError("source release manifest is missing or malformed") from exc
     if (
         not isinstance(manifest, Mapping)
         or manifest.get("schema_version")
@@ -767,15 +674,11 @@ def rebalance_skillcenter_hf_release_vectors(
         }
         or manifest.get("primary_key") != "entry_cid"
     ):
-        raise SkillCenterHFReleaseError(
-            "source release schema is unsupported"
-        )
+        raise SkillCenterHFReleaseError("source release schema is unsupported")
     source_script = Path(query_script).expanduser().resolve()
     source_skill = Path(skill_dir).expanduser().resolve()
     if not source_script.is_file() or not (source_skill / "SKILL.md").is_file():
-        raise SkillCenterHFReleaseError(
-            "current query script or agent skill is missing"
-        )
+        raise SkillCenterHFReleaseError("current query script or agent skill is missing")
 
     corpus = SkillCenterCorpusIndex.load(corpus_dir, verify_rows=False)
     vectors = SkillCenterCIDVectorIndex.load(vector_dir)
@@ -787,9 +690,7 @@ def rebalance_skillcenter_hf_release_vectors(
         or corpus.summary.corpus_cid != bindings.get("corpus_cid")
         or vectors.summary.faiss_cid != bindings.get("vector_faiss_cid")
     ):
-        raise SkillCenterHFReleaseError(
-            "source release, corpus, and vector index bindings differ"
-        )
+        raise SkillCenterHFReleaseError("source release, corpus, and vector index bindings differ")
 
     output.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(
@@ -806,9 +707,7 @@ def rebalance_skillcenter_hf_release_vectors(
             "indexes/vector_chunks.parquet",
             "manifest.json",
         }
-        for source_path in sorted(
-            path for path in source.rglob("*") if path.is_file()
-        ):
+        for source_path in sorted(path for path in source.rglob("*") if path.is_file()):
             relative = source_path.relative_to(source)
             relative_posix = relative.as_posix()
             if (
@@ -836,9 +735,7 @@ def rebalance_skillcenter_hf_release_vectors(
         target_script = staging / "scripts" / "query_skillcenter_hf.py"
         target_script.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_script, target_script)
-        semantic_source = _semantic_traversal_source(
-            semantic_traversal_module
-        )
+        semantic_source = _semantic_traversal_source(semantic_traversal_module)
         semantic_target = staging / "scripts" / "semantic_traversal.py"
         shutil.copy2(semantic_source, semantic_target)
         target_skill = staging / "skill" / source_skill.name
@@ -857,16 +754,12 @@ def rebalance_skillcenter_hf_release_vectors(
         upgraded["counts"] = {
             **dict(manifest["counts"]),
             "vector_chunks": len(vector_meta),
-            "vector_rows": sum(
-                int(row["row_count"]) for row in vector_meta
-            ),
+            "vector_rows": sum(int(row["row_count"]) for row in vector_meta),
         }
         upgraded["vector"] = _vector_manifest_config(
             dimension=vectors.summary.dimension,
             model_name=vectors.summary.model_name,
-            centroid_count=len(
-                {int(row["cluster_id"]) for row in vector_meta}
-            ),
+            centroid_count=len({int(row["cluster_id"]) for row in vector_meta}),
             shard_count=len(vector_meta),
         )
         upgraded["files"] = {
@@ -881,9 +774,7 @@ def rebalance_skillcenter_hf_release_vectors(
             "skill": _tree_descriptor(target_skill, root=staging),
         }
         upgraded["vector_layout_upgrade"] = {
-            "source_manifest_sha256": _sha256_file(
-                source / "manifest.json"
-            ),
+            "source_manifest_sha256": _sha256_file(source / "manifest.json"),
             "source_schema_version": manifest["schema_version"],
         }
         _atomic_write_bytes(
@@ -937,15 +828,11 @@ def add_skillcenter_hf_graph_navigation(
     if output.exists():
         if (output / "manifest.json").is_file():
             return validate_skillcenter_hf_release(output)
-        raise SkillCenterHFReleaseError(
-            f"graph navigation output already exists: {output}"
-        )
+        raise SkillCenterHFReleaseError(f"graph navigation output already exists: {output}")
     try:
         manifest = json.loads((source / "manifest.json").read_bytes())
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise SkillCenterHFReleaseError(
-            "source release manifest is missing or malformed"
-        ) from exc
+        raise SkillCenterHFReleaseError("source release manifest is missing or malformed") from exc
     if (
         not isinstance(manifest, Mapping)
         or manifest.get("schema_version")
@@ -955,30 +842,21 @@ def add_skillcenter_hf_graph_navigation(
         }
         or manifest.get("primary_key") != "entry_cid"
     ):
-        raise SkillCenterHFReleaseError(
-            "graph navigation requires a v2 or v3 source release"
-        )
+        raise SkillCenterHFReleaseError("graph navigation requires a v2 or v3 source release")
     source_script = Path(query_script).expanduser().resolve()
     source_skill = Path(skill_dir).expanduser().resolve()
     if not source_script.is_file() or not (source_skill / "SKILL.md").is_file():
-        raise SkillCenterHFReleaseError(
-            "current query script or agent skill is missing"
-        )
+        raise SkillCenterHFReleaseError("current query script or agent skill is missing")
     graph = SkillCenterCIDGraphIndex.load(graph_dir)
     bindings = dict(manifest.get("input_bindings") or {})
     if (
         graph.summary.dataset_revision != manifest.get("dataset_revision")
         or graph.summary.graph_cid != bindings.get("graph_cid")
-        or _sha256_file(graph.root / "manifest.json")
-        != bindings.get("graph_manifest_sha256")
-        or graph.summary.graph_edges
-        != int(dict(manifest["counts"])["graph_edges"])
-        or graph.summary.graph_nodes
-        != int(dict(manifest["counts"])["graph_nodes"])
+        or _sha256_file(graph.root / "manifest.json") != bindings.get("graph_manifest_sha256")
+        or graph.summary.graph_edges != int(dict(manifest["counts"])["graph_edges"])
+        or graph.summary.graph_nodes != int(dict(manifest["counts"])["graph_nodes"])
     ):
-        raise SkillCenterHFReleaseError(
-            "source release and graph index bindings differ"
-        )
+        raise SkillCenterHFReleaseError("source release and graph index bindings differ")
 
     output.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(
@@ -996,9 +874,7 @@ def add_skillcenter_hf_graph_navigation(
             "indexes/graph_outgoing_adjacency.parquet",
             "manifest.json",
         }
-        for source_path in sorted(
-            path for path in source.rglob("*") if path.is_file()
-        ):
+        for source_path in sorted(path for path in source.rglob("*") if path.is_file()):
             relative = source_path.relative_to(source)
             relative_posix = relative.as_posix()
             if (
@@ -1038,9 +914,7 @@ def add_skillcenter_hf_graph_navigation(
         target_script = staging / "scripts" / "query_skillcenter_hf.py"
         target_script.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_script, target_script)
-        semantic_source = _semantic_traversal_source(
-            semantic_traversal_module
-        )
+        semantic_source = _semantic_traversal_source(semantic_traversal_module)
         semantic_target = staging / "scripts" / "semantic_traversal.py"
         shutil.copy2(semantic_source, semantic_target)
         target_skill = staging / "skill" / source_skill.name
@@ -1052,28 +926,16 @@ def add_skillcenter_hf_graph_navigation(
         upgraded["indexes"] = indexes
         upgraded["counts"] = {
             **dict(manifest["counts"]),
-            "graph_outgoing_adjacency_rows": int(
-                outgoing_stats["row_count"]
-            ),
+            "graph_outgoing_adjacency_rows": int(outgoing_stats["row_count"]),
             "graph_outgoing_adjacency_shards": len(outgoing_meta),
-            "graph_outgoing_adjacency_edges": int(
-                outgoing_stats["adjacency_count"]
-            ),
-            "graph_incoming_adjacency_rows": int(
-                incoming_stats["row_count"]
-            ),
+            "graph_outgoing_adjacency_edges": int(outgoing_stats["adjacency_count"]),
+            "graph_incoming_adjacency_rows": int(incoming_stats["row_count"]),
             "graph_incoming_adjacency_shards": len(incoming_meta),
-            "graph_incoming_adjacency_edges": int(
-                incoming_stats["adjacency_count"]
-            ),
+            "graph_incoming_adjacency_edges": int(incoming_stats["adjacency_count"]),
         }
         upgraded["graph"] = {
-            "adjacency_pointers_per_row": (
-                GRAPH_ADJACENCY_POINTERS_PER_ROW
-            ),
-            "adjacency_pointers_per_shard": (
-                GRAPH_ADJACENCY_POINTERS_PER_SHARD
-            ),
+            "adjacency_pointers_per_row": (GRAPH_ADJACENCY_POINTERS_PER_ROW),
+            "adjacency_pointers_per_shard": (GRAPH_ADJACENCY_POINTERS_PER_SHARD),
             "directions": ["incoming", "outgoing"],
             "max_remote_walk_depth": 8,
             "ordering": "score_desc_nulls_last",
@@ -1090,9 +952,7 @@ def add_skillcenter_hf_graph_navigation(
             "skill": _tree_descriptor(target_skill, root=staging),
         }
         upgraded["graph_navigation_upgrade"] = {
-            "source_manifest_sha256": _sha256_file(
-                source / "manifest.json"
-            ),
+            "source_manifest_sha256": _sha256_file(source / "manifest.json"),
             "source_schema_version": manifest["schema_version"],
         }
         _atomic_write_bytes(
@@ -1371,9 +1231,7 @@ def _validate_graph_adjacency(
 
     graph_config = {
         "adjacency_pointers_per_row": GRAPH_ADJACENCY_POINTERS_PER_ROW,
-        "adjacency_pointers_per_shard": (
-            GRAPH_ADJACENCY_POINTERS_PER_SHARD
-        ),
+        "adjacency_pointers_per_shard": (GRAPH_ADJACENCY_POINTERS_PER_SHARD),
     }
     fingerprints: dict[str, tuple[int, int, int]] = {}
     for direction in ("incoming", "outgoing"):
@@ -1392,32 +1250,24 @@ def _validate_graph_adjacency(
         for meta in meta_rows:
             if (
                 str(meta["direction"]) != direction
-                or int(meta["adjacency_count"])
-                > graph_config["adjacency_pointers_per_shard"]
+                or int(meta["adjacency_count"]) > graph_config["adjacency_pointers_per_shard"]
                 or str(meta["first_key"]) > str(meta["last_key"])
             ):
                 raise SkillCenterHFReleaseError(
                     f"{direction} adjacency shard metadata is malformed"
                 )
-            path = release_root.joinpath(
-                *Path(str(meta["relative_path"])).parts
-            )
+            path = release_root.joinpath(*Path(str(meta["relative_path"])).parts)
             table = pq.read_table(path)
             rows = table.to_pylist()
             if (
                 not rows
                 or str(rows[0]["node_cid"]) != str(meta["first_key"])
                 or str(rows[-1]["node_cid"]) != str(meta["last_key"])
-                or int(rows[0]["page_index"])
-                != int(meta["first_page_index"])
-                or int(rows[-1]["page_index"])
-                != int(meta["last_page_index"])
-                or sum(int(row["neighbor_count"]) for row in rows)
-                != int(meta["adjacency_count"])
+                or int(rows[0]["page_index"]) != int(meta["first_page_index"])
+                or int(rows[-1]["page_index"]) != int(meta["last_page_index"])
+                or sum(int(row["neighbor_count"]) for row in rows) != int(meta["adjacency_count"])
             ):
-                raise SkillCenterHFReleaseError(
-                    f"{direction} adjacency shard range differs"
-                )
+                raise SkillCenterHFReleaseError(f"{direction} adjacency shard range differs")
             for row in rows:
                 node_cid = str(row["node_cid"])
                 page_index = int(row["page_index"])
@@ -1425,27 +1275,15 @@ def _validate_graph_adjacency(
                 total_neighbors = int(row["total_neighbor_count"])
                 edge_cids = [str(value) for value in row["edge_cids"]]
                 edge_types = [str(value) for value in row["edge_types"]]
-                neighbor_cids = [
-                    str(value) for value in row["neighbor_cids"]
-                ]
-                neighbor_types = [
-                    str(value) for value in row["neighbor_node_types"]
-                ]
-                methods = [
-                    str(value) for value in row["retrieval_methods"]
-                ]
-                scores = [
-                    float(value) if value is not None else None
-                    for value in row["scores"]
-                ]
+                neighbor_cids = [str(value) for value in row["neighbor_cids"]]
+                neighbor_types = [str(value) for value in row["neighbor_node_types"]]
+                methods = [str(value) for value in row["retrieval_methods"]]
+                scores = [float(value) if value is not None else None for value in row["scores"]]
                 neighbor_count = int(row["neighbor_count"])
                 if (
                     str(row["direction"]) != direction
-                    or str(row["schema_version"])
-                    != SKILLCENTER_HF_GRAPH_ADJACENCY_SCHEMA_VERSION
-                    or not 1
-                    <= neighbor_count
-                    <= graph_config["adjacency_pointers_per_row"]
+                    or str(row["schema_version"]) != SKILLCENTER_HF_GRAPH_ADJACENCY_SCHEMA_VERSION
+                    or not 1 <= neighbor_count <= graph_config["adjacency_pointers_per_row"]
                     or not (
                         len(edge_cids)
                         == len(edge_types)
@@ -1457,16 +1295,10 @@ def _validate_graph_adjacency(
                     )
                     or node_cid < previous_node
                 ):
-                    raise SkillCenterHFReleaseError(
-                        f"{direction} adjacency row is malformed"
-                    )
+                    raise SkillCenterHFReleaseError(f"{direction} adjacency row is malformed")
                 if node_cid != previous_node:
-                    if (
-                        previous_node
-                        and (
-                            previous_page + 1 != expected_pages
-                            or seen_neighbors != expected_neighbors
-                        )
+                    if previous_node and (
+                        previous_page + 1 != expected_pages or seen_neighbors != expected_neighbors
                     ):
                         raise SkillCenterHFReleaseError(
                             f"{direction} adjacency pages are incomplete"
@@ -1486,9 +1318,7 @@ def _validate_graph_adjacency(
                     or page_count != expected_pages
                     or total_neighbors != expected_neighbors
                 ):
-                    raise SkillCenterHFReleaseError(
-                        f"{direction} adjacency page sequence differs"
-                    )
+                    raise SkillCenterHFReleaseError(f"{direction} adjacency page sequence differs")
                 for (
                     edge_cid,
                     edge_type,
@@ -1502,10 +1332,7 @@ def _validate_graph_adjacency(
                         neighbor_cid,
                         edge_cid,
                     )
-                    if (
-                        previous_order_key is not None
-                        and order_key < previous_order_key
-                    ):
+                    if previous_order_key is not None and order_key < previous_order_key:
                         raise SkillCenterHFReleaseError(
                             f"{direction} adjacency is not score-ordered"
                         )
@@ -1521,17 +1348,12 @@ def _validate_graph_adjacency(
             or previous_page + 1 != expected_pages
             or seen_neighbors != expected_neighbors
             or fingerprint[0] != int(counts["graph_edges"])
-            or fingerprint[0]
-            != int(counts[f"graph_{direction}_adjacency_edges"])
+            or fingerprint[0] != int(counts[f"graph_{direction}_adjacency_edges"])
         ):
-            raise SkillCenterHFReleaseError(
-                f"{direction} adjacency coverage differs"
-            )
+            raise SkillCenterHFReleaseError(f"{direction} adjacency coverage differs")
         fingerprints[direction] = tuple(fingerprint)
     if fingerprints["incoming"] != fingerprints["outgoing"]:
-        raise SkillCenterHFReleaseError(
-            "incoming and outgoing adjacency edge coverage differs"
-        )
+        raise SkillCenterHFReleaseError("incoming and outgoing adjacency edge coverage differs")
 
 
 def validate_skillcenter_hf_release(
@@ -1544,13 +1366,9 @@ def validate_skillcenter_hf_release(
     try:
         manifest = json.loads(manifest_path.read_bytes())
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise SkillCenterHFReleaseError(
-            "release manifest is missing or malformed"
-        ) from exc
+        raise SkillCenterHFReleaseError("release manifest is missing or malformed") from exc
     schema_version = (
-        str(manifest.get("schema_version") or "")
-        if isinstance(manifest, Mapping)
-        else ""
+        str(manifest.get("schema_version") or "") if isinstance(manifest, Mapping) else ""
     )
     if (
         not isinstance(manifest, Mapping)
@@ -1562,9 +1380,7 @@ def validate_skillcenter_hf_release(
         or manifest.get("primary_key") != "entry_cid"
     ):
         raise SkillCenterHFReleaseError("unsupported release manifest")
-    has_graph_navigation = (
-        schema_version == SKILLCENTER_HF_RELEASE_SCHEMA_VERSION
-    )
+    has_graph_navigation = schema_version == SKILLCENTER_HF_RELEASE_SCHEMA_VERSION
     indexes = manifest.get("indexes")
     if not isinstance(indexes, Mapping):
         raise SkillCenterHFReleaseError("release indexes are missing")
@@ -1584,9 +1400,7 @@ def validate_skillcenter_hf_release(
             }
         )
     if set(indexes) != required_indexes:
-        raise SkillCenterHFReleaseError(
-            f"release index set differs: {sorted(indexes)}"
-        )
+        raise SkillCenterHFReleaseError(f"release index set differs: {sorted(indexes)}")
     _, pq = _pyarrow()
     index_rows: dict[str, list[dict[str, Any]]] = {}
     data_paths: set[str] = set()
@@ -1612,14 +1426,10 @@ def validate_skillcenter_hf_release(
             )
             actual_rows = int(pq.ParquetFile(shard_path).metadata.num_rows)
             if actual_rows != int(row["row_count"]):
-                raise SkillCenterHFReleaseError(
-                    f"shard row count differs: {row['relative_path']}"
-                )
+                raise SkillCenterHFReleaseError(f"shard row count differs: {row['relative_path']}")
             relative_path = str(row["relative_path"])
             if relative_path in data_paths:
-                raise SkillCenterHFReleaseError(
-                    f"duplicate shard pointer: {relative_path}"
-                )
+                raise SkillCenterHFReleaseError(f"duplicate shard pointer: {relative_path}")
             data_paths.add(relative_path)
     actual_data_paths = {
         path.relative_to(release_root).as_posix()
@@ -1627,9 +1437,7 @@ def validate_skillcenter_hf_release(
         if path.is_file()
     }
     if data_paths != actual_data_paths:
-        raise SkillCenterHFReleaseError(
-            "meta-index pointers do not cover the data files exactly"
-        )
+        raise SkillCenterHFReleaseError("meta-index pointers do not cover the data files exactly")
     readme = release_root / "README.md"
     if readme.is_symlink() or not readme.is_file():
         raise SkillCenterHFReleaseError("release README.md is missing")
@@ -1642,9 +1450,7 @@ def validate_skillcenter_hf_release(
     _verify_file_descriptor(release_root, query_descriptor)
     semantic_descriptor = files.get("semantic_traversal")
     if not isinstance(semantic_descriptor, Mapping):
-        raise SkillCenterHFReleaseError(
-            "release semantic traversal module is missing"
-        )
+        raise SkillCenterHFReleaseError("release semantic traversal module is missing")
     semantic_path = _verify_file_descriptor(
         release_root,
         semantic_descriptor,
@@ -1662,13 +1468,10 @@ def validate_skillcenter_hf_release(
     if not (skill_path / "SKILL.md").is_file():
         raise SkillCenterHFReleaseError("release agent skill is incomplete")
     actual_skill = _tree_descriptor(skill_path, root=release_root)
-    if (
-        actual_skill["sha256"] != skill_descriptor.get("sha256")
-        or actual_skill["file_count"] != skill_descriptor.get("file_count")
-    ):
-        raise SkillCenterHFReleaseError(
-            "release agent skill descriptor differs"
-        )
+    if actual_skill["sha256"] != skill_descriptor.get("sha256") or actual_skill[
+        "file_count"
+    ] != skill_descriptor.get("file_count"):
+        raise SkillCenterHFReleaseError("release agent skill descriptor differs")
     counts = dict(manifest["counts"])
     count_bindings = {
         "bm25_document_chunks": (
@@ -1699,29 +1502,20 @@ def validate_skillcenter_hf_release(
         )
     for index_name, (row_count_name, shard_count_name) in count_bindings.items():
         rows = index_rows[index_name]
-        if (
-            sum(int(row["row_count"]) for row in rows)
-            != int(counts[row_count_name])
-            or len(rows) != int(counts[shard_count_name])
-        ):
-            raise SkillCenterHFReleaseError(
-                f"release count binding differs: {index_name}"
-            )
+        if sum(int(row["row_count"]) for row in rows) != int(counts[row_count_name]) or len(
+            rows
+        ) != int(counts[shard_count_name]):
+            raise SkillCenterHFReleaseError(f"release count binding differs: {index_name}")
     if has_graph_navigation:
         graph_config = dict(manifest.get("graph") or {})
         if (
             int(graph_config.get("adjacency_pointers_per_row", -1))
             != GRAPH_ADJACENCY_POINTERS_PER_ROW
-            or int(
-                graph_config.get("adjacency_pointers_per_shard", -1)
-            )
+            or int(graph_config.get("adjacency_pointers_per_shard", -1))
             != GRAPH_ADJACENCY_POINTERS_PER_SHARD
-            or graph_config.get("directions")
-            != ["incoming", "outgoing"]
+            or graph_config.get("directions") != ["incoming", "outgoing"]
         ):
-            raise SkillCenterHFReleaseError(
-                "graph navigation configuration is malformed"
-            )
+            raise SkillCenterHFReleaseError("graph navigation configuration is malformed")
         _validate_graph_adjacency(
             release_root,
             index_rows=index_rows,
@@ -1729,71 +1523,46 @@ def validate_skillcenter_hf_release(
             pq=pq,
         )
     bm25_rows = index_rows["bm25_keyword_shards"]
-    if (
-        sum(int(row["term_count"]) for row in bm25_rows)
-        != int(counts["bm25_terms"])
-        or sum(int(row["posting_count"]) for row in bm25_rows)
-        != int(counts["bm25_postings"])
-    ):
-        raise SkillCenterHFReleaseError(
-            "BM25 meta-index coverage differs from manifest"
-        )
+    if sum(int(row["term_count"]) for row in bm25_rows) != int(counts["bm25_terms"]) or sum(
+        int(row["posting_count"]) for row in bm25_rows
+    ) != int(counts["bm25_postings"]):
+        raise SkillCenterHFReleaseError("BM25 meta-index coverage differs from manifest")
     ordered_bm25 = sorted(bm25_rows, key=lambda row: int(row["shard_id"]))
     for previous, current in zip(ordered_bm25, ordered_bm25[1:]):
         if str(previous["last_key"]) >= str(current["first_key"]):
-            raise SkillCenterHFReleaseError(
-                "BM25 keyword ranges overlap or are not ordered"
-            )
+            raise SkillCenterHFReleaseError("BM25 keyword ranges overlap or are not ordered")
     vector_config = dict(manifest["vector"])
     dimension = int(vector_config["dimension"])
     vector_rows = index_rows["vector_chunks"]
     if (
         vector_config.get("layout") != "semantic_centroid_groups"
-        or vector_config.get("assignment")
-        != "recursive_spherical_kmeans"
-        or vector_config.get("rows_sorted_by")
-        != "cosine_similarity_to_shard_centroid_desc"
+        or vector_config.get("assignment") != "recursive_spherical_kmeans"
+        or vector_config.get("rows_sorted_by") != "cosine_similarity_to_shard_centroid_desc"
         or int(vector_config.get("shard_count", -1)) != len(vector_rows)
         or int(vector_config.get("default_probe_centroids", -1)) < 1
-        or int(vector_config.get("max_shards_per_centroid", -1))
-        != VECTOR_MAX_SHARDS_PER_CENTROID
-        or int(vector_config.get("max_rows_per_centroid", -1))
-        != VECTOR_MAX_ROWS_PER_CENTROID
+        or int(vector_config.get("max_shards_per_centroid", -1)) != VECTOR_MAX_SHARDS_PER_CENTROID
+        or int(vector_config.get("max_rows_per_centroid", -1)) != VECTOR_MAX_ROWS_PER_CENTROID
     ):
-        raise SkillCenterHFReleaseError(
-            "semantic vector layout metadata is malformed"
-        )
+        raise SkillCenterHFReleaseError("semantic vector layout metadata is malformed")
     vector_groups: dict[int, list[dict[str, Any]]] = {}
     for row in vector_rows:
         vector_groups.setdefault(int(row["cluster_id"]), []).append(row)
-    if (
-        sorted(vector_groups) != list(range(len(vector_groups)))
-        or int(vector_config.get("centroid_count", -1))
-        != len(vector_groups)
-    ):
-        raise SkillCenterHFReleaseError(
-            "semantic vector centroid identifiers are malformed"
-        )
+    if sorted(vector_groups) != list(range(len(vector_groups))) or int(
+        vector_config.get("centroid_count", -1)
+    ) != len(vector_groups):
+        raise SkillCenterHFReleaseError("semantic vector centroid identifiers are malformed")
     for cluster_id, group in vector_groups.items():
         ordered = sorted(
             group,
             key=lambda row: int(row["chunk_in_cluster"]),
         )
         centroid = [float(value) for value in ordered[0]["centroid"]]
-        centroid_norm = math.sqrt(
-            sum(value * value for value in centroid)
-        )
+        centroid_norm = math.sqrt(sum(value * value for value in centroid))
         if (
             not 1 <= len(ordered) <= VECTOR_MAX_SHARDS_PER_CENTROID
-            or [
-                int(row["chunk_in_cluster"]) for row in ordered
-            ] != list(range(len(ordered)))
-            or any(
-                int(row["centroid_shard_count"]) != len(ordered)
-                for row in ordered
-            )
-            or sum(int(row["row_count"]) for row in ordered)
-            > VECTOR_MAX_ROWS_PER_CENTROID
+            or [int(row["chunk_in_cluster"]) for row in ordered] != list(range(len(ordered)))
+            or any(int(row["centroid_shard_count"]) != len(ordered) for row in ordered)
+            or sum(int(row["row_count"]) for row in ordered) > VECTOR_MAX_ROWS_PER_CENTROID
             or len(centroid) != dimension
             or not math.isclose(
                 centroid_norm,
@@ -1822,29 +1591,19 @@ def validate_skillcenter_hf_release(
                 f"vector centroid {cluster_id} must point to one or two shards"
             )
         for row in ordered:
-            shard_centroid = [
-                float(value) for value in row["shard_centroid"]
-            ]
-            shard_norm = math.sqrt(
-                sum(value * value for value in shard_centroid)
-            )
+            shard_centroid = [float(value) for value in row["shard_centroid"]]
+            shard_norm = math.sqrt(sum(value * value for value in shard_centroid))
             if len(shard_centroid) != dimension or not math.isclose(
                 shard_norm,
                 1.0,
                 rel_tol=1e-5,
                 abs_tol=1e-5,
             ):
-                raise SkillCenterHFReleaseError(
-                    "physical vector shard centroid is malformed"
-                )
+                raise SkillCenterHFReleaseError("physical vector shard centroid is malformed")
     if not (
-        int(counts["corpus_rows"])
-        == int(counts["bm25_documents"])
-        == int(counts["vector_rows"])
+        int(counts["corpus_rows"]) == int(counts["bm25_documents"]) == int(counts["vector_rows"])
     ):
-        raise SkillCenterHFReleaseError(
-            "release primary-key coverage counts differ"
-        )
+        raise SkillCenterHFReleaseError("release primary-key coverage counts differ")
     cid_sets = {}
     document_sets = {}
     try:
@@ -1854,16 +1613,13 @@ def validate_skillcenter_hf_release(
             "numpy is required to validate vector shard ordering"
         ) from exc
     vector_group_sums = {
-        cluster_id: np.zeros(dimension, dtype=np.float64)
-        for cluster_id in vector_groups
+        cluster_id: np.zeros(dimension, dtype=np.float64) for cluster_id in vector_groups
     }
     for name in ("corpus_chunks", "bm25_document_chunks", "vector_chunks"):
         cids: set[str] = set()
         documents: set[int] = set()
         for row in index_rows[name]:
-            path = release_root.joinpath(
-                *Path(str(row["relative_path"])).parts
-            )
+            path = release_root.joinpath(*Path(str(row["relative_path"])).parts)
             columns = ["document_index", "entry_cid"]
             if name == "vector_chunks":
                 columns.extend(
@@ -1876,9 +1632,7 @@ def validate_skillcenter_hf_release(
                 )
             table = pq.read_table(path, columns=columns)
             cids.update(str(value) for value in table["entry_cid"].to_pylist())
-            documents.update(
-                int(value) for value in table["document_index"].to_pylist()
-            )
+            documents.update(int(value) for value in table["document_index"].to_pylist())
             if name == "vector_chunks":
                 shard_id = int(row["shard_id"])
                 cluster_id = int(row["cluster_id"])
@@ -1888,10 +1642,8 @@ def validate_skillcenter_hf_release(
                     or set(table["cluster_id"].to_pylist()) != {cluster_id}
                     or set(table["schema_version"].to_pylist())
                     != {SKILLCENTER_HF_VECTOR_CHUNK_SCHEMA_VERSION}
-                    or str(table["entry_cid"][0].as_py())
-                    != str(row["first_key"])
-                    or str(table["entry_cid"][table.num_rows - 1].as_py())
-                    != str(row["last_key"])
+                    or str(table["entry_cid"][0].as_py()) != str(row["first_key"])
+                    or str(table["entry_cid"][table.num_rows - 1].as_py()) != str(row["last_key"])
                 ):
                     raise SkillCenterHFReleaseError(
                         f"vector shard identity differs: {expected_chunk}"
@@ -1919,12 +1671,7 @@ def validate_skillcenter_hf_release(
                         rtol=1.0e-5,
                         atol=1.0e-5,
                     )
-                    or bool(
-                        (
-                            scores[1:]
-                            > scores[:-1] + np.float32(2.0e-6)
-                        ).any()
-                    )
+                    or bool((scores[1:] > scores[:-1] + np.float32(2.0e-6)).any())
                     or not math.isclose(
                         float(scores[-1]),
                         float(row["centroid_min_score"]),
@@ -1953,13 +1700,10 @@ def validate_skillcenter_hf_release(
                 f"routing centroid differs from vector cell {cluster_id}"
             )
     expected_documents = set(range(int(counts["corpus_rows"])))
-    if (
-        len({frozenset(values) for values in cid_sets.values()}) != 1
-        or any(values != expected_documents for values in document_sets.values())
+    if len({frozenset(values) for values in cid_sets.values()}) != 1 or any(
+        values != expected_documents for values in document_sets.values()
     ):
-        raise SkillCenterHFReleaseError(
-            "corpus, BM25, and vector CID/document coverage differs"
-        )
+        raise SkillCenterHFReleaseError("corpus, BM25, and vector CID/document coverage differs")
     return SkillCenterHFReleaseSummary(
         output_dir=str(release_root),
         dataset_repo_id=str(manifest["dataset_repo_id"]),
@@ -1971,9 +1715,7 @@ def validate_skillcenter_hf_release(
         graph_edges=int(counts["graph_edges"]),
         vector_rows=int(counts["vector_rows"]),
         vector_chunks=int(counts["vector_chunks"]),
-        manifest_sha256=hashlib.sha256(
-            manifest_path.read_bytes()
-        ).hexdigest(),
+        manifest_sha256=hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
         graph_adjacency_rows=(
             int(counts.get("graph_incoming_adjacency_rows", 0))
             + int(counts.get("graph_outgoing_adjacency_rows", 0))
@@ -2005,9 +1747,7 @@ def _export_corpus(
             raise SkillCenterHFReleaseError("corpus batch exceeds shard limit")
         indices = [int(value) for value in table["corpus_index"].to_pylist()]
         if indices != list(range(expected_index, expected_index + len(indices))):
-            raise SkillCenterHFReleaseError(
-                "corpus_index is not contiguous"
-            )
+            raise SkillCenterHFReleaseError("corpus_index is not contiguous")
         table = table.append_column("document_index", table["corpus_index"])
         path = destination / f"part-{chunk_id:06d}.parquet"
         _write_parquet(path, table)
@@ -2084,9 +1824,7 @@ def _export_bm25_documents(
             output_rows = []
             for row in rows:
                 index = int(row["document_index"])
-                title_length, body_length, total_length = document_lengths[
-                    index
-                ]
+                title_length, body_length, total_length = document_lengths[index]
                 output_rows.append(
                     {
                         **dict(row),
@@ -2106,9 +1844,7 @@ def _export_bm25_documents(
                     shard_id=chunk_id,
                     row_count=table.num_rows,
                     first_key=str(table["entry_cid"][0].as_py()),
-                    last_key=str(
-                        table["entry_cid"][table.num_rows - 1].as_py()
-                    ),
+                    last_key=str(table["entry_cid"][table.num_rows - 1].as_py()),
                     start_document_index=processed,
                     end_document_index=processed + table.num_rows - 1,
                     kind="bm25_documents",
@@ -2146,19 +1882,15 @@ def _export_bm25_postings(
     total_postings = 0
     total_posting_rows = 0
     total_token_instances = sum(item[2] for item in document_lengths)
-    average_document_length = (
-        total_token_instances / max(1, len(document_lengths))
-    )
+    average_document_length = total_token_instances / max(1, len(document_lengths))
     with closing(sqlite3.connect(uri, uri=True)) as connection:
         connection.execute(
-            "CREATE VIRTUAL TABLE temp.vocab_row USING "
-            "fts5vocab(main, documents_fts, 'row')"
+            "CREATE VIRTUAL TABLE temp.vocab_row USING fts5vocab(main, documents_fts, 'row')"
         )
         shard_id = 0
         while True:
             term_stats = connection.execute(
-                "SELECT term, doc, cnt FROM vocab_row "
-                "WHERE term > ? ORDER BY term LIMIT ?",
+                "SELECT term, doc, cnt FROM vocab_row WHERE term > ? ORDER BY term LIMIT ?",
                 (last_term, BM25_TERMS_PER_SHARD),
             ).fetchall()
             if not term_stats:
@@ -2174,25 +1906,18 @@ def _export_bm25_postings(
                 document_lengths=document_lengths,
                 document_count=len(document_lengths),
             )
-            if (
-                posting_count != sum(int(row[1]) for row in term_stats)
-                or instance_count != sum(int(row[2]) for row in term_stats)
+            if posting_count != sum(int(row[1]) for row in term_stats) or instance_count != sum(
+                int(row[2]) for row in term_stats
             ):
-                raise SkillCenterHFReleaseError(
-                    "FTS5 row/instance posting statistics differ"
-                )
+                raise SkillCenterHFReleaseError("FTS5 row/instance posting statistics differ")
             schema = _bm25_posting_schema(pa)
             for part in _partition_bm25_rows(rows):
                 part_first_term = str(part[0]["term"])
                 part_last_term = str(part[-1]["term"])
                 part_terms = len({str(row["term"]) for row in part})
-                part_postings = sum(
-                    len(row["document_indices"]) for row in part
-                )
+                part_postings = sum(len(row["document_indices"]) for row in part)
                 part_instances = sum(
-                    sum(row["title_frequencies"])
-                    + sum(row["body_frequencies"])
-                    for row in part
+                    sum(row["title_frequencies"]) + sum(row["body_frequencies"]) for row in part
                 )
                 path = destination / f"part-{shard_id:06d}.parquet"
                 table = pa.Table.from_pylist(part, schema=schema)
@@ -2203,9 +1928,7 @@ def _export_bm25_postings(
                         b"last_term": part_last_term.encode("utf-8"),
                         b"posting_count": str(part_postings).encode("ascii"),
                         b"term_count": str(part_terms).encode("ascii"),
-                        b"token_instance_count": str(part_instances).encode(
-                            "ascii"
-                        ),
+                        b"token_instance_count": str(part_instances).encode("ascii"),
                     }
                 )
                 _write_parquet(path, table)
@@ -2276,9 +1999,7 @@ def _bm25_posting_rows(
             return
         document_index = current_doc - 1
         if not 0 <= document_index < len(document_lengths):
-            raise SkillCenterHFReleaseError(
-                "FTS posting document identifier is out of range"
-            )
+            raise SkillCenterHFReleaseError("FTS posting document identifier is out of range")
         doc_ids.append(document_index)
         title_frequencies.append(title_frequency)
         body_frequencies.append(body_frequency)
@@ -2293,13 +2014,9 @@ def _bm25_posting_rows(
         finish_document()
         document_frequency = len(doc_ids)
         corpus_frequency = sum(title_frequencies) + sum(body_frequencies)
-        chunk_count = math.ceil(
-            document_frequency / BM25_POSTINGS_PER_ROW
-        )
+        chunk_count = math.ceil(document_frequency / BM25_POSTINGS_PER_ROW)
         idf = _fts5_idf(document_count, document_frequency)
-        for chunk_index, start in enumerate(
-            range(0, document_frequency, BM25_POSTINGS_PER_ROW)
-        ):
+        for chunk_index, start in enumerate(range(0, document_frequency, BM25_POSTINGS_PER_ROW)):
             stop = min(start + BM25_POSTINGS_PER_ROW, document_frequency)
             selected_ids = doc_ids[start:stop]
             rows.append(
@@ -2308,16 +2025,11 @@ def _bm25_posting_rows(
                     "corpus_frequency": corpus_frequency,
                     "document_frequency": document_frequency,
                     "document_indices": selected_ids,
-                    "document_lengths": [
-                        document_lengths[index][2]
-                        for index in selected_ids
-                    ],
+                    "document_lengths": [document_lengths[index][2] for index in selected_ids],
                     "idf": idf,
                     "posting_chunk_count": chunk_count,
                     "posting_chunk_index": chunk_index,
-                    "schema_version": (
-                        SKILLCENTER_HF_BM25_POSTING_SCHEMA_VERSION
-                    ),
+                    "schema_version": (SKILLCENTER_HF_BM25_POSTING_SCHEMA_VERSION),
                     "term": current_term,
                     "title_frequencies": title_frequencies[start:stop],
                 }
@@ -2329,8 +2041,7 @@ def _bm25_posting_rows(
         body_frequencies.clear()
 
     cursor = connection.execute(
-        "SELECT term, doc, col FROM documents_vocab "
-        "WHERE term >= ? AND term <= ?",
+        "SELECT term, doc, col FROM documents_vocab WHERE term >= ? AND term <= ?",
         (first_term, last_term),
     )
     previous_key: tuple[str, int] | None = None
@@ -2339,9 +2050,7 @@ def _bm25_posting_rows(
         doc = int(raw_doc)
         key = (term, doc)
         if previous_key is not None and key < previous_key:
-            raise SkillCenterHFReleaseError(
-                "FTS5 vocabulary scan is not canonically ordered"
-            )
+            raise SkillCenterHFReleaseError("FTS5 vocabulary scan is not canonically ordered")
         if term != current_term:
             finish_term()
             current_term = term
@@ -2355,15 +2064,11 @@ def _bm25_posting_rows(
         elif column == "body":
             body_frequency += 1
         else:
-            raise SkillCenterHFReleaseError(
-                f"unsupported FTS5 column: {column}"
-            )
+            raise SkillCenterHFReleaseError(f"unsupported FTS5 column: {column}")
         previous_key = key
     finish_term()
     if emitted_terms != list(expected_terms):
-        raise SkillCenterHFReleaseError(
-            "FTS5 row and instance vocabularies differ"
-        )
+        raise SkillCenterHFReleaseError("FTS5 row and instance vocabularies differ")
     return rows, total_postings, total_instances
 
 
@@ -2436,14 +2141,8 @@ def _export_graph_table(
     processed = 0
     with closing(sqlite3.connect(uri, uri=True)) as connection:
         connection.row_factory = sqlite3.Row
-        total = int(
-            connection.execute(
-                f"SELECT COUNT(*) FROM {table_name}"
-            ).fetchone()[0]
-        )
-        cursor = connection.execute(
-            f"SELECT * FROM {table_name} ORDER BY {order_column}"
-        )
+        total = int(connection.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0])
+        cursor = connection.execute(f"SELECT * FROM {table_name} ORDER BY {order_column}")
         shard_id = 0
         while rows := cursor.fetchmany(RELEASE_CHUNK_ROWS):
             table = pa.Table.from_pylist(
@@ -2478,9 +2177,7 @@ def _export_graph_table(
                 },
             )
     if processed != total:
-        raise SkillCenterHFReleaseError(
-            f"graph {table_name} export is incomplete"
-        )
+        raise SkillCenterHFReleaseError(f"graph {table_name} export is incomplete")
     return metadata
 
 
@@ -2498,9 +2195,7 @@ def _iter_graph_adjacency_rows(
         node_column = "target_cid"
         neighbor_column = "source_cid"
     else:
-        raise SkillCenterHFReleaseError(
-            f"unsupported graph adjacency direction: {direction}"
-        )
+        raise SkillCenterHFReleaseError(f"unsupported graph adjacency direction: {direction}")
     cursor = connection.execute(
         "SELECT "
         f"e.{node_column} AS node_cid, "
@@ -2521,42 +2216,23 @@ def _iter_graph_adjacency_rows(
         node_cid: str,
         values: Sequence[sqlite3.Row],
     ) -> Iterator[dict[str, Any]]:
-        page_count = math.ceil(
-            len(values) / GRAPH_ADJACENCY_POINTERS_PER_ROW
-        )
-        for page_index, start in enumerate(
-            range(0, len(values), GRAPH_ADJACENCY_POINTERS_PER_ROW)
-        ):
-            selected = values[
-                start : start + GRAPH_ADJACENCY_POINTERS_PER_ROW
-            ]
+        page_count = math.ceil(len(values) / GRAPH_ADJACENCY_POINTERS_PER_ROW)
+        for page_index, start in enumerate(range(0, len(values), GRAPH_ADJACENCY_POINTERS_PER_ROW)):
+            selected = values[start : start + GRAPH_ADJACENCY_POINTERS_PER_ROW]
             yield {
                 "direction": direction,
                 "edge_cids": [str(row["edge_cid"]) for row in selected],
                 "edge_types": [str(row["edge_type"]) for row in selected],
-                "neighbor_cids": [
-                    str(row["neighbor_cid"]) for row in selected
-                ],
+                "neighbor_cids": [str(row["neighbor_cid"]) for row in selected],
                 "neighbor_count": len(selected),
-                "neighbor_node_types": [
-                    str(row["neighbor_node_type"]) for row in selected
-                ],
+                "neighbor_node_types": [str(row["neighbor_node_type"]) for row in selected],
                 "node_cid": node_cid,
                 "page_count": page_count,
                 "page_index": page_index,
-                "retrieval_methods": [
-                    str(row["retrieval_method"]) for row in selected
-                ],
-                "schema_version": (
-                    SKILLCENTER_HF_GRAPH_ADJACENCY_SCHEMA_VERSION
-                ),
+                "retrieval_methods": [str(row["retrieval_method"]) for row in selected],
+                "schema_version": (SKILLCENTER_HF_GRAPH_ADJACENCY_SCHEMA_VERSION),
                 "scores": [
-                    (
-                        float(row["score"])
-                        if row["score"] is not None
-                        else None
-                    )
-                    for row in selected
+                    (float(row["score"]) if row["score"] is not None else None) for row in selected
                 ],
                 "total_neighbor_count": len(values),
             }
@@ -2584,9 +2260,7 @@ def _export_graph_adjacency(
     """Export a paged adjacency layer for bounded remote graph traversal."""
 
     if direction not in {"incoming", "outgoing"}:
-        raise SkillCenterHFReleaseError(
-            f"unsupported graph adjacency direction: {direction}"
-        )
+        raise SkillCenterHFReleaseError(f"unsupported graph adjacency direction: {direction}")
     pa, _ = _pyarrow()
     schema = pa.schema(
         [
@@ -2604,15 +2278,9 @@ def _export_graph_adjacency(
             ("scores", pa.list_(pa.float64()), False),
             ("total_neighbor_count", pa.int64(), False),
         ],
-        metadata={
-            b"schema_version": (
-                SKILLCENTER_HF_GRAPH_ADJACENCY_SCHEMA_VERSION.encode()
-            )
-        },
+        metadata={b"schema_version": (SKILLCENTER_HF_GRAPH_ADJACENCY_SCHEMA_VERSION.encode())},
     )
-    destination = (
-        output_root / "data" / "graph" / "adjacency" / direction
-    )
+    destination = output_root / "data" / "graph" / "adjacency" / direction
     destination.mkdir(parents=True, exist_ok=True)
     uri = f"{database_path.as_uri()}?mode=ro&immutable=1"
     metadata = []
@@ -2637,21 +2305,15 @@ def _export_graph_adjacency(
                 shard_id=shard_id,
                 row_count=table.num_rows,
                 first_key=str(table["node_cid"][0].as_py()),
-                last_key=str(
-                    table["node_cid"][table.num_rows - 1].as_py()
-                ),
+                last_key=str(table["node_cid"][table.num_rows - 1].as_py()),
                 start_document_index=-1,
                 end_document_index=-1,
                 kind=f"graph_{direction}_adjacency",
                 adjacency_count=pending_pointers,
                 direction=direction,
                 first_page_index=int(table["page_index"][0].as_py()),
-                last_page_index=int(
-                    table["page_index"][table.num_rows - 1].as_py()
-                ),
-                node_count=len(
-                    set(str(row["node_cid"]) for row in pending)
-                ),
+                last_page_index=int(table["page_index"][table.num_rows - 1].as_py()),
+                node_count=len(set(str(row["node_cid"]) for row in pending)),
             )
         )
         shard_id += 1
@@ -2677,8 +2339,7 @@ def _export_graph_adjacency(
             pointers = int(row["neighbor_count"])
             if pending and (
                 len(pending) >= RELEASE_CHUNK_ROWS
-                or pending_pointers + pointers
-                > GRAPH_ADJACENCY_POINTERS_PER_SHARD
+                or pending_pointers + pointers > GRAPH_ADJACENCY_POINTERS_PER_SHARD
             ):
                 flush()
             pending.append(row)
@@ -2709,17 +2370,14 @@ def _balanced_shard_capacities(
     shard_count = math.ceil(row_count / max_rows)
     base, larger_shards = divmod(row_count, shard_count)
     capacities = tuple(
-        base + (1 if shard_id < larger_shards else 0)
-        for shard_id in range(shard_count)
+        base + (1 if shard_id < larger_shards else 0) for shard_id in range(shard_count)
     )
     if (
         sum(capacities) != row_count
         or max(capacities) > max_rows
         or max(capacities) - min(capacities) > 1
     ):
-        raise SkillCenterHFReleaseError(
-            "balanced vector shard capacities are malformed"
-        )
+        raise SkillCenterHFReleaseError("balanced vector shard capacities are malformed")
     return capacities
 
 
@@ -2748,32 +2406,21 @@ def _capacity_constrained_assignments(
         or bool((capacity_array < 1).any())
         or not np.isfinite(scores).all()
     ):
-        raise SkillCenterHFReleaseError(
-            "centroid preferences or capacities are malformed"
-        )
+        raise SkillCenterHFReleaseError("centroid preferences or capacities are malformed")
     centroid_count = scores.shape[1]
-    if (
-        bool((preferences < 0).any())
-        or bool((preferences >= centroid_count).any())
-    ):
-        raise SkillCenterHFReleaseError(
-            "centroid preference identifiers are malformed"
-        )
+    if bool((preferences < 0).any()) or bool((preferences >= centroid_count).any()):
+        raise SkillCenterHFReleaseError("centroid preference identifiers are malformed")
     expected_ids = np.arange(centroid_count, dtype=np.int32)
     if not np.array_equal(
         np.sort(preferences, axis=1),
         np.broadcast_to(expected_ids, preferences.shape),
     ):
-        raise SkillCenterHFReleaseError(
-            "each vector must rank every shard centroid exactly once"
-        )
+        raise SkillCenterHFReleaseError("each vector must rank every shard centroid exactly once")
 
     row_count = scores.shape[0]
     next_preference = np.zeros(row_count, dtype=np.int32)
     assignments = np.full(row_count, -1, dtype=np.int32)
-    accepted: list[list[tuple[float, int, int]]] = [
-        [] for _ in range(centroid_count)
-    ]
+    accepted: list[list[tuple[float, int, int]]] = [[] for _ in range(centroid_count)]
     pending = deque(range(row_count))
     while pending:
         row_id = int(pending.popleft())
@@ -2808,13 +2455,8 @@ def _capacity_constrained_assignments(
         assignments,
         minlength=centroid_count,
     )
-    if (
-        bool((assignments < 0).any())
-        or not np.array_equal(actual_counts, capacity_array)
-    ):
-        raise SkillCenterHFReleaseError(
-            "balanced vector assignment coverage differs"
-        )
+    if bool((assignments < 0).any()) or not np.array_equal(actual_counts, capacity_array):
+        raise SkillCenterHFReleaseError("balanced vector assignment coverage differs")
     return assignments
 
 
@@ -2833,9 +2475,7 @@ def _spherical_kmeans_groups(
     row_count, dimension = selected.shape
     cluster_count = min(int(cluster_count), row_count)
     if cluster_count < 1:
-        raise SkillCenterHFReleaseError(
-            "spherical vector cluster count must be positive"
-        )
+        raise SkillCenterHFReleaseError("spherical vector cluster count must be positive")
     training_count = min(row_count, VECTOR_TRAINING_ROWS)
     if training_count == row_count:
         training = selected
@@ -2860,8 +2500,7 @@ def _spherical_kmeans_groups(
     _, assignments = kmeans.index.search(selected, 1)
     assignments = assignments.reshape(-1)
     groups = [
-        positions[np.flatnonzero(assignments == cluster_id)]
-        for cluster_id in range(cluster_count)
+        positions[np.flatnonzero(assignments == cluster_id)] for cluster_id in range(cluster_count)
     ]
     return [group for group in groups if len(group)]
 
@@ -2903,9 +2542,7 @@ def _semantic_centroid_groups(
             if len(positions) <= VECTOR_MAX_ROWS_PER_CENTROID:
                 output.append(positions)
                 continue
-            child_count = math.ceil(
-                len(positions) / VECTOR_MAX_ROWS_PER_CENTROID
-            )
+            child_count = math.ceil(len(positions) / VECTOR_MAX_ROWS_PER_CENTROID)
             children = _spherical_kmeans_groups(
                 matrix,
                 positions,
@@ -2915,9 +2552,7 @@ def _semantic_centroid_groups(
                 np=np,
             )
             if len(children) < 2 or max(map(len, children)) == len(positions):
-                ordered = positions[
-                    np.argsort(positions, kind="stable")
-                ]
+                ordered = positions[np.argsort(positions, kind="stable")]
                 children = [
                     ordered[start : start + VECTOR_MAX_ROWS_PER_CENTROID]
                     for start in range(
@@ -2939,9 +2574,7 @@ def _semantic_centroid_groups(
         sum(len(group) for group in groups) != row_count
         or max(map(len, groups)) > VECTOR_MAX_ROWS_PER_CENTROID
     ):
-        raise SkillCenterHFReleaseError(
-            "semantic vector centroid coverage differs"
-        )
+        raise SkillCenterHFReleaseError("semantic vector centroid coverage differs")
     _notify(
         progress_callback,
         {
@@ -2995,13 +2628,10 @@ def _centroid_group_shards(
         np=np,
     )
     shards = [
-        positions[np.flatnonzero(assignments == shard_id)]
-        for shard_id in range(len(capacities))
+        positions[np.flatnonzero(assignments == shard_id)] for shard_id in range(len(capacities))
     ]
     if [len(shard) for shard in shards] != list(capacities):
-        raise SkillCenterHFReleaseError(
-            "centroid-local physical shard coverage differs"
-        )
+        raise SkillCenterHFReleaseError("centroid-local physical shard coverage differs")
     return shards
 
 
@@ -3027,9 +2657,7 @@ def _export_vectors(
     ):
         raise SkillCenterHFReleaseError("FAISS vector matrix is malformed")
     matrix = (matrix / norms).astype(np.float32)
-    identifiers = faiss.vector_to_array(
-        vectors.faiss_index.id_map
-    ).astype(np.int64)
+    identifiers = faiss.vector_to_array(vectors.faiss_index.id_map).astype(np.int64)
     metadata_rows = list(vectors.metadata_rows)
     if not np.array_equal(
         identifiers,
@@ -3038,24 +2666,15 @@ def _export_vectors(
             dtype=np.int64,
         ),
     ):
-        raise SkillCenterHFReleaseError(
-            "FAISS insertion order differs from vector metadata"
-        )
-    corpus_path = (
-        corpus.root / corpus.manifest["files"]["corpus"]["relative_path"]
-    )
+        raise SkillCenterHFReleaseError("FAISS insertion order differs from vector metadata")
+    corpus_path = corpus.root / corpus.manifest["files"]["corpus"]["relative_path"]
     corpus_rows = pq.read_table(
         corpus_path,
         columns=["corpus_index", "entry_cid"],
     ).to_pylist()
-    document_by_cid = {
-        str(row["entry_cid"]): int(row["corpus_index"])
-        for row in corpus_rows
-    }
+    document_by_cid = {str(row["entry_cid"]): int(row["corpus_index"]) for row in corpus_rows}
     if len(document_by_cid) != count:
-        raise SkillCenterHFReleaseError(
-            "corpus CID/document pointer map is incomplete"
-        )
+        raise SkillCenterHFReleaseError("corpus CID/document pointer map is incomplete")
     document_indices = np.asarray(
         [document_by_cid[str(row["entry_cid"])] for row in metadata_rows],
         dtype=np.int32,
@@ -3077,12 +2696,8 @@ def _export_vectors(
         routing_centroid = matrix[group_positions].mean(axis=0)
         routing_norm = float(np.linalg.norm(routing_centroid))
         if not math.isfinite(routing_norm) or routing_norm == 0:
-            raise SkillCenterHFReleaseError(
-                "semantic routing centroid is malformed"
-            )
-        routing_centroid = (
-            routing_centroid / routing_norm
-        ).astype(np.float32)
+            raise SkillCenterHFReleaseError("semantic routing centroid is malformed")
+        routing_centroid = (routing_centroid / routing_norm).astype(np.float32)
         shards = _centroid_group_shards(
             matrix,
             group_positions,
@@ -3091,19 +2706,13 @@ def _export_vectors(
             np=np,
         )
         if not 1 <= len(shards) <= VECTOR_MAX_SHARDS_PER_CENTROID:
-            raise SkillCenterHFReleaseError(
-                "semantic centroid points to too many vector shards"
-            )
+            raise SkillCenterHFReleaseError("semantic centroid points to too many vector shards")
         for chunk_in_cluster, selected in enumerate(shards):
             shard_centroid = matrix[selected].mean(axis=0)
             shard_norm = float(np.linalg.norm(shard_centroid))
             if not math.isfinite(shard_norm) or shard_norm == 0:
-                raise SkillCenterHFReleaseError(
-                    "physical vector shard centroid is malformed"
-                )
-            shard_centroid = (
-                shard_centroid / shard_norm
-            ).astype(np.float32)
+                raise SkillCenterHFReleaseError("physical vector shard centroid is malformed")
+            shard_centroid = (shard_centroid / shard_norm).astype(np.float32)
             scores_to_centroid = matrix[selected] @ shard_centroid
             order = np.lexsort(
                 (
@@ -3119,12 +2728,8 @@ def _export_vectors(
             chunk_name = f"vector-{shard_id:06d}"
             table = pa.table(
                 {
-                    "chunk_id": pa.array(
-                        [chunk_name] * len(selected), type=pa.string()
-                    ),
-                    "cluster_id": pa.array(
-                        [cluster_id] * len(selected), type=pa.int32()
-                    ),
+                    "chunk_id": pa.array([chunk_name] * len(selected), type=pa.string()),
+                    "cluster_id": pa.array([cluster_id] * len(selected), type=pa.int32()),
                     "entry_cid": pa.array(
                         [str(row["entry_cid"]) for row in rows],
                         type=pa.string(),
@@ -3138,17 +2743,11 @@ def _export_vectors(
                         type=pa.int32(),
                     ),
                     "corpus_chunk_id": pa.array(
-                        [
-                            int(value) // RELEASE_CHUNK_ROWS
-                            for value in selected_docs
-                        ],
+                        [int(value) // RELEASE_CHUNK_ROWS for value in selected_docs],
                         type=pa.int32(),
                     ),
                     "corpus_row_offset": pa.array(
-                        [
-                            int(value) % RELEASE_CHUNK_ROWS
-                            for value in selected_docs
-                        ],
+                        [int(value) % RELEASE_CHUNK_ROWS for value in selected_docs],
                         type=pa.int32(),
                     ),
                     "skill_id": pa.array(
@@ -3187,8 +2786,7 @@ def _export_vectors(
                         dimension,
                     ),
                     "schema_version": pa.array(
-                        [SKILLCENTER_HF_VECTOR_CHUNK_SCHEMA_VERSION]
-                        * len(selected),
+                        [SKILLCENTER_HF_VECTOR_CHUNK_SCHEMA_VERSION] * len(selected),
                         type=pa.string(),
                     ),
                 }
@@ -3201,9 +2799,7 @@ def _export_vectors(
                 shard_id=shard_id,
                 row_count=table.num_rows,
                 first_key=str(table["entry_cid"][0].as_py()),
-                last_key=str(
-                    table["entry_cid"][table.num_rows - 1].as_py()
-                ),
+                last_key=str(table["entry_cid"][table.num_rows - 1].as_py()),
                 start_document_index=int(selected_docs.min()),
                 end_document_index=int(selected_docs.max()),
                 kind="vectors",
@@ -3247,14 +2843,10 @@ def _fts5_document_lengths(
         ):
             counts = _decode_fts5_varints(bytes(payload))
             if len(counts) != 2:
-                raise SkillCenterHFReleaseError(
-                    "FTS5 docsize must contain title and body lengths"
-                )
+                raise SkillCenterHFReleaseError("FTS5 docsize must contain title and body lengths")
             document_index = int(rowid) - 1
             if not 0 <= document_index < expected_rows:
-                raise SkillCenterHFReleaseError(
-                    "FTS5 docsize rowid is out of range"
-                )
+                raise SkillCenterHFReleaseError("FTS5 docsize rowid is out of range")
             title_length, body_length = counts
             values[document_index] = (
                 title_length,
@@ -3302,23 +2894,13 @@ def _validate_input_bindings(
         "sqlite_cid": str(bm25.manifest["sqlite"]["cid"]),
     }
     checks = {
-        "bm25_to_corpus": (
-            bm25.manifest.get("corpus_input") == expected_bm25_corpus
-        ),
-        "graph_to_bm25": (
-            graph.manifest.get("bm25_input") == expected_graph_bm25
-        ),
-        "graph_to_corpus": (
-            graph.manifest.get("corpus_input") == expected_graph_corpus
-        ),
-        "vectors_to_corpus": (
-            vectors.manifest.get("corpus_input") == expected_vector_corpus
-        ),
+        "bm25_to_corpus": (bm25.manifest.get("corpus_input") == expected_bm25_corpus),
+        "graph_to_bm25": (graph.manifest.get("bm25_input") == expected_graph_bm25),
+        "graph_to_corpus": (graph.manifest.get("corpus_input") == expected_graph_corpus),
+        "vectors_to_corpus": (vectors.manifest.get("corpus_input") == expected_vector_corpus),
     }
     if not all(checks.values()):
-        raise SkillCenterHFReleaseError(
-            f"input artifact bindings differ: {checks}"
-        )
+        raise SkillCenterHFReleaseError(f"input artifact bindings differ: {checks}")
 
 
 def _decode_fts5_varints(payload: bytes) -> tuple[int, ...]:
@@ -3338,16 +2920,9 @@ def _decode_fts5_varints(payload: bytes) -> tuple[int, ...]:
 
 
 def _fts5_idf(document_count: int, document_frequency: int) -> float:
-    if (
-        document_count < 1
-        or document_frequency < 1
-        or document_frequency > document_count
-    ):
+    if document_count < 1 or document_frequency < 1 or document_frequency > document_count:
         raise SkillCenterHFReleaseError("invalid BM25 document frequency")
-    value = math.log(
-        (document_count - document_frequency + 0.5)
-        / (document_frequency + 0.5)
-    )
+    value = math.log((document_count - document_frequency + 0.5) / (document_frequency + 0.5))
     return value if value > 0.0 else 1.0e-6
 
 
@@ -3366,20 +2941,14 @@ def _bm25_posting_schema(pa: Any) -> Any:
             ("term", pa.string(), False),
             ("title_frequencies", pa.list_(pa.int32()), False),
         ],
-        metadata={
-            b"schema_version": (
-                SKILLCENTER_HF_BM25_POSTING_SCHEMA_VERSION.encode()
-            )
-        },
+        metadata={b"schema_version": (SKILLCENTER_HF_BM25_POSTING_SCHEMA_VERSION.encode())},
     )
 
 
 def _write_meta_index(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
     pa, _ = _pyarrow()
     if not rows:
-        raise SkillCenterHFReleaseError(
-            f"cannot write an empty meta-index: {path.name}"
-        )
+        raise SkillCenterHFReleaseError(f"cannot write an empty meta-index: {path.name}")
     base_fields = [
         ("cid", pa.string(), False),
         ("end_document_index", pa.int64(), False),
@@ -3412,22 +2981,18 @@ def _write_meta_index(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
         "token_instance_count": pa.int64(),
         "shard_centroid": pa.list_(pa.float32()),
     }
-    optional_names = sorted(set().union(*(set(row) for row in rows)) - {
-        name for name, *_ in base_fields
-    })
+    optional_names = sorted(
+        set().union(*(set(row) for row in rows)) - {name for name, *_ in base_fields}
+    )
     unknown = set(optional_names) - set(optional_types)
     if unknown:
-        raise SkillCenterHFReleaseError(
-            f"unsupported meta-index fields: {sorted(unknown)}"
-        )
+        raise SkillCenterHFReleaseError(f"unsupported meta-index fields: {sorted(unknown)}")
     schema = pa.schema(
         [
             *base_fields,
             *[(name, optional_types[name]) for name in optional_names],
         ],
-        metadata={
-            b"schema_version": SKILLCENTER_HF_META_SCHEMA_VERSION.encode()
-        },
+        metadata={b"schema_version": SKILLCENTER_HF_META_SCHEMA_VERSION.encode()},
     )
     _write_parquet(path, pa.Table.from_pylist(list(rows), schema=schema))
 
@@ -3463,9 +3028,7 @@ def _shard_meta_row(
 def _write_parquet(path: Path, table: Any) -> None:
     _, pq = _pyarrow()
     if table.num_rows > RELEASE_CHUNK_ROWS:
-        raise SkillCenterHFReleaseError(
-            f"Parquet shard exceeds {RELEASE_CHUNK_ROWS} rows: {path}"
-        )
+        raise SkillCenterHFReleaseError(f"Parquet shard exceeds {RELEASE_CHUNK_ROWS} rows: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.partial")
     pq.write_table(
@@ -3489,20 +3052,14 @@ def _validate_parquet_file(
     _, pq = _pyarrow()
     parquet = pq.ParquetFile(path)
     if max_rows is not None and parquet.metadata.num_rows > max_rows:
-        raise SkillCenterHFReleaseError(
-            f"Parquet file exceeds row limit: {path}"
-        )
+        raise SkillCenterHFReleaseError(f"Parquet file exceeds row limit: {path}")
     compressions = {
         parquet.metadata.row_group(group).column(column).compression
         for group in range(parquet.num_row_groups)
-        for column in range(
-            parquet.metadata.row_group(group).num_columns
-        )
+        for column in range(parquet.metadata.row_group(group).num_columns)
     }
     if compressions and compressions != {"ZSTD"}:
-        raise SkillCenterHFReleaseError(
-            f"Parquet file is not uniformly ZSTD-compressed: {path}"
-        )
+        raise SkillCenterHFReleaseError(f"Parquet file is not uniformly ZSTD-compressed: {path}")
 
 
 def _file_descriptor(path: Path, *, root: Path) -> dict[str, Any]:
@@ -3537,9 +3094,7 @@ def _verify_file_descriptor(root: Path, value: Any) -> Path:
     try:
         path.relative_to(root)
     except ValueError as exc:
-        raise SkillCenterHFReleaseError(
-            "file descriptor path escapes the release"
-        ) from exc
+        raise SkillCenterHFReleaseError("file descriptor path escapes the release") from exc
     if (
         not relative
         or Path(relative).is_absolute()
@@ -3554,9 +3109,7 @@ def _verify_file_descriptor(root: Path, value: Any) -> Path:
         or digest.hex() != str(value.get("sha256", ""))
         or cid_v1_from_digest(digest) != str(value.get("cid", ""))
     ):
-        raise SkillCenterHFReleaseError(
-            f"file descriptor failed verification: {relative}"
-        )
+        raise SkillCenterHFReleaseError(f"file descriptor failed verification: {relative}")
     return path
 
 
@@ -3604,9 +3157,7 @@ def _faiss_numpy() -> tuple[Any, Any]:
         import faiss
         import numpy as np
     except ImportError as exc:
-        raise SkillCenterHFReleaseError(
-            "faiss and numpy are required for vector export"
-        ) from exc
+        raise SkillCenterHFReleaseError("faiss and numpy are required for vector export") from exc
     return faiss, np
 
 

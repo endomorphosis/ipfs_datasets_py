@@ -25,12 +25,8 @@ This guide demonstrates how to integrate the `extraction/` and `query/` packages
 ### Basic Extraction → Query Workflow
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractor, KnowledgeGraph
-)
-from ipfs_datasets_py.knowledge_graphs.query import (
-    UnifiedQueryEngine, HybridSearchEngine
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor, KnowledgeGraph
+from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine, HybridSearchEngine
 
 # Step 1: Extract knowledge graph from text
 extractor = KnowledgeGraphExtractor()
@@ -62,20 +58,19 @@ for person in persons:
 ```python
 from ipfs_datasets_py.knowledge_graphs.extraction import (
     KnowledgeGraphExtractor,
-    KnowledgeGraphExtractorWithValidation
+    KnowledgeGraphExtractorWithValidation,
 )
 
 # Step 1: Extract with validation
 validator = KnowledgeGraphExtractorWithValidation(
-    validate_during_extraction=True,
-    auto_correct_suggestions=True
+    validate_during_extraction=True, auto_correct_suggestions=True
 )
 
 text = "Albert Einstein developed the theory of relativity in 1905."
 
 result = validator.extract_knowledge_graph(
     text,
-    validation_depth=2  # Validate entities and relationships
+    validation_depth=2,  # Validate entities and relationships
 )
 
 kg = result["knowledge_graph"]
@@ -124,23 +119,25 @@ print("-" * 50)
 for filename in os.listdir(INPUT_DIR):
     if not filename.endswith(".txt"):
         continue
-    
+
     filepath = os.path.join(INPUT_DIR, filename)
     with open(filepath, "r") as f:
         text = f.read()
-    
+
     # Extract knowledge graph
     doc_kg = extractor.extract_knowledge_graph(text)
     print(f"✓ {filename}: {len(doc_kg.entities)} entities")
-    
+
     # Merge into combined graph
     if combined_kg is None:
         combined_kg = doc_kg
     else:
         combined_kg.merge(doc_kg)
 
-print(f"\nCombined graph: {len(combined_kg.entities)} entities, "
-      f"{len(combined_kg.relationships)} relationships")
+print(
+    f"\nCombined graph: {len(combined_kg.entities)} entities, "
+    f"{len(combined_kg.relationships)} relationships"
+)
 
 # Step 2: Enrich with type inference
 print("\nPhase 2: Enrichment")
@@ -220,11 +217,12 @@ import json
 import time
 from typing import Dict, List
 
+
 class KnowledgeGraphSystem:
     """
     Real-time knowledge graph building and querying system.
     """
-    
+
     def __init__(self, storage_file: str = "live_kg.json"):
         self.extractor = KnowledgeGraphExtractor()
         self.storage_file = storage_file
@@ -233,106 +231,102 @@ class KnowledgeGraphSystem:
             "documents_processed": 0,
             "entities_added": 0,
             "relationships_added": 0,
-            "last_update": None
+            "last_update": None,
         }
-    
+
     def _load_or_create(self):
         """Load existing graph or create new one."""
         if os.path.exists(self.storage_file):
             with open(self.storage_file, "r") as f:
                 from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
                 return KnowledgeGraph.from_json(f.read())
         else:
             from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
             return KnowledgeGraph(name="live_knowledge_graph")
-    
+
     def add_document(self, text: str, metadata: Dict = None):
         """Add document to knowledge graph."""
         # Extract knowledge
         doc_kg = self.extractor.extract_knowledge_graph(text)
-        
+
         # Track stats before merge
         entities_before = len(self.kg.entities)
         rels_before = len(self.kg.relationships)
-        
+
         # Merge into main graph
         self.kg.merge(doc_kg)
-        
+
         # Update stats
         self.stats["documents_processed"] += 1
         self.stats["entities_added"] += len(self.kg.entities) - entities_before
         self.stats["relationships_added"] += len(self.kg.relationships) - rels_before
         self.stats["last_update"] = time.time()
-        
+
         # Save
         self._save()
-        
+
         return {
             "new_entities": len(self.kg.entities) - entities_before,
-            "new_relationships": len(self.kg.relationships) - rels_before
+            "new_relationships": len(self.kg.relationships) - rels_before,
         }
-    
+
     def query_entity(self, name: str):
         """Query entity by name."""
         entities = self.kg.get_entities_by_name(name)
         if not entities:
             return None
-        
+
         entity = entities[0]
         relationships = self.kg.get_relationships_by_entity(entity)
-        
+
         return {
             "entity": entity.to_dict(),
             "relationships": [rel.to_dict() for rel in relationships],
             "related_entities": [
-                rel.target_entity.to_dict() 
-                if rel.source_entity.entity_id == entity.entity_id 
+                rel.target_entity.to_dict()
+                if rel.source_entity.entity_id == entity.entity_id
                 else rel.source_entity.to_dict()
                 for rel in relationships
-            ]
+            ],
         }
-    
+
     def query_type(self, entity_type: str):
         """Query all entities of a type."""
         entities = self.kg.get_entities_by_type(entity_type)
         return [e.to_dict() for e in entities]
-    
+
     def find_connection(self, name1: str, name2: str):
         """Find connection between two entities."""
         entities1 = self.kg.get_entities_by_name(name1)
         entities2 = self.kg.get_entities_by_name(name2)
-        
+
         if not entities1 or not entities2:
             return None
-        
-        path = self.kg.find_path(
-            entities1[0].entity_id,
-            entities2[0].entity_id,
-            max_depth=5
-        )
-        
+
+        path = self.kg.find_path(entities1[0].entity_id, entities2[0].entity_id, max_depth=5)
+
         if not path:
             return None
-        
+
         path_entities = [self.kg.get_entity_by_id(eid) for eid in path]
-        return {
-            "path_length": len(path),
-            "entities": [e.to_dict() for e in path_entities if e]
-        }
-    
+        return {"path_length": len(path), "entities": [e.to_dict() for e in path_entities if e]}
+
     def get_stats(self):
         """Get system statistics."""
         return {
             **self.stats,
             "total_entities": len(self.kg.entities),
             "total_relationships": len(self.kg.relationships),
-            "entity_types": len(set(e.entity_type for e in self.kg.entities.values()))
+            "entity_types": len(set(e.entity_type for e in self.kg.entities.values())),
         }
-    
+
     def _save(self):
         """Save graph to disk."""
         with open(self.storage_file, "w") as f:
             f.write(self.kg.to_json())
+
 
 # Usage
 system = KnowledgeGraphSystem()
@@ -341,13 +335,15 @@ system = KnowledgeGraphSystem()
 docs = [
     "Python is a programming language created by Guido van Rossum.",
     "Guido van Rossum worked at Google and Dropbox.",
-    "Python is widely used in machine learning and data science."
+    "Python is widely used in machine learning and data science.",
 ]
 
 print("Adding documents...")
 for doc in docs:
     result = system.add_document(doc)
-    print(f"  Added: {result['new_entities']} entities, {result['new_relationships']} relationships")
+    print(
+        f"  Added: {result['new_entities']} entities, {result['new_relationships']} relationships"
+    )
 
 # Query
 print("\nQuerying...")
@@ -388,17 +384,18 @@ processing, and robotics.
 kg = extractor.extract_knowledge_graph(text)
 print(f"Knowledge graph: {len(kg.entities)} entities")
 
+
 # Step 2: Create simple vector store (for demonstration)
 # In production, use FAISS, Qdrant, or similar
 class SimpleVectorStore:
     def __init__(self):
         self.vectors = {}
         self.metadata = {}
-    
+
     def add(self, entity_id, vector, metadata):
         self.vectors[entity_id] = vector
         self.metadata[entity_id] = metadata
-    
+
     def search(self, query_vector, k=10):
         # Simple cosine similarity
         scores = []
@@ -407,9 +404,10 @@ class SimpleVectorStore:
                 np.linalg.norm(query_vector) * np.linalg.norm(vector) + 1e-8
             )
             scores.append((entity_id, similarity, self.metadata[entity_id]))
-        
+
         scores.sort(key=lambda x: x[1], reverse=True)
         return scores[:k]
+
 
 # Create embeddings (simplified - in production use real embeddings)
 vector_store = SimpleVectorStore()
@@ -420,11 +418,12 @@ for entity_id, entity in kg.entities.items():
 
 print(f"Vector store: {len(vector_store.vectors)} vectors")
 
+
 # Step 3: Hybrid search (combine vector similarity with graph structure)
 def hybrid_search(query: str, kg, vector_store, alpha=0.6):
     """
     Hybrid search combining vector similarity and graph structure.
-    
+
     Args:
         query: Search query
         kg: Knowledge graph
@@ -434,11 +433,11 @@ def hybrid_search(query: str, kg, vector_store, alpha=0.6):
     # Vector search
     query_vector = np.random.rand(128)  # Simplified
     vector_results = vector_store.search(query_vector, k=20)
-    
+
     # Graph expansion from top vector results
     seed_entities = [kg.get_entity_by_id(r[0]) for r in vector_results[:5]]
     seed_entities = [e for e in seed_entities if e]  # Filter None
-    
+
     # Expand in graph
     expanded_entities = set()
     for entity in seed_entities:
@@ -449,11 +448,11 @@ def hybrid_search(query: str, kg, vector_store, alpha=0.6):
                 expanded_entities.add(rel.source_entity.entity_id)
             else:
                 expanded_entities.add(rel.target_entity.entity_id)
-    
+
     # Combine scores
     vector_scores = {r[0]: r[1] for r in vector_results}
     graph_scores = {eid: 1.0 / (i + 1) for i, eid in enumerate(expanded_entities)}
-    
+
     # Hybrid scoring
     all_entities = set(vector_scores.keys()) | set(graph_scores.keys())
     hybrid_scores = []
@@ -461,13 +460,14 @@ def hybrid_search(query: str, kg, vector_store, alpha=0.6):
         v_score = vector_scores.get(eid, 0.0)
         g_score = graph_scores.get(eid, 0.0)
         combined = alpha * v_score + (1 - alpha) * g_score
-        
+
         entity = kg.get_entity_by_id(eid)
         if entity:
             hybrid_scores.append((entity, combined, v_score, g_score))
-    
+
     hybrid_scores.sort(key=lambda x: x[1], reverse=True)
     return hybrid_scores[:10]
+
 
 # Execute hybrid search
 results = hybrid_search("machine learning neural networks", kg, vector_store, alpha=0.7)
@@ -475,7 +475,9 @@ results = hybrid_search("machine learning neural networks", kg, vector_store, al
 print("\nHybrid Search Results:")
 print("-" * 60)
 for entity, score, v_score, g_score in results:
-    print(f"{entity.name:30} | Combined: {score:.3f} | Vector: {v_score:.3f} | Graph: {g_score:.3f}")
+    print(
+        f"{entity.name:30} | Combined: {score:.3f} | Vector: {v_score:.3f} | Graph: {g_score:.3f}"
+    )
 ```
 
 ---
@@ -494,51 +496,55 @@ from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class KnowledgeGraphBuilder(FileSystemEventHandler):
     """Watch directory and build knowledge graph from new files."""
-    
+
     def __init__(self, output_file="continuous_kg.json"):
         self.extractor = KnowledgeGraphExtractor()
         self.output_file = output_file
         self.kg = self._load_or_create()
-    
+
     def _load_or_create(self):
         if os.path.exists(self.output_file):
             from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
             with open(self.output_file, "r") as f:
                 return KnowledgeGraph.from_json(f.read())
         else:
             from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
             return KnowledgeGraph(name="continuous_kg")
-    
+
     def on_created(self, event):
-        if event.is_directory or not event.src_path.endswith('.txt'):
+        if event.is_directory or not event.src_path.endswith(".txt"):
             return
-        
+
         logger.info(f"Processing new file: {event.src_path}")
-        
+
         try:
             with open(event.src_path, "r") as f:
                 text = f.read()
-            
+
             # Extract and merge
             doc_kg = self.extractor.extract_knowledge_graph(text)
             entities_before = len(self.kg.entities)
             self.kg.merge(doc_kg)
             new_entities = len(self.kg.entities) - entities_before
-            
+
             # Save
             with open(self.output_file, "w") as f:
                 f.write(self.kg.to_json())
-            
+
             logger.info(
                 f"Added {new_entities} new entities. "
                 f"Total: {len(self.kg.entities)} entities, "
                 f"{len(self.kg.relationships)} relationships"
             )
-        
+
         except Exception as e:
             logger.error(f"Error processing {event.src_path}: {e}")
+
 
 # Usage
 watch_dir = "./documents"
@@ -573,6 +579,7 @@ import traceback
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ProcessingResult:
     success: bool
@@ -581,93 +588,88 @@ class ProcessingResult:
     relationships: int = 0
     error: str = None
 
+
 class BatchProcessor:
     """Process multiple documents with error recovery."""
-    
+
     def __init__(self, checkpoint_file="processing_checkpoint.json"):
         self.extractor = KnowledgeGraphExtractor()
         self.checkpoint_file = checkpoint_file
         self.processed_files = self._load_checkpoint()
-    
+
     def _load_checkpoint(self):
         if os.path.exists(self.checkpoint_file):
             with open(self.checkpoint_file, "r") as f:
                 return set(json.load(f))
         return set()
-    
+
     def _save_checkpoint(self):
         with open(self.checkpoint_file, "w") as f:
             json.dump(list(self.processed_files), f)
-    
+
     def process_batch(
-        self, 
-        file_paths: List[str],
-        output_file: str,
-        skip_processed: bool = True
+        self, file_paths: List[str], output_file: str, skip_processed: bool = True
     ) -> Dict:
         """Process batch of files with checkpointing."""
         results = []
         combined_kg = None
-        
+
         for i, file_path in enumerate(file_paths):
             # Skip if already processed
             if skip_processed and file_path in self.processed_files:
-                logger.info(f"[{i+1}/{len(file_paths)}] Skipping {file_path} (already processed)")
+                logger.info(f"[{i + 1}/{len(file_paths)}] Skipping {file_path} (already processed)")
                 continue
-            
-            logger.info(f"[{i+1}/{len(file_paths)}] Processing {file_path}")
-            
+
+            logger.info(f"[{i + 1}/{len(file_paths)}] Processing {file_path}")
+
             try:
                 # Read file
                 with open(file_path, "r") as f:
                     text = f.read()
-                
+
                 # Extract
                 doc_kg = self.extractor.extract_knowledge_graph(text)
-                
+
                 # Merge
                 if combined_kg is None:
                     from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
                     combined_kg = KnowledgeGraph(name="batch_kg")
-                
+
                 combined_kg.merge(doc_kg)
-                
+
                 # Mark as processed
                 self.processed_files.add(file_path)
                 self._save_checkpoint()
-                
+
                 # Record result
                 result = ProcessingResult(
                     success=True,
                     file_path=file_path,
                     entities=len(doc_kg.entities),
-                    relationships=len(doc_kg.relationships)
+                    relationships=len(doc_kg.relationships),
                 )
                 results.append(result)
-                
+
                 logger.info(f"  ✓ Success: {len(doc_kg.entities)} entities")
-                
+
             except Exception as e:
                 logger.error(f"  ✗ Error: {e}")
                 logger.debug(traceback.format_exc())
-                
-                result = ProcessingResult(
-                    success=False,
-                    file_path=file_path,
-                    error=str(e)
-                )
+
+                result = ProcessingResult(success=False, file_path=file_path, error=str(e))
                 results.append(result)
-        
+
         # Save combined graph
         if combined_kg:
             with open(output_file, "w") as f:
                 f.write(combined_kg.to_json())
             logger.info(f"Saved combined graph to {output_file}")
-        
+
         # Summary
         successful = [r for r in results if r.success]
         failed = [r for r in results if not r.success]
-        
+
         summary = {
             "total_files": len(file_paths),
             "processed": len(successful),
@@ -675,10 +677,11 @@ class BatchProcessor:
             "skipped": len(file_paths) - len(results),
             "total_entities": len(combined_kg.entities) if combined_kg else 0,
             "total_relationships": len(combined_kg.relationships) if combined_kg else 0,
-            "failed_files": [r.file_path for r in failed]
+            "failed_files": [r.file_path for r in failed],
         }
-        
+
         return summary
+
 
 # Usage
 import glob
@@ -696,9 +699,9 @@ print(f"  Skipped: {summary['skipped']}")
 print(f"  Total Entities: {summary['total_entities']}")
 print(f"  Total Relationships: {summary['total_relationships']}")
 
-if summary['failed_files']:
+if summary["failed_files"]:
     print(f"\nFailed files:")
-    for file_path in summary['failed_files']:
+    for file_path in summary["failed_files"]:
         print(f"  - {file_path}")
 ```
 
@@ -713,50 +716,54 @@ from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 
+
 def extract_from_file(file_path: str) -> tuple:
     """Extract knowledge graph from file (for parallel processing)."""
     try:
         extractor = KnowledgeGraphExtractor()
-        
+
         with open(file_path, "r") as f:
             text = f.read()
-        
+
         kg = extractor.extract_knowledge_graph(text)
-        
+
         return (True, file_path, kg.to_dict(), None)
-    
+
     except Exception as e:
         return (False, file_path, None, str(e))
+
 
 def parallel_extract(file_paths: List[str], max_workers: int = None):
     """Extract knowledge graphs in parallel."""
     if max_workers is None:
         max_workers = multiprocessing.cpu_count()
-    
+
     print(f"Processing {len(file_paths)} files with {max_workers} workers...")
-    
+
     results = []
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(extract_from_file, fp): fp for fp in file_paths}
-        
+
         for future in as_completed(futures):
             success, file_path, kg_dict, error = future.result()
-            
+
             if success:
                 print(f"✓ {file_path}")
                 results.append(kg_dict)
             else:
                 print(f"✗ {file_path}: {error}")
-    
+
     # Merge all graphs
     from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
     combined = KnowledgeGraph(name="parallel_combined")
-    
+
     for kg_dict in results:
         kg = KnowledgeGraph.from_dict(kg_dict)
         combined.merge(kg)
-    
+
     return combined
+
 
 # Usage
 import glob
@@ -764,8 +771,10 @@ import glob
 files = glob.glob("documents/*.txt")
 combined_kg = parallel_extract(files, max_workers=4)
 
-print(f"\nCombined: {len(combined_kg.entities)} entities, "
-      f"{len(combined_kg.relationships)} relationships")
+print(
+    f"\nCombined: {len(combined_kg.entities)} entities, "
+    f"{len(combined_kg.relationships)} relationships"
+)
 ```
 
 ### Optimization 2: Caching with Redis
@@ -776,46 +785,49 @@ import hashlib
 import redis
 import json
 
+
 class CachedExtractor:
     """Extractor with Redis caching."""
-    
+
     def __init__(self, redis_url="redis://localhost:6379"):
         self.extractor = KnowledgeGraphExtractor()
         self.redis_client = redis.from_url(redis_url)
         self.cache_prefix = "kg_extract:"
-    
+
     def _get_cache_key(self, text: str) -> str:
         """Generate cache key from text hash."""
         text_hash = hashlib.sha256(text.encode()).hexdigest()
         return f"{self.cache_prefix}{text_hash}"
-    
+
     def extract(self, text: str, use_cache: bool = True):
         """Extract with caching."""
         cache_key = self._get_cache_key(text)
-        
+
         # Try cache
         if use_cache:
             cached = self.redis_client.get(cache_key)
             if cached:
                 print("Cache hit!")
                 from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
+
                 return KnowledgeGraph.from_json(cached.decode())
-        
+
         # Extract
         print("Cache miss - extracting...")
         kg = self.extractor.extract_knowledge_graph(text)
-        
+
         # Cache result (with 1 hour expiry)
         self.redis_client.setex(cache_key, 3600, kg.to_json())
-        
+
         return kg
-    
+
     def clear_cache(self):
         """Clear all cached extractions."""
         keys = self.redis_client.keys(f"{self.cache_prefix}*")
         if keys:
             self.redis_client.delete(*keys)
             print(f"Cleared {len(keys)} cached items")
+
 
 # Usage (requires Redis running)
 # extractor = CachedExtractor()
@@ -830,40 +842,38 @@ class CachedExtractor:
 ### Pattern 1: Multi-Source Knowledge Fusion
 
 ```python
-from ipfs_datasets_py.knowledge_graphs.extraction import (
-    KnowledgeGraphExtractor,
-    KnowledgeGraph
-)
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor, KnowledgeGraph
 from typing import Dict, List
+
 
 class MultiSourceKnowledgeFusion:
     """Fuse knowledge from multiple sources with provenance tracking."""
-    
+
     def __init__(self):
         self.extractor = KnowledgeGraphExtractor()
         self.source_graphs = {}  # source_id -> KnowledgeGraph
         self.provenance = {}  # entity_id -> List[source_ids]
-    
+
     def add_source(self, source_id: str, text: str, metadata: Dict = None):
         """Add knowledge from a source."""
         # Extract
         kg = self.extractor.extract_knowledge_graph(text)
-        
+
         # Store source graph
         self.source_graphs[source_id] = kg
-        
+
         # Track provenance
         for entity_id in kg.entities:
             if entity_id not in self.provenance:
                 self.provenance[entity_id] = []
             self.provenance[entity_id].append(source_id)
-        
+
         return kg
-    
+
     def fuse(self, conflict_resolution="vote") -> KnowledgeGraph:
         """
         Fuse knowledge from all sources.
-        
+
         Args:
             conflict_resolution: Strategy for conflicts
                 - "vote": Use most common value
@@ -871,13 +881,13 @@ class MultiSourceKnowledgeFusion:
                 - "confidence": Use highest confidence
         """
         fused = KnowledgeGraph(name="fused_knowledge")
-        
+
         # Merge all source graphs
         for source_id, kg in self.source_graphs.items():
             fused.merge(kg)
-        
+
         return fused
-    
+
     def get_entity_provenance(self, entity_name: str) -> List[str]:
         """Get sources that mention an entity."""
         for entity_id, sources in self.provenance.items():
@@ -887,6 +897,7 @@ class MultiSourceKnowledgeFusion:
                 if entity and entity.name == entity_name:
                     return sources
         return []
+
 
 # Usage
 fusion = MultiSourceKnowledgeFusion()
@@ -911,64 +922,69 @@ print(f"Python mentioned in: {sources}")
 from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraph
 import time
 
+
 class IncrementalKnowledgeGraph:
     """Knowledge graph with versioning and incremental updates."""
-    
+
     def __init__(self, name: str = "incremental_kg"):
         self.current_version = 0
         self.versions = {0: KnowledgeGraph(name=name)}
         self.changelog = []
-    
+
     def update(self, new_kg: KnowledgeGraph, description: str = ""):
         """Add new knowledge and create version."""
         # Merge into current version
         current = self.versions[self.current_version]
         entities_before = len(current.entities)
         rels_before = len(current.relationships)
-        
+
         current.merge(new_kg)
-        
+
         # Calculate changes
         entities_added = len(current.entities) - entities_before
         rels_added = len(current.relationships) - rels_before
-        
+
         # Create new version
         self.current_version += 1
         self.versions[self.current_version] = current
-        
+
         # Log change
-        self.changelog.append({
-            "version": self.current_version,
-            "timestamp": time.time(),
-            "description": description,
-            "entities_added": entities_added,
-            "relationships_added": rels_added
-        })
-        
+        self.changelog.append(
+            {
+                "version": self.current_version,
+                "timestamp": time.time(),
+                "description": description,
+                "entities_added": entities_added,
+                "relationships_added": rels_added,
+            }
+        )
+
         return self.current_version
-    
+
     def get_version(self, version: int = None):
         """Get specific version (or current if None)."""
         if version is None:
             version = self.current_version
         return self.versions.get(version)
-    
+
     def get_changelog(self):
         """Get version changelog."""
         return self.changelog
-    
+
     def rollback(self, version: int):
         """Rollback to previous version."""
         if version not in self.versions:
             raise ValueError(f"Version {version} does not exist")
-        
+
         self.current_version = version
         return self.versions[version]
+
 
 # Usage
 ikg = IncrementalKnowledgeGraph()
 
 from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor
+
 extractor = KnowledgeGraphExtractor()
 
 # Version 1
@@ -986,8 +1002,7 @@ ikg.update(kg3, "Added applications")
 # View changelog
 print("Changelog:")
 for entry in ikg.get_changelog():
-    print(f"  v{entry['version']}: {entry['description']} "
-          f"(+{entry['entities_added']} entities)")
+    print(f"  v{entry['version']}: {entry['description']} (+{entry['entities_added']} entities)")
 
 # Rollback
 ikg.rollback(1)
@@ -1009,9 +1024,10 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class MonitoredExtractor:
     """Extractor with performance monitoring."""
-    
+
     def __init__(self):
         self.extractor = KnowledgeGraphExtractor()
         self.metrics = {
@@ -1019,57 +1035,64 @@ class MonitoredExtractor:
             "total_time": 0.0,
             "total_entities": 0,
             "total_relationships": 0,
-            "errors": 0
+            "errors": 0,
         }
-    
+
     def extract(self, text: str, **kwargs):
         """Extract with monitoring."""
         # Get initial memory
         process = psutil.Process()
         mem_before = process.memory_info().rss / 1024 / 1024  # MB
-        
+
         # Extract
         start = time.time()
         try:
             kg = self.extractor.extract_knowledge_graph(text, **kwargs)
             elapsed = time.time() - start
-            
+
             # Update metrics
             self.metrics["extractions"] += 1
             self.metrics["total_time"] += elapsed
             self.metrics["total_entities"] += len(kg.entities)
             self.metrics["total_relationships"] += len(kg.relationships)
-            
+
             # Log
             mem_after = process.memory_info().rss / 1024 / 1024
             mem_delta = mem_after - mem_before
-            
+
             logger.info(
                 f"Extraction complete: {len(kg.entities)} entities, "
                 f"{len(kg.relationships)} relationships in {elapsed:.2f}s "
                 f"(memory: +{mem_delta:.1f}MB)"
             )
-            
+
             return kg
-            
+
         except Exception as e:
             self.metrics["errors"] += 1
             logger.error(f"Extraction failed: {e}")
             raise
-    
+
     def get_stats(self):
         """Get performance statistics."""
-        avg_time = (self.metrics["total_time"] / self.metrics["extractions"] 
-                    if self.metrics["extractions"] > 0 else 0)
-        avg_entities = (self.metrics["total_entities"] / self.metrics["extractions"] 
-                        if self.metrics["extractions"] > 0 else 0)
-        
+        avg_time = (
+            self.metrics["total_time"] / self.metrics["extractions"]
+            if self.metrics["extractions"] > 0
+            else 0
+        )
+        avg_entities = (
+            self.metrics["total_entities"] / self.metrics["extractions"]
+            if self.metrics["extractions"] > 0
+            else 0
+        )
+
         return {
             **self.metrics,
             "avg_time": avg_time,
             "avg_entities": avg_entities,
-            "entities_per_second": avg_entities / avg_time if avg_time > 0 else 0
+            "entities_per_second": avg_entities / avg_time if avg_time > 0 else 0,
         }
+
 
 # Usage
 extractor = MonitoredExtractor()
@@ -1111,7 +1134,7 @@ except Exception as e:
 # For critical data, always validate
 if entity.confidence < 0.7:
     validation = extractor.validate_against_wikidata(kg, entity.name)
-    if validation['coverage'] < 0.5:
+    if validation["coverage"] < 0.5:
         print(f"Warning: Low validation for {entity.name}")
 ```
 
@@ -1120,16 +1143,12 @@ if entity.confidence < 0.7:
 ```python
 # Conservative for factual data
 kg = extractor.extract_knowledge_graph(
-    legal_text,
-    extraction_temperature=0.2,
-    structure_temperature=0.3
+    legal_text, extraction_temperature=0.2, structure_temperature=0.3
 )
 
 # Aggressive for exploratory analysis
 kg = extractor.extract_knowledge_graph(
-    research_paper,
-    extraction_temperature=0.9,
-    structure_temperature=0.8
+    research_paper, extraction_temperature=0.9, structure_temperature=0.8
 )
 ```
 

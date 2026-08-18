@@ -8,7 +8,10 @@ from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata
 from ._helpers import default_blob_dir, default_wallet_dir, load, save
 
 
-@tool_metadata(category="wallet_tools", mcp_description="Create a safe public-input location-region proof receipt.")
+@tool_metadata(
+    category="wallet_tools",
+    mcp_description="Create a safe public-input location-region proof receipt.",
+)
 async def wallet_create_location_region_proof(
     wallet_id: str,
     record_id: str,

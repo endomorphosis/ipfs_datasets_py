@@ -3,7 +3,7 @@ Session 29 — Server context coverage improvements.
 
 Targets server_context.py lines currently uncovered:
   156-166  __enter__ error paths (ImportError, generic Exception)
-  179-180  __exit__ cleanup error path  
+  179-180  __exit__ cleanup error path
   187-191  _initialize_metadata_registry
   216-218  _initialize_p2p_services ImportError
   226-228  _initialize_workflow_scheduler Exception
@@ -41,6 +41,7 @@ from ipfs_datasets_py.mcp_server.exceptions import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_context() -> ServerContext:
     """Create a fresh ServerContext (without entering)."""
     return ServerContext()
@@ -49,6 +50,7 @@ def _make_context() -> ServerContext:
 # ---------------------------------------------------------------------------
 # Property guards when not entered
 # ---------------------------------------------------------------------------
+
 
 class TestPropertiesWhenNotEntered:
     """Lines 373-395: property guards raise RuntimeError when context not entered."""
@@ -80,22 +82,23 @@ class TestPropertiesWhenNotEntered:
 # __enter__ error paths
 # ---------------------------------------------------------------------------
 
+
 class TestEnterErrorPaths:
     """Lines 156-166: ImportError and generic Exception in __enter__."""
 
     def test_import_error_during_init_raises_server_startup_error(self):
         """Lines 158-162: ImportError → ServerStartupError."""
         ctx = _make_context()
-        with patch.object(ctx, "_initialize_metadata_registry",
-                          side_effect=ImportError("module not found")):
+        with patch.object(
+            ctx, "_initialize_metadata_registry", side_effect=ImportError("module not found")
+        ):
             with pytest.raises(ServerStartupError, match="Module import failed"):
                 ctx.__enter__()
 
     def test_generic_exception_during_init_raises_server_startup_error(self):
         """Lines 163-166: generic Exception → ServerStartupError."""
         ctx = _make_context()
-        with patch.object(ctx, "_initialize_tool_manager",
-                          side_effect=RuntimeError("unexpected")):
+        with patch.object(ctx, "_initialize_tool_manager", side_effect=RuntimeError("unexpected")):
             with pytest.raises(ServerStartupError, match="Server initialization failed"):
                 ctx.__enter__()
 
@@ -111,8 +114,7 @@ class TestEnterErrorPaths:
 
         ctx._cleanup = tracking_cleanup
 
-        with patch.object(ctx, "_initialize_tool_manager",
-                          side_effect=RuntimeError("boom")):
+        with patch.object(ctx, "_initialize_tool_manager", side_effect=RuntimeError("boom")):
             with pytest.raises(ServerStartupError):
                 ctx.__enter__()
 
@@ -122,6 +124,7 @@ class TestEnterErrorPaths:
 # ---------------------------------------------------------------------------
 # __exit__ error paths
 # ---------------------------------------------------------------------------
+
 
 class TestExitErrorPaths:
     """Lines 179-191: __exit__ when cleanup raises."""
@@ -141,6 +144,7 @@ class TestExitErrorPaths:
 # ---------------------------------------------------------------------------
 # _cleanup branches
 # ---------------------------------------------------------------------------
+
 
 class TestCleanupBranches:
     """Lines 244-266: _cleanup with metadata registry, tool manager, p2p services."""
@@ -172,6 +176,7 @@ class TestCleanupBranches:
 # ---------------------------------------------------------------------------
 # list_tools()
 # ---------------------------------------------------------------------------
+
 
 class TestListTools:
     """Lines 481-489: list_tools() delegates to tool_manager."""
@@ -205,6 +210,7 @@ class TestListTools:
 # get_tool() — dot-notation hit
 # ---------------------------------------------------------------------------
 
+
 class TestGetToolDotNotation:
     """Line 580: get_tool("category.tool") hits the dot-notation branch."""
 
@@ -236,6 +242,7 @@ class TestGetToolDotNotation:
 # ---------------------------------------------------------------------------
 # execute_tool() error paths
 # ---------------------------------------------------------------------------
+
 
 class TestExecuteToolErrorPaths:
     """Lines 679-688: execute_tool() wraps various exceptions."""
@@ -294,6 +301,7 @@ class TestExecuteToolErrorPaths:
 # create_server_context() convenience function
 # ---------------------------------------------------------------------------
 
+
 class TestCreateServerContext:
     """Lines 692-720: create_server_context() context manager."""
 
@@ -312,6 +320,7 @@ class TestCreateServerContext:
 # ---------------------------------------------------------------------------
 # set/get current context (thread-local)
 # ---------------------------------------------------------------------------
+
 
 class TestThreadLocalContext:
     """Lines 719-865: set_current_context / get_current_context."""

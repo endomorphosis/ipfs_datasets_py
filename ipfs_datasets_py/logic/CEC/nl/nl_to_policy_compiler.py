@@ -33,6 +33,7 @@ The predicate name is used as the action.
 
 No external dependencies beyond stdlib + sibling logic modules.
 """
+
 from __future__ import annotations
 
 import logging
@@ -42,36 +43,53 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+
 # ── lazy imports so this module stays import-quiet ───────────────────────────
 def _get_nl_converter():
     from ..native.nl_converter import NaturalLanguageConverter, ConversionResult
+
     return NaturalLanguageConverter, ConversionResult
 
 
 def _get_dcec_types():
     from ..native.dcec_core import (
-        DeonticFormula, DeonticOperator,
-        CognitiveFormula, AtomicFormula, ConnectiveFormula,
+        DeonticFormula,
+        DeonticOperator,
+        CognitiveFormula,
+        AtomicFormula,
+        ConnectiveFormula,
         TemporalFormula,
     )
+
     return (
-        DeonticFormula, DeonticOperator,
-        CognitiveFormula, AtomicFormula, ConnectiveFormula,
+        DeonticFormula,
+        DeonticOperator,
+        CognitiveFormula,
+        AtomicFormula,
+        ConnectiveFormula,
         TemporalFormula,
     )
 
 
 def _get_policy_types():
     from ipfs_datasets_py.mcp_server.temporal_policy import (
-        PolicyClause, PolicyObject, PolicyEvaluator,
+        PolicyClause,
+        PolicyObject,
+        PolicyEvaluator,
     )
+
     return PolicyClause, PolicyObject, PolicyEvaluator
 
 
 # ── deontic → clause type mapping ────────────────────────────────────────────
 _OBLIGATION_OPS = {
-    "OBLIGATION", "OBLIGATORY",
-    "SUPEREROGATION", "RIGHT", "LIBERTY", "POWER", "IMMUNITY",
+    "OBLIGATION",
+    "OBLIGATORY",
+    "SUPEREROGATION",
+    "RIGHT",
+    "LIBERTY",
+    "POWER",
+    "IMMUNITY",
 }
 _PROHIBITION_OPS = {"PROHIBITION", "FORBIDDEN"}
 _PERMISSION_OPS = {"PERMISSION", "PERMITTED"}
@@ -88,8 +106,8 @@ class CompilationResult:
 
     input_text: str
     success: bool = False
-    policy: Any = None           # PolicyObject | None
-    clauses: List[Any] = field(default_factory=list)   # List[PolicyClause]
+    policy: Any = None  # PolicyObject | None
+    clauses: List[Any] = field(default_factory=list)  # List[PolicyClause]
     dcec_formulas: List[Any] = field(default_factory=list)  # List[Formula]
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
@@ -105,11 +123,13 @@ class CompilationResult:
 
 # ── helper: extract actor from DCEC formula ──────────────────────────────────
 
+
 def _extract_actor(formula) -> Optional[str]:
     """Return the first VariableTerm name from *formula*'s inner AtomicFormula."""
     AtomicFormula = None
     try:
         from ..native.dcec_core import AtomicFormula as _AF
+
         AtomicFormula = _AF
     except ImportError:
         return None
@@ -132,6 +152,7 @@ def _extract_action(formula) -> Optional[str]:
     AtomicFormula = None
     try:
         from ..native.dcec_core import AtomicFormula as _AF
+
         AtomicFormula = _AF
     except ImportError:
         return None
@@ -147,6 +168,7 @@ def _extract_action(formula) -> Optional[str]:
 
 
 # ── core helper: DCEC formula → PolicyClause ─────────────────────────────────
+
 
 def _dcec_formula_to_clause(
     formula,
@@ -185,6 +207,7 @@ def _dcec_formula_to_clause(
 
 
 # ── main compiler ─────────────────────────────────────────────────────────────
+
 
 class NLToDCECCompiler:
     """
@@ -287,7 +310,11 @@ class NLToDCECCompiler:
         # ── Stage 1b: grammar fallback (Phase 3b) ────────────────────────────
         if not primary_succeeded:
             try:
-                from .grammar_nl_policy_compiler import GrammarNLPolicyCompiler, _build_policy_clause
+                from .grammar_nl_policy_compiler import (
+                    GrammarNLPolicyCompiler,
+                    _build_policy_clause,
+                )
+
                 gcompiler = GrammarNLPolicyCompiler()
                 gresult = gcompiler.compile(text)
                 if gresult.success and gresult.clauses:
@@ -306,9 +333,8 @@ class NLToDCECCompiler:
         # If both paths failed, record a final error
         if not result.success and not result.errors:
             msg = (
-                (conv_result.error_message if conv_result else None)
-                or "NL conversion returned no formula"
-            )
+                conv_result.error_message if conv_result else None
+            ) or "NL conversion returned no formula"
             result.add_error(msg)
             if self.strict:
                 raise ValueError(msg)
@@ -355,9 +381,7 @@ class NLToDCECCompiler:
                 "text": sentence,
                 "success": single.success,
                 "formula_type": (
-                    type(single.dcec_formulas[0]).__name__
-                    if single.dcec_formulas
-                    else None
+                    type(single.dcec_formulas[0]).__name__ if single.dcec_formulas else None
                 ),
             }
 
@@ -385,6 +409,7 @@ class NLToDCECCompiler:
 
 
 # ── convenience helper ────────────────────────────────────────────────────────
+
 
 def compile_nl_to_policy(
     sentences: List[str],
@@ -416,5 +441,6 @@ def compile_nl_to_policy(
 def _make_policy_id(sentences: List[str]) -> str:
     """Derive a short policy id from input sentences."""
     import hashlib
+
     digest = hashlib.sha256("\n".join(sentences).encode()).hexdigest()[:12]
     return f"nl-policy-{digest}"

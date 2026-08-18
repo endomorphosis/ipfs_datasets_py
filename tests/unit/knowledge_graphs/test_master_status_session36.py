@@ -24,6 +24,7 @@ import pytest
 #    (is_cypher structural patterns; QueryError raise_on_error=True)
 # ===========================================================================
 
+
 class TestQueryExecutorRemainingPaths:
     """GIVEN a QueryExecutor, WHEN non-keyword structural Cypher patterns are
     used and QueryError is raised with raise_on_error=True, THEN the correct
@@ -31,6 +32,7 @@ class TestQueryExecutorRemainingPaths:
 
     def _executor(self):
         from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor
+
         return QueryExecutor(graph_engine=MagicMock())
 
     # -----------------------------------------------------------------------
@@ -66,9 +68,12 @@ class TestQueryExecutorRemainingPaths:
         import ipfs_datasets_py.knowledge_graphs.cypher as cymod
 
         qe = self._executor()
-        ast = MagicMock(); ast.clauses = [MagicMock()]
-        mock_parser = MagicMock(); mock_parser.parse.return_value = ast
-        mock_compiler = MagicMock(); mock_compiler.compile.return_value = []
+        ast = MagicMock()
+        ast.clauses = [MagicMock()]
+        mock_parser = MagicMock()
+        mock_parser.parse.return_value = ast
+        mock_compiler = MagicMock()
+        mock_compiler.compile.return_value = []
 
         with patch.object(qe, "_execute_ir_operations", side_effect=QueryError("qerror")):
             with patch.object(cymod, "CypherParser", return_value=mock_parser):
@@ -81,6 +86,7 @@ class TestQueryExecutorRemainingPaths:
 # 2. core/_legacy_graph_engine.py – line 588
 #    (BFS visited guard: node that cycles back to an already-visited node)
 # ===========================================================================
+
 
 class TestLegacyGraphEngineVisitedGuard:
     """GIVEN a graph with a back-edge that points to an already-visited node,
@@ -120,6 +126,7 @@ class TestLegacyGraphEngineVisitedGuard:
 # ===========================================================================
 # 3. lineage/enhanced.py – lines 259, 424
 # ===========================================================================
+
 
 class TestLineageEnhancedCorrectedPaths:
     """GIVEN corrected test scenarios that actually trigger lines 259 and 424."""
@@ -165,6 +172,7 @@ class TestLineageEnhancedCorrectedPaths:
 #    (expand_graph: node appears as seed AND as neighbor → visited in later hop)
 # ===========================================================================
 
+
 class TestHybridSearchExpandGraphVisited:
     """GIVEN n1 and n2 both as seed_nodes where n1→n2 exists,
     WHEN expand_graph is called with max_hops>0, THEN n2 is processed in
@@ -179,6 +187,7 @@ class TestHybridSearchExpandGraphVisited:
         )
 
         backend = MagicMock()
+
         # n1's neighbors include n2; n2 has no neighbors
         def mock_get_neighbors(node_id, rel_types=None):
             return ["n2"] if node_id == "n1" else []
@@ -204,6 +213,7 @@ class TestHybridSearchExpandGraphVisited:
 # 5. reasoning/cross_document.py – line 199
 #    (_compute_document_similarity: zero norm → return 0.0)
 # ===========================================================================
+
 
 class TestCrossDocumentSimilarityZeroNorm:
     """GIVEN one document with empty content (zero-norm), WHEN
@@ -248,6 +258,7 @@ class TestCrossDocumentSimilarityZeroNorm:
 #    (insert_entity: CompositeIndex missing required property → break)
 # ===========================================================================
 
+
 class TestIndexManagerCompositeBreak:
     """GIVEN a CompositeIndex requiring two properties, WHEN an entity is
     inserted that is missing one property, THEN the break at line 253 fires."""
@@ -270,9 +281,7 @@ class TestIndexManagerCompositeBreak:
         manager.insert_entity(entity_no_age)  # should not raise
 
         # Verify no composite entry was created for the missing-age entity
-        comp_index_name = [
-            n for n in manager.indexes if "composite" in n.lower()
-        ][0]
+        comp_index_name = [n for n in manager.indexes if "composite" in n.lower()][0]
         comp_idx = manager.indexes[comp_index_name]
         # search for Alice with age=30 should return nothing
         result = comp_idx.search_composite(["Alice", 30])
@@ -293,9 +302,7 @@ class TestIndexManagerCompositeBreak:
         }
         manager.insert_entity(entity_full)
 
-        comp_index_name = [
-            n for n in manager.indexes if "composite" in n.lower()
-        ][0]
+        comp_index_name = [n for n in manager.indexes if "composite" in n.lower()][0]
         comp_idx = manager.indexes[comp_index_name]
         result = comp_idx.search_composite(["Bob", 25])
         assert "e_full" in result
@@ -306,6 +313,7 @@ class TestIndexManagerCompositeBreak:
 #    (_expand_object @type with non-str/non-list → passthrough;
 #     _compact_object same)
 # ===========================================================================
+
 
 class TestJSONLDContextMissedPaths:
     """GIVEN JSON-LD objects with a non-string, non-list @type value,

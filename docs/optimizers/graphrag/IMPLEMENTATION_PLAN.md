@@ -99,31 +99,39 @@ This implementation plan adapts the adversarial testing framework from the compl
 ```python
 class OntologyGenerationContext:
     """Context for ontology generation."""
+
     data_source: str
     data_type: str  # 'text', 'pdf', 'json', 'csv', etc.
     domain: str  # 'legal', 'medical', 'scientific', etc.
     base_ontology: Optional[Dict]
     extraction_strategy: str  # 'rule_based', 'llm_based', 'hybrid'
 
+
 class EntityExtractionResult:
     """Result of entity extraction."""
+
     entities: List[Dict]
     relationships: List[Dict]
     confidence: float
     metadata: Dict
 
+
 class OntologyGenerator:
     """Generate ontologies from arbitrary data."""
-    
+
     def __init__(self, ipfs_accelerate_config: Dict):
         """Initialize with ipfs_accelerate_py configuration."""
-        
-    def extract_entities(self, data: Any, context: OntologyGenerationContext) -> EntityExtractionResult:
+
+    def extract_entities(
+        self, data: Any, context: OntologyGenerationContext
+    ) -> EntityExtractionResult:
         """Extract entities from data using AI models."""
-        
-    def infer_relationships(self, entities: List[Dict], context: OntologyGenerationContext) -> List[Dict]:
+
+    def infer_relationships(
+        self, entities: List[Dict], context: OntologyGenerationContext
+    ) -> List[Dict]:
         """Infer relationships between entities."""
-        
+
     def generate_ontology(self, data: Any, context: OntologyGenerationContext) -> Dict:
         """Generate complete ontology from data."""
 ```
@@ -150,6 +158,7 @@ class OntologyGenerator:
 ```python
 class CriticScore:
     """Structured ontology quality score."""
+
     overall: float  # 0.0 to 1.0
     completeness: float
     consistency: float
@@ -160,20 +169,18 @@ class CriticScore:
     weaknesses: List[str]
     recommendations: List[str]
 
+
 class OntologyCritic:
     """Evaluate ontology quality using LLM."""
-    
+
     def __init__(self, backend_config: Dict):
         """Initialize with LLM backend."""
-        
+
     def evaluate_ontology(
-        self,
-        ontology: Dict,
-        context: OntologyGenerationContext,
-        source_data: Any
+        self, ontology: Dict, context: OntologyGenerationContext, source_data: Any
     ) -> CriticScore:
         """Evaluate ontology across all dimensions."""
-        
+
     def compare_ontologies(self, ontology1: Dict, ontology2: Dict) -> Dict:
         """Compare two ontologies and identify improvements."""
 ```
@@ -194,40 +201,37 @@ class OntologyCritic:
 ```python
 class MediatorState:
     """Tracks state across refinement rounds."""
+
     current_ontology: Dict
     refinement_history: List[Dict]
     critic_scores: List[CriticScore]
     converged: bool
     current_round: int
 
+
 class OntologyMediator:
     """Mediates ontology generation and refinement."""
-    
+
     def __init__(
         self,
         generator: OntologyGenerator,
         critic: OntologyCritic,
         max_rounds: int = 10,
-        convergence_threshold: float = 0.85
+        convergence_threshold: float = 0.85,
     ):
         """Initialize mediator."""
-        
-    def generate_prompt(self, context: OntologyGenerationContext, feedback: Optional[CriticScore]) -> str:
+
+    def generate_prompt(
+        self, context: OntologyGenerationContext, feedback: Optional[CriticScore]
+    ) -> str:
         """Generate extraction prompt incorporating critic feedback."""
-        
+
     def refine_ontology(
-        self,
-        ontology: Dict,
-        feedback: CriticScore,
-        context: OntologyGenerationContext
+        self, ontology: Dict, feedback: CriticScore, context: OntologyGenerationContext
     ) -> Dict:
         """Refine ontology based on critic feedback."""
-        
-    def run_refinement_cycle(
-        self,
-        data: Any,
-        context: OntologyGenerationContext
-    ) -> MediatorState:
+
+    def run_refinement_cycle(self, data: Any, context: OntologyGenerationContext) -> MediatorState:
         """Run complete refinement cycle."""
 ```
 
@@ -247,27 +251,29 @@ class OntologyMediator:
 ```python
 class ValidationResult:
     """Result of logical validation."""
+
     is_consistent: bool
     contradictions: List[str]
     proofs: List[Dict]
     confidence: float
     prover_used: str
 
+
 class LogicValidator:
     """Validate ontologies using theorem provers."""
-    
+
     def __init__(self, prover_config: Dict):
         """Initialize with theorem prover configuration."""
-        
+
     def ontology_to_tdfol(self, ontology: Dict) -> List[Formula]:
         """Convert ontology to TDFOL formulas."""
-        
+
     def check_consistency(self, ontology: Dict) -> ValidationResult:
         """Check ontology for logical consistency."""
-        
+
     def find_contradictions(self, ontology: Dict) -> List[str]:
         """Identify logical contradictions."""
-        
+
     def suggest_fixes(self, ontology: Dict, contradictions: List[str]) -> List[Dict]:
         """Suggest fixes for contradictions."""
 ```
@@ -294,6 +300,7 @@ class LogicValidator:
 ```python
 class OptimizationReport:
     """Optimization recommendations from batch analysis."""
+
     average_score: float
     trend: str  # 'improving', 'stable', 'degrading'
     recommendations: List[str]
@@ -301,26 +308,23 @@ class OptimizationReport:
     worst_ontology: Dict
     improvement_rate: float
 
+
 class OntologyOptimizer:
     """SGD-based ontology optimization."""
-    
+
     def __init__(self):
         """Initialize optimizer."""
-        
+
     def analyze_batch(self, session_results: List[MediatorState]) -> OptimizationReport:
         """Analyze single batch of sessions."""
-        
+
     def analyze_trends(self, historical_results: List[OptimizationReport]) -> Dict:
         """Analyze trends across multiple batches."""
-        
+
     def identify_patterns(self, successful_ontologies: List[Dict]) -> Dict:
         """Identify common patterns in successful ontologies."""
-        
-    def generate_recommendations(
-        self,
-        current_state: MediatorState,
-        patterns: Dict
-    ) -> List[str]:
+
+    def generate_recommendations(self, current_state: MediatorState, patterns: Dict) -> List[str]:
         """Generate specific recommendations for improvement."""
 ```
 
@@ -340,6 +344,7 @@ class OntologyOptimizer:
 ```python
 class SessionResult:
     """Result from a single ontology session."""
+
     ontology: Dict
     critic_score: CriticScore
     validation_result: ValidationResult
@@ -348,24 +353,21 @@ class SessionResult:
     time_elapsed: float
     metadata: Dict
 
+
 class OntologySession:
     """Single ontology optimization session."""
-    
+
     def __init__(
         self,
         generator: OntologyGenerator,
         mediator: OntologyMediator,
         critic: OntologyCritic,
         validator: LogicValidator,
-        max_rounds: int = 10
+        max_rounds: int = 10,
     ):
         """Initialize session."""
-        
-    def run(
-        self,
-        data: Any,
-        context: OntologyGenerationContext
-    ) -> SessionResult:
+
+    def run(self, data: Any, context: OntologyGenerationContext) -> SessionResult:
         """Run complete optimization session."""
 ```
 
@@ -385,6 +387,7 @@ class OntologySession:
 ```python
 class BatchResult:
     """Results from batch execution."""
+
     sessions: List[SessionResult]
     total_sessions: int
     success_rate: float
@@ -392,33 +395,34 @@ class BatchResult:
     best_session: SessionResult
     optimization_report: OptimizationReport
 
+
 class OntologyHarness:
     """Parallel ontology optimization harness."""
-    
+
     def __init__(
         self,
         generator_config: Dict,
         critic_config: Dict,
         validator_config: Dict,
         parallelism: int = 4,
-        max_retries: int = 3
+        max_retries: int = 3,
     ):
         """Initialize harness."""
-        
+
     def run_sessions(
         self,
         data_sources: List[Any],
         contexts: List[OntologyGenerationContext],
-        num_sessions_per_source: int = 10
+        num_sessions_per_source: int = 10,
     ) -> BatchResult:
         """Run multiple sessions in parallel."""
-        
+
     def run_sgd_cycle(
         self,
         data_sources: List[Any],
         contexts: List[OntologyGenerationContext],
         num_cycles: int = 10,
-        convergence_threshold: float = 0.85
+        convergence_threshold: float = 0.85,
     ) -> List[BatchResult]:
         """Run complete SGD optimization cycle."""
 ```
@@ -439,6 +443,7 @@ class OntologyHarness:
 ```python
 class OntologyTemplate:
     """Template for domain-specific ontology."""
+
     domain: str
     entity_types: List[str]
     relationship_types: List[str]
@@ -446,17 +451,14 @@ class OntologyTemplate:
     optional_properties: Dict
     examples: List[Dict]
 
+
 class OntologyTemplateLibrary:
     """Repository of ontology templates."""
-    
+
     def get_template(self, domain: str) -> OntologyTemplate:
         """Get template for domain."""
-        
-    def generate_from_template(
-        self,
-        domain: str,
-        **kwargs
-    ) -> Dict:
+
+    def generate_from_template(self, domain: str, **kwargs) -> Dict:
         """Generate base ontology from template."""
 ```
 
@@ -476,30 +478,28 @@ class OntologyTemplateLibrary:
 ```python
 class PromptTemplate:
     """Template for extraction prompts."""
+
     system_prompt: str
     user_prompt_template: str
     examples: List[Dict]
     parameters: Dict
 
+
 class PromptGenerator:
     """Generate dynamic prompts for extraction."""
-    
+
     def __init__(self, template_library: Dict):
         """Initialize with prompt templates."""
-        
+
     def generate_extraction_prompt(
         self,
         context: OntologyGenerationContext,
         feedback: Optional[CriticScore] = None,
-        examples: Optional[List[Dict]] = None
+        examples: Optional[List[Dict]] = None,
     ) -> str:
         """Generate prompt for entity extraction."""
-        
-    def adapt_prompt_from_feedback(
-        self,
-        base_prompt: str,
-        feedback: CriticScore
-    ) -> str:
+
+    def adapt_prompt_from_feedback(self, base_prompt: str, feedback: CriticScore) -> str:
         """Adapt prompt based on critic feedback."""
 ```
 
@@ -513,14 +513,14 @@ class PromptGenerator:
 ```python
 class MetricsCollector:
     """Collect optimization metrics."""
-    
+
     def record_session(self, session_result: SessionResult):
         """Record metrics from session."""
-        
+
     def get_statistics(self) -> Dict:
         """Get aggregated statistics."""
-        
-    def export_metrics(self, format: str = 'json') -> str:
+
+    def export_metrics(self, format: str = "json") -> str:
         """Export metrics for analysis."""
 ```
 
@@ -540,27 +540,23 @@ class MetricsCollector:
 ```python
 class ConsistencyConstraint:
     """A consistency constraint for the ontology."""
+
     constraint_type: str
     formula: Formula
     cached_result: Optional[bool]
-    
+
+
 class ConsistencyChecker:
     """Check large knowledge graphs for consistency."""
-    
+
     def __init__(self, validator: LogicValidator):
         """Initialize with logic validator."""
-        
-    def check_incremental(
-        self,
-        base_ontology: Dict,
-        new_additions: Dict
-    ) -> ValidationResult:
+
+    def check_incremental(self, base_ontology: Dict, new_additions: Dict) -> ValidationResult:
         """Check consistency of additions to existing ontology."""
-        
+
     def maintain_consistency(
-        self,
-        ontology: Dict,
-        constraints: List[ConsistencyConstraint]
+        self, ontology: Dict, constraints: List[ConsistencyConstraint]
     ) -> ValidationResult:
         """Maintain consistency with predefined constraints."""
 ```
@@ -642,11 +638,7 @@ class ConsistencyChecker:
 from ipfs_datasets_py.processors.file_converter import ipfs_accelerate_converter
 
 # Use for any HuggingFace pipeline
-accelerate_config = {
-    'model': 'bert-base-uncased',
-    'task': 'token-classification',
-    'device': 'cuda'
-}
+accelerate_config = {"model": "bert-base-uncased", "task": "token-classification", "device": "cuda"}
 
 # Generator uses this for entity extraction
 generator = OntologyGenerator(ipfs_accelerate_config=accelerate_config)
@@ -658,7 +650,7 @@ from ipfs_datasets_py.logic.TDFOL import parse_tdfol
 from ipfs_datasets_py.logic.integration import NeurosymbolicReasoner
 
 # Validator converts ontology to TDFOL and proves consistency
-validator = LogicValidator(prover_config={'strategy': 'AUTO'})
+validator = LogicValidator(prover_config={"strategy": "AUTO"})
 result = validator.check_consistency(ontology)
 ```
 
@@ -680,14 +672,16 @@ ontology = generator.generate_ontology(data, context)
 from ipfs_datasets_py.logic.external_provers import (
     Z3ProverBridge,
     CVC5ProverBridge,
-    SymbolicAIProverBridge
+    SymbolicAIProverBridge,
 )
 
 # Validator can use any prover
-validator = LogicValidator(prover_config={
-    'provers': ['z3', 'cvc5', 'symbolic_ai'],
-    'strategy': 'parallel'  # Try all provers in parallel
-})
+validator = LogicValidator(
+    prover_config={
+        "provers": ["z3", "cvc5", "symbolic_ai"],
+        "strategy": "parallel",  # Try all provers in parallel
+    }
+)
 ```
 
 ---
@@ -696,22 +690,16 @@ validator = LogicValidator(prover_config={
 
 ### Basic Ontology Generation
 ```python
-from ipfs_datasets_py.optimizers.graphrag import (
-    OntologyGenerator,
-    OntologyGenerationContext
-)
+from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator, OntologyGenerationContext
 
 # Setup
-generator = OntologyGenerator(ipfs_accelerate_config={
-    'model': 'bert-base-uncased',
-    'task': 'ner'
-})
+generator = OntologyGenerator(ipfs_accelerate_config={"model": "bert-base-uncased", "task": "ner"})
 
 context = OntologyGenerationContext(
-    data_source='legal_document.pdf',
-    data_type='pdf',
-    domain='legal',
-    extraction_strategy='llm_based'
+    data_source="legal_document.pdf",
+    data_type="pdf",
+    domain="legal",
+    extraction_strategy="llm_based",
 )
 
 # Generate
@@ -725,10 +713,10 @@ from ipfs_datasets_py.optimizers.graphrag import OntologyHarness
 
 # Setup harness
 harness = OntologyHarness(
-    generator_config={'model': 'bert-base-uncased'},
-    critic_config={'model': 'gpt-4'},
-    validator_config={'strategy': 'AUTO'},
-    parallelism=4
+    generator_config={"model": "bert-base-uncased"},
+    critic_config={"model": "gpt-4"},
+    validator_config={"strategy": "AUTO"},
+    parallelism=4,
 )
 
 # Run SGD cycles
@@ -736,7 +724,7 @@ results = harness.run_sgd_cycle(
     data_sources=[doc1, doc2, doc3],
     contexts=[context1, context2, context3],
     num_cycles=10,
-    convergence_threshold=0.85
+    convergence_threshold=0.85,
 )
 
 # Analyze improvement
@@ -748,10 +736,7 @@ for i, batch in enumerate(results):
 ```python
 from ipfs_datasets_py.optimizers.graphrag import LogicValidator
 
-validator = LogicValidator(prover_config={
-    'strategy': 'AUTO',
-    'timeout': 5.0
-})
+validator = LogicValidator(prover_config={"strategy": "AUTO", "timeout": 5.0})
 
 # Check consistency
 result = validator.check_consistency(ontology)

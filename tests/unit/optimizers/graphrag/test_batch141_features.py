@@ -6,6 +6,7 @@ Methods under test:
   - OntologyOptimizer.dominant_trend()
   - OntologyOptimizer.history_range()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -14,8 +15,10 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_pipeline():
     from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipeline
+
     return OntologyPipeline()
 
 
@@ -29,6 +32,7 @@ def _push_run(p, overall):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
@@ -45,6 +49,7 @@ def _push_opt(o, avg, trend="stable"):
 # ---------------------------------------------------------------------------
 # OntologyPipeline.is_plateau
 # ---------------------------------------------------------------------------
+
 
 class TestIsPlateau:
     @pytest.mark.parametrize(
@@ -67,6 +72,7 @@ class TestIsPlateau:
 # ---------------------------------------------------------------------------
 # OntologyPipeline.peak_run_index
 # ---------------------------------------------------------------------------
+
 
 class TestPeakRunIndex:
     @pytest.mark.parametrize(
@@ -94,6 +100,7 @@ class TestPeakRunIndex:
 # OntologyOptimizer.dominant_trend
 # ---------------------------------------------------------------------------
 
+
 class TestDominantTrend:
     @pytest.mark.parametrize(
         "entries,expected",
@@ -118,6 +125,7 @@ class TestDominantTrend:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.history_range
 # ---------------------------------------------------------------------------
+
 
 class TestHistoryRange:
     @pytest.mark.parametrize(

@@ -29,6 +29,19 @@ STATUTE_FAMILY_SPLIT: Final = "statute_family"
 JURISDICTION_SPLIT: Final = "jurisdiction"
 TEMPORAL_SPLIT: Final = "temporal"
 EXTERNAL_TEST_SPLIT: Final = "external_test"
+LINEAGE_SPLIT: Final = "lineage"
+PUBLICATION_SPLIT: Final = "publication"
+DOMAIN_SPLIT: Final = "domain"
+NOTATION_SPLIT: Final = "notation"
+TYPE_SPLIT: Final = "type"
+COMPILER_SPLIT: Final = "compiler"
+PROOF_LIBRARY_SPLIT: Final = "proof_library"
+PREMISE_SPLIT: Final = "premise"
+LENGTH_SPLIT: Final = "length"
+RARE_OPERATOR_SPLIT: Final = "rare_operator"
+EXCEPTION_SPLIT: Final = "exception"
+CROSS_REFERENCE_SPLIT: Final = "cross_reference"
+IR_SPLIT_MANIFEST_SCHEMA: Final = "IRSplitManifest@1"
 
 LEGAL_IR_EVAL_SPLITS: Final = (
     TRAIN_SPLIT,
@@ -39,6 +52,18 @@ LEGAL_IR_EVAL_SPLITS: Final = (
     JURISDICTION_SPLIT,
     TEMPORAL_SPLIT,
     EXTERNAL_TEST_SPLIT,
+    LINEAGE_SPLIT,
+    PUBLICATION_SPLIT,
+    DOMAIN_SPLIT,
+    NOTATION_SPLIT,
+    TYPE_SPLIT,
+    COMPILER_SPLIT,
+    PROOF_LIBRARY_SPLIT,
+    PREMISE_SPLIT,
+    LENGTH_SPLIT,
+    RARE_OPERATOR_SPLIT,
+    EXCEPTION_SPLIT,
+    CROSS_REFERENCE_SPLIT,
 )
 
 PROTECTED_LEGAL_IR_SPLITS: Final = (
@@ -49,6 +74,18 @@ PROTECTED_LEGAL_IR_SPLITS: Final = (
     JURISDICTION_SPLIT,
     TEMPORAL_SPLIT,
     EXTERNAL_TEST_SPLIT,
+    LINEAGE_SPLIT,
+    PUBLICATION_SPLIT,
+    DOMAIN_SPLIT,
+    NOTATION_SPLIT,
+    TYPE_SPLIT,
+    COMPILER_SPLIT,
+    PROOF_LIBRARY_SPLIT,
+    PREMISE_SPLIT,
+    LENGTH_SPLIT,
+    RARE_OPERATOR_SPLIT,
+    EXCEPTION_SPLIT,
+    CROSS_REFERENCE_SPLIT,
 )
 
 TRAINING_OPERATION: Final = "training"
@@ -70,6 +107,29 @@ LEAKAGE_KEY_KINDS: Final = (
     "source_span",
     "amendment",
     "near_duplicate",
+    "lineage_group",
+    "derivative",
+    "theorem",
+    "notation",
+    "paraphrase",
+)
+
+DECLARED_HOLDOUTS: Final = (
+    ("lineage", LINEAGE_SPLIT),
+    ("publication", PUBLICATION_SPLIT),
+    ("jurisdiction", JURISDICTION_SPLIT),
+    ("domain", DOMAIN_SPLIT),
+    ("family", STATUTE_FAMILY_SPLIT),
+    ("notation", NOTATION_SPLIT),
+    ("time", TEMPORAL_SPLIT),
+    ("type", TYPE_SPLIT),
+    ("compiler", COMPILER_SPLIT),
+    ("proof_library", PROOF_LIBRARY_SPLIT),
+    ("premise", PREMISE_SPLIT),
+    ("length", LENGTH_SPLIT),
+    ("rare_operator", RARE_OPERATOR_SPLIT),
+    ("exception", EXCEPTION_SPLIT),
+    ("cross_reference", CROSS_REFERENCE_SPLIT),
 )
 
 
@@ -288,9 +348,21 @@ class LegalIREvalSplitConfig:
         if not math.isfinite(threshold) or threshold <= 0.0 or threshold > 1.0:
             raise ValueError("near_duplicate_jaccard_threshold must be in (0, 1]")
         object.__setattr__(self, "near_duplicate_jaccard_threshold", threshold)
-        object.__setattr__(self, "external_test_sources", tuple(_safe_key(v) for v in self.external_test_sources if _safe_key(v)))
-        object.__setattr__(self, "statute_family_holdout_values", tuple(_safe_key(v) for v in self.statute_family_holdout_values if _safe_key(v)))
-        object.__setattr__(self, "jurisdiction_holdout_values", tuple(_safe_key(v) for v in self.jurisdiction_holdout_values if _safe_key(v)))
+        object.__setattr__(
+            self,
+            "external_test_sources",
+            tuple(_safe_key(v) for v in self.external_test_sources if _safe_key(v)),
+        )
+        object.__setattr__(
+            self,
+            "statute_family_holdout_values",
+            tuple(_safe_key(v) for v in self.statute_family_holdout_values if _safe_key(v)),
+        )
+        object.__setattr__(
+            self,
+            "jurisdiction_holdout_values",
+            tuple(_safe_key(v) for v in self.jurisdiction_holdout_values if _safe_key(v)),
+        )
         protected = tuple(split for split in self.protected_splits if split in LEGAL_IR_EVAL_SPLITS)
         object.__setattr__(self, "protected_splits", protected or PROTECTED_LEGAL_IR_SPLITS)
 
@@ -334,6 +406,9 @@ class LegalIRSplitExample:
     source_label: str = ""
     near_duplicate_key: str = ""
     token_fingerprint: tuple[str, ...] = ()
+    lineage_group_id: str = ""
+    derivation_kind: str = ""
+    sibling_keys: tuple[str, ...] = ()
 
     @classmethod
     def from_sample(cls, sample: Any) -> "LegalIRSplitExample":
@@ -377,6 +452,24 @@ class LegalIRSplitExample:
             )
         )
         source_label = _safe_key(_get(sample, "source_label", "source", default=""))
+        lineage_group_id = _safe_key(
+            _get(sample, "lineage_group_id", "lineage_group", default="")
+        )
+        derivation_kind = _safe_key(
+            _get(sample, "derivation_kind", "derivative_kind", default="")
+        )
+        siblings = _sequence_strings(_get(sample, "sibling_keys", default=None))
+        for field_name in (
+            "theorem_id",
+            "notation_id",
+            "paraphrase_of",
+            "parent_record_id",
+        ):
+            value = _string(_get(sample, field_name, default=""))
+            if value:
+                siblings = (*siblings, f"{field_name}:{_safe_key(value)}")
+        for parent in _sequence_strings(_get(sample, "parent_record_ids", default=None)):
+            siblings = (*siblings, f"parent_record_id:{_safe_key(parent)}")
         return cls(
             sample_id=sample_id,
             content_hash=content_hash,
@@ -389,6 +482,9 @@ class LegalIRSplitExample:
             source_label=source_label,
             near_duplicate_key="",
             token_fingerprint=tuple(sorted(_tokens(text))),
+            lineage_group_id=lineage_group_id,
+            derivation_kind=derivation_kind,
+            sibling_keys=tuple(dict.fromkeys(siblings)),
         )
 
     @classmethod
@@ -396,7 +492,9 @@ class LegalIRSplitExample:
         return cls(
             sample_id=_string(value.get("sample_id")),
             content_hash=_string(value.get("content_hash")),
-            citation_clusters=tuple(_string(item) for item in value.get("citation_clusters", ()) if _string(item)),
+            citation_clusters=tuple(
+                _string(item) for item in value.get("citation_clusters", ()) if _string(item)
+            ),
             source_span_key=_string(value.get("source_span_key")),
             amendment_key=_string(value.get("amendment_key")),
             statute_family=_string(value.get("statute_family")),
@@ -404,7 +502,14 @@ class LegalIRSplitExample:
             effective_date=_string(value.get("effective_date")),
             source_label=_string(value.get("source_label")),
             near_duplicate_key=_string(value.get("near_duplicate_key")),
-            token_fingerprint=tuple(_string(item) for item in value.get("token_fingerprint", ()) if _string(item)),
+            token_fingerprint=tuple(
+                _string(item) for item in value.get("token_fingerprint", ()) if _string(item)
+            ),
+            lineage_group_id=_string(value.get("lineage_group_id")),
+            derivation_kind=_string(value.get("derivation_kind")),
+            sibling_keys=tuple(
+                _string(item) for item in value.get("sibling_keys", ()) if _string(item)
+            ),
         )
 
     def with_near_duplicate_key(self, key: str) -> "LegalIRSplitExample":
@@ -420,6 +525,9 @@ class LegalIRSplitExample:
             source_label=self.source_label,
             near_duplicate_key=key,
             token_fingerprint=self.token_fingerprint,
+            lineage_group_id=self.lineage_group_id,
+            derivation_kind=self.derivation_kind,
+            sibling_keys=self.sibling_keys,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -435,6 +543,9 @@ class LegalIRSplitExample:
             "source_span_key": self.source_span_key,
             "statute_family": self.statute_family,
             "token_fingerprint": list(self.token_fingerprint),
+            "lineage_group_id": self.lineage_group_id,
+            "derivation_kind": self.derivation_kind,
+            "sibling_keys": list(self.sibling_keys),
         }
 
 
@@ -507,9 +618,7 @@ class LegalIRSplitManifest:
             self,
             "assignment_conflicts",
             {
-                str(sample_id): tuple(
-                    split for split in splits if split in LEGAL_IR_EVAL_SPLITS
-                )
+                str(sample_id): tuple(split for split in splits if split in LEGAL_IR_EVAL_SPLITS)
                 for sample_id, splits in sorted(self.assignment_conflicts.items())
                 if len(tuple(splits)) > 1
             },
@@ -533,8 +642,7 @@ class LegalIRSplitManifest:
         payload = {
             "assignments": dict(self.assignments),
             "assignment_conflicts": {
-                sample_id: list(splits)
-                for sample_id, splits in self.assignment_conflicts.items()
+                sample_id: list(splits) for sample_id, splits in self.assignment_conflicts.items()
             },
             "config_digest": self.config_digest,
             "examples": [item.to_dict() for item in self.examples],
@@ -573,18 +681,30 @@ class LegalIRSplitManifest:
             }
         else:
             raw_conflicts = payload.get("assignment_conflicts", {})
-            assignment_conflicts = {
-                str(sample_id): tuple(_sequence_strings(splits))
-                for sample_id, splits in raw_conflicts.items()
-            } if isinstance(raw_conflicts, Mapping) else {}
+            assignment_conflicts = (
+                {
+                    str(sample_id): tuple(_sequence_strings(splits))
+                    for sample_id, splits in raw_conflicts.items()
+                }
+                if isinstance(raw_conflicts, Mapping)
+                else {}
+            )
         return cls(
             examples=examples,
             assignments=assignments if isinstance(assignments, Mapping) else {},
-            config_digest=_string(payload.get("config_digest") or payload.get("split_config_digest") or ""),
-            protected_splits=tuple(_sequence_strings(payload.get("protected_splits"))) or PROTECTED_LEGAL_IR_SPLITS,
-            schema_version=_string(payload.get("schema_version") or LEGAL_IR_EVAL_SPLIT_SCHEMA_VERSION),
-            partition_names=tuple(_sequence_strings(payload.get("partition_names"))) or LEGAL_IR_EVAL_SPLITS,
-            metadata=payload.get("metadata", {}) if isinstance(payload.get("metadata", {}), Mapping) else {},
+            config_digest=_string(
+                payload.get("config_digest") or payload.get("split_config_digest") or ""
+            ),
+            protected_splits=tuple(_sequence_strings(payload.get("protected_splits")))
+            or PROTECTED_LEGAL_IR_SPLITS,
+            schema_version=_string(
+                payload.get("schema_version") or LEGAL_IR_EVAL_SPLIT_SCHEMA_VERSION
+            ),
+            partition_names=tuple(_sequence_strings(payload.get("partition_names")))
+            or LEGAL_IR_EVAL_SPLITS,
+            metadata=payload.get("metadata", {})
+            if isinstance(payload.get("metadata", {}), Mapping)
+            else {},
             assignment_conflicts=assignment_conflicts,
         )
 
@@ -639,6 +759,11 @@ def build_legal_ir_eval_splits(
     _union_by_key(uf, examples, lambda item: item.near_duplicate_key)
     _union_by_key(uf, examples, lambda item: item.amendment_key)
     _union_by_key(uf, examples, lambda item: item.source_span_key)
+    _union_by_key(uf, examples, lambda item: item.lineage_group_id)
+    for sibling in sorted({key for item in examples for key in item.sibling_keys}):
+        members = [item.sample_id for item in examples if sibling in item.sibling_keys]
+        for member in members[1:]:
+            uf.union(members[0], member)
     for citation in sorted({key for item in examples for key in item.citation_clusters}):
         members = [item.sample_id for item in examples if citation in item.citation_clusters]
         for member in members[1:]:
@@ -755,12 +880,22 @@ def _group_split(
         return JURISDICTION_SPLIT
 
     family_key = sorted(families)[0] if families else group_id
-    if config.statute_family_ratio > 0.0 and _bucket(config.seed, "family", family_key) < config.statute_family_ratio:
+    if (
+        config.statute_family_ratio > 0.0
+        and _bucket(config.seed, "family", family_key) < config.statute_family_ratio
+    ):
         return STATUTE_FAMILY_SPLIT
     jurisdiction_key = sorted(jurisdictions)[0] if jurisdictions else group_id
-    if config.jurisdiction_ratio > 0.0 and _bucket(config.seed, "jurisdiction", jurisdiction_key) < config.jurisdiction_ratio:
+    if (
+        config.jurisdiction_ratio > 0.0
+        and _bucket(config.seed, "jurisdiction", jurisdiction_key) < config.jurisdiction_ratio
+    ):
         return JURISDICTION_SPLIT
-    if config.temporal_ratio > 0.0 and dates and _bucket(config.seed, "temporal", max(dates).isoformat()) < config.temporal_ratio:
+    if (
+        config.temporal_ratio > 0.0
+        and dates
+        and _bucket(config.seed, "temporal", max(dates).isoformat()) < config.temporal_ratio
+    ):
         return TEMPORAL_SPLIT
 
     bucket = _bucket(config.seed, "primary", group_id)
@@ -786,7 +921,11 @@ def validate_legal_ir_eval_splits(
 ) -> LegalIRSplitGuardResult:
     """Validate content, citation, source, amendment, and duplicate isolation."""
 
-    resolved = manifest if isinstance(manifest, LegalIRSplitManifest) else LegalIRSplitManifest.from_mapping(manifest)
+    resolved = (
+        manifest
+        if isinstance(manifest, LegalIRSplitManifest)
+        else LegalIRSplitManifest.from_mapping(manifest)
+    )
     violations: list[LegalIRLeakageViolation] = []
     examples = resolved.examples
     assignments = resolved.assignments
@@ -822,8 +961,7 @@ def validate_legal_ir_eval_splits(
                     key=sample_id,
                     splits=tuple(sorted(by_split)),
                     sample_ids_by_split={
-                        split: tuple(ids)
-                        for split, ids in sorted(by_split.items())
+                        split: tuple(ids) for split, ids in sorted(by_split.items())
                     },
                     protected_splits=tuple(sorted(set(by_split) & protected)),
                 )
@@ -839,6 +977,19 @@ def validate_legal_ir_eval_splits(
             add_map[("amendment", item.amendment_key)].append(item.sample_id)
         if item.near_duplicate_key:
             add_map[("near_duplicate", item.near_duplicate_key)].append(item.sample_id)
+        if item.lineage_group_id:
+            add_map[("lineage_group", item.lineage_group_id)].append(item.sample_id)
+        if item.derivation_kind and item.lineage_group_id:
+            add_map[("derivative", f"{item.lineage_group_id}:{item.derivation_kind}")].append(
+                item.sample_id
+            )
+        for sibling in item.sibling_keys:
+            kind = "paraphrase" if sibling.startswith("paraphrase_of:") else (
+                "theorem" if sibling.startswith("theorem_id:") else (
+                    "notation" if sibling.startswith("notation_id:") else "lineage_group"
+                )
+            )
+            add_map[(kind, sibling)].append(item.sample_id)
         for cluster in item.citation_clusters:
             add_map[("citation_cluster", cluster)].append(item.sample_id)
     for (kind, key), sample_ids in sorted(add_map.items()):
@@ -904,9 +1055,7 @@ def _source_overlap_violations(
                         key=key,
                         splits=tuple(sorted(split for split in by_split if split)),
                         sample_ids_by_split={
-                            split: tuple(ids)
-                            for split, ids in sorted(by_split.items())
-                            if split
+                            split: tuple(ids) for split, ids in sorted(by_split.items()) if split
                         },
                         protected_splits=tuple(sorted(set(by_split) & protected)),
                     )
@@ -935,7 +1084,11 @@ def authorize_legal_ir_split_use(
     operation: str,
     items: Sequence[Any] = (),
 ) -> LegalIRSplitGuardResult:
-    resolved = manifest if isinstance(manifest, LegalIRSplitManifest) else LegalIRSplitManifest.from_mapping(manifest)
+    resolved = (
+        manifest
+        if isinstance(manifest, LegalIRSplitManifest)
+        else LegalIRSplitManifest.from_mapping(manifest)
+    )
     result = require_legal_ir_split_guard(resolved, operation=operation)
     normalized_operation = str(operation or "").strip().lower()
     allowed = LEGAL_IR_SPLIT_OPERATION_ALLOWED_SPLITS.get(normalized_operation)
@@ -1030,9 +1183,7 @@ def require_codex_todo_projection_split(
 def split_guard_from_payload(payload: Mapping[str, Any]) -> LegalIRSplitGuardResult | None:
     """Decode a compact split guard block from rollout/projection payloads."""
 
-    if "passed" in payload and (
-        "violations" in payload or "blocked_operations" in payload
-    ):
+    if "passed" in payload and ("violations" in payload or "blocked_operations" in payload):
         value: Any = payload
     else:
         value = payload.get("legal_ir_split_guard")
@@ -1080,10 +1231,247 @@ def split_guard_blocks_operation(
     return str(operation or "").strip().lower() in blocked
 
 
+def _holdout_report(assignments: Mapping[str, str]) -> dict[str, Any]:
+    report: dict[str, Any] = {}
+    for name, split in DECLARED_HOLDOUTS:
+        count = sum(1 for value in assignments.values() if value == split)
+        report[name] = {
+            "count": count,
+            "split": split,
+            "status": "populated" if count else "insufficient",
+        }
+    return report
+
+
+def _hidden_test_commitment(assignments: Mapping[str, str]) -> str:
+    hidden = {
+        split: sorted(sample_id for sample_id, assigned in assignments.items() if assigned == split)
+        for split in (
+            HOLDOUT_SPLIT,
+            CANARY_SPLIT,
+            EXTERNAL_TEST_SPLIT,
+            LINEAGE_SPLIT,
+        )
+    }
+    return "sha256:" + _digest(hidden)
+
+
+def build_ir_campaign_splits(
+    samples: Sequence[Any],
+    config: LegalIREvalSplitConfig | None = None,
+) -> LegalIRSplitManifest:
+    """Build IRSplitManifest@1 from lineage-grouped samples.
+
+    Principal assignment is by lineage group, never by independent row.
+    """
+
+    cfg = config or LegalIREvalSplitConfig()
+    examples = [LegalIRSplitExample.from_sample(sample) for sample in samples]
+    examples.sort(key=lambda item: item.sample_id)
+    if examples and all(item.lineage_group_id for item in examples):
+        uf = _UnionFind(tuple(item.sample_id for item in examples))
+        _union_by_key(uf, examples, lambda item: item.lineage_group_id)
+        for sibling in sorted({key for item in examples for key in item.sibling_keys}):
+            members = [item.sample_id for item in examples if sibling in item.sibling_keys]
+            for member in members[1:]:
+                uf.union(members[0], member)
+        groups: dict[str, list[LegalIRSplitExample]] = defaultdict(list)
+        for item in examples:
+            groups[uf.find(item.sample_id)].append(item)
+        assignments = {}
+        for group_id, group in sorted(groups.items(), key=lambda entry: entry[0]):
+            split = _group_split(group, group_id=group_id, config=cfg)
+            for item in group:
+                assignments[item.sample_id] = split
+        manifest = LegalIRSplitManifest(
+            examples=tuple(examples),
+            assignments=assignments,
+            config_digest=cfg.digest,
+            protected_splits=cfg.protected_splits,
+            metadata={"seed": cfg.seed},
+        )
+    else:
+        manifest = build_legal_ir_eval_splits(samples, cfg)
+    report = _holdout_report(manifest.assignments)
+    metadata = dict(manifest.metadata)
+    metadata.update(
+        {
+            "hidden_test_commitment": _hidden_test_commitment(manifest.assignments),
+            "holdouts": report,
+            "ir_split_schema": IR_SPLIT_MANIFEST_SCHEMA,
+            "principal_split": "lineage-group",
+        }
+    )
+    return LegalIRSplitManifest(
+        examples=manifest.examples,
+        assignments=manifest.assignments,
+        config_digest=manifest.config_digest,
+        protected_splits=manifest.protected_splits,
+        schema_version=manifest.schema_version,
+        partition_names=manifest.partition_names,
+        metadata=metadata,
+        assignment_conflicts=manifest.assignment_conflicts,
+    )
+
+
+def campaign_samples_from_corpus_root(corpus_root: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Expand a sealed PGIR-011 corpus root into lineage-grouped split samples."""
+
+    artifacts = corpus_root.get("artifacts")
+    source_ids = corpus_root.get("source_record_ids")
+    derived_ids = corpus_root.get("derived_artifact_ids")
+    if not source_ids and isinstance(artifacts, Mapping):
+        embedded = artifacts.get("corpus_manifest.json")
+        if isinstance(embedded, Mapping):
+            source_ids = embedded.get("source_record_ids")
+            derived_ids = embedded.get("derived_artifact_ids")
+    if not isinstance(source_ids, Sequence) or isinstance(source_ids, (str, bytes)):
+        raise LegalIRSplitError("sealed corpus source_record_ids are required")
+    samples: list[dict[str, Any]] = []
+    for source_id in source_ids:
+        text = str(source_id)
+        population = text.split(":")[1] if text.count(":") >= 2 else "unknown"
+        group = text.replace("src:", "grp:", 1)
+        samples.append(
+            {
+                "derivation_kind": "",
+                "lineage_group_id": group,
+                "sample_id": text,
+                "source_document_id": text,
+                "source_label": population,
+                "statute_family": population,
+                "text": text,
+            }
+        )
+    include_derived = bool(corpus_root.get("include_derived", False))
+    if include_derived and isinstance(derived_ids, Sequence) and not isinstance(derived_ids, (str, bytes)):
+        for derived_id in derived_ids:
+            text = str(derived_id)
+            parts = text.split(":")
+            population = parts[1] if len(parts) > 1 else "unknown"
+            family = parts[2] if len(parts) > 2 else "derived"
+            index = parts[3] if len(parts) > 3 else "0000"
+            group = f"grp:{population}:{index}"
+            parent = f"src:{population}:{index}"
+            samples.append(
+                {
+                    "derivation_kind": family,
+                    "lineage_group_id": group,
+                    "parent_record_id": parent,
+                    "sample_id": text,
+                    "source_document_id": parent,
+                    "source_label": population,
+                    "statute_family": population,
+                    "text": text,
+                }
+            )
+    return samples
+
+
+def seal_ir_campaign_splits(
+    samples: Sequence[Any],
+    output_dir: str | Path,
+    *,
+    config: LegalIREvalSplitConfig | None = None,
+) -> dict[str, Any]:
+    """Write an immutable IRSplitManifest@1 plus leakage and holdout receipts."""
+
+    from pathlib import Path as PathType
+
+    cfg = config or LegalIREvalSplitConfig(seed="pgir-012-jdao-pinset-1")
+    manifest = build_ir_campaign_splits(samples, cfg)
+    result = manifest.guard_result()
+    if not result.passed:
+        raise LegalIRSplitLeakageError("campaign split leaked across a protected boundary", result)
+    output = PathType(output_dir)
+    output.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "holdouts": manifest.metadata.get("holdouts"),
+        "ir_split_schema": IR_SPLIT_MANIFEST_SCHEMA,
+        "legal_ir_split_manifest": manifest.to_dict(),
+        "schema": IR_SPLIT_MANIFEST_SCHEMA,
+    }
+    # Compact assignment-only view for the sealed root; full examples stay in the
+    # LegalIR manifest bytes when the caller materializes a small fixture.
+    compact = {
+        "assignments": dict(manifest.assignments),
+        "config_digest": manifest.config_digest,
+        "hidden_test_commitment": manifest.metadata.get("hidden_test_commitment"),
+        "holdouts": manifest.metadata.get("holdouts"),
+        "ir_split_schema": IR_SPLIT_MANIFEST_SCHEMA,
+        "leakage_report": result.to_dict(),
+        "principal_split": "lineage-group",
+        "protected_splits": list(manifest.protected_splits),
+        "samples_by_split": {
+            split: ids for split, ids in manifest.samples_by_split.items() if ids
+        },
+        "schema": IR_SPLIT_MANIFEST_SCHEMA,
+        "schema_version": manifest.schema_version,
+        "split_manifest_digest": manifest.digest,
+    }
+    raw = json.dumps(compact, allow_nan=False, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode("utf-8") + b"\n"
+    (output / "ir_split_manifest.json").write_bytes(raw)
+    leakage = json.dumps(result.to_dict(), allow_nan=False, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode("utf-8") + b"\n"
+    (output / "leakage_report.json").write_bytes(leakage)
+    holdouts = json.dumps(
+        {
+            "hidden_test_commitment": manifest.metadata.get("hidden_test_commitment"),
+            "holdouts": manifest.metadata.get("holdouts"),
+            "schema": "ir-split-holdout-report/v1",
+        },
+        allow_nan=False,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8") + b"\n"
+    (output / "holdout_report.json").write_bytes(holdouts)
+    root = {
+        "hidden_test_commitment": manifest.metadata.get("hidden_test_commitment"),
+        "holdouts": manifest.metadata.get("holdouts"),
+        "kind": "ir-sealed-split-root/v1",
+        "leakage_passed": True,
+        "schema": IR_SPLIT_MANIFEST_SCHEMA,
+        "split_manifest_digest": manifest.digest,
+        "split_manifest_sha256": hashlib.sha256(raw).hexdigest(),
+    }
+    (output / "split_root.json").write_bytes(
+        json.dumps(root, allow_nan=False, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode("utf-8") + b"\n"
+    )
+    return {**root, "payload": payload}
+
+
+def load_and_seal_corpus_splits(
+    corpus_dir: str | Path,
+    output_dir: str | Path,
+    *,
+    config: LegalIREvalSplitConfig | None = None,
+) -> dict[str, Any]:
+    from pathlib import Path as PathType
+
+    root_path = PathType(corpus_dir) / "corpus_manifest.json"
+    manifest = json.loads(root_path.read_text(encoding="utf-8"))
+    samples = campaign_samples_from_corpus_root(manifest)
+    return seal_ir_campaign_splits(samples, output_dir, config=config)
+
+
 __all__ = [
     "CANARY_SPLIT",
     "CODEX_TODO_PROJECTION_OPERATION",
+    "COMPILER_SPLIT",
+    "CROSS_REFERENCE_SPLIT",
+    "DECLARED_HOLDOUTS",
+    "DOMAIN_SPLIT",
+    "EXCEPTION_SPLIT",
     "EXTERNAL_TEST_SPLIT",
+    "IR_SPLIT_MANIFEST_SCHEMA",
+    "LENGTH_SPLIT",
+    "LINEAGE_SPLIT",
+    "NOTATION_SPLIT",
+    "PREMISE_SPLIT",
+    "PROOF_LIBRARY_SPLIT",
+    "PUBLICATION_SPLIT",
+    "RARE_OPERATOR_SPLIT",
+    "TYPE_SPLIT",
     "HOLDOUT_SPLIT",
     "HPARAM_SELECTION_OPERATION",
     "JURISDICTION_SPLIT",
@@ -1105,7 +1493,11 @@ __all__ = [
     "LegalIRSplitManifest",
     "LegalIRSplitPolicyError",
     "authorize_legal_ir_split_use",
+    "build_ir_campaign_splits",
     "build_legal_ir_eval_splits",
+    "campaign_samples_from_corpus_root",
+    "load_and_seal_corpus_splits",
+    "seal_ir_campaign_splits",
     "require_codex_todo_projection_split",
     "require_hparam_selection_split",
     "require_legal_ir_split_guard",

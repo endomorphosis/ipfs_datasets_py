@@ -176,7 +176,9 @@ async def _run_async(ns: argparse.Namespace) -> Dict[str, Any]:
     )
 
     if ns.command == "status":
-        return p2p_service_status(include_peers=not bool(ns.no_peers), peers_limit=int(ns.peers_limit))
+        return p2p_service_status(
+            include_peers=not bool(ns.no_peers), peers_limit=int(ns.peers_limit)
+        )
 
     if ns.command == "cache":
         if ns.cache_cmd == "get":
@@ -193,7 +195,9 @@ async def _run_async(ns: argparse.Namespace) -> Dict[str, Any]:
     if ns.command == "task":
         if ns.task_cmd == "submit":
             payload = _json_obj(ns.payload_json) or {}
-            return p2p_task_submit(task_type=ns.task_type, payload=payload, model_name=str(ns.model_name or ""))
+            return p2p_task_submit(
+                task_type=ns.task_type, payload=payload, model_name=str(ns.model_name or "")
+            )
         if ns.task_cmd == "get":
             return p2p_task_get(ns.task_id)
         if ns.task_cmd == "delete":
@@ -262,7 +266,9 @@ async def _run_async(ns: argparse.Namespace) -> Dict[str, Any]:
         if ns.sched_cmd == "init":
             peers = _json_list(ns.bootstrap_peers_json) if ns.bootstrap_peers_json else None
             peers_str = [str(p) for p in (peers or [])]
-            return p2p_scheduler_init(peer_id=str(ns.peer_id), bootstrap_peers=peers_str, force=bool(ns.force))
+            return p2p_scheduler_init(
+                peer_id=str(ns.peer_id), bootstrap_peers=peers_str, force=bool(ns.force)
+            )
         if ns.sched_cmd == "status":
             return p2p_scheduler_status()
         if ns.sched_cmd == "submit-task":

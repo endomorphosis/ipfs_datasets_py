@@ -1,0 +1,3145 @@
+{
+  "dimensions": [
+    "population",
+    "family",
+    "case_family",
+    "domain"
+  ],
+  "experiment_id": "R1",
+  "interface": "IRDeterministicR1Strata@1",
+  "strata": {
+    "case_family": {
+      "legal_corpus": {
+        "case_count": 5,
+        "case_ids": [
+          "legal_doc_2",
+          "privacy_act_amendment",
+          "fed_reg_1",
+          "dept_memo_1",
+          "hr_handbook"
+        ],
+        "compiler": [
+          {
+            "denominator": 5,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 64,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": 64,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "fields",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 0.95,
+              "mean": 0.73,
+              "min": 0.56,
+              "p50": 0.7,
+              "p95": 0.9079999999999999,
+              "sum": 3.65
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "score",
+            "value": 0.73
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "compiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "codes": {
+                "typed_deontic.unrepresented_cross_references": 1,
+                "typed_deontic.unrepresented_penalty": 1,
+                "typed_deontic.unrepresented_recipient": 3
+              },
+              "count": 5,
+              "max": 3.0,
+              "mean": 1.2,
+              "min": 0.0,
+              "p50": 1.0,
+              "p95": 2.8,
+              "sum": 6.0
+            },
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": 6,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "disclosures",
+            "value": 1.2
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 3.834404483961407,
+              "mean": 2.843024221190717,
+              "min": 1.7920878220465966,
+              "p50": 2.8856954019865952,
+              "p95": 3.6635239747702144,
+              "sum": 14.215121105953585
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "seconds",
+            "value": 2.843024221190717
+          }
+        ],
+        "decompiler": [
+          {
+            "denominator": 5,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no source-span channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "fields",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 1.0,
+              "mean": 1.0,
+              "min": 1.0,
+              "p50": 1.0,
+              "p95": 1.0,
+              "sum": 5.0
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "score",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "decompiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no unsupported-construct disclosure channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "disclosures",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 0.0022637310321442783,
+              "mean": 0.0021736690192483365,
+              "min": 0.002128161024302244,
+              "p50": 0.0021578739979304373,
+              "p95": 0.0022435548366047443,
+              "sum": 0.010868345096241683
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "seconds",
+            "value": 0.0021736690192483365
+          }
+        ],
+        "dimension": "case_family",
+        "stratum": "legal_corpus"
+      },
+      "pilot_control": {
+        "case_count": 5,
+        "case_ids": [
+          "exception_with_window",
+          "legal_doc_1",
+          "exec_order_1",
+          "corp_policy_1",
+          "construction_contract"
+        ],
+        "compiler": [
+          {
+            "denominator": 5,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.2
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.2
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.2
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.2
+          },
+          {
+            "denominator": 101,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": 101,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "fields",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 1.0,
+              "mean": 0.915,
+              "min": 0.858333333,
+              "p50": 0.9,
+              "p95": 0.99,
+              "sum": 4.575
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "score",
+            "value": 0.915
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "compiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "codes": {
+                "typed_deontic.unmapped_required_atom": 1,
+                "typed_deontic.unrepresented_cross_references": 2,
+                "typed_deontic.unrepresented_procedure": 2,
+                "typed_deontic.unrepresented_recipient": 2
+              },
+              "count": 5,
+              "max": 5.0,
+              "mean": 2.6,
+              "min": 0.0,
+              "p50": 2.0,
+              "p95": 4.8,
+              "sum": 13.0
+            },
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": 13,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "disclosures",
+            "value": 2.6
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 10.96357723796973,
+              "mean": 4.892208685574587,
+              "min": 2.8174585399683565,
+              "p50": 3.8448417609906755,
+              "p95": 9.564653702569194,
+              "sum": 24.461043427872937
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "seconds",
+            "value": 4.892208685574587
+          }
+        ],
+        "decompiler": [
+          {
+            "denominator": 5,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.8
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.8
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.8
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.8
+          },
+          {
+            "denominator": 5,
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no source-span channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "fields",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 1.0,
+              "mean": 0.9966666666,
+              "min": 0.983333333,
+              "p50": 1.0,
+              "p95": 1.0,
+              "sum": 4.983333333
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "score",
+            "value": 0.9966666666
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "decompiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no unsupported-construct disclosure channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "disclosures",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 0.0022659720270894468,
+              "mean": 0.002193141810130328,
+              "min": 0.0021637299796566367,
+              "p50": 0.002171715022996068,
+              "p95": 0.0022514532203786078,
+              "sum": 0.01096570905065164
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "seconds",
+            "value": 0.002193141810130328
+          }
+        ],
+        "dimension": "case_family",
+        "stratum": "pilot_control"
+      },
+      "selective_repair_activation": {
+        "case_count": 3,
+        "case_ids": [
+          "missing_temporal",
+          "low_confidence_object",
+          "contradictory_modality"
+        ],
+        "compiler": [
+          {
+            "denominator": 3,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 3,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 3,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 3,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "eligible_cases": 3
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "eligible_cases": 3
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "eligible_cases": 3
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "eligible_cases": 3
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 19,
+            "detail": {
+              "eligible_cases": 3
+            },
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": 19,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "fields",
+            "value": 1.0
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "count": 3,
+              "max": 0.9,
+              "mean": 0.7666666666666666,
+              "min": 0.5,
+              "p50": 0.9,
+              "p95": 0.9,
+              "sum": 2.3
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "score",
+            "value": 0.7666666666666666
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "compiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "codes": {},
+              "count": 3,
+              "max": 0.0,
+              "mean": 0.0,
+              "min": 0.0,
+              "p50": 0.0,
+              "p95": 0.0,
+              "sum": 0.0
+            },
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "disclosures",
+            "value": 0.0
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "count": 3,
+              "max": 1.7911560270003974,
+              "mean": 1.2228503020014614,
+              "min": 0.8551041929749772,
+              "p50": 1.0222906860290095,
+              "p95": 1.7142694929032585,
+              "sum": 3.668550906004384
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "seconds",
+            "value": 1.2228503020014614
+          }
+        ],
+        "decompiler": [
+          {
+            "denominator": 3,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 3,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 3,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 3,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "eligible_cases": 3
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 3,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "eligible_cases": 3
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 3,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "eligible_cases": 3
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 3,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "eligible_cases": 3
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 3,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 3,
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no source-span channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "fields",
+            "value": null
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "count": 3,
+              "max": 1.0,
+              "mean": 1.0,
+              "min": 1.0,
+              "p50": 1.0,
+              "p95": 1.0,
+              "sum": 3.0
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "score",
+            "value": 1.0
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "decompiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 3,
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no unsupported-construct disclosure channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "disclosures",
+            "value": null
+          },
+          {
+            "denominator": 3,
+            "detail": {
+              "count": 3,
+              "max": 0.002179810020606965,
+              "mean": 0.0021681616781279445,
+              "min": 0.0021510900114662945,
+              "p50": 0.002173585002310574,
+              "p95": 0.0021791875187773257,
+              "sum": 0.006504485034383833
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "seconds",
+            "value": 0.0021681616781279445
+          }
+        ],
+        "dimension": "case_family",
+        "stratum": "selective_repair_activation"
+      }
+    },
+    "domain": {
+      "complexity_tier_1": {
+        "case_count": 4,
+        "case_ids": [
+          "exception_with_window",
+          "missing_temporal",
+          "low_confidence_object",
+          "contradictory_modality"
+        ],
+        "compiler": [
+          {
+            "denominator": 4,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 4,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "eligible_cases": 4
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.25
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "eligible_cases": 4
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.25
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "eligible_cases": 4
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.25
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "eligible_cases": 4
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.25
+          },
+          {
+            "denominator": 25,
+            "detail": {
+              "eligible_cases": 4
+            },
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": 25,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "fields",
+            "value": 1.0
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "count": 4,
+              "max": 1.0,
+              "mean": 0.825,
+              "min": 0.5,
+              "p50": 0.9,
+              "p95": 0.985,
+              "sum": 3.3
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "score",
+            "value": 0.825
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "compiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "codes": {},
+              "count": 4,
+              "max": 0.0,
+              "mean": 0.0,
+              "min": 0.0,
+              "p50": 0.0,
+              "p95": 0.0,
+              "sum": 0.0
+            },
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "disclosures",
+            "value": 0.0
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "count": 4,
+              "max": 2.8662063279771246,
+              "mean": 1.6336893084953772,
+              "min": 0.8551041929749772,
+              "p50": 1.4067233565147035,
+              "p95": 2.7049487828306154,
+              "sum": 6.534757233981509
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "seconds",
+            "value": 1.6336893084953772
+          }
+        ],
+        "decompiler": [
+          {
+            "denominator": 4,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 4,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "eligible_cases": 4
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "eligible_cases": 4
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "eligible_cases": 4
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "eligible_cases": 4
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 4,
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no source-span channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "fields",
+            "value": null
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "count": 4,
+              "max": 1.0,
+              "mean": 1.0,
+              "min": 1.0,
+              "p50": 1.0,
+              "p95": 1.0,
+              "sum": 4.0
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "score",
+            "value": 1.0
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "decompiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 4,
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no unsupported-construct disclosure channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "disclosures",
+            "value": null
+          },
+          {
+            "denominator": 4,
+            "detail": {
+              "count": 4,
+              "max": 0.0021933779935352504,
+              "mean": 0.002174465756979771,
+              "min": 0.0021510900114662945,
+              "p50": 0.0021766975114587694,
+              "p95": 0.0021913427975960077,
+              "sum": 0.008697863027919084
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "seconds",
+            "value": 0.002174465756979771
+          }
+        ],
+        "dimension": "domain",
+        "stratum": "complexity_tier_1"
+      },
+      "complexity_tier_2": {
+        "case_count": 8,
+        "case_ids": [
+          "legal_doc_1",
+          "exec_order_1",
+          "corp_policy_1",
+          "legal_doc_2",
+          "privacy_act_amendment",
+          "fed_reg_1",
+          "dept_memo_1",
+          "hr_handbook"
+        ],
+        "compiler": [
+          {
+            "denominator": 8,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 112,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": 112,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "fields",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "count": 8,
+              "max": 0.95,
+              "mean": 0.795833333375,
+              "min": 0.56,
+              "p50": 0.8033333334999999,
+              "p95": 0.95,
+              "sum": 6.366666667
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "score",
+            "value": 0.795833333375
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "compiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "codes": {
+                "typed_deontic.unrepresented_cross_references": 3,
+                "typed_deontic.unrepresented_penalty": 1,
+                "typed_deontic.unrepresented_procedure": 1,
+                "typed_deontic.unrepresented_recipient": 5
+              },
+              "count": 8,
+              "max": 4.0,
+              "mean": 1.75,
+              "min": 0.0,
+              "p50": 2.0,
+              "p95": 3.6499999999999995,
+              "sum": 14.0
+            },
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": 14,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "disclosures",
+            "value": 1.75
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "count": 8,
+              "max": 3.9689595609670505,
+              "mean": 3.1057976209849585,
+              "min": 1.7920878220465966,
+              "p50": 2.9328486699960195,
+              "p95": 3.925518330975319,
+              "sum": 24.846380967879668
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "seconds",
+            "value": 3.1057976209849585
+          }
+        ],
+        "decompiler": [
+          {
+            "denominator": 8,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 7,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.875
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 7,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.875
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 7,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.875
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 7,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.875
+          },
+          {
+            "denominator": 8,
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no source-span channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "fields",
+            "value": null
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "count": 8,
+              "max": 1.0,
+              "mean": 0.997916666625,
+              "min": 0.983333333,
+              "p50": 1.0,
+              "p95": 1.0,
+              "sum": 7.983333333
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "score",
+            "value": 0.997916666625
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "decompiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 8,
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no unsupported-construct disclosure channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "disclosures",
+            "value": null
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "count": 8,
+              "max": 0.0022637310321442783,
+              "mean": 0.002171838015783578,
+              "min": 0.002128161024302244,
+              "p50": 0.0021632900170516223,
+              "p95": 0.002231525428942405,
+              "sum": 0.017374704126268625
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "seconds",
+            "value": 0.002171838015783578
+          }
+        ],
+        "dimension": "domain",
+        "stratum": "complexity_tier_2"
+      },
+      "complexity_tier_3": {
+        "case_count": 1,
+        "case_ids": [
+          "construction_contract"
+        ],
+        "compiler": [
+          {
+            "denominator": 1,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 1,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "eligible_cases": 1
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "eligible_cases": 1
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "eligible_cases": 1
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "eligible_cases": 1
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 47,
+            "detail": {
+              "eligible_cases": 1
+            },
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": 47,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "fields",
+            "value": 1.0
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "count": 1,
+              "max": 0.858333333,
+              "mean": 0.858333333,
+              "min": 0.858333333,
+              "p50": 0.858333333,
+              "p95": 0.858333333,
+              "sum": 0.858333333
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "score",
+            "value": 0.858333333
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "compiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "codes": {
+                "typed_deontic.unmapped_required_atom": 1,
+                "typed_deontic.unrepresented_procedure": 1
+              },
+              "count": 1,
+              "max": 5.0,
+              "mean": 5.0,
+              "min": 5.0,
+              "p50": 5.0,
+              "p95": 5.0,
+              "sum": 5.0
+            },
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "disclosures",
+            "value": 5.0
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "count": 1,
+              "max": 10.96357723796973,
+              "mean": 10.96357723796973,
+              "min": 10.96357723796973,
+              "p50": 10.96357723796973,
+              "p95": 10.96357723796973,
+              "sum": 10.96357723796973
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "seconds",
+            "value": 10.96357723796973
+          }
+        ],
+        "decompiler": [
+          {
+            "denominator": 1,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 1,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "eligible_cases": 1
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "eligible_cases": 1
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "eligible_cases": 1
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "eligible_cases": 1
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 1,
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no source-span channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "fields",
+            "value": null
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "count": 1,
+              "max": 1.0,
+              "mean": 1.0,
+              "min": 1.0,
+              "p50": 1.0,
+              "p95": 1.0,
+              "sum": 1.0
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "score",
+            "value": 1.0
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "decompiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 1,
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no unsupported-construct disclosure channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "disclosures",
+            "value": null
+          },
+          {
+            "denominator": 1,
+            "detail": {
+              "count": 1,
+              "max": 0.0022659720270894468,
+              "mean": 0.0022659720270894468,
+              "min": 0.0022659720270894468,
+              "p50": 0.0022659720270894468,
+              "p95": 0.0022659720270894468,
+              "sum": 0.0022659720270894468
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "seconds",
+            "value": 0.0022659720270894468
+          }
+        ],
+        "dimension": "domain",
+        "stratum": "complexity_tier_3"
+      }
+    },
+    "family": {
+      "deontic": {
+        "case_count": 13,
+        "case_ids": [
+          "exception_with_window",
+          "legal_doc_1",
+          "exec_order_1",
+          "corp_policy_1",
+          "construction_contract",
+          "missing_temporal",
+          "low_confidence_object",
+          "contradictory_modality",
+          "legal_doc_2",
+          "privacy_act_amendment",
+          "fed_reg_1",
+          "dept_memo_1",
+          "hr_handbook"
+        ],
+        "compiler": [
+          {
+            "denominator": 13,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 13,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 13,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 13,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "eligible_cases": 13
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.07692307692307693
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "eligible_cases": 13
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.07692307692307693
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "eligible_cases": 13
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.07692307692307693
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "eligible_cases": 13
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.07692307692307693
+          },
+          {
+            "denominator": 184,
+            "detail": {
+              "eligible_cases": 13
+            },
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": 184,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "fields",
+            "value": 1.0
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "count": 13,
+              "max": 1.0,
+              "mean": 0.8096153846153846,
+              "min": 0.5,
+              "p50": 0.866666667,
+              "p95": 0.9699999999999999,
+              "sum": 10.525
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "score",
+            "value": 0.8096153846153846
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "compiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "codes": {
+                "typed_deontic.unmapped_required_atom": 1,
+                "typed_deontic.unrepresented_cross_references": 3,
+                "typed_deontic.unrepresented_penalty": 1,
+                "typed_deontic.unrepresented_procedure": 2,
+                "typed_deontic.unrepresented_recipient": 5
+              },
+              "count": 13,
+              "max": 5.0,
+              "mean": 1.4615384615384615,
+              "min": 0.0,
+              "p50": 1.0,
+              "p95": 4.399999999999999,
+              "sum": 19.0
+            },
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": 19,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "disclosures",
+            "value": 1.4615384615384615
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "count": 13,
+              "max": 10.96357723796973,
+              "mean": 3.257285803063916,
+              "min": 0.8551041929749772,
+              "p50": 2.8662063279771246,
+              "p95": 6.766806631768112,
+              "sum": 42.34471543983091
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "seconds",
+            "value": 3.257285803063916
+          }
+        ],
+        "decompiler": [
+          {
+            "denominator": 13,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 13,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 13,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 13,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "eligible_cases": 13
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 12,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.9230769230769231
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "eligible_cases": 13
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 12,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.9230769230769231
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "eligible_cases": 13
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 12,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.9230769230769231
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "eligible_cases": 13
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 12,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.9230769230769231
+          },
+          {
+            "denominator": 13,
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no source-span channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "fields",
+            "value": null
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "count": 13,
+              "max": 1.0,
+              "mean": 0.9987179486923078,
+              "min": 0.983333333,
+              "p50": 1.0,
+              "p95": 1.0,
+              "sum": 12.983333333000001
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "score",
+            "value": 0.9987179486923078
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "decompiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 13,
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no unsupported-construct disclosure channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "disclosures",
+            "value": null
+          },
+          {
+            "denominator": 13,
+            "detail": {
+              "count": 13,
+              "max": 0.0022659720270894468,
+              "mean": 0.002179887629329012,
+              "min": 0.002128161024302244,
+              "p50": 0.0021709140273742378,
+              "p95": 0.0022646274301223457,
+              "sum": 0.028338539181277156
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "seconds",
+            "value": 0.002179887629329012
+          }
+        ],
+        "dimension": "family",
+        "stratum": "deontic"
+      }
+    },
+    "population": {
+      "pilot": {
+        "case_count": 5,
+        "case_ids": [
+          "exception_with_window",
+          "legal_doc_1",
+          "exec_order_1",
+          "corp_policy_1",
+          "construction_contract"
+        ],
+        "compiler": [
+          {
+            "denominator": 5,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.2
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.2
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.2
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 1,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.2
+          },
+          {
+            "denominator": 101,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": 101,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "fields",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 1.0,
+              "mean": 0.915,
+              "min": 0.858333333,
+              "p50": 0.9,
+              "p95": 0.99,
+              "sum": 4.575
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "score",
+            "value": 0.915
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "compiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "codes": {
+                "typed_deontic.unmapped_required_atom": 1,
+                "typed_deontic.unrepresented_cross_references": 2,
+                "typed_deontic.unrepresented_procedure": 2,
+                "typed_deontic.unrepresented_recipient": 2
+              },
+              "count": 5,
+              "max": 5.0,
+              "mean": 2.6,
+              "min": 0.0,
+              "p50": 2.0,
+              "p95": 4.8,
+              "sum": 13.0
+            },
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": 13,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "disclosures",
+            "value": 2.6
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 10.96357723796973,
+              "mean": 4.892208685574587,
+              "min": 2.8174585399683565,
+              "p50": 3.8448417609906755,
+              "p95": 9.564653702569194,
+              "sum": 24.461043427872937
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "seconds",
+            "value": 4.892208685574587
+          }
+        ],
+        "decompiler": [
+          {
+            "denominator": 5,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 5,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.8
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.8
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.8
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "eligible_cases": 5
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 4,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 0.8
+          },
+          {
+            "denominator": 5,
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no source-span channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "fields",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 1.0,
+              "mean": 0.9966666666,
+              "min": 0.983333333,
+              "p50": 1.0,
+              "p95": 1.0,
+              "sum": 4.983333333
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "score",
+            "value": 0.9966666666
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "decompiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no unsupported-construct disclosure channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "disclosures",
+            "value": null
+          },
+          {
+            "denominator": 5,
+            "detail": {
+              "count": 5,
+              "max": 0.0022659720270894468,
+              "mean": 0.002193141810130328,
+              "min": 0.0021637299796566367,
+              "p50": 0.002171715022996068,
+              "p95": 0.0022514532203786078,
+              "sum": 0.01096570905065164
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "seconds",
+            "value": 0.002193141810130328
+          }
+        ],
+        "dimension": "population",
+        "stratum": "pilot"
+      },
+      "repair_development": {
+        "case_count": 8,
+        "case_ids": [
+          "missing_temporal",
+          "low_confidence_object",
+          "contradictory_modality",
+          "legal_doc_2",
+          "privacy_act_amendment",
+          "fed_reg_1",
+          "dept_memo_1",
+          "hr_handbook"
+        ],
+        "compiler": [
+          {
+            "denominator": 8,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 0,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "cases",
+            "value": 0.0
+          },
+          {
+            "denominator": 83,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": 83,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "fields",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "count": 8,
+              "max": 0.95,
+              "mean": 0.74375,
+              "min": 0.5,
+              "p50": 0.72,
+              "p95": 0.9325,
+              "sum": 5.95
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "score",
+            "value": 0.74375
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "compiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "codes": {
+                "typed_deontic.unrepresented_cross_references": 1,
+                "typed_deontic.unrepresented_penalty": 1,
+                "typed_deontic.unrepresented_recipient": 3
+              },
+              "count": 8,
+              "max": 3.0,
+              "mean": 0.75,
+              "min": 0.0,
+              "p50": 0.0,
+              "p95": 2.6499999999999995,
+              "sum": 6.0
+            },
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": 6,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "disclosures",
+            "value": 0.75
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "count": 8,
+              "max": 3.834404483961407,
+              "mean": 2.235459001494746,
+              "min": 0.8551041929749772,
+              "p50": 2.2575096410000697,
+              "p95": 3.5353635928768194,
+              "sum": 17.88367201195797
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "compiler",
+            "unit": "seconds",
+            "value": 2.235459001494746
+          }
+        ],
+        "decompiler": [
+          {
+            "denominator": 8,
+            "metric_id": "parser_acceptance",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "metric_id": "type_acceptance",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "exact",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "canonical",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "ast",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "eligible_cases": 8
+            },
+            "metric_id": "graph",
+            "missing_as_zero": false,
+            "numerator": 8,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "cases",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "metric_id": "source_span",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no source-span channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "fields",
+            "value": null
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "count": 8,
+              "max": 1.0,
+              "mean": 1.0,
+              "min": 1.0,
+              "p50": 1.0,
+              "p95": 1.0,
+              "sum": 8.0
+            },
+            "metric_id": "semantic",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "score",
+            "value": 1.0
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "independent_deterministic_replay_available": true
+            },
+            "metric_id": "proof",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "frozen fixtures carry no independently checkable proof obligations",
+            "status": "unsupported",
+            "surface": "decompiler",
+            "unit": "obligations",
+            "value": null
+          },
+          {
+            "denominator": 8,
+            "metric_id": "unsupported",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": "source-withheld decompiler has no unsupported-construct disclosure channel",
+            "status": "not_applicable",
+            "surface": "decompiler",
+            "unit": "disclosures",
+            "value": null
+          },
+          {
+            "denominator": 8,
+            "detail": {
+              "count": 8,
+              "max": 0.0022637310321442783,
+              "mean": 0.0021716037663281895,
+              "min": 0.002128161024302244,
+              "p50": 0.0021603620261885226,
+              "p95": 0.0022343586781062184,
+              "sum": 0.017372830130625516
+            },
+            "metric_id": "latency",
+            "missing_as_zero": false,
+            "numerator": null,
+            "reason": null,
+            "status": "measured",
+            "surface": "decompiler",
+            "unit": "seconds",
+            "value": 0.0021716037663281895
+          }
+        ],
+        "dimension": "population",
+        "stratum": "repair_development"
+      }
+    }
+  },
+  "strata_cid": "baguqeerarwgs6u4nnhxm3n7ezwvfe2frhmnx42tkynjyhxnt3pshbvoti7vq",
+  "task_id": "PGIR-023",
+  "unmaterialized_and_excluded": {
+    "corpus_materialized": false,
+    "excluded_populations": [
+      "blind_holdout",
+      "holdout_cases",
+      "hidden_test",
+      "canary",
+      "statute_family",
+      "jurisdiction"
+    ],
+    "measured_fixture_populations": [
+      "pilot",
+      "repair_development"
+    ],
+    "partitions": {
+      "canary": {
+        "hidden": false,
+        "reason": "protected_split_excluded",
+        "status": "excluded"
+      },
+      "holdout": {
+        "hidden": true,
+        "reason": "hidden_test_selection_prohibited",
+        "status": "excluded"
+      },
+      "jurisdiction": {
+        "count": 74,
+        "hidden": true,
+        "reason": "holdout_partition",
+        "status": "excluded"
+      },
+      "statute_family": {
+        "count": 4999,
+        "hidden": true,
+        "reason": "holdout_partition",
+        "status": "excluded"
+      },
+      "train": {
+        "hidden": false,
+        "reason": "corpus_not_materialized",
+        "status": "not_measured"
+      },
+      "validation": {
+        "hidden": false,
+        "reason": "corpus_not_materialized",
+        "status": "not_measured"
+      }
+    },
+    "policy": "Hidden, canary, and holdout partitions are never selected. Unmaterialized non-hidden source rows are not_measured, not zero.",
+    "training_admitted_rows": 0
+  }
+}

@@ -101,12 +101,8 @@ def test_packet_002415_pairs_are_explicit_registry_policy_targets() -> None:
     assert COMPILER_AMBIGUITY_PACKET_002415_FAMILY_PAIRS == expected_pairs
     for predicted_family, target_family in expected_pairs:
         assert target_family in compiler_ambiguity_policy_targets(predicted_family)
-        assert target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        )
-        assert target_family in priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
-        )
+        assert target_family in compiler_required_adaptive_ambiguity_targets(predicted_family)
+        assert target_family in priority_signal_free_adaptive_ambiguity_targets(predicted_family)
         assert target_family in signal_free_adaptive_ambiguity_targets(predicted_family)
         assert is_compiler_ambiguity_policy_pair(predicted_family, target_family)
         assert is_compiler_required_adaptive_ambiguity_pair(
@@ -160,9 +156,7 @@ def test_compiler_exposes_packet_002415_adaptive_ambiguities() -> None:
         family_margin,
         expected_type,
     ) in evidence_cases:
-        compiler = DeterministicModalCompiler(
-            config=ModalCompilerConfig(parser_backend="spacy")
-        )
+        compiler = DeterministicModalCompiler(config=ModalCompilerConfig(parser_backend="spacy"))
         ranking = _adaptive_ranking_for_margin(
             predicted_family=predicted_family,
             target_family=target_family,
@@ -195,9 +189,6 @@ def test_compiler_exposes_packet_002415_adaptive_ambiguities() -> None:
         assert ambiguity.metadata.get("is_explicit_adaptive_ambiguity") is True
         assert ambiguity.metadata.get("explicit_ambiguity_type") == expected_type
         assert (
-            abs(
-                float(ambiguity.metadata.get("priority", 0.0))
-                - (abs(family_margin) + threshold)
-            )
+            abs(float(ambiguity.metadata.get("priority", 0.0)) - (abs(family_margin) + threshold))
             <= 1e-12
         )

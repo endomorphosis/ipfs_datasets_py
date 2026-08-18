@@ -3,7 +3,7 @@ Batch 316: GraphRAG Benchmark Suite on Standard Datasets
 ==========================================================
 
 Comprehensive benchmark testing for GraphRAG extraction quality across multiple domains.
-Validates entity extraction, relationship inference, and performance characteristics on 
+Validates entity extraction, relationship inference, and performance characteristics on
 realistic datasets representing medical, legal, technical, and general domains.
 
 Goals:
@@ -60,7 +60,7 @@ MEDICAL_CORPUS = {
         COPD exacerbation. Antibiotic therapy: ceftriaxone and azithromycin initiated. 
         Admitted to ICU at California Healthcare System. Respiratory therapist Jennifer Lee 
         coordinated mechanical ventilation setup. Discharge planning required.
-        """
+        """,
     ],
     "expected_min_entities": 8,
     "expected_min_relationships": 3,
@@ -91,7 +91,7 @@ LEGAL_CORPUS = {
         Transaction obligates seller to transfer equipment for $2.5 million. 
         President Mark Thompson (Global Manufacturing) and CEO Lisa Anderson (Regional Distributors) 
         executed agreement on March 1, 2024. Payment terms: 30% deposit, 70% on delivery.
-        """
+        """,
     ],
     "expected_min_entities": 10,
     "expected_min_relationships": 4,
@@ -121,7 +121,7 @@ TECHNICAL_CORPUS = {
         Service integrates with LDAP directory, Active Directory, and Google OAuth. 
         Token storage: Redis with TTL. Audit logging: Elasticsearch stack. 
         Service deployed across AWS regions (us-east-1, eu-west-1, ap-southeast-1).
-        """
+        """,
     ],
     "expected_min_entities": 8,
     "expected_min_relationships": 3,
@@ -149,7 +149,7 @@ GENERAL_CORPUS = {
         Patricia Lee of Colorado. Event attended by 2000 residents. Center offers 12 programs 
         managed by Director Thomas Hall. Partnership is_part_of state education initiative. 
         Funding sources: City of Denver ($3M), State of Colorado ($2M), Federal Grant ($1M).
-        """
+        """,
     ],
     "expected_min_entities": 8,
     "expected_min_relationships": 3,
@@ -167,9 +167,10 @@ BENCHMARK_DATASETS = {
 # BENCHMARK METRICS & SCORING
 # ============================================================================
 
+
 class BenchmarkMetrics:
     """Container for extraction quality and performance metrics."""
-    
+
     def __init__(self, domain: str, text_length: int):
         self.domain = domain
         self.text_length = text_length
@@ -183,7 +184,7 @@ class BenchmarkMetrics:
         self.entity_types_found = set()
         self.relationship_types_found = set()
         self.low_confidence_entities = 0
-        
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "domain": self.domain,
@@ -191,14 +192,24 @@ class BenchmarkMetrics:
             "extraction_time_ms": self.extraction_time_ms,
             "entity_count": self.entity_count,
             "relationship_count": self.relationship_count,
-            "avg_entity_confidence": round(self.avg_entity_confidence, 3) if self.entity_count > 0 else 0.0,
-            "avg_relationship_confidence": round(self.avg_relationship_confidence, 3) if self.relationship_count > 0 else 0.0,
-            "min_entity_confidence": round(self.min_entity_confidence, 3) if self.entity_count > 0 else 0.0,
-            "max_entity_confidence": round(self.max_entity_confidence, 3) if self.entity_count > 0 else 0.0,
+            "avg_entity_confidence": round(self.avg_entity_confidence, 3)
+            if self.entity_count > 0
+            else 0.0,
+            "avg_relationship_confidence": round(self.avg_relationship_confidence, 3)
+            if self.relationship_count > 0
+            else 0.0,
+            "min_entity_confidence": round(self.min_entity_confidence, 3)
+            if self.entity_count > 0
+            else 0.0,
+            "max_entity_confidence": round(self.max_entity_confidence, 3)
+            if self.entity_count > 0
+            else 0.0,
             "entity_types_found": sorted(list(self.entity_types_found)),
             "relationship_types_found": sorted(list(self.relationship_types_found)),
             "low_confidence_entities": self.low_confidence_entities,
-            "extraction_rate_per_100_chars": round((self.entity_count / (self.text_length / 100)) if self.text_length > 0 else 0, 2),
+            "extraction_rate_per_100_chars": round(
+                (self.entity_count / (self.text_length / 100)) if self.text_length > 0 else 0, 2
+            ),
         }
 
 
@@ -214,21 +225,18 @@ def generate_ontology_with_context(data: str, domain: str) -> Dict[str, Any]:
 
 
 def compute_benchmark_metrics(
-    domain: str, 
-    combined_text: str, 
-    extraction_result: Dict[str, Any],
-    extraction_time_ms: float
+    domain: str, combined_text: str, extraction_result: Dict[str, Any], extraction_time_ms: float
 ) -> BenchmarkMetrics:
     """Compute detailed benchmark metrics from extraction result."""
     metrics = BenchmarkMetrics(domain, len(combined_text))
     metrics.extraction_time_ms = extraction_time_ms
-    
+
     entities = extraction_result.get("entities", [])
     relationships = extraction_result.get("relationships", [])
-    
+
     metrics.entity_count = len(entities)
     metrics.relationship_count = len(relationships)
-    
+
     # Compute entity confidence metrics
     if entities:
         confidences = [e.get("confidence", 0.5) for e in entities]
@@ -237,13 +245,13 @@ def compute_benchmark_metrics(
         metrics.max_entity_confidence = max(confidences)
         metrics.low_confidence_entities = sum(1 for c in confidences if c < 0.5)
         metrics.entity_types_found = {e.get("type", "unknown") for e in entities}
-    
+
     # Compute relationship confidence metrics
     if relationships:
         rel_confidences = [r.get("confidence", 0.5) for r in relationships]
         metrics.avg_relationship_confidence = sum(rel_confidences) / len(rel_confidences)
         metrics.relationship_types_found = {r.get("type", "unknown") for r in relationships}
-    
+
     return metrics
 
 
@@ -251,215 +259,233 @@ def compute_benchmark_metrics(
 # TEST CLASSES
 # ============================================================================
 
+
 class TestBenchmarkMedicalDomain:
     """Benchmark GraphRAG extraction on medical domain corpus."""
-    
+
     def test_medical_entity_extraction_baseline(self):
         """Verify medical text extraction meets baseline entity thresholds."""
         dataset = BENCHMARK_DATASETS["medical"]
         combined_text = "\n".join(dataset["texts"])
-        
+
         start_time = time.time()
         result = generate_ontology_with_context(combined_text, "medical")
         elapsed_ms = (time.time() - start_time) * 1000
-        
+
         metrics = compute_benchmark_metrics("medical", combined_text, result, elapsed_ms)
-        
+
         # Assertions: baseline thresholds
-        assert metrics.entity_count >= dataset["expected_min_entities"], \
+        assert metrics.entity_count >= dataset["expected_min_entities"], (
             f"Medical: expected ≥{dataset['expected_min_entities']} entities, got {metrics.entity_count}"
-        assert metrics.relationship_count >= dataset["expected_min_relationships"], \
+        )
+        assert metrics.relationship_count >= dataset["expected_min_relationships"], (
             f"Medical: expected ≥{dataset['expected_min_relationships']} relationships, got {metrics.relationship_count}"
-        assert metrics.extraction_time_ms < 5000, f"Medical: extraction took {metrics.extraction_time_ms:.0f}ms (max 5000ms)"
-    
+        )
+        assert metrics.extraction_time_ms < 5000, (
+            f"Medical: extraction took {metrics.extraction_time_ms:.0f}ms (max 5000ms)"
+        )
+
     def test_medical_entity_types_coverage(self):
         """Verify medical extraction finds key entity types."""
         dataset = BENCHMARK_DATASETS["medical"]
         combined_text = "\n".join(dataset["texts"])
-        
+
         result = generate_ontology_with_context(combined_text, "medical")
         metrics = compute_benchmark_metrics("medical", combined_text, result, 0)
-        
+
         # Medical text should extract at least some entity types
-        assert len(metrics.entity_types_found) > 0, \
+        assert len(metrics.entity_types_found) > 0, (
             f"Medical text should extract entity types. Found: {metrics.entity_types_found}"
-    
+        )
+
     def test_medical_relationships_extracted(self):
         """Verify medical extraction infers relationships."""
         dataset = BENCHMARK_DATASETS["medical"]
         combined_text = "\n".join(dataset["texts"])
-        
+
         result = generate_ontology_with_context(combined_text, "medical")
         metrics = compute_benchmark_metrics("medical", combined_text, result, 0)
-        
+
         # Should extract relationships
-        assert metrics.relationship_count > 0, \
+        assert metrics.relationship_count > 0, (
             f"Medical: should infer relationships. Types: {metrics.relationship_types_found}"
+        )
 
 
 class TestBenchmarkLegalDomain:
     """Benchmark GraphRAG extraction on legal domain corpus."""
-    
+
     def test_legal_entity_extraction_baseline(self):
         """Verify legal text extraction meets baseline entity thresholds."""
         dataset = BENCHMARK_DATASETS["legal"]
         combined_text = "\n".join(dataset["texts"])
-        
+
         start_time = time.time()
         result = generate_ontology_with_context(combined_text, "legal")
         elapsed_ms = (time.time() - start_time) * 1000
-        
+
         metrics = compute_benchmark_metrics("legal", combined_text, result, elapsed_ms)
-        
+
         # Legal documents should have good extraction
-        assert metrics.entity_count >= dataset["expected_min_entities"], \
+        assert metrics.entity_count >= dataset["expected_min_entities"], (
             f"Legal: expected ≥{dataset['expected_min_entities']} entities, got {metrics.entity_count}"
-        assert metrics.relationship_count >= dataset["expected_min_relationships"], \
+        )
+        assert metrics.relationship_count >= dataset["expected_min_relationships"], (
             f"Legal: expected ≥{dataset['expected_min_relationships']} relationships, got {metrics.relationship_count}"
-    
+        )
+
     def test_legal_obligation_relationships(self):
         """Verify legal text captures relationships."""
         dataset = BENCHMARK_DATASETS["legal"]
         combined_text = "\n".join(dataset["texts"])
-        
+
         result = generate_ontology_with_context(combined_text, "legal")
         relationships = result.get("relationships", [])
-        
+
         # Should extract relationships from legal text
-        assert len(relationships) >= 1, \
+        assert len(relationships) >= 1, (
             f"Legal text should extract relationships. Found: {len(relationships)}"
-    
+        )
+
     def test_legal_entity_types_coverage(self):
         """Verify legal extraction covers key entity types."""
         dataset = BENCHMARK_DATASETS["legal"]
         combined_text = "\n".join(dataset["texts"])
-        
+
         result = generate_ontology_with_context(combined_text, "legal")
         metrics = compute_benchmark_metrics("legal", combined_text, result, 0)
-        
+
         # Legal documents should have multiple entity types
-        assert len(metrics.entity_types_found) > 0, \
+        assert len(metrics.entity_types_found) > 0, (
             f"Legal: should extract entity types, found {metrics.entity_types_found}"
+        )
 
 
 class TestBenchmarkTechnicalDomain:
     """Benchmark GraphRAG extraction on technical domain corpus."""
-    
+
     def test_technical_entity_extraction_baseline(self):
         """Verify technical text extraction meets baseline entity thresholds."""
         dataset = BENCHMARK_DATASETS["technical"]
         combined_text = "\n".join(dataset["texts"])
-        
+
         start_time = time.time()
         result = generate_ontology_with_context(combined_text, "technical")
         elapsed_ms = (time.time() - start_time) * 1000
-        
+
         metrics = compute_benchmark_metrics("technical", combined_text, result, elapsed_ms)
-        
+
         # Technical text has entity names and tool references
-        assert metrics.entity_count >= dataset["expected_min_entities"], \
+        assert metrics.entity_count >= dataset["expected_min_entities"], (
             f"Technical: expected ≥{dataset['expected_min_entities']} entities, got {metrics.entity_count}"
-        assert metrics.relationship_count >= dataset["expected_min_relationships"], \
+        )
+        assert metrics.relationship_count >= dataset["expected_min_relationships"], (
             f"Technical: expected ≥{dataset['expected_min_relationships']} relationships, got {metrics.relationship_count}"
-    
+        )
+
     def test_technical_relationships_found(self):
         """Verify technical text captures classification relationships."""
         dataset = BENCHMARK_DATASETS["technical"]
         combined_text = "\n".join(dataset["texts"])
-        
+
         result = generate_ontology_with_context(combined_text, "technical")
         relationships = result.get("relationships", [])
-        
+
         # Technical text should have relationships
-        assert len(relationships) >= 1, \
+        assert len(relationships) >= 1, (
             f"Technical text should extract relationships. Found: {len(relationships)}"
-    
+        )
+
     def test_technical_organization_extraction(self):
         """Verify technical extraction finds organization entities."""
         dataset = BENCHMARK_DATASETS["technical"]
         combined_text = "\n".join(dataset["texts"])
-        
+
         result = generate_ontology_with_context(combined_text, "technical")
         metrics = compute_benchmark_metrics("technical", combined_text, result, 0)
-        
+
         # Should find at least some entity types
-        assert len(metrics.entity_types_found) > 0, \
+        assert len(metrics.entity_types_found) > 0, (
             f"Technical: should extract entity types, found {metrics.entity_types_found}"
+        )
 
 
 class TestBenchmarkGeneralDomain:
     """Benchmark GraphRAG extraction on general domain corpus."""
-    
+
     def test_general_entity_extraction_baseline(self):
         """Verify general text extraction meets baseline entity thresholds."""
         dataset = BENCHMARK_DATASETS["general"]
         combined_text = "\n".join(dataset["texts"])
-        
+
         start_time = time.time()
         result = generate_ontology_with_context(combined_text, "general")
         elapsed_ms = (time.time() - start_time) * 1000
-        
+
         metrics = compute_benchmark_metrics("general", combined_text, result, elapsed_ms)
-        
+
         # General text should extract diverse entities
-        assert metrics.entity_count >= dataset["expected_min_entities"], \
+        assert metrics.entity_count >= dataset["expected_min_entities"], (
             f"General: expected ≥{dataset['expected_min_entities']} entities, got {metrics.entity_count}"
-        assert metrics.relationship_count >= dataset["expected_min_relationships"], \
+        )
+        assert metrics.relationship_count >= dataset["expected_min_relationships"], (
             f"General: expected ≥{dataset['expected_min_relationships']} relationships, got {metrics.relationship_count}"
-    
+        )
+
     def test_general_multi_entity_type(self):
         """Verify general text extracts multiple entity type categories."""
         dataset = BENCHMARK_DATASETS["general"]
         combined_text = "\n".join(dataset["texts"])
-        
+
         result = generate_ontology_with_context(combined_text, "general")
         metrics = compute_benchmark_metrics("general", combined_text, result, 0)
-        
+
         # General text should include multiple entity types
-        assert len(metrics.entity_types_found) >= 1, \
+        assert len(metrics.entity_types_found) >= 1, (
             f"General: should extract multiple entity types, found {metrics.entity_types_found}"
+        )
 
 
 class TestBenchmarkComparisonAcrossDomains:
     """Compare extraction quality metrics across all domains."""
-    
+
     @pytest.mark.parametrize("domain", ["medical", "legal", "technical", "general"])
     def test_extraction_completes_all_domains(self, domain: str):
         """Verify extraction completes without error across all domains."""
         dataset = BENCHMARK_DATASETS[domain]
         combined_text = "\n".join(dataset["texts"])
-        
+
         # Should complete without error
         result = generate_ontology_with_context(combined_text, domain)
-        
+
         # Should return valid structure
         assert isinstance(result, dict)
         assert "entities" in result
         assert "relationships" in result
         assert isinstance(result["entities"], list)
         assert isinstance(result["relationships"], list)
-    
+
     @pytest.mark.parametrize("domain", ["medical", "legal", "technical", "general"])
     def test_extraction_finds_entities_all_domains(self, domain: str):
         """Verify extraction finds entities in all domains."""
         dataset = BENCHMARK_DATASETS[domain]
         combined_text = "\n".join(dataset["texts"])
-        
+
         result = generate_ontology_with_context(combined_text, domain)
-        
+
         # All domains should extract at least some entities
         assert len(result.get("entities", [])) > 0, f"{domain}: no entities extracted"
-    
+
     def test_quality_baseline_comparison(self):
         """Compare baseline extraction metrics across domains."""
         results = {}
-        
+
         for domain, dataset in BENCHMARK_DATASETS.items():
             combined_text = "\n".join(dataset["texts"])
             result = generate_ontology_with_context(combined_text, domain)
             metrics = compute_benchmark_metrics(domain, combined_text, result, 0)
             results[domain] = metrics.to_dict()
-        
+
         # All domains should show measurable extraction
         extraction_counts = [results[d]["entity_count"] for d in BENCHMARK_DATASETS.keys()]
         assert max(extraction_counts) > 0, "No entities extracted from any domain"
@@ -467,7 +493,7 @@ class TestBenchmarkComparisonAcrossDomains:
 
 class TestBenchmarkPerformanceScaling:
     """Test extraction performance under various text sizes."""
-    
+
     def test_extraction_speed_single_document(self):
         """Verify extraction speed on single document (baseline)."""
         text = """
@@ -475,15 +501,15 @@ class TestBenchmarkPerformanceScaling:
         in New York City. He manages a team that develops cloud infrastructure. 
         The infrastructure includes databases, message queues, and caching layers.
         """
-        
+
         start_time = time.time()
         result = generate_ontology_with_context(text, "general")
         elapsed_ms = (time.time() - start_time) * 1000
-        
+
         # Should complete in reasonable time (< 2 seconds)
         assert elapsed_ms < 2000, f"Single document extraction took {elapsed_ms:.0f}ms (max 2000ms)"
         assert len(result.get("entities", [])) >= 0  # May extract nothing from short text
-    
+
     def test_extraction_speed_multi_document(self):
         """Verify extraction speed on combined long text (scaling test)."""
         # Combine all benchmark texts
@@ -491,47 +517,50 @@ class TestBenchmarkPerformanceScaling:
         for domain_data in BENCHMARK_DATASETS.values():
             all_texts.extend(domain_data["texts"])
         combined_text = "\n".join(all_texts)
-        
+
         start_time = time.time()
         result = generate_ontology_with_context(combined_text, "general")
         elapsed_ms = (time.time() - start_time) * 1000
-        
+
         # Should handle multi-document text in reasonable time (< 10 seconds)
-        assert elapsed_ms < 10000, f"Multi-document extraction took {elapsed_ms:.0f}ms (max 10000ms)"
+        assert elapsed_ms < 10000, (
+            f"Multi-document extraction took {elapsed_ms:.0f}ms (max 10000ms)"
+        )
 
 
 class TestBenchmarkExtractionConsistency:
     """Test extraction consistency and determinism."""
-    
+
     def test_extraction_consistency_repeated_runs(self):
         """Verify extraction produces consistent results on repeated runs."""
         text = BENCHMARK_DATASETS["medical"]["texts"][0]
-        
+
         # Run extraction multiple times
         results = []
         for _ in range(2):
             result = generate_ontology_with_context(text, "medical")
             results.append(result)
-        
+
         # Same text should produce same entity count and types
         entity_counts = [len(r.get("entities", [])) for r in results]
-        assert len(set(entity_counts)) == 1, \
+        assert len(set(entity_counts)) == 1, (
             f"Extraction not consistent: entity counts {entity_counts}"
-    
+        )
+
     def test_extraction_confidences_reasonable(self):
         """Verify confidence scores are within reasonable range (0-1)."""
         combined_text = "\n".join(BENCHMARK_DATASETS["legal"]["texts"])
-        
+
         result = generate_ontology_with_context(combined_text, "legal")
-        
+
         entities = result.get("entities", [])
         relationships = result.get("relationships", [])
-        
+
         # All confidences should be in [0, 1]
         for entity in entities:
             conf = entity.get("confidence", 0.5)
             assert 0 <= conf <= 1, f"Invalid entity confidence: {conf}"
-        
+
         for rel in relationships:
             conf = rel.get("confidence", 0.5)
             assert 0 <= conf <= 1, f"Invalid relationship confidence: {conf}"
@@ -539,39 +568,39 @@ class TestBenchmarkExtractionConsistency:
 
 class TestBenchmarkSummary:
     """Summary statistics and reporting for benchmark suite."""
-    
+
     def test_benchmark_dataset_structure(self):
         """Verify benchmark datasets are properly structured."""
         assert len(BENCHMARK_DATASETS) == 4, "Benchmark suite should cover 4 domains"
-        
+
         for domain, dataset in BENCHMARK_DATASETS.items():
             assert "name" in dataset
             assert "texts" in dataset
             assert "expected_min_entities" in dataset
             assert "expected_min_relationships" in dataset
             assert len(dataset["texts"]) >= 3, f"{domain}: need ≥3 sample texts"
-            
+
             # Each text should be reasonably sized
             for text in dataset["texts"]:
                 assert len(text) > 100, f"{domain}: text too short for meaningful extraction"
-    
+
     def test_benchmark_baseline_metrics_all_domains(self):
         """Generate baseline metrics report for all domains."""
         summary = {}
-        
+
         for domain, dataset in BENCHMARK_DATASETS.items():
             combined_text = "\n".join(dataset["texts"])
-            
+
             start_time = time.time()
             result = generate_ontology_with_context(combined_text, domain)
             elapsed_ms = (time.time() - start_time) * 1000
-            
+
             metrics = compute_benchmark_metrics(domain, combined_text, result, elapsed_ms)
             summary[domain] = metrics.to_dict()
-        
+
         # Verify all domains processed
         assert len(summary) == 4, f"Expected 4 domain results, got {len(summary)}"
-        
+
         # All should have attempted extraction
         for domain, metrics in summary.items():
             assert isinstance(metrics["entity_count"], int)

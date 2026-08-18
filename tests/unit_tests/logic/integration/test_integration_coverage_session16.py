@@ -11,6 +11,7 @@ Targets (in order of impact):
 7. tdfol_grammar_bridge.py 46 uncovered → available=False, dcec_grammar mock
 8. Various small modules
 """
+
 import sys
 import anyio
 import pytest
@@ -27,6 +28,7 @@ class TestFOLInputValidators:
     @pytest.fixture
     def fol_input_class(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
+
         return FOLInput
 
     def test_single_word_text_raises_validation_error(self, fol_input_class):
@@ -49,7 +51,7 @@ class TestFOLInputValidators:
         """GIVEN domain_predicates with invalid formats WHEN creating FOLInput THEN invalid predicates are filtered (lines 161-170)."""
         obj = fol_input_class(
             text="all contracts must be signed",
-            domain_predicates=["1invalid", "Valid", "has spaces", "GoodPred", ""]
+            domain_predicates=["1invalid", "Valid", "has spaces", "GoodPred", ""],
         )
         # Valid predicates start with a letter and contain only alphanumeric/underscore
         assert "Valid" in obj.domain_predicates
@@ -61,7 +63,7 @@ class TestFOLInputValidators:
         """GIVEN valid predicates WHEN creating FOLInput THEN all are kept (lines 161-170)."""
         obj = fol_input_class(
             text="every contract must be signed",
-            domain_predicates=["Contract", "Person", "Valid_State"]
+            domain_predicates=["Contract", "Person", "Valid_State"],
         )
         assert len(obj.domain_predicates) == 3
 
@@ -77,6 +79,7 @@ class TestFOLOutputValidators:
     @pytest.fixture
     def fol_output_class(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLOutput
+
         return FOLOutput
 
     def _make_components(self):
@@ -85,33 +88,35 @@ class TestFOLOutputValidators:
     def test_empty_fol_formula_raises_validation_error(self, fol_output_class):
         """GIVEN empty fol_formula WHEN creating FOLOutput THEN ValidationError raised (lines 208-209)."""
         with pytest.raises(Exception):
-            fol_output_class(fol_formula="", confidence=0.5, logical_components=self._make_components())
+            fol_output_class(
+                fol_formula="", confidence=0.5, logical_components=self._make_components()
+            )
 
     def test_whitespace_fol_formula_raises_validation_error(self, fol_output_class):
         """GIVEN whitespace-only fol_formula WHEN creating FOLOutput THEN ValidationError raised (lines 208-209)."""
         with pytest.raises(Exception):
-            fol_output_class(fol_formula="   ", confidence=0.5, logical_components=self._make_components())
+            fol_output_class(
+                fol_formula="   ", confidence=0.5, logical_components=self._make_components()
+            )
 
     def test_unbalanced_parens_raises_validation_error(self, fol_output_class):
         """GIVEN unbalanced parentheses in formula WHEN creating FOLOutput THEN ValidationError raised (lines 215-216)."""
         with pytest.raises(Exception):
-            fol_output_class(fol_formula="Cat(x", confidence=0.5, logical_components=self._make_components())
+            fol_output_class(
+                fol_formula="Cat(x", confidence=0.5, logical_components=self._make_components()
+            )
 
     def test_formula_with_fol_symbol_accepted(self, fol_output_class):
         """GIVEN formula with universal quantifier WHEN creating FOLOutput THEN accepted (lines 219-228)."""
         obj = fol_output_class(
-            fol_formula="∀x Cat(x)",
-            confidence=0.8,
-            logical_components=self._make_components()
+            fol_formula="∀x Cat(x)", confidence=0.8, logical_components=self._make_components()
         )
         assert "∀" in obj.fol_formula
 
     def test_formula_with_predicate_notation_accepted(self, fol_output_class):
         """GIVEN formula with predicate notation WHEN creating FOLOutput THEN accepted (lines 225-228)."""
         obj = fol_output_class(
-            fol_formula="Cat(x)",
-            confidence=0.8,
-            logical_components=self._make_components()
+            fol_formula="Cat(x)", confidence=0.8, logical_components=self._make_components()
         )
         assert obj.fol_formula == "Cat(x)"
 
@@ -120,16 +125,14 @@ class TestFOLOutputValidators:
         obj = fol_output_class(
             fol_formula="some plain text statement here",
             confidence=0.3,
-            logical_components=self._make_components()
+            logical_components=self._make_components(),
         )
         assert obj.fol_formula == "some plain text statement here"
 
     def test_missing_components_keys_auto_added(self, fol_output_class):
         """GIVEN logical_components missing required keys WHEN creating FOLOutput THEN keys auto-added (lines 238-242)."""
         obj = fol_output_class(
-            fol_formula="Cat(x)",
-            confidence=0.8,
-            logical_components={"extra_key": "value"}
+            fol_formula="Cat(x)", confidence=0.8, logical_components={"extra_key": "value"}
         )
         assert "quantifiers" in obj.logical_components
         assert "predicates" in obj.logical_components
@@ -138,9 +141,7 @@ class TestFOLOutputValidators:
     def test_partial_components_keys_auto_added(self, fol_output_class):
         """GIVEN logical_components with only quantifiers WHEN creating FOLOutput THEN missing keys added."""
         obj = fol_output_class(
-            fol_formula="∀x Dog(x)",
-            confidence=0.9,
-            logical_components={"quantifiers": ["∀"]}
+            fol_formula="∀x Dog(x)", confidence=0.9, logical_components={"quantifiers": ["∀"]}
         )
         assert "predicates" in obj.logical_components
         assert "entities" in obj.logical_components
@@ -152,6 +153,7 @@ class TestFOLSyntaxValidator:
     @pytest.fixture
     def validator(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         return FOLSyntaxValidator(strict=True)
 
     def test_validate_empty_formula(self, validator):
@@ -184,7 +186,7 @@ class TestFOLSyntaxValidator:
 
     def test_validate_formula_with_exceptions_handled(self, validator):
         """GIVEN validator with _check_syntax exception WHEN validate THEN error info returned (lines 305-307)."""
-        with patch.object(validator, '_check_syntax', side_effect=RuntimeError("syntax crash")):
+        with patch.object(validator, "_check_syntax", side_effect=RuntimeError("syntax crash")):
             result = validator.validate_formula("∀x Cat(x)")
             assert result["valid"] is False
             assert any("Validation error" in e for e in result["errors"])
@@ -221,8 +223,10 @@ class TestFallbackContractedFOLConverter:
     @pytest.fixture
     def converter(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import (
-            ContractedFOLConverter, SYMBOLIC_AI_AVAILABLE
+            ContractedFOLConverter,
+            SYMBOLIC_AI_AVAILABLE,
         )
+
         if SYMBOLIC_AI_AVAILABLE:
             pytest.skip("SymbolicAI is available - these tests are for the fallback path")
         return ContractedFOLConverter()
@@ -230,6 +234,7 @@ class TestFallbackContractedFOLConverter:
     @pytest.fixture
     def fol_input_class(self):
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
+
         return FOLInput
 
     def test_call_all_quantifier(self, converter, fol_input_class):
@@ -254,17 +259,23 @@ class TestFallbackContractedFOLConverter:
 
     def test_call_prolog_format(self, converter, fol_input_class):
         """GIVEN prolog output_format WHEN calling converter THEN prolog notation returned (line 721)."""
-        result = converter(fol_input_class(text="all contracts must be signed", output_format="prolog"))
+        result = converter(
+            fol_input_class(text="all contracts must be signed", output_format="prolog")
+        )
         assert "forall" in result.fol_formula or "Statement" in result.fol_formula
 
     def test_call_tptp_format(self, converter, fol_input_class):
         """GIVEN tptp output_format WHEN calling converter THEN TPTP notation returned (lines 722-724)."""
-        result = converter(fol_input_class(text="all contracts must be signed", output_format="tptp"))
+        result = converter(
+            fol_input_class(text="all contracts must be signed", output_format="tptp")
+        )
         assert "fof(" in result.fol_formula
 
     def test_call_symbolic_format(self, converter, fol_input_class):
         """GIVEN symbolic output_format WHEN calling converter THEN symbolic notation returned."""
-        result = converter(fol_input_class(text="all contracts must be signed", output_format="symbolic"))
+        result = converter(
+            fol_input_class(text="all contracts must be signed", output_format="symbolic")
+        )
         assert result.confidence == 0.6
 
     def test_call_with_exception_returns_error_output(self, converter):
@@ -282,13 +293,17 @@ class TestContractModule:
 
     def test_create_fol_converter_factory(self):
         """GIVEN strict=True WHEN create_fol_converter THEN converter created (line 762-765)."""
-        from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import create_fol_converter
+        from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import (
+            create_fol_converter,
+        )
+
         converter = create_fol_converter(strict_validation=True)
         assert converter is not None
 
     def test_validate_fol_input_helper(self):
         """GIVEN text + kwargs WHEN validate_fol_input THEN FOLInput created (line 779)."""
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import validate_fol_input
+
         inp = validate_fol_input("all cats are animals", confidence_threshold=0.9)
         assert inp.text == "all cats are animals"
         assert inp.confidence_threshold == 0.9
@@ -296,6 +311,7 @@ class TestContractModule:
     def test_test_contracts_function_runs(self):
         """GIVEN test_contracts function WHEN called THEN runs without error (lines 782-815)."""
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import test_contracts
+
         # test_contracts() prints to stdout; it should run without exception
         try:
             test_contracts()
@@ -314,16 +330,19 @@ class TestTDFOLCECBridgeProverPaths:
     @pytest.fixture
     def bridge(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
+
         return TDFOLCECBridge()
 
     @pytest.fixture
     def simple_formula(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import create_obligation, Predicate, Variable
+
         return create_obligation(Predicate("Report", 0), Variable("x"))
 
     def _make_prover_core_mock(self, result_value):
         """Create a mock prover_core that returns a given result."""
         from ipfs_datasets_py.logic.CEC.native import prover_core as real_pc
+
         mock_pc = MagicMock()
         mock_pc.ProofResult = real_pc.ProofResult
 
@@ -346,38 +365,50 @@ class TestTDFOLCECBridgeProverPaths:
     def test_prove_with_cec_proved(self, bridge, simple_formula):
         """GIVEN CEC returns PROVED WHEN prove_with_cec THEN result returned (lines 246-286)."""
         from ipfs_datasets_py.logic.CEC.native import prover_core as real_pc
+
         mock_pc = self._make_prover_core_mock(real_pc.ProofResult.PROVED)
 
-        with patch('ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge.prover_core', mock_pc):
+        with patch(
+            "ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge.prover_core", mock_pc
+        ):
             result = bridge.prove_with_cec(simple_formula, axioms=[])
             # result.status may be from tdfol_core.ProofStatus or proof_execution_engine.ProofStatus
             assert result is not None
-            assert hasattr(result, 'status')
+            assert hasattr(result, "status")
 
     def test_prove_with_cec_disproved(self, bridge, simple_formula):
         """GIVEN CEC returns DISPROVED WHEN prove_with_cec THEN result returned (lines 288-295)."""
         from ipfs_datasets_py.logic.CEC.native import prover_core as real_pc
+
         mock_pc = self._make_prover_core_mock(real_pc.ProofResult.DISPROVED)
 
-        with patch('ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge.prover_core', mock_pc):
+        with patch(
+            "ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge.prover_core", mock_pc
+        ):
             result = bridge.prove_with_cec(simple_formula, axioms=[])
             assert result is not None
 
     def test_prove_with_cec_timeout(self, bridge, simple_formula):
         """GIVEN CEC returns TIMEOUT WHEN prove_with_cec THEN result returned (lines 297-304)."""
         from ipfs_datasets_py.logic.CEC.native import prover_core as real_pc
+
         mock_pc = self._make_prover_core_mock(real_pc.ProofResult.TIMEOUT)
 
-        with patch('ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge.prover_core', mock_pc):
+        with patch(
+            "ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge.prover_core", mock_pc
+        ):
             result = bridge.prove_with_cec(simple_formula, axioms=[])
             assert result is not None
 
     def test_prove_with_cec_unknown(self, bridge, simple_formula):
         """GIVEN CEC returns UNKNOWN WHEN prove_with_cec THEN result returned (lines 306-313)."""
         from ipfs_datasets_py.logic.CEC.native import prover_core as real_pc
+
         mock_pc = self._make_prover_core_mock(real_pc.ProofResult.UNKNOWN)
 
-        with patch('ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge.prover_core', mock_pc):
+        with patch(
+            "ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge.prover_core", mock_pc
+        ):
             result = bridge.prove_with_cec(simple_formula, axioms=[])
             assert result is not None
 
@@ -402,7 +433,9 @@ class TestInteractiveFOLConstructorEdgePaths:
 
     @pytest.fixture
     def constructor_with_mock_bridge(self):
-        from ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor import InteractiveFOLConstructor
+        from ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor import (
+            InteractiveFOLConstructor,
+        )
 
         class _MockFOLResult:
             confidence = 0.3  # below default threshold 0.6
@@ -458,7 +491,10 @@ class TestDeontologicalReasoningConditions:
 
     @pytest.fixture
     def extractor(self):
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import DeonticExtractor
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
+            DeonticExtractor,
+        )
+
         return DeonticExtractor()
 
     def test_extract_conditional_with_may_modal(self, extractor):
@@ -488,9 +524,14 @@ class TestDeontologicalReasoningConditions:
 
     def test_analyze_document_with_exception_path(self):
         """GIVEN _extract_modality_statements raises WHEN extract_statements THEN error propagated or caught."""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import DeonticExtractor
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
+            DeonticExtractor,
+        )
+
         extractor = DeonticExtractor()
-        with patch.object(extractor, '_extract_modality_statements', side_effect=RuntimeError("forced")):
+        with patch.object(
+            extractor, "_extract_modality_statements", side_effect=RuntimeError("forced")
+        ):
             try:
                 result = extractor.extract_statements("some text", "doc_id")
                 # Either returns empty or error dict
@@ -500,7 +541,10 @@ class TestDeontologicalReasoningConditions:
 
     def test_corpus_async_process_with_error_document(self):
         """GIVEN corpus with error-causing document WHEN analyze_corpus_for_deontic_conflicts THEN error tracked (lines 333-335)."""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import DeontologicalReasoningEngine
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
+            DeontologicalReasoningEngine,
+        )
+
         engine = DeontologicalReasoningEngine()
         documents = [
             {"id": "doc1", "text": "The contractor must submit reports.", "source": "test"},
@@ -522,41 +566,59 @@ class TestTemporalDeonticAPIExceptions:
 
     def test_check_document_consistency_exception(self):
         """GIVEN consistency checker raises WHEN check_document_consistency_from_parameters THEN error dict returned (lines 124-126)."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import check_document_consistency_from_parameters
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            check_document_consistency_from_parameters,
+        )
 
-        with patch('ipfs_datasets_py.logic.integration.domain.document_consistency_checker.DocumentConsistencyChecker') as MockChecker:
+        with patch(
+            "ipfs_datasets_py.logic.integration.domain.document_consistency_checker.DocumentConsistencyChecker"
+        ) as MockChecker:
             MockChecker.return_value.check_document.side_effect = RuntimeError("checker crash")
             result = anyio.run(check_document_consistency_from_parameters, {"text": "some text"})
         assert isinstance(result, dict)
 
     def test_query_theorems_from_parameters_start_date(self):
         """GIVEN start_date parameter WHEN query_theorems_from_parameters THEN date_range updated (lines 267-271)."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import query_theorems_from_parameters
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            query_theorems_from_parameters,
+        )
+
         params = {"query": "obligation", "start_date": "2020-01-01", "top_k": 2}
         result = anyio.run(query_theorems_from_parameters, params)
         assert isinstance(result, dict)
 
     def test_query_theorems_from_parameters_invalid_date(self):
         """GIVEN invalid date WHEN query_theorems_from_parameters THEN ValueError silently ignored (lines 270-271, 274-278)."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import query_theorems_from_parameters
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            query_theorems_from_parameters,
+        )
+
         params = {"query": "permission", "start_date": "not-a-date", "end_date": "also-bad"}
         result = anyio.run(query_theorems_from_parameters, params)
         assert isinstance(result, dict)
 
     def test_query_theorems_from_parameters_end_date(self):
         """GIVEN valid end_date WHEN query_theorems_from_parameters THEN works (lines 274-276)."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import query_theorems_from_parameters
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            query_theorems_from_parameters,
+        )
+
         params = {"query": "obligation", "end_date": "2023-12-31", "top_k": 2}
         result = anyio.run(query_theorems_from_parameters, params)
         assert isinstance(result, dict)
 
     def test_process_caselaw_bulk_exception(self):
         """GIVEN processor raises WHEN bulk_process_caselaw_from_parameters THEN error dict returned (lines 325-327)."""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import bulk_process_caselaw_from_parameters
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            bulk_process_caselaw_from_parameters,
+        )
         import tempfile
+
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor.CaselawBulkProcessor.process_caselaw_corpus',
-                       side_effect=RuntimeError("proc crash")):
+            with patch(
+                "ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor.CaselawBulkProcessor.process_caselaw_corpus",
+                side_effect=RuntimeError("proc crash"),
+            ):
                 result = anyio.run(bulk_process_caselaw_from_parameters, {"directories": [tmpdir]})
         assert isinstance(result, dict)
 
@@ -569,7 +631,10 @@ class TestTDFOLGrammarBridgeAvailableFalse:
 
     @pytest.fixture
     def bridge(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            TDFOLGrammarBridge,
+        )
+
         b = TDFOLGrammarBridge()
         return b
 
@@ -578,13 +643,13 @@ class TestTDFOLGrammarBridgeAvailableFalse:
         bridge.available = False
         result = bridge.parse_natural_language("The officer must file a report")
         # Falls back to _fallback_parse which might return None or a Formula
-        assert result is None or hasattr(result, '__class__')
+        assert result is None or hasattr(result, "__class__")
 
     def test_parse_natural_language_grammar_returns_none_no_fallback(self, bridge):
         """GIVEN grammar returns None and use_fallback=False WHEN parse THEN None returned (line 192-196)."""
         if not bridge.available:
             pytest.skip("Grammar not available")
-        with patch.object(bridge.dcec_grammar, 'parse_to_dcec', return_value=None):
+        with patch.object(bridge.dcec_grammar, "parse_to_dcec", return_value=None):
             result = bridge.parse_natural_language("Some text", use_fallback=False)
             assert result is None
 
@@ -592,24 +657,28 @@ class TestTDFOLGrammarBridgeAvailableFalse:
         """GIVEN grammar returns None and use_fallback=True WHEN parse THEN fallback used (lines 193-195)."""
         if not bridge.available:
             pytest.skip("Grammar not available")
-        with patch.object(bridge.dcec_grammar, 'parse_to_dcec', return_value=None):
+        with patch.object(bridge.dcec_grammar, "parse_to_dcec", return_value=None):
             result = bridge.parse_natural_language("Some text", use_fallback=True)
             # fallback may return something or None
-            assert result is None or hasattr(result, '__class__')
+            assert result is None or hasattr(result, "__class__")
 
     def test_parse_natural_language_grammar_exception_with_fallback(self, bridge):
         """GIVEN grammar raises WHEN parse with use_fallback=True THEN fallback used (lines 198-202)."""
         if not bridge.available:
             pytest.skip("Grammar not available")
-        with patch.object(bridge.dcec_grammar, 'parse_to_dcec', side_effect=RuntimeError("grammar crash")):
+        with patch.object(
+            bridge.dcec_grammar, "parse_to_dcec", side_effect=RuntimeError("grammar crash")
+        ):
             result = bridge.parse_natural_language("Some text", use_fallback=True)
-            assert result is None or hasattr(result, '__class__')
+            assert result is None or hasattr(result, "__class__")
 
     def test_parse_natural_language_grammar_exception_no_fallback(self, bridge):
         """GIVEN grammar raises WHEN parse with use_fallback=False THEN None returned (lines 198-203)."""
         if not bridge.available:
             pytest.skip("Grammar not available")
-        with patch.object(bridge.dcec_grammar, 'parse_to_dcec', side_effect=RuntimeError("grammar crash")):
+        with patch.object(
+            bridge.dcec_grammar, "parse_to_dcec", side_effect=RuntimeError("grammar crash")
+        ):
             result = bridge.parse_natural_language("Some text", use_fallback=False)
             assert result is None
 
@@ -617,10 +686,10 @@ class TestTDFOLGrammarBridgeAvailableFalse:
         """GIVEN grammar returns DCEC string WHEN parse THEN formula parsed (lines 183-190)."""
         if not bridge.available:
             pytest.skip("Grammar not available")
-        with patch.object(bridge.dcec_grammar, 'parse_to_dcec', return_value="O(Report)"):
+        with patch.object(bridge.dcec_grammar, "parse_to_dcec", return_value="O(Report)"):
             result = bridge.parse_natural_language("The officer must report the incident")
             # May succeed or fail parsing, but lines 185-190 should be touched
-            assert result is None or hasattr(result, '__class__')
+            assert result is None or hasattr(result, "__class__")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -632,11 +701,13 @@ class TestCECBridgeErrors:
     @pytest.fixture
     def bridge(self):
         from ipfs_datasets_py.logic.integration.cec_bridge import CECBridge
+
         return CECBridge()
 
     @pytest.fixture
     def simple_formula(self):
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import create_obligation, Predicate, Variable
+
         return create_obligation(Predicate("Report", 0), Variable("x"))
 
     def test_prove_with_formula_no_cache(self, bridge, simple_formula):
@@ -646,7 +717,7 @@ class TestCECBridgeErrors:
 
     def test_prove_with_cec_strategy(self, bridge, simple_formula):
         """GIVEN strategy='cec' WHEN prove THEN CEC prove path attempted (line 147/158/181-199)."""
-        result = bridge.prove(simple_formula, axioms=[], strategy='cec', use_cache=False)
+        result = bridge.prove(simple_formula, axioms=[], strategy="cec", use_cache=False)
         assert result is not None
 
     def test_get_statistics_returns_dict(self, bridge):
@@ -663,7 +734,10 @@ class TestDeonticReasoningAsyncCorpus:
 
     def test_analyze_corpus_document_processing_error(self):
         """GIVEN document that causes error WHEN analyze_corpus_for_deontic_conflicts THEN error tracked (line 333-335)."""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import DeontologicalReasoningEngine
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
+            DeontologicalReasoningEngine,
+        )
+
         engine = DeontologicalReasoningEngine()
         documents = [
             {"id": "doc1", "text": "The contractor must submit reports.", "source": "s1"},
@@ -685,7 +759,10 @@ class TestLegalDomainKnowledgeEdgePaths:
 
     @pytest.fixture
     def ldk(self):
-        from ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge import LegalDomainKnowledge
+        from ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge import (
+            LegalDomainKnowledge,
+        )
+
         return LegalDomainKnowledge()
 
     def test_extract_agents_from_criminal_text(self, ldk):
@@ -703,10 +780,9 @@ class TestLegalDomainKnowledgeEdgePaths:
     def test_validate_deontic_extraction_result(self, ldk):
         """GIVEN valid text WHEN validate_deontic_extraction THEN validation result returned (lines 603-644)."""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         result = ldk.validate_deontic_extraction(
-            "The contractor must submit the report",
-            DeonticOperator.OBLIGATION,
-            0.9
+            "The contractor must submit the report", DeonticOperator.OBLIGATION, 0.9
         )
         assert isinstance(result, dict)
 
@@ -720,6 +796,7 @@ class TestMiscEdgePaths:
     def test_validation_context_dataclass(self):
         """GIVEN ValidationContext WHEN created THEN fields accessible (lines 245-251)."""
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import ValidationContext
+
         ctx = ValidationContext(strict_mode=False, allow_empty_predicates=True, max_complexity=50)
         assert ctx.strict_mode is False
         assert ctx.max_complexity == 50
@@ -727,6 +804,7 @@ class TestMiscEdgePaths:
     def test_fol_input_confidence_bounds(self):
         """GIVEN confidence_threshold at boundary values WHEN creating FOLInput THEN accepted."""
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
+
         for val in (0.0, 0.5, 1.0):
             obj = FOLInput(text="all parties must comply", confidence_threshold=val)
             assert obj.confidence_threshold == val
@@ -734,17 +812,19 @@ class TestMiscEdgePaths:
     def test_fol_output_confidence_bounds(self):
         """GIVEN confidence at boundary values WHEN creating FOLOutput THEN accepted."""
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLOutput
+
         for val in (0.0, 0.5, 1.0):
             obj = FOLOutput(
                 fol_formula="P(x)",
                 confidence=val,
-                logical_components={"quantifiers": [], "predicates": [], "entities": []}
+                logical_components={"quantifiers": [], "predicates": [], "entities": []},
             )
             assert obj.confidence == val
 
     def test_fol_syntax_validator_strict_false(self):
         """GIVEN strict=False validator WHEN validate THEN valid results returned."""
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLSyntaxValidator
+
         v = FOLSyntaxValidator(strict=False)
         result = v.validate_formula("∀x Animal(x)")
         assert isinstance(result, dict)
@@ -753,6 +833,7 @@ class TestMiscEdgePaths:
         """GIVEN TDFOLCECBridge with cec_available=False WHEN prove_with_cec THEN returns quickly."""
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import create_obligation, Predicate, Variable
+
         bridge = TDFOLCECBridge()
         bridge.cec_available = False
         formula = create_obligation(Predicate("Report", 0), Variable("x"))
@@ -762,6 +843,7 @@ class TestMiscEdgePaths:
     def test_fol_input_reasoning_depth_bounds(self):
         """GIVEN reasoning_depth at boundary values WHEN FOLInput THEN accepted."""
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLInput
+
         obj = FOLInput(text="all people must pay", reasoning_depth=1)
         assert obj.reasoning_depth == 1
         obj2 = FOLInput(text="all people must pay", reasoning_depth=10)
@@ -770,17 +852,18 @@ class TestMiscEdgePaths:
     def test_fol_output_with_full_logical_components(self):
         """GIVEN FOLOutput with all components WHEN created THEN all preserved."""
         from ipfs_datasets_py.logic.integration.domain.symbolic_contracts import FOLOutput
+
         obj = FOLOutput(
             fol_formula="∀x ∃y Loves(x, y)",
             confidence=0.85,
             logical_components={
                 "quantifiers": ["∀", "∃"],
                 "predicates": ["Loves"],
-                "entities": ["x", "y"]
+                "entities": ["x", "y"],
             },
             reasoning_steps=["Step 1: parse", "Step 2: convert"],
             warnings=[],
-            metadata={"source": "test"}
+            metadata={"source": "test"},
         )
         assert len(obj.reasoning_steps) == 2
         assert obj.metadata["source"] == "test"

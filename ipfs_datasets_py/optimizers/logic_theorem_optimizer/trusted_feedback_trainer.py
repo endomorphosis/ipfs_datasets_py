@@ -42,9 +42,7 @@ from .modal_autoencoder import (
 )
 
 
-TRUSTED_FEEDBACK_TRAINER_SCHEMA_VERSION: Final = (
-    "legal-ir-trusted-feedback-weight-updates-v1"
-)
+TRUSTED_FEEDBACK_TRAINER_SCHEMA_VERSION: Final = "legal-ir-trusted-feedback-weight-updates-v1"
 DEFAULT_TRUSTED_FEEDBACK_MAX_LEARNING_RATE: Final = 0.10
 DEFAULT_TRUSTED_FEEDBACK_MAX_UPDATES: Final = 64
 
@@ -175,12 +173,8 @@ class TrustedFeedbackUpdateReport(_SerializableMapping):
             "guardrail_blocked_count": self.guardrail_blocked_count,
             "gradient_norms_by_family": dict(sorted(self.gradient_norms_by_family.items())),
             "gradient_norms_by_head": dict(sorted(self.gradient_norms_by_head.items())),
-            "head_family_gradient_norms": dict(
-                sorted(self.head_family_gradient_norms.items())
-            ),
-            "head_family_update_norms": dict(
-                sorted(self.head_family_update_norms.items())
-            ),
+            "head_family_gradient_norms": dict(sorted(self.head_family_gradient_norms.items())),
+            "head_family_update_norms": dict(sorted(self.head_family_update_norms.items())),
             "holdout_count": self.holdout_count,
             "invalid_count": self.invalid_count,
             "limit_skipped_count": self.limit_skipped_count,
@@ -195,9 +189,7 @@ class TrustedFeedbackUpdateReport(_SerializableMapping):
             "skipped_untrusted_count": self.untrusted_count,
             "stale_count": self.stale_count,
             "status": self.status,
-            "trainable_legal_ir_head_norms": _json_ready(
-                self.trainable_legal_ir_head_norms
-            ),
+            "trainable_legal_ir_head_norms": _json_ready(self.trainable_legal_ir_head_norms),
             "untrusted_count": self.untrusted_count,
             "update_norms_by_family": dict(sorted(self.update_norms_by_family.items())),
             "update_norms_by_head": dict(sorted(self.update_norms_by_head.items())),
@@ -246,15 +238,9 @@ class TrustedFeedbackTrainer:
         if not math.isfinite(step) or step < 0.0 or step > self.config.maximum_learning_rate:
             raise ValueError("learning_rate is outside the trusted-feedback bound")
         ablation, ablation_allowed = _ablation_gate(ablation_evidence)
-        holdout_ids = {
-            str(value)
-            for value in ablation.get("heldout_sample_ids", ())
-            if str(value)
-        }
+        holdout_ids = {str(value) for value in ablation.get("heldout_sample_ids", ()) if str(value)}
         ablation_train_ids = {
-            str(value)
-            for value in ablation.get("training_sample_ids", ())
-            if str(value)
+            str(value) for value in ablation.get("training_sample_ids", ()) if str(value)
         }
         counts = {
             "applied_count": 0,
@@ -319,7 +305,10 @@ class TrustedFeedbackTrainer:
                 if partition == "mismatch":
                     block("guardrail_blocked_count", "feedback_partition_mismatch")
                     continue
-                if self.config.require_explicit_train_partition and partition != ProofFeedbackPartition.TRAIN.value:
+                if (
+                    self.config.require_explicit_train_partition
+                    and partition != ProofFeedbackPartition.TRAIN.value
+                ):
                     block("guardrail_blocked_count", "train_partition_not_attested")
                     continue
                 copy_reason = _source_copy_block_reason(
@@ -423,9 +412,7 @@ def apply_trusted_feedback_weight_updates(
 ) -> TrustedFeedbackUpdateReport:
     """One-shot production entry point with weight writes explicitly enabled."""
 
-    resolved_config = config or TrustedFeedbackTrainerConfig(
-        production_weight_writes_enabled=True
-    )
+    resolved_config = config or TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True)
     trainer = TrustedFeedbackTrainer(
         autoencoder,
         expected_versions=expected_versions,
@@ -520,18 +507,14 @@ def _aggregate_update_norm_reports(
 
 def _sqrt_norms(squares: Mapping[str, float]) -> dict[str, float]:
     return {
-        key: round(math.sqrt(max(0.0, float(value))), 12)
-        for key, value in sorted(squares.items())
+        key: round(math.sqrt(max(0.0, float(value))), 12) for key, value in sorted(squares.items())
     }
 
 
 def _divide_norms(norms: Mapping[str, float], denominator: float) -> dict[str, float]:
     if denominator <= 0.0:
         return {key: 0.0 for key in sorted(norms)}
-    return {
-        key: round(float(value) / denominator, 12)
-        for key, value in sorted(norms.items())
-    }
+    return {key: round(float(value) / denominator, 12) for key, value in sorted(norms.items())}
 
 
 def _coerce_versions(value: Any) -> Optional[ProofFeedbackVersions]:
@@ -550,7 +533,9 @@ def _version_fingerprint(value: Any) -> str:
         return value.fingerprint
     if isinstance(value, Mapping):
         versions = _coerce_versions(value)
-        return versions.fingerprint if versions is not None else proof_feedback_content_digest(value)
+        return (
+            versions.fingerprint if versions is not None else proof_feedback_content_digest(value)
+        )
     return str(value or "").strip()
 
 
@@ -674,14 +659,13 @@ def _feedback_id(
         value = str(item.get(key) or "").strip()
         if value:
             if len(value) <= 128 and all(
-                character.isalnum() or character in "._:/@+-"
-                for character in value
+                character.isalnum() or character in "._:/@+-" for character in value
             ):
                 return value
-            return "trusted-feedback-" + hashlib.sha256(
-                value.encode("utf-8")
-            ).hexdigest()
-    payload = json.dumps(_json_ready(item), ensure_ascii=True, separators=(",", ":"), sort_keys=True)
+            return "trusted-feedback-" + hashlib.sha256(value.encode("utf-8")).hexdigest()
+    payload = json.dumps(
+        _json_ready(item), ensure_ascii=True, separators=(",", ":"), sort_keys=True
+    )
     return "trusted-feedback-" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
@@ -718,16 +702,12 @@ def _apply_bounded_sample_update(
         item,
         require_trusted=False,
     )
-    target = autoencoder._leanstral_guidance_target_distribution(
-        feature_bus.learning_payload
-    )
+    target = autoencoder._leanstral_guidance_target_distribution(feature_bus.learning_payload)
     if not target:
         return False
     sample_features = autoencoder._legal_ir_view_feature_keys_for(sample)
     bounded_sample_features = [
-        str(feature)
-        for feature in sample_features
-        if _safe_structural_feature_key(feature)
+        str(feature) for feature in sample_features if _safe_structural_feature_key(feature)
     ][:24]
     feature_keys = list(feature_bus.feature_keys) + bounded_sample_features
     global_changed = autoencoder._nudge_legal_ir_view_global_logits_toward_distribution(
@@ -774,9 +754,7 @@ def _partition(
 ) -> str:
     if record is not None:
         claimed = item.get("partition") or item.get("feedback_partition")
-        claimed_text = str(
-            getattr(claimed, "value", claimed) or ""
-        ).strip().lower()
+        claimed_text = str(getattr(claimed, "value", claimed) or "").strip().lower()
         if claimed_text and claimed_text != record.partition.value:
             if ProofFeedbackPartition.HOLDOUT.value in {
                 claimed_text,
@@ -796,11 +774,7 @@ def _feedback_is_trusted(
     if record is not None:
         # A trusted receipt cannot override an explicit rejection on the
         # guidance envelope to which it is bound.
-        if any(
-            _truth(item.get(key)) is False
-            for key in ("accepted", "trusted")
-            if key in item
-        ):
+        if any(_truth(item.get(key)) is False for key in ("accepted", "trusted") if key in item):
             return False
         return (
             record.trust_status == ProofFeedbackTrustStatus.TRUSTED
@@ -808,7 +782,9 @@ def _feedback_is_trusted(
             and record.positive
         )
     trusted = any(_truth(item.get(key)) is True for key in ("accepted", "trusted"))
-    if not trusted or any(_truth(item.get(key)) is False for key in ("accepted", "trusted") if key in item):
+    if not trusted or any(
+        _truth(item.get(key)) is False for key in ("accepted", "trusted") if key in item
+    ):
         return False
     source = str(item.get("source") or "").lower()
     schema = str(item.get("schema_version") or "").lower()
@@ -842,7 +818,11 @@ def _source_copy_block_reason(item: Mapping[str, Any], *, maximum_penalty: float
             return "source_copy_rejected"
         if lowered in {"source_copy_guard_passed", "source_copy_passed"} and _truth(value) is False:
             return "source_copy_guard_failed"
-        if lowered in {"source_copy_penalty", "source_copy_reward_hack_penalty", "source_span_copy_ratio"}:
+        if lowered in {
+            "source_copy_penalty",
+            "source_copy_reward_hack_penalty",
+            "source_span_copy_ratio",
+        }:
             try:
                 number = float(value)
             except (TypeError, ValueError):
@@ -850,7 +830,9 @@ def _source_copy_block_reason(item: Mapping[str, Any], *, maximum_penalty: float
             if not math.isfinite(number) or number > float(maximum_penalty):
                 return "source_copy_penalty_exceeded"
         if lowered in {"rejection_reason", "rejection_reasons"}:
-            values = value if isinstance(value, Sequence) and not isinstance(value, str) else (value,)
+            values = (
+                value if isinstance(value, Sequence) and not isinstance(value, str) else (value,)
+            )
             markers = {_atom(child) for child in values}
             if markers.intersection(_SOURCE_COPY_REJECTION_MARKERS):
                 return "source_copy_rejected"
@@ -878,7 +860,11 @@ def _ablation_gate(
 ) -> tuple[dict[str, Any], bool]:
     if evidence is None:
         return {}, False
-    payload = evidence.to_dict() if isinstance(evidence, TrustedFeedbackAblationEvidence) else dict(evidence)
+    payload = (
+        evidence.to_dict()
+        if isinstance(evidence, TrustedFeedbackAblationEvidence)
+        else dict(evidence)
+    )
     if str(payload.get("schema_version") or "") != TRUSTED_FEEDBACK_ABLATION_SCHEMA_VERSION:
         return _json_ready(payload), False
     try:
@@ -915,7 +901,10 @@ def _json_ready(value: Any) -> Any:
     if isinstance(value, Enum):
         return value.value
     if isinstance(value, Mapping):
-        return {str(key): _json_ready(child) for key, child in sorted(value.items(), key=lambda pair: str(pair[0]))}
+        return {
+            str(key): _json_ready(child)
+            for key, child in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
     if isinstance(value, (list, tuple, set, frozenset)):
         return [_json_ready(child) for child in value]
     to_dict = getattr(value, "to_dict", None)

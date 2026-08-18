@@ -567,9 +567,10 @@ async def mcp_tool(**params):
 ```python
 class CoreModule:
     """Reusable business logic"""
+
     def __init__(self, config):
         pass
-    
+
     async def operation(self, **params):
         # Business logic
         pass

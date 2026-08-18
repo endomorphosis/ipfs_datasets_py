@@ -146,7 +146,6 @@ def _make_ont(nodes, edges):
 
 
 class TestScoreValleyDensity:
-
     def test_empty_returns_zero(self):
         opt = _make_opt()
         assert opt.score_valley_density() == 0.0
@@ -187,6 +186,7 @@ class TestScoreValleyDensity:
 
     def test_result_in_unit_interval(self):
         import random
+
         rng = random.Random(42)
         scores = [rng.random() for _ in range(20)]
         opt = _make_opt(*scores)
@@ -210,7 +210,6 @@ class TestScoreValleyDensity:
 
 
 class TestScoreDimensionMinZ:
-
     def test_uniform_returns_zero(self):
         critic = _make_critic()
         s = _make_score()  # all dims=0.5
@@ -219,8 +218,12 @@ class TestScoreDimensionMinZ:
     def test_all_zero_returns_zero(self):
         critic = _make_critic()
         s = _make_score(
-            completeness=0.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         assert critic.score_dimension_min_z(s) == 0.0
 
@@ -229,8 +232,12 @@ class TestScoreDimensionMinZ:
         # mean = (0.0 + 0.5*4 + 1.0)/6 = 0.5; the 4 values at 0.5 have z=0
         critic = _make_critic()
         s = _make_score(
-            completeness=0.0, consistency=0.5, clarity=0.5,
-            granularity=0.5, relationship_coherence=0.5, domain_alignment=1.0,
+            completeness=0.0,
+            consistency=0.5,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=1.0,
         )
         min_z = critic.score_dimension_min_z(s)
         assert min_z == 0.0
@@ -239,8 +246,12 @@ class TestScoreDimensionMinZ:
         # Two groups of values — min_z must be less than max_z
         critic = _make_critic()
         s = _make_score(
-            completeness=1.0, consistency=1.0, clarity=1.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=1.0,
+            consistency=1.0,
+            clarity=1.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         min_z = critic.score_dimension_min_z(s)
         max_z = critic.score_dimension_max_z(s)
@@ -255,8 +266,12 @@ class TestScoreDimensionMinZ:
         # Two groups of 3 equal values each: all |z| values are equal
         critic = _make_critic()
         s = _make_score(
-            completeness=1.0, consistency=1.0, clarity=1.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=1.0,
+            consistency=1.0,
+            clarity=1.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         min_z = critic.score_dimension_min_z(s)
         max_z = critic.score_dimension_max_z(s)
@@ -271,8 +286,12 @@ class TestScoreDimensionMinZ:
         # One outlier among 6 dims — min_z (closest to mean) < max_z (furthest)
         critic = _make_critic()
         s = _make_score(
-            completeness=1.0, consistency=0.0, clarity=0.0,
-            granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0,
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
         )
         assert critic.score_dimension_min_z(s) < critic.score_dimension_max_z(s)
 
@@ -283,7 +302,6 @@ class TestScoreDimensionMinZ:
 
 
 class TestRunScoreVelocityRange:
-
     def test_empty_returns_zero(self):
         p = _make_pipeline([])
         assert p.run_score_velocity_range() == 0.0
@@ -311,6 +329,7 @@ class TestRunScoreVelocityRange:
 
     def test_range_non_negative(self):
         import random
+
         rng = random.Random(7)
         scores = [rng.random() for _ in range(8)]
         p = _make_pipeline(scores)
@@ -342,7 +361,6 @@ class TestRunScoreVelocityRange:
 
 
 class TestSCCNonSingletonFraction:
-
     def test_empty_returns_zero(self):
         lv = _make_lv()
         ont = _make_ont([], [])

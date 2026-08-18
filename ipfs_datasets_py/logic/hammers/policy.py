@@ -349,18 +349,14 @@ class PortfolioPolicy:
                     f"family {name!r}; known families are {known_solver_names()!r}"
                 )
             if not isinstance(budget, SolverBudget):
-                raise ValueError(
-                    f"PortfolioPolicy.solver_budgets[{name!r}] must be a SolverBudget"
-                )
+                raise ValueError(f"PortfolioPolicy.solver_budgets[{name!r}] must be a SolverBudget")
             budget.validate()
 
         if not isinstance(self.executable_overrides, dict) or not all(
             isinstance(k, str) and isinstance(v, str) and v.strip()
             for k, v in self.executable_overrides.items()
         ):
-            raise ValueError(
-                "PortfolioPolicy.executable_overrides must map str -> non-empty str"
-            )
+            raise ValueError("PortfolioPolicy.executable_overrides must map str -> non-empty str")
         for name in self.executable_overrides:
             if name not in known_solver_names():
                 raise PolicyError(
@@ -372,17 +368,11 @@ class PortfolioPolicy:
         if not isinstance(self.max_parallel_processes, int) or isinstance(
             self.max_parallel_processes, bool
         ):
-            raise ValueError(
-                "PortfolioPolicy.max_parallel_processes must be an int"
-            )
+            raise ValueError("PortfolioPolicy.max_parallel_processes must be an int")
         if self.max_parallel_processes <= 0:
-            raise ValueError(
-                "PortfolioPolicy.max_parallel_processes must be positive"
-            )
+            raise ValueError("PortfolioPolicy.max_parallel_processes must be positive")
         if not isinstance(self.cancel_on_first_conclusive, bool):
-            raise ValueError(
-                "PortfolioPolicy.cancel_on_first_conclusive must be a boolean"
-            )
+            raise ValueError("PortfolioPolicy.cancel_on_first_conclusive must be a boolean")
 
     def budget_for(self, solver_name: str) -> SolverBudget:
         """Return the effective :class:`SolverBudget` for ``solver_name``:

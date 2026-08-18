@@ -27,6 +27,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_pipeline import OntologyPipel
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _ctx(domain: str = "test") -> OntologyGenerationContext:
     return OntologyGenerationContext(data_source="test", data_type="text", domain=domain)
 
@@ -59,6 +60,7 @@ def _generator() -> OntologyGenerator:
 # ---------------------------------------------------------------------------
 # OntologyCritic.evaluate_with_rubric
 # ---------------------------------------------------------------------------
+
 
 class TestEvaluateWithRubric:
     def test_returns_critic_score(self, small_ontology):
@@ -94,8 +96,7 @@ class TestEvaluateWithRubric:
         critic = _critic()
         base = critic.evaluate_ontology(small_ontology, _ctx())
         score = critic.evaluate_with_rubric(
-            small_ontology, _ctx(),
-            {"completeness": 1.0, "nonexistent_dim": 5.0}
+            small_ontology, _ctx(), {"completeness": 1.0, "nonexistent_dim": 5.0}
         )
         assert abs(score.metadata["rubric_overall"] - base.completeness) < 1e-4
 
@@ -106,23 +107,19 @@ class TestEvaluateWithRubric:
     def test_all_zero_weights_raises(self, small_ontology):
         with pytest.raises(ValueError):
             _critic().evaluate_with_rubric(
-                small_ontology, _ctx(),
-                {"completeness": 0.0, "consistency": 0.0}
+                small_ontology, _ctx(), {"completeness": 0.0, "consistency": 0.0}
             )
 
     def test_rubric_overall_in_range(self, small_ontology):
         score = _critic().evaluate_with_rubric(
-            small_ontology, _ctx(),
-            {"completeness": 0.3, "consistency": 0.4, "clarity": 0.3}
+            small_ontology, _ctx(), {"completeness": 0.3, "consistency": 0.4, "clarity": 0.3}
         )
         assert 0.0 <= score.metadata["rubric_overall"] <= 1.0
 
     def test_other_dims_preserved(self, small_ontology):
         critic = _critic()
         base = critic.evaluate_ontology(small_ontology, _ctx())
-        rubric_score = critic.evaluate_with_rubric(
-            small_ontology, _ctx(), {"completeness": 1.0}
-        )
+        rubric_score = critic.evaluate_with_rubric(small_ontology, _ctx(), {"completeness": 1.0})
         assert rubric_score.consistency == base.consistency
         assert rubric_score.clarity == base.clarity
 
@@ -130,6 +127,7 @@ class TestEvaluateWithRubric:
 # ---------------------------------------------------------------------------
 # LogicValidator.filter_valid_entities
 # ---------------------------------------------------------------------------
+
 
 class TestFilterValidEntities:
     def test_returns_list(self):
@@ -167,6 +165,7 @@ class TestFilterValidEntities:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.score_entity
 # ---------------------------------------------------------------------------
+
 
 class TestScoreEntity:
     def _make_entity(self, text="Alice", etype="Person", confidence=1.0, span=None):
@@ -214,6 +213,7 @@ class TestScoreEntity:
 # OntologyPipeline.as_dict and reset
 # ---------------------------------------------------------------------------
 
+
 class TestPipelineAsDict:
     def test_returns_dict(self):
         d = OntologyPipeline(domain="legal").as_dict()
@@ -258,6 +258,7 @@ class TestPipelineReset:
 # OntologyGenerator.batch_extract_with_spans
 # ---------------------------------------------------------------------------
 
+
 class TestBatchExtractWithSpans:
     def test_returns_correct_count(self):
         gen = _generator()
@@ -270,9 +271,15 @@ class TestBatchExtractWithSpans:
 
     def test_single_doc(self):
         gen = _generator()
-        results = gen.batch_extract_with_spans(["Alice.", ], _ctx())
+        results = gen.batch_extract_with_spans(
+            [
+                "Alice.",
+            ],
+            _ctx(),
+        )
         assert len(results) == 1
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
         assert isinstance(results[0], EntityExtractionResult)
 
     def test_order_preserved(self):

@@ -1,0 +1,100 @@
+{
+  "catalog_cid": "baguqeeraf2bvrvkrxez4ap4ngftynmgaf6lvkdhdbpakqtmb5he2nzqxjhsq",
+  "interface": "IRDeterministicE1Metrics@1",
+  "metrics": [
+    {
+      "description": "Share of attempted cases whose parser/component produced a nonempty typed artifact without a parse or empty-output failure.",
+      "higher_is_better": true,
+      "metric_id": "parser_acceptance",
+      "missing_as_zero": false,
+      "unit": "cases",
+      "value_kind": "rate"
+    },
+    {
+      "description": "Share of attempted cases whose output validated as the measured canonical IR (compiler) or whose reconstruction recompiled to a typed IR (decompiler).",
+      "higher_is_better": true,
+      "metric_id": "type_acceptance",
+      "missing_as_zero": false,
+      "unit": "cases",
+      "value_kind": "rate"
+    },
+    {
+      "description": "Exact rule-list equality after the measured canonical sort. Compiler compares gold vs L1; decompiler compares L1 vs L2.",
+      "higher_is_better": true,
+      "metric_id": "exact",
+      "missing_as_zero": false,
+      "unit": "cases",
+      "value_kind": "rate"
+    },
+    {
+      "description": "Canonical IR CID equality on the measured payload. Distinct from exact only when a non-canonical encoding is retained.",
+      "higher_is_better": true,
+      "metric_id": "canonical",
+      "missing_as_zero": false,
+      "unit": "cases",
+      "value_kind": "rate"
+    },
+    {
+      "description": "Shape-only AST agreement: rule count, modality node types, and facet arities, ignoring atom strings.",
+      "higher_is_better": true,
+      "metric_id": "ast",
+      "missing_as_zero": false,
+      "unit": "cases",
+      "value_kind": "rate"
+    },
+    {
+      "description": "Labeled actor/action/object/qualifier edge-set agreement for the seven-facet rule graph.",
+      "higher_is_better": true,
+      "metric_id": "graph",
+      "missing_as_zero": false,
+      "unit": "cases",
+      "value_kind": "rate"
+    },
+    {
+      "description": "Share of nonempty rule fields grounded by a valid half-open source-map span inside the source text. Source-withheld decompilation has no span channel.",
+      "higher_is_better": true,
+      "metric_id": "source_span",
+      "missing_as_zero": false,
+      "unit": "fields",
+      "value_kind": "rate"
+    },
+    {
+      "description": "Mean weighted assignment semantic score from the frozen round-trip metric. Not a substitute for proof or exact match.",
+      "higher_is_better": true,
+      "metric_id": "semantic",
+      "missing_as_zero": false,
+      "unit": "score",
+      "value_kind": "mean"
+    },
+    {
+      "description": "Independent formal-proof replay on paired obligations. Reported unsupported unless a checked proof trace exists.",
+      "higher_is_better": true,
+      "metric_id": "proof",
+      "missing_as_zero": false,
+      "unit": "obligations",
+      "value_kind": "rate"
+    },
+    {
+      "description": "Disclosed unsupported-construct count per attempted case. This is a disclosure tally, not a quality score, and absence of a disclosure channel is not recorded as zero.",
+      "higher_is_better": null,
+      "metric_id": "unsupported",
+      "missing_as_zero": false,
+      "unit": "disclosures",
+      "value_kind": "mean"
+    },
+    {
+      "description": "Wall-clock seconds for one isolated surface call.",
+      "higher_is_better": false,
+      "metric_id": "latency",
+      "missing_as_zero": false,
+      "unit": "seconds",
+      "value_kind": "mean"
+    }
+  ],
+  "missing_as_zero": false,
+  "schema": "ipfs-datasets.ir-learning.evaluations.deterministic.e1-metrics.v1",
+  "surfaces": [
+    "compiler",
+    "decompiler"
+  ]
+}

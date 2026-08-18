@@ -216,19 +216,20 @@ ipfs_datasets_py/
 Core implementation: ipfs_datasets_py.datasets.loader.DatasetLoader
 """
 
+
 async def load_dataset(source: str, format: str = None, **options):
     """Load a dataset from various sources.
-    
+
     Args:
         source: Dataset source (HF name, file, URL, IPFS CID)
         format: Optional format hint
         **options: Additional loading options
-    
+
     Returns:
         Dict with loading results
     """
     from ipfs_datasets_py.datasets.loader import DatasetLoader
-    
+
     loader = DatasetLoader()
     return await loader.load(source, format=format, **options)
 ```
@@ -238,12 +239,13 @@ async def load_dataset(source: str, format: str = None, **options):
 # ipfs_datasets_py/datasets/loader.py
 """Dataset loading operations - reusable business logic."""
 
+
 class DatasetLoader:
     """Load datasets from various sources."""
-    
+
     async def load(self, source: str, format: str = None, **options):
         """Load a dataset.
-        
+
         This core logic is used by:
         - MCP server tools
         - CLI commands

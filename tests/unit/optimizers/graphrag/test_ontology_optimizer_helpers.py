@@ -7,6 +7,7 @@ Tests:
 - _compute_score_distribution: dimension score aggregation
 - _identify_patterns: pattern counting across sessions
 """
+
 from __future__ import annotations
 
 from types import SimpleNamespace

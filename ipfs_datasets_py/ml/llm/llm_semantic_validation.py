@@ -22,13 +22,17 @@ import requests
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Union, Tuple, Set, Callable, TypeVar, Generic
 
-from ipfs_datasets_py.ml.llm.llm_interface import LLMInterface, MockLLMInterface, LLMInterfaceFactory
+from ipfs_datasets_py.ml.llm.llm_interface import (
+    LLMInterface,
+    MockLLMInterface,
+    LLMInterfaceFactory,
+)
 from ipfs_datasets_py.ml.llm.llm_graphrag import GraphRAGLLMProcessor, DomainSpecificProcessor
 from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 from ipfs_datasets_py.knowledge_graphs.query.sparql_templates import *
 
 # Type for generic schema validation
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ValidationResult(Generic[T]):
@@ -44,7 +48,7 @@ class ValidationResult(Generic[T]):
         is_valid: bool,
         data: Optional[T] = None,
         errors: Optional[List[str]] = None,
-        warnings: Optional[List[str]] = None
+        warnings: Optional[List[str]] = None,
     ):
         """
         Initialize validation result.
@@ -68,7 +72,7 @@ class ValidationResult(Generic[T]):
             "data": self.data,
             "errors": self.errors,
             "warnings": self.warnings,
-            "timestamp": self.timestamp.isoformat()
+            "timestamp": self.timestamp.isoformat(),
         }
 
     def __bool__(self) -> bool:
@@ -90,11 +94,7 @@ class SchemaRegistry:
         self._default_schemas: Dict[str, Dict[str, Any]] = {}
 
     def register_schema(
-        self,
-        domain: str,
-        task: str,
-        schema: Dict[str, Any],
-        version: str = "1.0.0"
+        self, domain: str, task: str, schema: Dict[str, Any], version: str = "1.0.0"
     ) -> None:
         """
         Register a schema for a domain and task.
@@ -114,10 +114,7 @@ class SchemaRegistry:
         self._schemas[domain][task][version] = schema
 
     def register_default_schema(
-        self,
-        task: str,
-        schema: Dict[str, Any],
-        version: str = "1.0.0"
+        self, task: str, schema: Dict[str, Any], version: str = "1.0.0"
     ) -> None:
         """
         Register a default schema for a task.
@@ -133,10 +130,7 @@ class SchemaRegistry:
         self._default_schemas[task][version] = schema
 
     def get_schema(
-        self,
-        domain: str,
-        task: str,
-        version: Optional[str] = None
+        self, domain: str, task: str, version: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Get a schema for a domain and task.
@@ -173,9 +167,7 @@ class SchemaRegistry:
         return self._get_default_schema(task, version)
 
     def _get_default_schema(
-        self,
-        task: str,
-        version: Optional[str] = None
+        self, task: str, version: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Get a default schema for a task.
@@ -217,7 +209,7 @@ class SchemaValidator:
     def __init__(
         self,
         registry: Optional[SchemaRegistry] = None,
-        llm_interface: Optional[LLMInterface] = None
+        llm_interface: Optional[LLMInterface] = None,
     ):
         """
         Initialize schema validator.
@@ -242,12 +234,9 @@ class SchemaValidator:
                 "answer": {"type": "string"},
                 "reasoning": {"type": "string"},
                 "confidence": {"type": "number"},
-                "references": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                }
+                "references": {"type": "array", "items": {"type": "string"}},
             },
-            "required": ["answer", "reasoning", "confidence"]
+            "required": ["answer", "reasoning", "confidence"],
         }
         self.registry.register_default_schema("cross_document_reasoning", cross_doc_schema)
 
@@ -257,23 +246,18 @@ class SchemaValidator:
             "properties": {
                 "relationship_type": {
                     "type": "string",
-                    "enum": ["complementary", "contradictory", "identical", "unrelated"]
+                    "enum": ["complementary", "contradictory", "identical", "unrelated"],
                 },
                 "explanation": {"type": "string"},
                 "inference": {"type": "string"},
-                "confidence": {"type": "number"}
+                "confidence": {"type": "number"},
             },
-            "required": ["relationship_type", "explanation", "inference", "confidence"]
+            "required": ["relationship_type", "explanation", "inference", "confidence"],
         }
         self.registry.register_default_schema("evidence_chain_analysis", evidence_chain_schema)
 
     def validate(
-        self,
-        data: Any,
-        domain: str,
-        task: str,
-        version: Optional[str] = None,
-        strict: bool = False
+        self, data: Any, domain: str, task: str, version: Optional[str] = None, strict: bool = False
     ) -> ValidationResult:
         """
         Validate data against a schema.
@@ -293,8 +277,7 @@ class SchemaValidator:
 
         if not schema:
             return ValidationResult(
-                is_valid=False,
-                errors=[f"No schema found for domain '{domain}', task '{task}'"]
+                is_valid=False, errors=[f"No schema found for domain '{domain}', task '{task}'"]
             )
 
         try:
@@ -306,9 +289,7 @@ class SchemaValidator:
                 errors = list(jsonschema.Draft7Validator(schema).iter_errors(data))
                 if errors:
                     return ValidationResult(
-                        is_valid=False,
-                        data=data,
-                        errors=[str(e) for e in errors]
+                        is_valid=False, data=data, errors=[str(e) for e in errors]
                     )
 
             # Validation succeeded
@@ -316,24 +297,13 @@ class SchemaValidator:
 
         except jsonschema.exceptions.ValidationError as e:
             # Validation failed
-            return ValidationResult(
-                is_valid=False,
-                data=data,
-                errors=[str(e)]
-            )
+            return ValidationResult(is_valid=False, data=data, errors=[str(e)])
         except Exception as e:
             # Other error
-            return ValidationResult(
-                is_valid=False,
-                errors=[f"Validation error: {str(e)}"]
-            )
+            return ValidationResult(is_valid=False, errors=[f"Validation error: {str(e)}"])
 
     def repair_and_validate(
-        self,
-        data: Any,
-        domain: str,
-        task: str,
-        max_attempts: int = 3
+        self, data: Any, domain: str, task: str, max_attempts: int = 3
     ) -> ValidationResult:
         """
         Attempt to repair invalid data and validate it.
@@ -358,8 +328,7 @@ class SchemaValidator:
 
         if not schema:
             return ValidationResult(
-                is_valid=False,
-                errors=[f"No schema found for domain '{domain}', task '{task}'"]
+                is_valid=False, errors=[f"No schema found for domain '{domain}', task '{task}'"]
             )
 
         # Attempt to repair
@@ -405,18 +374,20 @@ class SchemaValidator:
 
                 else:
                     # Couldn't extract JSON
-                    result.warnings.append(f"Repair attempt {attempt+1}: couldn't extract JSON from LLM response")
+                    result.warnings.append(
+                        f"Repair attempt {attempt + 1}: couldn't extract JSON from LLM response"
+                    )
 
             except Exception as e:
                 # Error during repair
-                result.warnings.append(f"Repair attempt {attempt+1} failed: {str(e)}")
+                result.warnings.append(f"Repair attempt {attempt + 1} failed: {str(e)}")
 
         # If we get here, all repair attempts failed
         return ValidationResult(
             is_valid=False,
             data=repaired_data,
             errors=result.errors,
-            warnings=[*result.warnings, "All repair attempts failed"]
+            warnings=[*result.warnings, "All repair attempts failed"],
         )
 
 
@@ -432,7 +403,7 @@ class SemanticAugmenter:
     def __init__(
         self,
         llm_interface: Optional[LLMInterface] = None,
-        domain_processor: Optional[DomainSpecificProcessor] = None
+        domain_processor: Optional[DomainSpecificProcessor] = None,
     ):
         """
         Initialize semantic augmenter.
@@ -445,11 +416,7 @@ class SemanticAugmenter:
         self.domain_processor = domain_processor
 
     def augment(
-        self,
-        data: Dict[str, Any],
-        domain: str,
-        task: str,
-        context: Optional[Dict[str, Any]] = None
+        self, data: Dict[str, Any], domain: str, task: str, context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Augment data with semantic information.
@@ -482,10 +449,7 @@ class SemanticAugmenter:
         return augmented
 
     def _augment_cross_document_reasoning(
-        self,
-        data: Dict[str, Any],
-        domain: str,
-        context: Optional[Dict[str, Any]] = None
+        self, data: Dict[str, Any], domain: str, context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Augment cross-document reasoning results.
@@ -504,7 +468,9 @@ class SemanticAugmenter:
             data["key_concepts"] = self._extract_key_concepts(data["reasoning"])
 
             # Add uncertainty assessment
-            data["uncertainty_assessment"] = self._assess_uncertainty(data["reasoning"], data.get("confidence", 0.0))
+            data["uncertainty_assessment"] = self._assess_uncertainty(
+                data["reasoning"], data.get("confidence", 0.0)
+            )
 
         # Add domain-specific augmentations
         if domain == "academic":
@@ -517,10 +483,7 @@ class SemanticAugmenter:
         return data
 
     def _augment_evidence_chain(
-        self,
-        data: Dict[str, Any],
-        domain: str,
-        context: Optional[Dict[str, Any]] = None
+        self, data: Dict[str, Any], domain: str, context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Augment evidence chain analysis results.
@@ -571,7 +534,7 @@ class SemanticAugmenter:
         """
         # In a real implementation, this would use NLP or an LLM
         # For now, we'll use a simple approach based on capitalized phrases
-        concept_pattern = r'\b[A-Z][a-z]*(?:\s+[A-Z][a-z]*)*\b'
+        concept_pattern = r"\b[A-Z][a-z]*(?:\s+[A-Z][a-z]*)*\b"
         concepts = re.findall(concept_pattern, text)
 
         # Filter out common words
@@ -594,9 +557,21 @@ class SemanticAugmenter:
         """
         # Look for uncertainty markers in the text
         uncertainty_markers = [
-            "may", "might", "could", "possibly", "perhaps", "probably",
-            "likely", "unlikely", "uncertain", "unclear", "not clear",
-            "suggests", "indicates", "seems", "appears"
+            "may",
+            "might",
+            "could",
+            "possibly",
+            "perhaps",
+            "probably",
+            "likely",
+            "unlikely",
+            "uncertain",
+            "unclear",
+            "not clear",
+            "suggests",
+            "indicates",
+            "seems",
+            "appears",
         ]
 
         # Count occurrences of uncertainty markers
@@ -621,13 +596,11 @@ class SemanticAugmenter:
             "score": combined_score,
             "interpretation": interpretation,
             "markers_found": marker_count,
-            "confidence_impact": 1 - confidence
+            "confidence_impact": 1 - confidence,
         }
 
     def _generate_scholarly_context(
-        self,
-        data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None
+        self, data: Dict[str, Any], context: Optional[Dict[str, Any]] = None
     ) -> str:
         """
         Generate scholarly context for academic domain.
@@ -649,9 +622,7 @@ class SemanticAugmenter:
         return f"This analysis relates to scholarly research in {', '.join(key_concepts[:3])}. The findings may contribute to the academic discourse on these topics."
 
     def _generate_clinical_relevance(
-        self,
-        data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None
+        self, data: Dict[str, Any], context: Optional[Dict[str, Any]] = None
     ) -> str:
         """
         Generate clinical relevance for medical domain.
@@ -666,9 +637,7 @@ class SemanticAugmenter:
         return "The clinical relevance of these findings should be assessed by medical professionals. This analysis is for informational purposes only and does not constitute medical advice."
 
     def _generate_legal_implications(
-        self,
-        data: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None
+        self, data: Dict[str, Any], context: Optional[Dict[str, Any]] = None
     ) -> str:
         """
         Generate legal implications for legal domain.
@@ -694,7 +663,7 @@ class SemanticValidator:
     def __init__(
         self,
         validator: Optional[SchemaValidator] = None,
-        augmenter: Optional[SemanticAugmenter] = None
+        augmenter: Optional[SemanticAugmenter] = None,
     ):
         """
         Initialize semantic validator.
@@ -712,7 +681,7 @@ class SemanticValidator:
         domain: str,
         task: str,
         context: Optional[Dict[str, Any]] = None,
-        auto_repair: bool = True
+        auto_repair: bool = True,
     ) -> Tuple[bool, Dict[str, Any], List[str]]:
         """
         Process data through validation and augmentation.
@@ -758,7 +727,7 @@ class SPARQLValidator:
         tracer: Optional[WikipediaKnowledgeGraphTracer] = None,
         llm_interface: Optional[LLMInterface] = None,
         cache_results: bool = True,
-        cache_ttl: int = 3600
+        cache_ttl: int = 3600,
     ):
         """
         Initialize SPARQL validator.
@@ -777,15 +746,15 @@ class SPARQLValidator:
         self.cache_ttl = cache_ttl
         self.cache = {}
         self.headers = {
-            'User-Agent': 'IPFSDatasets-SPARQLValidator/1.0',
-            'Accept': 'application/json'
+            "User-Agent": "IPFSDatasets-SPARQLValidator/1.0",
+            "Accept": "application/json",
         }
 
     def validate_entity(
         self,
         entity_name: str,
         entity_type: Optional[str] = None,
-        entity_properties: Optional[Dict[str, Any]] = None
+        entity_properties: Optional[Dict[str, Any]] = None,
     ) -> ValidationResult:
         """
         Validate a single entity against the SPARQL endpoint.
@@ -813,13 +782,10 @@ class SPARQLValidator:
                 result = ValidationResult(
                     is_valid=False,
                     errors=[f"Entity '{entity_name}' not found in Wikidata"],
-                    warnings=["Consider checking alternative spellings or labels"]
+                    warnings=["Consider checking alternative spellings or labels"],
                 )
                 if self.cache_results:
-                    self.cache[cache_key] = {
-                        "result": result,
-                        "timestamp": time.time()
-                    }
+                    self.cache[cache_key] = {"result": result, "timestamp": time.time()}
                 return result
 
             # Entity found, validate properties if provided
@@ -831,18 +797,22 @@ class SPARQLValidator:
 
                 for prop_name, prop_value in entity_properties.items():
                     # Try to find matching property in Wikidata
-                    matched, closest_match = self._match_property(prop_name, prop_value, wikidata_props)
+                    matched, closest_match = self._match_property(
+                        prop_name, prop_value, wikidata_props
+                    )
 
                     if not matched:
-                        mismatches.append({
-                            "property": prop_name,
-                            "expected": prop_value,
-                            "closest_match": closest_match
-                        })
+                        mismatches.append(
+                            {
+                                "property": prop_name,
+                                "expected": prop_value,
+                                "closest_match": closest_match,
+                            }
+                        )
                     else:
                         validated_properties[prop_name] = {
                             "wikidata_match": closest_match["property"],
-                            "confidence": closest_match["confidence"]
+                            "confidence": closest_match["confidence"],
                         }
 
             # Construct validation result
@@ -852,33 +822,27 @@ class SPARQLValidator:
                     "entity": entity_name,
                     "wikidata_entity": wikidata_entity,
                     "validated_properties": validated_properties,
-                    "property_mismatches": mismatches
+                    "property_mismatches": mismatches,
                 },
                 errors=[f"Mismatch in property '{m['property']}'" for m in mismatches],
-                warnings=[]
+                warnings=[],
             )
 
             # Cache the result if enabled
             if self.cache_results:
-                self.cache[cache_key] = {
-                    "result": result,
-                    "timestamp": time.time()
-                }
+                self.cache[cache_key] = {"result": result, "timestamp": time.time()}
 
             return result
 
         except Exception as e:
-            return ValidationResult(
-                is_valid=False,
-                errors=[f"SPARQL validation error: {str(e)}"]
-            )
+            return ValidationResult(is_valid=False, errors=[f"SPARQL validation error: {str(e)}"])
 
     def validate_relationship(
         self,
         source_entity: str,
         relationship_type: str,
         target_entity: str,
-        bidirectional: bool = False
+        bidirectional: bool = False,
     ) -> ValidationResult:
         """
         Validate a relationship between entities against the SPARQL endpoint.
@@ -914,21 +878,15 @@ class SPARQLValidator:
                 result = ValidationResult(
                     is_valid=False,
                     errors=[f"Entities not found in Wikidata: {', '.join(missing_entities)}"],
-                    warnings=["Relationship cannot be validated without entity lookup"]
+                    warnings=["Relationship cannot be validated without entity lookup"],
                 )
                 if self.cache_results:
-                    self.cache[cache_key] = {
-                        "result": result,
-                        "timestamp": time.time()
-                    }
+                    self.cache[cache_key] = {"result": result, "timestamp": time.time()}
                 return result
 
             # Check if relationship exists in Wikidata
             relationship_info = self._check_relationship(
-                source_wikidata["id"],
-                target_wikidata["id"],
-                relationship_type,
-                bidirectional
+                source_wikidata["id"], target_wikidata["id"], relationship_type, bidirectional
             )
 
             if not relationship_info["exists"]:
@@ -938,14 +896,14 @@ class SPARQLValidator:
                         "source": source_entity,
                         "target": target_entity,
                         "relationship": relationship_type,
-                        "wikidata_relationship": relationship_info["closest_match"]
+                        "wikidata_relationship": relationship_info["closest_match"],
                     },
                     errors=[f"Relationship '{relationship_type}' not found in Wikidata"],
                     warnings=[
                         f"Consider checking similar relationships: {relationship_info['closest_match']['property']}"
-                        if relationship_info.get("closest_match") else
-                        "No similar relationships found"
-                    ]
+                        if relationship_info.get("closest_match")
+                        else "No similar relationships found"
+                    ],
                 )
             else:
                 result = ValidationResult(
@@ -955,23 +913,19 @@ class SPARQLValidator:
                         "target": target_entity,
                         "relationship": relationship_type,
                         "wikidata_relationship": relationship_info["relationship"],
-                        "confidence": relationship_info["confidence"]
-                    }
+                        "confidence": relationship_info["confidence"],
+                    },
                 )
 
             # Cache the result if enabled
             if self.cache_results:
-                self.cache[cache_key] = {
-                    "result": result,
-                    "timestamp": time.time()
-                }
+                self.cache[cache_key] = {"result": result, "timestamp": time.time()}
 
             return result
 
         except Exception as e:
             return ValidationResult(
-                is_valid=False,
-                errors=[f"SPARQL relationship validation error: {str(e)}"]
+                is_valid=False, errors=[f"SPARQL relationship validation error: {str(e)}"]
             )
 
     def validate_knowledge_graph(
@@ -979,7 +933,7 @@ class SPARQLValidator:
         kg: Any,  # Should be KnowledgeGraph from knowledge_graph_extraction module
         main_entity_name: Optional[str] = None,
         validation_depth: int = 1,
-        min_confidence: float = 0.7
+        min_confidence: float = 0.7,
     ) -> ValidationResult:
         """
         Validate an entire knowledge graph against the SPARQL endpoint.
@@ -998,7 +952,7 @@ class SPARQLValidator:
         if self.tracer:
             trace_id = self.tracer.trace_validation(
                 kg_name=getattr(kg, "name", "unknown_kg"),
-                entity_name=main_entity_name or "all_entities"
+                entity_name=main_entity_name or "all_entities",
             )
 
         try:
@@ -1006,11 +960,17 @@ class SPARQLValidator:
             if not hasattr(kg, "entities") or not hasattr(kg, "relationships"):
                 return ValidationResult(
                     is_valid=False,
-                    errors=["Invalid knowledge graph object: missing entities or relationships attributes"]
+                    errors=[
+                        "Invalid knowledge graph object: missing entities or relationships attributes"
+                    ],
                 )
 
             entities = list(kg.entities.values()) if hasattr(kg.entities, "values") else kg.entities
-            relationships = list(kg.relationships.values()) if hasattr(kg.relationships, "values") else kg.relationships
+            relationships = (
+                list(kg.relationships.values())
+                if hasattr(kg.relationships, "values")
+                else kg.relationships
+            )
 
             # If main entity is specified, focus validation on that entity
             if main_entity_name:
@@ -1018,18 +978,20 @@ class SPARQLValidator:
                 if not main_entities:
                     return ValidationResult(
                         is_valid=False,
-                        errors=[f"Main entity '{main_entity_name}' not found in knowledge graph"]
+                        errors=[f"Main entity '{main_entity_name}' not found in knowledge graph"],
                     )
                 main_entity = main_entities[0]
 
                 # Get Wikidata entity for main entity
-                wikidata_entity = self._get_wikidata_entity(main_entity.name, main_entity.entity_type)
+                wikidata_entity = self._get_wikidata_entity(
+                    main_entity.name, main_entity.entity_type
+                )
 
                 if not wikidata_entity:
                     result = ValidationResult(
                         is_valid=False,
                         errors=[f"Main entity '{main_entity_name}' not found in Wikidata"],
-                        warnings=["Consider checking alternative spellings or labels"]
+                        warnings=["Consider checking alternative spellings or labels"],
                     )
 
                     if self.tracer and trace_id:
@@ -1037,7 +999,7 @@ class SPARQLValidator:
                             trace_id=trace_id,
                             status="failed",
                             error=result.errors[0],
-                            validation_results=result.to_dict()
+                            validation_results=result.to_dict(),
                         )
 
                     return result
@@ -1052,16 +1014,20 @@ class SPARQLValidator:
                 if hasattr(main_entity, "properties") and main_entity.properties:
                     valid_props = 0
                     for prop_name, prop_value in main_entity.properties.items():
-                        matched, closest_match = self._match_property(prop_name, prop_value, wikidata_props)
+                        matched, closest_match = self._match_property(
+                            prop_name, prop_value, wikidata_props
+                        )
                         property_validations[prop_name] = {
                             "valid": matched,
                             "wikidata_match": closest_match["property"] if closest_match else None,
-                            "confidence": closest_match["confidence"] if closest_match else 0.0
+                            "confidence": closest_match["confidence"] if closest_match else 0.0,
                         }
                         if matched:
                             valid_props += 1
 
-                    property_coverage = valid_props / len(main_entity.properties) if main_entity.properties else 0.0
+                    property_coverage = (
+                        valid_props / len(main_entity.properties) if main_entity.properties else 0.0
+                    )
 
                 # If validation depth > 1, validate relationships
                 relationship_validations = {}
@@ -1071,46 +1037,85 @@ class SPARQLValidator:
                     # Get relationships involving the main entity
                     entity_relationships = []
                     for rel in relationships:
-                        if (hasattr(rel, "source_entity") and hasattr(rel.source_entity, "entity_id") and
-                            rel.source_entity.entity_id == main_entity.entity_id) or \
-                           (hasattr(rel, "target_entity") and hasattr(rel.target_entity, "entity_id") and
-                            rel.target_entity.entity_id == main_entity.entity_id):
+                        if (
+                            hasattr(rel, "source_entity")
+                            and hasattr(rel.source_entity, "entity_id")
+                            and rel.source_entity.entity_id == main_entity.entity_id
+                        ) or (
+                            hasattr(rel, "target_entity")
+                            and hasattr(rel.target_entity, "entity_id")
+                            and rel.target_entity.entity_id == main_entity.entity_id
+                        ):
                             entity_relationships.append(rel)
 
                     valid_rels = 0
                     for rel in entity_relationships:
                         # Determine source and target for validation
-                        if hasattr(rel, "source_entity") and hasattr(rel.source_entity, "entity_id") and rel.source_entity.entity_id == main_entity.entity_id:
+                        if (
+                            hasattr(rel, "source_entity")
+                            and hasattr(rel.source_entity, "entity_id")
+                            and rel.source_entity.entity_id == main_entity.entity_id
+                        ):
                             source = main_entity.name
-                            target = rel.target_entity.name if hasattr(rel, "target_entity") and hasattr(rel.target_entity, "name") else "unknown"
+                            target = (
+                                rel.target_entity.name
+                                if hasattr(rel, "target_entity")
+                                and hasattr(rel.target_entity, "name")
+                                else "unknown"
+                            )
                         else:
-                            source = rel.source_entity.name if hasattr(rel, "source_entity") and hasattr(rel.source_entity, "name") else "unknown"
+                            source = (
+                                rel.source_entity.name
+                                if hasattr(rel, "source_entity")
+                                and hasattr(rel.source_entity, "name")
+                                else "unknown"
+                            )
                             target = main_entity.name
 
                         # Validate relationship
                         rel_result = self.validate_relationship(
                             source,
-                            rel.relationship_type if hasattr(rel, "relationship_type") else "related_to",
+                            rel.relationship_type
+                            if hasattr(rel, "relationship_type")
+                            else "related_to",
                             target,
-                            rel.bidirectional if hasattr(rel, "bidirectional") else False
+                            rel.bidirectional if hasattr(rel, "bidirectional") else False,
                         )
 
-                        relationship_validations[rel.relationship_id if hasattr(rel, "relationship_id") else f"rel_{valid_rels}"] = {
+                        relationship_validations[
+                            rel.relationship_id
+                            if hasattr(rel, "relationship_id")
+                            else f"rel_{valid_rels}"
+                        ] = {
                             "valid": rel_result.is_valid,
                             "source": source,
                             "target": target,
-                            "relationship_type": rel.relationship_type if hasattr(rel, "relationship_type") else "related_to",
-                            "wikidata_match": rel_result.data.get("wikidata_relationship", {}).get("property") if rel_result.is_valid else None,
-                            "confidence": rel_result.data.get("confidence", 0.0) if rel_result.is_valid else 0.0
+                            "relationship_type": rel.relationship_type
+                            if hasattr(rel, "relationship_type")
+                            else "related_to",
+                            "wikidata_match": rel_result.data.get("wikidata_relationship", {}).get(
+                                "property"
+                            )
+                            if rel_result.is_valid
+                            else None,
+                            "confidence": rel_result.data.get("confidence", 0.0)
+                            if rel_result.is_valid
+                            else 0.0,
                         }
 
                         if rel_result.is_valid:
                             valid_rels += 1
 
-                    relationship_coverage = valid_rels / len(entity_relationships) if entity_relationships else 0.0
+                    relationship_coverage = (
+                        valid_rels / len(entity_relationships) if entity_relationships else 0.0
+                    )
 
                 # Calculate overall coverage
-                overall_coverage = (property_coverage + relationship_coverage) / 2 if validation_depth > 1 else property_coverage
+                overall_coverage = (
+                    (property_coverage + relationship_coverage) / 2
+                    if validation_depth > 1
+                    else property_coverage
+                )
 
                 # Create validation result
                 result = ValidationResult(
@@ -1122,10 +1127,16 @@ class SPARQLValidator:
                         "property_coverage": property_coverage,
                         "relationship_validations": relationship_validations,
                         "relationship_coverage": relationship_coverage,
-                        "overall_coverage": overall_coverage
+                        "overall_coverage": overall_coverage,
                     },
-                    errors=[] if overall_coverage >= min_confidence else [f"Overall validation coverage ({overall_coverage:.2f}) below threshold ({min_confidence})"],
-                    warnings=[f"Some properties could not be validated against Wikidata"] if property_coverage < 1.0 else []
+                    errors=[]
+                    if overall_coverage >= min_confidence
+                    else [
+                        f"Overall validation coverage ({overall_coverage:.2f}) below threshold ({min_confidence})"
+                    ],
+                    warnings=[f"Some properties could not be validated against Wikidata"]
+                    if property_coverage < 1.0
+                    else [],
                 )
 
             else:
@@ -1145,14 +1156,18 @@ class SPARQLValidator:
                     entity_result = self.validate_entity(
                         entity.name,
                         entity.entity_type if hasattr(entity, "entity_type") else None,
-                        entity.properties if hasattr(entity, "properties") else None
+                        entity.properties if hasattr(entity, "properties") else None,
                     )
 
-                    entity_validations[entity.entity_id if hasattr(entity, "entity_id") else entity.name] = {
+                    entity_validations[
+                        entity.entity_id if hasattr(entity, "entity_id") else entity.name
+                    ] = {
                         "valid": entity_result.is_valid,
                         "name": entity.name,
                         "type": entity.entity_type if hasattr(entity, "entity_type") else "entity",
-                        "wikidata_entity": entity_result.data.get("wikidata_entity") if entity_result.is_valid else None
+                        "wikidata_entity": entity_result.data.get("wikidata_entity")
+                        if entity_result.is_valid
+                        else None,
                     }
 
                     if entity_result.is_valid:
@@ -1169,36 +1184,62 @@ class SPARQLValidator:
                             continue
 
                         # Get source and target entities
-                        source = rel.source_entity.name if hasattr(rel, "source_entity") and hasattr(rel.source_entity, "name") else None
-                        target = rel.target_entity.name if hasattr(rel, "target_entity") and hasattr(rel.target_entity, "name") else None
+                        source = (
+                            rel.source_entity.name
+                            if hasattr(rel, "source_entity") and hasattr(rel.source_entity, "name")
+                            else None
+                        )
+                        target = (
+                            rel.target_entity.name
+                            if hasattr(rel, "target_entity") and hasattr(rel.target_entity, "name")
+                            else None
+                        )
 
                         if not source or not target:
                             continue
 
                         rel_result = self.validate_relationship(
                             source,
-                            rel.relationship_type if hasattr(rel, "relationship_type") else "related_to",
+                            rel.relationship_type
+                            if hasattr(rel, "relationship_type")
+                            else "related_to",
                             target,
-                            rel.bidirectional if hasattr(rel, "bidirectional") else False
+                            rel.bidirectional if hasattr(rel, "bidirectional") else False,
                         )
 
-                        relationship_validations[rel.relationship_id if hasattr(rel, "relationship_id") else f"{source}_{target}"] = {
+                        relationship_validations[
+                            rel.relationship_id
+                            if hasattr(rel, "relationship_id")
+                            else f"{source}_{target}"
+                        ] = {
                             "valid": rel_result.is_valid,
                             "source": source,
                             "target": target,
-                            "relationship_type": rel.relationship_type if hasattr(rel, "relationship_type") else "related_to",
-                            "wikidata_match": rel_result.data.get("wikidata_relationship", {}).get("property") if rel_result.is_valid else None
+                            "relationship_type": rel.relationship_type
+                            if hasattr(rel, "relationship_type")
+                            else "related_to",
+                            "wikidata_match": rel_result.data.get("wikidata_relationship", {}).get(
+                                "property"
+                            )
+                            if rel_result.is_valid
+                            else None,
                         }
 
                         if rel_result.is_valid:
                             valid_relationships += 1
 
-                    relationship_coverage = valid_relationships / len(relationships) if relationships else 0.0
+                    relationship_coverage = (
+                        valid_relationships / len(relationships) if relationships else 0.0
+                    )
                 else:
                     relationship_coverage = 0.0
 
                 # Calculate overall coverage
-                overall_coverage = (entity_coverage + relationship_coverage) / 2 if validation_depth > 1 else entity_coverage
+                overall_coverage = (
+                    (entity_coverage + relationship_coverage) / 2
+                    if validation_depth > 1
+                    else entity_coverage
+                )
 
                 # Create validation result
                 result = ValidationResult(
@@ -1208,10 +1249,16 @@ class SPARQLValidator:
                         "entity_coverage": entity_coverage,
                         "relationship_validations": relationship_validations,
                         "relationship_coverage": relationship_coverage,
-                        "overall_coverage": overall_coverage
+                        "overall_coverage": overall_coverage,
                     },
-                    errors=[] if overall_coverage >= min_confidence else [f"Overall validation coverage ({overall_coverage:.2f}) below threshold ({min_confidence})"],
-                    warnings=[f"Some entities could not be validated against Wikidata"] if entity_coverage < 1.0 else []
+                    errors=[]
+                    if overall_coverage >= min_confidence
+                    else [
+                        f"Overall validation coverage ({overall_coverage:.2f}) below threshold ({min_confidence})"
+                    ],
+                    warnings=[f"Some entities could not be validated against Wikidata"]
+                    if entity_coverage < 1.0
+                    else [],
                 )
 
             # Update trace if tracer is available
@@ -1220,15 +1267,14 @@ class SPARQLValidator:
                     trace_id=trace_id,
                     status="completed" if result.is_valid else "partial",
                     validation_results=result.to_dict(),
-                    coverage=result.data.get("overall_coverage", 0.0)
+                    coverage=result.data.get("overall_coverage", 0.0),
                 )
 
             return result
 
         except Exception as e:
             error_result = ValidationResult(
-                is_valid=False,
-                errors=[f"Knowledge graph validation error: {str(e)}"]
+                is_valid=False, errors=[f"Knowledge graph validation error: {str(e)}"]
             )
 
             # Update trace with error if tracer is available
@@ -1237,7 +1283,7 @@ class SPARQLValidator:
                     trace_id=trace_id,
                     status="failed",
                     error=str(e),
-                    validation_results=error_result.to_dict()
+                    validation_results=error_result.to_dict(),
                 )
 
             return error_result
@@ -1245,7 +1291,7 @@ class SPARQLValidator:
     def generate_validation_explanation(
         self,
         validation_result: ValidationResult,
-        explanation_type: str = "summary"  # "summary", "detailed", or "fix"
+        explanation_type: str = "summary",  # "summary", "detailed", or "fix"
     ) -> str:
         """
         Generate a human-readable explanation of a validation result.
@@ -1263,7 +1309,9 @@ class SPARQLValidator:
                 # Single entity validation
                 entity_name = validation_result.data["entity_name"]
                 property_validations = validation_result.data.get("property_validations", {})
-                invalid_properties = {k: v for k, v in property_validations.items() if not v.get("valid")}
+                invalid_properties = {
+                    k: v for k, v in property_validations.items() if not v.get("valid")
+                }
 
                 prompt = f"""
                 I need to fix validation issues for the entity "{entity_name}" against Wikidata.
@@ -1285,7 +1333,9 @@ class SPARQLValidator:
             else:
                 # Multi-entity validation
                 entity_validations = validation_result.data.get("entity_validations", {})
-                invalid_entities = {k: v for k, v in entity_validations.items() if not v.get("valid")}
+                invalid_entities = {
+                    k: v for k, v in entity_validations.items() if not v.get("valid")
+                }
 
                 prompt = f"""
                 I need to fix validation issues for multiple entities against Wikidata.
@@ -1312,7 +1362,9 @@ class SPARQLValidator:
                 wikidata_entity = validation_result.data.get("wikidata_entity", {})
                 property_validations = validation_result.data.get("property_validations", {})
                 property_coverage = validation_result.data.get("property_coverage", 0.0)
-                relationship_validations = validation_result.data.get("relationship_validations", {})
+                relationship_validations = validation_result.data.get(
+                    "relationship_validations", {}
+                )
                 relationship_coverage = validation_result.data.get("relationship_coverage", 0.0)
                 overall_coverage = validation_result.data.get("overall_coverage", 0.0)
 
@@ -1348,7 +1400,9 @@ class SPARQLValidator:
                 # Multi-entity validation
                 entity_validations = validation_result.data.get("entity_validations", {})
                 entity_coverage = validation_result.data.get("entity_coverage", 0.0)
-                relationship_validations = validation_result.data.get("relationship_validations", {})
+                relationship_validations = validation_result.data.get(
+                    "relationship_validations", {}
+                )
                 relationship_coverage = validation_result.data.get("relationship_coverage", 0.0)
                 overall_coverage = validation_result.data.get("overall_coverage", 0.0)
 
@@ -1360,7 +1414,9 @@ class SPARQLValidator:
                 explanation += "### Entity Validations\n\n"
                 for entity_id, validation in entity_validations.items():
                     status = "✅" if validation.get("valid") else "❌"
-                    explanation += f"- {status} {validation.get('name')} ({validation.get('type')}): "
+                    explanation += (
+                        f"- {status} {validation.get('name')} ({validation.get('type')}): "
+                    )
                     if validation.get("valid"):
                         wikidata_entity = validation.get("wikidata_entity", {})
                         explanation += f"Matches Wikidata entity '{wikidata_entity.get('label')}' ({wikidata_entity.get('id')})\n"
@@ -1406,9 +1462,7 @@ class SPARQLValidator:
                     return f"Knowledge graph validation failed. Coverage ({overall_coverage:.2f}) is below threshold."
 
     def _get_wikidata_entity(
-        self,
-        entity_name: str,
-        entity_type: Optional[str] = None
+        self, entity_name: str, entity_type: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Get Wikidata entity by name and optional type.
@@ -1436,7 +1490,7 @@ class SPARQLValidator:
                 "action": "wbsearchentities",
                 "format": "json",
                 "search": entity_name,
-                "language": "en"
+                "language": "en",
             }
 
             response = requests.get(url, params=params, headers=self.headers)
@@ -1457,7 +1511,7 @@ class SPARQLValidator:
                         "concept": ["concept", "idea", "abstract"],
                         "field": ["field", "discipline", "area"],
                         "model": ["model", "algorithm"],
-                        "technology": ["technology"]
+                        "technology": ["technology"],
                     }
 
                     # Try to match entity type
@@ -1473,14 +1527,14 @@ class SPARQLValidator:
                                         "id": entity["id"],
                                         "label": entity["label"],
                                         "description": entity.get("description", ""),
-                                        "url": f"https://www.wikidata.org/wiki/{entity['id']}"
+                                        "url": f"https://www.wikidata.org/wiki/{entity['id']}",
                                     }
 
                                     # Cache result
                                     if self.cache_results:
                                         self.cache[cache_key] = {
                                             "result": result,
-                                            "timestamp": time.time()
+                                            "timestamp": time.time(),
                                         }
 
                                     return result
@@ -1491,24 +1545,18 @@ class SPARQLValidator:
                     "id": entity["id"],
                     "label": entity["label"],
                     "description": entity.get("description", ""),
-                    "url": f"https://www.wikidata.org/wiki/{entity['id']}"
+                    "url": f"https://www.wikidata.org/wiki/{entity['id']}",
                 }
 
                 # Cache result
                 if self.cache_results:
-                    self.cache[cache_key] = {
-                        "result": result,
-                        "timestamp": time.time()
-                    }
+                    self.cache[cache_key] = {"result": result, "timestamp": time.time()}
 
                 return result
 
             # No results
             if self.cache_results:
-                self.cache[cache_key] = {
-                    "result": None,
-                    "timestamp": time.time()
-                }
+                self.cache[cache_key] = {"result": None, "timestamp": time.time()}
 
             return None
 
@@ -1547,9 +1595,7 @@ class SPARQLValidator:
             """
 
             response = requests.get(
-                self.endpoint_url,
-                params={"query": query, "format": "json"},
-                headers=self.headers
+                self.endpoint_url, params={"query": query, "format": "json"}, headers=self.headers
             )
 
             data = response.json()
@@ -1561,16 +1607,13 @@ class SPARQLValidator:
                     "property": binding.get("propertyLabel", {}).get("value", ""),
                     "property_id": binding.get("property", {}).get("value", "").split("/")[-1],
                     "value": binding.get("valueLabel", {}).get("value", ""),
-                    "value_uri": binding.get("value", {}).get("value", "")
+                    "value_uri": binding.get("value", {}).get("value", ""),
                 }
                 properties.append(prop)
 
             # Cache result
             if self.cache_results:
-                self.cache[cache_key] = {
-                    "result": properties,
-                    "timestamp": time.time()
-                }
+                self.cache[cache_key] = {"result": properties, "timestamp": time.time()}
 
             return properties
 
@@ -1579,10 +1622,7 @@ class SPARQLValidator:
             return []
 
     def _match_property(
-        self,
-        prop_name: str,
-        prop_value: Any,
-        wikidata_props: List[Dict[str, Any]]
+        self, prop_name: str, prop_value: Any, wikidata_props: List[Dict[str, Any]]
     ) -> Tuple[bool, Optional[Dict[str, Any]]]:
         """
         Match a property against Wikidata properties.
@@ -1603,10 +1643,14 @@ class SPARQLValidator:
 
         for wiki_prop in wikidata_props:
             # Calculate name similarity
-            name_similarity = self._string_similarity(prop_name.lower(), wiki_prop["property"].lower())
+            name_similarity = self._string_similarity(
+                prop_name.lower(), wiki_prop["property"].lower()
+            )
 
             # Calculate value similarity
-            value_similarity = self._string_similarity(prop_value_str.lower(), wiki_prop["value"].lower())
+            value_similarity = self._string_similarity(
+                prop_value_str.lower(), wiki_prop["value"].lower()
+            )
 
             # Calculate combined score
             score = (name_similarity * 0.6) + (value_similarity * 0.4)
@@ -1617,7 +1661,7 @@ class SPARQLValidator:
                     "property": wiki_prop["property"],
                     "property_id": wiki_prop["property_id"],
                     "value": wiki_prop["value"],
-                    "confidence": score
+                    "confidence": score,
                 }
 
         # If no good match, return closest property by name
@@ -1626,7 +1670,9 @@ class SPARQLValidator:
             best_name_score = 0.0
 
             for wiki_prop in wikidata_props:
-                name_similarity = self._string_similarity(prop_name.lower(), wiki_prop["property"].lower())
+                name_similarity = self._string_similarity(
+                    prop_name.lower(), wiki_prop["property"].lower()
+                )
 
                 if name_similarity > best_name_score:
                     best_name_score = name_similarity
@@ -1634,7 +1680,7 @@ class SPARQLValidator:
                         "property": wiki_prop["property"],
                         "property_id": wiki_prop["property_id"],
                         "value": wiki_prop["value"],
-                        "confidence": name_similarity * 0.5  # Lower confidence for name-only match
+                        "confidence": name_similarity * 0.5,  # Lower confidence for name-only match
                     }
 
             return False, best_name_match
@@ -1642,11 +1688,7 @@ class SPARQLValidator:
         return True, best_match
 
     def _check_relationship(
-        self,
-        source_id: str,
-        target_id: str,
-        relationship_type: str,
-        bidirectional: bool = False
+        self, source_id: str, target_id: str, relationship_type: str, bidirectional: bool = False
     ) -> Dict[str, Any]:
         """
         Check if a relationship exists between entities in Wikidata.
@@ -1683,7 +1725,7 @@ class SPARQLValidator:
             response = requests.get(
                 self.endpoint_url,
                 params={"query": forward_query, "format": "json"},
-                headers=self.headers
+                headers=self.headers,
             )
 
             data = response.json()
@@ -1704,7 +1746,7 @@ class SPARQLValidator:
                 response = requests.get(
                     self.endpoint_url,
                     params={"query": reverse_query, "format": "json"},
-                    headers=self.headers
+                    headers=self.headers,
                 )
 
                 data = response.json()
@@ -1713,25 +1755,31 @@ class SPARQLValidator:
             # Combine results
             all_relationships = []
             for binding in forward_results:
-                all_relationships.append({
-                    "property": binding.get("propertyLabel", {}).get("value", ""),
-                    "property_id": binding.get("property", {}).get("value", "").split("/")[-1],
-                    "direction": "forward"
-                })
+                all_relationships.append(
+                    {
+                        "property": binding.get("propertyLabel", {}).get("value", ""),
+                        "property_id": binding.get("property", {}).get("value", "").split("/")[-1],
+                        "direction": "forward",
+                    }
+                )
 
             for binding in reverse_results:
-                all_relationships.append({
-                    "property": binding.get("propertyLabel", {}).get("value", ""),
-                    "property_id": binding.get("property", {}).get("value", "").split("/")[-1],
-                    "direction": "reverse"
-                })
+                all_relationships.append(
+                    {
+                        "property": binding.get("propertyLabel", {}).get("value", ""),
+                        "property_id": binding.get("property", {}).get("value", "").split("/")[-1],
+                        "direction": "reverse",
+                    }
+                )
 
             # Check if any relationship matches the provided type
             best_match = None
             best_score = 0.0
 
             for rel in all_relationships:
-                similarity = self._string_similarity(relationship_type.lower(), rel["property"].lower())
+                similarity = self._string_similarity(
+                    relationship_type.lower(), rel["property"].lower()
+                )
 
                 if similarity > best_score:
                     best_score = similarity
@@ -1739,33 +1787,23 @@ class SPARQLValidator:
 
             # Determine if relationship exists
             if best_match and best_score >= 0.7:  # Threshold for considering a match
-                result = {
-                    "exists": True,
-                    "relationship": best_match,
-                    "confidence": best_score
-                }
+                result = {"exists": True, "relationship": best_match, "confidence": best_score}
             else:
                 result = {
                     "exists": False,
                     "closest_match": best_match,
-                    "confidence": best_score if best_match else 0.0
+                    "confidence": best_score if best_match else 0.0,
                 }
 
             # Cache result
             if self.cache_results:
-                self.cache[cache_key] = {
-                    "result": result,
-                    "timestamp": time.time()
-                }
+                self.cache[cache_key] = {"result": result, "timestamp": time.time()}
 
             return result
 
         except Exception as e:
             logging.error(f"Error checking relationship: {e}")
-            return {
-                "exists": False,
-                "error": str(e)
-            }
+            return {"exists": False, "error": str(e)}
 
     def _string_similarity(self, str1: str, str2: str) -> float:
         """
@@ -1795,10 +1833,7 @@ class SPARQLValidator:
         return len(intersection) / len(union)
 
     def find_entity_paths(
-        self,
-        source_entity: str,
-        target_entity: str,
-        max_path_length: int = 2
+        self, source_entity: str, target_entity: str, max_path_length: int = 2
     ) -> ValidationResult:
         """
         Find paths between two entities in Wikidata.
@@ -1833,23 +1868,18 @@ class SPARQLValidator:
                 result = ValidationResult(
                     is_valid=False,
                     errors=[f"Entities not found in Wikidata: {', '.join(missing_entities)}"],
-                    warnings=["Path finding cannot proceed without entity lookup"]
+                    warnings=["Path finding cannot proceed without entity lookup"],
                 )
 
                 if self.cache_results:
-                    self.cache[cache_key] = {
-                        "result": result,
-                        "timestamp": time.time()
-                    }
+                    self.cache[cache_key] = {"result": result, "timestamp": time.time()}
                 return result
 
             # Build and execute query to find paths
             query = build_path_relationship_query(source_wikidata["id"], target_wikidata["id"])
 
             response = requests.get(
-                self.endpoint_url,
-                params={"query": query, "format": "json"},
-                headers=self.headers
+                self.endpoint_url, params={"query": query, "format": "json"}, headers=self.headers
             )
 
             data = response.json()
@@ -1862,21 +1892,45 @@ class SPARQLValidator:
             for binding in bindings:
                 if "p2" not in binding:
                     # Direct path
-                    direct_paths.append({
-                        "property": binding.get("p1Label", {}).get("value", "unknown relation"),
-                        "property_id": binding.get("p1", {}).get("value", "").split("/")[-1] if "p1" in binding else None,
-                        "direction": "forward"
-                    })
+                    direct_paths.append(
+                        {
+                            "property": binding.get("p1Label", {}).get("value", "unknown relation"),
+                            "property_id": binding.get("p1", {}).get("value", "").split("/")[-1]
+                            if "p1" in binding
+                            else None,
+                            "direction": "forward",
+                        }
+                    )
                 else:
                     # Two-hop path
-                    two_hop_paths.append({
-                        "intermediate": binding.get("intermediateLabel", {}).get("value", "unknown entity"),
-                        "intermediate_id": binding.get("intermediate", {}).get("value", "").split("/")[-1] if "intermediate" in binding else None,
-                        "first_property": binding.get("p1Label", {}).get("value", "unknown relation"),
-                        "first_property_id": binding.get("p1", {}).get("value", "").split("/")[-1] if "p1" in binding else None,
-                        "second_property": binding.get("p2Label", {}).get("value", "unknown relation"),
-                        "second_property_id": binding.get("p2", {}).get("value", "").split("/")[-1] if "p2" in binding else None
-                    })
+                    two_hop_paths.append(
+                        {
+                            "intermediate": binding.get("intermediateLabel", {}).get(
+                                "value", "unknown entity"
+                            ),
+                            "intermediate_id": binding.get("intermediate", {})
+                            .get("value", "")
+                            .split("/")[-1]
+                            if "intermediate" in binding
+                            else None,
+                            "first_property": binding.get("p1Label", {}).get(
+                                "value", "unknown relation"
+                            ),
+                            "first_property_id": binding.get("p1", {})
+                            .get("value", "")
+                            .split("/")[-1]
+                            if "p1" in binding
+                            else None,
+                            "second_property": binding.get("p2Label", {}).get(
+                                "value", "unknown relation"
+                            ),
+                            "second_property_id": binding.get("p2", {})
+                            .get("value", "")
+                            .split("/")[-1]
+                            if "p2" in binding
+                            else None,
+                        }
+                    )
 
             # Create validation result
             result = ValidationResult(
@@ -1887,32 +1941,31 @@ class SPARQLValidator:
                     "target": target_entity,
                     "target_id": target_wikidata["id"],
                     "direct_paths": direct_paths,
-                    "two_hop_paths": two_hop_paths
+                    "two_hop_paths": two_hop_paths,
                 },
-                errors=[] if len(direct_paths) > 0 or len(two_hop_paths) > 0 else [f"No paths found between '{source_entity}' and '{target_entity}'"],
-                warnings=[] if direct_paths else ["No direct paths found, but indirect paths exist"] if two_hop_paths else []
+                errors=[]
+                if len(direct_paths) > 0 or len(two_hop_paths) > 0
+                else [f"No paths found between '{source_entity}' and '{target_entity}'"],
+                warnings=[]
+                if direct_paths
+                else ["No direct paths found, but indirect paths exist"]
+                if two_hop_paths
+                else [],
             )
 
             # Cache the result if enabled
             if self.cache_results:
-                self.cache[cache_key] = {
-                    "result": result,
-                    "timestamp": time.time()
-                }
+                self.cache[cache_key] = {"result": result, "timestamp": time.time()}
 
             return result
 
         except Exception as e:
             return ValidationResult(
-                is_valid=False,
-                errors=[f"Error finding paths between entities: {str(e)}"]
+                is_valid=False, errors=[f"Error finding paths between entities: {str(e)}"]
             )
 
     def find_similar_entities(
-        self,
-        entity_name: str,
-        entity_type: Optional[str] = None,
-        min_similarity: float = 0.5
+        self, entity_name: str, entity_type: Optional[str] = None, min_similarity: float = 0.5
     ) -> ValidationResult:
         """
         Find similar entities to a given entity in Wikidata.
@@ -1940,14 +1993,11 @@ class SPARQLValidator:
                 result = ValidationResult(
                     is_valid=False,
                     errors=[f"Entity '{entity_name}' not found in Wikidata"],
-                    warnings=["Cannot find similar entities without entity lookup"]
+                    warnings=["Cannot find similar entities without entity lookup"],
                 )
 
                 if self.cache_results:
-                    self.cache[cache_key] = {
-                        "result": result,
-                        "timestamp": time.time()
-                    }
+                    self.cache[cache_key] = {"result": result, "timestamp": time.time()}
                 return result
 
             # Get entity type ID if needed but not provided
@@ -1955,20 +2005,20 @@ class SPARQLValidator:
             if entity_type:
                 # Try to map entity type to Wikidata type ID
                 type_map = {
-                    "person": "Q5",           # human
+                    "person": "Q5",  # human
                     "organization": "Q43229",  # organization
-                    "company": "Q783794",      # company
-                    "location": "Q82794",      # geographic location
-                    "place": "Q82794",         # geographic location
-                    "country": "Q6256",        # country
-                    "city": "Q515",            # city
-                    "event": "Q1190554",       # event
-                    "technology": "Q11016",    # technology
-                    "software": "Q7397",       # software
-                    "book": "Q571",            # book
-                    "film": "Q11424",          # film
-                    "concept": "Q151885",      # concept
-                    "scientific_concept": "Q2023214"  # scientific concept
+                    "company": "Q783794",  # company
+                    "location": "Q82794",  # geographic location
+                    "place": "Q82794",  # geographic location
+                    "country": "Q6256",  # country
+                    "city": "Q515",  # city
+                    "event": "Q1190554",  # event
+                    "technology": "Q11016",  # technology
+                    "software": "Q7397",  # software
+                    "book": "Q571",  # book
+                    "film": "Q11424",  # film
+                    "concept": "Q151885",  # concept
+                    "scientific_concept": "Q2023214",  # scientific concept
                 }
                 type_id = type_map.get(entity_type.lower())
 
@@ -1980,7 +2030,7 @@ class SPARQLValidator:
                         response = requests.get(
                             self.endpoint_url,
                             params={"query": type_search_query, "format": "json"},
-                            headers=self.headers
+                            headers=self.headers,
                         )
                         data = response.json()
                         bindings = data.get("results", {}).get("bindings", [])
@@ -1996,9 +2046,7 @@ class SPARQLValidator:
             query = build_similar_entities_query(wikidata_entity["id"], type_id)
 
             response = requests.get(
-                self.endpoint_url,
-                params={"query": query, "format": "json"},
-                headers=self.headers
+                self.endpoint_url, params={"query": query, "format": "json"}, headers=self.headers
             )
 
             data = response.json()
@@ -2012,11 +2060,13 @@ class SPARQLValidator:
 
                 # Only include entities with similarity above threshold
                 if similarity_score >= min_similarity:
-                    similar_entities.append({
-                        "entity": binding.get("itemLabel", {}).get("value", "unknown entity"),
-                        "entity_id": binding.get("item", {}).get("value", "").split("/")[-1],
-                        "similarity": similarity_score
-                    })
+                    similar_entities.append(
+                        {
+                            "entity": binding.get("itemLabel", {}).get("value", "unknown entity"),
+                            "entity_id": binding.get("item", {}).get("value", "").split("/")[-1],
+                            "similarity": similarity_score,
+                        }
+                    )
 
             # Create validation result
             result = ValidationResult(
@@ -2024,32 +2074,31 @@ class SPARQLValidator:
                 data={
                     "entity": entity_name,
                     "entity_id": wikidata_entity["id"],
-                    "similar_entities": similar_entities
+                    "similar_entities": similar_entities,
                 },
-                errors=[] if similar_entities else [f"No similar entities found for '{entity_name}' with similarity >= {min_similarity}"],
-                warnings=[] if len(similar_entities) >= 3 else ["Only a few similar entities found"]
+                errors=[]
+                if similar_entities
+                else [
+                    f"No similar entities found for '{entity_name}' with similarity >= {min_similarity}"
+                ],
+                warnings=[]
+                if len(similar_entities) >= 3
+                else ["Only a few similar entities found"],
             )
 
             # Cache the result if enabled
             if self.cache_results:
-                self.cache[cache_key] = {
-                    "result": result,
-                    "timestamp": time.time()
-                }
+                self.cache[cache_key] = {"result": result, "timestamp": time.time()}
 
             return result
 
         except Exception as e:
             return ValidationResult(
-                is_valid=False,
-                errors=[f"Error finding similar entities: {str(e)}"]
+                is_valid=False, errors=[f"Error finding similar entities: {str(e)}"]
             )
 
     def validate_common_properties(
-        self,
-        entity_name: str,
-        entity_type: str,
-        entity_properties: Dict[str, Any]
+        self, entity_name: str, entity_type: str, entity_properties: Dict[str, Any]
     ) -> ValidationResult:
         """
         Validate that an entity has the common properties expected for its type.
@@ -2077,32 +2126,29 @@ class SPARQLValidator:
                 result = ValidationResult(
                     is_valid=False,
                     errors=[f"Entity '{entity_name}' not found in Wikidata"],
-                    warnings=["Cannot validate common properties without entity lookup"]
+                    warnings=["Cannot validate common properties without entity lookup"],
                 )
 
                 if self.cache_results:
-                    self.cache[cache_key] = {
-                        "result": result,
-                        "timestamp": time.time()
-                    }
+                    self.cache[cache_key] = {"result": result, "timestamp": time.time()}
                 return result
 
             # Get entity type ID
             type_map = {
-                "person": "Q5",           # human
+                "person": "Q5",  # human
                 "organization": "Q43229",  # organization
-                "company": "Q783794",      # company
-                "location": "Q82794",      # geographic location
-                "place": "Q82794",         # geographic location
-                "country": "Q6256",        # country
-                "city": "Q515",            # city
-                "event": "Q1190554",       # event
-                "technology": "Q11016",    # technology
-                "software": "Q7397",       # software
-                "book": "Q571",            # book
-                "film": "Q11424",          # film
-                "concept": "Q151885",      # concept
-                "scientific_concept": "Q2023214"  # scientific concept
+                "company": "Q783794",  # company
+                "location": "Q82794",  # geographic location
+                "place": "Q82794",  # geographic location
+                "country": "Q6256",  # country
+                "city": "Q515",  # city
+                "event": "Q1190554",  # event
+                "technology": "Q11016",  # technology
+                "software": "Q7397",  # software
+                "book": "Q571",  # book
+                "film": "Q11424",  # film
+                "concept": "Q151885",  # concept
+                "scientific_concept": "Q2023214",  # scientific concept
             }
 
             type_id = type_map.get(entity_type.lower())
@@ -2114,7 +2160,7 @@ class SPARQLValidator:
                 response = requests.get(
                     self.endpoint_url,
                     params={"query": entity_type_query, "format": "json"},
-                    headers=self.headers
+                    headers=self.headers,
                 )
 
                 data = response.json()
@@ -2126,14 +2172,11 @@ class SPARQLValidator:
                     result = ValidationResult(
                         is_valid=False,
                         errors=[f"Cannot determine Wikidata type for entity type '{entity_type}'"],
-                        warnings=["Cannot validate common properties without a valid entity type"]
+                        warnings=["Cannot validate common properties without a valid entity type"],
                     )
 
                     if self.cache_results:
-                        self.cache[cache_key] = {
-                            "result": result,
-                            "timestamp": time.time()
-                        }
+                        self.cache[cache_key] = {"result": result, "timestamp": time.time()}
                     return result
 
             # Get property statistics for this entity type
@@ -2142,7 +2185,7 @@ class SPARQLValidator:
             response = requests.get(
                 self.endpoint_url,
                 params={"query": property_stats_query, "format": "json"},
-                headers=self.headers
+                headers=self.headers,
             )
 
             data = response.json()
@@ -2155,10 +2198,9 @@ class SPARQLValidator:
                 usage_percentage = float(binding.get("percentage", {}).get("value", "0"))
 
                 if usage_percentage >= 30:  # Consider properties used by at least 30% of entities
-                    common_properties.append({
-                        "property": property_name,
-                        "percentage": usage_percentage
-                    })
+                    common_properties.append(
+                        {"property": property_name, "percentage": usage_percentage}
+                    )
 
             # Check which common properties the entity has
             missing_properties = []
@@ -2171,27 +2213,32 @@ class SPARQLValidator:
                 # Try to find a matching property in the entity properties
                 property_found = False
                 for entity_prop_name, entity_prop_value in entity_properties.items():
-                    if self._string_similarity(property_name.lower(), entity_prop_name.lower()) >= 0.7:
+                    if (
+                        self._string_similarity(property_name.lower(), entity_prop_name.lower())
+                        >= 0.7
+                    ):
                         property_found = True
-                        found_properties.append({
-                            "property": property_name,
-                            "entity_property": entity_prop_name,
-                            "percentage": usage_percentage
-                        })
+                        found_properties.append(
+                            {
+                                "property": property_name,
+                                "entity_property": entity_prop_name,
+                                "percentage": usage_percentage,
+                            }
+                        )
                         break
 
                 if not property_found:
-                    missing_properties.append({
-                        "property": property_name,
-                        "percentage": usage_percentage
-                    })
+                    missing_properties.append(
+                        {"property": property_name, "percentage": usage_percentage}
+                    )
 
             # Calculate coverage
             coverage = len(found_properties) / len(common_properties) if common_properties else 1.0
 
             # Create validation result
             result = ValidationResult(
-                is_valid=coverage >= 0.7,  # Consider valid if at least 70% of common properties are present
+                is_valid=coverage
+                >= 0.7,  # Consider valid if at least 70% of common properties are present
                 data={
                     "entity": entity_name,
                     "entity_id": wikidata_entity["id"],
@@ -2200,31 +2247,32 @@ class SPARQLValidator:
                     "common_properties": common_properties,
                     "found_properties": found_properties,
                     "missing_properties": missing_properties,
-                    "coverage": coverage
+                    "coverage": coverage,
                 },
-                errors=[] if coverage >= 0.7 else [f"Missing {len(missing_properties)} common properties for entity type '{entity_type}'"],
-                warnings=[f"Entity is missing some common properties: {', '.join(p['property'] for p in missing_properties[:3])}{'...' if len(missing_properties) > 3 else ''}"] if missing_properties else []
+                errors=[]
+                if coverage >= 0.7
+                else [
+                    f"Missing {len(missing_properties)} common properties for entity type '{entity_type}'"
+                ],
+                warnings=[
+                    f"Entity is missing some common properties: {', '.join(p['property'] for p in missing_properties[:3])}{'...' if len(missing_properties) > 3 else ''}"
+                ]
+                if missing_properties
+                else [],
             )
 
             # Cache the result if enabled
             if self.cache_results:
-                self.cache[cache_key] = {
-                    "result": result,
-                    "timestamp": time.time()
-                }
+                self.cache[cache_key] = {"result": result, "timestamp": time.time()}
 
             return result
 
         except Exception as e:
             return ValidationResult(
-                is_valid=False,
-                errors=[f"Error validating common properties: {str(e)}"]
+                is_valid=False, errors=[f"Error validating common properties: {str(e)}"]
             )
 
-    def execute_custom_sparql_query(
-        self,
-        query: str
-    ) -> Dict[str, Any]:
+    def execute_custom_sparql_query(self, query: str) -> Dict[str, Any]:
         """
         Execute a custom SPARQL query against the endpoint.
 
@@ -2244,9 +2292,7 @@ class SPARQLValidator:
         try:
             # Execute query
             response = requests.get(
-                self.endpoint_url,
-                params={"query": query, "format": "json"},
-                headers=self.headers
+                self.endpoint_url, params={"query": query, "format": "json"}, headers=self.headers
             )
 
             # Parse response
@@ -2254,10 +2300,7 @@ class SPARQLValidator:
 
             # Cache the result if enabled
             if self.cache_results:
-                self.cache[cache_key] = {
-                    "result": result,
-                    "timestamp": time.time()
-                }
+                self.cache[cache_key] = {"result": result, "timestamp": time.time()}
 
             return result
 

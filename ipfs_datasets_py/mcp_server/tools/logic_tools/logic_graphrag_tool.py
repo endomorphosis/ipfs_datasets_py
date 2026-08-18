@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.core_operations.logic_processor import LogicProcessor
+
     _PROCESSOR = LogicProcessor()
     _AVAILABLE = True
 except Exception as _e:
@@ -94,8 +95,12 @@ async def logic_verify_rag_output(
     )
 
 
-__all__ = ["logic_build_knowledge_graph", "logic_verify_rag_output",
-           "LogicBuildKnowledgeGraphTool", "LogicVerifyRAGOutputTool"]
+__all__ = [
+    "logic_build_knowledge_graph",
+    "logic_verify_rag_output",
+    "LogicBuildKnowledgeGraphTool",
+    "LogicVerifyRAGOutputTool",
+]
 
 
 class LogicBuildKnowledgeGraphTool:

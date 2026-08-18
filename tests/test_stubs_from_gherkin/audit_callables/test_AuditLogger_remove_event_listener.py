@@ -19,16 +19,23 @@ def an_auditlogger_instance_is_initialized():
     """
     try:
         logger = AuditLogger()
-        
+
         if logger is None:
-            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None") from None
-        
-        if not hasattr(logger, 'event_listeners'):
-            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing 'event_listeners' attribute") from None
-        
+            raise FixtureError(
+                "Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None"
+            ) from None
+
+        if not hasattr(logger, "event_listeners"):
+            raise FixtureError(
+                "Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing 'event_listeners' attribute"
+            ) from None
+
         return logger
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}"
+        ) from e
+
 
 @pytest.fixture
 def a_listener_function_is_registered_for_all_categori(an_auditlogger_instance_is_initialized):
@@ -37,27 +44,33 @@ def a_listener_function_is_registered_for_all_categori(an_auditlogger_instance_i
     """
     try:
         logger = an_auditlogger_instance_is_initialized
-        
+
         # Create a test listener function
         def test_listener(event):
             pass
-        
+
         # Register the listener for all categories (category=None)
         logger.add_event_listener(test_listener, category=None)
-        
+
         # Verify listener was added
         if test_listener not in logger.event_listeners.get(None, []):
-            raise FixtureError("Failed to create fixture a_listener_function_is_registered_for_all_categori: Listener not found in event_listeners[None]") from None
-        
+            raise FixtureError(
+                "Failed to create fixture a_listener_function_is_registered_for_all_categori: Listener not found in event_listeners[None]"
+            ) from None
+
         # Store listener function on logger for test access
         logger._test_listener = test_listener
-        
+
         return logger
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture a_listener_function_is_registered_for_all_categori: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture a_listener_function_is_registered_for_all_categori: {e}"
+        ) from e
 
 
-def test_remove_event_listener_returns_true_when_found(an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori):
+def test_remove_event_listener_returns_true_when_found(
+    an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori
+):
     """
     Scenario: Remove event listener returns True when found
 
@@ -71,7 +84,9 @@ def test_remove_event_listener_returns_true_when_found(an_auditlogger_instance_i
     pass
 
 
-def test_remove_event_listener_returns_false_when_not_found(an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori):
+def test_remove_event_listener_returns_false_when_not_found(
+    an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori
+):
     """
     Scenario: Remove event listener returns False when not found
 
@@ -88,7 +103,9 @@ def test_remove_event_listener_returns_false_when_not_found(an_auditlogger_insta
     pass
 
 
-def test_remove_event_listener_stops_receiving_events(an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori):
+def test_remove_event_listener_stops_receiving_events(
+    an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori
+):
     """
     Scenario: Remove event listener stops receiving events
 
@@ -102,7 +119,9 @@ def test_remove_event_listener_stops_receiving_events(an_auditlogger_instance_is
     pass
 
 
-def test_remove_event_listener_for_specific_category_stops_authentication_events(an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori):
+def test_remove_event_listener_for_specific_category_stops_authentication_events(
+    an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori
+):
     """
     Scenario: Remove event listener for specific category stops AUTHENTICATION events
 
@@ -120,7 +139,9 @@ def test_remove_event_listener_for_specific_category_stops_authentication_events
     pass
 
 
-def test_remove_event_listener_for_specific_category_preserves_data_access_events(an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori):
+def test_remove_event_listener_for_specific_category_preserves_data_access_events(
+    an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori
+):
     """
     Scenario: Remove event listener for specific category preserves DATA_ACCESS events
 
@@ -138,7 +159,9 @@ def test_remove_event_listener_for_specific_category_preserves_data_access_event
     pass
 
 
-def test_remove_event_listener_is_thread_safe(an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori):
+def test_remove_event_listener_is_thread_safe(
+    an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori
+):
     """
     Scenario: Remove event listener is thread-safe
 
@@ -155,7 +178,9 @@ def test_remove_event_listener_is_thread_safe(an_auditlogger_instance_is_initial
     pass
 
 
-def test_remove_event_listener_when_category_list_empty(an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori):
+def test_remove_event_listener_when_category_list_empty(
+    an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori
+):
     """
     Scenario: Remove event listener when category list empty
 
@@ -172,7 +197,9 @@ def test_remove_event_listener_when_category_list_empty(an_auditlogger_instance_
     pass
 
 
-def test_remove_same_listener_twice(an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori):
+def test_remove_same_listener_twice(
+    an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori
+):
     """
     Scenario: Remove same listener twice
 
@@ -186,7 +213,9 @@ def test_remove_same_listener_twice(an_auditlogger_instance_is_initialized, a_li
     pass
 
 
-def test_remove_event_listener_preserves_other_listeners_keeps_listener_1(an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori):
+def test_remove_event_listener_preserves_other_listeners_keeps_listener_1(
+    an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori
+):
     """
     Scenario: Remove event listener preserves other listeners keeps listener 1
 
@@ -203,7 +232,9 @@ def test_remove_event_listener_preserves_other_listeners_keeps_listener_1(an_aud
     pass
 
 
-def test_remove_event_listener_preserves_other_listeners_keeps_listener_3(an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori):
+def test_remove_event_listener_preserves_other_listeners_keeps_listener_3(
+    an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori
+):
     """
     Scenario: Remove event listener preserves other listeners keeps listener 3
 
@@ -218,4 +249,3 @@ def test_remove_event_listener_preserves_other_listeners_keeps_listener_3(an_aud
     """
     # TODO: Implement test
     pass
-

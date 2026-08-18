@@ -12,23 +12,30 @@ import datetime
 from typing import Dict, List, Any, Optional
 
 # Configure logging
-logging.basicConfig(level=logging.INFO,
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Import security and provenance components
 from ipfs_datasets_py.audit.audit_logger import AuditLogger
 from ipfs_datasets_py.audit.enhanced_security import (
-    EnhancedSecurityManager, DataClassification, AccessDecision,
-    SecurityPolicy, AccessControlEntry, SecuritySession
+    EnhancedSecurityManager,
+    DataClassification,
+    AccessDecision,
+    SecurityPolicy,
+    AccessControlEntry,
+    SecuritySession,
 )
 from ipfs_datasets_py.audit.security_provenance_integration import (
-    SecurityProvenanceIntegrator, secure_provenance_operation
+    SecurityProvenanceIntegrator,
+    secure_provenance_operation,
 )
 
 # Try to import provenance module
 try:
     from ipfs_datasets_py.analytics.data_provenance_enhanced import EnhancedProvenanceManager
+
     PROVENANCE_AVAILABLE = True
 except ImportError:
     PROVENANCE_AVAILABLE = False
@@ -47,32 +54,30 @@ def setup_security_environment():
         "raw_data": "dataset_raw_001",
         "processed_data": "dataset_processed_001",
         "anonymized_data": "dataset_anonymized_001",
-        "report": "report_001"
+        "report": "report_001",
     }
 
     # Set up data classifications
     security_manager.set_data_classification(
         resource_id=resources["raw_data"],
         classification=DataClassification.CONFIDENTIAL,
-        user_id="admin"
+        user_id="admin",
     )
 
     security_manager.set_data_classification(
         resource_id=resources["processed_data"],
         classification=DataClassification.CONFIDENTIAL,
-        user_id="admin"
+        user_id="admin",
     )
 
     security_manager.set_data_classification(
         resource_id=resources["anonymized_data"],
         classification=DataClassification.INTERNAL,
-        user_id="admin"
+        user_id="admin",
     )
 
     security_manager.set_data_classification(
-        resource_id=resources["report"],
-        classification=DataClassification.PUBLIC,
-        user_id="admin"
+        resource_id=resources["report"], classification=DataClassification.PUBLIC, user_id="admin"
     )
 
     # Set up access control entries
@@ -84,7 +89,7 @@ def setup_security_environment():
         principal_id="data_scientist",
         principal_type="role",
         permissions=["read"],
-        conditions={"ip_range": "192.168.1.0/24"}
+        conditions={"ip_range": "192.168.1.0/24"},
     )
     security_manager.add_access_control_entry(data_scientist_raw_ace, "admin")
 
@@ -94,7 +99,7 @@ def setup_security_environment():
         principal_id="data_scientist",
         principal_type="role",
         permissions=["read", "write"],
-        conditions={"ip_range": "192.168.1.0/24"}
+        conditions={"ip_range": "192.168.1.0/24"},
     )
     security_manager.add_access_control_entry(data_scientist_processed_ace, "admin")
 
@@ -105,7 +110,7 @@ def setup_security_environment():
         principal_id="privacy_officer",
         principal_type="role",
         permissions=["read", "write", "delete"],
-        conditions={}
+        conditions={},
     )
     security_manager.add_access_control_entry(privacy_officer_ace, "admin")
 
@@ -115,7 +120,7 @@ def setup_security_environment():
         principal_id="privacy_officer",
         principal_type="role",
         permissions=["read", "write", "delete"],
-        conditions={}
+        conditions={},
     )
     security_manager.add_access_control_entry(privacy_officer_processed_ace, "admin")
 
@@ -125,7 +130,7 @@ def setup_security_environment():
         principal_id="privacy_officer",
         principal_type="role",
         permissions=["read", "write", "delete"],
-        conditions={}
+        conditions={},
     )
     security_manager.add_access_control_entry(privacy_officer_anonymized_ace, "admin")
 
@@ -136,7 +141,7 @@ def setup_security_environment():
         principal_id="analyst",
         principal_type="role",
         permissions=["read"],
-        conditions={}
+        conditions={},
     )
     security_manager.add_access_control_entry(analyst_ace, "admin")
 
@@ -146,7 +151,7 @@ def setup_security_environment():
         principal_id="analyst",
         principal_type="role",
         permissions=["read", "write"],
-        conditions={}
+        conditions={},
     )
     security_manager.add_access_control_entry(analyst_report_ace, "admin")
 
@@ -161,7 +166,7 @@ def setup_security_environment():
                 "required_verification": True,
                 "min_verified_percentage": 75,
                 "severity": "high",
-                "description": "Requires verified data lineage for anonymized data"
+                "description": "Requires verified data lineage for anonymized data",
             },
             {
                 "type": "transformation_chain",
@@ -169,8 +174,8 @@ def setup_security_environment():
                 "prohibited_transformations": [],
                 "max_chain_length": 5,
                 "severity": "high",
-                "description": "Requires anonymization in transformation chain"
-            }
+                "description": "Requires anonymization in transformation chain",
+            },
         ]
 
         integrator.create_provenance_based_security_policy(
@@ -178,7 +183,7 @@ def setup_security_environment():
             name="Anonymized Data Lineage Policy",
             resource_pattern="dataset_anonymized_*",
             lineage_rules=lineage_rules,
-            user_id="admin"
+            user_id="admin",
         )
 
     return resources
@@ -209,14 +214,10 @@ def record_data_transformations(resources, user_id="alice"):
                 input_ids=["external_source_001"],
                 output_id=resources["raw_data"],
                 transformation_type="load",
-                parameters={
-                    "source": "external_api",
-                    "format": "json",
-                    "record_count": 10000
-                },
+                parameters={"source": "external_api", "format": "json", "record_count": 10000},
                 user_id=user_id,
                 verify_lineage=False,  # No upstream lineage to verify for raw data
-                classification=DataClassification.CONFIDENTIAL
+                classification=DataClassification.CONFIDENTIAL,
             )
 
             logger.info(f"Recorded raw data loading: {record_id}")
@@ -233,11 +234,11 @@ def record_data_transformations(resources, user_id="alice"):
                 parameters={
                     "operations": ["clean", "normalize", "transform"],
                     "fields_processed": ["name", "address", "phone", "email"],
-                    "processing_timestamp": datetime.datetime.utcnow().isoformat() + 'Z'
+                    "processing_timestamp": datetime.datetime.utcnow().isoformat() + "Z",
                 },
                 user_id=user_id,
                 verify_lineage=True,
-                classification=DataClassification.CONFIDENTIAL
+                classification=DataClassification.CONFIDENTIAL,
             )
 
             logger.info(f"Recorded data processing: {record_id}")
@@ -258,11 +259,11 @@ def record_data_transformations(resources, user_id="alice"):
                     "method": "differential_privacy",
                     "epsilon": 0.1,
                     "fields_anonymized": ["name", "address", "phone", "email"],
-                    "anonymization_timestamp": datetime.datetime.utcnow().isoformat() + 'Z'
+                    "anonymization_timestamp": datetime.datetime.utcnow().isoformat() + "Z",
                 },
                 user_id=user_id,
                 verify_lineage=True,
-                classification=DataClassification.INTERNAL
+                classification=DataClassification.INTERNAL,
             )
 
             logger.info(f"Recorded data anonymization: {record_id}")
@@ -282,11 +283,11 @@ def record_data_transformations(resources, user_id="alice"):
                 parameters={
                     "report_type": "summary_statistics",
                     "report_format": "pdf",
-                    "generated_at": datetime.datetime.utcnow().isoformat() + 'Z'
+                    "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
                 },
                 user_id=user_id,
                 verify_lineage=True,
-                classification=DataClassification.PUBLIC
+                classification=DataClassification.PUBLIC,
             )
 
             logger.info(f"Recorded report generation: {record_id}")
@@ -314,7 +315,7 @@ def access_data_with_lineage_check(user_id, resource_id):
     return {
         "status": "success",
         "message": f"Access to {resource_id} granted with lineage verification",
-        "timestamp": datetime.datetime.utcnow().isoformat() + 'Z'
+        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
     }
 
 
@@ -341,7 +342,7 @@ def verify_cross_document_security(user_id="security_officer"):
     document_ids = [
         "document_001",  # Containing raw data
         "document_002",  # Containing processed data
-        "document_003"   # Containing anonymized data
+        "document_003",  # Containing anonymized data
     ]
 
     # Perform verification
@@ -357,10 +358,12 @@ def verify_cross_document_security(user_id="security_officer"):
         logger.info(f"  - Secure: {results.get('is_secure', False)}")
 
         # Report security issues if any
-        if results.get('security_issues'):
+        if results.get("security_issues"):
             logger.warning("Security issues found:")
-            for i, issue in enumerate(results['security_issues']):
-                logger.warning(f"  {i+1}. {issue['type']} - {issue['description']} (Severity: {issue['severity']})")
+            for i, issue in enumerate(results["security_issues"]):
+                logger.warning(
+                    f"  {i + 1}. {issue['type']} - {issue['description']} (Severity: {issue['severity']})"
+                )
 
     except Exception as e:
         logger.error(f"Error during cross-document verification: {e}")
@@ -386,17 +389,12 @@ def query_provenance_with_security(user_id="analyst"):
     integrator = SecurityProvenanceIntegrator()
 
     # Define query parameters
-    query_params = {
-        "record_type": "transformation",
-        "transformation_type": "anonymize"
-    }
+    query_params = {"record_type": "transformation", "transformation_type": "anonymize"}
 
     # Perform secure query
     try:
         results = integrator.secure_provenance_query(
-            query_params=query_params,
-            user_id=user_id,
-            include_cross_document=True
+            query_params=query_params, user_id=user_id, include_cross_document=True
         )
 
         # Log results
@@ -405,19 +403,21 @@ def query_provenance_with_security(user_id="analyst"):
         logger.info(f"  - Records accessible to user: {results.get('filtered_records', 0)}")
 
         # Display accessible records
-        if results.get('records'):
+        if results.get("records"):
             logger.info("Accessible records:")
-            for i, record in enumerate(results['records']):
+            for i, record in enumerate(results["records"]):
                 # Extract key information
-                record_id = record.get('record_id', 'Unknown')
-                record_type = record.get('record_type', 'Unknown')
-                classification = record.get('security', {}).get('classification', 'UNCLASSIFIED')
+                record_id = record.get("record_id", "Unknown")
+                record_type = record.get("record_type", "Unknown")
+                classification = record.get("security", {}).get("classification", "UNCLASSIFIED")
 
-                logger.info(f"  {i+1}. Record {record_id} ({record_type}) - Classification: {classification}")
+                logger.info(
+                    f"  {i + 1}. Record {record_id} ({record_type}) - Classification: {classification}"
+                )
 
         # Report cross-document analysis if included
-        if results.get('cross_document_analysis'):
-            analysis = results['cross_document_analysis']
+        if results.get("cross_document_analysis"):
+            analysis = results["cross_document_analysis"]
             logger.info("Cross-document analysis:")
             logger.info(f"  - Documents analyzed: {analysis.get('document_count', 0)}")
             logger.info(f"  - Security issues: {len(analysis.get('security_issues', []))}")
@@ -440,8 +440,7 @@ def main():
     # Access data with lineage check
     try:
         result = access_data_with_lineage_check(
-            user_id="bob",
-            resource_id=resources["anonymized_data"]
+            user_id="bob", resource_id=resources["anonymized_data"]
         )
         logger.info(f"Data access result: {result}")
     except PermissionError as e:

@@ -68,18 +68,12 @@ from ipfs_datasets_py.logic.ir_core.protocols import AuthorityKind
 LEGAL_CONSTRAINT_QUERY_INTERFACE: Final = "LegalConstraintQuery@1"
 LEGAL_APPLICABILITY_EVIDENCE_INTERFACE: Final = "LegalApplicabilityEvidence@1"
 LEGAL_CONSTRAINT_QUERY_SCHEMA_VERSION: Final = "legal-constraint-query/v1"
-LEGAL_APPLICABILITY_EVIDENCE_SCHEMA_VERSION: Final = (
-    "legal-applicability-evidence/v1"
-)
+LEGAL_APPLICABILITY_EVIDENCE_SCHEMA_VERSION: Final = "legal-applicability-evidence/v1"
 LEGAL_CONSTRAINT_RECORD_SCHEMA_VERSION: Final = "legal-constraint-record/v1"
-LEGAL_CONSTRAINT_SELECTION_SCHEMA_VERSION: Final = (
-    "legal-constraint-selection/v1"
-)
+LEGAL_CONSTRAINT_SELECTION_SCHEMA_VERSION: Final = "legal-constraint-selection/v1"
 
 LEGAL_CONSTRAINT_QUERY_IDENTITY_DOMAIN: Final = "legal-constraint-query"
-LEGAL_APPLICABILITY_EVIDENCE_IDENTITY_DOMAIN: Final = (
-    "legal-applicability-evidence"
-)
+LEGAL_APPLICABILITY_EVIDENCE_IDENTITY_DOMAIN: Final = "legal-applicability-evidence"
 LEGAL_CONSTRAINT_SELECTION_IDENTITY_DOMAIN: Final = "legal-constraint-selection"
 
 MAX_COLLECTION_ITEMS: Final = 1_024
@@ -197,14 +191,10 @@ class LegalPremiseTaintStatus(str, Enum):
 # ---------------------------------------------------------------------------
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise LegalConstraintQueryError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise LegalConstraintQueryError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _text(
@@ -217,9 +207,7 @@ def _text(
     if not isinstance(value, str):
         raise LegalConstraintQueryError(f"{name} must be a string")
     if value != value.strip() or "\x00" in value:
-        raise LegalConstraintQueryError(
-            f"{name} must not contain surrounding whitespace or NUL"
-        )
+        raise LegalConstraintQueryError(f"{name} must not contain surrounding whitespace or NUL")
     if not allow_empty and not value:
         raise LegalConstraintQueryError(f"{name} must not be empty")
     if len(value) > max_chars:
@@ -251,9 +239,7 @@ def _digest_or_empty(value: Any, name: str) -> str:
     if not text:
         return ""
     if not _DIGEST_RE.fullmatch(text):
-        raise LegalConstraintQueryError(
-            f"{name} must be a sha256:<hex> digest or empty"
-        )
+        raise LegalConstraintQueryError(f"{name} must be a sha256:<hex> digest or empty")
     return text
 
 
@@ -293,18 +279,14 @@ def _unique_sorted_texts(value: Any, name: str) -> tuple[str, ...]:
     if isinstance(value, str):
         text = _text(value, name)
         if text.lower() in _WILDCARDS:
-            raise LegalConstraintQueryError(
-                f"{name} must contain explicit values, not a wildcard"
-            )
+            raise LegalConstraintQueryError(f"{name} must contain explicit values, not a wildcard")
         return (text,)
     seq = _sequence(value, name)
     items: list[str] = []
     for item in seq:
         text = _text(item, name)
         if text.lower() in _WILDCARDS:
-            raise LegalConstraintQueryError(
-                f"{name} must contain explicit values, not a wildcard"
-            )
+            raise LegalConstraintQueryError(f"{name} must contain explicit values, not a wildcard")
         items.append(text)
     if len(items) != len(set(items)):
         raise LegalConstraintQueryError(f"{name} must be unique")
@@ -337,9 +319,7 @@ def _enum_value(value: Any, enum_cls: type[Enum], name: str) -> Any:
     try:
         return enum_cls(value)
     except ValueError as exc:
-        raise LegalConstraintQueryError(
-            f"unsupported {name}: {value!r}"
-        ) from exc
+        raise LegalConstraintQueryError(f"unsupported {name}: {value!r}") from exc
 
 
 def _frozen_map(value: Any, name: str) -> FrozenMap:
@@ -502,9 +482,7 @@ class LegalConstraintRecord:
     schema_version: str = LEGAL_CONSTRAINT_RECORD_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "constraint_id", _identifier(self.constraint_id, "constraint_id")
-        )
+        object.__setattr__(self, "constraint_id", _identifier(self.constraint_id, "constraint_id"))
         object.__setattr__(self, "modality", _modality_atom(self.modality))
         object.__setattr__(
             self, "jurisdictions", _unique_sorted_texts(self.jurisdictions, "jurisdictions")
@@ -525,13 +503,11 @@ class LegalConstraintRecord:
             "hierarchy_rank",
             _non_negative_int(self.hierarchy_rank, "hierarchy_rank"),
         )
+        object.__setattr__(self, "precedence", _non_negative_int(self.precedence, "precedence"))
         object.__setattr__(
-            self, "precedence", _non_negative_int(self.precedence, "precedence")
-        )
-        object.__setattr__(
-            self, "enacted_date", _date_text(self.enacted_date, "enacted_date")
-            if self.enacted_date
-            else ""
+            self,
+            "enacted_date",
+            _date_text(self.enacted_date, "enacted_date") if self.enacted_date else "",
         )
         for name in (
             "effective_from",
@@ -561,15 +537,9 @@ class LegalConstraintRecord:
             self, "repealed_by", _optional_identifier(self.repealed_by, "repealed_by")
         )
         object.__setattr__(self, "actors", _unique_sorted_texts(self.actors, "actors"))
-        object.__setattr__(
-            self, "subjects", _unique_sorted_texts(self.subjects, "subjects")
-        )
-        object.__setattr__(
-            self, "resources", _unique_sorted_texts(self.resources, "resources")
-        )
-        object.__setattr__(
-            self, "purposes", _unique_sorted_texts(self.purposes, "purposes")
-        )
+        object.__setattr__(self, "subjects", _unique_sorted_texts(self.subjects, "subjects"))
+        object.__setattr__(self, "resources", _unique_sorted_texts(self.resources, "resources"))
+        object.__setattr__(self, "purposes", _unique_sorted_texts(self.purposes, "purposes"))
         thresholds = self.thresholds
         if isinstance(thresholds, FrozenMap):
             thresholds_map = thresholds.to_dict()
@@ -585,26 +555,20 @@ class LegalConstraintRecord:
             "premise_taint",
             _enum_value(self.premise_taint, LegalPremiseTaintStatus, "premise_taint"),
         )
-        object.__setattr__(
-            self, "trusted_source", _bool(self.trusted_source, "trusted_source")
-        )
+        object.__setattr__(self, "trusted_source", _bool(self.trusted_source, "trusted_source"))
         object.__setattr__(self, "reviewed", _bool(self.reviewed, "reviewed"))
         object.__setattr__(
             self,
             "conflict_key",
             _optional_text(self.conflict_key, "conflict_key"),
         )
-        object.__setattr__(
-            self, "statement", _optional_text(self.statement, "statement")
-        )
+        object.__setattr__(self, "statement", _optional_text(self.statement, "statement"))
         object.__setattr__(
             self,
             "law_version_id",
             _optional_identifier(self.law_version_id, "law_version_id"),
         )
-        object.__setattr__(
-            self, "corpus_id", _optional_identifier(self.corpus_id, "corpus_id")
-        )
+        object.__setattr__(self, "corpus_id", _optional_identifier(self.corpus_id, "corpus_id"))
         if self.retrieval_rank is not None:
             object.__setattr__(
                 self,
@@ -622,9 +586,7 @@ class LegalConstraintRecord:
             object.__setattr__(self, "retrieval_score", score)
         object.__setattr__(self, "mandatory", _bool(self.mandatory, "mandatory", default=True))
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != LEGAL_CONSTRAINT_RECORD_SCHEMA_VERSION:
             raise LegalConstraintQueryError(
                 f"unsupported legal constraint record schema: {self.schema_version!r}"
@@ -763,9 +725,7 @@ class LegalConstraintRecord:
             jurisdictions=jurisdictions if not isinstance(jurisdictions, str) else (jurisdictions,),
             territories=territories if not isinstance(territories, str) else (territories,),
             subject_matters=(
-                subject_matters
-                if not isinstance(subject_matters, str)
-                else (subject_matters,)
+                subject_matters if not isinstance(subject_matters, str) else (subject_matters,)
             ),
             authority_id=value.get("authority_id", ""),
             hierarchy_rank=value.get("hierarchy_rank", 0),
@@ -792,9 +752,7 @@ class LegalConstraintRecord:
             thresholds=value.get("thresholds", {}),
             source_ref_ids=value.get("source_ref_ids", ()),
             provenance_ids=value.get("provenance_ids", ()),
-            premise_taint=value.get(
-                "premise_taint", LegalPremiseTaintStatus.UNKNOWN.value
-            ),
+            premise_taint=value.get("premise_taint", LegalPremiseTaintStatus.UNKNOWN.value),
             trusted_source=value.get("trusted_source", False),
             reviewed=value.get("reviewed", False),
             conflict_key=value.get("conflict_key", ""),
@@ -805,9 +763,7 @@ class LegalConstraintRecord:
             retrieval_score=value.get("retrieval_score", None),
             mandatory=value.get("mandatory", True),
             metadata=value.get("metadata", {}),
-            schema_version=value.get(
-                "schema_version", LEGAL_CONSTRAINT_RECORD_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", LEGAL_CONSTRAINT_RECORD_SCHEMA_VERSION),
         )
 
 
@@ -830,9 +786,7 @@ class LegalConstraintAssessment:
     record: LegalConstraintRecord | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "constraint_id", _identifier(self.constraint_id, "constraint_id")
-        )
+        object.__setattr__(self, "constraint_id", _identifier(self.constraint_id, "constraint_id"))
         object.__setattr__(
             self,
             "disposition",
@@ -847,20 +801,18 @@ class LegalConstraintAssessment:
         object.__setattr__(
             self,
             "matched_dimensions",
-            tuple(sorted(set(_text(item, "matched_dimensions") for item in self.matched_dimensions))),
+            tuple(
+                sorted(set(_text(item, "matched_dimensions") for item in self.matched_dimensions))
+            ),
         )
         object.__setattr__(
             self,
             "rejected_dimensions",
             tuple(
-                sorted(
-                    set(_text(item, "rejected_dimensions") for item in self.rejected_dimensions)
-                )
+                sorted(set(_text(item, "rejected_dimensions") for item in self.rejected_dimensions))
             ),
         )
-        object.__setattr__(
-            self, "defeated_by", _unique_sorted_ids(self.defeated_by, "defeated_by")
-        )
+        object.__setattr__(self, "defeated_by", _unique_sorted_ids(self.defeated_by, "defeated_by"))
         object.__setattr__(
             self,
             "conflicts_with",
@@ -877,9 +829,7 @@ class LegalConstraintAssessment:
             "hierarchy_rank",
             _non_negative_int(self.hierarchy_rank, "hierarchy_rank"),
         )
-        object.__setattr__(
-            self, "precedence", _non_negative_int(self.precedence, "precedence")
-        )
+        object.__setattr__(self, "precedence", _non_negative_int(self.precedence, "precedence"))
         object.__setattr__(self, "modality", _modality_atom(self.modality))
         if self.record is not None and not isinstance(self.record, LegalConstraintRecord):
             raise LegalConstraintQueryError("record must be a LegalConstraintRecord")
@@ -922,9 +872,7 @@ class LegalContradiction:
         )
         ids = _unique_sorted_ids(self.constraint_ids, "constraint_ids")
         if len(ids) < 2:
-            raise LegalConstraintQueryError(
-                "contradiction requires at least two constraint_ids"
-            )
+            raise LegalConstraintQueryError("contradiction requires at least two constraint_ids")
         object.__setattr__(self, "constraint_ids", ids)
         object.__setattr__(self, "kind", _identifier(self.kind, "kind"))
         object.__setattr__(
@@ -994,9 +942,7 @@ class LegalConstraintQuery:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "query_id", _identifier(self.query_id, "query_id"))
-        object.__setattr__(
-            self, "jurisdiction", _text(self.jurisdiction, "jurisdiction")
-        )
+        object.__setattr__(self, "jurisdiction", _text(self.jurisdiction, "jurisdiction"))
         as_of = _date_text(self.as_of, "as_of")
         if not as_of:
             raise LegalConstraintQueryError("as_of is required")
@@ -1009,9 +955,7 @@ class LegalConstraintQuery:
             "resource",
             "purpose",
         ):
-            object.__setattr__(
-                self, name, _optional_text(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _optional_text(getattr(self, name), name))
         object.__setattr__(
             self, "authority_id", _optional_identifier(self.authority_id, "authority_id")
         )
@@ -1025,17 +969,13 @@ class LegalConstraintQuery:
         else:
             raise LegalConstraintQueryError("thresholds must be a mapping")
         object.__setattr__(self, "thresholds", MappingProxyType(thresholds_map))
-        object.__setattr__(
-            self, "corpus_id", _optional_identifier(self.corpus_id, "corpus_id")
-        )
+        object.__setattr__(self, "corpus_id", _optional_identifier(self.corpus_id, "corpus_id"))
         object.__setattr__(
             self,
             "corpus_root_digest",
             _digest_or_empty(self.corpus_root_digest, "corpus_root_digest"),
         )
-        object.__setattr__(
-            self, "policy_id", _optional_identifier(self.policy_id, "policy_id")
-        )
+        object.__setattr__(self, "policy_id", _optional_identifier(self.policy_id, "policy_id"))
         object.__setattr__(
             self,
             "invocation_digest",
@@ -1058,18 +998,14 @@ class LegalConstraintQuery:
             "require_provenance",
             "include_emergency",
         ):
-            object.__setattr__(
-                self, name, _bool(getattr(self, name), name, default=True)
-            )
+            object.__setattr__(self, name, _bool(getattr(self, name), name, default=True))
         object.__setattr__(
             self,
             "world_policy_kind",
             _enum_value(self.world_policy_kind, WorldPolicyKind, "world_policy_kind"),
         )
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != LEGAL_CONSTRAINT_QUERY_SCHEMA_VERSION:
             raise LegalConstraintQueryError(
                 f"unsupported legal constraint query schema: {self.schema_version!r}"
@@ -1185,13 +1121,9 @@ class LegalConstraintQuery:
             require_trusted_source=value.get("require_trusted_source", True),
             require_provenance=value.get("require_provenance", True),
             include_emergency=value.get("include_emergency", True),
-            world_policy_kind=value.get(
-                "world_policy_kind", WorldPolicyKind.CLOSED.value
-            ),
+            world_policy_kind=value.get("world_policy_kind", WorldPolicyKind.CLOSED.value),
             metadata=value.get("metadata", {}),
-            schema_version=value.get(
-                "schema_version", LEGAL_CONSTRAINT_QUERY_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", LEGAL_CONSTRAINT_QUERY_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -1199,9 +1131,7 @@ class LegalConstraintQuery:
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise LegalConstraintQueryError(
-                "legal constraint query must be valid JSON"
-            ) from exc
+            raise LegalConstraintQueryError("legal constraint query must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "legal constraint query"))
 
     def select(
@@ -1263,9 +1193,7 @@ class LegalApplicabilityEvidence:
     schema_version: str = LEGAL_APPLICABILITY_EVIDENCE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "evidence_id", _identifier(self.evidence_id, "evidence_id")
-        )
+        object.__setattr__(self, "evidence_id", _identifier(self.evidence_id, "evidence_id"))
         object.__setattr__(
             self,
             "status",
@@ -1301,26 +1229,18 @@ class LegalApplicabilityEvidence:
             _unique_sorted_ids(self.rejected_selector_ids, "rejected_selector_ids"),
         )
         if set(self.matched_selector_ids) - known:
-            raise LegalConstraintQueryError(
-                "matched_selector_ids reference unknown selectors"
-            )
+            raise LegalConstraintQueryError("matched_selector_ids reference unknown selectors")
         if set(self.rejected_selector_ids) - known:
-            raise LegalConstraintQueryError(
-                "rejected_selector_ids reference unknown selectors"
-            )
+            raise LegalConstraintQueryError("rejected_selector_ids reference unknown selectors")
         if set(self.matched_selector_ids) & set(self.rejected_selector_ids):
-            raise LegalConstraintQueryError(
-                "selector IDs cannot be both matched and rejected"
-            )
+            raise LegalConstraintQueryError("selector IDs cannot be both matched and rejected")
         gaps = tuple(
             item
             if isinstance(item, CoverageGap)
             else CoverageGap.from_dict(_mapping(item, "coverage gap"))
             for item in _sequence(self.coverage_gaps, "coverage_gaps")
         )
-        object.__setattr__(
-            self, "coverage_gaps", tuple(sorted(gaps, key=lambda item: item.gap_id))
-        )
+        object.__setattr__(self, "coverage_gaps", tuple(sorted(gaps, key=lambda item: item.gap_id)))
         assessments = tuple(
             item
             if isinstance(item, LegalConstraintAssessment)
@@ -1333,9 +1253,7 @@ class LegalApplicabilityEvidence:
             tuple(sorted(assessments, key=lambda item: item.constraint_id)),
         )
         contradictions = tuple(
-            item
-            if isinstance(item, LegalContradiction)
-            else LegalContradiction(**dict(item))  # type: ignore[arg-type]
+            item if isinstance(item, LegalContradiction) else LegalContradiction(**dict(item))  # type: ignore[arg-type]
             for item in _sequence(self.contradictions, "contradictions")
         )
         object.__setattr__(
@@ -1346,9 +1264,7 @@ class LegalApplicabilityEvidence:
         object.__setattr__(
             self,
             "selected_constraint_ids",
-            _unique_sorted_ids(
-                self.selected_constraint_ids, "selected_constraint_ids"
-            ),
+            _unique_sorted_ids(self.selected_constraint_ids, "selected_constraint_ids"),
         )
         for name in (
             "considered_count",
@@ -1356,15 +1272,11 @@ class LegalApplicabilityEvidence:
             "selected_count",
             "selection_budget",
         ):
-            object.__setattr__(
-                self, name, _non_negative_int(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _non_negative_int(getattr(self, name), name))
         object.__setattr__(
             self,
             "selection_method",
-            _enum_value(
-                self.selection_method, PremiseSelectionMethod, "selection_method"
-            ),
+            _enum_value(self.selection_method, PremiseSelectionMethod, "selection_method"),
         )
         object.__setattr__(
             self,
@@ -1375,14 +1287,10 @@ class LegalApplicabilityEvidence:
             ),
         )
         if self.retrieval_rank_used_for_authority:
-            raise LegalConstraintQueryError(
-                "retrieval rank must never select authority"
-            )
+            raise LegalConstraintQueryError("retrieval rank must never select authority")
         keys = tuple(
             _identifier(item, "authority_selection_keys")
-            for item in _sequence(
-                self.authority_selection_keys, "authority_selection_keys"
-            )
+            for item in _sequence(self.authority_selection_keys, "authority_selection_keys")
         )
         if "retrieval_rank" in keys or "retrieval_score" in keys:
             raise LegalConstraintQueryError(
@@ -1412,18 +1320,12 @@ class LegalApplicabilityEvidence:
                     SelectedPremiseSet.from_dict(self.selected_premises),
                 )
             else:
-                raise LegalConstraintQueryError(
-                    "selected_premises must be SelectedPremiseSet"
-                )
-        if self.temporal_proof_safe is not None and not isinstance(
-            self.temporal_proof_safe, bool
-        ):
+                raise LegalConstraintQueryError("selected_premises must be SelectedPremiseSet")
+        if self.temporal_proof_safe is not None and not isinstance(self.temporal_proof_safe, bool):
             raise LegalConstraintQueryError("temporal_proof_safe must be a bool or null")
         object.__setattr__(self, "notes", _optional_text(self.notes, "notes"))
         object.__setattr__(self, "metadata", _frozen_map(self.metadata, "metadata"))
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != LEGAL_APPLICABILITY_EVIDENCE_SCHEMA_VERSION:
             raise LegalConstraintQueryError(
                 f"unsupported legal applicability evidence schema: {self.schema_version!r}"
@@ -1435,22 +1337,13 @@ class LegalApplicabilityEvidence:
                     "APPLICABLE evidence cannot retain rejected selectors"
                 )
             if self.coverage_gaps:
-                raise LegalConstraintQueryError(
-                    "APPLICABLE evidence cannot retain coverage gaps"
-                )
-            unresolved = [
-                item
-                for item in self.contradictions
-                if not item.resolved
-            ]
+                raise LegalConstraintQueryError("APPLICABLE evidence cannot retain coverage gaps")
+            unresolved = [item for item in self.contradictions if not item.resolved]
             if unresolved:
                 raise LegalConstraintQueryError(
                     "APPLICABLE evidence cannot retain unresolved contradictions"
                 )
-        if (
-            self.status is LegalSelectionDisposition.COVERAGE_GAP
-            and not self.coverage_gaps
-        ):
+        if self.status is LegalSelectionDisposition.COVERAGE_GAP and not self.coverage_gaps:
             raise LegalConstraintQueryError(
                 "COVERAGE_GAP status requires at least one coverage gap"
             )
@@ -1503,9 +1396,7 @@ class LegalApplicabilityEvidence:
             "selected_constraint_ids": list(self.selected_constraint_ids),
             "selected_count": self.selected_count,
             "selected_premises": (
-                self.selected_premises.to_dict()
-                if self.selected_premises is not None
-                else None
+                self.selected_premises.to_dict() if self.selected_premises is not None else None
             ),
             "selection_budget": self.selection_budget,
             "selection_method": self.selection_method.value,
@@ -1596,9 +1487,7 @@ class LegalApplicabilityEvidence:
                 f"unknown legal applicability evidence interface: {interface!r}"
             )
         if value.get("retrieval_rank_used_for_authority"):
-            raise LegalConstraintQueryError(
-                "retrieval rank must never select authority"
-            )
+            raise LegalConstraintQueryError("retrieval rank must never select authority")
         shared = value.get("shared_applicability")
         premises = value.get("selected_premises")
         assessments_raw = value.get("assessments", ())
@@ -1616,17 +1505,13 @@ class LegalApplicabilityEvidence:
                         active=bool(mapping.get("active", False)),
                         reason_codes=tuple(mapping.get("reason_codes", ())),
                         matched_dimensions=tuple(mapping.get("matched_dimensions", ())),
-                        rejected_dimensions=tuple(
-                            mapping.get("rejected_dimensions", ())
-                        ),
+                        rejected_dimensions=tuple(mapping.get("rejected_dimensions", ())),
                         defeated_by=tuple(mapping.get("defeated_by", ())),
                         conflicts_with=tuple(mapping.get("conflicts_with", ())),
                         retrieval_rank=mapping.get("retrieval_rank"),
                         hierarchy_rank=int(mapping.get("hierarchy_rank", 0)),
                         precedence=int(mapping.get("precedence", 0)),
-                        modality=mapping.get(
-                            "modality", LegalModality.UNSPECIFIED.value
-                        ),
+                        modality=mapping.get("modality", LegalModality.UNSPECIFIED.value),
                         record=(
                             LegalConstraintRecord.from_dict(record)
                             if isinstance(record, Mapping)
@@ -1648,9 +1533,7 @@ class LegalApplicabilityEvidence:
                         kind=mapping.get("kind", "conflict"),
                         reason_codes=tuple(mapping.get("reason_codes", ())),
                         resolved=bool(mapping.get("resolved", False)),
-                        winning_constraint_id=mapping.get(
-                            "winning_constraint_id", ""
-                        ),
+                        winning_constraint_id=mapping.get("winning_constraint_id", ""),
                         notes=mapping.get("notes", ""),
                     )
                 )
@@ -1699,9 +1582,7 @@ class LegalApplicabilityEvidence:
             temporal_proof_safe=value.get("temporal_proof_safe", None),
             notes=value.get("notes", ""),
             metadata=value.get("metadata", {}),
-            schema_version=value.get(
-                "schema_version", LEGAL_APPLICABILITY_EVIDENCE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", LEGAL_APPLICABILITY_EVIDENCE_SCHEMA_VERSION),
         )
 
 
@@ -1726,9 +1607,7 @@ class LegalConstraintSelectionResult:
         if not isinstance(self.query, LegalConstraintQuery):
             raise LegalConstraintQueryError("query must be LegalConstraintQuery")
         if not isinstance(self.evidence, LegalApplicabilityEvidence):
-            raise LegalConstraintQueryError(
-                "evidence must be LegalApplicabilityEvidence"
-            )
+            raise LegalConstraintQueryError("evidence must be LegalApplicabilityEvidence")
         object.__setattr__(
             self,
             "assessments",
@@ -1744,9 +1623,7 @@ class LegalConstraintSelectionResult:
             "contradictions",
             tuple(sorted(self.contradictions, key=lambda item: item.contradiction_id)),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != LEGAL_CONSTRAINT_SELECTION_SCHEMA_VERSION:
             raise LegalConstraintQueryError(
                 f"unsupported selection schema: {self.schema_version!r}"
@@ -1981,8 +1858,7 @@ def _hard_filter_record(
 
     superseded_on = _parse_date(record.superseded_date)
     if disposition is LegalConstraintDisposition.APPLICABLE and (
-        record.superseded_by
-        or (superseded_on is not None and as_of >= superseded_on)
+        record.superseded_by or (superseded_on is not None and as_of >= superseded_on)
     ):
         disposition = LegalConstraintDisposition.SUPERSEDED
         active = False
@@ -2095,10 +1971,7 @@ def _hard_filter_record(
         # Different authority is not auto-reject; hierarchy resolution handles
         # competition.  Still record the mismatch for evidence.
         reasons.append("authority_differs_from_query")
-    elif (
-        disposition is LegalConstraintDisposition.APPLICABLE
-        and record.authority_id
-    ):
+    elif disposition is LegalConstraintDisposition.APPLICABLE and record.authority_id:
         matched.append("authority")
 
     # Thresholds.
@@ -2221,10 +2094,7 @@ def _resolve_relationships(
 
     # Applicable exceptions defeat targets without erasing either record.
     for exception_id, assessment in tuple(assessments.items()):
-        if not (
-            assessment.active
-            and assessment.modality is LegalModality.EXCEPTION
-        ):
+        if not (assessment.active and assessment.modality is LegalModality.EXCEPTION):
             continue
         record = records[exception_id]
         if not record.exception_to:
@@ -2254,9 +2124,7 @@ def _resolve_relationships(
                         target,
                         disposition=LegalConstraintDisposition.DEFEATED,
                         active=False,
-                        defeated_by=tuple(
-                            sorted(set((*target.defeated_by, exception_id)))
-                        ),
+                        defeated_by=tuple(sorted(set((*target.defeated_by, exception_id)))),
                     ),
                     "applicable_exception",
                 )
@@ -2264,9 +2132,7 @@ def _resolve_relationships(
                     assessments[exception_id],
                     "exception_applied",
                 )
-                matched = set(assessments[exception_id].matched_dimensions) | {
-                    "exceptions"
-                }
+                matched = set(assessments[exception_id].matched_dimensions) | {"exceptions"}
                 assessments[exception_id] = replace(
                     assessments[exception_id],
                     matched_dimensions=tuple(sorted(matched)),
@@ -2294,9 +2160,7 @@ def _resolve_relationships(
                         target,
                         disposition=LegalConstraintDisposition.SUPERSEDED,
                         active=False,
-                        defeated_by=tuple(
-                            sorted(set((*target.defeated_by, winner_id)))
-                        ),
+                        defeated_by=tuple(sorted(set((*target.defeated_by, winner_id)))),
                     ),
                     "express_supersession",
                 )
@@ -2312,11 +2176,7 @@ def _resolve_relationships(
                 )
 
     def active_items() -> list[LegalConstraintAssessment]:
-        return [
-            assessments[key]
-            for key in sorted(assessments)
-            if assessments[key].active
-        ]
+        return [assessments[key] for key in sorted(assessments) if assessments[key].active]
 
     # Competing authorities / opposed modalities on the same applicability key.
     by_key: dict[str, list[LegalConstraintAssessment]] = {}
@@ -2351,9 +2211,7 @@ def _resolve_relationships(
                             disposition=LegalConstraintDisposition.SUPERSEDED,
                             active=False,
                             defeated_by=tuple(
-                                sorted(
-                                    set((*loser.defeated_by, winner.constraint_id))
-                                )
+                                sorted(set((*loser.defeated_by, winner.constraint_id)))
                             ),
                         ),
                         "higher_authority_preempts",
@@ -2375,9 +2233,7 @@ def _resolve_relationships(
                     )
                 elif left.precedence != right.precedence:
                     winner, loser = (
-                        (left, right)
-                        if left.precedence > right.precedence
-                        else (right, left)
+                        (left, right) if left.precedence > right.precedence else (right, left)
                     )
                     assessments[loser.constraint_id] = _add_assessment_reason(
                         replace(
@@ -2385,9 +2241,7 @@ def _resolve_relationships(
                             disposition=LegalConstraintDisposition.SUPERSEDED,
                             active=False,
                             defeated_by=tuple(
-                                sorted(
-                                    set((*loser.defeated_by, winner.constraint_id))
-                                )
+                                sorted(set((*loser.defeated_by, winner.constraint_id)))
                             ),
                         ),
                         "higher_precedence_provision",
@@ -2424,9 +2278,7 @@ def _resolve_relationships(
                                     sorted(
                                         set(
                                             (
-                                                *assessments[
-                                                    item.constraint_id
-                                                ].conflicts_with,
+                                                *assessments[item.constraint_id].conflicts_with,
                                                 peer,
                                             )
                                         )
@@ -2501,10 +2353,10 @@ def _overall_disposition(
         if review_like and not active:
             return LegalSelectionDisposition.REVIEW_REQUIRED
 
-    if any(
-        item.disposition is LegalConstraintDisposition.INDETERMINATE
-        for item in assessments
-    ) and not active:
+    if (
+        any(item.disposition is LegalConstraintDisposition.INDETERMINATE for item in assessments)
+        and not active
+    ):
         return LegalSelectionDisposition.INDETERMINATE
 
     if active:
@@ -2559,13 +2411,9 @@ def select_applicable_legal_constraints(
 
     record_by_id = {item.constraint_id: item for item in records}
     candidate_ids = frozenset(record_by_id)
-    known_defs = frozenset(
-        _unique_sorted_ids(known_definition_ids or (), "known_definition_ids")
-    )
+    known_defs = frozenset(_unique_sorted_ids(known_definition_ids or (), "known_definition_ids"))
     known_xrefs = frozenset(
-        _unique_sorted_ids(
-            known_cross_reference_ids or (), "known_cross_reference_ids"
-        )
+        _unique_sorted_ids(known_cross_reference_ids or (), "known_cross_reference_ids")
     )
 
     temporal_allowed: frozenset[str] | None = None
@@ -2573,9 +2421,7 @@ def select_applicable_legal_constraints(
     if temporal_applicability is not None:
         temporal_proof_safe = bool(temporal_applicability.get("proof_safe", False))
         allowed = temporal_applicability.get("applicable_law_version_ids", ())
-        temporal_allowed = frozenset(
-            _unique_sorted_ids(allowed, "applicable_law_version_ids")
-        )
+        temporal_allowed = frozenset(_unique_sorted_ids(allowed, "applicable_law_version_ids"))
 
     selectors = _build_query_selectors(query)
     assessments_map: dict[str, LegalConstraintAssessment] = {}
@@ -2589,14 +2435,10 @@ def select_applicable_legal_constraints(
             temporal_allowed_ids=temporal_allowed,
         )
 
-    assessments_map, contradictions = _resolve_relationships(
-        assessments_map, record_by_id
-    )
+    assessments_map, contradictions = _resolve_relationships(assessments_map, record_by_id)
 
     # Bounded selection by authority hierarchy / precedence only.
-    active = [
-        item for item in assessments_map.values() if item.active
-    ]
+    active = [item for item in assessments_map.values() if item.active]
     ordered = sorted(active, key=_authority_sort_key)
     budget = query.selection_budget
     selected_assessments = ordered[:budget]
@@ -2613,9 +2455,7 @@ def select_applicable_legal_constraints(
             "selection_budget_exceeded",
         )
 
-    selected_ids = tuple(
-        item.constraint_id for item in selected_assessments if item.active
-    )
+    selected_ids = tuple(item.constraint_id for item in selected_assessments if item.active)
     # Re-read after truncation updates.
     selected_ids = tuple(
         item.constraint_id
@@ -2646,12 +2486,8 @@ def select_applicable_legal_constraints(
             )
         )
 
-    assessments = tuple(
-        sorted(assessments_map.values(), key=lambda item: item.constraint_id)
-    )
-    contradiction_tuple = tuple(
-        sorted(contradictions, key=lambda item: item.contradiction_id)
-    )
+    assessments = tuple(sorted(assessments_map.values(), key=lambda item: item.constraint_id))
+    contradiction_tuple = tuple(sorted(contradictions, key=lambda item: item.contradiction_id))
     disposition = _overall_disposition(
         assessments,
         contradiction_tuple,
@@ -2660,10 +2496,7 @@ def select_applicable_legal_constraints(
     )
 
     # If temporal proof is explicitly unsafe while we would otherwise apply, abstain.
-    if (
-        temporal_proof_safe is False
-        and disposition is LegalSelectionDisposition.APPLICABLE
-    ):
+    if temporal_proof_safe is False and disposition is LegalSelectionDisposition.APPLICABLE:
         disposition = LegalSelectionDisposition.REVIEW_REQUIRED
 
     # Selector match evidence from assessments + query.

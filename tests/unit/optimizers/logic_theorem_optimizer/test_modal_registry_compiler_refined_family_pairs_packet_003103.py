@@ -27,10 +27,7 @@ _PACKET_003103_FAMILY_PAIRS = (
 
 
 def test_packet_003103_pairs_are_pinned_in_packet_pair_table() -> None:
-    assert (
-        tuple(COMPILER_AMBIGUITY_PACKET_003103_FAMILY_PAIRS)
-        == _PACKET_003103_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_AMBIGUITY_PACKET_003103_FAMILY_PAIRS) == _PACKET_003103_FAMILY_PAIRS
 
 
 def test_packet_003103_pairs_are_in_refined_modal_family_cue_policy_table() -> None:

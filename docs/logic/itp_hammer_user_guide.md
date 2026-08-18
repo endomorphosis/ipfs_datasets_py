@@ -93,16 +93,23 @@ adversarial suite that specifically tries to defeat this.
 from ipfs_datasets_py.logic.hammers.corpus import CorpusManifest, CorpusSource
 from ipfs_datasets_py.logic.hammers.models import HammerPolicy, ITPKind
 from ipfs_datasets_py.logic.hammers.premise_selection import (
-    GoalFeatures, select_premises,
+    GoalFeatures,
+    select_premises,
 )
 
 manifest = CorpusManifest(manifest_id="my-corpus")
-manifest.register_source(CorpusSource(
-    corpus_id="my-corpus", name="My Corpus", source_itp=ITPKind.LEAN,
-    version_ref="v1", license_id="Apache-2.0",
-))
-manifest.add_theorem(theorem_id="t1", corpus_id="my-corpus",
-                      statement="theorem t1 : 1 + 1 = 2", imports=["Init"])
+manifest.register_source(
+    CorpusSource(
+        corpus_id="my-corpus",
+        name="My Corpus",
+        source_itp=ITPKind.LEAN,
+        version_ref="v1",
+        license_id="Apache-2.0",
+    )
+)
+manifest.add_theorem(
+    theorem_id="t1", corpus_id="my-corpus", statement="theorem t1 : 1 + 1 = 2", imports=["Init"]
+)
 
 goal = GoalFeatures.from_statement("theorem goal : 1 + 1 = 2", imports=["Init"])
 selection = select_premises(manifest, goal, top_k=8)

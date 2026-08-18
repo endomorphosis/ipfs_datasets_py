@@ -10,6 +10,7 @@ Run with::
 
     pytest benchmarks/bench_hierarchical_dispatch.py -v
 """
+
 from __future__ import annotations
 
 import anyio
@@ -26,6 +27,7 @@ from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import (
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def manager_with_mock_category() -> HierarchicalToolManager:
@@ -59,6 +61,7 @@ def manager_with_mock_category() -> HierarchicalToolManager:
 # Benchmarks
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.benchmark(group="dispatch")
 def test_dispatch_warm_cache(benchmark, manager_with_mock_category):
     """dispatch() on a pre-loaded category (warm cache)."""
@@ -77,9 +80,7 @@ def test_dispatch_invalid_category(benchmark, manager_with_mock_category):
     """dispatch() on a non-existent category (error fast-path)."""
 
     async def _run():
-        return await manager_with_mock_category.dispatch(
-            "nonexistent_category", "some_tool", {}
-        )
+        return await manager_with_mock_category.dispatch("nonexistent_category", "some_tool", {})
 
     result = benchmark(lambda: anyio.run(_run))
     assert result.get("status") == "error"

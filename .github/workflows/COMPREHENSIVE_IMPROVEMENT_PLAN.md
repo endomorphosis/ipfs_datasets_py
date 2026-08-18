@@ -522,10 +522,11 @@ python .github/scripts/test_workflow_syntax.py
 import pytest
 from workflow_validator import WorkflowValidator
 
+
 def test_pr_monitor_triggers():
-    workflow = WorkflowValidator('.github/workflows/pr-unified-monitor.yml')
-    assert workflow.has_trigger('pull_request')
-    assert 'opened' in workflow.trigger_types('pull_request')
+    workflow = WorkflowValidator(".github/workflows/pr-unified-monitor.yml")
+    assert workflow.has_trigger("pull_request")
+    assert "opened" in workflow.trigger_types("pull_request")
 ```
 
 **Layer 3: Integration Testing**

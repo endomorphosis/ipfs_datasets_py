@@ -134,7 +134,7 @@ class BaseHarness(ABC):
         session.record_round(
             score=critique.score,
             feedback=critique.feedback,
-            metadata={'phase': 'initial'},
+            metadata={"phase": "initial"},
         )
 
         if self.config.verbose:
@@ -152,7 +152,7 @@ class BaseHarness(ABC):
             session.record_round(
                 score=critique.score,
                 feedback=critique.feedback,
-                metadata={'phase': 'refinement', 'round': _round + 1},
+                metadata={"phase": "refinement", "round": _round + 1},
             )
 
             if self.config.verbose:
@@ -160,8 +160,8 @@ class BaseHarness(ABC):
 
         # Final validation
         valid = self._validate(artifact, context)
-        session.metadata['final_valid'] = valid
-        session.metadata['final_artifact_type'] = type(artifact).__name__
+        session.metadata["final_valid"] = valid
+        session.metadata["final_artifact_type"] = type(artifact).__name__
         session.finish()
 
         logger.info(
@@ -173,11 +173,11 @@ class BaseHarness(ABC):
     def get_config(self) -> Dict[str, Any]:
         """Return harness configuration as a plain dict."""
         return {
-            'max_rounds': self.config.max_rounds,
-            'target_score': self.config.target_score,
-            'convergence_threshold': self.config.convergence_threshold,
-            'verbose': self.config.verbose,
-            'harness_class': type(self).__name__,
+            "max_rounds": self.config.max_rounds,
+            "target_score": self.config.target_score,
+            "convergence_threshold": self.config.convergence_threshold,
+            "verbose": self.config.verbose,
+            "harness_class": type(self).__name__,
         }
 
 

@@ -49,7 +49,7 @@ from ipfs_datasets_py.processors.protocol import (
     Relationship,
     ProcessingMetadata,
     ProcessingStatus,
-    InputType
+    InputType,
 )
 ```
 
@@ -59,7 +59,7 @@ from ipfs_datasets_py.processors.core.protocol import (
     ProcessorProtocol,
     ProcessingContext,
     ProcessingResult,
-    InputType
+    InputType,
 )
 ```
 
@@ -68,9 +68,8 @@ from ipfs_datasets_py.processors.core.protocol import (
 **OLD:**
 ```python
 class MyProcessor:
-    async def can_process(self, input_source):
-        ...
-    
+    async def can_process(self, input_source): ...
+
     async def process(self, input_source, **options):
         result = await some_async_operation()
         ...
@@ -79,9 +78,8 @@ class MyProcessor:
 **NEW:**
 ```python
 class MyProcessor:
-    def can_handle(self, context: ProcessingContext) -> bool:
-        ...
-    
+    def can_handle(self, context: ProcessingContext) -> bool: ...
+
     def process(self, context: ProcessingContext) -> ProcessingResult:
         # If you need async operations, wrap them:
         # import asyncio
@@ -97,7 +95,7 @@ class MyProcessor:
 ```python
 async def can_process(self, input_source: Union[str, Path]) -> bool:
     input_str = str(input_source).lower()
-    return input_str.endswith('.pdf')
+    return input_str.endswith(".pdf")
 ```
 
 **NEW:**
@@ -105,7 +103,7 @@ async def can_process(self, input_source: Union[str, Path]) -> bool:
 def can_handle(self, context: ProcessingContext) -> bool:
     # Use context instead of raw input
     fmt = context.get_format()
-    return fmt and fmt.lower() == 'pdf'
+    return fmt and fmt.lower() == "pdf"
 ```
 
 #### `process()` with ProcessingContext
@@ -115,9 +113,9 @@ def can_handle(self, context: ProcessingContext) -> bool:
 async def process(self, input_source: Union[str, Path], **options) -> ProcessingResult:
     # Direct access to input
     content = await read_file(input_source)
-    
+
     # Options passed as kwargs
-    max_size = options.get('max_size', 1000)
+    max_size = options.get("max_size", 1000)
     ...
 ```
 
@@ -126,9 +124,9 @@ async def process(self, input_source: Union[str, Path], **options) -> Processing
 def process(self, context: ProcessingContext) -> ProcessingResult:
     # Access via context
     content = read_file(context.source)
-    
+
     # Options in context
-    max_size = context.options.get('max_size', 1000)
+    max_size = context.options.get("max_size", 1000)
     ...
 ```
 
@@ -139,8 +137,10 @@ def process(self, context: ProcessingContext) -> ProcessingResult:
 def get_supported_types(self) -> list[str]:
     return ["pdf", "file"]
 
+
 def get_priority(self) -> int:
     return 10
+
 
 def get_name(self) -> str:
     return "PDFProcessor"
@@ -155,7 +155,7 @@ def get_capabilities(self) -> Dict[str, Any]:
         "formats": ["pdf"],
         "input_types": ["file", "url"],
         "outputs": ["knowledge_graph", "text"],
-        "features": ["text_extraction", "entity_extraction"]
+        "features": ["text_extraction", "entity_extraction"],
     }
 ```
 
@@ -240,7 +240,9 @@ return ProcessingResult(
 **OLD:**
 ```python
 from ipfs_datasets_py.processors.protocol import (
-    ProcessingResult, ProcessingMetadata, ProcessingStatus
+    ProcessingResult,
+    ProcessingMetadata,
+    ProcessingStatus,
 )
 
 metadata = ProcessingMetadata(
@@ -248,14 +250,11 @@ metadata = ProcessingMetadata(
     processor_version="1.0",
     input_type=InputType.FILE,
     status=ProcessingStatus.SUCCESS,
-    processing_time_seconds=1.5
+    processing_time_seconds=1.5,
 )
 
 return ProcessingResult(
-    knowledge_graph=kg,
-    vectors=vectors,
-    content={"text": "..."},
-    metadata=metadata
+    knowledge_graph=kg, vectors=vectors, content={"text": "..."}, metadata=metadata
 )
 ```
 
@@ -274,7 +273,7 @@ return ProcessingResult(
         # Add any custom metadata
     },
     errors=[],  # List of error strings
-    warnings=[]  # List of warning strings
+    warnings=[],  # List of warning strings
 )
 ```
 
@@ -296,82 +295,71 @@ from ipfs_datasets_py.processors.protocol import (
     Relationship,
     ProcessingMetadata,
     ProcessingStatus,
-    InputType
+    InputType,
 )
 from pathlib import Path
 from typing import Union
 import time
 
+
 class OldPDFProcessor:
     """Deprecated async processor."""
-    
+
     async def can_process(self, input_source: Union[str, Path]) -> bool:
         input_str = str(input_source).lower()
-        return input_str.endswith('.pdf')
-    
-    async def process(
-        self, 
-        input_source: Union[str, Path],
-        **options
-    ) -> ProcessingResult:
+        return input_str.endswith(".pdf")
+
+    async def process(self, input_source: Union[str, Path], **options) -> ProcessingResult:
         start_time = time.time()
-        
+
         # Create metadata
         metadata = ProcessingMetadata(
-            processor_name="PDFProcessor",
-            processor_version="1.0",
-            input_type=InputType.FILE
+            processor_name="PDFProcessor", processor_version="1.0", input_type=InputType.FILE
         )
-        
+
         try:
             # Process file
             text = f"Content from {input_source}"
-            
+
             # Build knowledge graph
             kg = KnowledgeGraph(source=str(input_source))
             entity = Entity(
-                id="doc_1",
-                type="Document",
-                label=Path(input_source).name,
-                properties={"pages": 10}
+                id="doc_1", type="Document", label=Path(input_source).name, properties={"pages": 10}
             )
             kg.add_entity(entity)
-            
+
             # Create vectors
             vectors = VectorStore()
             vectors.add_embedding("doc_1", [0.1, 0.2, 0.3])
-            
+
             # Set metadata
             elapsed = time.time() - start_time
             metadata.processing_time_seconds = elapsed
             metadata.status = ProcessingStatus.SUCCESS
-            
+
             return ProcessingResult(
-                knowledge_graph=kg,
-                vectors=vectors,
-                content={"text": text},
-                metadata=metadata
+                knowledge_graph=kg, vectors=vectors, content={"text": text}, metadata=metadata
             )
-        
+
         except Exception as e:
             elapsed = time.time() - start_time
             metadata.processing_time_seconds = elapsed
             metadata.status = ProcessingStatus.FAILED
             metadata.add_error(str(e))
-            
+
             return ProcessingResult(
                 knowledge_graph=KnowledgeGraph(source=str(input_source)),
                 vectors=VectorStore(),
                 content={"error": str(e)},
-                metadata=metadata
+                metadata=metadata,
             )
-    
+
     def get_supported_types(self) -> list[str]:
         return ["pdf", "file"]
-    
+
     def get_priority(self) -> int:
         return 10
-    
+
     def get_name(self) -> str:
         return "PDFProcessor"
 ```
@@ -385,43 +373,44 @@ from ipfs_datasets_py.processors.core.protocol import (
     ProcessorProtocol,
     ProcessingContext,
     ProcessingResult,
-    InputType
+    InputType,
 )
 from pathlib import Path
 from typing import Dict, Any, List
 import time
 
+
 class NewPDFProcessor:
     """Modern synchronous processor."""
-    
+
     def __init__(self):
         """Initialize processor."""
         self._name = "PDFProcessor"
         self._priority = 10
-    
+
     def can_handle(self, context: ProcessingContext) -> bool:
         """Check if we can handle this input."""
         # Use context methods
         fmt = context.get_format()
-        if fmt and fmt.lower() == 'pdf':
+        if fmt and fmt.lower() == "pdf":
             return True
-        
+
         # Check input type
         if context.input_type == InputType.FILE:
             source_str = str(context.source).lower()
-            return source_str.endswith('.pdf')
-        
+            return source_str.endswith(".pdf")
+
         return False
-    
+
     def process(self, context: ProcessingContext) -> ProcessingResult:
         """Process the input."""
         start_time = time.time()
         source = context.source
-        
+
         try:
             # Process file
             text = f"Content from {source}"
-            
+
             # Build knowledge graph as dict
             kg = {
                 "entities": [
@@ -429,21 +418,21 @@ class NewPDFProcessor:
                         "id": "doc_1",
                         "type": "Document",
                         "label": Path(source).name,
-                        "properties": {"pages": 10}
+                        "properties": {"pages": 10},
                     }
                 ],
                 "relationships": [],
-                "source": str(source)
+                "source": str(source),
             }
-            
+
             # Create vectors as list
             vectors = [
                 [0.1, 0.2, 0.3]  # Embedding for doc_1
             ]
-            
+
             # Calculate elapsed time
             elapsed = time.time() - start_time
-            
+
             return ProcessingResult(
                 success=True,
                 knowledge_graph=kg,
@@ -452,24 +441,21 @@ class NewPDFProcessor:
                     "processor": self._name,
                     "processing_time": elapsed,
                     "text_length": len(text),
-                    "pages": 10
-                }
+                    "pages": 10,
+                },
             )
-        
+
         except Exception as e:
             elapsed = time.time() - start_time
-            
+
             return ProcessingResult(
                 success=False,
                 knowledge_graph={},
                 vectors=[],
-                metadata={
-                    "processor": self._name,
-                    "processing_time": elapsed
-                },
-                errors=[f"Processing failed: {str(e)}"]
+                metadata={"processor": self._name, "processing_time": elapsed},
+                errors=[f"Processing failed: {str(e)}"],
             )
-    
+
     def get_capabilities(self) -> Dict[str, Any]:
         """Return processor capabilities."""
         return {
@@ -478,11 +464,7 @@ class NewPDFProcessor:
             "formats": ["pdf"],
             "input_types": ["file", "url"],
             "outputs": ["knowledge_graph", "vectors", "text"],
-            "features": [
-                "text_extraction",
-                "entity_extraction",
-                "document_metadata"
-            ]
+            "features": ["text_extraction", "entity_extraction", "document_metadata"],
         }
 ```
 
@@ -501,7 +483,7 @@ registry = get_global_registry()
 registry.register(
     processor=NewPDFProcessor(),
     priority=10,  # Also in get_capabilities()
-    name="PDFProcessor"
+    name="PDFProcessor",
 )
 
 # Use UniversalProcessor
@@ -523,12 +505,13 @@ else:
 ```python
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_old_processor():
     processor = OldPDFProcessor()
     can_process = await processor.can_process("test.pdf")
     assert can_process
-    
+
     result = await processor.process("test.pdf")
     assert result.metadata.status == ProcessingStatus.SUCCESS
 ```
@@ -538,18 +521,16 @@ async def test_old_processor():
 ```python
 def test_new_processor():
     from ipfs_datasets_py.processors.core import ProcessingContext, InputType
-    
+
     processor = NewPDFProcessor()
-    
+
     context = ProcessingContext(
-        input_type=InputType.FILE,
-        source="test.pdf",
-        metadata={"format": "pdf"}
+        input_type=InputType.FILE, source="test.pdf", metadata={"format": "pdf"}
     )
-    
+
     can_handle = processor.can_handle(context)
     assert can_handle
-    
+
     result = processor.process(context)
     assert result.success
 ```
@@ -564,6 +545,7 @@ def test_new_processor():
 
 ```python
 import asyncio
+
 
 def process(self, context: ProcessingContext) -> ProcessingResult:
     # Wrap async calls
@@ -619,10 +601,7 @@ from ipfs_datasets_py.processors.core.protocol import ProcessingContext
 ```python
 from ipfs_datasets_py.processors.core import ProcessingContext, InputType
 
-context = ProcessingContext(
-    input_type=InputType.FILE,
-    source="your_input.pdf"
-)
+context = ProcessingContext(input_type=InputType.FILE, source="your_input.pdf")
 result = processor.can_handle(context)
 ```
 

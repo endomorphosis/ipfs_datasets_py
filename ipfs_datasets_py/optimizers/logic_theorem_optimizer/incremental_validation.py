@@ -270,7 +270,9 @@ class TypedASTScope:
                 or value.get("semantic_family")
             ),
             focused_tests=_identifiers(value.get("focused_tests")),
-            replay_samples=_identifiers(value.get("replay_samples") or value.get("replay_case_ids")),
+            replay_samples=_identifiers(
+                value.get("replay_samples") or value.get("replay_case_ids")
+            ),
             mutation_cases=_identifiers(value.get("mutation_cases")),
             proof_obligations=_identifiers(
                 value.get("proof_obligations") or value.get("proof_obligation_ids")
@@ -352,8 +354,12 @@ class ChangedScopeRule:
         if not str(self.rule_id or "").strip():
             raise ValueError("scope rule_id must not be empty")
         for name in (
-            "path_patterns", "ast_terms", "focused_tests", "replay_samples",
-            "mutation_cases", "proof_obligations",
+            "path_patterns",
+            "ast_terms",
+            "focused_tests",
+            "replay_samples",
+            "mutation_cases",
+            "proof_obligations",
         ):
             object.__setattr__(self, name, _identifiers(getattr(self, name)))
         object.__setattr__(self, "legal_ir_families", _ordered_families(self.legal_ir_families))
@@ -362,33 +368,46 @@ class ChangedScopeRule:
         return any(fnmatch.fnmatchcase(path, pattern) for pattern in self.path_patterns)
 
     def matches_ast(self, scope: TypedASTScope) -> bool:
-        return bool(self.ast_terms) and any(term.lower() in scope.search_text for term in self.ast_terms)
+        return bool(self.ast_terms) and any(
+            term.lower() in scope.search_text for term in self.ast_terms
+        )
 
 
 def _default_scope_rules() -> tuple[ChangedScopeRule, ...]:
     modal_test = "tests/unit_tests/logic/modal/test_leanstral_validation.py"
-    incremental_test = "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_validation.py"
+    incremental_test = (
+        "tests/unit/optimizers/logic_theorem_optimizer/test_incremental_validation.py"
+    )
     family_test = "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_family_evaluator.py"
     replay_test = "tests/unit/logic/integration/test_hammer_failure_replay.py"
     proof_test = "tests/unit/logic/integration/test_legal_ir_proof_feedback.py"
     return (
         ChangedScopeRule(
-            "modal_compiler", ("ipfs_datasets_py/logic/modal/compiler*.py", "ipfs_datasets_py/logic/modal/codec.py"),
-            focused_tests=(modal_test,), legal_ir_families=("deontic", "frame_logic", "temporal", "provenance"),
+            "modal_compiler",
+            ("ipfs_datasets_py/logic/modal/compiler*.py", "ipfs_datasets_py/logic/modal/codec.py"),
+            focused_tests=(modal_test,),
+            legal_ir_families=("deontic", "frame_logic", "temporal", "provenance"),
             replay_samples=("accepted-candidate", "syntax-rejected"),
             mutation_cases=("invert_modality", "remove_modal_cue", "alter_scope"),
             proof_obligations=("modal_operator_preserved", "source_provenance_preserved"),
         ),
         ChangedScopeRule(
-            "decompiler", ("ipfs_datasets_py/logic/modal/decompiler*.py",),
-            ast_terms=("decompil", "decode", "round_trip", "reconstruct"), focused_tests=(modal_test,),
+            "decompiler",
+            ("ipfs_datasets_py/logic/modal/decompiler*.py",),
+            ast_terms=("decompil", "decode", "round_trip", "reconstruct"),
+            focused_tests=(modal_test,),
             legal_ir_families=("decompiler", "deontic", "temporal", "provenance"),
             replay_samples=("source-copy-rejected", "reconstruction-failed"),
             mutation_cases=("invert_modality", "remove_exception", "alter_deadline"),
-            proof_obligations=("decompiler_round_trip", "exception_scope_preserved", "source_provenance_preserved"),
+            proof_obligations=(
+                "decompiler_round_trip",
+                "exception_scope_preserved",
+                "source_provenance_preserved",
+            ),
         ),
         ChangedScopeRule(
-            "deontic", ("ipfs_datasets_py/logic/deontic/**",),
+            "deontic",
+            ("ipfs_datasets_py/logic/deontic/**",),
             ast_terms=("obligation", "permission", "prohibition", "deontic"),
             focused_tests=(modal_test, family_test, replay_test),
             legal_ir_families=("deontic", "decompiler", "provenance"),
@@ -397,66 +416,117 @@ def _default_scope_rules() -> tuple[ChangedScopeRule, ...]:
             proof_obligations=("modal_operator_preserved", "exception_scope_preserved"),
         ),
         ChangedScopeRule(
-            "knowledge_graph", ("ipfs_datasets_py/logic/modal/kg_bridge.py", "ipfs_datasets_py/logic/knowledge_graphs/**", "ipfs_datasets_py/logic/flogic/**"),
-            ast_terms=("graph", "triple", "flogic", "frame"), focused_tests=(modal_test, family_test),
-            legal_ir_families=("knowledge_graphs", "frame_logic", "provenance"), replay_samples=("kg-rejected",),
+            "knowledge_graph",
+            (
+                "ipfs_datasets_py/logic/modal/kg_bridge.py",
+                "ipfs_datasets_py/logic/knowledge_graphs/**",
+                "ipfs_datasets_py/logic/flogic/**",
+            ),
+            ast_terms=("graph", "triple", "flogic", "frame"),
+            focused_tests=(modal_test, family_test),
+            legal_ir_families=("knowledge_graphs", "frame_logic", "provenance"),
+            replay_samples=("kg-rejected",),
             mutation_cases=("remove_relation_endpoint", "alter_scope"),
-            proof_obligations=("graph_has_no_dangling_edges", "frame_terms_preserved", "source_provenance_preserved"),
+            proof_obligations=(
+                "graph_has_no_dangling_edges",
+                "frame_terms_preserved",
+                "source_provenance_preserved",
+            ),
         ),
         ChangedScopeRule(
-            "tdfol_temporal", ("ipfs_datasets_py/logic/TDFOL/**", "ipfs_datasets_py/logic/bridge/fol_tdfol.py"),
-            ast_terms=("tdfol", "deadline", "temporal", "quantif"), focused_tests=(family_test, replay_test),
+            "tdfol_temporal",
+            ("ipfs_datasets_py/logic/TDFOL/**", "ipfs_datasets_py/logic/bridge/fol_tdfol.py"),
+            ast_terms=("tdfol", "deadline", "temporal", "quantif"),
+            focused_tests=(family_test, replay_test),
             legal_ir_families=("tdfol", "temporal", "external_provers", "provenance"),
-            replay_samples=("hammer-unproved", "codex-repair-feedback"), mutation_cases=("alter_deadline", "unsupported_modal_system"),
+            replay_samples=("hammer-unproved", "codex-repair-feedback"),
+            mutation_cases=("alter_deadline", "unsupported_modal_system"),
             proof_obligations=("proof_route_is_distinct_from_proof", "source_provenance_preserved"),
         ),
         ChangedScopeRule(
-            "cec", ("ipfs_datasets_py/logic/CEC/**", "ipfs_datasets_py/logic/bridge/cec_dcec.py"),
-            ast_terms=("event", "cec", "lifecycle", "interval"), focused_tests=(family_test, replay_test),
-            legal_ir_families=("cec", "temporal", "provenance"), replay_samples=("reconstruction-failed",),
-            mutation_cases=("alter_deadline",), proof_obligations=("event_interval_preserved", "source_provenance_preserved"),
+            "cec",
+            ("ipfs_datasets_py/logic/CEC/**", "ipfs_datasets_py/logic/bridge/cec_dcec.py"),
+            ast_terms=("event", "cec", "lifecycle", "interval"),
+            focused_tests=(family_test, replay_test),
+            legal_ir_families=("cec", "temporal", "provenance"),
+            replay_samples=("reconstruction-failed",),
+            mutation_cases=("alter_deadline",),
+            proof_obligations=("event_interval_preserved", "source_provenance_preserved"),
         ),
         ChangedScopeRule(
-            "external_provers", ("ipfs_datasets_py/logic/external_provers/**", "ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover*.py"),
-            ast_terms=("proof_route", "backend", "prover", "kernel"), focused_tests=(family_test, replay_test, proof_test),
-            legal_ir_families=("external_provers", "tdfol"), replay_samples=("backend-unavailable", "hammer-unproved"),
-            mutation_cases=("unsupported_modal_system",), proof_obligations=("proof_route_is_distinct_from_proof",),
+            "external_provers",
+            (
+                "ipfs_datasets_py/logic/external_provers/**",
+                "ipfs_datasets_py/optimizers/logic_theorem_optimizer/prover*.py",
+            ),
+            ast_terms=("proof_route", "backend", "prover", "kernel"),
+            focused_tests=(family_test, replay_test, proof_test),
+            legal_ir_families=("external_provers", "tdfol"),
+            replay_samples=("backend-unavailable", "hammer-unproved"),
+            mutation_cases=("unsupported_modal_system",),
+            proof_obligations=("proof_route_is_distinct_from_proof",),
         ),
         ChangedScopeRule(
-            "proof_feedback", ("ipfs_datasets_py/logic/integration/reasoning/legal_ir_*proof*.py", "ipfs_datasets_py/logic/integration/reasoning/legal_ir_*obligation*.py"),
-            ast_terms=("obligation", "premise", "receipt", "counterexample"), focused_tests=(proof_test, replay_test),
-            legal_ir_families=LEGAL_IR_EVALUATION_FAMILIES, replay_samples=("accepted-candidate", "hammer-unproved", "reconstruction-failed"),
+            "proof_feedback",
+            (
+                "ipfs_datasets_py/logic/integration/reasoning/legal_ir_*proof*.py",
+                "ipfs_datasets_py/logic/integration/reasoning/legal_ir_*obligation*.py",
+            ),
+            ast_terms=("obligation", "premise", "receipt", "counterexample"),
+            focused_tests=(proof_test, replay_test),
+            legal_ir_families=LEGAL_IR_EVALUATION_FAMILIES,
+            replay_samples=("accepted-candidate", "hammer-unproved", "reconstruction-failed"),
             proof_obligations=DEFAULT_PROOF_OBLIGATIONS,
         ),
         ChangedScopeRule(
-            "family_runtime", (
+            "family_runtime",
+            (
                 "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
                 "ipfs_datasets_py/optimizers/logic_theorem_optimizer/incremental_validation.py",
             ),
-            focused_tests=(family_test, incremental_test), legal_ir_families=LEGAL_IR_EVALUATION_FAMILIES,
-            replay_samples=DEFAULT_REPLAY_CASES, mutation_cases=DEFAULT_MUTATION_CASES,
+            focused_tests=(family_test, incremental_test),
+            legal_ir_families=LEGAL_IR_EVALUATION_FAMILIES,
+            replay_samples=DEFAULT_REPLAY_CASES,
+            mutation_cases=DEFAULT_MUTATION_CASES,
             proof_obligations=DEFAULT_PROOF_OBLIGATIONS,
         ),
         ChangedScopeRule(
-            "representation_runtime", ("ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",),
+            "representation_runtime",
+            ("ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",),
             ast_terms=("autoencoder", "loss", "embedding", "auxiliary_head"),
-            focused_tests=(family_test, proof_test), legal_ir_families=LEGAL_IR_EVALUATION_FAMILIES,
+            focused_tests=(family_test, proof_test),
+            legal_ir_families=LEGAL_IR_EVALUATION_FAMILIES,
             replay_samples=("accepted-candidate", "source-copy-rejected", "codex-repair-feedback"),
             mutation_cases=("invert_modality", "remove_modal_cue", "alter_scope"),
-            proof_obligations=("modal_operator_preserved", "source_provenance_preserved", "decompiler_round_trip"),
+            proof_obligations=(
+                "modal_operator_preserved",
+                "source_provenance_preserved",
+                "decompiler_round_trip",
+            ),
         ),
         ChangedScopeRule(
-            "provenance", (), ast_terms=("provenance", "source_span", "citation", "receipt"),
-            focused_tests=(modal_test, proof_test), legal_ir_families=("provenance",), replay_samples=("source-copy-rejected",),
+            "provenance",
+            (),
+            ast_terms=("provenance", "source_span", "citation", "receipt"),
+            focused_tests=(modal_test, proof_test),
+            legal_ir_families=("provenance",),
+            replay_samples=("source-copy-rejected",),
             proof_obligations=("source_provenance_preserved",),
         ),
         ChangedScopeRule(
-            "exception", (), ast_terms=("exception", "unless", "prohibition", "deontic"),
-            focused_tests=(modal_test,), legal_ir_families=("deontic", "decompiler"), replay_samples=("accepted-candidate",),
-            mutation_cases=("invert_modality", "remove_exception"), proof_obligations=("modal_operator_preserved", "exception_scope_preserved"),
+            "exception",
+            (),
+            ast_terms=("exception", "unless", "prohibition", "deontic"),
+            focused_tests=(modal_test,),
+            legal_ir_families=("deontic", "decompiler"),
+            replay_samples=("accepted-candidate",),
+            mutation_cases=("invert_modality", "remove_exception"),
+            proof_obligations=("modal_operator_preserved", "exception_scope_preserved"),
         ),
         ChangedScopeRule(
-            "tests", ("tests/**/test_*.py",), focused_tests=(),
+            "tests",
+            ("tests/**/test_*.py",),
+            focused_tests=(),
         ),
     )
 
@@ -484,9 +554,19 @@ class ChangedScopeValidationPlan:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "boundary", ValidationBoundary.coerce(self.boundary))
-        object.__setattr__(self, "changed_files", tuple(sorted({_normalize_path(item) for item in self.changed_files})))
+        object.__setattr__(
+            self,
+            "changed_files",
+            tuple(sorted({_normalize_path(item) for item in self.changed_files})),
+        )
         object.__setattr__(self, "typed_ast_scopes", tuple(self.typed_ast_scopes))
-        for name in ("focused_tests", "replay_samples", "mutation_cases", "proof_obligations", "matched_rules"):
+        for name in (
+            "focused_tests",
+            "replay_samples",
+            "mutation_cases",
+            "proof_obligations",
+            "matched_rules",
+        ):
             object.__setattr__(self, name, _identifiers(getattr(self, name)))
         object.__setattr__(self, "legal_ir_families", _ordered_families(self.legal_ir_families))
         if self.boundary.requires_complete_promotion_gates and not (
@@ -588,8 +668,11 @@ class ChangedScopeValidationPlanner:
             )
 
         selected: dict[str, set[str]] = {
-            "focused_tests": set(), "legal_ir_families": set(), "replay_samples": set(),
-            "mutation_cases": set(), "proof_obligations": set(),
+            "focused_tests": set(),
+            "legal_ir_families": set(),
+            "replay_samples": set(),
+            "mutation_cases": set(),
+            "proof_obligations": set(),
         }
         for scope in scopes:
             for name in selected:
@@ -812,7 +895,8 @@ class IncrementalValidationReport:
     @property
     def failed_check_ids(self) -> tuple[str, ...]:
         return tuple(
-            check_id for check_id in self.plan.required_check_ids
+            check_id
+            for check_id in self.plan.required_check_ids
             if check_id in self.results and not self.results[check_id].accepted
         )
 
@@ -821,7 +905,8 @@ class IncrementalValidationReport:
         """Required checks deliberately not started after an earlier gate failed."""
 
         return tuple(
-            check_id for check_id in self.plan.required_check_ids
+            check_id
+            for check_id in self.plan.required_check_ids
             if check_id in self.results and not self.results[check_id].executed
         )
 
@@ -880,7 +965,8 @@ class IncrementalValidationReport:
         value = {
             "accepted": self.accepted,
             "accepted_check_count": sum(
-                1 for check_id in self.plan.required_check_ids
+                1
+                for check_id in self.plan.required_check_ids
                 if check_id in self.results and self.results[check_id].accepted
             ),
             "deterministic_semantic_failure_count": len(self.semantic_failure_check_ids),
@@ -908,7 +994,11 @@ class IncrementalValidationReport:
 
     @property
     def accepted(self) -> bool:
-        return not self.missing_check_ids and not self.failed_check_ids and self.promotion_gates_complete
+        return (
+            not self.missing_check_ids
+            and not self.failed_check_ids
+            and self.promotion_gates_complete
+        )
 
     @property
     def merge_allowed(self) -> bool:
@@ -980,22 +1070,16 @@ class IncrementalValidationStageResult:
 
     @property
     def executed_check_ids(self) -> tuple[str, ...]:
-        return tuple(
-            check_id for check_id in self.check_ids if self.results[check_id].executed
-        )
+        return tuple(check_id for check_id in self.check_ids if self.results[check_id].executed)
 
     @property
     def skipped_check_ids(self) -> tuple[str, ...]:
-        return tuple(
-            check_id for check_id in self.check_ids if not self.results[check_id].executed
-        )
+        return tuple(check_id for check_id in self.check_ids if not self.results[check_id].executed)
 
     @property
     def failed_check_ids(self) -> tuple[str, ...]:
         return tuple(
-            check_id
-            for check_id in self.executed_check_ids
-            if not self.results[check_id].accepted
+            check_id for check_id in self.executed_check_ids if not self.results[check_id].accepted
         )
 
     @property
@@ -1109,7 +1193,8 @@ class StagedIncrementalValidationReport:
         return all(
             stage.accepted
             for stage in self.stages
-            if stage.stage in {
+            if stage.stage
+            in {
                 IncrementalValidationStage.SYNTAX,
                 IncrementalValidationStage.FOCUSED_PREFLIGHT,
             }
@@ -1120,7 +1205,8 @@ class StagedIncrementalValidationReport:
         return tuple(
             check_id
             for stage in self.stages
-            if stage.stage in {
+            if stage.stage
+            in {
                 IncrementalValidationStage.SYNTAX,
                 IncrementalValidationStage.FOCUSED_PREFLIGHT,
             }
@@ -1136,7 +1222,8 @@ class StagedIncrementalValidationReport:
         return any(
             stage.executed_check_ids
             for stage in self.stages
-            if stage.stage in {
+            if stage.stage
+            in {
                 IncrementalValidationStage.EXPENSIVE,
                 IncrementalValidationStage.PROMOTION,
             }
@@ -1144,10 +1231,16 @@ class StagedIncrementalValidationReport:
 
     @property
     def report_id(self) -> str:
-        return f"staged-incremental-validation-{_digest(self.to_dict(include_report_id=False))[:20]}"
+        return (
+            f"staged-incremental-validation-{_digest(self.to_dict(include_report_id=False))[:20]}"
+        )
 
     def stage(self, value: IncrementalValidationStage | str) -> IncrementalValidationStageResult:
-        selected = value if isinstance(value, IncrementalValidationStage) else IncrementalValidationStage(value)
+        selected = (
+            value
+            if isinstance(value, IncrementalValidationStage)
+            else IncrementalValidationStage(value)
+        )
         return next(item for item in self.stages if item.stage is selected)
 
     def to_dict(self, *, include_report_id: bool = True) -> dict[str, Any]:
@@ -1203,7 +1296,9 @@ class IncrementalCandidateValidator:
         return normalized
 
     @staticmethod
-    def _normalize_callback_result(check_id: str, value: Any) -> tuple[bool, bool, str, Mapping[str, Any]]:
+    def _normalize_callback_result(
+        check_id: str, value: Any
+    ) -> tuple[bool, bool, str, Mapping[str, Any]]:
         if isinstance(value, IncrementalValidationResult):
             if value.check_id != check_id:
                 return False, False, "result_identity_mismatch", {}
@@ -1239,7 +1334,9 @@ class IncrementalCandidateValidator:
             request = IncrementalValidationRequest(check.check_id, plan, baseline, attempt)
             try:
                 value = check.callback(request)
-                accepted, transient, error, evidence = self._normalize_callback_result(check.check_id, value)
+                accepted, transient, error, evidence = self._normalize_callback_result(
+                    check.check_id, value
+                )
             except (TransientValidationError, TimeoutError, ConnectionError) as exc:
                 accepted, transient = False, True
                 error = f"{exc.__class__.__name__}: {exc}"
@@ -1252,24 +1349,35 @@ class IncrementalCandidateValidator:
             if accepted:
                 self._record(checks_passed=1)
                 return IncrementalValidationResult(
-                    check_id=check.check_id, accepted=True, attempts=attempt,
-                    transient_failures=transient_failures, evidence=evidence,
-                    baseline_evidence_id=baseline_id, started_at_monotonic=started,
+                    check_id=check.check_id,
+                    accepted=True,
+                    attempts=attempt,
+                    transient_failures=transient_failures,
+                    evidence=evidence,
+                    baseline_evidence_id=baseline_id,
+                    started_at_monotonic=started,
                     elapsed_seconds=time.monotonic() - started,
                     worker_thread_id=threading.get_ident(),
                 )
             if not transient or attempt > self.max_transient_retries:
                 self._record(checks_failed=1, retry_budget_exhausted=int(transient))
                 return IncrementalValidationResult(
-                    check_id=check.check_id, accepted=False, attempts=attempt,
-                    transient_failures=transient_failures + int(transient), error=error,
-                    evidence=evidence, baseline_evidence_id=baseline_id,
-                    started_at_monotonic=started, elapsed_seconds=time.monotonic() - started,
+                    check_id=check.check_id,
+                    accepted=False,
+                    attempts=attempt,
+                    transient_failures=transient_failures + int(transient),
+                    error=error,
+                    evidence=evidence,
+                    baseline_evidence_id=baseline_id,
+                    started_at_monotonic=started,
+                    elapsed_seconds=time.monotonic() - started,
                     worker_thread_id=threading.get_ident(),
                 )
             transient_failures += 1
             self._record(transient_retries=1)
-        raise AssertionError(f"unreachable validation retry state: {terminal_error} {terminal_evidence}")
+        raise AssertionError(
+            f"unreachable validation retry state: {terminal_error} {terminal_evidence}"
+        )
 
     def _execute_stage(
         self,
@@ -1432,9 +1540,7 @@ class IncrementalCandidateValidator:
             stages.append(outcome)
 
         combined_results = {
-            check_id: result
-            for stage in stages
-            for check_id, result in stage.results.items()
+            check_id: result for stage in stages for check_id, result in stage.results.items()
         }
         report = IncrementalValidationReport(
             plan=plan,
@@ -1454,7 +1560,8 @@ class IncrementalCandidateValidator:
     def validate(
         self,
         plan: ChangedScopeValidationPlan,
-        checks: Mapping[str, ValidationCallback | IncrementalValidationCheck] | Sequence[IncrementalValidationCheck],
+        checks: Mapping[str, ValidationCallback | IncrementalValidationCheck]
+        | Sequence[IncrementalValidationCheck],
         *,
         baseline_evidence: Optional[FrozenBaselineEvidence] = None,
     ) -> IncrementalValidationReport:
@@ -1471,12 +1578,16 @@ class IncrementalCandidateValidator:
             check = normalized.get(check_id)
             if check is None:
                 results[check_id] = IncrementalValidationResult(
-                    check_id=check_id, accepted=False, error="required_check_not_registered",
+                    check_id=check_id,
+                    accepted=False,
+                    error="required_check_not_registered",
                     baseline_evidence_id=baseline_id,
                 )
             elif check.check_id != check_id:
                 results[check_id] = IncrementalValidationResult(
-                    check_id=check_id, accepted=False, error="registered_check_identity_mismatch",
+                    check_id=check_id,
+                    accepted=False,
+                    error="registered_check_identity_mismatch",
                     baseline_evidence_id=baseline_id,
                 )
             else:
@@ -1485,7 +1596,9 @@ class IncrementalCandidateValidator:
         self._record(runs=1, checks_selected=len(selected), checks_missing=len(results))
         if selected:
             worker_count = min(self.max_workers, len(selected))
-            with ThreadPoolExecutor(max_workers=worker_count, thread_name_prefix="legal-ir-validation") as pool:
+            with ThreadPoolExecutor(
+                max_workers=worker_count, thread_name_prefix="legal-ir-validation"
+            ) as pool:
                 futures = {
                     pool.submit(self._execute, check, plan, baseline_evidence): check_id
                     for check_id, check in selected.items()
@@ -1496,7 +1609,8 @@ class IncrementalCandidateValidator:
                         results[check_id] = future.result()
                     except Exception as exc:  # pragma: no cover - executor defence
                         results[check_id] = IncrementalValidationResult(
-                            check_id=check_id, accepted=False,
+                            check_id=check_id,
+                            accepted=False,
                             error=f"executor_error:{exc.__class__.__name__}: {exc}",
                             baseline_evidence_id=baseline_id,
                         )
@@ -1525,7 +1639,8 @@ class PreflightFirstIncrementalValidator(IncrementalCandidateValidator):
 
 def validate_incremental_candidate(
     plan: ChangedScopeValidationPlan,
-    checks: Mapping[str, ValidationCallback | IncrementalValidationCheck] | Sequence[IncrementalValidationCheck],
+    checks: Mapping[str, ValidationCallback | IncrementalValidationCheck]
+    | Sequence[IncrementalValidationCheck],
     *,
     baseline_evidence: Optional[FrozenBaselineEvidence] = None,
     max_workers: int = 8,

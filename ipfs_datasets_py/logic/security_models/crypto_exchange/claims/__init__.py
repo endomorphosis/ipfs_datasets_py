@@ -28,14 +28,14 @@ def default_claims() -> list[SecurityClaim]:
 
 
 __all__ = [
-    'AuditEventExistsForCriticalTransitionClaim',
-    'CapabilityDelegationMonotonicityClaim',
-    'NoDepositCreditedBeforeFinalityClaim',
-    'GlobalAssetConservationClaim',
-    'NoOverReservedInternalAccountClaim',
-    'NoSigningAfterWalletFreezeClaim',
-    'NoUnauthorizedWithdrawalClaim',
-    'RevokedCapabilityClaim',
-    'SecurityClaim',
-    'default_claims',
+    "AuditEventExistsForCriticalTransitionClaim",
+    "CapabilityDelegationMonotonicityClaim",
+    "NoDepositCreditedBeforeFinalityClaim",
+    "GlobalAssetConservationClaim",
+    "NoOverReservedInternalAccountClaim",
+    "NoSigningAfterWalletFreezeClaim",
+    "NoUnauthorizedWithdrawalClaim",
+    "RevokedCapabilityClaim",
+    "SecurityClaim",
+    "default_claims",
 ]

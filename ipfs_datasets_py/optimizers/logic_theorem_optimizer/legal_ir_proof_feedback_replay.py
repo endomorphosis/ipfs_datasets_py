@@ -75,9 +75,7 @@ LEGAL_IR_HISTORICAL_HAMMER_REPLAY_SCHEMA_VERSION = (
 LEGAL_IR_HISTORICAL_HAMMER_INVENTORY_SCHEMA_VERSION = (
     "legal-ir-historical-hammer-obligation-inventory-v1"
 )
-LEGAL_IR_HISTORICAL_HAMMER_CACHE_SCHEMA_VERSION = (
-    "legal-ir-historical-hammer-replay-cache-v1"
-)
+LEGAL_IR_HISTORICAL_HAMMER_CACHE_SCHEMA_VERSION = "legal-ir-historical-hammer-replay-cache-v1"
 LEGAL_IR_HISTORICAL_HAMMER_EXECUTION_RESULT_SCHEMA_VERSION = (
     "legal-ir-historical-hammer-execution-result-v1"
 )
@@ -182,9 +180,7 @@ _ACCEPTED_RECONSTRUCTION_STATUSES = frozenset(
 )
 _PROVED_STATUSES = frozenset({"passed", "proved", "success", "verified"})
 _TIMEOUT_STATUSES = frozenset({"deadline_exceeded", "timed_out", "timeout"})
-_UNSUPPORTED_STATUSES = frozenset(
-    {"translation_failed", "unsupported", "unsupported_translation"}
-)
+_UNSUPPORTED_STATUSES = frozenset({"translation_failed", "unsupported", "unsupported_translation"})
 _SUPPORTED_TRANSLATION_STATUSES = frozenset(
     {"passed", "success", "supported", "translated", "verified"}
 )
@@ -374,8 +370,7 @@ def _statement_from_mapping(value: Mapping[str, Any]) -> str:
         isinstance(candidate, str)
         and candidate.strip()
         and any(
-            key in value
-            for key in ("kind", "logic_family", "obligation_id", "obligation_type")
+            key in value for key in ("kind", "logic_family", "obligation_id", "obligation_type")
         )
     ):
         return _normalize_statement(candidate)
@@ -401,11 +396,7 @@ def _looks_like_obligation(value: Mapping[str, Any], parent_key: str) -> bool:
         return True
     if parent_key.lower() == "goal":
         metadata = _mapping(value.get("metadata"))
-        return bool(
-            value.get("name")
-            or value.get("itp_system")
-            or metadata.get("obligation_id")
-        )
+        return bool(value.get("name") or value.get("itp_system") or metadata.get("obligation_id"))
     return False
 
 
@@ -419,9 +410,7 @@ def _count_artifact_members(value: Any, *, depth: int = 0) -> int:
             if key in _ARTIFACT_COLLECTION_KEYS:
                 if isinstance(child, Mapping):
                     count += len(child)
-                elif isinstance(child, Sequence) and not isinstance(
-                    child, (bytes, bytearray, str)
-                ):
+                elif isinstance(child, Sequence) and not isinstance(child, (bytes, bytearray, str)):
                     count += len(child)
                 elif child is not None:
                     count += 1
@@ -483,9 +472,7 @@ class HistoricalHammerObligation:
     original_id_digests: tuple[str, ...]
     occurrence_count: int
     statement: str = field(repr=False, compare=False)
-    execution_metadata: Mapping[str, Any] = field(
-        default_factory=dict, repr=False, compare=False
-    )
+    execution_metadata: Mapping[str, Any] = field(default_factory=dict, repr=False, compare=False)
     schema_version: str = LEGAL_IR_HISTORICAL_HAMMER_INVENTORY_SCHEMA_VERSION
 
     @property
@@ -520,9 +507,7 @@ class HistoricalHammerObligation:
             "logic_family": self.logic_family,
             "occurrence_count": self.occurrence_count,
             "original_id_digests": list(self.original_id_digests),
-            "premise_hint_digests": [
-                replay_content_digest(item) for item in self.premise_hints
-            ],
+            "premise_hint_digests": [replay_content_digest(item) for item in self.premise_hints],
             "schema_version": self.schema_version,
             "source_artifact_digests": list(self.source_artifact_digests),
         }
@@ -560,9 +545,7 @@ def _candidate_from_mapping(
             {
                 _safe_identifier(item)
                 for item in _sequence(
-                    value.get("premise_hints")
-                    or value.get("selected_premise_families")
-                    or ()
+                    value.get("premise_hints") or value.get("selected_premise_families") or ()
                 )
                 if str(item or "").strip()
             }
@@ -582,10 +565,7 @@ def _candidate_from_mapping(
     }
     digest = replay_content_digest(identity)
     original_id = (
-        value.get("obligation_id")
-        or metadata.get("obligation_id")
-        or value.get("id")
-        or ""
+        value.get("obligation_id") or metadata.get("obligation_id") or value.get("id") or ""
     )
     origin = replay_content_digest(
         {
@@ -600,9 +580,7 @@ def _candidate_from_mapping(
         logic_family=logic_family,
         premise_hints=hints,
         source_artifact_digests=(origin,),
-        original_id_digests=(
-            (replay_content_digest(str(original_id)),) if original_id else ()
-        ),
+        original_id_digests=((replay_content_digest(str(original_id)),) if original_id else ()),
         occurrence_count=1,
         statement=statement,
         execution_metadata=execution_metadata,
@@ -633,9 +611,7 @@ class HistoricalHammerInventory:
             "cycle_file_count": self.cycle_file_count,
             "historically_trusted_count": self.historically_trusted_count,
             "nested_artifact_count": self.nested_artifact_count,
-            "obligation_addresses": [
-                item.content_address for item in self.obligations
-            ],
+            "obligation_addresses": [item.content_address for item in self.obligations],
             "schema_version": self.schema_version,
             "source_file_digests": list(self.source_file_digests),
         }
@@ -761,8 +737,7 @@ def load_historical_hammer_obligations(
                     ),
                     original_id_digests=tuple(
                         sorted(
-                            set(existing.original_id_digests)
-                            | set(candidate.original_id_digests)
+                            set(existing.original_id_digests) | set(candidate.original_id_digests)
                         )
                     ),
                     occurrence_count=existing.occurrence_count + 1,
@@ -815,9 +790,7 @@ class HistoricalHammerReplayPolicy:
             self.resource_wait_timeout_seconds is not None
             and self.resource_wait_timeout_seconds < 0
         ):
-            raise HistoricalHammerReplayError(
-                "resource_wait_timeout_seconds cannot be negative"
-            )
+            raise HistoricalHammerReplayError("resource_wait_timeout_seconds cannot be negative")
         for value in (
             self.compiler_schema_version,
             self.solver_policy_fingerprint,
@@ -913,9 +886,7 @@ class ReplayExecutorResult:
     checker: str
     trust_root_id: str
     selected_premise_families: tuple[str, ...] = ()
-    route_result: Optional[LegalIRProofRouteResult] = field(
-        default=None, repr=False, compare=False
-    )
+    route_result: Optional[LegalIRProofRouteResult] = field(default=None, repr=False, compare=False)
     schema_version: str = LEGAL_IR_HISTORICAL_HAMMER_EXECUTION_RESULT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -978,12 +949,8 @@ class ReplayExecutorResult:
         def first(*items: Any, default: Any = "") -> Any:
             return next((item for item in items if item is not None and item != ""), default)
 
-        raw_status = first(
-            value.get("status"), proof.get("status"), default="unknown"
-        )
-        status = _safe_identifier(
-            str(getattr(raw_status, "value", raw_status)).lower()
-        )
+        raw_status = first(value.get("status"), proof.get("status"), default="unknown")
+        status = _safe_identifier(str(getattr(raw_status, "value", raw_status)).lower())
         reconstruction_status = _safe_identifier(
             str(
                 first(
@@ -1057,9 +1024,7 @@ class ReplayExecutorResult:
                     default=False,
                 )
             ),
-            trusted=bool(
-                first(value.get("trusted"), receipt.get("trusted"), default=False)
-            ),
+            trusted=bool(first(value.get("trusted"), receipt.get("trusted"), default=False)),
             draft=bool(
                 first(
                     value.get("draft"),
@@ -1114,9 +1079,7 @@ class ReplayExecutorResult:
                 sorted(
                     {
                         _safe_identifier(item)
-                        for item in _sequence(
-                            value.get("selected_premise_families") or ()
-                        )
+                        for item in _sequence(value.get("selected_premise_families") or ())
                         if str(item or "").strip()
                     }
                 )
@@ -1256,14 +1219,12 @@ class CurrentLegalIRHammerExecutor:
             raise HistoricalHammerExecutionError(
                 "current proof router timeout does not match replay policy"
             )
-        if (
-            router_policy is not None
-            and context.proof_routing_policy_fingerprint != "unspecified"
-        ):
+        if router_policy is not None and context.proof_routing_policy_fingerprint != "unspecified":
             to_dict = getattr(router_policy, "to_dict", None)
-            if not callable(to_dict) or replay_content_digest(
-                to_dict()
-            ) != context.proof_routing_policy_fingerprint:
+            if (
+                not callable(to_dict)
+                or replay_content_digest(to_dict()) != context.proof_routing_policy_fingerprint
+            ):
                 raise HistoricalHammerExecutionError(
                     "current proof router policy fingerprint does not match replay policy"
                 )
@@ -1276,9 +1237,7 @@ class CurrentLegalIRHammerExecutor:
                 "replay_content_address": candidate.content_address,
             },
         )
-        premises = (
-            self.premises(candidate) if callable(self.premises) else self.premises
-        )
+        premises = self.premises(candidate) if callable(self.premises) else self.premises
         route_result = self.proof_router.route(
             obligation,
             goal,
@@ -1304,9 +1263,7 @@ def load_replay_executor(specification: str) -> HistoricalHammerExecutor:
         or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", module_name)
         or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", attribute_name)
     ):
-        raise HistoricalHammerExecutionError(
-            "executor must use the form package.module:callable"
-        )
+        raise HistoricalHammerExecutionError("executor must use the form package.module:callable")
     try:
         value = getattr(importlib.import_module(module_name), attribute_name)
     except (ImportError, AttributeError) as exc:
@@ -1352,10 +1309,7 @@ def _classify_result(
         return ReplayFailureClass.PROOF_NOT_CHECKED
     if not result.trusted:
         return ReplayFailureClass.PROOF_UNTRUSTED
-    if (
-        context.trusted_proof_checkers
-        and result.checker not in context.trusted_proof_checkers
-    ):
+    if context.trusted_proof_checkers and result.checker not in context.trusted_proof_checkers:
         return ReplayFailureClass.TRUST_ROOT_REJECTED
     if context.trusted_root_ids and result.trust_root_id not in context.trusted_root_ids:
         return ReplayFailureClass.TRUST_ROOT_REJECTED
@@ -1429,9 +1383,7 @@ class HistoricalHammerReplayOutcome:
         payload = {
             "execution_key": self.execution_key,
             "failure_class": self.failure_class.value,
-            "feedback_record_id": (
-                self.feedback_record.record_id if self.feedback_record else ""
-            ),
+            "feedback_record_id": (self.feedback_record.record_id if self.feedback_record else ""),
             "obligation_content_address": self.obligation_content_address,
             "schema_version": LEGAL_IR_HISTORICAL_HAMMER_REPLAY_SCHEMA_VERSION,
         }
@@ -1442,9 +1394,7 @@ class HistoricalHammerReplayOutcome:
             "cache_hit": bool(self.cache_hit),
             "execution_key": self.execution_key,
             "failure_class": self.failure_class.value,
-            "feedback_record_id": (
-                self.feedback_record.record_id if self.feedback_record else ""
-            ),
+            "feedback_record_id": (self.feedback_record.record_id if self.feedback_record else ""),
             "obligation_content_address": self.obligation_content_address,
             "outcome_id": self.outcome_id,
             "trusted_feedback_emitted": self.trusted_feedback_emitted,
@@ -1568,9 +1518,7 @@ class HistoricalHammerReplayReport:
             "cache_hit_count": sum(item.cache_hit for item in self.outcomes),
             "failure_counts": dict(self.failure_counts),
             "feedback": self.feedback_replay.to_dict(include_records=False),
-            "inventory": self.inventory.to_dict(
-                include_obligations=include_inventory_obligations
-            ),
+            "inventory": self.inventory.to_dict(include_obligations=include_inventory_obligations),
             "outcomes": [item.to_dict() for item in self.outcomes],
             "policy_fingerprint": self.policy_fingerprint,
             "replayed_obligation_count": len(self.outcomes),
@@ -1625,11 +1573,7 @@ class HistoricalHammerProofFeedbackReplay:
         self.resource_scheduler = (
             resource_scheduler
             if resource_scheduler is not None
-            else (
-                get_global_resource_scheduler()
-                if self.policy.use_global_solver_budget
-                else None
-            )
+            else (get_global_resource_scheduler() if self.policy.use_global_solver_budget else None)
         )
         self._checkpoint_lock = threading.Lock()
 
@@ -1653,13 +1597,9 @@ class HistoricalHammerProofFeedbackReplay:
             timeout_seconds=float(self.policy.timeout_seconds),
             compiler_schema_version=self.policy.compiler_schema_version,
             solver_policy_fingerprint=self.policy.solver_policy_fingerprint,
-            proof_routing_policy_fingerprint=(
-                self.policy.proof_routing_policy_fingerprint
-            ),
+            proof_routing_policy_fingerprint=(self.policy.proof_routing_policy_fingerprint),
             versions=self.policy.versions,
-            trusted_proof_checkers=tuple(
-                sorted(set(self.policy.trusted_proof_checkers))
-            ),
+            trusted_proof_checkers=tuple(sorted(set(self.policy.trusted_proof_checkers))),
             trusted_root_ids=tuple(sorted(set(self.policy.trusted_root_ids))),
         )
 
@@ -1673,9 +1613,7 @@ class HistoricalHammerProofFeedbackReplay:
         if isinstance(raw, ReplayExecutorResult):
             return raw
         if isinstance(raw, LegalIRProofRouteResult):
-            return ReplayExecutorResult.from_route_result(
-                raw, candidate=candidate, context=context
-            )
+            return ReplayExecutorResult.from_route_result(raw, candidate=candidate, context=context)
         if isinstance(raw, Mapping):
             return ReplayExecutorResult.from_mapping(raw)
         raise HistoricalHammerExecutionError(
@@ -1765,8 +1703,7 @@ class HistoricalHammerProofFeedbackReplay:
 
     def run(
         self,
-        inputs: Iterable[str | os.PathLike[str]]
-        | HistoricalHammerInventory,
+        inputs: Iterable[str | os.PathLike[str]] | HistoricalHammerInventory,
         *,
         report_path: Optional[str | os.PathLike[str]] = None,
     ) -> HistoricalHammerReplayReport:
@@ -1812,9 +1749,7 @@ class HistoricalHammerProofFeedbackReplay:
                     try:
                         result = future.result()
                         self.cache.put(execution_key, result)
-                        outcome = self._outcome(
-                            candidate, execution_key, result, cache_hit=False
-                        )
+                        outcome = self._outcome(candidate, execution_key, result, cache_hit=False)
                     except HistoricalHammerCacheIntegrityError:
                         outcome = self._failure_outcome(
                             candidate,
@@ -1850,9 +1785,7 @@ class HistoricalHammerProofFeedbackReplay:
 
         ordered = tuple(outcomes[key] for key in sorted(outcomes))
         records = tuple(
-            item.feedback_record
-            for item in ordered
-            if item.feedback_record is not None
+            item.feedback_record for item in ordered if item.feedback_record is not None
         )
         self.feedback_store.put_many(records)
         feedback_replay = ProofFeedbackReplay.create(records)
@@ -1863,9 +1796,7 @@ class HistoricalHammerProofFeedbackReplay:
             feedback_replay=feedback_replay,
         )
         destination = (
-            Path(report_path)
-            if report_path is not None
-            else self.state_dir / "replay-report.json"
+            Path(report_path) if report_path is not None else self.state_dir / "replay-report.json"
         )
         _atomic_json_write(destination, report.to_dict())
         return report

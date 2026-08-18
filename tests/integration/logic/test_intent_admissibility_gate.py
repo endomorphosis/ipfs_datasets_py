@@ -42,9 +42,7 @@ from ipfs_datasets_py.logic.proof_corpus.store import ProofCorpusStore
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_ROOT = REPO_ROOT / "tests" / "fixtures" / "logic" / "admissibility"
-INTENT_FORMAL_ROOT = (
-    REPO_ROOT / "tests" / "fixtures" / "intent_ir" / "admissibility"
-)
+INTENT_FORMAL_ROOT = REPO_ROOT / "tests" / "fixtures" / "intent_ir" / "admissibility"
 
 REQUIRED_CASE_IDS = (
     "benign_skill",
@@ -162,9 +160,7 @@ def _build_corpus(
     env_profile = case.get("envelope_profile_id", "legal-strict")
 
     store = ProofCorpusStore()
-    intent_env = store.put(
-        ArtifactEnvelope.from_intent_artifact(intent, profile=env_profile)
-    )
+    intent_env = store.put(ArtifactEnvelope.from_intent_artifact(intent, profile=env_profile))
     by_name: dict[str, ArtifactEnvelope] = {"intent": intent_env}
 
     for c in case.get("constraints") or []:
@@ -200,9 +196,7 @@ def _block_network(monkeypatch: pytest.MonkeyPatch) -> None:
     """Fail closed if any test path attempts a real network connection."""
 
     def _blocked(*_args: object, **_kwargs: object) -> None:
-        raise AssertionError(
-            "LIG-016 integration fixtures must not use the network"
-        )
+        raise AssertionError("LIG-016 integration fixtures must not use the network")
 
     monkeypatch.setattr(socket.socket, "connect", _blocked)
     monkeypatch.setattr(socket.socket, "connect_ex", lambda *_a, **_k: 1)
@@ -245,9 +239,7 @@ def test_fixture_manifest_covers_required_outcome_classes() -> None:
             assert _is_cid(cid)
         # Source formal artifact used for reconstruction must exist.
         source = entry["source_formal_case_id"]
-        assert (
-            INTENT_FORMAL_ROOT / "formal_artifacts" / f"{source}.json"
-        ).is_file()
+        assert (INTENT_FORMAL_ROOT / "formal_artifacts" / f"{source}.json").is_file()
 
 
 # ---------------------------------------------------------------------------
@@ -266,9 +258,7 @@ def test_end_to_end_gate_decision_matches_pinned_lineage(case_id: str) -> None:
     assert gate.interface == ADMISSIBILITY_GATE_INTERFACE
 
     decision = gate.evaluate(intent_env.content_cid, case["profile_id"])
-    via_helper = evaluate_admissibility(
-        store, intent_env.content_cid, case["profile_id"]
-    )
+    via_helper = evaluate_admissibility(store, intent_env.content_cid, case["profile_id"])
     assert decision.to_dict() == via_helper.to_dict()
 
     assert decision.status is AdmissibilityStatus(expected["status"])
@@ -371,9 +361,7 @@ def test_outcome_class_semantics(
 ) -> None:
     store, intent_env, lineage, _ = _build_corpus(case_id)
     case = _case_record(case_id)
-    decision = evaluate_admissibility(
-        store, intent_env.content_cid, case["profile_id"]
-    )
+    decision = evaluate_admissibility(store, intent_env.content_cid, case["profile_id"])
 
     assert decision.status is status
     codes = set(decision.reason_codes)
@@ -386,9 +374,7 @@ def test_outcome_class_semantics(
     else:
         assert decision.is_allow is True
         assert set(lineage["legal_content_cids"]) <= set(decision.constraint_cids)
-        assert set(lineage["security_content_cids"]) <= set(
-            decision.constraint_cids
-        )
+        assert set(lineage["security_content_cids"]) <= set(decision.constraint_cids)
         assert len(decision.constraint_cids) >= 2
 
 
@@ -416,9 +402,7 @@ def test_evaluate_from_formalization_artifact_preserves_lineage() -> None:
 
     case_id = "benign_skill"
     store, _intent_env, lineage, _ = _build_corpus(case_id)
-    _raw, artifact = _load_intent_formal(
-        _case_record(case_id)["source_formal_case_id"]
-    )
+    _raw, artifact = _load_intent_formal(_case_record(case_id)["source_formal_case_id"])
     assert artifact.artifact_id == lineage["intent_formal_artifact_cid"]
     assert artifact.declaration_digest == lineage["intent_declaration_digest"]
 
@@ -469,9 +453,7 @@ def test_default_profile_never_allows_without_constraints() -> None:
 
     _raw, intent = _load_intent_formal("benign_skill")
     store = ProofCorpusStore()
-    intent_env = store.put(
-        ArtifactEnvelope.from_intent_artifact(intent, profile="legal-strict")
-    )
+    intent_env = store.put(ArtifactEnvelope.from_intent_artifact(intent, profile="legal-strict"))
     decision = evaluate_admissibility(store, intent_env.content_cid, None)
     assert decision.profile_id == "legal-strict"
     assert decision.is_allow is False

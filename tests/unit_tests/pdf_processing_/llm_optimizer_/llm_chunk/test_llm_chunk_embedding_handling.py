@@ -17,7 +17,7 @@ from tests._test_utils import (
     raise_on_bad_callable_code_quality,
     get_ast_tree,
     BadDocumentationError,
-    BadSignatureError
+    BadSignatureError,
 )
 
 work_dir = os.path.abspath(os.path.dirname(__file__))
@@ -30,17 +30,23 @@ file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimize
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     ChunkOptimizer,
     LLMOptimizer,
     TextProcessor,
     LLMChunk,
-    LLMDocument
+    LLMDocument,
 )
-from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import LLMChunkTestDataFactory
+from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk.llm_chunk_factory import (
+    LLMChunkTestDataFactory,
+)
 
 
 # Check if each classes methods are accessible:
@@ -77,8 +83,6 @@ except ImportError as e:
     raise ImportError(f"Failed to import necessary modules: {e}")
 
 
-
-
 class TestLLMChunkEmbeddingHandling:
     """Test LLMChunk embedding field handling and numpy array operations."""
 
@@ -90,17 +94,17 @@ class TestLLMChunkEmbeddingHandling:
         """
         # Given - arrays with different shapes
         test_arrays = [
-            np.array([1.0, 2.0, 3.0]),                    # 1D array
-            np.array([[1.0, 2.0], [3.0, 4.0]]),           # 2D array
-            np.array([[[1.0, 2.0]], [[3.0, 4.0]]]),       # 3D array
-            np.array([]),                                  # Empty array
-            np.array([5.0])                                # Single element
+            np.array([1.0, 2.0, 3.0]),  # 1D array
+            np.array([[1.0, 2.0], [3.0, 4.0]]),  # 2D array
+            np.array([[[1.0, 2.0]], [[3.0, 4.0]]]),  # 3D array
+            np.array([]),  # Empty array
+            np.array([5.0]),  # Single element
         ]
-        
+
         # When/Then - shape should be preserved for each array
         for original_array in test_arrays:
             chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=original_array)
-            
+
             assert chunk.embedding.shape == original_array.shape
             assert chunk.embedding.ndim == original_array.ndim
             assert chunk.embedding.size == original_array.size
@@ -117,13 +121,13 @@ class TestLLMChunkEmbeddingHandling:
             np.array([1.0, 2.0, 3.0], dtype=np.float64),
             np.array([1, 2, 3], dtype=np.int32),
             np.array([1, 2, 3], dtype=np.int64),
-            np.array([True, False, True], dtype=np.bool_)
+            np.array([True, False, True], dtype=np.bool_),
         ]
-        
+
         # When/Then - dtype should be preserved for each array
         for original_array in test_arrays:
             chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=original_array)
-            
+
             assert chunk.embedding.dtype == original_array.dtype
             assert np.array_equal(chunk.embedding, original_array)
 
@@ -136,20 +140,20 @@ class TestLLMChunkEmbeddingHandling:
         # Given - array with specific values
         original_values = [0.123456789, -0.987654321, 1e-10, 1e10, 0.0, -0.0]
         original_array = np.array(original_values, dtype=np.float64)
-        
+
         # When
         chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=original_array)
-        
+
         # Then - values should be exactly preserved
         assert np.array_equal(chunk.embedding, original_array)
         assert np.allclose(chunk.embedding, original_values, rtol=1e-15, atol=1e-15)
-        
+
         # Test edge cases - special float values
         special_values = [np.inf, -np.inf, 0.0, -0.0]
         special_array = np.array(special_values)
-        
+
         chunk_special = LLMChunkTestDataFactory.create_chunk_instance(embedding=special_array)
-        
+
         assert np.array_equal(chunk_special.embedding, special_array, equal_nan=True)
         assert np.isinf(chunk_special.embedding[0]) and chunk_special.embedding[0] > 0
         assert np.isinf(chunk_special.embedding[1]) and chunk_special.embedding[1] < 0
@@ -163,35 +167,35 @@ class TestLLMChunkEmbeddingHandling:
             - No unexpected array copying
         """
         from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMChunk
-        
+
         # Given - original array
         original_array = np.array([1.0, 2.0, 3.0, 4.0])
-        
+
         # When
         chunk = LLMChunkTestDataFactory.create_chunk_instance(embedding=original_array)
-        
+
         # Then - check if arrays share memory (implementation dependent)
         # Note: dataclass field assignment may or may not copy the array
         arrays_share_memory = np.shares_memory(chunk.embedding, original_array)
-        
+
         # Verify that changes to original array affect chunk embedding (if sharing memory)
         original_first_value = original_array[0]
         original_array[0] = 999.0
-        
+
         if arrays_share_memory:
             # If memory is shared, chunk embedding should reflect the change
             assert chunk.embedding[0] == 999.0
         else:
             # If memory is not shared, chunk embedding should be unchanged
             assert chunk.embedding[0] == original_first_value
-        
+
         # Restore original value for clean test state
         original_array[0] = original_first_value
-        
+
         # Test with view of array
         array_view = original_array[1:3]
         chunk_view = LLMChunkTestDataFactory.create_chunk_instance(embedding=array_view)
-        
+
         # Verify the view is preserved
         assert chunk_view.embedding.shape == (2,)
         assert np.array_equal(chunk_view.embedding, [2.0, 3.0])

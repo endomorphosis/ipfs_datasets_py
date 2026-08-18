@@ -123,9 +123,7 @@ class _FakeModel:
 
 def _modal_scope(document: IntentIRDocument) -> RepairScope:
     artifact = IntentFormalizationCompiler().compile(document)
-    formula = next(
-        item for item in artifact.formulas if item.view_id == INTENT_MODAL_VIEW_ID
-    )
+    formula = next(item for item in artifact.formulas if item.view_id == INTENT_MODAL_VIEW_ID)
     return RepairScope(
         formula_ids=(formula.formula_id,),
         allowed_paths=("/body",),
@@ -134,9 +132,7 @@ def _modal_scope(document: IntentIRDocument) -> RepairScope:
 
 def test_no_advisor_and_candidate_paths_share_the_exact_baseline() -> None:
     document = _document()
-    model = _FakeModel(
-        lambda expression: expression["body"].update(predicate="submit")
-    )
+    model = _FakeModel(lambda expression: expression["body"].update(predicate="submit"))
     advisor = IntentFormalizationAdvisor(model, checkpoint=_checkpoint())
 
     baseline = advisor.formalize(document, use_advisor=False)
@@ -178,34 +174,24 @@ def test_features_are_rebound_to_the_deterministic_compiler_sample() -> None:
     (
         (
             "source",
-            lambda expression: expression["body"].update(
-                source_ref_ids=["source:model"]
-            ),
+            lambda expression: expression["body"].update(source_ref_ids=["source:model"]),
         ),
         (
             "provenance",
-            lambda expression: expression["body"].update(
-                provenance={"producer": "model"}
-            ),
+            lambda expression: expression["body"].update(provenance={"producer": "model"}),
         ),
         (
             "modality",
-            lambda expression: expression["body"].update(
-                modality=IntentModality.PROHIBITED.value
-            ),
+            lambda expression: expression["body"].update(modality=IntentModality.PROHIBITED.value),
         ),
         (
             "assumption",
-            lambda expression: expression["body"].update(
-                assumptions=["model-invented"]
-            ),
+            lambda expression: expression["body"].update(assumptions=["model-invented"]),
         ),
     ),
 )
 def test_candidate_cannot_mutate_frozen_intent_semantics(name, mutate) -> None:
-    advisor = IntentFormalizationAdvisor(
-        _FakeModel(mutate), checkpoint=_checkpoint()
-    )
+    advisor = IntentFormalizationAdvisor(_FakeModel(mutate), checkpoint=_checkpoint())
 
     with pytest.raises(AdvisorValidationError, match="cannot alter"):
         advisor.formalize(
@@ -217,16 +203,10 @@ def test_candidate_cannot_mutate_frozen_intent_semantics(name, mutate) -> None:
 
 def test_unsupported_view_and_wrong_head_scope_are_rejected() -> None:
     artifact = IntentFormalizationCompiler().compile(_document())
-    with pytest.raises(
-        IntentAdvisorValidationError, match="unsupported.*view"
-    ):
-        default_intent_repair_scope(
-            artifact, view_ids=("intent-ir-view/unknown/v1",)
-        )
+    with pytest.raises(IntentAdvisorValidationError, match="unsupported.*view"):
+        default_intent_repair_scope(artifact, view_ids=("intent-ir-view/unknown/v1",))
 
-    fact = next(
-        item for item in artifact.formulas if item.view_id == INTENT_FACT_VIEW_ID
-    )
+    fact = next(item for item in artifact.formulas if item.view_id == INTENT_FACT_VIEW_ID)
     features = build_intent_advisor_features(_document(), artifact)
     advisor = IntentFormalizationAdvisor(
         _FakeModel(), checkpoint=_checkpoint(head_id=INTENT_MODAL_HEAD_ID)
@@ -249,11 +229,7 @@ def test_oversized_output_and_invalid_formula_types_fail_closed() -> None:
         max_expression_bytes=128,
     )
     oversized = IntentFormalizationAdvisor(
-        _FakeModel(
-            lambda expression: expression["body"].update(
-                predicate="x" * 1024
-            )
-        ),
+        _FakeModel(lambda expression: expression["body"].update(predicate="x" * 1024)),
         checkpoint=_checkpoint(),
         config=small,
     )
@@ -265,16 +241,10 @@ def test_oversized_output_and_invalid_formula_types_fail_closed() -> None:
         )
 
     invalid_type = IntentFormalizationAdvisor(
-        _FakeModel(
-            lambda expression: expression["body"].update(
-                predicate=["not", "a", "string"]
-            )
-        ),
+        _FakeModel(lambda expression: expression["body"].update(predicate=["not", "a", "string"])),
         checkpoint=_checkpoint(),
     )
-    with pytest.raises(
-        IntentAdvisorValidationError, match="must be a string"
-    ):
+    with pytest.raises(IntentAdvisorValidationError, match="must be a string"):
         invalid_type.formalize(
             _document(),
             repair_scope=_modal_scope(_document()),
@@ -284,14 +254,8 @@ def test_oversized_output_and_invalid_formula_types_fail_closed() -> None:
 
 def test_stale_ontology_checkpoint_metadata_and_unknown_heads_fail_closed() -> None:
     checkpoint = _checkpoint()
-    assert (
-        checkpoint.ontology_identity
-        == INTENT_FORMALIZATION_ONTOLOGY_IDENTITY
-    )
-    assert (
-        checkpoint.metadata["policy_version"]
-        == INTENT_ADVISOR_CHECKPOINT_POLICY_VERSION
-    )
+    assert checkpoint.ontology_identity == INTENT_FORMALIZATION_ONTOLOGY_IDENTITY
+    assert checkpoint.metadata["policy_version"] == INTENT_ADVISOR_CHECKPOINT_POLICY_VERSION
     assert INTENT_CHECKPOINT_POLICY.validate(checkpoint) == checkpoint
 
     with pytest.raises(AdvisorValidationError, match="incompatible"):
@@ -305,9 +269,7 @@ def test_stale_ontology_checkpoint_metadata_and_unknown_heads_fail_closed() -> N
     metadata = checkpoint.metadata.to_dict()
     metadata["policy_version"] = "intent-advisor-checkpoint-policy/v0"
     with pytest.raises(AdvisorValidationError, match="stale or incomplete"):
-        INTENT_CHECKPOINT_POLICY.validate(
-            replace(checkpoint, metadata=metadata)
-        )
+        INTENT_CHECKPOINT_POLICY.validate(replace(checkpoint, metadata=metadata))
 
     with pytest.raises(AdvisorValidationError, match="unsupported.*head"):
         create_intent_checkpoint_manifest(
@@ -322,11 +284,7 @@ def test_stale_ontology_checkpoint_metadata_and_unknown_heads_fail_closed() -> N
 
 def test_candidates_cannot_claim_proof_or_execution_authority() -> None:
     advisor = IntentFormalizationAdvisor(
-        _FakeModel(
-            lambda expression: expression["body"].update(
-                proof_status="proved"
-            )
-        ),
+        _FakeModel(lambda expression: expression["body"].update(proof_status="proved")),
         checkpoint=_checkpoint(),
     )
 

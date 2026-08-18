@@ -5,6 +5,7 @@ MCP tool for creating vector indexes.
 This tool handles creating vector indexes for similarity search
 using the VectorStore from vector_tools.
 """
+
 import anyio
 import json
 import uuid
@@ -38,7 +39,7 @@ async def create_vector_index(
     metric: str = "cosine",
     metadata: Optional[List[Dict[str, Any]]] = None,
     index_id: Optional[str] = None,
-    index_name: Optional[str] = None
+    index_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Create a vector index for similarity search.
@@ -55,7 +56,14 @@ async def create_vector_index(
         Dict containing information about the created index
     """
     # MCP JSON-string entrypoint (used by unit tests)
-    if isinstance(vectors, str) and dimension is None and metric == "cosine" and metadata is None and index_id is None and index_name is None:
+    if (
+        isinstance(vectors, str)
+        and dimension is None
+        and metric == "cosine"
+        and metadata is None
+        and index_id is None
+        and index_name is None
+    ):
         data, error = parse_json_object(vectors)
         if error is not None:
             return error
@@ -106,7 +114,7 @@ async def create_vector_index(
 
         # Convert vectors to numpy arrays and add to index
         np_vectors = np.array(vectors)
-        
+
         # Handle metadata: if provided but doesn't match vector count, adjust it
         if metadata is not None:
             if isinstance(metadata, dict):
@@ -118,9 +126,11 @@ async def create_vector_index(
                     metadata = metadata * len(vectors)
                 else:
                     # If mismatch, create default metadata for all vectors
-                    logger.warning(f"Metadata count ({len(metadata)}) doesn't match vector count ({len(vectors)}). Using default metadata.")
+                    logger.warning(
+                        f"Metadata count ({len(metadata)}) doesn't match vector count ({len(vectors)}). Using default metadata."
+                    )
                     metadata = [{"vector_index": i} for i in range(len(vectors))]
-        
+
         vector_ids = index.add_vectors(np_vectors, metadata=metadata)
 
         # Return information about the index
@@ -130,11 +140,8 @@ async def create_vector_index(
             "num_vectors": len(vectors),
             "dimension": dimension,
             "metric": metric,
-            "vector_ids": vector_ids
+            "vector_ids": vector_ids,
         }
     except Exception as e:
         logger.error(f"Error creating vector index: {e}")
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}

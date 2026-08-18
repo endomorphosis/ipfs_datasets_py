@@ -15,9 +15,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
 @dataclass
 class _FakeLanguageConfig:
     stopwords: list[str] = field(default_factory=lambda: ["el", "la"])
-    domain_vocab: dict[str, list[str]] = field(
-        default_factory=lambda: {"legal": ["obligacion"]}
-    )
+    domain_vocab: dict[str, list[str]] = field(default_factory=lambda: {"legal": ["obligacion"]})
     adjustment: float = -0.1
 
     def apply_confidence_adjustment(self, confidence: float) -> float:

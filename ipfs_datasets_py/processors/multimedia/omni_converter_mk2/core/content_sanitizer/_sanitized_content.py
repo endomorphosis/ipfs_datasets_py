@@ -5,13 +5,14 @@ from types_ import Any, Content
 @dataclass
 class SanitizedContent:
     """Sanitized content from a file.
-    
+
     This class extends the base Content class with sanitization information.
-    
+
     Attributes:
         sanitization_applied (list[str]): list of sanitization techniques applied.
         removed_content (dict[str, Any]): Information about content that was removed.
     """
+
     content: Content
     sanitization_applied: list[str] = field(default_factory=list)
     removed_content: dict[str, Any] = field(default_factory=dict)

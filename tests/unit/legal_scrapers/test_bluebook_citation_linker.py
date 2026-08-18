@@ -11,7 +11,9 @@ import pyarrow.parquet as pq
 import pytest
 import ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory as inventory_module
 import ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_linker as linker_module
-from tests.integration.test_bluebook_citation_linker_real_corpora import _build_federal_register_cases
+from tests.integration.test_bluebook_citation_linker_real_corpora import (
+    _build_federal_register_cases,
+)
 
 from ipfs_datasets_py.processors.legal_scrapers import (
     BluebookCitationResolver,
@@ -25,6 +27,7 @@ from ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_linker import 
 
 try:
     from hypothesis import given, settings, strategies as st
+
     HYPOTHESIS_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
     HYPOTHESIS_AVAILABLE = False
@@ -32,17 +35,20 @@ except Exception:  # pragma: no cover - optional dependency
     def given(*args, **kwargs):
         def _decorator(func):
             return func
+
         return _decorator
 
     def settings(*args, **kwargs):
         def _decorator(func):
             return func
+
         return _decorator
 
     class _HypothesisStub:
         def __getattr__(self, name):
             def _factory(*args, **kwargs):
                 return None
+
             return _factory
 
     st = _HypothesisStub()
@@ -661,11 +667,18 @@ def test_bluebook_citation_resolver_links_usc_and_state_law_from_local_parquet(t
     assert by_type["state_statute"].corpus_key == "state_laws"
     assert by_type["state_statute"].source_cid == "bafymn51817"
     assert by_type["state_statute"].source_title == "Best interests of the child"
-    assert "justicedao/ipfs_state_laws" in by_type["state_statute"].metadata["preferred_dataset_ids"]
+    assert (
+        "justicedao/ipfs_state_laws" in by_type["state_statute"].metadata["preferred_dataset_ids"]
+    )
     assert "STATE-MN.parquet" in by_type["state_statute"].metadata["preferred_parquet_files"]
     assert by_type["state_statute"].metadata["resolution_quality"] == "exact_anchor"
-    assert by_type["state_statute"].metadata["source_provenance"]["guarantee_level"] == "exact_anchor"
-    assert by_type["state_statute"].metadata["source_provenance"]["primary_citation"] == "Minn. Stat. § 518.17"
+    assert (
+        by_type["state_statute"].metadata["source_provenance"]["guarantee_level"] == "exact_anchor"
+    )
+    assert (
+        by_type["state_statute"].metadata["source_provenance"]["primary_citation"]
+        == "Minn. Stat. § 518.17"
+    )
     assert by_type["state_statute"].metadata["source_provenance"]["source_row_hash"]
 
 
@@ -783,7 +796,10 @@ def test_bluebook_resolver_matches_recovery_promotion_rows_in_strict_mode(tmp_pa
     assert len(links) == 1
     assert links[0].matched is True
     assert links[0].matched_field == "citation_text"
-    assert links[0].source_url == "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983"
+    assert (
+        links[0].source_url
+        == "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983"
+    )
 
 
 def test_bluebook_exact_anchor_guarantee_audit_flags_case_url_fallback_non_exact():
@@ -975,7 +991,10 @@ def test_bluebook_citation_resolver_matches_ors_identifier_alias(tmp_path):
     assert link.matched is True
     assert link.corpus_key == "state_laws"
     assert link.source_cid == "bafyors801545"
-    assert link.source_url == "https://www.oregonlegislature.gov/bills_laws/ors/ors801.html#section-801.545"
+    assert (
+        link.source_url
+        == "https://www.oregonlegislature.gov/bills_laws/ors/ors801.html#section-801.545"
+    )
 
 
 def test_bluebook_lookup_result_document_suggests_citation_for_malformed_text(tmp_path):
@@ -1630,8 +1649,12 @@ def test_bluebook_citation_resolver_caches_hf_repo_file_listing(monkeypatch):
     or_sources = resolver._find_hf_sources(_CORPUS_CONFIGS["state_laws"], state_code="OR")
 
     assert listed_repo_ids == ["justicedao/ipfs_state_laws"]
-    assert mn_sources[0] == "hf://justicedao/ipfs_state_laws/state_laws_parquet_cid/STATE-MN.parquet"
-    assert or_sources[0] == "hf://justicedao/ipfs_state_laws/state_laws_parquet_cid/STATE-OR.parquet"
+    assert (
+        mn_sources[0] == "hf://justicedao/ipfs_state_laws/state_laws_parquet_cid/STATE-MN.parquet"
+    )
+    assert (
+        or_sources[0] == "hf://justicedao/ipfs_state_laws/state_laws_parquet_cid/STATE-OR.parquet"
+    )
 
 
 def test_bluebook_citation_resolver_can_limit_hf_sources_to_exact_state_partition(monkeypatch):
@@ -1673,7 +1696,9 @@ def test_bluebook_citation_resolver_can_materialize_remote_sources_before_query(
 
     monkeypatch.setattr(resolver, "_materialize_remote_parquet", fake_materialize)
     monkeypatch.setattr(resolver, "_schema_for_source", lambda con, source_ref: set())
-    monkeypatch.setattr(resolver, "_build_where_clause", lambda schema, corpus_key, citation, state_code: ([], []))
+    monkeypatch.setattr(
+        resolver, "_build_where_clause", lambda schema, corpus_key, citation, state_code: ([], [])
+    )
 
     rows = resolver._query_source("https://example.test/uscode.parquet", "us_code", citation, None)
 
@@ -1681,7 +1706,9 @@ def test_bluebook_citation_resolver_can_materialize_remote_sources_before_query(
     assert materialized == ["https://example.test/uscode.parquet"]
 
 
-def test_bluebook_citation_resolver_queries_recovered_state_citation_text_when_identifier_exists(tmp_path):
+def test_bluebook_citation_resolver_queries_recovered_state_citation_text_when_identifier_exists(
+    tmp_path,
+):
     parquet_path = tmp_path / "STATE-FL.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -1704,14 +1731,18 @@ def test_bluebook_citation_resolver_queries_recovered_state_citation_text_when_i
         local_root_overrides={"state_laws": str(tmp_path)},
     )
 
-    links = resolver.resolve_text("The filing cites Fla. Stat. § 61.13.", state_code="FL", exhaustive=False)
+    links = resolver.resolve_text(
+        "The filing cites Fla. Stat. § 61.13.", state_code="FL", exhaustive=False
+    )
 
     assert len(links) == 1
     assert links[0].matched is True
     assert links[0].matched_field == "citation_text"
 
 
-def test_bluebook_citation_resolver_queries_recovered_federal_register_citation_text_when_identifier_exists(tmp_path):
+def test_bluebook_citation_resolver_queries_recovered_federal_register_citation_text_when_identifier_exists(
+    tmp_path,
+):
     parquet_path = tmp_path / "federal_register.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -2009,9 +2040,13 @@ def test_bluebook_citation_resolver_uses_exhaustive_canonical_query_fallback(mon
             notes=["Resolved with lexical fallback."],
         )
 
-    monkeypatch.setattr(inventory_module, "query_canonical_legal_corpus", fake_query_canonical_legal_corpus)
+    monkeypatch.setattr(
+        inventory_module, "query_canonical_legal_corpus", fake_query_canonical_legal_corpus
+    )
 
-    resolver = BluebookCitationResolver(allow_hf_fallback=False, parquet_file_overrides={"us_code": []})
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False, parquet_file_overrides={"us_code": []}
+    )
 
     links = resolve_bluebook_citations_in_text(
         "The filing relies on 42 U.S.C. § 1983 as authority.",
@@ -2060,9 +2095,13 @@ def test_resolve_bluebook_lookup_result_document_returns_exhaustive_payload(monk
             notes=["Resolved with lexical fallback."],
         )
 
-    monkeypatch.setattr(inventory_module, "query_canonical_legal_corpus", fake_query_canonical_legal_corpus)
+    monkeypatch.setattr(
+        inventory_module, "query_canonical_legal_corpus", fake_query_canonical_legal_corpus
+    )
 
-    resolver = BluebookCitationResolver(allow_hf_fallback=False, parquet_file_overrides={"us_code": []})
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False, parquet_file_overrides={"us_code": []}
+    )
 
     result = resolve_bluebook_lookup_result_document(
         "The filing relies on 42 U.S.C. § 1983 as authority.",
@@ -2159,7 +2198,9 @@ def test_resolve_bluebook_lookup_result_document_tracks_non_exact_case_fallback_
     assert result["non_exact_matched_citations"][0]["resolution_method"] == "citation_url_fallback"
 
 
-def test_resolve_bluebook_lookup_result_document_recovers_when_hf_lookup_misses_entirely(monkeypatch):
+def test_resolve_bluebook_lookup_result_document_recovers_when_hf_lookup_misses_entirely(
+    monkeypatch,
+):
     captured = {}
 
     async def fake_recover_missing_legal_citation_source(**kwargs):
@@ -2262,7 +2303,9 @@ def test_bluebook_citation_resolver_filters_cid_index_sidecars_from_overrides(tm
     assert sources == [str(primary_path)]
 
 
-def test_bluebook_citation_resolver_uses_caselaw_hf_alias_when_primary_repo_has_no_parquet(monkeypatch):
+def test_bluebook_citation_resolver_uses_caselaw_hf_alias_when_primary_repo_has_no_parquet(
+    monkeypatch,
+):
     listed_repo_ids = []
 
     def fake_list_repo_files(*, repo_id, repo_type):
@@ -2298,7 +2341,9 @@ def test_bluebook_citation_resolver_uses_caselaw_hf_alias_when_primary_repo_has_
     ]
 
 
-def test_bluebook_citation_resolver_filters_embeddings_directory_parquet_from_hf_sources(monkeypatch):
+def test_bluebook_citation_resolver_filters_embeddings_directory_parquet_from_hf_sources(
+    monkeypatch,
+):
     def fake_list_repo_files(*, repo_id, repo_type):
         assert repo_type == "dataset"
         assert repo_id == "justicedao/ipfs_caselaw_access_project"
@@ -2322,7 +2367,9 @@ def test_bluebook_citation_resolver_filters_embeddings_directory_parquet_from_hf
     ]
 
 
-def test_bluebook_citation_resolver_prefers_repaired_caselaw_shards_over_deduplicated_monolith(monkeypatch):
+def test_bluebook_citation_resolver_prefers_repaired_caselaw_shards_over_deduplicated_monolith(
+    monkeypatch,
+):
     def fake_list_repo_files(*, repo_id, repo_type):
         assert repo_type == "dataset"
         assert repo_id == "justicedao/ipfs_caselaw_access_project"
@@ -2349,7 +2396,9 @@ def test_bluebook_citation_resolver_prefers_repaired_caselaw_shards_over_dedupli
     ]
 
 
-def test_bluebook_citation_resolver_uses_dataset_server_parquet_when_repo_tree_only_has_embeddings(monkeypatch):
+def test_bluebook_citation_resolver_uses_dataset_server_parquet_when_repo_tree_only_has_embeddings(
+    monkeypatch,
+):
     def fake_list_repo_files(*, repo_id, repo_type):
         assert repo_type == "dataset"
         assert repo_id == "justicedao/ipfs_caselaw_access_project"
@@ -2438,7 +2487,12 @@ def test_bluebook_citation_resolver_ignores_embeddings_sidecars_in_override_sour
     resolver = BluebookCitationResolver(
         allow_hf_fallback=False,
         parquet_file_overrides={
-            "state_laws": [str(state_laws_path), str(embeddings_path), str(metadata_path), str(tmp_path / "index.faiss")],
+            "state_laws": [
+                str(state_laws_path),
+                str(embeddings_path),
+                str(metadata_path),
+                str(tmp_path / "index.faiss"),
+            ],
         },
     )
 

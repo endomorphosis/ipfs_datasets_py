@@ -27,17 +27,21 @@ import webbrowser
 from typing import Dict, List, Any, Optional, Tuple
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Import RAG query components
 try:
-    from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector, UnifiedGraphRAGQueryOptimizer
+    from ipfs_datasets_py.rag.rag_query_optimizer import (
+        QueryMetricsCollector,
+        UnifiedGraphRAGQueryOptimizer,
+    )
     from ipfs_datasets_py.rag.rag_query_visualization import (
         RAGQueryDashboard,
         EnhancedQueryVisualizer,
-        create_query_performance_heatmap
+        create_query_performance_heatmap,
     )
+
     RAG_COMPONENTS_AVAILABLE = True
 except ImportError:
     logger.warning("RAG query components not available. Some features will be disabled.")
@@ -46,17 +50,22 @@ except ImportError:
 # Import audit components
 try:
     from ipfs_datasets_py.audit.audit_logger import (
-        AuditLogger, AuditEvent, AuditLevel, AuditCategory
+        AuditLogger,
+        AuditEvent,
+        AuditLevel,
+        AuditCategory,
     )
     from ipfs_datasets_py.audit.audit_visualization import (
         AuditMetricsAggregator,
         AuditVisualizer,
-        create_query_audit_timeline
+        create_query_audit_timeline,
     )
+
     AUDIT_COMPONENTS_AVAILABLE = True
 except ImportError:
     logger.warning("Audit components not available. Some features will be disabled.")
     AUDIT_COMPONENTS_AVAILABLE = False
+
 
 class IntegratedMonitoringSystem:
     """
@@ -83,20 +92,21 @@ class IntegratedMonitoringSystem:
         self.audit_metrics = AuditMetricsAggregator() if AUDIT_COMPONENTS_AVAILABLE else None
 
         # Set up visualization components
-        self.query_visualizer = EnhancedQueryVisualizer(
-            metrics_collector=self.query_metrics,
-            theme=theme
-        ) if RAG_COMPONENTS_AVAILABLE else None
+        self.query_visualizer = (
+            EnhancedQueryVisualizer(metrics_collector=self.query_metrics, theme=theme)
+            if RAG_COMPONENTS_AVAILABLE
+            else None
+        )
 
-        self.audit_visualizer = AuditVisualizer(
-            theme=theme
-        ) if AUDIT_COMPONENTS_AVAILABLE else None
+        self.audit_visualizer = AuditVisualizer(theme=theme) if AUDIT_COMPONENTS_AVAILABLE else None
 
-        self.dashboard = RAGQueryDashboard(
-            metrics_collector=self.query_metrics,
-            dashboard_dir=self.dashboard_dir,
-            theme=theme
-        ) if RAG_COMPONENTS_AVAILABLE else None
+        self.dashboard = (
+            RAGQueryDashboard(
+                metrics_collector=self.query_metrics, dashboard_dir=self.dashboard_dir, theme=theme
+            )
+            if RAG_COMPONENTS_AVAILABLE
+            else None
+        )
 
         # Track generated files
         self.output_files = {}
@@ -105,9 +115,13 @@ class IntegratedMonitoringSystem:
 
         # Verify components
         if not RAG_COMPONENTS_AVAILABLE or not AUDIT_COMPONENTS_AVAILABLE:
-            logger.warning("Some components are not available. The example will have limited functionality.")
+            logger.warning(
+                "Some components are not available. The example will have limited functionality."
+            )
         else:
-            logger.info(f"Integrated monitoring system initialized with dashboard directory: {self.dashboard_dir}")
+            logger.info(
+                f"Integrated monitoring system initialized with dashboard directory: {self.dashboard_dir}"
+            )
 
             # Log system initialization
             self._log_audit_event(
@@ -116,7 +130,7 @@ class IntegratedMonitoringSystem:
                 action="system_initialization",
                 status="success",
                 resource_id="monitoring_system",
-                message="Integrated monitoring system initialized successfully"
+                message="Integrated monitoring system initialized successfully",
             )
 
     def _log_audit_event(self, level, category, action, status, resource_id, message, details=None):
@@ -138,7 +152,7 @@ class IntegratedMonitoringSystem:
             resource_id=resource_id,
             resource_type="system_component",
             message=message,
-            details=details or {}
+            details=details or {},
         )
 
         self.audit_logger.log_event_obj(event)
@@ -170,7 +184,7 @@ class IntegratedMonitoringSystem:
                 "max_depth": 2,
                 "traversal": {"max_depth": 2, "relationship_types": ["related_to", "contains"]},
                 "max_vector_results": 5,
-                "min_similarity": 0.6
+                "min_similarity": 0.6,
             }
 
         # Start query monitoring
@@ -184,11 +198,7 @@ class IntegratedMonitoringSystem:
             status="in_progress",
             resource_id=f"query_{query_id}",
             message=f"RAG query started: {query_text[:50]}...",
-            details={
-                "query_id": query_id,
-                "query_text": query_text,
-                "query_params": query_params
-            }
+            details={"query_id": query_id, "query_text": query_text, "query_params": query_params},
         )
 
         # Process query phases
@@ -200,10 +210,7 @@ class IntegratedMonitoringSystem:
             results = self._process_real_query(query_id, query_text, query_params)
 
         # End query tracking
-        self.query_metrics.end_query_tracking(
-            query_id=query_id,
-            results=results
-        )
+        self.query_metrics.end_query_tracking(query_id=query_id, results=results)
 
         # Log query completion
         status = "success" if results["quality_score"] > 0.6 else "partial"
@@ -218,8 +225,8 @@ class IntegratedMonitoringSystem:
                 "query_id": query_id,
                 "results_count": results["count"],
                 "quality_score": results["quality_score"],
-                "execution_time": self.query_metrics.get_query_metrics(query_id)["total_duration"]
-            }
+                "execution_time": self.query_metrics.get_query_metrics(query_id)["total_duration"],
+            },
         )
 
         return results
@@ -231,9 +238,7 @@ class IntegratedMonitoringSystem:
         time.sleep(0.05 + random.random() * 0.1)  # Random delay
         vector_results_count = query_params.get("max_vector_results", 5)
         self.query_metrics.end_phase(
-            query_id,
-            "vector_search",
-            phase_results={"vector_results": vector_results_count}
+            query_id, "vector_search", phase_results={"vector_results": vector_results_count}
         )
 
         # Simulate graph traversal phase
@@ -241,9 +246,7 @@ class IntegratedMonitoringSystem:
         time.sleep(0.1 + random.random() * 0.15)  # Random delay
         nodes_explored = random.randint(5, 20)
         self.query_metrics.end_phase(
-            query_id,
-            "graph_traversal",
-            phase_results={"nodes_explored": nodes_explored}
+            query_id, "graph_traversal", phase_results={"nodes_explored": nodes_explored}
         )
 
         # Simulate result ranking phase
@@ -258,7 +261,7 @@ class IntegratedMonitoringSystem:
         return {
             "count": results_count,
             "quality_score": quality_score,
-            "sources": [f"doc_{i}" for i in range(results_count)]
+            "sources": [f"doc_{i}" for i in range(results_count)],
         }
 
     def _process_real_query(self, query_id, query_text, query_params):
@@ -285,7 +288,7 @@ class IntegratedMonitoringSystem:
         level_map = {
             "low": AuditLevel.WARNING,
             "medium": AuditLevel.ERROR,
-            "high": AuditLevel.CRITICAL
+            "high": AuditLevel.CRITICAL,
         }
         audit_level = level_map.get(severity, AuditLevel.ERROR)
 
@@ -300,27 +303,32 @@ class IntegratedMonitoringSystem:
             details={
                 "severity": severity,
                 "detection_time": datetime.datetime.now().isoformat(),
-                "incident_type": "anomalous_query_pattern"
-            }
+                "incident_type": "anomalous_query_pattern",
+            },
         )
 
         # Simulate performance impact if incident is medium or high
         if severity in ["medium", "high"]:
             # Perform some degraded queries
             degradation_factor = 2.0 if severity == "medium" else 4.0
-            logger.info(f"Security incident causing {degradation_factor}x query performance degradation")
+            logger.info(
+                f"Security incident causing {degradation_factor}x query performance degradation"
+            )
 
             # Simulate a few degraded queries
             query_count = max(2, int(duration_seconds / 2))
             for i in range(query_count):
                 # Start degraded query
                 query_id = f"incident_query_{i}"
-                self.query_metrics.start_query_tracking(query_id=query_id, query_params={
-                    "max_depth": 2,
-                    "traversal": {"max_depth": 2},
-                    "max_vector_results": 5,
-                    "min_similarity": 0.6
-                })
+                self.query_metrics.start_query_tracking(
+                    query_id=query_id,
+                    query_params={
+                        "max_depth": 2,
+                        "traversal": {"max_depth": 2},
+                        "max_vector_results": 5,
+                        "min_similarity": 0.6,
+                    },
+                )
 
                 # Simulate slow phases
                 self.query_metrics.start_phase(query_id, "vector_search")
@@ -343,8 +351,8 @@ class IntegratedMonitoringSystem:
                         details={
                             "incident_id": incident_id,
                             "query_id": query_id,
-                            "timeout_phase": "graph_traversal"
-                        }
+                            "timeout_phase": "graph_traversal",
+                        },
                     )
                     # Don't end tracking - simulate abandoned query
                 else:
@@ -354,8 +362,8 @@ class IntegratedMonitoringSystem:
                         results={
                             "count": max(1, 5 - i),
                             "quality_score": 0.3 + (i * 0.05),
-                            "sources": [f"doc_{j}" for j in range(max(1, 3 - i))]
-                        }
+                            "sources": [f"doc_{j}" for j in range(max(1, 3 - i))],
+                        },
                     )
 
                 time.sleep(0.5)  # Gap between queries
@@ -372,8 +380,8 @@ class IntegratedMonitoringSystem:
                 details={
                     "incident_id": incident_id,
                     "mitigation_type": "query_rate_limiting",
-                    "settings": {"max_queries_per_minute": 10}
-                }
+                    "settings": {"max_queries_per_minute": 10},
+                },
             )
 
         # Sleep for the specified duration to simulate the incident timeframe
@@ -390,8 +398,8 @@ class IntegratedMonitoringSystem:
             details={
                 "incident_id": incident_id,
                 "resolution_time": datetime.datetime.now().isoformat(),
-                "duration_seconds": duration_seconds
-            }
+                "duration_seconds": duration_seconds,
+            },
         )
 
         logger.info(f"Security incident simulation completed")
@@ -425,7 +433,7 @@ class IntegratedMonitoringSystem:
             interval_minutes=1,
             theme=self.theme,
             output_file=timeline_path,
-            show_plot=False
+            show_plot=False,
         )
 
         # 2. Create interactive timeline visualization
@@ -438,7 +446,7 @@ class IntegratedMonitoringSystem:
             interactive=True,
             hours_back=1,
             title="Interactive Query Performance & Security Timeline",
-            show_plot=False
+            show_plot=False,
         )
 
         # 3. Create query performance heatmap
@@ -450,7 +458,7 @@ class IntegratedMonitoringSystem:
             output_file=heatmap_path,
             title="Query Phase Duration Heatmap",
             theme=self.theme,
-            show_plot=False
+            show_plot=False,
         )
 
         # 4. Create security event distribution
@@ -462,7 +470,7 @@ class IntegratedMonitoringSystem:
             hours_back=1,
             output_file=events_by_level_path,
             title="Security Events by Severity Level",
-            show_plot=False
+            show_plot=False,
         )
 
         # 5. Create event timeline
@@ -475,7 +483,7 @@ class IntegratedMonitoringSystem:
             interval_minutes=1,
             output_file=event_timeline_path,
             title="Security Event Timeline",
-            show_plot=False
+            show_plot=False,
         )
 
         # 6. Generate the complete dashboard
@@ -490,7 +498,7 @@ class IntegratedMonitoringSystem:
             include_security=True,
             include_query_audit_timeline=True,
             interactive=True,
-            theme=self.theme
+            theme=self.theme,
         )
 
         # 7. Generate a summary report
@@ -510,17 +518,17 @@ class IntegratedMonitoringSystem:
 
         # Detect anomalies
         slow_queries = [
-            qid for qid, metrics in self.query_metrics.query_metrics.items()
+            qid
+            for qid, metrics in self.query_metrics.query_metrics.items()
             if metrics["total_duration"] > 1.0  # Queries taking more than 1 second
         ]
 
         high_severity_events = self.audit_metrics.get_events_by_level(
-            hours_back=1,
-            levels=[AuditLevel.ERROR, AuditLevel.CRITICAL]
+            hours_back=1, levels=[AuditLevel.ERROR, AuditLevel.CRITICAL]
         )
 
         # Create simple HTML report
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(f"""<!DOCTYPE html>
 <html>
 <head>
@@ -555,28 +563,37 @@ class IntegratedMonitoringSystem:
 </head>
 <body>
     <h1>RAG Query and Security Monitoring Report</h1>
-    <p>Generated on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+    <p>Generated on: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
 
-    <div class="summary-box {('critical' if high_severity_events else 'normal')}">
+    <div class="summary-box {("critical" if high_severity_events else "normal")}">
         <h2>Executive Summary</h2>
         <p>This report provides an overview of the system's performance and security status.</p>
         <ul>
-            <li><strong>Total Queries Processed:</strong> {len(self.query_metrics.query_metrics)}</li>
-            <li><strong>Average Query Duration:</strong> {query_stats['average_duration']:.2f} seconds</li>
-            <li><strong>Total Security Events:</strong> {len(self.audit_metrics.get_recent_events(hours_back=1))}</li>
+            <li><strong>Total Queries Processed:</strong> {
+                len(self.query_metrics.query_metrics)
+            }</li>
+            <li><strong>Average Query Duration:</strong> {
+                query_stats["average_duration"]:.2f} seconds</li>
+            <li><strong>Total Security Events:</strong> {
+                len(self.audit_metrics.get_recent_events(hours_back=1))
+            }</li>
             <li><strong>High Severity Events:</strong> {len(high_severity_events)}</li>
-            <li><strong>System Status:</strong> {'Incident Detected' if high_severity_events else 'Normal Operation'}</li>
+            <li><strong>System Status:</strong> {
+                "Incident Detected" if high_severity_events else "Normal Operation"
+            }</li>
         </ul>
     </div>
 
     <h2>Performance Metrics</h2>
-    <div class="summary-box {('warning' if slow_queries else 'normal')}">
+    <div class="summary-box {("warning" if slow_queries else "normal")}">
         <h3>Query Performance</h3>
         <p>Summary of RAG query performance metrics:</p>
         <ul>
-            <li><strong>Fastest Query:</strong> {query_stats['min_duration']:.3f} seconds</li>
-            <li><strong>Slowest Query:</strong> {query_stats['max_duration']:.3f} seconds</li>
-            <li><strong>Average Quality Score:</strong> {query_stats.get('average_quality_score', 'N/A')}</li>
+            <li><strong>Fastest Query:</strong> {query_stats["min_duration"]:.3f} seconds</li>
+            <li><strong>Slowest Query:</strong> {query_stats["max_duration"]:.3f} seconds</li>
+            <li><strong>Average Quality Score:</strong> {
+                query_stats.get("average_quality_score", "N/A")
+            }</li>
             <li><strong>Slow Queries Detected:</strong> {len(slow_queries)}</li>
         </ul>
 
@@ -587,23 +604,42 @@ class IntegratedMonitoringSystem:
                 <th>Average Duration (sec)</th>
                 <th>Max Duration (sec)</th>
             </tr>
-            {''.join([f'<tr><td>{phase}</td><td>{stats["avg"]:.3f}</td><td>{stats["max"]:.3f}</td></tr>'
-                     for phase, stats in query_stats.get('phases', {}).items()])}
+            {
+                "".join(
+                    [
+                        f"<tr><td>{phase}</td><td>{stats["avg"]:.3f}</td><td>{stats["max"]:.3f}</td></tr>"
+                        for phase, stats in query_stats.get("phases", {}).items()
+                    ]
+                )
+            }
         </table>
     </div>
 
     <h2>Security Analysis</h2>
-    <div class="summary-box {('critical' if high_severity_events else 'normal')}">
+    <div class="summary-box {("critical" if high_severity_events else "normal")}">
         <h3>Security Events</h3>
         <p>Summary of security audit events:</p>
         <ul>
-            <li><strong>Total Events:</strong> {len(self.audit_metrics.get_recent_events(hours_back=1))}</li>
-            <li><strong>Critical Events:</strong> {len([e for e in high_severity_events if e.level == AuditLevel.CRITICAL])}</li>
-            <li><strong>Error Events:</strong> {len([e for e in high_severity_events if e.level == AuditLevel.ERROR])}</li>
-            <li><strong>Warning Events:</strong> {len(self.audit_metrics.get_events_by_level(hours_back=1, levels=[AuditLevel.WARNING]))}</li>
+            <li><strong>Total Events:</strong> {
+                len(self.audit_metrics.get_recent_events(hours_back=1))
+            }</li>
+            <li><strong>Critical Events:</strong> {
+                len([e for e in high_severity_events if e.level == AuditLevel.CRITICAL])
+            }</li>
+            <li><strong>Error Events:</strong> {
+                len([e for e in high_severity_events if e.level == AuditLevel.ERROR])
+            }</li>
+            <li><strong>Warning Events:</strong> {
+                len(
+                    self.audit_metrics.get_events_by_level(
+                        hours_back=1, levels=[AuditLevel.WARNING]
+                    )
+                )
+            }</li>
         </ul>
 
-        {f'''<h4>High Severity Events</h4>
+        {
+                f'''<h4>High Severity Events</h4>
         <table>
             <tr>
                 <th>Timestamp</th>
@@ -612,9 +648,18 @@ class IntegratedMonitoringSystem:
                 <th>Action</th>
                 <th>Message</th>
             </tr>
-            {''.join([f'<tr><td>{e.timestamp}</td><td>{e.level.name}</td><td>{e.category.name}</td><td>{e.action}</td><td>{e.message}</td></tr>'
-                     for e in high_severity_events])}
-        </table>''' if high_severity_events else ''}
+            {
+                    ''.join(
+                        [
+                            f'<tr><td>{e.timestamp}</td><td>{e.level.name}</td><td>{e.category.name}</td><td>{e.action}</td><td>{e.message}</td></tr>'
+                            for e in high_severity_events
+                        ]
+                    )
+                }
+        </table>'''
+                if high_severity_events
+                else ""
+            }
     </div>
 
     <h2>Visual Analysis</h2>
@@ -623,8 +668,15 @@ class IntegratedMonitoringSystem:
 
     <h3>Static Visualizations</h3>
     <ul>
-        {''.join([f'<li><a href="visualizations/{os.path.basename(path)}">{name.replace("_", " ").title()}</a></li>'
-                 for name, path in self.output_files.items() if name != 'dashboard' and name != 'report'])}
+        {
+                "".join(
+                    [
+                        f'<li><a href="visualizations/{os.path.basename(path)}">{name.replace("_", " ").title()}</a></li>'
+                        for name, path in self.output_files.items()
+                        if name != "dashboard" and name != "report"
+                    ]
+                )
+            }
     </ul>
 
     <hr>
@@ -643,6 +695,7 @@ class IntegratedMonitoringSystem:
             webbrowser.open(dashboard_url)
         else:
             logger.error("Dashboard not found or not generated yet")
+
 
 def run_comprehensive_example(output_dir=None, run_time=60, theme="light", open_browser=True):
     """
@@ -667,7 +720,7 @@ def run_comprehensive_example(output_dir=None, run_time=60, theme="light", open_
     for i in range(10):
         system.process_rag_query(
             query_text=f"Baseline query {i}: How does IPFS handle content addressing?",
-            simulate=True
+            simulate=True,
         )
         time.sleep(0.5)
 
@@ -680,7 +733,7 @@ def run_comprehensive_example(output_dir=None, run_time=60, theme="light", open_
         # Process a query
         system.process_rag_query(
             query_text=f"Normal operation query: What are the benefits of content addressing?",
-            simulate=True
+            simulate=True,
         )
 
         # Small delay between operations
@@ -695,7 +748,7 @@ def run_comprehensive_example(output_dir=None, run_time=60, theme="light", open_
         for i in range(5):
             system.process_rag_query(
                 query_text=f"Post-incident query {i}: How does IPFS handle network partitions?",
-                simulate=True
+                simulate=True,
             )
             time.sleep(1)
 
@@ -708,8 +761,7 @@ def run_comprehensive_example(output_dir=None, run_time=60, theme="light", open_
         logger.info("Simulating recovery from incident")
         for i in range(5):
             system.process_rag_query(
-                query_text=f"Recovery query {i}: Tell me about IPFS clustering",
-                simulate=True
+                query_text=f"Recovery query {i}: Tell me about IPFS clustering", simulate=True
             )
             time.sleep(1)
 
@@ -723,8 +775,7 @@ def run_comprehensive_example(output_dir=None, run_time=60, theme="light", open_
         logger.info("Simulating recovery from major incident")
         for i in range(7):
             system.process_rag_query(
-                query_text=f"Major recovery query {i}: Explain libp2p security",
-                simulate=True
+                query_text=f"Major recovery query {i}: Explain libp2p security", simulate=True
             )
             time.sleep(1)
 
@@ -739,12 +790,21 @@ def run_comprehensive_example(output_dir=None, run_time=60, theme="light", open_
     logger.info(f"Example completed successfully in {time.time() - start_time:.1f} seconds")
     return output_files
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run comprehensive RAG and audit visualization example")
+    parser = argparse.ArgumentParser(
+        description="Run comprehensive RAG and audit visualization example"
+    )
     parser.add_argument("--output-dir", type=str, help="Directory to store outputs")
-    parser.add_argument("--run-time", type=int, default=60, help="How long to run the simulation in seconds")
-    parser.add_argument("--theme", type=str, default="light", choices=["light", "dark"], help="Dashboard theme")
-    parser.add_argument("--no-browser", action="store_true", help="Don't open browser automatically")
+    parser.add_argument(
+        "--run-time", type=int, default=60, help="How long to run the simulation in seconds"
+    )
+    parser.add_argument(
+        "--theme", type=str, default="light", choices=["light", "dark"], help="Dashboard theme"
+    )
+    parser.add_argument(
+        "--no-browser", action="store_true", help="Don't open browser automatically"
+    )
 
     args = parser.parse_args()
 
@@ -754,7 +814,7 @@ if __name__ == "__main__":
             output_dir=args.output_dir,
             run_time=args.run_time,
             theme=args.theme,
-            open_browser=not args.no_browser
+            open_browser=not args.no_browser,
         )
 
         # Display results
@@ -769,7 +829,9 @@ if __name__ == "__main__":
             else:
                 dashboard = output_files.get("dashboard")
                 if dashboard:
-                    print(f"\nTo view the dashboard manually, open: file://{os.path.abspath(dashboard)}")
+                    print(
+                        f"\nTo view the dashboard manually, open: file://{os.path.abspath(dashboard)}"
+                    )
         else:
             print("\nExample failed. Please check the logs for more information.")
     except Exception as e:

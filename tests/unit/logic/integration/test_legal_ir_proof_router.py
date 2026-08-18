@@ -159,9 +159,10 @@ def test_native_tdfol_result_avoids_external_portfolio() -> None:
     assert backend_calls == []
     native = next(item for item in result.attempts if item.route == "native_tdfol")
     assert native.status == ProofRouteStatus.PROVED
-    assert next(
-        item for item in result.attempts if item.route == "smt_atp_portfolio"
-    ).skip_reason == "required_trust_obtained"
+    assert (
+        next(item for item in result.attempts if item.route == "smt_atp_portfolio").skip_reason
+        == "required_trust_obtained"
+    )
 
 
 def test_drafted_tdfol_candidate_is_proved_from_compiler_owned_fact() -> None:
@@ -309,9 +310,7 @@ def test_canonical_graph_check_matches_the_source_graph_payload() -> None:
         metadata={"triple_index": 1},
     )
     sample = {
-        "frame_logic": {
-            "triples": [{"subject": "f1", "predicate": "actor", "object": "agency"}]
-        }
+        "frame_logic": {"triples": [{"subject": "f1", "predicate": "actor", "object": "agency"}]}
     }
     result = LegalIRProofRouter(
         HammerPipeline(backends=[]),
@@ -387,9 +386,7 @@ def test_portfolio_failure_preserves_bounded_backend_diagnostics() -> None:
     )
     obligation = _obligation()
     result = router.route(obligation, _goal(obligation), _premises())
-    attempt = next(
-        item for item in result.attempts if item.route == "smt_atp_portfolio"
-    )
+    attempt = next(item for item in result.attempts if item.route == "smt_atp_portfolio")
 
     assert attempt.status == ProofRouteStatus.UNKNOWN
     assert attempt.metadata["hammer_status"] == "unproved"

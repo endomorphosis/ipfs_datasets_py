@@ -6,7 +6,7 @@ IPFS graph database.
 
 Components:
 - lexer: Tokenization of Cypher queries
-- ast: Abstract Syntax Tree definitions  
+- ast: Abstract Syntax Tree definitions
 - parser: Cypher query parser
 - compiler: AST to IR compiler ✅ **NEW**
 - optimizer: Query plan optimization (Phase 3)
@@ -21,15 +21,15 @@ Phase 2 Progress:
 
 Usage:
     from ipfs_datasets_py.knowledge_graphs.cypher import CypherParser, CypherCompiler
-    
+
     # Parse Cypher query
     parser = CypherParser()
     ast = parser.parse("MATCH (n:Person) WHERE n.age > 30 RETURN n")
-    
+
     # Compile to IR
     compiler = CypherCompiler()
     ir = compiler.compile(ast)
-    
+
     # Execute IR (via QueryExecutor)
     executor.execute_ir(ir)
 """
@@ -73,57 +73,52 @@ from .functions import FUNCTION_REGISTRY, Point, evaluate_function
 
 __all__ = [
     # Lexer
-    'CypherLexer',
-    'Token',
-    'TokenType',
-    
+    "CypherLexer",
+    "Token",
+    "TokenType",
     # AST nodes
-    'ASTNode',
-    'ASTNodeType',
-    'QueryNode',
-    'MatchClause',
-    'WhereClause',
-    'ReturnClause',
-    'ReturnItem',
-    'OrderByClause',
-    'OrderItem',
-    'CreateClause',
-    'DeleteClause',
-    'SetClause',
-    'PatternNode',
-    'NodePattern',
-    'RelationshipPattern',
-    'ExpressionNode',
-    'BinaryOpNode',
-    'UnaryOpNode',
-    'PropertyAccessNode',
-    'FunctionCallNode',
-    'LiteralNode',
-    'VariableNode',
-    'ParameterNode',
-    'ListNode',
-    'MapNode',
-    'CaseExpressionNode',
-    'WhenClause',
-    
+    "ASTNode",
+    "ASTNodeType",
+    "QueryNode",
+    "MatchClause",
+    "WhereClause",
+    "ReturnClause",
+    "ReturnItem",
+    "OrderByClause",
+    "OrderItem",
+    "CreateClause",
+    "DeleteClause",
+    "SetClause",
+    "PatternNode",
+    "NodePattern",
+    "RelationshipPattern",
+    "ExpressionNode",
+    "BinaryOpNode",
+    "UnaryOpNode",
+    "PropertyAccessNode",
+    "FunctionCallNode",
+    "LiteralNode",
+    "VariableNode",
+    "ParameterNode",
+    "ListNode",
+    "MapNode",
+    "CaseExpressionNode",
+    "WhenClause",
     # Visitors
-    'ASTVisitor',
-    'ASTPrettyPrinter',
-    
+    "ASTVisitor",
+    "ASTPrettyPrinter",
     # Parser
-    'CypherParser',
-    'CypherParseError',
-    'parse_cypher',
-    
+    "CypherParser",
+    "CypherParseError",
+    "parse_cypher",
     # Compiler
-    'CypherCompiler',
-    'CypherCompileError',
-    'compile_cypher',
-    
+    "CypherCompiler",
+    "CypherCompileError",
+    "compile_cypher",
     # Functions (Phase 2 critical)
-    'FUNCTION_REGISTRY',
-    'Point',
-    'evaluate_function',
+    "FUNCTION_REGISTRY",
+    "Point",
+    "evaluate_function",
 ]
 
-__version__ = '0.2.5'  # Phase 2 nearly complete
+__version__ = "0.2.5"  # Phase 2 nearly complete

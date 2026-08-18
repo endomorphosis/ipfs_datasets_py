@@ -22,6 +22,7 @@ from unittest.mock import patch, MagicMock
 # Helper: run async functions in tests
 # ---------------------------------------------------------------------------
 
+
 def _run(coro):
     loop = asyncio.new_event_loop()
     try:
@@ -34,6 +35,7 @@ def _run(coro):
 # 1. deontological_reasoning_utils.py
 # ===========================================================================
 
+
 class TestExtractKeywords:
     """Tests for extract_keywords function."""
 
@@ -41,7 +43,10 @@ class TestExtractKeywords:
         """GIVEN a text with meaningful words
         WHEN extract_keywords is called
         THEN meaningful keywords are returned excluding stop-words"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import extract_keywords
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            extract_keywords,
+        )
+
         result = extract_keywords("must pay taxes annually")
         assert "pay" in result
         assert "taxes" in result
@@ -53,7 +58,10 @@ class TestExtractKeywords:
         """GIVEN text with only stop-words
         WHEN extract_keywords is called
         THEN empty set returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import extract_keywords
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            extract_keywords,
+        )
+
         result = extract_keywords("the a an and or but in on at")
         assert isinstance(result, set)
         # all are stop-words or ≤2 chars
@@ -63,7 +71,10 @@ class TestExtractKeywords:
         """GIVEN text with 1-2 char words
         WHEN extract_keywords is called
         THEN they are filtered out"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import extract_keywords
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            extract_keywords,
+        )
+
         result = extract_keywords("up it is go")
         # 'up'=2, 'it'=2, 'is'=2, 'go'=2 — all ≤2 chars filtered
         assert len(result) == 0
@@ -76,14 +87,20 @@ class TestCalculateTextSimilarity:
         """GIVEN two identical texts
         WHEN calculate_text_similarity is called
         THEN similarity is 1.0"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import calculate_text_similarity
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            calculate_text_similarity,
+        )
+
         assert calculate_text_similarity("pay taxes", "pay taxes") == 1.0
 
     def test_unrelated_texts_have_low_similarity(self):
         """GIVEN two unrelated texts
         WHEN calculate_text_similarity is called
         THEN similarity is low"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import calculate_text_similarity
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            calculate_text_similarity,
+        )
+
         score = calculate_text_similarity("pay taxes", "file lawsuit")
         assert score < 0.5
 
@@ -91,7 +108,10 @@ class TestCalculateTextSimilarity:
         """GIVEN two texts sharing some words
         WHEN calculate_text_similarity is called
         THEN similarity is between 0 and 1"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import calculate_text_similarity
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            calculate_text_similarity,
+        )
+
         score = calculate_text_similarity("pay annual taxes", "pay bills")
         assert 0.0 < score < 1.0
 
@@ -99,7 +119,10 @@ class TestCalculateTextSimilarity:
         """GIVEN empty texts
         WHEN calculate_text_similarity is called
         THEN 0.0 returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import calculate_text_similarity
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            calculate_text_similarity,
+        )
+
         assert calculate_text_similarity("", "pay taxes") == 0.0
         assert calculate_text_similarity("pay taxes", "") == 0.0
         assert calculate_text_similarity("", "") == 0.0
@@ -112,28 +135,40 @@ class TestAreEntitiesSimilar:
         """GIVEN identical entity names
         WHEN are_entities_similar is called
         THEN True returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import are_entities_similar
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            are_entities_similar,
+        )
+
         assert are_entities_similar("citizen", "citizen") is True
 
     def test_substring_match(self):
         """GIVEN entity name that is substring of other
         WHEN are_entities_similar is called
         THEN True returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import are_entities_similar
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            are_entities_similar,
+        )
+
         assert are_entities_similar("citizen", "citizens") is True
 
     def test_unrelated_entities_not_similar(self):
         """GIVEN completely different entities
         WHEN are_entities_similar is called with default threshold
         THEN False returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import are_entities_similar
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            are_entities_similar,
+        )
+
         assert are_entities_similar("citizen", "corporation") is False
 
     def test_case_insensitive(self):
         """GIVEN entities with different casing
         WHEN are_entities_similar is called
         THEN True returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import are_entities_similar
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            are_entities_similar,
+        )
+
         assert are_entities_similar("CITIZEN", "citizen") is True
 
 
@@ -144,21 +179,30 @@ class TestAreActionsSimilar:
         """GIVEN identical actions
         WHEN are_actions_similar is called
         THEN True returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import are_actions_similar
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            are_actions_similar,
+        )
+
         assert are_actions_similar("pay taxes", "pay taxes") is True
 
     def test_substring_match(self):
         """GIVEN action that is substring of other
         WHEN are_actions_similar is called
         THEN True returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import are_actions_similar
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            are_actions_similar,
+        )
+
         assert are_actions_similar("pay taxes", "must pay taxes annually") is True
 
     def test_unrelated_actions_not_similar(self):
         """GIVEN unrelated actions
         WHEN are_actions_similar is called
         THEN False returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import are_actions_similar
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            are_actions_similar,
+        )
+
         assert are_actions_similar("pay taxes", "file lawsuit") is False
 
 
@@ -169,14 +213,20 @@ class TestNormalizeEntityAction:
         """GIVEN entity with extra whitespace and capitals
         WHEN normalize_entity is called
         THEN stripped lowercase returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import normalize_entity
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            normalize_entity,
+        )
+
         assert normalize_entity("  CITIZEN  ") == "citizen"
 
     def test_normalize_action_strips_and_lowercases(self):
         """GIVEN action with extra whitespace and capitals
         WHEN normalize_action is called
         THEN stripped lowercase returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import normalize_action
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            normalize_action,
+        )
+
         assert normalize_action("  PAY TAXES  ") == "pay taxes"
 
 
@@ -187,7 +237,10 @@ class TestExtractConditionsExceptions:
         """GIVEN text with if-clause
         WHEN extract_conditions_from_text is called
         THEN condition extracted"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import extract_conditions_from_text
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            extract_conditions_from_text,
+        )
+
         conditions = extract_conditions_from_text("if employed, must pay taxes")
         assert len(conditions) > 0
 
@@ -195,15 +248,23 @@ class TestExtractConditionsExceptions:
         """GIVEN text with when-clause
         WHEN extract_conditions_from_text is called
         THEN condition extracted"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import extract_conditions_from_text
-        conditions = extract_conditions_from_text("when the contract is signed, the party must comply")
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            extract_conditions_from_text,
+        )
+
+        conditions = extract_conditions_from_text(
+            "when the contract is signed, the party must comply"
+        )
         assert len(conditions) > 0
 
     def test_extract_conditions_empty_text(self):
         """GIVEN text without conditions
         WHEN extract_conditions_from_text is called
         THEN empty list returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import extract_conditions_from_text
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            extract_conditions_from_text,
+        )
+
         conditions = extract_conditions_from_text("must pay taxes")
         assert conditions == []
 
@@ -211,7 +272,10 @@ class TestExtractConditionsExceptions:
         """GIVEN text with unless-clause
         WHEN extract_exceptions_from_text is called
         THEN exception extracted"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import extract_exceptions_from_text
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            extract_exceptions_from_text,
+        )
+
         exceptions = extract_exceptions_from_text("must pay taxes unless exempt")
         assert len(exceptions) > 0
 
@@ -219,7 +283,10 @@ class TestExtractConditionsExceptions:
         """GIVEN text without exceptions
         WHEN extract_exceptions_from_text is called
         THEN empty list returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import extract_exceptions_from_text
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils import (
+            extract_exceptions_from_text,
+        )
+
         exceptions = extract_exceptions_from_text("must pay taxes")
         assert exceptions == []
 
@@ -228,11 +295,13 @@ class TestExtractConditionsExceptions:
 # 2. logic_verification.py — uncovered paths
 # ===========================================================================
 
+
 class TestLogicVerifierFallbackPaths:
     """Tests for LogicVerifier fallback paths (use_symbolic_ai=False)."""
 
     def setup_method(self):
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
+
         self.verifier = LogicVerifier(use_symbolic_ai=False, fallback_enabled=True)
 
     def test_add_axiom_invalid_syntax_returns_false(self):
@@ -240,7 +309,10 @@ class TestLogicVerifierFallbackPaths:
         WHEN add_axiom called
         THEN False returned and axiom not added"""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_types import LogicAxiom
-        invalid_axiom = LogicAxiom(name="invalid", formula="P ∧ (Q", description="bad", axiom_type="user_defined")
+
+        invalid_axiom = LogicAxiom(
+            name="invalid", formula="P ∧ (Q", description="bad", axiom_type="user_defined"
+        )
         result = self.verifier.add_axiom(invalid_axiom)
         assert result is False
 
@@ -249,7 +321,10 @@ class TestLogicVerifierFallbackPaths:
         WHEN add_axiom called again
         THEN False returned"""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification_types import LogicAxiom
-        axiom = LogicAxiom(name="modus_ponens", formula="P", description="dup", axiom_type="built_in")
+
+        axiom = LogicAxiom(
+            name="modus_ponens", formula="P", description="dup", axiom_type="built_in"
+        )
         result = self.verifier.add_axiom(axiom)
         assert result is False
 
@@ -416,9 +491,12 @@ class TestLogicVerifierSymbolicFallback:
         THEN falls back to pattern matching"""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         symbol_mock = self._make_symbol_mock("unknown result, cannot determine")
-        with patch.object(lv_mod, 'Symbol', return_value=symbol_mock), \
-             patch.object(lv_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with (
+            patch.object(lv_mod, "Symbol", return_value=symbol_mock),
+            patch.object(lv_mod, "SYMBOLIC_AI_AVAILABLE", True),
+        ):
             verifier = LogicVerifier(use_symbolic_ai=True, fallback_enabled=True)
             result = verifier._check_consistency_symbolic(["P", "Q"])
         # Falls back to pattern_matching
@@ -430,9 +508,12 @@ class TestLogicVerifierSymbolicFallback:
         THEN is_consistent=False"""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         symbol_mock = self._make_symbol_mock("inconsistent formulas detected")
-        with patch.object(lv_mod, 'Symbol', return_value=symbol_mock), \
-             patch.object(lv_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with (
+            patch.object(lv_mod, "Symbol", return_value=symbol_mock),
+            patch.object(lv_mod, "SYMBOLIC_AI_AVAILABLE", True),
+        ):
             verifier = LogicVerifier(use_symbolic_ai=True, fallback_enabled=True)
             result = verifier._check_consistency_symbolic(["P", "¬P"])
         assert result.is_consistent is False
@@ -443,9 +524,12 @@ class TestLogicVerifierSymbolicFallback:
         THEN is_consistent=True"""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         symbol_mock = self._make_symbol_mock("consistent and compatible")
-        with patch.object(lv_mod, 'Symbol', return_value=symbol_mock), \
-             patch.object(lv_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with (
+            patch.object(lv_mod, "Symbol", return_value=symbol_mock),
+            patch.object(lv_mod, "SYMBOLIC_AI_AVAILABLE", True),
+        ):
             verifier = LogicVerifier(use_symbolic_ai=True, fallback_enabled=True)
             result = verifier._check_consistency_symbolic(["P", "Q"])
         assert result.is_consistent is True
@@ -456,9 +540,12 @@ class TestLogicVerifierSymbolicFallback:
         THEN entails=True"""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         symbol_mock = self._make_symbol_mock("yes, the entailment holds")
-        with patch.object(lv_mod, 'Symbol', return_value=symbol_mock), \
-             patch.object(lv_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with (
+            patch.object(lv_mod, "Symbol", return_value=symbol_mock),
+            patch.object(lv_mod, "SYMBOLIC_AI_AVAILABLE", True),
+        ):
             verifier = LogicVerifier(use_symbolic_ai=True, fallback_enabled=True)
             result = verifier._check_entailment_symbolic(["P → Q", "P"], "Q")
         assert result.entails is True
@@ -469,9 +556,12 @@ class TestLogicVerifierSymbolicFallback:
         THEN entails=False"""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         symbol_mock = self._make_symbol_mock("no, cannot establish entailment")
-        with patch.object(lv_mod, 'Symbol', return_value=symbol_mock), \
-             patch.object(lv_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with (
+            patch.object(lv_mod, "Symbol", return_value=symbol_mock),
+            patch.object(lv_mod, "SYMBOLIC_AI_AVAILABLE", True),
+        ):
             verifier = LogicVerifier(use_symbolic_ai=True, fallback_enabled=True)
             result = verifier._check_entailment_symbolic(["P"], "Q")
         assert result.entails is False
@@ -482,10 +572,13 @@ class TestLogicVerifierSymbolicFallback:
         THEN fallback used"""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         # "uncertain" does not contain "yes" or "no" as substrings
         symbol_mock = self._make_symbol_mock("uncertain, further analysis required")
-        with patch.object(lv_mod, 'Symbol', return_value=symbol_mock), \
-             patch.object(lv_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with (
+            patch.object(lv_mod, "Symbol", return_value=symbol_mock),
+            patch.object(lv_mod, "SYMBOLIC_AI_AVAILABLE", True),
+        ):
             verifier = LogicVerifier(use_symbolic_ai=True, fallback_enabled=True)
             result = verifier._check_entailment_symbolic(["P → Q", "P"], "Q")
         # Fallback should handle modus ponens
@@ -497,10 +590,13 @@ class TestLogicVerifierSymbolicFallback:
         THEN ProofResult with steps returned"""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         proof_text = "Step 1: P → Q (premise)\nStep 2: P (premise)\nStep 3: Q (modus_ponens)"
         symbol_mock = self._make_symbol_mock(proof_text)
-        with patch.object(lv_mod, 'Symbol', return_value=symbol_mock), \
-             patch.object(lv_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with (
+            patch.object(lv_mod, "Symbol", return_value=symbol_mock),
+            patch.object(lv_mod, "SYMBOLIC_AI_AVAILABLE", True),
+        ):
             verifier = LogicVerifier(use_symbolic_ai=True, fallback_enabled=True)
             result = verifier._generate_proof_symbolic(["P → Q", "P"], "Q")
         assert len(result.steps) == 3
@@ -512,9 +608,12 @@ class TestLogicVerifierSymbolicFallback:
         THEN conflicting pair added"""
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
         import ipfs_datasets_py.logic.integration.reasoning.logic_verification as lv_mod
+
         symbol_mock = self._make_symbol_mock("no, they cannot both be true")
-        with patch.object(lv_mod, 'Symbol', return_value=symbol_mock), \
-             patch.object(lv_mod, 'SYMBOLIC_AI_AVAILABLE', True):
+        with (
+            patch.object(lv_mod, "Symbol", return_value=symbol_mock),
+            patch.object(lv_mod, "SYMBOLIC_AI_AVAILABLE", True),
+        ):
             verifier = LogicVerifier(use_symbolic_ai=True, fallback_enabled=True)
             result = verifier._find_conflicting_pairs_symbolic(["P", "¬P"])
         assert len(result) == 1
@@ -527,7 +626,10 @@ class TestLogicVerifierUtilConvenienceFunctions:
         """GIVEN list of contradictory formulas
         WHEN verify_consistency called
         THEN is_consistent=False"""
-        from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import verify_consistency
+        from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
+            verify_consistency,
+        )
+
         result = verify_consistency(["P", "¬P"])
         assert result.is_consistent is False
 
@@ -535,7 +637,10 @@ class TestLogicVerifierUtilConvenienceFunctions:
         """GIVEN modus ponens premises and conclusion
         WHEN verify_entailment called
         THEN entails=True"""
-        from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import verify_entailment
+        from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
+            verify_entailment,
+        )
+
         result = verify_entailment(["P → Q", "P"], "Q")
         assert result.entails is True
 
@@ -543,7 +648,10 @@ class TestLogicVerifierUtilConvenienceFunctions:
         """GIVEN modus ponens premises and conclusion
         WHEN generate_proof called
         THEN is_valid=True"""
-        from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import generate_proof
+        from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
+            generate_proof,
+        )
+
         result = generate_proof(["P → Q", "P"], "Q")
         assert result.is_valid is True
 
@@ -551,8 +659,11 @@ class TestLogicVerifierUtilConvenienceFunctions:
         """GIVEN factory call with default params
         WHEN create_logic_verifier called
         THEN LogicVerifier instance returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import create_logic_verifier
+        from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
+            create_logic_verifier,
+        )
         from ipfs_datasets_py.logic.integration.reasoning.logic_verification import LogicVerifier
+
         verifier = create_logic_verifier(use_symbolic_ai=False)
         assert isinstance(verifier, LogicVerifier)
 
@@ -560,7 +671,10 @@ class TestLogicVerifierUtilConvenienceFunctions:
         """GIVEN formula with extra closing paren
         WHEN validate_formula_syntax called
         THEN False returned (paren_count goes negative)"""
-        from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import validate_formula_syntax
+        from ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils import (
+            validate_formula_syntax,
+        )
+
         assert validate_formula_syntax("P)") is False
 
 
@@ -568,11 +682,15 @@ class TestLogicVerifierUtilConvenienceFunctions:
 # 3. domain/legal_domain_knowledge.py
 # ===========================================================================
 
+
 class TestLegalDomainKnowledge:
     """Tests for LegalDomainKnowledge class methods."""
 
     def setup_method(self):
-        from ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge import LegalDomainKnowledge
+        from ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge import (
+            LegalDomainKnowledge,
+        )
+
         self.knowledge = LegalDomainKnowledge()
 
     def test_classify_obligation(self):
@@ -580,6 +698,7 @@ class TestLegalDomainKnowledge:
         WHEN classify_legal_statement called
         THEN OBLIGATION operator returned with confidence"""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         op, conf = self.knowledge.classify_legal_statement("The party shall pay rent monthly")
         assert op == DeonticOperator.OBLIGATION
         assert conf > 0.5
@@ -589,6 +708,7 @@ class TestLegalDomainKnowledge:
         WHEN classify_legal_statement called
         THEN PERMISSION operator returned"""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         op, conf = self.knowledge.classify_legal_statement("The tenant may terminate this lease")
         assert op == DeonticOperator.PERMISSION
 
@@ -597,7 +717,10 @@ class TestLegalDomainKnowledge:
         WHEN classify_legal_statement called
         THEN PROHIBITION operator returned"""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
-        op, conf = self.knowledge.classify_legal_statement("Employees must not disclose confidential information")
+
+        op, conf = self.knowledge.classify_legal_statement(
+            "Employees must not disclose confidential information"
+        )
         assert op == DeonticOperator.PROHIBITION
         assert conf > 0.5
 
@@ -629,7 +752,9 @@ class TestLegalDomainKnowledge:
         """GIVEN legal text with if clause
         WHEN extract_conditions called
         THEN conditions list non-empty"""
-        conditions = self.knowledge.extract_conditions("If the contract is breached, the party must pay damages")
+        conditions = self.knowledge.extract_conditions(
+            "If the contract is breached, the party must pay damages"
+        )
         assert isinstance(conditions, list)
 
     def test_extract_temporal_expressions_deadline(self):
@@ -647,16 +772,20 @@ class TestLegalDomainKnowledge:
         WHEN identify_legal_domain called
         THEN contract domain identified"""
         from ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge import LegalDomain
+
         domain, conf = self.knowledge.identify_legal_domain(
             "This contract agreement between the parties establishes obligations for performance and consideration"
         )
-        assert domain == LegalDomain.CONTRACT or conf >= 0.0  # tolerance — domain detection may vary
+        assert (
+            domain == LegalDomain.CONTRACT or conf >= 0.0
+        )  # tolerance — domain detection may vary
 
     def test_identify_legal_domain_no_keywords(self):
         """GIVEN text with no domain keywords
         WHEN identify_legal_domain called
         THEN default CONTRACT domain returned"""
         from ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge import LegalDomain
+
         domain, conf = self.knowledge.identify_legal_domain("some random text with no legal terms")
         assert domain == LegalDomain.CONTRACT
         assert conf <= 0.5
@@ -677,6 +806,7 @@ class TestLegalDomainKnowledge:
         WHEN validate_deontic_extraction called
         THEN warning about conflicting signals"""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         result = self.knowledge.validate_deontic_extraction(
             "may pay taxes", DeonticOperator.OBLIGATION, 0.8
         )
@@ -688,6 +818,7 @@ class TestLegalDomainKnowledge:
         WHEN validate_deontic_extraction called
         THEN warning about conflicting signals"""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         result = self.knowledge.validate_deontic_extraction(
             "must pay taxes", DeonticOperator.PERMISSION, 0.8
         )
@@ -698,6 +829,7 @@ class TestLegalDomainKnowledge:
         WHEN validate_deontic_extraction called
         THEN is_valid=False"""
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import DeonticOperator
+
         result = self.knowledge.validate_deontic_extraction(
             "may must", DeonticOperator.OBLIGATION, 0.3
         )
@@ -708,7 +840,10 @@ class TestLegalDomainKnowledge:
         """GIVEN demonstrate_legal_knowledge function
         WHEN called
         THEN completes without error"""
-        from ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge import demonstrate_legal_knowledge
+        from ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge import (
+            demonstrate_legal_knowledge,
+        )
+
         demonstrate_legal_knowledge()  # Should not raise
 
 
@@ -716,15 +851,22 @@ class TestLegalDomainKnowledge:
 # 4. domain/deontic_query_engine.py
 # ===========================================================================
 
+
 class TestDeonticQueryEngine:
     """Tests for DeonticQueryEngine class."""
 
     def _make_rule_set(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent, DeonticRuleSet
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
+            DeonticRuleSet,
         )
+
         citizen = LegalAgent(identifier="citizen", name="Citizen", agent_type="person")
-        corporation = LegalAgent(identifier="corporation", name="Corporation", agent_type="organization")
+        corporation = LegalAgent(
+            identifier="corporation", name="Corporation", agent_type="organization"
+        )
         return DeonticRuleSet(
             name="test_rules",
             formulas=[
@@ -756,7 +898,10 @@ class TestDeonticQueryEngine:
         """GIVEN no rule set
         WHEN DeonticQueryEngine initialized
         THEN empty indexes"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine(enable_rate_limiting=False, enable_validation=False)
         assert engine.rule_set is None
         assert len(engine.operator_index) == 0
@@ -765,16 +910,24 @@ class TestDeonticQueryEngine:
         """GIVEN rule set with 3 formulas
         WHEN DeonticQueryEngine initialized with rule set
         THEN indexes built"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         rule_set = self._make_rule_set()
-        engine = DeonticQueryEngine(rule_set=rule_set, enable_rate_limiting=False, enable_validation=False)
+        engine = DeonticQueryEngine(
+            rule_set=rule_set, enable_rate_limiting=False, enable_validation=False
+        )
         assert len(engine.operator_index) > 0
 
     def test_load_rule_set(self):
         """GIVEN engine without rule set
         WHEN load_rule_set called
         THEN rule set loaded and indexes built"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine(enable_rate_limiting=False, enable_validation=False)
         rule_set = self._make_rule_set()
         engine.load_rule_set(rule_set)
@@ -785,7 +938,10 @@ class TestDeonticQueryEngine:
         """GIVEN engine with rule set
         WHEN query_obligations called without filter
         THEN all obligations returned"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine(
             rule_set=self._make_rule_set(),
             enable_rate_limiting=False,
@@ -799,7 +955,10 @@ class TestDeonticQueryEngine:
         """GIVEN engine with rule set
         WHEN query_obligations called with agent='citizen'
         THEN obligations for citizen returned"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine(
             rule_set=self._make_rule_set(),
             enable_rate_limiting=False,
@@ -812,7 +971,10 @@ class TestDeonticQueryEngine:
         """GIVEN engine with rule set
         WHEN query_permissions called
         THEN permissions returned"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine(
             rule_set=self._make_rule_set(),
             enable_rate_limiting=False,
@@ -825,7 +987,10 @@ class TestDeonticQueryEngine:
         """GIVEN engine with rule set
         WHEN query_permissions called with action='terminate'
         THEN matching permissions returned"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine(
             rule_set=self._make_rule_set(),
             enable_rate_limiting=False,
@@ -838,7 +1003,10 @@ class TestDeonticQueryEngine:
         """GIVEN engine with rule set
         WHEN query_prohibitions called
         THEN prohibitions returned"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine(
             rule_set=self._make_rule_set(),
             enable_rate_limiting=False,
@@ -851,7 +1019,11 @@ class TestDeonticQueryEngine:
         """GIVEN NL query with 'must'
         WHEN query_by_natural_language called
         THEN obligations returned"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine, QueryType
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+            QueryType,
+        )
+
         engine = DeonticQueryEngine(
             rule_set=self._make_rule_set(),
             enable_rate_limiting=False,
@@ -864,7 +1036,11 @@ class TestDeonticQueryEngine:
         """GIVEN NL query with 'may'
         WHEN query_by_natural_language called
         THEN permissions returned"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine, QueryType
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+            QueryType,
+        )
+
         engine = DeonticQueryEngine(
             rule_set=self._make_rule_set(),
             enable_rate_limiting=False,
@@ -877,7 +1053,11 @@ class TestDeonticQueryEngine:
         """GIVEN NL query with 'forbidden'
         WHEN query_by_natural_language called
         THEN prohibitions returned"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine, QueryType
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+            QueryType,
+        )
+
         engine = DeonticQueryEngine(
             rule_set=self._make_rule_set(),
             enable_rate_limiting=False,
@@ -890,7 +1070,10 @@ class TestDeonticQueryEngine:
         """GIVEN NL query with no keyword hints
         WHEN query_by_natural_language called
         THEN returns some result"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine(
             rule_set=self._make_rule_set(),
             enable_rate_limiting=False,
@@ -903,7 +1086,10 @@ class TestDeonticQueryEngine:
         """GIVEN engine with rule set
         WHEN check_compliance called
         THEN ComplianceResult returned"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine(
             rule_set=self._make_rule_set(),
             enable_rate_limiting=False,
@@ -917,10 +1103,16 @@ class TestDeonticQueryEngine:
         """GIVEN engine with obligation AND prohibition for same agent/action
         WHEN find_conflicts called
         THEN conflicts detected"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
-        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator, LegalAgent, DeonticRuleSet
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
         )
+        from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
+            DeonticFormula,
+            DeonticOperator,
+            LegalAgent,
+            DeonticRuleSet,
+        )
+
         agent = LegalAgent(identifier="citizen", name="Citizen", agent_type="person")
         rule_set = DeonticRuleSet(
             name="conflict_rules",
@@ -941,7 +1133,9 @@ class TestDeonticQueryEngine:
                 ),
             ],
         )
-        engine = DeonticQueryEngine(rule_set=rule_set, enable_rate_limiting=False, enable_validation=False)
+        engine = DeonticQueryEngine(
+            rule_set=rule_set, enable_rate_limiting=False, enable_validation=False
+        )
         conflicts = engine.find_conflicts()
         assert len(conflicts) >= 1
         assert conflicts[0].conflict_type == "obligation_prohibition"
@@ -950,7 +1144,10 @@ class TestDeonticQueryEngine:
         """GIVEN engine with rule set
         WHEN get_agent_summary called
         THEN summary dict returned"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine(
             rule_set=self._make_rule_set(),
             enable_rate_limiting=False,
@@ -963,7 +1160,11 @@ class TestDeonticQueryEngine:
         """GIVEN a QueryResult
         WHEN to_dict called
         THEN dict with expected keys returned"""
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import QueryResult, QueryType
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            QueryResult,
+            QueryType,
+        )
+
         result = QueryResult(query_type=QueryType.OBLIGATIONS, total_matches=0)
         d = result.to_dict()
         assert "query_type" in d
@@ -974,8 +1175,10 @@ class TestDeonticQueryEngine:
         WHEN create_query_engine factory called
         THEN DeonticQueryEngine returned"""
         from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
-            create_query_engine, DeonticQueryEngine
+            create_query_engine,
+            DeonticQueryEngine,
         )
+
         rule_set = self._make_rule_set()
         engine = create_query_engine(rule_set)
         assert isinstance(engine, DeonticQueryEngine)
@@ -985,6 +1188,7 @@ class TestDeonticQueryEngine:
         WHEN query_legal_rules called
         THEN QueryResult returned"""
         from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import query_legal_rules
+
         rule_set = self._make_rule_set()
         result = query_legal_rules(rule_set, "must citizens pay")
         assert result is not None
@@ -994,11 +1198,15 @@ class TestDeonticQueryEngine:
 # 5. deontological_reasoning.py — remaining uncovered lines
 # ===========================================================================
 
+
 class TestDeontologicalReasoningExtractors:
     """Tests for DeonticExtractor conditional and exception paths."""
 
     def setup_method(self):
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import DeonticExtractor
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
+            DeonticExtractor,
+        )
+
         self.extractor = DeonticExtractor()
 
     def test_extract_conditional_obligation(self):
@@ -1042,7 +1250,10 @@ class TestDeontologicalReasoningExtractors:
         """GIVEN text with 'must'
         WHEN _calculate_confidence called
         THEN confidence above base"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         conf = self.extractor._calculate_confidence("citizens must pay", DeonticModality.OBLIGATION)
         assert conf >= 0.8
 
@@ -1050,8 +1261,13 @@ class TestDeontologicalReasoningExtractors:
         """GIVEN text with 'should'
         WHEN _calculate_confidence called
         THEN confidence slightly reduced"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
-        conf = self.extractor._calculate_confidence("citizens should pay", DeonticModality.OBLIGATION)
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
+        conf = self.extractor._calculate_confidence(
+            "citizens should pay", DeonticModality.OBLIGATION
+        )
         assert conf <= 0.7
 
     def test_extract_context_returns_dict(self):
@@ -1071,18 +1287,30 @@ class TestDeontologicalReasoningAsyncEngine:
         WHEN _count_by_modality called
         THEN counts dict returned"""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
-            DeontologicalReasoningEngine, DeonticStatement,
+            DeontologicalReasoningEngine,
+            DeonticStatement,
         )
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         engine = DeontologicalReasoningEngine()
         stmts = [
             DeonticStatement(
-                id="s1", entity="citizen", action="pay taxes",
-                modality=DeonticModality.OBLIGATION, source_document="doc1", source_text="...",
+                id="s1",
+                entity="citizen",
+                action="pay taxes",
+                modality=DeonticModality.OBLIGATION,
+                source_document="doc1",
+                source_text="...",
             ),
             DeonticStatement(
-                id="s2", entity="citizen", action="vote",
-                modality=DeonticModality.PERMISSION, source_document="doc1", source_text="...",
+                id="s2",
+                entity="citizen",
+                action="vote",
+                modality=DeonticModality.PERMISSION,
+                source_document="doc1",
+                source_text="...",
             ),
         ]
         counts = engine._count_by_modality(stmts)
@@ -1094,18 +1322,30 @@ class TestDeontologicalReasoningAsyncEngine:
         WHEN _count_by_entity called
         THEN entity counts returned"""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
-            DeontologicalReasoningEngine, DeonticStatement,
+            DeontologicalReasoningEngine,
+            DeonticStatement,
         )
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         engine = DeontologicalReasoningEngine()
         stmts = [
             DeonticStatement(
-                id="s1", entity="citizen", action="pay taxes",
-                modality=DeonticModality.OBLIGATION, source_document="doc1", source_text="...",
+                id="s1",
+                entity="citizen",
+                action="pay taxes",
+                modality=DeonticModality.OBLIGATION,
+                source_document="doc1",
+                source_text="...",
             ),
             DeonticStatement(
-                id="s2", entity="citizen", action="vote",
-                modality=DeonticModality.PERMISSION, source_document="doc1", source_text="...",
+                id="s2",
+                entity="citizen",
+                action="vote",
+                modality=DeonticModality.PERMISSION,
+                source_document="doc1",
+                source_text="...",
             ),
         ]
         counts = engine._count_by_entity(stmts)
@@ -1116,19 +1356,31 @@ class TestDeontologicalReasoningAsyncEngine:
         WHEN _analyze_conflicts called
         THEN by_type and by_severity dicts returned"""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
-            DeontologicalReasoningEngine, DeonticStatement,
+            DeontologicalReasoningEngine,
+            DeonticStatement,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticModality, DeonticConflict, ConflictType,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         engine = DeontologicalReasoningEngine()
         stmt1 = DeonticStatement(
-            id="s1", entity="citizen", action="pay taxes",
-            modality=DeonticModality.OBLIGATION, source_document="doc1", source_text="...",
+            id="s1",
+            entity="citizen",
+            action="pay taxes",
+            modality=DeonticModality.OBLIGATION,
+            source_document="doc1",
+            source_text="...",
         )
         stmt2 = DeonticStatement(
-            id="s2", entity="citizen", action="pay taxes",
-            modality=DeonticModality.PROHIBITION, source_document="doc1", source_text="...",
+            id="s2",
+            entity="citizen",
+            action="pay taxes",
+            modality=DeonticModality.PROHIBITION,
+            source_document="doc1",
+            source_text="...",
         )
         conflict = DeonticConflict(
             id="c1",
@@ -1147,19 +1399,31 @@ class TestDeontologicalReasoningAsyncEngine:
         WHEN _generate_analysis_recommendations called
         THEN recommendation about high-severity conflicts returned"""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
-            DeontologicalReasoningEngine, DeonticStatement,
+            DeontologicalReasoningEngine,
+            DeonticStatement,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticModality, DeonticConflict, ConflictType,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         engine = DeontologicalReasoningEngine()
         stmt1 = DeonticStatement(
-            id="s1", entity="citizen", action="pay taxes",
-            modality=DeonticModality.OBLIGATION, source_document="doc1", source_text="...",
+            id="s1",
+            entity="citizen",
+            action="pay taxes",
+            modality=DeonticModality.OBLIGATION,
+            source_document="doc1",
+            source_text="...",
         )
         stmt2 = DeonticStatement(
-            id="s2", entity="citizen", action="pay taxes",
-            modality=DeonticModality.PROHIBITION, source_document="doc2", source_text="...",
+            id="s2",
+            entity="citizen",
+            action="pay taxes",
+            modality=DeonticModality.PROHIBITION,
+            source_document="doc2",
+            source_text="...",
         )
         conflict = DeonticConflict(
             id="c1",
@@ -1176,7 +1440,10 @@ class TestDeontologicalReasoningAsyncEngine:
         """GIVEN no conflicts
         WHEN _generate_analysis_recommendations called
         THEN 'no major conflicts' recommendation returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import DeontologicalReasoningEngine
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
+            DeontologicalReasoningEngine,
+        )
+
         engine = DeontologicalReasoningEngine()
         recommendations = engine._generate_analysis_recommendations([])
         assert len(recommendations) == 1
@@ -1186,10 +1453,16 @@ class TestDeontologicalReasoningAsyncEngine:
         """GIVEN corpus with conflicting docs
         WHEN analyze_corpus_for_deontic_conflicts called
         THEN result dict with conflicts_summary returned"""
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import DeontologicalReasoningEngine
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
+            DeontologicalReasoningEngine,
+        )
+
         engine = DeontologicalReasoningEngine()
         docs = [
-            {"id": "doc1", "content": "Citizens must pay taxes by April. Citizens cannot pay taxes."},
+            {
+                "id": "doc1",
+                "content": "Citizens must pay taxes by April. Citizens cannot pay taxes.",
+            },
         ]
         result = _run(engine.analyze_corpus_for_deontic_conflicts(docs))
         assert "statements_summary" in result
@@ -1200,13 +1473,21 @@ class TestDeontologicalReasoningAsyncEngine:
         WHEN query_deontic_statements called
         THEN filtered results returned"""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
-            DeontologicalReasoningEngine, DeonticStatement,
+            DeontologicalReasoningEngine,
+            DeonticStatement,
         )
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         engine = DeontologicalReasoningEngine()
         stmt = DeonticStatement(
-            id="s1", entity="citizen", action="pay taxes",
-            modality=DeonticModality.OBLIGATION, source_document="doc1", source_text="...",
+            id="s1",
+            entity="citizen",
+            action="pay taxes",
+            modality=DeonticModality.OBLIGATION,
+            source_document="doc1",
+            source_text="...",
         )
         engine.statement_database["s1"] = stmt
         results = _run(engine.query_deontic_statements(entity="citizen"))
@@ -1217,17 +1498,29 @@ class TestDeontologicalReasoningAsyncEngine:
         WHEN query_deontic_statements filtered by modality
         THEN only matching statements returned"""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
-            DeontologicalReasoningEngine, DeonticStatement,
+            DeontologicalReasoningEngine,
+            DeonticStatement,
         )
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         engine = DeontologicalReasoningEngine()
         stmt1 = DeonticStatement(
-            id="s1", entity="citizen", action="pay taxes",
-            modality=DeonticModality.OBLIGATION, source_document="doc1", source_text="...",
+            id="s1",
+            entity="citizen",
+            action="pay taxes",
+            modality=DeonticModality.OBLIGATION,
+            source_document="doc1",
+            source_text="...",
         )
         stmt2 = DeonticStatement(
-            id="s2", entity="citizen", action="vote",
-            modality=DeonticModality.PERMISSION, source_document="doc1", source_text="...",
+            id="s2",
+            entity="citizen",
+            action="vote",
+            modality=DeonticModality.PERMISSION,
+            source_document="doc1",
+            source_text="...",
         )
         engine.statement_database["s1"] = stmt1
         engine.statement_database["s2"] = stmt2
@@ -1240,13 +1533,21 @@ class TestDeontologicalReasoningAsyncEngine:
         WHEN query_deontic_statements called with action_keywords
         THEN only matching statements returned"""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
-            DeontologicalReasoningEngine, DeonticStatement,
+            DeontologicalReasoningEngine,
+            DeonticStatement,
         )
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         engine = DeontologicalReasoningEngine()
         stmt = DeonticStatement(
-            id="s1", entity="citizen", action="pay taxes",
-            modality=DeonticModality.OBLIGATION, source_document="doc1", source_text="...",
+            id="s1",
+            entity="citizen",
+            action="pay taxes",
+            modality=DeonticModality.OBLIGATION,
+            source_document="doc1",
+            source_text="...",
         )
         engine.statement_database["s1"] = stmt
         results = _run(engine.query_deontic_statements(action_keywords=["taxes"]))
@@ -1257,19 +1558,31 @@ class TestDeontologicalReasoningAsyncEngine:
         WHEN query_conflicts called
         THEN matching conflicts returned"""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
-            DeontologicalReasoningEngine, DeonticStatement,
+            DeontologicalReasoningEngine,
+            DeonticStatement,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticModality, DeonticConflict, ConflictType,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         engine = DeontologicalReasoningEngine()
         stmt1 = DeonticStatement(
-            id="s1", entity="citizen", action="pay taxes",
-            modality=DeonticModality.OBLIGATION, source_document="doc1", source_text="...",
+            id="s1",
+            entity="citizen",
+            action="pay taxes",
+            modality=DeonticModality.OBLIGATION,
+            source_document="doc1",
+            source_text="...",
         )
         stmt2 = DeonticStatement(
-            id="s2", entity="citizen", action="pay taxes",
-            modality=DeonticModality.PROHIBITION, source_document="doc2", source_text="...",
+            id="s2",
+            entity="citizen",
+            action="pay taxes",
+            modality=DeonticModality.PROHIBITION,
+            source_document="doc2",
+            source_text="...",
         )
         conflict = DeonticConflict(
             id="c1",
@@ -1288,31 +1601,47 @@ class TestDeontologicalReasoningAsyncEngine:
         WHEN query_conflicts called with min_severity='high'
         THEN only high severity conflicts returned"""
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
-            DeontologicalReasoningEngine, DeonticStatement,
+            DeontologicalReasoningEngine,
+            DeonticStatement,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticModality, DeonticConflict, ConflictType,
+            DeonticModality,
+            DeonticConflict,
+            ConflictType,
         )
+
         engine = DeontologicalReasoningEngine()
         stmt1 = DeonticStatement(
-            id="s1", entity="citizen", action="pay taxes",
-            modality=DeonticModality.OBLIGATION, source_document="doc1", source_text="...",
+            id="s1",
+            entity="citizen",
+            action="pay taxes",
+            modality=DeonticModality.OBLIGATION,
+            source_document="doc1",
+            source_text="...",
         )
         stmt2 = DeonticStatement(
-            id="s2", entity="citizen", action="pay taxes",
-            modality=DeonticModality.PROHIBITION, source_document="doc2", source_text="...",
+            id="s2",
+            entity="citizen",
+            action="pay taxes",
+            modality=DeonticModality.PROHIBITION,
+            source_document="doc2",
+            source_text="...",
         )
         c_high = DeonticConflict(
             id="c1",
             conflict_type=ConflictType.OBLIGATION_PROHIBITION,
-            statement1=stmt1, statement2=stmt2,
-            severity="high", explanation="High conflict",
+            statement1=stmt1,
+            statement2=stmt2,
+            severity="high",
+            explanation="High conflict",
         )
         c_low = DeonticConflict(
             id="c2",
             conflict_type=ConflictType.JURISDICTIONAL,
-            statement1=stmt1, statement2=stmt2,
-            severity="low", explanation="Low conflict",
+            statement1=stmt1,
+            statement2=stmt2,
+            severity="low",
+            explanation="Low conflict",
         )
         engine.conflict_database["c1"] = c_high
         engine.conflict_database["c2"] = c_low
@@ -1324,6 +1653,7 @@ class TestDeontologicalReasoningAsyncEngine:
 # 6. domain/temporal_deontic_api.py
 # ===========================================================================
 
+
 class TestTemporalDeonticAPI:
     """Tests for temporal_deontic_api module functions."""
 
@@ -1331,9 +1661,13 @@ class TestTemporalDeonticAPI:
         """GIVEN ISO format date string
         WHEN _parse_temporal_context called
         THEN datetime object returned"""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import _parse_temporal_context
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            _parse_temporal_context,
+        )
+
         result = _parse_temporal_context("2024-01-15T00:00:00")
         from datetime import datetime
+
         assert isinstance(result, datetime)
         assert result.year == 2024
 
@@ -1341,8 +1675,11 @@ class TestTemporalDeonticAPI:
         """GIVEN None value
         WHEN _parse_temporal_context called
         THEN current datetime returned"""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import _parse_temporal_context
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            _parse_temporal_context,
+        )
         from datetime import datetime
+
         result = _parse_temporal_context(None)
         assert isinstance(result, datetime)
 
@@ -1350,8 +1687,11 @@ class TestTemporalDeonticAPI:
         """GIVEN 'current_time' string
         WHEN _parse_temporal_context called
         THEN current datetime returned"""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import _parse_temporal_context
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            _parse_temporal_context,
+        )
         from datetime import datetime
+
         result = _parse_temporal_context("current_time")
         assert isinstance(result, datetime)
 
@@ -1359,8 +1699,11 @@ class TestTemporalDeonticAPI:
         """GIVEN invalid date string
         WHEN _parse_temporal_context called
         THEN falls back to current datetime"""
-        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import _parse_temporal_context
+        from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
+            _parse_temporal_context,
+        )
         from datetime import datetime
+
         result = _parse_temporal_context("not_a_date")
         assert isinstance(result, datetime)
 
@@ -1369,8 +1712,9 @@ class TestTemporalDeonticAPI:
         WHEN check_document_consistency_from_parameters called
         THEN error response returned"""
         from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
-            check_document_consistency_from_parameters
+            check_document_consistency_from_parameters,
         )
+
         result = _run(check_document_consistency_from_parameters({}))
         assert result["success"] is False
         assert "error" in result
@@ -1380,12 +1724,17 @@ class TestTemporalDeonticAPI:
         WHEN check_document_consistency_from_parameters called
         THEN success=True response returned"""
         from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
-            check_document_consistency_from_parameters
+            check_document_consistency_from_parameters,
         )
-        result = _run(check_document_consistency_from_parameters({
-            "document_text": "Citizens must pay taxes. Citizens must file returns.",
-            "document_id": "test_doc",
-        }))
+
+        result = _run(
+            check_document_consistency_from_parameters(
+                {
+                    "document_text": "Citizens must pay taxes. Citizens must file returns.",
+                    "document_id": "test_doc",
+                }
+            )
+        )
         assert result["success"] is True
         assert "document_id" in result
 
@@ -1394,11 +1743,16 @@ class TestTemporalDeonticAPI:
         WHEN query_theorems_from_parameters called
         THEN success=True and empty list returned"""
         from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
-            query_theorems_from_parameters
+            query_theorems_from_parameters,
         )
-        result = _run(query_theorems_from_parameters({
-            "query": "pay taxes",
-        }))
+
+        result = _run(
+            query_theorems_from_parameters(
+                {
+                    "query": "pay taxes",
+                }
+            )
+        )
         assert result.get("success") is True or "error" in result
 
     def test_add_theorem_missing_required_fields(self):
@@ -1406,8 +1760,9 @@ class TestTemporalDeonticAPI:
         WHEN add_theorem_from_parameters called
         THEN error response returned"""
         from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
-            add_theorem_from_parameters
+            add_theorem_from_parameters,
         )
+
         result = _run(add_theorem_from_parameters({}))
         assert result.get("success") is False or "error" in result
 
@@ -1416,12 +1771,17 @@ class TestTemporalDeonticAPI:
         WHEN add_theorem_from_parameters called
         THEN theorem added"""
         from ipfs_datasets_py.logic.integration.domain.temporal_deontic_api import (
-            add_theorem_from_parameters
+            add_theorem_from_parameters,
         )
-        result = _run(add_theorem_from_parameters({
-            "theorem_text": "Citizens must pay taxes",
-            "theorem_name": "tax_obligation",
-            "jurisdiction": "Federal",
-        }))
+
+        result = _run(
+            add_theorem_from_parameters(
+                {
+                    "theorem_text": "Citizens must pay taxes",
+                    "theorem_name": "tax_obligation",
+                    "jurisdiction": "Federal",
+                }
+            )
+        )
         # May succeed or return error - just ensure no exception raised
         assert "success" in result or "error" in result

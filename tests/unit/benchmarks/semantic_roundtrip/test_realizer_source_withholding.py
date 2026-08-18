@@ -66,9 +66,7 @@ def test_guard_rejects_top_level_source_native_gold_and_hidden_channels(
     forbidden: str,
 ) -> None:
     with pytest.raises(ContractError, match="forbidden"):
-        RealizerLeakageGuard.request_from_payload(
-            {**_payload(), forbidden: "secret"}
-        )
+        RealizerLeakageGuard.request_from_payload({**_payload(), forbidden: "secret"})
 
 
 @pytest.mark.parametrize(
@@ -86,9 +84,7 @@ def test_guard_rejects_nested_and_camel_case_hidden_channels(
     config: dict[str, object],
 ) -> None:
     with pytest.raises(ContractError, match="may not contain"):
-        RealizerLeakageGuard.request_from_payload(
-            {**_payload(), "config": config}
-        )
+        RealizerLeakageGuard.request_from_payload({**_payload(), "config": config})
 
 
 @pytest.mark.parametrize(
@@ -132,9 +128,7 @@ def test_budget_provenance_cannot_be_smuggled_inside_public_config() -> None:
 
 
 def test_request_is_detached_and_contains_only_the_public_wire_contract() -> None:
-    config: dict[str, object] = {
-        "decode": {"temperature": 0, "max_tokens": 100}
-    }
+    config: dict[str, object] = {"decode": {"temperature": 0, "max_tokens": 100}}
     request = RealizerLeakageGuard.build_request(IR, VOCABULARY, config)
     config["decode"]["temperature"] = 99  # type: ignore[index]
 
@@ -179,9 +173,7 @@ def test_deterministic_realizer_never_observes_an_originating_constructor(
         VOCABULARY,
         {"decode": {"temperature": 0}},
     )
-    result = RealizerLeakageGuard.invoke(
-        CanonicalDeterministicRealizer(), request
-    )
+    result = RealizerLeakageGuard.invoke(CanonicalDeterministicRealizer(), request)
 
     assert origin is not None
     assert result.status is ComponentStatus.SUCCESS
@@ -189,12 +181,8 @@ def test_deterministic_realizer_never_observes_an_originating_constructor(
 
 
 def test_deterministic_output_depends_on_ir_not_constructor_ancestry() -> None:
-    first = RealizerLeakageGuard.build_request(
-        IR, VOCABULARY, {"arm_label": "first"}
-    )
-    second = RealizerLeakageGuard.build_request(
-        IR, VOCABULARY, {"arm_label": "second"}
-    )
+    first = RealizerLeakageGuard.build_request(IR, VOCABULARY, {"arm_label": "first"})
+    second = RealizerLeakageGuard.build_request(IR, VOCABULARY, {"arm_label": "second"})
     realizer = CanonicalDeterministicRealizer()
 
     assert realizer.realize(first) == realizer.realize(second)

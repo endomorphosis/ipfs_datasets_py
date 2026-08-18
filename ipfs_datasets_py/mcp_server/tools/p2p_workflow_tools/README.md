@@ -12,18 +12,15 @@ MCP tools for submitting and monitoring peer-to-peer workflow execution.
 
 ```python
 from ipfs_datasets_py.mcp_server.tools.p2p_workflow_tools import (
-    submit_p2p_workflow, get_p2p_workflow_status
+    submit_p2p_workflow,
+    get_p2p_workflow_status,
 )
 
 # Submit a workflow to the P2P network
 result = await submit_p2p_workflow(
     workflow_type="distributed_embedding",
-    params={
-        "dataset": "legal_corpus",
-        "model": "all-MiniLM-L6-v2",
-        "shard_count": 8
-    },
-    replication=2               # Run on 2 peers for redundancy
+    params={"dataset": "legal_corpus", "model": "all-MiniLM-L6-v2", "shard_count": 8},
+    replication=2,  # Run on 2 peers for redundancy
 )
 workflow_id = result["workflow_id"]
 

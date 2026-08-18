@@ -26,6 +26,7 @@ import pytest
 # Test Section 1: IPFSPolicyStore.reload() pins on reload
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSPolicyStoreReloadPins:
     """IPFSPolicyStore.reload() should re-pin all reloaded policies."""
 
@@ -35,6 +36,7 @@ class TestIPFSPolicyStoreReloadPins:
             PolicyRegistry,
             NLUCANPolicyCompiler,
         )
+
         reg = PolicyRegistry()
         store = IPFSPolicyStore(path, reg)
         # Manually inject a compiled policy
@@ -51,17 +53,17 @@ class TestIPFSPolicyStoreReloadPins:
             IPFSPolicyStore,
             PolicyRegistry,
         )
+
         path = str(tmp_path / "store.json")
         # Write a minimal versioned store file
-        (tmp_path / "store.json").write_text(
-            json.dumps({"version": "1", "policies": {}})
-        )
+        (tmp_path / "store.json").write_text(json.dumps({"version": "1", "policies": {}}))
         reg = PolicyRegistry()
         pinned: List[str] = []
 
         class FakeIPFS:
             def add(self, content: bytes):
                 return {"Hash": "QmFake123"}
+
             def cat(self, cid: str):
                 return b"{}"
 
@@ -86,10 +88,9 @@ class TestIPFSPolicyStoreReloadPins:
             IPFSPolicyStore,
             PolicyRegistry,
         )
+
         path = str(tmp_path / "store.json")
-        (tmp_path / "store.json").write_text(
-            json.dumps({"version": "1", "policies": {}})
-        )
+        (tmp_path / "store.json").write_text(json.dumps({"version": "1", "policies": {}}))
         reg = PolicyRegistry()
         store = IPFSPolicyStore(path, reg)
         assert store.reload() == 0
@@ -100,6 +101,7 @@ class TestIPFSPolicyStoreReloadPins:
             IPFSPolicyStore,
             FilePolicyStore,
         )
+
         # Method resolution: IPFSPolicyStore.reload should be distinct
         assert "reload" in IPFSPolicyStore.__dict__, (
             "IPFSPolicyStore must override reload() directly"
@@ -112,10 +114,9 @@ class TestIPFSPolicyStoreReloadPins:
             FilePolicyStore,
             PolicyRegistry,
         )
+
         path = str(tmp_path / "store.json")
-        (tmp_path / "store.json").write_text(
-            json.dumps({"version": "1", "policies": {}})
-        )
+        (tmp_path / "store.json").write_text(json.dumps({"version": "1", "policies": {}}))
         reg = PolicyRegistry()
         store = IPFSPolicyStore(path, reg)
         reload_called = []
@@ -136,10 +137,9 @@ class TestIPFSPolicyStoreReloadPins:
             IPFSPolicyStore,
             PolicyRegistry,
         )
+
         path = str(tmp_path / "store.json")
-        (tmp_path / "store.json").write_text(
-            json.dumps({"version": "1", "policies": {}})
-        )
+        (tmp_path / "store.json").write_text(json.dumps({"version": "1", "policies": {}}))
         reg = PolicyRegistry()
         store = IPFSPolicyStore(path, reg)
         pin_names: List[str] = []
@@ -154,6 +154,7 @@ class TestIPFSPolicyStoreReloadPins:
             IPFSPolicyStore,
             PolicyRegistry,
         )
+
         path = str(tmp_path / "nonexistent.json")
         reg = PolicyRegistry()
         store = IPFSPolicyStore(path, reg)
@@ -162,6 +163,7 @@ class TestIPFSPolicyStoreReloadPins:
     def test_ipfs_policy_store_has_reload_in_source(self):
         """IPFSPolicyStore.reload source should mention pin_policy."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import IPFSPolicyStore
+
         src = inspect.getsource(IPFSPolicyStore.reload)
         assert "pin_policy" in src
 
@@ -169,6 +171,7 @@ class TestIPFSPolicyStoreReloadPins:
 # ---------------------------------------------------------------------------
 # Test Section 2: DelegationManager.merge with copy_revocations
 # ---------------------------------------------------------------------------
+
 
 class TestDelegationManagerMergeCopyRevocations:
     """DelegationManager.merge(other, copy_revocations=...)."""
@@ -179,6 +182,7 @@ class TestDelegationManagerMergeCopyRevocations:
             Delegation,
             Capability,
         )
+
         mgr = DelegationManager()
         d = Delegation(cid, "did:key:issuer", "did:key:audience", [Capability("*", "*")])
         mgr._store.add(d)
@@ -186,7 +190,12 @@ class TestDelegationManagerMergeCopyRevocations:
 
     def test_merge_no_revocations_by_default(self):
         """Default merge does NOT copy revocations."""
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, Delegation, Capability
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            Delegation,
+            Capability,
+        )
+
         src = DelegationManager()
         d = Delegation("cid-src", "did:key:issuer", "did:key:audience", [Capability("*", "*")])
         src._store.add(d)
@@ -198,7 +207,12 @@ class TestDelegationManagerMergeCopyRevocations:
 
     def test_merge_with_copy_revocations_true(self):
         """copy_revocations=True copies all revoked CIDs."""
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, Delegation, Capability
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            Delegation,
+            Capability,
+        )
+
         src = DelegationManager()
         d = Delegation("cid-x", "did:key:issuer", "did:key:audience", [Capability("*", "*")])
         src._store.add(d)
@@ -213,7 +227,12 @@ class TestDelegationManagerMergeCopyRevocations:
 
     def test_merge_copy_revocations_does_not_add_delegations_twice(self):
         """Duplicate delegations are not added even when copy_revocations=True."""
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, Delegation, Capability
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            Delegation,
+            Capability,
+        )
+
         d = Delegation("same-cid", "did:key:issuer", "did:key:audience", [Capability("*", "*")])
         src = DelegationManager()
         src._store.add(d)
@@ -225,7 +244,12 @@ class TestDelegationManagerMergeCopyRevocations:
 
     def test_merge_copy_revocations_false_explicit(self):
         """Explicit copy_revocations=False behaves same as default."""
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, Delegation, Capability
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            Delegation,
+            Capability,
+        )
+
         src = DelegationManager()
         src._revocation.revoke("protected-cid")
         dst = DelegationManager()
@@ -234,7 +258,12 @@ class TestDelegationManagerMergeCopyRevocations:
 
     def test_merge_copy_revocations_does_not_mutate_source(self):
         """Merging never modifies the source manager's revocation list."""
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, Delegation, Capability
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            Delegation,
+            Capability,
+        )
+
         d = Delegation("cid-y", "did:key:issuer", "did:key:audience", [Capability("*", "*")])
         src = DelegationManager()
         src._store.add(d)
@@ -252,6 +281,7 @@ class TestDelegationManagerMergeCopyRevocations:
     def test_merge_copy_revocations_kwarg_only(self):
         """copy_revocations must be keyword-only (cannot be passed positionally)."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         mgr = DelegationManager()
         sig = inspect.signature(mgr.merge)
         params = sig.parameters
@@ -263,7 +293,12 @@ class TestDelegationManagerMergeCopyRevocations:
 
     def test_merge_with_copy_revocations_returns_delegation_count(self):
         """Return value is delegation count regardless of copy_revocations."""
-        from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager, Delegation, Capability
+        from ipfs_datasets_py.mcp_server.ucan_delegation import (
+            DelegationManager,
+            Delegation,
+            Capability,
+        )
+
         d1 = Delegation("d1", "iss", "aud", [Capability("*", "*")])
         d2 = Delegation("d2", "iss", "aud", [Capability("*", "*")])
         src = DelegationManager()
@@ -276,6 +311,7 @@ class TestDelegationManagerMergeCopyRevocations:
     def test_merge_empty_source_copy_revocations_true(self):
         """Merging an empty manager with copy_revocations=True adds 0 delegations."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         src = DelegationManager()
         dst = DelegationManager()
         n = dst.merge(src, copy_revocations=True)
@@ -286,32 +322,39 @@ class TestDelegationManagerMergeCopyRevocations:
 # Test Section 3: PubSubBus.publish_async error logging
 # ---------------------------------------------------------------------------
 
+
 class TestPubSubBusPublishAsyncErrorLogging:
     """publish_async() should log handler exceptions at DEBUG level."""
 
     def test_publish_async_source_has_logger_debug(self):
         """publish_async must contain logger.debug in the error path."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         src = inspect.getsource(PubSubBus.publish_async)
         assert "logger.debug" in src, "publish_async should log errors via logger.debug"
 
     def test_publish_async_exception_variable_named(self):
         """Exception should be captured with `as exc` (not silently discarded)."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         src = inspect.getsource(PubSubBus.publish_async)
-        assert "except Exception as exc" in src or "except Exception as _exc" in src or (
-            "except" in src and ("exc" in src or "err" in src)
+        assert (
+            "except Exception as exc" in src
+            or "except Exception as _exc" in src
+            or ("except" in src and ("exc" in src or "err" in src))
         ), "Exception should be named in except clause"
 
     def test_publish_async_fallback_sync_on_no_anyio(self):
         """Falls back to sync publish when anyio absent, with UserWarning."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus, PubSubEventType
+
         bus = PubSubBus()
         received: List[Any] = []
         bus.subscribe(PubSubEventType.INTERFACE_ANNOUNCE, lambda t, p: received.append(p))
 
         try:
             import anyio
+
             pytest.skip("anyio is installed — testing no-anyio path would require unpatching")
         except ImportError:
             with warnings.catch_warnings(record=True) as w:
@@ -325,12 +368,14 @@ class TestPubSubBusPublishAsyncErrorLogging:
     def test_publish_async_returns_count(self):
         """publish_async returns handler count (sync or async)."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus, PubSubEventType
+
         bus = PubSubBus()
         received: List[Any] = []
         bus.subscribe(PubSubEventType.INTERFACE_ANNOUNCE, lambda t, p: received.append(p))
         bus.subscribe(PubSubEventType.INTERFACE_ANNOUNCE, lambda t, p: received.append(p))
         try:
             import anyio
+
             count = asyncio.run(bus.publish_async(PubSubEventType.INTERFACE_ANNOUNCE, {}))
             notified = count.notified if hasattr(count, "notified") else count
             assert notified == 2
@@ -345,15 +390,15 @@ class TestPubSubBusPublishAsyncErrorLogging:
         """publish_async must be a coroutine function."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
         import asyncio
+
         bus = PubSubBus()
-        assert asyncio.iscoroutinefunction(bus.publish_async), (
-            "publish_async must be async def"
-        )
+        assert asyncio.iscoroutinefunction(bus.publish_async), "publish_async must be async def"
 
 
 # ---------------------------------------------------------------------------
 # Test Section 4: ComplianceChecker.load_encrypted version check
 # ---------------------------------------------------------------------------
+
 
 class TestComplianceCheckerLoadEncryptedVersionCheck:
     """load_encrypted() should warn on version mismatch."""
@@ -365,6 +410,7 @@ class TestComplianceCheckerLoadEncryptedVersionCheck:
         except ImportError:
             pytest.skip("cryptography not installed")
         from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+
         pw_bytes = password.encode()
         # Use a password-based key derivation function instead of a single SHA-256 hash.
         # A fixed salt is acceptable here because this helper is only used in tests and
@@ -400,6 +446,7 @@ class TestComplianceCheckerLoadEncryptedVersionCheck:
             ComplianceChecker,
             _COMPLIANCE_RULE_VERSION,
         )
+
         path = str(tmp_path / "rules.enc")
         self._save_encrypted_with_version(path, "pass", "999")
 
@@ -408,9 +455,7 @@ class TestComplianceCheckerLoadEncryptedVersionCheck:
             warnings.simplefilter("always")
             n = checker.load_encrypted(path, "pass")
             msgs = [str(x.message) for x in w]
-            assert any("999" in m for m in msgs), (
-                f"Expected version-mismatch warning; got: {msgs}"
-            )
+            assert any("999" in m for m in msgs), f"Expected version-mismatch warning; got: {msgs}"
 
     def test_load_encrypted_no_warning_on_matching_version(self, tmp_path):
         """No version warning when file version matches current."""
@@ -422,6 +467,7 @@ class TestComplianceCheckerLoadEncryptedVersionCheck:
             ComplianceChecker,
             _COMPLIANCE_RULE_VERSION,
         )
+
         path = str(tmp_path / "rules.enc")
         self._save_encrypted_with_version(path, "mypassword", _COMPLIANCE_RULE_VERSION)
 
@@ -430,9 +476,9 @@ class TestComplianceCheckerLoadEncryptedVersionCheck:
             warnings.simplefilter("always")
             n = checker.load_encrypted(path, "mypassword")
             version_warnings = [
-                x for x in w
-                if "version" in str(x.message).lower()
-                and "anyio" not in str(x.message).lower()
+                x
+                for x in w
+                if "version" in str(x.message).lower() and "anyio" not in str(x.message).lower()
             ]
             assert len(version_warnings) == 0, (
                 f"No version warning expected; got: {[str(x.message) for x in version_warnings]}"
@@ -441,6 +487,7 @@ class TestComplianceCheckerLoadEncryptedVersionCheck:
     def test_load_encrypted_source_has_version_check(self):
         """load_encrypted must check 'version' key in decrypted payload."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         src = inspect.getsource(ComplianceChecker.load_encrypted)
         assert "version" in src, "load_encrypted should inspect the version field"
         assert "_COMPLIANCE_RULE_VERSION" in src, (
@@ -455,6 +502,7 @@ class TestComplianceCheckerLoadEncryptedVersionCheck:
             pytest.skip("cryptography not installed")
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
         import hashlib
+
         path = str(tmp_path / "rules_no_ver.enc")
         pw = "pw"
         pw_bytes = pw.encode()
@@ -472,7 +520,8 @@ class TestComplianceCheckerLoadEncryptedVersionCheck:
             warnings.simplefilter("always")
             n = checker.load_encrypted(path, pw)
             version_warnings = [
-                x for x in w
+                x
+                for x in w
                 if "version" in str(x.message).lower()
                 and "anyio" not in str(x.message).lower()
                 and "cryptography" not in str(x.message).lower()
@@ -486,6 +535,7 @@ class TestComplianceCheckerLoadEncryptedVersionCheck:
 # Test Section 5: Full E2E Session 65
 # ---------------------------------------------------------------------------
 
+
 class TestE2ESession65:
     """End-to-end tests spanning all 4 session 65 features."""
 
@@ -495,30 +545,35 @@ class TestE2ESession65:
             IPFSPolicyStore,
             FilePolicyStore,
         )
+
         assert "reload" in IPFSPolicyStore.__dict__
         assert IPFSPolicyStore.reload is not FilePolicyStore.reload
 
     def test_delegation_manager_merge_accepts_copy_revocations(self):
         """DelegationManager.merge accepts copy_revocations= kwarg."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         sig = inspect.signature(DelegationManager.merge)
         assert "copy_revocations" in sig.parameters
 
     def test_delegation_manager_merge_copy_revocations_default_false(self):
         """copy_revocations defaults to False."""
         from ipfs_datasets_py.mcp_server.ucan_delegation import DelegationManager
+
         sig = inspect.signature(DelegationManager.merge)
         assert sig.parameters["copy_revocations"].default is False
 
     def test_publish_async_has_debug_logging(self):
         """publish_async logs exceptions at DEBUG level."""
         from ipfs_datasets_py.mcp_server.mcp_p2p_transport import PubSubBus
+
         src = inspect.getsource(PubSubBus.publish_async)
         assert "logger.debug" in src
 
     def test_compliance_load_encrypted_version_check_present(self):
         """ComplianceChecker.load_encrypted has version-check code."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         src = inspect.getsource(ComplianceChecker.load_encrypted)
         # Must reference _COMPLIANCE_RULE_VERSION to do a version check
         assert "_COMPLIANCE_RULE_VERSION" in src
@@ -537,6 +592,7 @@ class TestE2ESession65:
             Delegation,
             Capability,
         )
+
         src = DelegationManager()
         d = Delegation("cid-e2e", "iss", "aud", [Capability("*", "*")])
         src._store.add(d)
@@ -551,10 +607,9 @@ class TestE2ESession65:
     def test_file_policy_store_reload_no_regression(self, tmp_path):
         """FilePolicyStore.reload() still works correctly (session 64 regression)."""
         from ipfs_datasets_py.mcp_server.nl_ucan_policy import FilePolicyStore, PolicyRegistry
+
         path = str(tmp_path / "policies.json")
-        (tmp_path / "policies.json").write_text(
-            json.dumps({"version": "1", "policies": {}})
-        )
+        (tmp_path / "policies.json").write_text(json.dumps({"version": "1", "policies": {}}))
         reg = PolicyRegistry()
         store = FilePolicyStore(path, reg)
         n = store.reload()
@@ -563,15 +618,21 @@ class TestE2ESession65:
     def test_compliance_checker_merge_no_regression(self):
         """ComplianceChecker.merge() still works correctly (session 63 regression)."""
         from ipfs_datasets_py.mcp_server.compliance_checker import ComplianceChecker
+
         c1 = ComplianceChecker()
         c2 = ComplianceChecker()
-        c2.add_rule("my_rule", lambda intent: __import__(
-            "ipfs_datasets_py.mcp_server.compliance_checker",
-            fromlist=["ComplianceResult"]
-        ).ComplianceResult(rule_id="my_rule", status=__import__(
-            "ipfs_datasets_py.mcp_server.compliance_checker",
-            fromlist=["ComplianceStatus"]
-        ).ComplianceStatus.COMPLIANT, violations=[]))
+        c2.add_rule(
+            "my_rule",
+            lambda intent: __import__(
+                "ipfs_datasets_py.mcp_server.compliance_checker", fromlist=["ComplianceResult"]
+            ).ComplianceResult(
+                rule_id="my_rule",
+                status=__import__(
+                    "ipfs_datasets_py.mcp_server.compliance_checker", fromlist=["ComplianceStatus"]
+                ).ComplianceStatus.COMPLIANT,
+                violations=[],
+            ),
+        )
         added = c1.merge(c2)
         assert added == 1
         assert "my_rule" in c1._rule_order

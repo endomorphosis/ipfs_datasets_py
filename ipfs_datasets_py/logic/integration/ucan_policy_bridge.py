@@ -44,6 +44,7 @@ Usage::
     print(eval_result.decision)       # "allow"
     print(eval_result.ucan_allowed)   # True
 """
+
 from __future__ import annotations
 
 import logging
@@ -78,6 +79,7 @@ class BridgeCompileResult:
     warnings:
         Any warnings accumulated during compilation.
     """
+
     success: bool = False
     policy_cid: str = ""
     delegation_tokens: List[Any] = field(default_factory=list)
@@ -116,6 +118,7 @@ class BridgeEvaluationResult:
     revoked:
         ``True`` if the leaf token was revoked before evaluation.
     """
+
     decision: str = "deny"
     policy_cid: str = ""
     reason: str = ""
@@ -142,6 +145,7 @@ class SignedPolicyResult:
         ``True`` if :class:`~mcp_server.did_key_manager.DIDKeyManager` was
         reachable.  ``False`` means no JWTs were produced.
     """
+
     compile_result: BridgeCompileResult
     signed_jwts: List[str] = field(default_factory=list)
     signing_available: bool = False
@@ -174,8 +178,10 @@ class UCANPolicyBridge:
         # Lazy import to avoid hard coupling
         try:
             from ipfs_datasets_py.mcp_server.ucan_delegation import (
-                DelegationStore, RevocationList,
+                DelegationStore,
+                RevocationList,
             )
+
             self._store = delegation_store or DelegationStore()
             self._revocations = revocation_list or RevocationList()
         except ImportError:
@@ -210,6 +216,7 @@ class UCANPolicyBridge:
             from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (
                 compile_nl_to_ucan_policy,
             )
+
             compile_result = compile_nl_to_ucan_policy(
                 nl_text,
                 issuer_did=issuer_did,
@@ -258,14 +265,13 @@ class UCANPolicyBridge:
         # BO125: Detect policy conflicts from compiled clauses
         try:
             from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import detect_conflicts
+
             if compile_result.policy_result is not None:
                 policy = compile_result.policy_result.policy
                 if policy is not None and hasattr(policy, "clauses"):
                     result.conflicts = detect_conflicts(policy.clauses)
                     for conflict in result.conflicts:
-                        result.warnings.append(
-                            f"Policy conflict detected: {conflict.description}"
-                        )
+                        result.warnings.append(f"Policy conflict detected: {conflict.description}")
         except (ImportError, ModuleNotFoundError, AttributeError) as exc:
             logger.debug("BO125 conflict detection unavailable: %s", exc)
 
@@ -319,6 +325,7 @@ class UCANPolicyBridge:
         try:
             from ipfs_datasets_py.mcp_server.temporal_policy import PolicyEvaluator
             from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject, ALLOW, DENY
+
             evaluator = self._policy_evaluator or PolicyEvaluator()
             intent = IntentObject(tool=tool)
             decision_obj = evaluator.evaluate(intent, policy_cid, at_time=at_time, actor=actor)
@@ -398,8 +405,11 @@ class UCANPolicyBridge:
         """
         if manager is None:
             return self.evaluate(
-                policy_cid, tool=tool, actor=actor,
-                leaf_cid=leaf_cid, at_time=at_time,
+                policy_cid,
+                tool=tool,
+                actor=actor,
+                leaf_cid=leaf_cid,
+                at_time=at_time,
             )
 
         result = BridgeEvaluationResult(policy_cid=policy_cid)
@@ -417,6 +427,7 @@ class UCANPolicyBridge:
         try:
             from ipfs_datasets_py.mcp_server.temporal_policy import PolicyEvaluator
             from ipfs_datasets_py.mcp_server.cid_artifacts import IntentObject
+
             policy_ev = self._policy_evaluator or PolicyEvaluator()
             intent = IntentObject(tool=tool)
             decision_obj = policy_ev.evaluate(intent, policy_cid, at_time=at_time, actor=actor)
@@ -560,6 +571,7 @@ class UCANPolicyBridge:
 
         try:
             from ipfs_datasets_py.mcp_server.did_key_manager import get_did_key_manager
+
             mgr = get_did_key_manager()
             signing_available = True
             for token in compile_result.delegation_tokens:
@@ -586,6 +598,7 @@ class UCANPolicyBridge:
         """Register *policy* with the internal PolicyEvaluator."""
         try:
             from ipfs_datasets_py.mcp_server.temporal_policy import PolicyEvaluator
+
             if self._policy_evaluator is None:
                 self._policy_evaluator = PolicyEvaluator()
             self._policy_evaluator.register_policy(policy)

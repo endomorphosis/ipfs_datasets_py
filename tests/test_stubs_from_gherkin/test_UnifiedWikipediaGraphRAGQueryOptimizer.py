@@ -18,13 +18,19 @@ def unifiedwikipediagraphragqueryoptimizer_instance():
     try:
         instance = UnifiedWikipediaGraphRAGQueryOptimizer()
         if instance is None:
-            raise FixtureError("Failed to create UnifiedWikipediaGraphRAGQueryOptimizer instance: instance is None")
+            raise FixtureError(
+                "Failed to create UnifiedWikipediaGraphRAGQueryOptimizer instance: instance is None"
+            )
         return instance
     except Exception as e:
-        raise FixtureError(f"Failed to create fixture unifiedwikipediagraphragqueryoptimizer_instance: {e}") from e
+        raise FixtureError(
+            f"Failed to create fixture unifiedwikipediagraphragqueryoptimizer_instance: {e}"
+        ) from e
 
 
-def test_initialize_with_default_components_rewriter_is_wikipediagraphragqueryrewriter(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_initialize_with_default_components_rewriter_is_wikipediagraphragqueryrewriter(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with default components rewriter is WikipediaGraphRAGQueryRewriter
 
@@ -37,7 +43,9 @@ def test_initialize_with_default_components_rewriter_is_wikipediagraphragqueryre
     pass
 
 
-def test_initialize_with_default_components_budget_manager_is_wikipediagraphragbudgetmanager(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_initialize_with_default_components_budget_manager_is_wikipediagraphragbudgetmanager(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with default components budget_manager is WikipediaGraphRAGBudgetManager
 
@@ -50,7 +58,9 @@ def test_initialize_with_default_components_budget_manager_is_wikipediagraphragb
     pass
 
 
-def test_initialize_with_default_components_base_optimizer_is_wikipediaragqueryoptimizer(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_initialize_with_default_components_base_optimizer_is_wikipediaragqueryoptimizer(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with default components base_optimizer is WikipediaRAGQueryOptimizer
 
@@ -63,7 +73,9 @@ def test_initialize_with_default_components_base_optimizer_is_wikipediaragqueryo
     pass
 
 
-def test_initialize_with_default_components_graph_info_contains_graph_type_as_wikipedia(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_initialize_with_default_components_graph_info_contains_graph_type_as_wikipedia(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with default components graph_info contains graph_type as wikipedia
 
@@ -76,7 +88,9 @@ def test_initialize_with_default_components_graph_info_contains_graph_type_as_wi
     pass
 
 
-def test_initialize_with_custom_components_rewriter_is_custom_instance(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_initialize_with_custom_components_rewriter_is_custom_instance(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with custom components rewriter is custom instance
 
@@ -94,7 +108,9 @@ def test_initialize_with_custom_components_rewriter_is_custom_instance(unifiedwi
     pass
 
 
-def test_initialize_with_custom_components_budget_manager_is_custom_instance(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_initialize_with_custom_components_budget_manager_is_custom_instance(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with custom components budget_manager is custom instance
 
@@ -112,7 +128,9 @@ def test_initialize_with_custom_components_budget_manager_is_custom_instance(uni
     pass
 
 
-def test_initialize_with_custom_components_base_optimizer_is_custom_instance(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_initialize_with_custom_components_base_optimizer_is_custom_instance(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with custom components base_optimizer is custom instance
 
@@ -130,7 +148,9 @@ def test_initialize_with_custom_components_base_optimizer_is_custom_instance(uni
     pass
 
 
-def test_initialize_with_tracer_tracer_is_set_in_unified_optimizer(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_initialize_with_tracer_tracer_is_set_in_unified_optimizer(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with tracer tracer is set in unified optimizer
 
@@ -146,7 +166,9 @@ def test_initialize_with_tracer_tracer_is_set_in_unified_optimizer(unifiedwikipe
     pass
 
 
-def test_initialize_with_tracer_tracer_is_set_in_base_optimizer(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_initialize_with_tracer_tracer_is_set_in_base_optimizer(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Initialize with tracer tracer is set in base_optimizer
 
@@ -162,7 +184,9 @@ def test_initialize_with_tracer_tracer_is_set_in_base_optimizer(unifiedwikipedia
     pass
 
 
-def test_optimize_query_with_all_parameters_result_contains_query(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_with_all_parameters_result_contains_query(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with all parameters result contains query
 
@@ -184,7 +208,9 @@ def test_optimize_query_with_all_parameters_result_contains_query(unifiedwikiped
     pass
 
 
-def test_optimize_query_with_all_parameters_result_contains_budget(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_with_all_parameters_result_contains_budget(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with all parameters result contains budget
 
@@ -206,7 +232,9 @@ def test_optimize_query_with_all_parameters_result_contains_budget(unifiedwikipe
     pass
 
 
-def test_optimize_query_with_all_parameters_result_contains_query_id(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_with_all_parameters_result_contains_query_id(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with all parameters result contains query_id
 
@@ -228,7 +256,9 @@ def test_optimize_query_with_all_parameters_result_contains_query_id(unifiedwiki
     pass
 
 
-def test_optimize_query_applies_base_optimization_base_optimizer_optimize_query_is_called(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_applies_base_optimization_base_optimizer_optimize_query_is_called(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query applies base optimization base optimizer optimize_query is called
 
@@ -244,7 +274,9 @@ def test_optimize_query_applies_base_optimization_base_optimizer_optimize_query_
     pass
 
 
-def test_optimize_query_applies_base_optimization_result_includes_base_optimization(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_applies_base_optimization_result_includes_base_optimization(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query applies base optimization result includes base optimization
 
@@ -260,7 +292,9 @@ def test_optimize_query_applies_base_optimization_result_includes_base_optimizat
     pass
 
 
-def test_optimize_query_applies_rewriting_rewriter_rewrite_query_is_called(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_applies_rewriting_rewriter_rewrite_query_is_called(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query applies rewriting rewriter rewrite_query is called
 
@@ -277,7 +311,9 @@ def test_optimize_query_applies_rewriting_rewriter_rewrite_query_is_called(unifi
     pass
 
 
-def test_optimize_query_applies_rewriting_query_is_rewritten_with_wikipedia_optimizations(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_applies_rewriting_query_is_rewritten_with_wikipedia_optimizations(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query applies rewriting query is rewritten with Wikipedia optimizations
 
@@ -294,7 +330,9 @@ def test_optimize_query_applies_rewriting_query_is_rewritten_with_wikipedia_opti
     pass
 
 
-def test_optimize_query_allocates_budget_budget_manager_allocate_budget_is_called(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_allocates_budget_budget_manager_allocate_budget_is_called(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query allocates budget budget_manager allocate_budget is called
 
@@ -311,7 +349,9 @@ def test_optimize_query_allocates_budget_budget_manager_allocate_budget_is_calle
     pass
 
 
-def test_optimize_query_allocates_budget_budget_is_allocated_with_priority_high(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_allocates_budget_budget_is_allocated_with_priority_high(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query allocates budget budget is allocated with priority high
 
@@ -328,7 +368,9 @@ def test_optimize_query_allocates_budget_budget_is_allocated_with_priority_high(
     pass
 
 
-def test_optimize_query_with_metrics_collector_metrics_collector_starts_query_tracking(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_with_metrics_collector_metrics_collector_starts_query_tracking(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with metrics collector metrics_collector starts query tracking
 
@@ -345,7 +387,9 @@ def test_optimize_query_with_metrics_collector_metrics_collector_starts_query_tr
     pass
 
 
-def test_optimize_query_with_metrics_collector_query_id_is_included_in_result(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_with_metrics_collector_query_id_is_included_in_result(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with metrics collector query_id is included in result
 
@@ -362,7 +406,9 @@ def test_optimize_query_with_metrics_collector_query_id_is_included_in_result(un
     pass
 
 
-def test_optimize_query_with_trace_id_tracer_logs_unified_optimization(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_with_trace_id_tracer_logs_unified_optimization(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with trace_id tracer logs unified optimization
 
@@ -380,7 +426,9 @@ def test_optimize_query_with_trace_id_tracer_logs_unified_optimization(unifiedwi
     pass
 
 
-def test_optimize_query_with_trace_id_trace_id_is_unified_001(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_with_trace_id_trace_id_is_unified_001(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query with trace_id trace_id is unified_001
 
@@ -398,7 +446,9 @@ def test_optimize_query_with_trace_id_trace_id_is_unified_001(unifiedwikipediagr
     pass
 
 
-def test_optimize_query_without_query_vector_raises_error(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_without_query_vector_raises_error(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query without query_vector raises error
 
@@ -448,7 +498,9 @@ def test_optimize_query_with_vector_store(unifiedwikipediagraphragqueryoptimizer
     pass
 
 
-def test_optimize_query_stores_last_query_id_last_query_id_is_set(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_stores_last_query_id_last_query_id_is_set(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query stores last_query_id last_query_id is set
 
@@ -465,7 +517,9 @@ def test_optimize_query_stores_last_query_id_last_query_id_is_set(unifiedwikiped
     pass
 
 
-def test_optimize_query_stores_last_query_id_last_query_id_matches_result_query_id(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_stores_last_query_id_last_query_id_matches_result_query_id(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query stores last_query_id last_query_id matches result query_id
 
@@ -482,7 +536,9 @@ def test_optimize_query_stores_last_query_id_last_query_id_matches_result_query_
     pass
 
 
-def test_optimize_query_uses_default_parameters_max_vector_results_defaults_to_5(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_uses_default_parameters_max_vector_results_defaults_to_5(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query uses default parameters max_vector_results defaults to 5
 
@@ -498,7 +554,9 @@ def test_optimize_query_uses_default_parameters_max_vector_results_defaults_to_5
     pass
 
 
-def test_optimize_query_uses_default_parameters_max_traversal_depth_defaults_to_2(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_uses_default_parameters_max_traversal_depth_defaults_to_2(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query uses default parameters max_traversal_depth defaults to 2
 
@@ -514,7 +572,9 @@ def test_optimize_query_uses_default_parameters_max_traversal_depth_defaults_to_
     pass
 
 
-def test_optimize_query_uses_default_parameters_min_similarity_defaults_to_05(unifiedwikipediagraphragqueryoptimizer_instance):
+def test_optimize_query_uses_default_parameters_min_similarity_defaults_to_05(
+    unifiedwikipediagraphragqueryoptimizer_instance,
+):
     """
     Scenario: Optimize query uses default parameters min_similarity defaults to 0.5
 
@@ -528,4 +588,3 @@ def test_optimize_query_uses_default_parameters_min_similarity_defaults_to_05(un
         min_similarity defaults to 0.5
     """
     pass
-

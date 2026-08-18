@@ -78,7 +78,9 @@ def test_hf_embeddings_alias_uses_env_default_model(monkeypatch) -> None:
     vector = embeddings_router.embed_text("hello", provider="hf_api")
 
     assert vector == [0.9, 0.8, 0.7]
-    assert captured["url"] == "https://router.huggingface.co/hf-inference/models/intfloat/e5-small-v2"
+    assert (
+        captured["url"] == "https://router.huggingface.co/hf-inference/models/intfloat/e5-small-v2"
+    )
 
 
 def test_hf_embeddings_sets_bill_to_header_from_env(monkeypatch) -> None:
@@ -131,7 +133,9 @@ def test_openrouter_embeddings_set_hf_bill_to_header_from_adapter_env(monkeypatc
 
     monkeypatch.setattr(embeddings_router.urllib.request, "urlopen", fake_urlopen)
 
-    vector = embeddings_router.embed_text("hello", provider="openrouter", model_name="text-embedding-3-small")
+    vector = embeddings_router.embed_text(
+        "hello", provider="openrouter", model_name="text-embedding-3-small"
+    )
 
     assert vector == [0.1, 0.2]
     assert captured["bill_to"] == "Publicus"

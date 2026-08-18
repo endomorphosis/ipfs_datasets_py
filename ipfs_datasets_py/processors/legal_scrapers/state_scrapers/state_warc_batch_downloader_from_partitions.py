@@ -248,13 +248,25 @@ def _coalesce_ranges(
             current_end = candidate_end
             current_records.append(idx)
         else:
-            slices.append(RangeSlice(start=current_start, end=current_end or current_start, record_indexes=current_records))
+            slices.append(
+                RangeSlice(
+                    start=current_start,
+                    end=current_end or current_start,
+                    record_indexes=current_records,
+                )
+            )
             current_start = start
             current_end = end
             current_records = [idx]
 
     if current_start is not None:
-        slices.append(RangeSlice(start=current_start, end=current_end or current_start, record_indexes=current_records))
+        slices.append(
+            RangeSlice(
+                start=current_start,
+                end=current_end or current_start,
+                record_indexes=current_records,
+            )
+        )
 
     return slices
 
@@ -280,7 +292,9 @@ def _download_ranges_for_warc(
         return json.loads(index_path.read_text(encoding="utf-8"))
 
     if not allow_download:
-        raise RuntimeError(f"Missing range files for {warc_filename}: {combined_path} / {index_path}")
+        raise RuntimeError(
+            f"Missing range files for {warc_filename}: {combined_path} / {index_path}"
+        )
 
     url = "https://data.commoncrawl.org/" + warc_filename.lstrip("/")
 
@@ -306,7 +320,9 @@ def _download_ranges_for_warc(
 
     index_entries: List[Dict[str, Any]] = []
 
-    def _playwright_range_get(range_start: int, range_end: int) -> tuple[Optional[int], Optional[bytes], Optional[str]]:
+    def _playwright_range_get(
+        range_start: int, range_end: int
+    ) -> tuple[Optional[int], Optional[bytes], Optional[str]]:
         try:
             from playwright.sync_api import sync_playwright  # type: ignore
         except Exception as exc:
@@ -352,7 +368,7 @@ def _download_ranges_for_warc(
                     if status_code in (403, 429, 500, 502, 503, 504):
                         last_error = f"transient_status={status_code}"
                         if attempt + 1 < max_retries:
-                            sleep_seconds = retry_backoff_seconds * (2 ** attempt)
+                            sleep_seconds = retry_backoff_seconds * (2**attempt)
                             logger.warning(
                                 "Retrying %s bytes=%s-%s after status %s (attempt %s/%s, sleep %.1fs)",
                                 warc_filename,
@@ -375,9 +391,7 @@ def _download_ranges_for_warc(
                         pw_status, pw_data, pw_err = _playwright_range_get(start, end)
                         if pw_status in (200, 206) and pw_data is not None:
                             if pw_status == 200 and len(pw_data) != expected_size:
-                                last_error = (
-                                    f"playwright_status=200_size_mismatch expected={expected_size} got={len(pw_data)}"
-                                )
+                                last_error = f"playwright_status=200_size_mismatch expected={expected_size} got={len(pw_data)}"
                             else:
                                 raw_payload = pw_data
                                 status_code = int(pw_status)
@@ -393,7 +407,7 @@ def _download_ranges_for_warc(
                 except Exception as exc:
                     last_error = str(exc)
                     if attempt + 1 < max_retries:
-                        sleep_seconds = retry_backoff_seconds * (2 ** attempt)
+                        sleep_seconds = retry_backoff_seconds * (2**attempt)
                         logger.warning(
                             "Retrying %s bytes=%s-%s after error: %s (attempt %s/%s, sleep %.1fs)",
                             warc_filename,
@@ -455,7 +469,9 @@ def _extract_http_payload(raw_bytes: bytes) -> bytes:
     return blob
 
 
-def _find_range_entry(entries: Sequence[Dict[str, Any]], offset: int, length: int) -> Optional[Dict[str, Any]]:
+def _find_range_entry(
+    entries: Sequence[Dict[str, Any]], offset: int, length: int
+) -> Optional[Dict[str, Any]]:
     end = offset + length - 1
     for entry in entries:
         if entry["start"] <= offset and entry["end"] >= end:
@@ -657,18 +673,37 @@ def _build_parser() -> argparse.ArgumentParser:
         default=Path("artifacts/jurisdiction_pointer_inventory/pointers_by_jurisdiction"),
         help="Directory containing parquet partitions like jurisdiction=OR/",
     )
-    parser.add_argument("--state", action="append", default=None, help="State/jurisdiction code to process (repeatable)")
+    parser.add_argument(
+        "--state",
+        action="append",
+        default=None,
+        help="State/jurisdiction code to process (repeatable)",
+    )
     parser.add_argument("--repo-root", type=Path, default=Path.cwd(), help="Repository root")
-    parser.add_argument("--archive-dir", type=Path, default=DEFAULT_ARCHIVE_DIR, help="Where to store .ranges files")
+    parser.add_argument(
+        "--archive-dir", type=Path, default=DEFAULT_ARCHIVE_DIR, help="Where to store .ranges files"
+    )
     parser.add_argument("--range-gap-bytes", type=int, default=1024)
     parser.add_argument("--max-range-bytes", type=int, default=None)
     parser.add_argument("--timeout-seconds", type=int, default=60)
     parser.add_argument("--overwrite-ranges", action="store_true")
     parser.add_argument("--overwrite-html", action="store_true")
     parser.add_argument("--skip-download", action="store_true")
-    parser.add_argument("--max-warc-files", type=int, default=None, help="Optional cap per state for starting partial runs")
-    parser.add_argument("--max-retries", type=int, default=5, help="Max retries per range request on transient errors")
-    parser.add_argument("--retry-backoff-seconds", type=float, default=1.5, help="Base exponential backoff seconds")
+    parser.add_argument(
+        "--max-warc-files",
+        type=int,
+        default=None,
+        help="Optional cap per state for starting partial runs",
+    )
+    parser.add_argument(
+        "--max-retries",
+        type=int,
+        default=5,
+        help="Max retries per range request on transient errors",
+    )
+    parser.add_argument(
+        "--retry-backoff-seconds", type=float, default=1.5, help="Base exponential backoff seconds"
+    )
     parser.add_argument(
         "--cc-cache-mode",
         choices=["range", "auto", "full"],
@@ -691,7 +726,9 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="On 403 range errors from requests, retry the same range via Playwright browser context.",
     )
-    parser.add_argument("--laws-only", action="store_true", help="Apply strict law-focused URL filters")
+    parser.add_argument(
+        "--laws-only", action="store_true", help="Apply strict law-focused URL filters"
+    )
     parser.add_argument(
         "--url-include-regex",
         action="append",
@@ -721,7 +758,9 @@ def run(argv: Optional[Sequence[str]] = None) -> List[Dict[str, Any]]:
     if not partitioned_parquet_dir.exists():
         raise SystemExit(f"Partitioned parquet dir not found: {partitioned_parquet_dir}")
 
-    requested_states = [s.upper() for s in (args.state or _discover_states(partitioned_parquet_dir))]
+    requested_states = [
+        s.upper() for s in (args.state or _discover_states(partitioned_parquet_dir))
+    ]
     if not requested_states:
         raise SystemExit("No jurisdictions found to process.")
 
@@ -748,7 +787,9 @@ def run(argv: Optional[Sequence[str]] = None) -> List[Dict[str, Any]]:
             logger.warning("No parquet files for %s at %s", state_code, part_dir)
             continue
 
-        logger.info("Loading pointer records for %s (%s parquet files)", state_code, len(parquet_paths))
+        logger.info(
+            "Loading pointer records for %s (%s parquet files)", state_code, len(parquet_paths)
+        )
         records = _load_pointer_records(
             parquet_paths,
             include_regexes=include_regexes,
@@ -761,8 +802,12 @@ def run(argv: Optional[Sequence[str]] = None) -> List[Dict[str, Any]]:
             warc_items = warc_items[: max(0, int(args.max_warc_files))]
 
         archive_dir = args.archive_dir.expanduser().resolve() / f"warc_ranges_{state_code.lower()}"
-        html_output_dir = args.repo_root.expanduser().resolve() / "data" / "state_laws" / state_code / "raw_html"
-        manifest_dir = args.repo_root.expanduser().resolve() / "data" / "state_laws" / state_code / "manifests"
+        html_output_dir = (
+            args.repo_root.expanduser().resolve() / "data" / "state_laws" / state_code / "raw_html"
+        )
+        manifest_dir = (
+            args.repo_root.expanduser().resolve() / "data" / "state_laws" / state_code / "manifests"
+        )
         manifest_dir.mkdir(parents=True, exist_ok=True)
 
         all_manifests: List[Dict[str, Any]] = []

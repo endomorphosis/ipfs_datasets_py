@@ -124,18 +124,36 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Enable low-memory mode (disable router caches, EU audit, and cap citation audit text).",
     )
-    parser.add_argument("--embeddings-provider", default="", help="Embeddings router provider override.")
+    parser.add_argument(
+        "--embeddings-provider", default="", help="Embeddings router provider override."
+    )
     parser.add_argument("--embeddings-model", default="", help="Embeddings model name override.")
-    parser.add_argument("--embeddings-device", default="", help="Embeddings device override (cpu/cuda).")
-    parser.add_argument("--embeddings-batch-size", type=int, default=128, help="Batch size for embeddings_router.")
-    parser.add_argument("--embeddings-parallel-batches", type=int, default=1, help="Parallel batch workers for embeddings_router.")
+    parser.add_argument(
+        "--embeddings-device", default="", help="Embeddings device override (cpu/cuda)."
+    )
+    parser.add_argument(
+        "--embeddings-batch-size", type=int, default=128, help="Batch size for embeddings_router."
+    )
+    parser.add_argument(
+        "--embeddings-parallel-batches",
+        type=int,
+        default=1,
+        help="Parallel batch workers for embeddings_router.",
+    )
     parser.add_argument(
         "--embeddings-chunking-strategy",
         default="",
         help="Chunking strategy for embeddings (semantic, sentences, fixed, sliding_window).",
     )
-    parser.add_argument("--embeddings-chunk-size", type=int, default=512, help="Chunk size for embeddings chunking.")
-    parser.add_argument("--embeddings-chunk-overlap", type=int, default=50, help="Chunk overlap for embeddings chunking.")
+    parser.add_argument(
+        "--embeddings-chunk-size", type=int, default=512, help="Chunk size for embeddings chunking."
+    )
+    parser.add_argument(
+        "--embeddings-chunk-overlap",
+        type=int,
+        default=50,
+        help="Chunk overlap for embeddings chunking.",
+    )
     parser.add_argument(
         "--json",
         action="store_true",
@@ -206,7 +224,9 @@ def _auto_cuda_device(requested: str | None, *, enable: bool) -> str | None:
 
 def _build_strict_subset(enriched: dict, builder: DocketDatasetBuilder) -> dict:
     preview = builder.preview_retrieval_index(enriched, min_evidence_quality="plain_text")
-    selected_ids = {str(doc.get("document_id") or "") for doc in list(preview.get("documents") or [])}
+    selected_ids = {
+        str(doc.get("document_id") or "") for doc in list(preview.get("documents") or [])
+    }
     strict_docs = [
         document
         for document in list(enriched.get("documents") or [])
@@ -309,7 +329,9 @@ def main() -> int:
         status["stage"] = "attach_recap"
         enriched = attach_available_courtlistener_recap_evidence_to_docket(
             enriched,
-            max_documents=None if int(args.max_recap_documents or 0) <= 0 else int(args.max_recap_documents),
+            max_documents=None
+            if int(args.max_recap_documents or 0) <= 0
+            else int(args.max_recap_documents),
             request_timeout_seconds=float(args.request_timeout_seconds or 30.0),
         )
         if str(args.filing_url or "").strip():
@@ -327,7 +349,12 @@ def main() -> int:
         enriched_path.parent.mkdir(parents=True, exist_ok=True)
         enriched_path.write_text(json.dumps(enriched), encoding="utf-8")
 
-    auto_cuda = str(os.getenv("IPFS_DATASETS_PY_AUTO_CUDA", "")).strip().lower() in {"1", "true", "yes", "on"}
+    auto_cuda = str(os.getenv("IPFS_DATASETS_PY_AUTO_CUDA", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
     embeddings_device = _auto_cuda_device(
         str(args.embeddings_device or "").strip() or None,
         enable=auto_cuda,
@@ -369,7 +396,7 @@ def main() -> int:
                 executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
                 future = executor.submit(
                     llm_router.generate_text,
-                    "Return a JSON object only. Respond with {\"status\":\"ok\"}.",
+                    'Return a JSON object only. Respond with {"status":"ok"}.',
                     temperature=0.0,
                     max_new_tokens=24,
                     allow_local_fallback=False,
@@ -387,7 +414,7 @@ def main() -> int:
                     executor.shutdown(wait=False, cancel_futures=True)
             else:
                 response = llm_router.generate_text(
-                    "Return a JSON object only. Respond with {\"status\":\"ok\"}.",
+                    'Return a JSON object only. Respond with {"status":"ok"}.',
                     temperature=0.0,
                     max_new_tokens=24,
                     allow_local_fallback=False,
@@ -398,7 +425,9 @@ def main() -> int:
             preflight_report["model_name"] = str(trace.get("model_name") or "")
             preflight_report["elapsed_seconds"] = float(time.monotonic() - preflight_start)
             if preflight_report["status"] == "unknown":
-                preflight_report["status"] = "ok" if str(response or "").strip() else "empty_response"
+                preflight_report["status"] = (
+                    "ok" if str(response or "").strip() else "empty_response"
+                )
         except Exception as exc:
             preflight_report["status"] = "error"
             preflight_report["error"] = str(exc)
@@ -408,7 +437,9 @@ def main() -> int:
         builder.router_max_documents = max(0, int(args.router_max_documents))
 
     status["stage"] = "prepare_source"
-    export_source = _build_strict_subset(enriched, builder) if bool(args.strict_evidence_mode) else enriched
+    export_source = (
+        _build_strict_subset(enriched, builder) if bool(args.strict_evidence_mode) else enriched
+    )
 
     if args.full_logic_audit:
         if args.formal_logic_max_documents is None:
@@ -437,7 +468,9 @@ def main() -> int:
         case_name = str(export_source.get("case_name") or docket_id)
         court = str(export_source.get("court") or "")
         dataset_id = f"docket_dataset_{docket_id.replace(':', '_').replace('-', '_')}"
-        knowledge_graph = builder._build_knowledge_graph(dataset_id, docket_id, case_name, court, index_documents)
+        knowledge_graph = builder._build_knowledge_graph(
+            dataset_id, docket_id, case_name, court, index_documents
+        )
         bm25_index = builder._build_bm25_index(dataset_id, index_documents)
         vector_index = builder._build_vector_index(dataset_id, index_documents)
 
@@ -488,8 +521,13 @@ def main() -> int:
     bm25_index = dict(dataset_payload.get("bm25_index") or {})
     vector_index = dict(dataset_payload.get("vector_index") or {})
     proof_assistant = dict(dataset_payload.get("proof_assistant") or {})
-    citation_audit = dict((dataset_payload.get("metadata") or {}).get("citation_source_audit") or {})
-    formal_logic_summary = dict((dataset_payload.get("metadata") or {}).get("artifact_provenance", {}).get("formal_logic") or {})
+    citation_audit = dict(
+        (dataset_payload.get("metadata") or {}).get("citation_source_audit") or {}
+    )
+    formal_logic_summary = dict(
+        (dataset_payload.get("metadata") or {}).get("artifact_provenance", {}).get("formal_logic")
+        or {}
+    )
     payload = {
         "docket_id": docket_id,
         "case_name": case_name,
@@ -500,10 +538,16 @@ def main() -> int:
         "vector_document_count": int((vector_index or {}).get("document_count") or 0),
         "vector_total_count": int((vector_index or {}).get("vector_count") or 0),
         "knowledge_graph_entity_count": len(list((knowledge_graph or {}).get("entities") or [])),
-        "knowledge_graph_relationship_count": len(list((knowledge_graph or {}).get("relationships") or [])),
+        "knowledge_graph_relationship_count": len(
+            list((knowledge_graph or {}).get("relationships") or [])
+        ),
         "proof_agenda_count": len(list((proof_assistant or {}).get("agenda") or [])),
-        "proof_evidence_packet_count": len(list((proof_assistant or {}).get("evidence_packets") or [])),
-        "proof_revalidation_count": len(list((proof_assistant or {}).get("revalidation_runs") or [])),
+        "proof_evidence_packet_count": len(
+            list((proof_assistant or {}).get("evidence_packets") or [])
+        ),
+        "proof_revalidation_count": len(
+            list((proof_assistant or {}).get("revalidation_runs") or [])
+        ),
         "deontic_rule_count": len(dict(deontic_graph.get("rules") or {})),
         "deontic_node_count": len(dict(deontic_graph.get("nodes") or {})),
         "deontic_trigger_count": len(list((deontic_triggers or {}).get("entries") or [])),

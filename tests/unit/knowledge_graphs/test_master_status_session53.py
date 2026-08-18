@@ -26,13 +26,12 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 _numpy_available = bool(importlib.util.find_spec("numpy"))
-_skip_no_numpy = pytest.mark.skipif(
-    not _numpy_available, reason="numpy not installed"
-)
+_skip_no_numpy = pytest.mark.skipif(not _numpy_available, reason="numpy not installed")
 
 # ---------------------------------------------------------------------------
 # 1. compiler.py: variable = element.variable or f"_n{i}" is always truthy
 # ---------------------------------------------------------------------------
+
 
 class TestCompilerVariableInvariant:
     """
@@ -103,6 +102,7 @@ class TestCompilerVariableInvariant:
 # 2. ir_executor.py: Record._values is a tuple (not a dict), so .get() raises
 # ---------------------------------------------------------------------------
 
+
 class TestRecordValuesTupleInvariant:
     """
     The removed block (lines 433-442) attempted to call
@@ -116,12 +116,14 @@ class TestRecordValuesTupleInvariant:
     def test_record_values_is_always_tuple(self):
         """GIVEN any Record THEN _values is a tuple."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Record
+
         r = Record(["a", "b"], [1, 2])
         assert isinstance(r._values, tuple)
 
     def test_record_values_has_no_get_method(self):
         """GIVEN Record._values (tuple) THEN it has no .get() method."""
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Record
+
         r = Record(["x"], [42])
         assert not hasattr(r._values, "get"), "Tuple must not have .get()"
 
@@ -134,6 +136,7 @@ class TestRecordValuesTupleInvariant:
              AttributeError, and the inner if/elif block (435-442) never ran.
         """
         from ipfs_datasets_py.knowledge_graphs.neo4j_compat.result import Record
+
         r = Record(["a"], [1])
         # dotted key not in _data
         val = r.get("a.b")
@@ -168,6 +171,7 @@ class TestRecordValuesTupleInvariant:
 # 3. ipld.py: source_result invariant in vector_augmented_query
 # ---------------------------------------------------------------------------
 
+
 class TestVectorAugmentedQuerySourceResultInvariant:
     """
     The removed guard ``if not source_result: continue`` (lines 753-754) is
@@ -197,9 +201,7 @@ class TestVectorAugmentedQuerySourceResultInvariant:
         hop = 1
 
         prev_hop_entities = [
-            result["entity"].id
-            for result in graph_results
-            if result["hops"] == hop - 1
+            result["entity"].id for result in graph_results if result["hops"] == hop - 1
         ]
         assert set(prev_hop_entities) == {"a", "b"}
 
@@ -226,9 +228,7 @@ class TestVectorAugmentedQuerySourceResultInvariant:
             graph_results.append({"entity": m, "vector_score": 0.9 - i * 0.1, "hops": i // 2})
 
         for hop in range(1, 4):
-            prev_hop_entities = [
-                r["entity"].id for r in graph_results if r["hops"] == hop - 1
-            ]
+            prev_hop_entities = [r["entity"].id for r in graph_results if r["hops"] == hop - 1]
             for eid in prev_hop_entities:
                 sr = next((r for r in graph_results if r["entity"].id == eid), None)
                 assert sr is not None
@@ -237,6 +237,7 @@ class TestVectorAugmentedQuerySourceResultInvariant:
 # ---------------------------------------------------------------------------
 # 4. ipld.py: BFS depth guard in get_connected_entities is unreachable
 # ---------------------------------------------------------------------------
+
 
 class TestGetConnectedEntitiesDepthInvariant:
     """
@@ -318,9 +319,15 @@ class TestGetConnectedEntitiesDepthInvariant:
         entity_d = Entity(entity_id="D", name="D")
         kg.entities = {"A": entity_a, "B": entity_b, "C": entity_c, "D": entity_d}
         # Use (source, target) positional args — not source_id/target_id
-        rel_ab = Relationship(relationship_id="r1", relationship_type="LINK", source="A", target="B")
-        rel_bc = Relationship(relationship_id="r2", relationship_type="LINK", source="B", target="C")
-        rel_cd = Relationship(relationship_id="r3", relationship_type="LINK", source="C", target="D")
+        rel_ab = Relationship(
+            relationship_id="r1", relationship_type="LINK", source="A", target="B"
+        )
+        rel_bc = Relationship(
+            relationship_id="r2", relationship_type="LINK", source="B", target="C"
+        )
+        rel_cd = Relationship(
+            relationship_id="r3", relationship_type="LINK", source="C", target="D"
+        )
         kg.relationships = {"r1": rel_ab, "r2": rel_bc, "r3": rel_cd}
 
         # Stub get_entity_relationships to return adjacent Relationships

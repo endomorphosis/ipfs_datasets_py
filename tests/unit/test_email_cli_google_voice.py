@@ -22,7 +22,9 @@ def _build_voice_takeout(tmp_path: Path) -> Path:
         """,
         encoding="utf-8",
     )
-    (voice_dir / "metadata.json").write_text('{"participants":["(503) 555-0100"]}', encoding="utf-8")
+    (voice_dir / "metadata.json").write_text(
+        '{"participants":["(503) 555-0100"]}', encoding="utf-8"
+    )
     return tmp_path
 
 
@@ -66,12 +68,7 @@ def _build_voice_data_export(tmp_path: Path) -> Path:
 def _load_email_cli_module():
     import importlib.util
 
-    module_path = (
-        Path(__file__).resolve().parents[2]
-        / "ipfs_datasets_py"
-        / "cli"
-        / "email_cli.py"
-    )
+    module_path = Path(__file__).resolve().parents[2] / "ipfs_datasets_py" / "cli" / "email_cli.py"
     spec = importlib.util.spec_from_file_location("email_cli_under_test", module_path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -104,7 +101,9 @@ def test_email_cli_google_voice_materialize(tmp_path: Path) -> None:
     output = io.StringIO()
     with redirect_stdout(output):
         try:
-            module.main(["google-voice", str(source), "--materialize", "--output-dir", str(output_dir)])
+            module.main(
+                ["google-voice", str(source), "--materialize", "--output-dir", str(output_dir)]
+            )
         except SystemExit as exc:
             assert exc.code == 0
 

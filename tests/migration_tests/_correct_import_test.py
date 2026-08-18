@@ -5,7 +5,9 @@ Updated test with correct function names.
 
 import sys
 import traceback
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
+
 
 def test_import(module_path, function_name):
     """Test importing a specific function from a module."""
@@ -18,6 +20,7 @@ def test_import(module_path, function_name):
     except Exception as e:
         print(f"✗ Failed to import {function_name}: {e}")
         return False
+
 
 if __name__ == "__main__":
     # Updated with correct function names

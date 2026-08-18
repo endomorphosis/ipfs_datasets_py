@@ -15,6 +15,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
 def mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyMediator(generator=OntologyGenerator(), critic=OntologyCritic())
 
 
@@ -25,7 +26,8 @@ def _score(**recs) -> CriticScore:
         consistency=0.5,
         clarity=0.5,
         granularity=0.5,
-        relationship_coherence=0.5, domain_alignment=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
         recommendations=recommendations,
     )
 
@@ -161,6 +163,7 @@ class TestRefineOntologyActionDispatch:
 
     def test_original_ontology_not_mutated(self, mediator, ontology_builder):
         import copy
+
         ontology = ontology_builder(3)
         original = copy.deepcopy(ontology)
         score = _score(recommendations=["Improve clarity and add property definitions"])

@@ -54,7 +54,11 @@ def main() -> None:
             bs.get("final_decoded_enumeration_integrity_mean"),
             cs.get("final_decoded_enumeration_integrity_mean"),
         ),
-        ("flogic_relation_coverage_mean", bs.get("flogic_relation_coverage_mean"), cs.get("flogic_relation_coverage_mean")),
+        (
+            "flogic_relation_coverage_mean",
+            bs.get("flogic_relation_coverage_mean"),
+            cs.get("flogic_relation_coverage_mean"),
+        ),
         (
             "artifact_orphan_total",
             bs.get("final_decoded_orphan_terminal_count_total"),
@@ -65,9 +69,21 @@ def main() -> None:
             bs.get("final_decoded_relative_clause_artifact_count_total"),
             cs.get("final_decoded_relative_clause_artifact_count_total"),
         ),
-        ("semantic_similarity_hybrid_mean", bs.get("semantic_similarity_hybrid_mean"), cs.get("semantic_similarity_hybrid_mean")),
-        ("hybrid_ir_success_count", bs.get("hybrid_ir_success_count"), cs.get("hybrid_ir_success_count")),
-        ("hybrid_ir_success_rate", bs.get("hybrid_ir_success_rate"), cs.get("hybrid_ir_success_rate")),
+        (
+            "semantic_similarity_hybrid_mean",
+            bs.get("semantic_similarity_hybrid_mean"),
+            cs.get("semantic_similarity_hybrid_mean"),
+        ),
+        (
+            "hybrid_ir_success_count",
+            bs.get("hybrid_ir_success_count"),
+            cs.get("hybrid_ir_success_count"),
+        ),
+        (
+            "hybrid_ir_success_rate",
+            bs.get("hybrid_ir_success_rate"),
+            cs.get("hybrid_ir_success_rate"),
+        ),
     ]
 
     print("BASELINE:", args.baseline)

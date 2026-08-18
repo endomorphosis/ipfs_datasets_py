@@ -10,12 +10,13 @@ import json
 import time
 from pathlib import Path
 
+
 def generate_final_summary():
     """Generate a comprehensive final test summary."""
 
     # Read the latest test report
     try:
-        with open('mcp_tools_test_report.json', 'r') as f:
+        with open("mcp_tools_test_report.json", "r") as f:
             test_report = json.load(f)
     except FileNotFoundError:
         print("No test report found. Please run the tests first.")
@@ -23,7 +24,7 @@ def generate_final_summary():
 
     # Read the tool verification results
     try:
-        with open('mcp_tools_verification.json', 'r') as f:
+        with open("mcp_tools_verification.json", "r") as f:
             verification_report = json.load(f)
     except FileNotFoundError:
         verification_report = {}
@@ -37,11 +38,11 @@ def generate_final_summary():
     # Overall Statistics
     print("OVERALL TEST STATISTICS:")
     print("-" * 40)
-    tests_run = test_report.get('tests_run', 0)
-    failures = test_report.get('failures', 0)
-    errors = test_report.get('errors', 0)
-    skipped = test_report.get('skipped', 0)
-    success_rate = test_report.get('success_rate', 0)
+    tests_run = test_report.get("tests_run", 0)
+    failures = test_report.get("failures", 0)
+    errors = test_report.get("errors", 0)
+    skipped = test_report.get("skipped", 0)
+    success_rate = test_report.get("success_rate", 0)
 
     successful = tests_run - failures - errors - skipped
 
@@ -58,35 +59,45 @@ def generate_final_summary():
     print("-" * 40)
 
     categories = {
-        'dataset_tools': {'total': 4, 'working': 1, 'description': 'Dataset processing and conversion'},
-        'audit_tools': {'total': 2, 'working': 2, 'description': 'Security and compliance auditing'},
-        'web_archive_tools': {'total': 6, 'working': 1, 'description': 'Web archive processing'},
-        'cli': {'total': 1, 'working': 1, 'description': 'Command line execution'},
-        'functions': {'total': 1, 'working': 1, 'description': 'Python code execution'},
-        'ipfs_tools': {'total': 2, 'working': 0, 'description': 'IPFS integration'},
-        'vector_tools': {'total': 2, 'working': 0, 'description': 'Vector search and indexing'},
-        'graph_tools': {'total': 1, 'working': 0, 'description': 'Knowledge graph operations'},
-        'security_tools': {'total': 1, 'working': 0, 'description': 'Security and access control'},
-        'provenance_tools': {'total': 1, 'working': 0, 'description': 'Data provenance tracking'}
+        "dataset_tools": {
+            "total": 4,
+            "working": 1,
+            "description": "Dataset processing and conversion",
+        },
+        "audit_tools": {
+            "total": 2,
+            "working": 2,
+            "description": "Security and compliance auditing",
+        },
+        "web_archive_tools": {"total": 6, "working": 1, "description": "Web archive processing"},
+        "cli": {"total": 1, "working": 1, "description": "Command line execution"},
+        "functions": {"total": 1, "working": 1, "description": "Python code execution"},
+        "ipfs_tools": {"total": 2, "working": 0, "description": "IPFS integration"},
+        "vector_tools": {"total": 2, "working": 0, "description": "Vector search and indexing"},
+        "graph_tools": {"total": 1, "working": 0, "description": "Knowledge graph operations"},
+        "security_tools": {"total": 1, "working": 0, "description": "Security and access control"},
+        "provenance_tools": {"total": 1, "working": 0, "description": "Data provenance tracking"},
     }
 
     for category, info in categories.items():
-        working = info['working']
-        total = info['total']
+        working = info["working"]
+        total = info["total"]
         percentage = (working / total * 100) if total > 0 else 0
         status = "✓" if working == total else "⚠" if working > 0 else "✗"
-        print(f"{status} {category:15} {working}/{total:2} ({percentage:5.1f}%) - {info['description']}")
+        print(
+            f"{status} {category:15} {working}/{total:2} ({percentage:5.1f}%) - {info['description']}"
+        )
 
     print()
 
     # Working Tools
     working_tools = [
-        'dataset_tools/process_dataset',
-        'audit_tools/generate_audit_report',
-        'audit_tools/record_audit_event',
-        'web_archive_tools/create_warc',
-        'cli/execute_command',
-        'functions/execute_python_snippet'
+        "dataset_tools/process_dataset",
+        "audit_tools/generate_audit_report",
+        "audit_tools/record_audit_event",
+        "web_archive_tools/create_warc",
+        "cli/execute_command",
+        "functions/execute_python_snippet",
     ]
 
     print("WORKING TOOLS:")
@@ -137,8 +148,8 @@ def generate_final_summary():
 
     # Generate missing test file
     missing_tests = []
-    if test_report.get('missing_tools'):
-        for tool_path in test_report['missing_tools']:
+    if test_report.get("missing_tools"):
+        for tool_path in test_report["missing_tools"]:
             category, tool_name = tool_path
             missing_tests.append(f"{category}/{tool_name}")
 
@@ -156,34 +167,35 @@ def generate_final_summary():
 
     # Save detailed report
     summary_report = {
-        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-        'overall_stats': {
-            'tests_run': tests_run,
-            'successful': successful,
-            'failures': failures,
-            'errors': errors,
-            'skipped': skipped,
-            'success_rate': success_rate
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "overall_stats": {
+            "tests_run": tests_run,
+            "successful": successful,
+            "failures": failures,
+            "errors": errors,
+            "skipped": skipped,
+            "success_rate": success_rate,
         },
-        'working_tools': working_tools,
-        'missing_tests': missing_tests,
-        'categories': categories,
-        'major_issues': [
-            'Import dependencies (libp2p_kit, DatasetManager)',
-            'Function signature mismatches',
-            'Missing implementation modules'
+        "working_tools": working_tools,
+        "missing_tests": missing_tests,
+        "categories": categories,
+        "major_issues": [
+            "Import dependencies (libp2p_kit, DatasetManager)",
+            "Function signature mismatches",
+            "Missing implementation modules",
         ],
-        'recommendations': [
-            'Fix import issues',
-            'Complete tool implementations',
-            'Improve test infrastructure'
-        ]
+        "recommendations": [
+            "Fix import issues",
+            "Complete tool implementations",
+            "Improve test infrastructure",
+        ],
     }
 
-    with open('final_test_summary.json', 'w') as f:
+    with open("final_test_summary.json", "w") as f:
         json.dump(summary_report, f, indent=2)
 
     print(f"Detailed report saved to: final_test_summary.json")
+
 
 if __name__ == "__main__":
     generate_final_summary()

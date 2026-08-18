@@ -167,7 +167,9 @@ def extract_attachment_text(
 
     try:
         if suffix in TEXT_ATTACHMENT_SUFFIXES:
-            result["text"] = _truncate_text(_read_text_attachment(attachment_path, max_bytes=max_bytes), max_chars)
+            result["text"] = _truncate_text(
+                _read_text_attachment(attachment_path, max_bytes=max_bytes), max_chars
+            )
             result["method"] = "text"
             return result
 
@@ -192,7 +194,11 @@ def extract_attachment_text(
                     return result
             if use_ocr:
                 ocr_result = _extract_pdf_text_with_ocr(attachment_path, max_chars=max_chars)
-                merged = "\n\n".join(part for part in [native_text, str(ocr_result.get("text") or "").strip()] if part)
+                merged = "\n\n".join(
+                    part
+                    for part in [native_text, str(ocr_result.get("text") or "").strip()]
+                    if part
+                )
                 result["text"] = _truncate_text(merged, max_chars)
                 result["method"] = "pdf-text+ocr" if native_text else "pdf-ocr"
                 result["ocr_used"] = bool(ocr_result.get("text"))

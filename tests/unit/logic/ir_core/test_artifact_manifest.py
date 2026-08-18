@@ -176,13 +176,10 @@ def test_integrity_detects_duplicate_and_unbound_artifacts(tmp_path) -> None:
     with pytest.raises(ArtifactManifestValidationError, match="duplicate"):
         duplicate.validate()
 
-    (tmp_path / "outputs" / "unmanifested.log").write_text(
-        "not bound", encoding="utf-8"
-    )
+    (tmp_path / "outputs" / "unmanifested.log").write_text("not bound", encoding="utf-8")
     report = manifest.audit_integrity(tmp_path)
     assert any(
-        issue.kind is IntegrityIssueKind.UNBOUND
-        and issue.path == "outputs/unmanifested.log"
+        issue.kind is IntegrityIssueKind.UNBOUND and issue.path == "outputs/unmanifested.log"
         for issue in report.issues
     )
 

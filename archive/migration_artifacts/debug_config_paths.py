@@ -2,14 +2,16 @@
 """
 Debug config path resolution
 """
+
 import sys
 import os
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
 
 print("Debugging config path resolution...")
 
 # Import config module directly
-sys.path.insert(0, './ipfs_datasets_py/')
+sys.path.insert(0, "./ipfs_datasets_py/")
 import config as config_module
 
 print("Creating config class...")
@@ -20,14 +22,10 @@ print("Checking available config files...")
 
 # Check all the paths the findConfig method would check
 import os
-test_paths = [
-    './config.toml',
-    '../config.toml', 
-    '../config/config.toml',
-    './config/config.toml'
-]
 
-this_dir = os.path.dirname(os.path.realpath('./ipfs_datasets_py/config.py'))
+test_paths = ["./config.toml", "../config.toml", "../config/config.toml", "./config/config.toml"]
+
+this_dir = os.path.dirname(os.path.realpath("./ipfs_datasets_py/config.py"))
 print(f"this_dir would be: {this_dir}")
 
 for path in test_paths:
@@ -57,4 +55,5 @@ except SystemExit as e:
 except Exception as e:
     print(f"❌ Config instantiation failed: {e}")
     import traceback
+
     traceback.print_exc()

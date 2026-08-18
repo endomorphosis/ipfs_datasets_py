@@ -155,19 +155,16 @@ See `config/alert_rules.yml` for more examples.
 import asyncio
 from ipfs_datasets_py.alerts import DiscordNotifier, DiscordEmbed
 
+
 async def send_alert():
     # Initialize notifier (webhook mode)
-    notifier = DiscordNotifier(
-        mode="webhook",
-        webhook_url="https://discord.com/api/webhooks/..."
-    )
-    
+    notifier = DiscordNotifier(mode="webhook", webhook_url="https://discord.com/api/webhooks/...")
+
     # Send basic message
-    result = await notifier.send_message(
-        text="🚨 Market alert: Price spike detected!"
-    )
-    
+    result = await notifier.send_message(text="🚨 Market alert: Price spike detected!")
+
     await notifier.close()
+
 
 asyncio.run(send_alert())
 ```
@@ -177,26 +174,28 @@ asyncio.run(send_alert())
 ```python
 from ipfs_datasets_py.alerts import DiscordNotifier, DiscordEmbed
 
+
 async def send_embed():
     notifier = DiscordNotifier(mode="webhook", webhook_url="...")
-    
+
     embed = DiscordEmbed(
         title="📊 Market Alert",
         description="AAPL price spike detected",
-        color=0x00ff00,  # Green
+        color=0x00FF00,  # Green
         fields=[
             {"name": "Price", "value": "$175.50", "inline": True},
             {"name": "Change", "value": "+5.2%", "inline": True},
         ],
-        footer="Alert System | 2024-01-15 10:30:00"
+        footer="Alert System | 2024-01-15 10:30:00",
     )
-    
+
     result = await notifier.send_message(
         embed=embed,
-        role_names=["trader"]  # Mention role
+        role_names=["trader"],  # Mention role
     )
-    
+
     await notifier.close()
+
 
 asyncio.run(send_embed())
 ```
@@ -204,36 +203,31 @@ asyncio.run(send_embed())
 #### Rule-Based Alerts
 
 ```python
-from ipfs_datasets_py.alerts import (
-    DiscordNotifier, AlertManager, AlertRule
-)
+from ipfs_datasets_py.alerts import DiscordNotifier, AlertManager, AlertRule
+
 
 async def monitor_market():
     # Setup
-    notifier = DiscordNotifier(
-        config_file="config/discord.yml"
-    )
-    manager = AlertManager(
-        notifier=notifier,
-        config_file="config/alert_rules.yml"
-    )
-    
+    notifier = DiscordNotifier(config_file="config/discord.yml")
+    manager = AlertManager(notifier=notifier, config_file="config/alert_rules.yml")
+
     # Evaluate market event
     event = {
         "symbol": "AAPL",
         "price": 175.50,
         "change_pct": 7.2,
         "volume": 85000000,
-        "timestamp": "2024-01-15T10:30:00Z"
+        "timestamp": "2024-01-15T10:30:00Z",
     }
-    
+
     results = await manager.evaluate_event(event)
-    
+
     for result in results:
-        if result['status'] == 'triggered':
+        if result["status"] == "triggered":
             print(f"Alert triggered: {result['rule_name']}")
-    
+
     await notifier.close()
+
 
 asyncio.run(monitor_market())
 ```
@@ -248,15 +242,10 @@ custom_rule = AlertRule(
     rule_id="my_custom_alert",
     name="My Custom Alert",
     description="Custom trading signal",
-    condition={
-        "and": [
-            {">": [{"var": "price"}, 150]},
-            {"<": [{"var": "volume"}, 50000000]}
-        ]
-    },
+    condition={"and": [{">": [{"var": "price"}, 150]}, {"<": [{"var": "volume"}, 50000000]}]},
     message_template="Custom alert: {symbol} at ${price}",
     severity="info",
-    suppression_window=600  # 10 minutes
+    suppression_window=600,  # 10 minutes
 )
 
 # Add to manager
@@ -274,7 +263,7 @@ rule = {
         # Price > 20-period SMA
         {">": [{"var": "price"}, {"sma": ["price", 20]}]},
         # Z-score > 2 (unusual)
-        {">": [{"zscore": ["volume", 20]}, 2.0]}
+        {">": [{"zscore": ["volume", 20]}, 2.0]},
     ]
 }
 
@@ -325,15 +314,11 @@ python examples/discord_alerts_demo.py --demo 3  # Run specific demo
 from ipfs_datasets_py.mcp_server.tools.alert_tools import discord_alert_tools
 
 # Send message
-result = await discord_alert_tools.send_discord_message(
-    text="Alert message",
-    role_names=["trader"]
-)
+result = await discord_alert_tools.send_discord_message(text="Alert message", role_names=["trader"])
 
 # Evaluate rules
 result = await discord_alert_tools.evaluate_alert_rules(
-    event={"price": 150, "volume": 1000000},
-    rule_ids=["price_spike_alert"]
+    event={"price": 150, "volume": 1000000}, rule_ids=["price_spike_alert"]
 )
 ```
 
@@ -428,23 +413,16 @@ condition:
 
 import asyncio
 from datetime import datetime
-from ipfs_datasets_py.alerts import (
-    DiscordNotifier, AlertManager, AlertRule, RuleEngine
-)
+from ipfs_datasets_py.alerts import DiscordNotifier, AlertManager, AlertRule, RuleEngine
+
 
 async def market_monitoring_workflow():
     # 1. Setup notifier
-    notifier = DiscordNotifier(
-        mode="webhook",
-        webhook_url="https://discord.com/api/webhooks/..."
-    )
-    
+    notifier = DiscordNotifier(mode="webhook", webhook_url="https://discord.com/api/webhooks/...")
+
     # 2. Create alert manager
-    manager = AlertManager(
-        notifier=notifier,
-        config_file="config/alert_rules.yml"
-    )
-    
+    manager = AlertManager(notifier=notifier, config_file="config/alert_rules.yml")
+
     # 3. Add custom real-time rule
     realtime_rule = AlertRule(
         rule_id="realtime_spike",
@@ -452,15 +430,15 @@ async def market_monitoring_workflow():
         condition={">": [{"percent_change": ["price", 1]}, 3]},
         message_template="⚡ Real-time spike: {symbol} {change_pct:+.2f}%",
         severity="warning",
-        suppression_window=60
+        suppression_window=60,
     )
     manager.add_rule(realtime_rule)
-    
+
     # 4. Simulate market data stream
     async def market_data_stream():
         """Simulate receiving market data."""
         symbols = ["AAPL", "GOOGL", "MSFT", "TSLA"]
-        
+
         while True:
             for symbol in symbols:
                 yield {
@@ -468,24 +446,25 @@ async def market_monitoring_workflow():
                     "price": 150 + (hash(symbol + str(datetime.now())) % 50),
                     "change_pct": ((hash(symbol) % 20) - 10),
                     "volume": 80000000 + (hash(symbol) % 40000000),
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
             await asyncio.sleep(5)
-    
+
     # 5. Monitor stream
     print("Starting market monitoring...")
     try:
         async for event in market_data_stream():
             results = await manager.evaluate_event(event)
-            
+
             if results:
                 for result in results:
-                    if result['status'] == 'triggered':
+                    if result["status"] == "triggered":
                         print(f"✓ Alert: {result['rule_name']} for {event['symbol']}")
     except KeyboardInterrupt:
         print("\nMonitoring stopped")
     finally:
         await notifier.close()
+
 
 if __name__ == "__main__":
     asyncio.run(market_monitoring_workflow())
@@ -496,12 +475,13 @@ if __name__ == "__main__":
 ```python
 from ipfs_datasets_py.alerts import DiscordNotifier, AlertRule, AlertManager
 
+
 async def graphrag_sentiment_monitor():
     """Monitor GraphRAG analysis outputs for sentiment shifts."""
-    
+
     notifier = DiscordNotifier(mode="webhook", webhook_url="...")
     manager = AlertManager(notifier=notifier)
-    
+
     # Rule for negative sentiment detection
     sentiment_rule = AlertRule(
         rule_id="graphrag_negative_sentiment",
@@ -509,7 +489,7 @@ async def graphrag_sentiment_monitor():
         condition={
             "and": [
                 {"<": [{"var": "graphrag.sentiment_score"}, -0.5]},
-                {">": [{"var": "graphrag.confidence"}, 0.7]}
+                {">": [{"var": "graphrag.confidence"}, 0.7]},
             ]
         },
         message_template="""
@@ -522,18 +502,18 @@ async def graphrag_sentiment_monitor():
         embed_config={
             "title": "GraphRAG Sentiment Alert",
             "description": "Negative sentiment shift detected in news",
-            "color": 0xf39c12,
+            "color": 0xF39C12,
             "fields": [
                 {"name": "Symbol", "value": "{symbol}", "inline": True},
                 {"name": "Sentiment", "value": "{graphrag.sentiment_score}", "inline": True},
-                {"name": "Summary", "value": "{graphrag.summary}", "inline": False}
-            ]
+                {"name": "Summary", "value": "{graphrag.summary}", "inline": False},
+            ],
         },
         severity="warning",
-        suppression_window=1800  # 30 minutes
+        suppression_window=1800,  # 30 minutes
     )
     manager.add_rule(sentiment_rule)
-    
+
     # Simulate GraphRAG analysis output
     graphrag_output = {
         "symbol": "AAPL",
@@ -541,12 +521,13 @@ async def graphrag_sentiment_monitor():
             "sentiment_score": -0.75,
             "confidence": 0.85,
             "summary": "Multiple news sources report concerns about supply chain",
-            "entities": ["CEO", "Supply Chain", "Manufacturing"]
-        }
+            "entities": ["CEO", "Supply Chain", "Manufacturing"],
+        },
     }
-    
+
     results = await manager.evaluate_event(graphrag_output)
     await notifier.close()
+
 
 asyncio.run(graphrag_sentiment_monitor())
 ```
@@ -562,14 +543,16 @@ asyncio.run(graphrag_sentiment_monitor())
 import aiohttp
 import asyncio
 
+
 async def test_webhook():
     webhook_url = "https://discord.com/api/webhooks/..."
-    
+
     async with aiohttp.ClientSession() as session:
         payload = {"content": "Test message"}
         async with session.post(webhook_url, json=payload) as response:
             print(f"Status: {response.status}")
             print(await response.text())
+
 
 asyncio.run(test_webhook())
 ```
@@ -613,7 +596,7 @@ import logging
 
 # Enable debug logging
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('ipfs_datasets_py.alerts')
+logger = logging.getLogger("ipfs_datasets_py.alerts")
 logger.setLevel(logging.DEBUG)
 ```
 
@@ -624,19 +607,19 @@ logger.setLevel(logging.DEBUG)
 ```python
 from ipfs_datasets_py.alerts import RuleEngine
 
+
 # Register custom predicate
 def bollinger_band(var_path: str, window: int = 20, num_std: int = 2, context=None):
     """Calculate Bollinger Bands."""
     # Your implementation
     pass
 
+
 engine = RuleEngine()
-engine.register_predicate('bollinger', bollinger_band)
+engine.register_predicate("bollinger", bollinger_band)
 
 # Use in rules
-rule = {
-    ">": [{"var": "price"}, {"bollinger": ["price", 20, 2]}]
-}
+rule = {">": [{"var": "price"}, {"bollinger": ["price", 20, 2]}]}
 ```
 
 ### Multi-Channel Notifications
@@ -646,15 +629,15 @@ rule = {
 notifiers = {
     "alerts": DiscordNotifier(webhook_url="..."),
     "admin": DiscordNotifier(webhook_url="..."),
-    "traders": DiscordNotifier(webhook_url="...")
+    "traders": DiscordNotifier(webhook_url="..."),
 }
 
 # Route alerts based on severity
-if result['severity'] == 'critical':
-    await notifiers['admin'].send_message(...)
-    await notifiers['alerts'].send_message(...)
+if result["severity"] == "critical":
+    await notifiers["admin"].send_message(...)
+    await notifiers["alerts"].send_message(...)
 else:
-    await notifiers['alerts'].send_message(...)
+    await notifiers["alerts"].send_message(...)
 ```
 
 ### Persistence

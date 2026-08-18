@@ -15,19 +15,21 @@ class NevadaScraper(BaseStateScraper):
 
     _NRS_CHAPTER_HREF_RE = re.compile(r"^NRS-\d{3}[A-Z]?\.html$", re.IGNORECASE)
     _NRS_SECTION_NUMBER_RE = re.compile(r"^\d+[A-Z]?\.\d+(?:\.\d+)?[A-Z]?$")
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Nevada's legislative website."""
         return "https://www.leg.state.nv.us"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Nevada."""
-        return [{
-            "name": "Nevada Revised Statutes",
-            "url": f"{self.get_base_url()}/NRS/",
-            "type": "Code"
-        }]
-    
+        return [
+            {
+                "name": "Nevada Revised Statutes",
+                "url": f"{self.get_base_url()}/NRS/",
+                "type": "Code",
+            }
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -35,11 +37,11 @@ class NevadaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Nevada's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -57,9 +59,13 @@ class NevadaScraper(BaseStateScraper):
                 return direct[: int(limit)]
 
         fallback_limit = max(10, int(limit if limit != 1000000 else 40))
-        return await self._generic_scrape(code_name, code_url, "Nev. Rev. Stat.", max_sections=fallback_limit)
+        return await self._generic_scrape(
+            code_name, code_url, "Nev. Rev. Stat.", max_sections=fallback_limit
+        )
 
-    async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 2) -> List[NormalizedStatute]:
+    async def _scrape_direct_seed_sections(
+        self, code_name: str, max_statutes: int = 2
+    ) -> List[NormalizedStatute]:
         seeds = [
             ("1.010", f"{self.get_base_url()}/NRS/NRS-001.html"),
             ("200.010", f"{self.get_base_url()}/NRS/NRS-200.html"),
@@ -173,7 +179,9 @@ class NevadaScraper(BaseStateScraper):
                 return
             section_number = str(current.get("section_number") or "").strip()
             section_name = str(current.get("section_name") or "").strip()
-            body_parts = [str(item).strip() for item in current.get("body_parts") or [] if str(item).strip()]
+            body_parts = [
+                str(item).strip() for item in current.get("body_parts") or [] if str(item).strip()
+            ]
             if not section_number or not body_parts:
                 current = None
                 return
@@ -191,7 +199,9 @@ class NevadaScraper(BaseStateScraper):
                     section_name=(section_name or f"NRS {section_number}")[:200],
                     full_text=full_text[:14000],
                     legal_area=self._identify_legal_area(section_name or full_text[:800]),
-                    source_url=f"{chapter_url}#{current.get('anchor')}" if current.get("anchor") else chapter_url,
+                    source_url=f"{chapter_url}#{current.get('anchor')}"
+                    if current.get("anchor")
+                    else chapter_url,
                     official_cite=f"Nev. Rev. Stat. § {section_number}",
                     structured_data={
                         "source_kind": "official_nevada_revised_statutes_html",
@@ -214,7 +224,11 @@ class NevadaScraper(BaseStateScraper):
                 if not self._NRS_SECTION_NUMBER_RE.match(section_number):
                     continue
                 leadline = paragraph.find("span", class_="Leadline")
-                section_name = self._normalize_legal_text(leadline.get_text(" ", strip=True)) if leadline else ""
+                section_name = (
+                    self._normalize_legal_text(leadline.get_text(" ", strip=True))
+                    if leadline
+                    else ""
+                )
                 text = self._normalize_legal_text(paragraph.get_text(" ", strip=True))
                 current = {
                     "anchor": str(anchor.get("name") or "").strip(),

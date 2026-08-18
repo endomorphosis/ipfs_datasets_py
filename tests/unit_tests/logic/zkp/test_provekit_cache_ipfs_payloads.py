@@ -113,9 +113,7 @@ class TestProveKitProofCacheKey:
 
     def test_cache_key_changes_when_backend_id_changes(self):
         key_a = build_provekit_proof_cache_key(**_BASE_KEY_KWARGS)
-        key_b = build_provekit_proof_cache_key(
-            **{**_BASE_KEY_KWARGS, "backend_id": "groth16"}
-        )
+        key_b = build_provekit_proof_cache_key(**{**_BASE_KEY_KWARGS, "backend_id": "groth16"})
         assert key_a != key_b
 
     def test_cache_key_changes_when_circuit_ref_changes(self):
@@ -127,9 +125,7 @@ class TestProveKitProofCacheKey:
 
     def test_cache_key_changes_when_hash_backend_changes(self):
         key_a = build_provekit_proof_cache_key(**_BASE_KEY_KWARGS)
-        key_b = build_provekit_proof_cache_key(
-            **{**_BASE_KEY_KWARGS, "hash_backend": "keccak"}
-        )
+        key_b = build_provekit_proof_cache_key(**{**_BASE_KEY_KWARGS, "hash_backend": "keccak"})
         assert key_a != key_b
 
     def test_cache_key_changes_when_verifier_key_digest_changes(self):
@@ -149,9 +145,7 @@ class TestProveKitProofCacheKey:
 
     def test_cache_key_changes_when_ruleset_changes(self):
         key_a = build_provekit_proof_cache_key(**_BASE_KEY_KWARGS)
-        key_b = build_provekit_proof_cache_key(
-            **{**_BASE_KEY_KWARGS, "ruleset_id": "LegalIR_v2"}
-        )
+        key_b = build_provekit_proof_cache_key(**{**_BASE_KEY_KWARGS, "ruleset_id": "LegalIR_v2"})
         assert key_a != key_b
 
     def test_cache_key_is_independent_of_private_axioms(self):
@@ -167,9 +161,9 @@ class TestProveKitProofCacheKey:
             {"backend_id": "   "},
             {"circuit_ref": ""},
             {"hash_backend": ""},
-            {"verifier_key_sha256": "a" * 63},       # too short
-            {"verifier_key_sha256": "A" * 64},       # uppercase
-            {"verifier_key_sha256": "z" * 64},       # not hex
+            {"verifier_key_sha256": "a" * 63},  # too short
+            {"verifier_key_sha256": "A" * 64},  # uppercase
+            {"verifier_key_sha256": "z" * 64},  # not hex
             {"verifier_key_sha256": ""},
             {"provekit_commit": ""},
             {"ruleset_id": ""},
@@ -204,9 +198,7 @@ class TestProveKitProofCacheKey:
             ),
         }
         for component, variant_key in variant_keys.items():
-            assert base_key != variant_key, (
-                f"Changing {component!r} did not alter the cache key"
-            )
+            assert base_key != variant_key, f"Changing {component!r} did not alter the cache key"
         assert len(set(variant_keys.values())) == len(variant_keys), (
             "Two different component changes produced the same cache key"
         )
@@ -238,11 +230,15 @@ class TestProveKitProofCacheKeyFromProof:
         public_inputs = _make_proof_inputs()
         metadata = _make_proof_metadata()
         k1 = build_provekit_proof_cache_key_from_proof(
-            public_inputs, metadata, verifier_key_sha256=_DUMMY_VK_SHA,
+            public_inputs,
+            metadata,
+            verifier_key_sha256=_DUMMY_VK_SHA,
             provekit_commit="deadbeef" * 8,
         )
         k2 = build_provekit_proof_cache_key_from_proof(
-            public_inputs, metadata, verifier_key_sha256=_DUMMY_VK_SHA,
+            public_inputs,
+            metadata,
+            verifier_key_sha256=_DUMMY_VK_SHA,
             provekit_commit="deadbeef" * 8,
         )
         assert k1 == k2
@@ -251,11 +247,15 @@ class TestProveKitProofCacheKeyFromProof:
         public_inputs = _make_proof_inputs()
         metadata = _make_proof_metadata()
         k1 = build_provekit_proof_cache_key_from_proof(
-            public_inputs, metadata, verifier_key_sha256=_DUMMY_VK_SHA,
+            public_inputs,
+            metadata,
+            verifier_key_sha256=_DUMMY_VK_SHA,
             provekit_commit="aaa" * 21 + "a",
         )
         k2 = build_provekit_proof_cache_key_from_proof(
-            public_inputs, metadata, verifier_key_sha256=_ALT_VK_SHA,
+            public_inputs,
+            metadata,
+            verifier_key_sha256=_ALT_VK_SHA,
             provekit_commit="aaa" * 21 + "a",
         )
         assert k1 != k2
@@ -487,9 +487,7 @@ def test_ipfs_payload_no_witness_leak_across_call_sites():
 
     metadata = _make_proof_metadata()
     # Inject a private term into a metadata field that should be stripped
-    metadata["provekit_artifacts"]["input_path"] = (
-        "/tmp/secret_legal_clause_Prover.toml"
-    )
+    metadata["provekit_artifacts"]["input_path"] = "/tmp/secret_legal_clause_Prover.toml"
 
     payload = build_provekit_ipfs_payload(
         proof_public_inputs=_make_proof_inputs(),
@@ -502,6 +500,4 @@ def test_ipfs_payload_no_witness_leak_across_call_sites():
         # Only check terms that should _never_ appear as keys; raw file paths
         # may appear as artifact refs (verifier_key_path is public).
         if term in ("prover_key_path", "pkp_path", "input_path", "prover_toml_path", "cwd"):
-            assert f'"{term}"' not in payload_json, (
-                f"Private key {term!r} leaked into IPFS payload"
-            )
+            assert f'"{term}"' not in payload_json, f"Private key {term!r} leaked into IPFS payload"

@@ -173,8 +173,9 @@ try:
     from ..accelerate_integration import (
         AccelerateManager,
         is_accelerate_available,
-        get_accelerate_status
+        get_accelerate_status,
     )
+
     HAVE_ACCELERATE = True
 except ImportError:
     HAVE_ACCELERATE = False

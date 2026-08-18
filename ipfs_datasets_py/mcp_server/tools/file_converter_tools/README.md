@@ -25,9 +25,7 @@ around the `file_converter` package.
 from ipfs_datasets_py.mcp_server.tools.file_converter_tools import convert_file
 
 result = await convert_file(
-    input_path="/data/document.pdf",
-    output_format="text",
-    extract_images=False
+    input_path="/data/document.pdf", output_format="text", extract_images=False
 )
 # Returns: {"text": "...", "page_count": 12, "encoding": "utf-8"}
 ```
@@ -41,7 +39,7 @@ result = await batch_convert(
     inputs=["/data/a.pdf", "/data/b.docx", "https://example.com/c.html"],
     output_dir="/data/converted/",
     output_format="text",
-    parallel_workers=4
+    parallel_workers=4,
 )
 ```
 
@@ -53,7 +51,7 @@ from ipfs_datasets_py.mcp_server.tools.file_converter_tools import extract_knowl
 kg = await extract_knowledge_graph(
     input_path="/data/research_paper.pdf",
     entity_types=["Person", "Organization", "Concept"],
-    output_format="json"
+    output_format="json",
 )
 ```
 

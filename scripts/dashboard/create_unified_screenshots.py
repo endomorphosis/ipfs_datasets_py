@@ -13,48 +13,46 @@ except ImportError:
     print("html2image not available, trying alternative...")
     try:
         import subprocess
+
         subprocess.run([sys.executable, "-m", "pip", "install", "html2image"], check=True)
         from html2image import Html2Image
     except Exception as e:
         print(f"Could not install html2image: {e}")
         sys.exit(1)
 
+
 def create_unified_dashboard_screenshots():
     """Create screenshots of the unified investigation dashboard."""
-    
+
     # Create screenshots directory
     screenshots_dir = Path("/tmp/unified_dashboard_screenshots")
     screenshots_dir.mkdir(exist_ok=True)
-    
+
     try:
         # Initialize HTML2Image
-        hti = Html2Image(
-            output_path=str(screenshots_dir),
-            size=(1200, 800),
-            temp_path="/tmp"
-        )
-        
+        hti = Html2Image(output_path=str(screenshots_dir), size=(1200, 800), temp_path="/tmp")
+
         # Screenshot 1: Full Dashboard
-        html_file = Path("/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/unified_dashboard_screenshot.html")
-        
+        html_file = Path(
+            "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/unified_dashboard_screenshot.html"
+        )
+
         if html_file.exists():
-            hti.screenshot(
-                html_file=str(html_file),
-                save_as="unified_dashboard_main.png"
+            hti.screenshot(html_file=str(html_file), save_as="unified_dashboard_main.png")
+            print(
+                f"✅ Created main dashboard screenshot: {screenshots_dir}/unified_dashboard_main.png"
             )
-            print(f"✅ Created main dashboard screenshot: {screenshots_dir}/unified_dashboard_main.png")
         else:
             print(f"❌ HTML file not found: {html_file}")
-        
+
         # Screenshot 2: Mobile View
         hti.size = (375, 812)  # iPhone size
         if html_file.exists():
-            hti.screenshot(
-                html_file=str(html_file),
-                save_as="unified_dashboard_mobile.png"
+            hti.screenshot(html_file=str(html_file), save_as="unified_dashboard_mobile.png")
+            print(
+                f"✅ Created mobile dashboard screenshot: {screenshots_dir}/unified_dashboard_mobile.png"
             )
-            print(f"✅ Created mobile dashboard screenshot: {screenshots_dir}/unified_dashboard_mobile.png")
-        
+
         # Create a comparison HTML showing key improvements
         comparison_html = """
         <!DOCTYPE html>
@@ -203,29 +201,29 @@ def create_unified_dashboard_screenshots():
         </body>
         </html>
         """
-        
+
         comparison_file = screenshots_dir / "improvements_summary.html"
         with open(comparison_file, "w") as f:
             f.write(comparison_html)
-        
+
         # Screenshot the comparison
         hti.size = (1200, 1000)
-        hti.screenshot(
-            html_file=str(comparison_file),
-            save_as="unified_dashboard_improvements.png"
+        hti.screenshot(html_file=str(comparison_file), save_as="unified_dashboard_improvements.png")
+        print(
+            f"✅ Created improvements summary: {screenshots_dir}/unified_dashboard_improvements.png"
         )
-        print(f"✅ Created improvements summary: {screenshots_dir}/unified_dashboard_improvements.png")
-        
+
         print(f"\n🎉 All screenshots created successfully in: {screenshots_dir}")
         print(f"📸 Files created:")
         for png_file in screenshots_dir.glob("*.png"):
             print(f"   - {png_file.name}")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Error creating screenshots: {e}")
         return False
+
 
 if __name__ == "__main__":
     create_unified_dashboard_screenshots()

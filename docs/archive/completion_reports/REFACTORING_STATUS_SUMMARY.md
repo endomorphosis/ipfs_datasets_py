@@ -178,22 +178,24 @@ Delegates core logic to utils modules.
 from ipfs_datasets_py.utils.workflows import WorkflowAnalyzer, WorkflowFixer
 import argparse
 
+
 def main():
-    parser = argparse.ArgumentParser(description='...')
+    parser = argparse.ArgumentParser(description="...")
     # CLI argument parsing (workflow-specific)
     args = parser.parse_args()
-    
+
     # Delegate to utils for core functionality
     analyzer = WorkflowAnalyzer()
     result = analyzer.analyze_failure(...)
-    
+
     fixer = WorkflowFixer(result, ...)
     proposal = fixer.generate_fix_proposal()
-    
+
     # Output formatting (workflow-specific)
     print(json.dumps(proposal, indent=2))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
 ```
 

@@ -183,9 +183,7 @@ class LegalIRDiagnosticSourceMap:
         return cls(
             source_map_id=str(data.get("source_map_id") or ""),
             source_node_ids=tuple(_strings(data.get("source_node_ids", ()))),
-            source_span_ids=tuple(
-                _strings(data.get("source_span_ids", data.get("span_ids", ())))
-            ),
+            source_span_ids=tuple(_strings(data.get("source_span_ids", data.get("span_ids", ())))),
             document_id=str(data.get("document_id") or data.get("source_document_id") or ""),
             citation=str(data.get("citation") or data.get("canonical_citation") or ""),
             field_path=str(data.get("field_path") or ""),
@@ -325,7 +323,9 @@ class LegalIRDiagnostic:
             "source_map": source_map.to_dict(),
         }
         diagnostic_id = str(self.diagnostic_id or "lir-diagnostic-" + _stable_hash(payload)[:24])
-        trace_id = str(self.explanation_trace_id or "lir-trace-" + _stable_hash([diagnostic_id, code])[:24])
+        trace_id = str(
+            self.explanation_trace_id or "lir-trace-" + _stable_hash([diagnostic_id, code])[:24]
+        )
         object.__setattr__(self, "code", code)
         object.__setattr__(self, "family", family)
         object.__setattr__(self, "severity", severity)
@@ -333,7 +333,10 @@ class LegalIRDiagnostic:
         object.__setattr__(
             self,
             "remediation_hint",
-            self.remediation_hint or _REMEDIATION_HINTS.get(code, _REMEDIATION_HINTS[LegalIRDiagnosticCode.COMPILER_DIAGNOSTIC.value]),
+            self.remediation_hint
+            or _REMEDIATION_HINTS.get(
+                code, _REMEDIATION_HINTS[LegalIRDiagnosticCode.COMPILER_DIAGNOSTIC.value]
+            ),
         )
         object.__setattr__(self, "diagnostic_id", diagnostic_id)
         object.__setattr__(self, "related_ids", related)
@@ -422,7 +425,9 @@ class LegalIRDiagnosticReport:
 
     def __post_init__(self) -> None:
         diagnostics = tuple(
-            item if isinstance(item, LegalIRDiagnostic) else LegalIRDiagnostic.from_dict(_mapping(item))
+            item
+            if isinstance(item, LegalIRDiagnostic)
+            else LegalIRDiagnostic.from_dict(_mapping(item))
             for item in self.diagnostics
         )
         trace_by_id = {
@@ -436,9 +441,11 @@ class LegalIRDiagnosticReport:
         }
         for diagnostic in diagnostics:
             trace_by_id.setdefault(diagnostic.explanation_trace_id, diagnostic.default_trace())
-        report_id = self.report_id or "lir-diagnostic-report-" + _stable_hash(
-            [diagnostic.to_dict() for diagnostic in diagnostics]
-        )[:24]
+        report_id = (
+            self.report_id
+            or "lir-diagnostic-report-"
+            + _stable_hash([diagnostic.to_dict() for diagnostic in diagnostics])[:24]
+        )
         object.__setattr__(self, "report_id", report_id)
         object.__setattr__(self, "diagnostics", diagnostics)
         object.__setattr__(self, "traces", tuple(trace_by_id[key] for key in sorted(trace_by_id)))
@@ -450,7 +457,11 @@ class LegalIRDiagnosticReport:
 
     @property
     def warning_count(self) -> int:
-        return sum(1 for diagnostic in self.diagnostics if diagnostic.severity is LegalIRDiagnosticSeverity.WARNING)
+        return sum(
+            1
+            for diagnostic in self.diagnostics
+            if diagnostic.severity is LegalIRDiagnosticSeverity.WARNING
+        )
 
     @property
     def valid(self) -> bool:
@@ -511,7 +522,9 @@ class LegalIRDiagnosticsBuilder:
     ) -> None:
         self.artifact_id = str(artifact_id or "")
         self.source_map = _source_map(source_map)
-        self.source_map_id = source_map_id or (self.source_map.source_map_id if self.source_map else "")
+        self.source_map_id = source_map_id or (
+            self.source_map.source_map_id if self.source_map else ""
+        )
         self.metadata = dict(metadata or {})
         self._diagnostics: list[LegalIRDiagnostic] = []
         self._traces: list[LegalIRExplanationTrace] = []
@@ -550,10 +563,7 @@ class LegalIRDiagnosticsBuilder:
             source_map=source_ref,
             remediation_hint=remediation_hint,
             diagnostic_id=diagnostic_id,
-            related_ids={
-                key: tuple(_strings(value))
-                for key, value in (related_ids or {}).items()
-            },
+            related_ids={key: tuple(_strings(value)) for key, value in (related_ids or {}).items()},
             metadata=dict(metadata or {}),
         )
         self._diagnostics.append(diagnostic)
@@ -613,7 +623,11 @@ class LegalIRDiagnosticsBuilder:
 
     def extend(self, diagnostics: Iterable[LegalIRDiagnostic | Mapping[str, Any]]) -> None:
         for item in diagnostics:
-            diagnostic = item if isinstance(item, LegalIRDiagnostic) else LegalIRDiagnostic.from_dict(_mapping(item))
+            diagnostic = (
+                item
+                if isinstance(item, LegalIRDiagnostic)
+                else LegalIRDiagnostic.from_dict(_mapping(item))
+            )
             self._diagnostics.append(diagnostic)
             self._traces.append(diagnostic.default_trace())
 
@@ -710,7 +724,11 @@ def attach_legal_ir_diagnostic_to_source_map(
 ) -> str:
     """Record a diagnostic as a derived source-map node and return its node id."""
 
-    resolved = diagnostic if isinstance(diagnostic, LegalIRDiagnostic) else LegalIRDiagnostic.from_dict(_mapping(diagnostic))
+    resolved = (
+        diagnostic
+        if isinstance(diagnostic, LegalIRDiagnostic)
+        else LegalIRDiagnostic.from_dict(_mapping(diagnostic))
+    )
     source_node_ids = resolved.source_map.source_node_ids
     if source_node_ids:
         builder.add_derived_node(
@@ -782,7 +800,9 @@ def _collect_local_diagnostics(builder: LegalIRDiagnosticsBuilder, data: Mapping
         if not diagnostic:
             continue
         source_node_ids = tuple(_strings(diagnostic.get("source_node_ids", ())))
-        source_span_ids = tuple(_strings(diagnostic.get("source_span_ids", diagnostic.get("span_ids", ()))))
+        source_span_ids = tuple(
+            _strings(diagnostic.get("source_span_ids", diagnostic.get("span_ids", ())))
+        )
         raw_code = str(diagnostic.get("code") or diagnostic.get("diagnostic_type") or "")
         code = _code_from_local(raw_code, data)
         builder.add(
@@ -799,8 +819,12 @@ def _collect_local_diagnostics(builder: LegalIRDiagnosticsBuilder, data: Mapping
         )
 
 
-def _collect_unsupported_backend(builder: LegalIRDiagnosticsBuilder, data: Mapping[str, Any]) -> None:
-    for item in _sequence(data.get("unsupported_diagnostics")) + _sequence(data.get("unsupported_features")):
+def _collect_unsupported_backend(
+    builder: LegalIRDiagnosticsBuilder, data: Mapping[str, Any]
+) -> None:
+    for item in _sequence(data.get("unsupported_diagnostics")) + _sequence(
+        data.get("unsupported_features")
+    ):
         diagnostic = _mapping(item)
         if not diagnostic:
             if item:
@@ -813,9 +837,19 @@ def _collect_unsupported_backend(builder: LegalIRDiagnosticsBuilder, data: Mappi
             or diagnostic.get("unsupported_feature")
             or ""
         )
-        backend = str(diagnostic.get("backend") or diagnostic.get("target") or data.get("backend") or "")
-        reason = str(diagnostic.get("reason_code") or diagnostic.get("reason") or diagnostic.get("code") or "")
-        message = str(diagnostic.get("message") or f"Backend {backend or '<unknown>'} does not support {feature or '<unknown feature>'}.")
+        backend = str(
+            diagnostic.get("backend") or diagnostic.get("target") or data.get("backend") or ""
+        )
+        reason = str(
+            diagnostic.get("reason_code")
+            or diagnostic.get("reason")
+            or diagnostic.get("code")
+            or ""
+        )
+        message = str(
+            diagnostic.get("message")
+            or f"Backend {backend or '<unknown>'} does not support {feature or '<unknown feature>'}."
+        )
         builder.add_unsupported_backend_feature(
             message,
             severity=str(diagnostic.get("severity") or "warning"),
@@ -839,7 +873,10 @@ def _collect_security_findings(builder: LegalIRDiagnosticsBuilder, data: Mapping
         payload = _mapping(finding)
         reason = str(payload.get("reason") or ",".join(reasons) or "poisoning_rejection")
         builder.add_poisoning_rejection(
-            str(payload.get("detail") or f"LegalIR artifact was rejected by poisoning defenses: {reason}."),
+            str(
+                payload.get("detail")
+                or f"LegalIR artifact was rejected by poisoning defenses: {reason}."
+            ),
             severity=str(payload.get("severity") or "error"),
             field_path=str(payload.get("field_path") or ""),
             related_ids={"artifact_id": (artifact_id,), "rejection_reason": (reason,)},
@@ -857,7 +894,10 @@ def _collect_decompiler_losses(builder: LegalIRDiagnosticsBuilder, data: Mapping
             reason = str(failure.get("reason") or "decompiler_loss")
             formula_id = str(failure.get("formula_id") or "")
             builder.add_decompiler_loss(
-                str(failure.get("message") or f"Decompiler failed to preserve {field_path or 'a required field'}: {reason}."),
+                str(
+                    failure.get("message")
+                    or f"Decompiler failed to preserve {field_path or 'a required field'}: {reason}."
+                ),
                 field_path=field_path,
                 related_ids={
                     "failure_id": (str(failure.get("failure_id") or ""),),
@@ -888,21 +928,35 @@ def _collect_proof_failures(builder: LegalIRDiagnosticsBuilder, data: Mapping[st
         return
     trusted = bool(data.get("trusted", data.get("proof_checked", False)))
     proof_checked = bool(data.get("proof_checked", data.get("kernel_verified", False)))
-    status = str(data.get("proof_status") or data.get("status") or data.get("verification_status") or data.get("reconstruction_status") or "")
-    failed = (not trusted) or (not proof_checked and status) or status.lower() in {
-        "failed",
-        "failure",
-        "not_reconstructed",
-        "rejected",
-        "translation_failed",
-        "untrusted",
-    }
+    status = str(
+        data.get("proof_status")
+        or data.get("status")
+        or data.get("verification_status")
+        or data.get("reconstruction_status")
+        or ""
+    )
+    failed = (
+        (not trusted)
+        or (not proof_checked and status)
+        or status.lower()
+        in {
+            "failed",
+            "failure",
+            "not_reconstructed",
+            "rejected",
+            "translation_failed",
+            "untrusted",
+        }
+    )
     if not failed:
         return
     obligation_id = str(data.get("obligation_id") or "")
     receipt_id = str(data.get("receipt_id") or data.get("proof_receipt_id") or "")
     builder.add_proof_failure(
-        str(data.get("message") or f"Proof evidence is not trusted for obligation {obligation_id or '<unknown>'}."),
+        str(
+            data.get("message")
+            or f"Proof evidence is not trusted for obligation {obligation_id or '<unknown>'}."
+        ),
         source_node_ids=tuple(_strings(data.get("source_node_ids", ()))),
         related_ids={
             "obligation_id": (obligation_id,),
@@ -917,7 +971,11 @@ def _collect_learned_guidance(builder: LegalIRDiagnosticsBuilder, data: Mapping[
     promoted = data.get("promoted")
     block_reasons = tuple(_strings(data.get("block_reasons", ())))
     report_outcome = str(data.get("report_outcome") or data.get("promotion_report_outcome") or "")
-    if promoted is not False and not block_reasons and report_outcome not in {"no_candidate", "rejection"}:
+    if (
+        promoted is not False
+        and not block_reasons
+        and report_outcome not in {"no_candidate", "rejection"}
+    ):
         return
     source_export_id = str(data.get("source_export_id") or data.get("learned_export_id") or "")
     reasons = block_reasons or ((report_outcome,) if report_outcome else ("abstained",))
@@ -1072,7 +1130,9 @@ def _related_ids(data: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:
         "target_ids",
     ):
         value = data.get(key)
-        values = _unique_text(value if isinstance(value, Sequence) and not isinstance(value, str) else (value,))
+        values = _unique_text(
+            value if isinstance(value, Sequence) and not isinstance(value, str) else (value,)
+        )
         if values:
             related[key] = values
     return related

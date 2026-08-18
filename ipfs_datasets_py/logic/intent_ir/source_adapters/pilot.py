@@ -49,16 +49,12 @@ from .snapshot import SkillCenterSnapshot, SkillCenterSnapshotCache
 
 
 SKILLCENTER_PILOT_INTERFACE: Final = "SkillCenterPilot@1"
-SKILLCENTER_PILOT_MANIFEST_SCHEMA_VERSION: Final = (
-    "skillcenter-pilot-manifest/v1"
-)
+SKILLCENTER_PILOT_MANIFEST_SCHEMA_VERSION: Final = "skillcenter-pilot-manifest/v1"
 SKILLCENTER_PILOT_REPORT_SCHEMA_VERSION: Final = "skillcenter-pilot-report/v1"
 
 SECURITY_LITE_PROFILE: Final = "security-lite"
 GITHUB_LITE_PROFILE: Final = "github-lite"
-REQUIRED_PILOT_PROFILES: Final = frozenset(
-    {SECURITY_LITE_PROFILE, GITHUB_LITE_PROFILE}
-)
+REQUIRED_PILOT_PROFILES: Final = frozenset({SECURITY_LITE_PROFILE, GITHUB_LITE_PROFILE})
 GITHUB_ALL_FILENAME: Final = "github-skillmd-all-v20260608.sqlite"
 ROLLOUT_GATE_NAMES: Final = (
     "quality",
@@ -101,28 +97,17 @@ class PilotRunMode(str, Enum):
 
 def _require_int(value: Any, label: str, *, minimum: int = 1) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
-        raise SkillCenterPilotManifestError(
-            f"{label} must be an integer >= {minimum}"
-        )
+        raise SkillCenterPilotManifestError(f"{label} must be an integer >= {minimum}")
     return value
 
 
 def _require_text(value: Any, label: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not value
-        or value.strip() != value
-        or "\x00" in value
-    ):
-        raise SkillCenterPilotManifestError(
-            f"{label} must be non-empty normalized text"
-        )
+    if not isinstance(value, str) or not value or value.strip() != value or "\x00" in value:
+        raise SkillCenterPilotManifestError(f"{label} must be non-empty normalized text")
     return value
 
 
-def _require_exact_fields(
-    value: Mapping[str, Any], expected: set[str], label: str
-) -> None:
+def _require_exact_fields(value: Mapping[str, Any], expected: set[str], label: str) -> None:
     actual = set(value)
     if actual != expected:
         missing = sorted(expected - actual)
@@ -138,9 +123,7 @@ def _require_exact_fields(
 
 
 def _mapping(value: Any, label: str) -> Mapping[str, Any]:
-    if not isinstance(value, Mapping) or any(
-        not isinstance(key, str) for key in value
-    ):
+    if not isinstance(value, Mapping) or any(not isinstance(key, str) for key in value):
         raise SkillCenterPilotManifestError(f"{label} must be an object")
     return value
 
@@ -164,9 +147,7 @@ class PilotBundleSpec:
             raise SkillCenterPilotManifestError(
                 "bundle.profile must be a lowercase hyphenated identifier"
             )
-        repository_file = _require_text(
-            self.repository_file, "bundle.repository_file"
-        )
+        repository_file = _require_text(self.repository_file, "bundle.repository_file")
         if Path(repository_file).name != repository_file:
             raise SkillCenterPilotManifestError(
                 "pilot repository_file must be a root-level filename"
@@ -178,15 +159,9 @@ class PilotBundleSpec:
         if not isinstance(self.expected_sha256, str) or not re.fullmatch(
             r"[0-9a-f]{64}", self.expected_sha256
         ):
-            raise SkillCenterPilotManifestError(
-                "bundle.expected_sha256 must be lowercase SHA-256"
-            )
-        size = _require_int(
-            self.expected_size_bytes, "bundle.expected_size_bytes"
-        )
-        total = _require_int(
-            self.expected_total_skills, "bundle.expected_total_skills"
-        )
+            raise SkillCenterPilotManifestError("bundle.expected_sha256 must be lowercase SHA-256")
+        size = _require_int(self.expected_size_bytes, "bundle.expected_size_bytes")
+        total = _require_int(self.expected_total_skills, "bundle.expected_total_skills")
         sample_limit = _require_int(self.sample_limit, "bundle.sample_limit")
         if sample_limit > total:
             raise SkillCenterPilotManifestError(
@@ -200,16 +175,12 @@ class PilotBundleSpec:
         object.__setattr__(
             self,
             "expected_bundle_type",
-            _require_text(
-                self.expected_bundle_type, "bundle.expected_bundle_type"
-            ),
+            _require_text(self.expected_bundle_type, "bundle.expected_bundle_type"),
         )
         object.__setattr__(
             self,
             "expected_bundle_version",
-            _require_text(
-                self.expected_bundle_version, "bundle.expected_bundle_version"
-            ),
+            _require_text(self.expected_bundle_version, "bundle.expected_bundle_version"),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -261,17 +232,11 @@ class PilotBounds:
             "max_elapsed_seconds",
             "max_peak_memory_bytes",
         ):
-            object.__setattr__(
-                self, field, _require_int(getattr(self, field), f"bounds.{field}")
-            )
+            object.__setattr__(self, field, _require_int(getattr(self, field), f"bounds.{field}"))
         if self.max_bundle_count != 2:
-            raise SkillCenterPilotManifestError(
-                "bounded pilot must declare exactly two bundles"
-            )
+            raise SkillCenterPilotManifestError("bounded pilot must declare exactly two bundles")
         if self.batch_size > 1_000:
-            raise SkillCenterPilotManifestError(
-                "bounds.batch_size exceeds the reader safety limit"
-            )
+            raise SkillCenterPilotManifestError("bounds.batch_size exceeds the reader safety limit")
 
     def to_dict(self) -> dict[str, int]:
         return {
@@ -307,15 +272,11 @@ class PilotExpansionPolicy:
     github_all_requires_rollout_gates: tuple[str, ...]
 
     def __post_init__(self) -> None:
-        if len(set(self.allowed_repository_files)) != len(
-            self.allowed_repository_files
-        ):
+        if len(set(self.allowed_repository_files)) != len(self.allowed_repository_files):
             raise SkillCenterPilotManifestError(
                 "allowed_repository_files must not contain duplicates"
             )
-        if len(set(self.prohibited_repository_files)) != len(
-            self.prohibited_repository_files
-        ):
+        if len(set(self.prohibited_repository_files)) != len(self.prohibited_repository_files):
             raise SkillCenterPilotManifestError(
                 "prohibited_repository_files must not contain duplicates"
             )
@@ -356,12 +317,8 @@ class PilotExpansionPolicy:
     def to_dict(self) -> dict[str, Any]:
         return {
             "allowed_repository_files": list(self.allowed_repository_files),
-            "github_all_requires_rollout_gates": list(
-                self.github_all_requires_rollout_gates
-            ),
-            "prohibited_repository_files": list(
-                self.prohibited_repository_files
-            ),
+            "github_all_requires_rollout_gates": list(self.github_all_requires_rollout_gates),
+            "prohibited_repository_files": list(self.prohibited_repository_files),
         }
 
     @classmethod
@@ -374,21 +331,16 @@ class PilotExpansionPolicy:
         }
         _require_exact_fields(value, fields, "expansion_policy")
         for field in fields:
-            if (
-                not isinstance(value[field], list)
-                or any(not isinstance(item, str) for item in value[field])
+            if not isinstance(value[field], list) or any(
+                not isinstance(item, str) for item in value[field]
             ):
                 raise SkillCenterPilotManifestError(
                     f"expansion_policy.{field} must be a string array"
                 )
         return cls(
             allowed_repository_files=tuple(value["allowed_repository_files"]),
-            prohibited_repository_files=tuple(
-                value["prohibited_repository_files"]
-            ),
-            github_all_requires_rollout_gates=tuple(
-                value["github_all_requires_rollout_gates"]
-            ),
+            prohibited_repository_files=tuple(value["prohibited_repository_files"]),
+            github_all_requires_rollout_gates=tuple(value["github_all_requires_rollout_gates"]),
         )
 
 
@@ -408,28 +360,18 @@ class SkillCenterPilotManifest:
         dataset_id = _require_text(self.dataset_id, "dataset_id")
         revision = _require_text(self.dataset_revision, "dataset_revision")
         if self.interface != SKILLCENTER_PILOT_INTERFACE:
-            raise SkillCenterPilotManifestError(
-                f"interface must be {SKILLCENTER_PILOT_INTERFACE}"
-            )
+            raise SkillCenterPilotManifestError(f"interface must be {SKILLCENTER_PILOT_INTERFACE}")
         if self.schema_version != SKILLCENTER_PILOT_MANIFEST_SCHEMA_VERSION:
-            raise SkillCenterPilotManifestError(
-                "unsupported pilot manifest schema_version"
-            )
+            raise SkillCenterPilotManifestError("unsupported pilot manifest schema_version")
         if any(not isinstance(item, PilotBundleSpec) for item in self.bundles):
-            raise SkillCenterPilotManifestError(
-                "bundles must contain PilotBundleSpec values"
-            )
+            raise SkillCenterPilotManifestError("bundles must contain PilotBundleSpec values")
         bundles = tuple(sorted(self.bundles, key=lambda item: item.profile))
-        if len(bundles) != 2 or {
-            item.profile for item in bundles
-        } != REQUIRED_PILOT_PROFILES:
+        if len(bundles) != 2 or {item.profile for item in bundles} != REQUIRED_PILOT_PROFILES:
             raise SkillCenterPilotManifestError(
                 "pilot manifest must contain exactly security-lite and github-lite"
             )
         if len({item.repository_file for item in bundles}) != 2:
-            raise SkillCenterPilotManifestError(
-                "pilot bundle repository files must be unique"
-            )
+            raise SkillCenterPilotManifestError("pilot bundle repository files must be unique")
         allowed_files = set(self.expansion_policy.allowed_repository_files)
         bundle_files = {item.repository_file for item in bundles}
         if allowed_files != bundle_files:
@@ -469,9 +411,7 @@ class SkillCenterPilotManifest:
 
     def snapshot_for(self, bundle: PilotBundleSpec) -> SkillCenterSnapshot:
         if bundle not in self.bundles:
-            raise SkillCenterPilotManifestError(
-                "bundle does not belong to this pilot manifest"
-            )
+            raise SkillCenterPilotManifestError("bundle does not belong to this pilot manifest")
         return SkillCenterSnapshot(
             dataset_id=self.dataset_id,
             dataset_revision=self.dataset_revision,
@@ -511,8 +451,7 @@ class SkillCenterPilotManifest:
             dataset_id=value["dataset_id"],
             dataset_revision=value["dataset_revision"],
             bundles=tuple(
-                PilotBundleSpec.from_dict(_mapping(item, "bundle"))
-                for item in bundles_value
+                PilotBundleSpec.from_dict(_mapping(item, "bundle")) for item in bundles_value
             ),
             bounds=PilotBounds.from_dict(_mapping(value["bounds"], "bounds")),
             expansion_policy=PilotExpansionPolicy.from_dict(
@@ -523,16 +462,12 @@ class SkillCenterPilotManifest:
         )
 
     @classmethod
-    def from_json(
-        cls, payload: str | bytes | bytearray
-    ) -> "SkillCenterPilotManifest":
+    def from_json(cls, payload: str | bytes | bytearray) -> "SkillCenterPilotManifest":
         if isinstance(payload, (bytes, bytearray)):
             try:
                 payload = bytes(payload).decode("utf-8")
             except UnicodeDecodeError as exc:
-                raise SkillCenterPilotManifestError(
-                    "pilot manifest must be UTF-8"
-                ) from exc
+                raise SkillCenterPilotManifestError("pilot manifest must be UTF-8") from exc
         if not isinstance(payload, str):
             raise TypeError("pilot manifest JSON must be str or bytes")
         if len(payload.encode("utf-8")) > _MAX_MANIFEST_BYTES:
@@ -542,9 +477,7 @@ class SkillCenterPilotManifest:
             result: dict[str, Any] = {}
             for key, value in pairs:
                 if key in result:
-                    raise SkillCenterPilotManifestError(
-                        f"duplicate manifest field: {key}"
-                    )
+                    raise SkillCenterPilotManifestError(f"duplicate manifest field: {key}")
                 result[key] = value
             return result
 
@@ -553,26 +486,20 @@ class SkillCenterPilotManifest:
         except SkillCenterPilotManifestError:
             raise
         except (TypeError, ValueError, json.JSONDecodeError) as exc:
-            raise SkillCenterPilotManifestError(
-                f"invalid pilot manifest JSON: {exc}"
-            ) from exc
+            raise SkillCenterPilotManifestError(f"invalid pilot manifest JSON: {exc}") from exc
         return cls.from_dict(_mapping(decoded, "pilot manifest"))
 
     @classmethod
     def from_path(cls, path: str | Path) -> "SkillCenterPilotManifest":
         candidate = Path(path)
         if candidate.is_symlink() or not candidate.is_file():
-            raise SkillCenterPilotManifestError(
-                "pilot manifest path must be a regular file"
-            )
+            raise SkillCenterPilotManifestError("pilot manifest path must be a regular file")
         if candidate.stat().st_size > _MAX_MANIFEST_BYTES:
             raise SkillCenterPilotManifestError("pilot manifest is oversized")
         try:
             payload = candidate.read_bytes()
         except OSError as exc:
-            raise SkillCenterPilotManifestError(
-                f"cannot read pilot manifest: {exc}"
-            ) from exc
+            raise SkillCenterPilotManifestError(f"cannot read pilot manifest: {exc}") from exc
         return cls.from_json(payload)
 
 
@@ -620,9 +547,7 @@ class PilotGroundingReport:
         }
 
 
-def _frozen_counts(
-    values: Mapping[str, int], keys: tuple[str, ...]
-) -> Mapping[str, int]:
+def _frozen_counts(values: Mapping[str, int], keys: tuple[str, ...]) -> Mapping[str, int]:
     return MappingProxyType({key: int(values.get(key, 0)) for key in keys})
 
 
@@ -762,31 +687,21 @@ class SkillCenterPilotReport:
 
     def __post_init__(self) -> None:
         if self.schema_version != SKILLCENTER_PILOT_REPORT_SCHEMA_VERSION:
-            raise SkillCenterPilotError(
-                "unsupported pilot report schema_version"
-            )
+            raise SkillCenterPilotError("unsupported pilot report schema_version")
         if self.github_all_expansion_permitted:
-            raise SkillCenterPilotGateError(
-                "SkillCenterPilot@1 cannot permit GitHub-all expansion"
-            )
+            raise SkillCenterPilotGateError("SkillCenterPilot@1 cannot permit GitHub-all expansion")
         if tuple(self.rollout_gates) != ROLLOUT_GATE_NAMES:
-            raise SkillCenterPilotError(
-                "pilot report must contain the five ordered rollout gates"
-            )
+            raise SkillCenterPilotError("pilot report must contain the five ordered rollout gates")
         object.__setattr__(self, "bundles", tuple(self.bundles))
         object.__setattr__(
             self,
             "rollout_gates",
-            MappingProxyType(
-                {key: bool(self.rollout_gates[key]) for key in ROLLOUT_GATE_NAMES}
-            ),
+            MappingProxyType({key: bool(self.rollout_gates[key]) for key in ROLLOUT_GATE_NAMES}),
         )
 
     @property
     def passed(self) -> bool:
-        return all(item.passed for item in self.bundles) and all(
-            self.rollout_gates.values()
-        )
+        return all(item.passed for item in self.bundles) and all(self.rollout_gates.values())
 
     @property
     def selected_record_count(self) -> int:
@@ -846,33 +761,23 @@ class SkillCenterPilot:
         if not isinstance(cache, SkillCenterSnapshotCache):
             raise TypeError("cache must be a SkillCenterSnapshotCache")
         if not isinstance(store, ContentAddressedStore):
-            raise TypeError(
-                "store must implement put_bytes(payload, media_type=...)"
-            )
+            raise TypeError("store must implement put_bytes(payload, media_type=...)")
         if policy is not None and not isinstance(policy, SkillSourcePolicy):
             raise TypeError("policy must be a SkillSourcePolicy")
-        if normalizer is not None and not isinstance(
-            normalizer, SkillCenterIntentNormalizer
-        ):
-            raise TypeError(
-                "normalizer must be a SkillCenterIntentNormalizer"
-            )
+        if normalizer is not None and not isinstance(normalizer, SkillCenterIntentNormalizer):
+            raise TypeError("normalizer must be a SkillCenterIntentNormalizer")
         self.manifest = manifest
         self.cache = cache
         self.store = store
         self.policy = policy or SkillSourcePolicy()
-        self.normalizer = normalizer or SkillCenterIntentNormalizer(
-            policy=self.policy
-        )
+        self.normalizer = normalizer or SkillCenterIntentNormalizer(policy=self.policy)
 
     def run_sample(self) -> SkillCenterPilotReport:
         """Run the deterministic per-bundle sample limits."""
 
         return self.run(PilotRunMode.SAMPLE)
 
-    def run_full(
-        self, sample_report: SkillCenterPilotReport
-    ) -> SkillCenterPilotReport:
+    def run_full(self, sample_report: SkillCenterPilotReport) -> SkillCenterPilotReport:
         """Run both complete small bundles after a matching sample passes."""
 
         return self.run(PilotRunMode.FULL, sample_report=sample_report)
@@ -884,30 +789,21 @@ class SkillCenterPilot:
         sample_report: SkillCenterPilotReport | None = None,
     ) -> SkillCenterPilotReport:
         try:
-            selected_mode = (
-                mode if isinstance(mode, PilotRunMode) else PilotRunMode(mode)
-            )
+            selected_mode = mode if isinstance(mode, PilotRunMode) else PilotRunMode(mode)
         except (TypeError, ValueError) as exc:
             raise SkillCenterPilotError(f"unsupported pilot mode: {mode!r}") from exc
         if selected_mode is PilotRunMode.FULL:
             self._validate_sample_gate(sample_report)
         elif sample_report is not None:
-            raise SkillCenterPilotGateError(
-                "sample_report is accepted only for a full pilot run"
-            )
+            raise SkillCenterPilotGateError("sample_report is accepted only for a full pilot run")
 
         started = time.monotonic_ns()
-        reports = tuple(
-            self._run_bundle(bundle, selected_mode)
-            for bundle in self.manifest.bundles
-        )
+        reports = tuple(self._run_bundle(bundle, selected_mode) for bundle in self.manifest.bundles)
         elapsed_ms = _elapsed_ms(started)
         peak_memory = _process_peak_memory_bytes()
         failures = sum(len(item.failures) for item in reports)
         selected = sum(item.selected_record_count for item in reports)
-        policy_evaluated = sum(
-            item.policy_evaluated_count for item in reports
-        )
+        policy_evaluated = sum(item.policy_evaluated_count for item in reports)
         normalized = sum(item.normalized_record_count for item in reports)
         blocked = sum(item.policy_blocked_count for item in reports)
         expected = (
@@ -918,23 +814,17 @@ class SkillCenterPilot:
         gates = MappingProxyType(
             {
                 "quality": failures == 0 and selected == expected,
-                "safety": (
-                    policy_evaluated == selected
-                    and normalized + blocked == selected
-                ),
+                "safety": (policy_evaluated == selected and normalized + blocked == selected),
                 "license": (
                     policy_evaluated == selected
                     and all(
-                        sum(item.policy_decision_counts.values())
-                        == item.policy_evaluated_count
+                        sum(item.policy_decision_counts.values()) == item.policy_evaluated_count
                         for item in reports
                     )
                 ),
                 "throughput": (
-                    elapsed_ms
-                    <= self.manifest.bounds.max_elapsed_seconds * 1000
-                    and peak_memory
-                    <= self.manifest.bounds.max_peak_memory_bytes
+                    elapsed_ms <= self.manifest.bounds.max_elapsed_seconds * 1000
+                    and peak_memory <= self.manifest.bounds.max_peak_memory_bytes
                 ),
                 "reproducibility": all(
                     item.snapshot_verified
@@ -955,21 +845,15 @@ class SkillCenterPilot:
             process_peak_memory_bytes=peak_memory,
         )
 
-    def _validate_sample_gate(
-        self, sample_report: SkillCenterPilotReport | None
-    ) -> None:
+    def _validate_sample_gate(self, sample_report: SkillCenterPilotReport | None) -> None:
         if not isinstance(sample_report, SkillCenterPilotReport):
             raise SkillCenterPilotGateError(
                 "full pilot requires a SkillCenterPilotReport sample receipt"
             )
         if sample_report.mode is not PilotRunMode.SAMPLE:
-            raise SkillCenterPilotGateError(
-                "full pilot requires a sample-mode receipt"
-            )
+            raise SkillCenterPilotGateError("full pilot requires a sample-mode receipt")
         if sample_report.manifest_sha256 != self.manifest.manifest_sha256:
-            raise SkillCenterPilotGateError(
-                "sample receipt belongs to a different pilot manifest"
-            )
+            raise SkillCenterPilotGateError("sample receipt belongs to a different pilot manifest")
         if (
             sample_report.dataset_id != self.manifest.dataset_id
             or sample_report.dataset_revision != self.manifest.dataset_revision
@@ -978,27 +862,17 @@ class SkillCenterPilot:
                 "sample receipt snapshot identity does not match the manifest"
             )
         if sample_report.selected_record_count != self.manifest.sample_records:
-            raise SkillCenterPilotGateError(
-                "sample receipt does not cover every declared sample"
-            )
+            raise SkillCenterPilotGateError("sample receipt does not cover every declared sample")
         if not sample_report.passed:
-            raise SkillCenterPilotGateError(
-                "sample receipt did not pass all pilot gates"
-            )
+            raise SkillCenterPilotGateError("sample receipt did not pass all pilot gates")
         if sample_report.github_all_expansion_permitted:
-            raise SkillCenterPilotGateError(
-                "sample receipt illegally permits GitHub-all expansion"
-            )
+            raise SkillCenterPilotGateError("sample receipt illegally permits GitHub-all expansion")
 
-    def _run_bundle(
-        self, bundle: PilotBundleSpec, mode: PilotRunMode
-    ) -> PilotBundleReport:
+    def _run_bundle(self, bundle: PilotBundleSpec, mode: PilotRunMode) -> PilotBundleReport:
         started = time.monotonic_ns()
         snapshot = self.manifest.snapshot_for(bundle)
         expected_count = (
-            bundle.sample_limit
-            if mode is PilotRunMode.SAMPLE
-            else bundle.expected_total_skills
+            bundle.sample_limit if mode is PilotRunMode.SAMPLE else bundle.expected_total_skills
         )
         failures: list[PilotFailure] = []
         records = []
@@ -1028,9 +902,7 @@ class SkillCenterPilot:
             )
             actual_manifest = reader.inspect()
             self._validate_bundle_metadata(bundle, actual_manifest)
-            limit = (
-                bundle.sample_limit if mode is PilotRunMode.SAMPLE else None
-            )
+            limit = bundle.sample_limit if mode is PilotRunMode.SAMPLE else None
             records = list(
                 reader.iter_records(
                     limit=limit,
@@ -1051,9 +923,7 @@ class SkillCenterPilot:
                     decisions.append(decision)
                     evaluated.append((record, decision))
                     policy_counts[decision.allowed_use.value] += 1
-                    finding_counts.update(
-                        finding.category.value for finding in decision.findings
-                    )
+                    finding_counts.update(finding.category.value for finding in decision.findings)
                 except Exception as exc:
                     failures.append(
                         _failure(
@@ -1072,9 +942,7 @@ class SkillCenterPilot:
                     max_records=self.manifest.bounds.max_total_records,
                 ).project(
                     tuple(
-                        CorpusEvidenceRecord(
-                            record=record, policy_decision=decision
-                        )
+                        CorpusEvidenceRecord(record=record, policy_decision=decision)
                         for record, decision in zip(records, decisions)
                     )
                 )
@@ -1103,15 +971,9 @@ class SkillCenterPilot:
                 )
                 grounding_counts["statements"] += len(document.statements)
                 grounding_counts["actions"] += len(document.actions)
-                grounding_counts["control_edges"] += len(
-                    document.control_edges
-                )
-                grounding_counts["ambiguity"] += len(
-                    result.ambiguity_diagnostics
-                )
-                grounding_counts["unsupported"] += len(
-                    result.unsupported_diagnostics
-                )
+                grounding_counts["control_edges"] += len(document.control_edges)
+                grounding_counts["ambiguity"] += len(result.ambiguity_diagnostics)
+                grounding_counts["unsupported"] += len(result.unsupported_diagnostics)
                 intent_digests.append(intent_ir_sha256(document))
                 semantic = SemanticIntentGraphProjector(self.store).project(
                     document, corpus_graph=corpus_graph
@@ -1171,10 +1033,7 @@ class SkillCenterPilot:
             ambiguity_diagnostic_count=grounding_counts["ambiguity"],
             unsupported_diagnostic_count=grounding_counts["unsupported"],
         )
-        blocked_count = sum(
-            policy_counts[item.value]
-            for item in _BLOCKED_NORMALIZATION_DECISIONS
-        )
+        blocked_count = sum(policy_counts[item.value] for item in _BLOCKED_NORMALIZATION_DECISIONS)
         return PilotBundleReport(
             profile=bundle.profile,
             repository_file=bundle.repository_file,
@@ -1198,18 +1057,10 @@ class SkillCenterPilot:
             finding_counts=_frozen_counts(finding_counts, finding_keys),
             grounding=grounding,
             intent_ir_digests=tuple(intent_digests),
-            corpus_graph_digest=(
-                corpus_graph.graph_digest if corpus_graph is not None else ""
-            ),
-            corpus_graph_cid=(
-                corpus_graph.graph_cid if corpus_graph is not None else ""
-            ),
-            corpus_node_count=(
-                len(corpus_graph.nodes) if corpus_graph is not None else 0
-            ),
-            corpus_edge_count=(
-                len(corpus_graph.edges) if corpus_graph is not None else 0
-            ),
+            corpus_graph_digest=(corpus_graph.graph_digest if corpus_graph is not None else ""),
+            corpus_graph_cid=(corpus_graph.graph_cid if corpus_graph is not None else ""),
+            corpus_node_count=(len(corpus_graph.nodes) if corpus_graph is not None else 0),
+            corpus_edge_count=(len(corpus_graph.edges) if corpus_graph is not None else 0),
             semantic_graph_digests=tuple(semantic_digests),
             semantic_graph_cids=tuple(semantic_cids),
             semantic_node_count=semantic_nodes,
@@ -1221,33 +1072,26 @@ class SkillCenterPilot:
         )
 
     @staticmethod
-    def _validate_bundle_metadata(
-        expected: PilotBundleSpec, actual: Any
-    ) -> None:
+    def _validate_bundle_metadata(expected: PilotBundleSpec, actual: Any) -> None:
         mismatches = []
         if actual.total_skills != expected.expected_total_skills:
             mismatches.append(
-                "total_skills "
-                f"{actual.total_skills} != {expected.expected_total_skills}"
+                f"total_skills {actual.total_skills} != {expected.expected_total_skills}"
             )
         if actual.bundle_type != expected.expected_bundle_type:
             mismatches.append(
-                f"bundle_type {actual.bundle_type!r} != "
-                f"{expected.expected_bundle_type!r}"
+                f"bundle_type {actual.bundle_type!r} != {expected.expected_bundle_type!r}"
             )
         if actual.bundle_version != expected.expected_bundle_version:
             mismatches.append(
-                f"bundle_version {actual.bundle_version!r} != "
-                f"{expected.expected_bundle_version!r}"
+                f"bundle_version {actual.bundle_version!r} != {expected.expected_bundle_version!r}"
             )
         if actual.local_sha256 != expected.expected_sha256:
             mismatches.append("local SHA-256 differs from manifest")
         if actual.size_bytes != expected.expected_size_bytes:
             mismatches.append("local byte size differs from manifest")
         if mismatches:
-            raise SkillCenterPilotError(
-                "bundle metadata mismatch: " + "; ".join(mismatches)
-            )
+            raise SkillCenterPilotError("bundle metadata mismatch: " + "; ".join(mismatches))
 
 
 def _failure(

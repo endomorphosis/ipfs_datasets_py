@@ -18,12 +18,8 @@ from typing import Dict, List, Any, Optional, Union, Callable, Type, Set, Tuple
 from enum import Enum, auto
 from dataclasses import dataclass, field, asdict
 
-from ipfs_datasets_py.audit.audit_logger import (
-    AuditLogger, AuditEvent, AuditCategory, AuditLevel
-)
-from ipfs_datasets_py.audit.intrusion import (
-    IntrusionDetection, SecurityAlert, SecurityAlertManager
-)
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditCategory, AuditLevel
+from ipfs_datasets_py.audit.intrusion import IntrusionDetection, SecurityAlert, SecurityAlertManager
 
 # Try to import cryptography module for encryption features
 try:
@@ -33,6 +29,7 @@ try:
     from cryptography.hazmat.primitives.asymmetric import rsa, padding
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.backends import default_backend
+
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
@@ -40,6 +37,7 @@ except ImportError:
 
 class DataClassification(Enum):
     """Classification levels for data sensitivity."""
+
     PUBLIC = 0
     INTERNAL = 1
     CONFIDENTIAL = 2
@@ -49,6 +47,7 @@ class DataClassification(Enum):
 
 class AccessDecision(Enum):
     """Possible outcomes of access control decisions."""
+
     ALLOW = auto()
     DENY = auto()
     ELEVATE = auto()  # Requires additional authentication/authorization
@@ -58,6 +57,7 @@ class AccessDecision(Enum):
 @dataclass
 class SecurityPolicy:
     """Represents a security policy configuration."""
+
     policy_id: str
     name: str
     description: str
@@ -74,6 +74,7 @@ class SecurityPolicy:
 @dataclass
 class AccessControlEntry:
     """Represents an access control entry for a resource."""
+
     resource_id: str
     resource_type: str
     principal_id: str  # User or role ID
@@ -90,6 +91,7 @@ class AccessControlEntry:
 @dataclass
 class DataEncryptionConfig:
     """Configuration for data encryption."""
+
     enabled: bool = False
     key_id: Optional[str] = None
     algorithm: str = "AES-256-GCM"
@@ -109,7 +111,7 @@ class EnhancedSecurityManager:
     _instance = None
 
     @classmethod
-    def get_instance(cls) -> 'EnhancedSecurityManager':
+    def get_instance(cls) -> "EnhancedSecurityManager":
         """Get the singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
@@ -172,14 +174,16 @@ class EnhancedSecurityManager:
             # Log the alert
             self.audit_logger.security(
                 action="security_alert",
-                level=AuditLevel.WARNING if alert.level in ["low", "medium"] else AuditLevel.CRITICAL,
+                level=AuditLevel.WARNING
+                if alert.level in ["low", "medium"]
+                else AuditLevel.CRITICAL,
                 details={
                     "alert_id": alert.alert_id,
                     "alert_type": alert.type,
                     "alert_level": alert.level,
                     "description": alert.description,
-                    "source_events": alert.source_events
-                }
+                    "source_events": alert.source_events,
+                },
             )
 
             # Add to alert manager
@@ -207,8 +211,8 @@ class EnhancedSecurityManager:
                 details={
                     "alert_id": alert.alert_id,
                     "response_actions": ["detailed_logging", "notification"],
-                    "timestamp": datetime.datetime.utcnow().isoformat() + 'Z'
-                }
+                    "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+                },
             )
 
             # Implement automated response actions based on alert type
@@ -241,7 +245,7 @@ class EnhancedSecurityManager:
             duration_minutes: Duration of enhanced monitoring in minutes
         """
         expiration = datetime.datetime.utcnow() + datetime.timedelta(minutes=duration_minutes)
-        expiration_str = expiration.isoformat() + 'Z'
+        expiration_str = expiration.isoformat() + "Z"
 
         self.audit_logger.security(
             action="set_enhanced_monitoring",
@@ -250,8 +254,8 @@ class EnhancedSecurityManager:
                 "user_id": user_id,
                 "duration_minutes": duration_minutes,
                 "expiration": expiration_str,
-                "reason": "security_alert_response"
-            }
+                "reason": "security_alert_response",
+            },
         )
 
         # In a real implementation, we would update a monitoring configuration
@@ -265,7 +269,7 @@ class EnhancedSecurityManager:
             duration_minutes: Duration of restriction in minutes
         """
         expiration = datetime.datetime.utcnow() + datetime.timedelta(minutes=duration_minutes)
-        expiration_str = expiration.isoformat() + 'Z'
+        expiration_str = expiration.isoformat() + "Z"
 
         self.audit_logger.security(
             action="add_access_restriction",
@@ -274,8 +278,8 @@ class EnhancedSecurityManager:
                 "resource_id": resource_id,
                 "duration_minutes": duration_minutes,
                 "expiration": expiration_str,
-                "reason": "security_alert_response"
-            }
+                "reason": "security_alert_response",
+            },
         )
 
         # In a real implementation, we would update access control entries
@@ -302,46 +306,64 @@ class EnhancedSecurityManager:
                             resource_id = event.resource_id
                             if resource_id and resource_id in self.data_classifications:
                                 classification = self.data_classifications[resource_id]
-                                min_required = DataClassification[rule.get("min_classification", "PUBLIC")]
+                                min_required = DataClassification[
+                                    rule.get("min_classification", "PUBLIC")
+                                ]
 
-                                if classification.value > min_required.value and not self._check_user_clearance(event.user, classification):
-                                    violations.append({
-                                        "policy_id": policy_id,
-                                        "rule_type": rule_type,
-                                        "description": f"User {event.user} accessed {classification.name} data without clearance",
-                                        "severity": rule.get("severity", "high")
-                                    })
+                                if (
+                                    classification.value > min_required.value
+                                    and not self._check_user_clearance(event.user, classification)
+                                ):
+                                    violations.append(
+                                        {
+                                            "policy_id": policy_id,
+                                            "rule_type": rule_type,
+                                            "description": f"User {event.user} accessed {classification.name} data without clearance",
+                                            "severity": rule.get("severity", "high"),
+                                        }
+                                    )
 
                     elif rule_type == "access_time":
                         # Check for access outside allowed time windows
                         if "allowed_hours" in rule:
-                            event_time = datetime.datetime.fromisoformat(event.timestamp.rstrip('Z'))
+                            event_time = datetime.datetime.fromisoformat(
+                                event.timestamp.rstrip("Z")
+                            )
                             hour = event_time.hour
                             allowed_hours = rule["allowed_hours"]
 
                             if hour < allowed_hours["start"] or hour >= allowed_hours["end"]:
-                                violations.append({
-                                    "policy_id": policy_id,
-                                    "rule_type": rule_type,
-                                    "description": f"Access at {hour}:00 outside allowed hours ({allowed_hours['start']}:00-{allowed_hours['end']}:00)",
-                                    "severity": rule.get("severity", "medium")
-                                })
+                                violations.append(
+                                    {
+                                        "policy_id": policy_id,
+                                        "rule_type": rule_type,
+                                        "description": f"Access at {hour}:00 outside allowed hours ({allowed_hours['start']}:00-{allowed_hours['end']}:00)",
+                                        "severity": rule.get("severity", "medium"),
+                                    }
+                                )
 
                     elif rule_type == "data_volume":
                         # Check for excessive data volume operations
-                        if event.category in [AuditCategory.DATA_MODIFICATION, AuditCategory.DATA_ACCESS]:
+                        if event.category in [
+                            AuditCategory.DATA_MODIFICATION,
+                            AuditCategory.DATA_ACCESS,
+                        ]:
                             if "data_size_bytes" in event.details:
                                 try:
                                     size = int(event.details["data_size_bytes"])
-                                    threshold = rule.get("threshold_bytes", 100 * 1024 * 1024)  # Default 100MB
+                                    threshold = rule.get(
+                                        "threshold_bytes", 100 * 1024 * 1024
+                                    )  # Default 100MB
 
                                     if size > threshold:
-                                        violations.append({
-                                            "policy_id": policy_id,
-                                            "rule_type": rule_type,
-                                            "description": f"Data operation size ({size/1024/1024:.2f} MB) exceeds threshold ({threshold/1024/1024:.2f} MB)",
-                                            "severity": rule.get("severity", "medium")
-                                        })
+                                        violations.append(
+                                            {
+                                                "policy_id": policy_id,
+                                                "rule_type": rule_type,
+                                                "description": f"Data operation size ({size / 1024 / 1024:.2f} MB) exceeds threshold ({threshold / 1024 / 1024:.2f} MB)",
+                                                "severity": rule.get("severity", "medium"),
+                                            }
+                                        )
                                 except (ValueError, TypeError):
                                     pass
 
@@ -370,8 +392,8 @@ class EnhancedSecurityManager:
                     "rule_type": violation["rule_type"],
                     "description": violation["description"],
                     "severity": severity,
-                    "source_event_id": event.event_id
-                }
+                    "source_event_id": event.event_id,
+                },
             )
 
     def _check_user_clearance(self, user_id: str, classification: DataClassification) -> bool:
@@ -389,8 +411,13 @@ class EnhancedSecurityManager:
         # For now, just return a conservative result
         return False
 
-    def check_access(self, user_id: str, resource_id: str, operation: str,
-                   context: Optional[Dict[str, Any]] = None) -> AccessDecision:
+    def check_access(
+        self,
+        user_id: str,
+        resource_id: str,
+        operation: str,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> AccessDecision:
         """
         Check if a user is allowed to perform an operation on a resource.
 
@@ -425,7 +452,7 @@ class EnhancedSecurityManager:
             for ace in applicable_aces:
                 # Check for expired entries
                 if ace.expiration:
-                    expiration_time = datetime.datetime.fromisoformat(ace.expiration.rstrip('Z'))
+                    expiration_time = datetime.datetime.fromisoformat(ace.expiration.rstrip("Z"))
                     if datetime.datetime.utcnow() > expiration_time:
                         continue
 
@@ -465,7 +492,11 @@ class EnhancedSecurityManager:
             classification = self.data_classifications[resource_id]
 
             # For sensitive data, default to DENY for write operations
-            if classification.value >= DataClassification.CONFIDENTIAL.value and operation in ["write", "update", "delete"]:
+            if classification.value >= DataClassification.CONFIDENTIAL.value and operation in [
+                "write",
+                "update",
+                "delete",
+            ]:
                 return AccessDecision.DENY
 
             # For RESTRICTED or CRITICAL data, require elevated access for read
@@ -526,10 +557,11 @@ class EnhancedSecurityManager:
         """
         # In a real implementation, this would use proper IP address parsing
         # For now, just do a simple string comparison
-        return ip.startswith(ip_range.split('/')[0].rsplit('.', 1)[0])
+        return ip.startswith(ip_range.split("/")[0].rsplit(".", 1)[0])
 
-    def set_data_classification(self, resource_id: str, classification: DataClassification,
-                             user_id: Optional[str] = None) -> bool:
+    def set_data_classification(
+        self, resource_id: str, classification: DataClassification, user_id: Optional[str] = None
+    ) -> bool:
         """
         Set the data classification for a resource.
 
@@ -553,8 +585,10 @@ class EnhancedSecurityManager:
                 user=user_id,
                 details={
                     "classification": classification.name,
-                    "previous_classification": old_classification.name if old_classification else None
-                }
+                    "previous_classification": old_classification.name
+                    if old_classification
+                    else None,
+                },
             )
 
             return True
@@ -576,7 +610,9 @@ class EnhancedSecurityManager:
         with self._lock:
             return self.data_classifications.get(resource_id)
 
-    def add_access_control_entry(self, ace: AccessControlEntry, user_id: Optional[str] = None) -> bool:
+    def add_access_control_entry(
+        self, ace: AccessControlEntry, user_id: Optional[str] = None
+    ) -> bool:
         """
         Add an access control entry for a resource.
 
@@ -594,8 +630,10 @@ class EnhancedSecurityManager:
 
                 # Check for existing entry with same principal
                 for i, existing_ace in enumerate(self.access_control_entries[ace.resource_id]):
-                    if (existing_ace.principal_id == ace.principal_id and
-                        existing_ace.principal_type == ace.principal_type):
+                    if (
+                        existing_ace.principal_id == ace.principal_id
+                        and existing_ace.principal_type == ace.principal_type
+                    ):
                         # Replace existing entry
                         self.access_control_entries[ace.resource_id][i] = ace
                         break
@@ -613,8 +651,8 @@ class EnhancedSecurityManager:
                     "principal_id": ace.principal_id,
                     "principal_type": ace.principal_type,
                     "permissions": ace.permissions,
-                    "expiration": ace.expiration
-                }
+                    "expiration": ace.expiration,
+                },
             )
 
             return True
@@ -623,8 +661,13 @@ class EnhancedSecurityManager:
             self.logger.error(f"Error adding access control entry: {str(e)}")
             return False
 
-    def remove_access_control_entry(self, resource_id: str, principal_id: str, principal_type: str,
-                                 user_id: Optional[str] = None) -> bool:
+    def remove_access_control_entry(
+        self,
+        resource_id: str,
+        principal_id: str,
+        principal_type: str,
+        user_id: Optional[str] = None,
+    ) -> bool:
         """
         Remove an access control entry for a resource.
 
@@ -647,8 +690,10 @@ class EnhancedSecurityManager:
                 # Find and remove the matching entry
                 filtered_entries = []
                 for existing_ace in self.access_control_entries[resource_id]:
-                    if (existing_ace.principal_id == principal_id and
-                        existing_ace.principal_type == principal_type):
+                    if (
+                        existing_ace.principal_id == principal_id
+                        and existing_ace.principal_type == principal_type
+                    ):
                         removed = True
                     else:
                         filtered_entries.append(existing_ace)
@@ -665,10 +710,7 @@ class EnhancedSecurityManager:
                     action="remove_access_control_entry",
                     resource_id=resource_id,
                     user=user_id,
-                    details={
-                        "principal_id": principal_id,
-                        "principal_type": principal_type
-                    }
+                    details={"principal_id": principal_id, "principal_type": principal_type},
                 )
 
             return removed
@@ -713,8 +755,8 @@ class EnhancedSecurityManager:
                     "policy_id": policy.policy_id,
                     "policy_name": policy.name,
                     "enforcement_level": policy.enforcement_level,
-                    "rule_count": len(policy.rules)
-                }
+                    "rule_count": len(policy.rules),
+                },
             )
 
             return True
@@ -743,11 +785,7 @@ class EnhancedSecurityManager:
 
             # Log the policy removal
             self.audit_logger.security(
-                action="remove_security_policy",
-                user=user_id,
-                details={
-                    "policy_id": policy_id
-                }
+                action="remove_security_policy", user=user_id, details={"policy_id": policy_id}
             )
 
             return True
@@ -779,8 +817,9 @@ class EnhancedSecurityManager:
         with self._lock:
             return list(self.security_policies.values())
 
-    def add_encryption_config(self, resource_id: str, config: DataEncryptionConfig,
-                           user_id: Optional[str] = None) -> bool:
+    def add_encryption_config(
+        self, resource_id: str, config: DataEncryptionConfig, user_id: Optional[str] = None
+    ) -> bool:
         """
         Add an encryption configuration for a resource.
 
@@ -804,8 +843,8 @@ class EnhancedSecurityManager:
                 details={
                     "encryption_enabled": config.enabled,
                     "algorithm": config.algorithm,
-                    "key_rotation_days": config.key_rotation_days
-                }
+                    "key_rotation_days": config.key_rotation_days,
+                },
             )
 
             return True
@@ -827,7 +866,9 @@ class EnhancedSecurityManager:
         with self._lock:
             return self.encryption_configs.get(resource_id)
 
-    def encrypt_sensitive_data(self, data: bytes, resource_id: Optional[str] = None) -> Tuple[bytes, str]:
+    def encrypt_sensitive_data(
+        self, data: bytes, resource_id: Optional[str] = None
+    ) -> Tuple[bytes, str]:
         """
         Encrypt sensitive data with appropriate configuration.
 
@@ -913,7 +954,7 @@ class EnhancedSecurityManager:
 
         # WARNING: This is not secure and is only for demonstration purposes!
         # In a real implementation, keys would be securely stored and retrieved.
-        salt = b'not-secure-salt'
+        salt = b"not-secure-salt"
         password = key_id.encode()
 
         kdf = PBKDF2HMAC(
@@ -921,7 +962,7 @@ class EnhancedSecurityManager:
             length=32,
             salt=salt,
             iterations=100000,
-            backend=default_backend()
+            backend=default_backend(),
         )
 
         key = base64.urlsafe_b64encode(kdf.derive(password))
@@ -936,9 +977,13 @@ class SecuritySession:
     a context, ensuring proper auditing and cleanup.
     """
 
-    def __init__(self, user_id: str, resource_id: Optional[str] = None,
-                action: str = "security_operation",
-                security_manager=None):
+    def __init__(
+        self,
+        user_id: str,
+        resource_id: Optional[str] = None,
+        action: str = "security_operation",
+        security_manager=None,
+    ):
         """
         Initialize the security session.
 
@@ -965,7 +1010,7 @@ class SecuritySession:
             action=f"{self.action}_start",
             user=self.user_id,
             resource_id=self.resource_id,
-            details={"session_context": self.context}
+            details={"session_context": self.context},
         )
 
         return self
@@ -976,10 +1021,7 @@ class SecuritySession:
         duration_ms = int((end_time - self.start_time).total_seconds() * 1000)
 
         # Prepare details
-        details = {
-            "duration_ms": duration_ms,
-            "session_context": self.context
-        }
+        details = {"duration_ms": duration_ms, "session_context": self.context}
 
         # Handle exceptions
         if exc_type is not None:
@@ -990,11 +1032,7 @@ class SecuritySession:
                 user=self.user_id,
                 resource_id=self.resource_id,
                 status="failure",
-                details={
-                    **details,
-                    "error_type": exc_type.__name__,
-                    "error_message": str(exc_val)
-                }
+                details={**details, "error_type": exc_type.__name__, "error_message": str(exc_val)},
             )
         else:
             # Log session completion
@@ -1003,7 +1041,7 @@ class SecuritySession:
                 user=self.user_id,
                 resource_id=self.resource_id,
                 status="success",
-                details=details
+                details=details,
             )
 
         # Don't suppress exceptions
@@ -1033,12 +1071,13 @@ class SecuritySession:
             user_id=self.user_id,
             resource_id=self.resource_id,
             operation=operation,
-            context=self.context
+            context=self.context,
         )
 
 
-def security_operation(user_id_arg: str, resource_id_arg: Optional[str] = None,
-                      action: str = "security_operation"):
+def security_operation(
+    user_id_arg: str, resource_id_arg: Optional[str] = None, action: str = "security_operation"
+):
     """
     Decorator for securing operations with access control and auditing.
 
@@ -1050,6 +1089,7 @@ def security_operation(user_id_arg: str, resource_id_arg: Optional[str] = None,
     Returns:
         Callable: Decorated function
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             # Extract user ID and resource ID from arguments
@@ -1057,6 +1097,7 @@ def security_operation(user_id_arg: str, resource_id_arg: Optional[str] = None,
             if user_id is None and args:
                 # Try to get from function signature
                 import inspect
+
                 sig = inspect.signature(func)
                 param_names = list(sig.parameters.keys())
 
@@ -1071,6 +1112,7 @@ def security_operation(user_id_arg: str, resource_id_arg: Optional[str] = None,
                 if resource_id is None and args:
                     # Try to get from function signature
                     import inspect
+
                     sig = inspect.signature(func)
                     param_names = list(sig.parameters.keys())
 
@@ -1085,14 +1127,12 @@ def security_operation(user_id_arg: str, resource_id_arg: Optional[str] = None,
             # Check access if resource ID is provided
             if resource_id:
                 # Determine operation based on function name
-                operation = func.__name__.split('_')[0]
+                operation = func.__name__.split("_")[0]
                 if operation not in ["read", "write", "update", "delete", "create"]:
                     operation = "access"
 
                 decision = security_manager.check_access(
-                    user_id=user_id,
-                    resource_id=resource_id,
-                    operation=operation
+                    user_id=user_id, resource_id=resource_id, operation=operation
                 )
 
                 if decision == AccessDecision.DENY:
@@ -1102,14 +1142,13 @@ def security_operation(user_id_arg: str, resource_id_arg: Optional[str] = None,
                         level=AuditLevel.WARNING,
                         user=user_id,
                         resource_id=resource_id,
-                        details={
-                            "operation": operation,
-                            "function": func.__name__
-                        }
+                        details={"operation": operation, "function": func.__name__},
                     )
 
                     # Raise permission error
-                    raise PermissionError(f"Access denied for user {user_id} to perform {operation} on {resource_id}")
+                    raise PermissionError(
+                        f"Access denied for user {user_id} to perform {operation} on {resource_id}"
+                    )
 
                 elif decision == AccessDecision.ELEVATE:
                     # In a real implementation, this would trigger additional authentication
@@ -1119,15 +1158,16 @@ def security_operation(user_id_arg: str, resource_id_arg: Optional[str] = None,
                         level=AuditLevel.NOTICE,
                         user=user_id,
                         resource_id=resource_id,
-                        details={
-                            "operation": operation,
-                            "function": func.__name__
-                        }
+                        details={"operation": operation, "function": func.__name__},
                     )
 
             # Create security session
-            with SecuritySession(user_id=user_id, resource_id=resource_id, action=action,
-                            security_manager=security_manager) as session:
+            with SecuritySession(
+                user_id=user_id,
+                resource_id=resource_id,
+                action=action,
+                security_manager=security_manager,
+            ) as session:
                 # Execute the function
                 return func(*args, **kwargs)
 

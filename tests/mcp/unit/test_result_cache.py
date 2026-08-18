@@ -3,6 +3,7 @@
 Covers MemoryCacheBackend and ResultCache (get, put, invalidate, stats, TTL,
 eviction) without any external dependencies.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -20,6 +21,7 @@ from ipfs_datasets_py.mcp_server.mcplusplus.result_cache import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_entry(key: str = "k1", value: object = "v1", ttl: float | None = None) -> CacheEntry:
     now = time.time()
@@ -45,6 +47,7 @@ def _run(coro):  # noqa: ANN001
 # ---------------------------------------------------------------------------
 # MemoryCacheBackend
 # ---------------------------------------------------------------------------
+
 
 class TestMemoryCacheBackendBasic:
     def test_get_miss_returns_none(self):
@@ -99,6 +102,7 @@ class TestMemoryCacheBackendBasic:
 # ---------------------------------------------------------------------------
 # ResultCache
 # ---------------------------------------------------------------------------
+
 
 class TestResultCacheGetPut:
     def setup_method(self):
@@ -178,8 +182,8 @@ class TestResultCacheStats:
 
     def test_hits_and_misses_tracked(self):
         _run(self.cache.put("t1", "v1"))
-        _run(self.cache.get("t1"))   # hit
-        _run(self.cache.get("t2"))   # miss
+        _run(self.cache.get("t1"))  # hit
+        _run(self.cache.get("t2"))  # miss
         assert self.cache.hits >= 1
         assert self.cache.misses >= 1
 

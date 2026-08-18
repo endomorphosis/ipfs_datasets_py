@@ -86,10 +86,7 @@ def sparse_ontology() -> OntologyRef:
     return OntologyRef(
         ontology_id="sparse_001",
         data={
-            "entities": [
-                {"id": f"e{i}", "name": f"Entity{i}", "type": "Thing"}
-                for i in range(10)
-            ],
+            "entities": [{"id": f"e{i}", "name": f"Entity{i}", "type": "Thing"} for i in range(10)],
             "relationships": [
                 {"source": "e1", "target": "e2", "type": "related"},
             ],  # Only 1 relationship for 10 entities
@@ -108,11 +105,9 @@ class TestBasicBatchProcessing:
     def test_recommend_single_ontology(self, empty_ontology):
         """Test recommendation for single ontology."""
         recommender = create_batch_recommender()
-        
-        recommendations, summary = recommender.recommend_strategies_batch(
-            [empty_ontology]
-        )
-        
+
+        recommendations, summary = recommender.recommend_strategies_batch([empty_ontology])
+
         assert len(recommendations) == 1
         assert recommendations[0].ontology_id == "empty_001"
         assert summary.total_processed == 1
@@ -121,11 +116,9 @@ class TestBasicBatchProcessing:
     def test_recommend_multiple_ontologies(self, sample_ontologies):
         """Test recommendation for multiple ontologies."""
         recommender = create_batch_recommender()
-        
-        recommendations, summary = recommender.recommend_strategies_batch(
-            sample_ontologies
-        )
-        
+
+        recommendations, summary = recommender.recommend_strategies_batch(sample_ontologies)
+
         assert len(recommendations) >= 2  # At least some successful
         assert summary.total_processed == 3
         assert summary.successful > 0
@@ -134,7 +127,7 @@ class TestBasicBatchProcessing:
         """Test that recommendations include all required fields."""
         recommender = create_batch_recommender()
         recommendations, _ = recommender.recommend_strategies_batch(sample_ontologies)
-        
+
         for rec in recommendations:
             assert rec.ontology_id is not None
             assert rec.strategy_type is not None
@@ -154,10 +147,10 @@ class TestBasicBatchProcessing:
             "normalize_names",
             "validate_relationships",
         }
-        
+
         recommender = create_batch_recommender()
         recommendations, _ = recommender.recommend_strategies_batch(sample_ontologies)
-        
+
         for rec in recommendations:
             assert rec.strategy_type in valid_types
 
@@ -173,9 +166,9 @@ class TestEdgeCases:
     def test_empty_batch(self):
         """Test processing empty ontology list."""
         recommender = create_batch_recommender()
-        
+
         recommendations, summary = recommender.recommend_strategies_batch([])
-        
+
         assert len(recommendations) == 0
         assert summary.total_processed == 0
         assert summary.successful == 0
@@ -183,11 +176,9 @@ class TestEdgeCases:
     def test_empty_ontology_recommendation(self, empty_ontology):
         """Test recommendation for empty ontology."""
         recommender = create_batch_recommender()
-        
-        recommendations, summary = recommender.recommend_strategies_batch(
-            [empty_ontology]
-        )
-        
+
+        recommendations, summary = recommender.recommend_strategies_batch([empty_ontology])
+
         # Empty ontology should recommend seeding
         assert len(recommendations) > 0
         rec = recommendations[0]
@@ -196,11 +187,9 @@ class TestEdgeCases:
     def test_sparse_ontology_recommendation(self, sparse_ontology):
         """Test recommendation for sparse/disconnected ontology."""
         recommender = create_batch_recommender()
-        
-        recommendations, summary = recommender.recommend_strategies_batch(
-            [sparse_ontology]
-        )
-        
+
+        recommendations, summary = recommender.recommend_strategies_batch([sparse_ontology])
+
         # Sparse ontology should recommend adding relationships
         assert len(recommendations) > 0
         rec = recommendations[0]
@@ -212,19 +201,19 @@ class TestEdgeCases:
     def test_confidence_threshold_filtering(self, sample_ontologies):
         """Test confidence threshold filtering."""
         recommender = create_batch_recommender()
-        
+
         # Get results with low confidence threshold
         recommendations_low, summary_low = recommender.recommend_strategies_batch(
             sample_ontologies,
             confidence_threshold=0.0,
         )
-        
+
         # Get results with high confidence threshold
         recommendations_high, summary_high = recommender.recommend_strategies_batch(
             sample_ontologies,
             confidence_threshold=0.95,
         )
-        
+
         # High threshold should have fewer or equal recommendations
         assert len(recommendations_high) <= len(recommendations_low)
 
@@ -241,12 +230,12 @@ class TestStrategyTypeFiltering:
     def test_filter_by_strategy_type(self, sample_ontologies):
         """Test filtering recommendations by type."""
         recommender = create_batch_recommender()
-        
+
         recommendations_filtered, _ = recommender.recommend_strategies_batch(
             sample_ontologies,
             strategy_type="add_missing_relationships",
         )
-        
+
         # All filtered recommendations should match the requested strategy type
         for rec in recommendations_filtered:
             assert rec.strategy_type == "add_missing_relationships"
@@ -254,12 +243,12 @@ class TestStrategyTypeFiltering:
     def test_alternative_strategies_provided(self, sample_ontologies):
         """Test that alternative strategies are included."""
         recommender = create_batch_recommender()
-        
+
         recommendations, _ = recommender.recommend_strategies_batch(
             sample_ontologies,
             max_per_ontology=3,
         )
-        
+
         for rec in recommendations:
             # Should have alternatives
             if len(rec.alternatives) > 0:
@@ -280,11 +269,9 @@ class TestSummaryStatistics:
     def test_summary_counts_accurate(self, sample_ontologies):
         """Test that summary counts are accurate."""
         recommender = create_batch_recommender()
-        
-        recommendations, summary = recommender.recommend_strategies_batch(
-            sample_ontologies
-        )
-        
+
+        recommendations, summary = recommender.recommend_strategies_batch(sample_ontologies)
+
         assert summary.successful == len(recommendations)
         assert summary.total_processed == len(sample_ontologies)
         assert summary.successful + summary.failed + summary.skipped == summary.total_processed
@@ -292,15 +279,15 @@ class TestSummaryStatistics:
     def test_confidence_statistics(self, sample_ontologies):
         """Test confidence score statistics."""
         recommender = create_batch_recommender()
-        
+
         _, summary = recommender.recommend_strategies_batch(sample_ontologies)
-        
+
         stats = summary.confidence_stats
         assert "average" in stats
         assert "min" in stats
         assert "max" in stats
         assert "median" in stats
-        
+
         # All values should be between 0 and 1
         assert 0 <= stats["average"] <= 1
         assert 0 <= stats["min"] <= 1
@@ -310,11 +297,9 @@ class TestSummaryStatistics:
     def test_strategy_distribution(self, sample_ontologies):
         """Test strategy type distribution."""
         recommender = create_batch_recommender()
-        
-        recommendations, summary = recommender.recommend_strategies_batch(
-            sample_ontologies
-        )
-        
+
+        recommendations, summary = recommender.recommend_strategies_batch(sample_ontologies)
+
         # Distribution should match recommendations
         total_in_distribution = sum(summary.strategy_distribution.values())
         assert total_in_distribution == len(recommendations)
@@ -322,12 +307,12 @@ class TestSummaryStatistics:
     def test_timing_statistics(self, sample_ontologies):
         """Test that timing statistics are computed."""
         recommender = create_batch_recommender()
-        
+
         _, summary = recommender.recommend_strategies_batch(sample_ontologies)
-        
+
         assert summary.total_time_ms > 0
         assert summary.average_time_per_ontology_ms >= 0
-        
+
         # Average should be reasonable
         if summary.successful > 0:
             assert summary.average_time_per_ontology_ms < summary.total_time_ms
@@ -345,22 +330,22 @@ class TestProgressTracking:
         """Test that progress callback is called."""
         call_count = 0
         callback_args = []
-        
+
         def progress_callback(processed: int, total: int):
             nonlocal call_count
             call_count += 1
             callback_args.append((processed, total))
-        
+
         recommender = create_batch_recommender()
-        
+
         recommendations, _ = recommender.recommend_strategies_batch(
             sample_ontologies,
             progress_callback=progress_callback,
         )
-        
+
         # Callback should be called for each ontology
         assert call_count == len(sample_ontologies)
-        
+
         # Progress should be monotonic
         processed_values = [args[0] for args in callback_args]
         assert processed_values == sorted(processed_values)
@@ -375,20 +360,20 @@ class TestProgressTracking:
             )
             for i in range(batch_size)
         ]
-        
+
         call_count = 0
-        
+
         def progress_callback(processed: int, total: int):
             nonlocal call_count
             call_count += 1
-        
+
         recommender = create_batch_recommender()
-        
+
         _, _ = recommender.recommend_strategies_batch(
             ontologies,
             progress_callback=progress_callback,
         )
-        
+
         assert call_count == batch_size
 
 
@@ -408,23 +393,22 @@ class TestPerformance:
             OntologyRef(
                 ontology_id=f"ont_{i:04d}",
                 data={
-                    "entities": [{"id": f"e{j}", "name": f"Entity{j}"}
-                               for j in range(5)],
+                    "entities": [{"id": f"e{j}", "name": f"Entity{j}"} for j in range(5)],
                     "relationships": [{"source": "e1", "target": "e2"}],
                 },
             )
             for i in range(batch_size)
         ]
-        
+
         recommender = create_batch_recommender()
-        
+
         start = time.perf_counter()
         recommendations, summary = recommender.recommend_strategies_batch(ontologies)
         elapsed_ms = (time.perf_counter() - start) * 1000
-        
+
         # Performance target: 100 ontologies in <5 seconds
         assert elapsed_ms < 5000, f"Batch took {elapsed_ms:.1f}ms, target <5000ms"
-        
+
         # Average per ontology should be reasonable (<50ms)
         average_ms = elapsed_ms / batch_size
         assert average_ms < 50, f"Average {average_ms:.1f}ms/ontology, target <50ms"
@@ -432,11 +416,9 @@ class TestPerformance:
     def test_summary_computation_efficient(self, sample_ontologies):
         """Test that summary computation is efficient."""
         recommender = create_batch_recommender()
-        
-        recommendations, summary = recommender.recommend_strategies_batch(
-            sample_ontologies
-        )
-        
+
+        recommendations, summary = recommender.recommend_strategies_batch(sample_ontologies)
+
         # Summary should exist and be populated
         assert summary is not None
         assert isinstance(summary, BatchStrategySummary)
@@ -453,14 +435,14 @@ class TestFactoryFunction:
     def test_create_batch_recommender(self):
         """Test creating recommender via factory."""
         recommender = create_batch_recommender()
-        
+
         assert isinstance(recommender, BatchStrategyRecommender)
         assert recommender.max_batch_size == 100
 
     def test_create_with_custom_batch_size(self):
         """Test creating recommender with custom batch size."""
         recommender = create_batch_recommender(max_batch_size=500)
-        
+
         assert recommender.max_batch_size == 500
 
 
@@ -475,12 +457,12 @@ class TestIntegration:
     def test_full_workflow(self, sample_ontologies):
         """Test complete batch recommendation workflow."""
         recommender = create_batch_recommender()
-        
+
         progress_calls = []
-        
+
         def track_progress(processed, total):
             progress_calls.append((processed, total))
-        
+
         # Run full batch with all features
         recommendations, summary = recommender.recommend_strategies_batch(
             sample_ontologies,
@@ -489,7 +471,7 @@ class TestIntegration:
             confidence_threshold=0.5,
             progress_callback=track_progress,
         )
-        
+
         # Verify all aspects
         assert len(progress_calls) == len(sample_ontologies)
         assert summary.total_processed == len(sample_ontologies)
@@ -523,22 +505,19 @@ class TestIntegration:
             OntologyRef(
                 ontology_id="sparse",
                 data={
-                    "entities": [
-                        {"id": f"e{i}", "name": f"Entity{i}"}
-                        for i in range(10)
-                    ],
+                    "entities": [{"id": f"e{i}", "name": f"Entity{i}"} for i in range(10)],
                     "relationships": [{"source": "e0", "target": "e1"}],
                 },
             ),
         ]
-        
+
         recommender = create_batch_recommender()
         recommendations, summary = recommender.recommend_strategies_batch(ontologies)
-        
+
         # All different ontology types should be processed
         assert summary.total_processed == 3
         assert len(summary.strategy_distribution) > 1
-        
+
         # Should have recommendations for different strategy types
         strategy_types = set(rec.strategy_type for rec in recommendations)
         assert len(strategy_types) > 1

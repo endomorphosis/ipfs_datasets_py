@@ -165,8 +165,7 @@ TOOL_SCHEMAS: Final[dict[str, dict[str, Any]]] = {
             "properties": {
                 "intent": {
                     "description": (
-                        "Intent content CID (string), envelope map, or "
-                        "FormalizationArtifact map."
+                        "Intent content CID (string), envelope map, or FormalizationArtifact map."
                     ),
                 },
                 "profile": {
@@ -279,9 +278,7 @@ def _open_store(
 
     store = ProofCorpusStore(root=root)
     if envelopes is not None:
-        if not isinstance(envelopes, Sequence) or isinstance(
-            envelopes, (str, bytes, bytearray)
-        ):
+        if not isinstance(envelopes, Sequence) or isinstance(envelopes, (str, bytes, bytearray)):
             raise TypeError("envelopes must be a sequence of mappings")
         for index, item in enumerate(envelopes):
             if not isinstance(item, Mapping):
@@ -423,9 +420,7 @@ def _normalize_prompt(source: Mapping[str, Any]) -> dict[str, Any]:
             title=_optional_str(source.get("title"), "title"),
             source_uri=_optional_str(source.get("source_uri"), "source_uri"),
             source_id=_optional_str(source.get("source_id"), "source_id"),
-            source_revision=_optional_str(
-                source.get("source_revision"), "source_revision"
-            )
+            source_revision=_optional_str(source.get("source_revision"), "source_revision")
             or "unpinned",
             language=_optional_str(source.get("language"), "language") or "en",
             tags=tuple(source.get("tags") or ()),
@@ -481,9 +476,7 @@ def _normalize_mcp_tool(source: Mapping[str, Any]) -> dict[str, Any]:
             server_name=_optional_str(source.get("server_name"), "server_name"),
             source_uri=_optional_str(source.get("source_uri"), "source_uri"),
             source_id=_optional_str(source.get("source_id"), "source_id"),
-            source_revision=_optional_str(
-                source.get("source_revision"), "source_revision"
-            )
+            source_revision=_optional_str(source.get("source_revision"), "source_revision")
             or "unpinned",
             annotations=source.get("annotations"),
             tags=tuple(source.get("tags") or ()),
@@ -664,9 +657,7 @@ async def formalize_intent(
                     error_type="validation",
                 )
             envelope = store.put(
-                ArtifactEnvelope.from_intent_artifact(
-                    artifact, profile=profile.strip()
-                )
+                ArtifactEnvelope.from_intent_artifact(artifact, profile=profile.strip())
             )
             result["content_cid"] = envelope.content_cid
             result["artifact_cid"] = envelope.artifact_cid

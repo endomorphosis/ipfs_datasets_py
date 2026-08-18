@@ -44,6 +44,7 @@ def deontic_extractor_instance():
     # TODO: Implement fixture
     pass
 
+
 @pytest.fixture
 def document_id():
     """
@@ -111,16 +112,17 @@ def deontic_extractor_instance():
     # TODO: Implement fixture
     pass
 
+
 def test_initialize_creates_deonticextractor_instance():
     """
     Scenario: Initialize creates DeonticExtractor instance
-    
+
     Given:
         (implicit - no background)
-    
+
     When:
         DeonticExtractor() is called
-    
+
     Then:
         a DeonticExtractor instance is returned
     """
@@ -136,25 +138,28 @@ def deontic_extractor_instance():
     Given a DeonticExtractor instance
     """
     from ipfs_datasets_py.deontological_reasoning import DeonticExtractor
+
     return DeonticExtractor()
+
 
 def test_initialize_creates_deonticextractor_instance():
     """
     Scenario: Initialize creates DeonticExtractor instance
-    
+
     Given:
         (implicit - no background)
-    
+
     When:
         DeonticExtractor() is called
-    
+
     Then:
         a DeonticExtractor instance is returned
     """
     # When: DeonticExtractor() is called
     from ipfs_datasets_py.deontological_reasoning import DeonticExtractor
+
     extractor = DeonticExtractor()
-    
+
     # Then: a DeonticExtractor instance is returned
     assert extractor is not None
     assert isinstance(extractor, DeonticExtractor)

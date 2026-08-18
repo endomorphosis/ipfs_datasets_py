@@ -3,10 +3,12 @@
 # TODO: Implement the actual provenance tools logic here.
 # Refer to the original claudes_toolbox-1/tools/functions/provenance_tools.py for implementation details.
 
+
 class ClaudesProvenanceTool:
     """
     A tool for recording provenance migrated from claudes_toolbox-1.
     """
+
     def record(self, data_identifier: str, operation: str, metadata: dict) -> str:
         """
         Records provenance information for a data operation.
@@ -21,6 +23,7 @@ class ClaudesProvenanceTool:
         """
         return f"Placeholder recording provenance for '{data_identifier}' operation '{operation}' with metadata {metadata}"
 
+
 # Main MCP function
 async def provenance_tools_claudes():
     """
@@ -30,8 +33,9 @@ async def provenance_tools_claudes():
         "status": "success",
         "message": "ClaudesProvenanceTool initialized successfully",
         "tool_type": "Provenance recording tool",
-        "available_methods": ["record"]
+        "available_methods": ["record"],
     }
+
 
 # Example usage (will not be executed by the MCP server directly)
 if __name__ == "__main__":

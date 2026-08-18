@@ -86,8 +86,7 @@ def main() -> None:
     }
 
     report = {
-        case_name: _run_case(generator, context, text)
-        for case_name, context in cases.items()
+        case_name: _run_case(generator, context, text) for case_name, context in cases.items()
     }
     print(json.dumps(report, indent=2))
 

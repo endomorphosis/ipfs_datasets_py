@@ -5,6 +5,7 @@ This provides a basic DatasetManager class that the MCP tools can use
 for dataset operations. Supports accelerate integration for distributed
 inference when available.
 """
+
 import anyio
 from typing import Dict, Any, Optional, Union, Protocol, runtime_checkable
 
@@ -24,17 +25,18 @@ except Exception:  # pragma: no cover
 class _DatasetLike(Protocol):
     def __str__(self) -> str: ...
 
+
 class DatasetManager:
     """Simple dataset manager for MCP tools."""
 
     def __init__(self, use_accelerate: bool = True):
         """Initialize the dataset manager.
-        
+
         Args:
             use_accelerate: Whether to use ipfs_accelerate_py if available
         """
         self._datasets = {}
-        
+
         # Initialize accelerate manager if available and enabled
         self.accelerate_manager = None
         if use_accelerate and callable(_get_accelerate_manager):
@@ -54,7 +56,7 @@ class DatasetManager:
         else:
             print("⚠ Accelerate integration not available, using local processing only")
 
-    def get_dataset(self, dataset_id: str) -> 'ManagedDataset':
+    def get_dataset(self, dataset_id: str) -> "ManagedDataset":
         """Get a dataset by ID."""
         if dataset_id in self._datasets:
             return self._datasets[dataset_id]
@@ -62,7 +64,7 @@ class DatasetManager:
         # Try to load from HuggingFace Hub (optional dependency)
         if load_dataset is not None:
             try:
-                hf_dataset = load_dataset(dataset_id, split='train')
+                hf_dataset = load_dataset(dataset_id, split="train")
                 managed = ManagedDataset(hf_dataset, dataset_id)
                 self._datasets[dataset_id] = managed
                 return managed
@@ -85,6 +87,7 @@ class DatasetManager:
         managed = ManagedDataset(dataset, dataset_id)
         self._datasets[dataset_id] = managed
 
+
 class ManagedDataset:
     """A managed dataset wrapper."""
 
@@ -94,7 +97,9 @@ class ManagedDataset:
         self.dataset_id = dataset_id
         self.format = "json"  # Default format
 
-    async def save_async(self, destination: str, format: Optional[str] = None, **options) -> Dict[str, Any]:
+    async def save_async(
+        self, destination: str, format: Optional[str] = None, **options
+    ) -> Dict[str, Any]:
         """Save the dataset asynchronously."""
         # Simulate async save operation
         await anyio.sleep(0.01)
@@ -105,7 +110,7 @@ class ManagedDataset:
         return {
             "location": destination,
             "size": len(str(self.dataset)) if self.dataset else 1024,
-            "format": actual_format
+            "format": actual_format,
         }
 
     def save(self, destination: str, format: Optional[str] = None, **options) -> Dict[str, Any]:
@@ -116,5 +121,5 @@ class ManagedDataset:
         return {
             "location": destination,
             "size": len(str(self.dataset)) if self.dataset else 1024,
-            "format": actual_format
+            "format": actual_format,
         }

@@ -40,27 +40,29 @@ logger = logging.getLogger(__name__)
 
 
 def _ensure_ipfs_accelerate_on_path() -> None:
-        """Make the nested ipfs_accelerate_py submodule importable.
+    """Make the nested ipfs_accelerate_py submodule importable.
 
-        In this workspace, ipfs_accelerate_py is checked out at:
-            ipfs_datasets_py/ipfs_accelerate_py/ipfs_accelerate_py/
-        which is not on sys.path when running from the mono-repo root.
-        """
+    In this workspace, ipfs_accelerate_py is checked out at:
+        ipfs_datasets_py/ipfs_accelerate_py/ipfs_accelerate_py/
+    which is not on sys.path when running from the mono-repo root.
+    """
 
-        try:
-                import sys
+    try:
+        import sys
 
-                # This file lives at: <root>/ipfs_datasets_py/ipfs_datasets_py/mcp_server/...
-                # The submodule root is: <root>/ipfs_datasets_py
-                submodule_root = Path(__file__).resolve().parents[2]
-                candidate = submodule_root / "ipfs_accelerate_py"
-                if candidate.exists() and str(candidate) not in sys.path:
-                        sys.path.insert(0, str(candidate))
-        except (OSError, ValueError):
-                pass
+        # This file lives at: <root>/ipfs_datasets_py/ipfs_datasets_py/mcp_server/...
+        # The submodule root is: <root>/ipfs_datasets_py
+        submodule_root = Path(__file__).resolve().parents[2]
+        candidate = submodule_root / "ipfs_accelerate_py"
+        if candidate.exists() and str(candidate) not in sys.path:
+            sys.path.insert(0, str(candidate))
+    except (OSError, ValueError):
+        pass
 
 
-_DEFAULT_QUEUE_PATH = os.path.join(os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "task_queue.duckdb")
+_DEFAULT_QUEUE_PATH = os.path.join(
+    os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "task_queue.duckdb"
+)
 
 
 @dataclass
@@ -176,12 +178,14 @@ class P2PServiceManager:
             except ConfigurationError as e:
                 logger.warning(f"Configuration error restoring environment variable {key}: {e}")
             except Exception as e:
-                logger.warning(f"Unexpected error restoring environment variable {key}: {e}", exc_info=True)
+                logger.warning(
+                    f"Unexpected error restoring environment variable {key}: {e}", exc_info=True
+                )
         self._env_restore.clear()
 
     def start(self, *, accelerate_instance: Any | None = None) -> bool:
         """Start the libp2p TaskQueue service (best-effort).
-        
+
         Also initializes MCP++ enhanced features if enabled:
         - Workflow scheduler
         - Peer registry
@@ -201,7 +205,9 @@ class P2PServiceManager:
             logger.warning(f"ipfs_accelerate_py not available: {e}")
             return False
         except Exception as e:
-            logger.error(f"Unexpected error importing TaskQueueP2PServiceRuntime: {e}", exc_info=True)
+            logger.error(
+                f"Unexpected error importing TaskQueueP2PServiceRuntime: {e}", exc_info=True
+            )
             return False
 
         if self._runtime is None:
@@ -230,10 +236,10 @@ class P2PServiceManager:
         """Stop the P2P service and cleanup MCP++ features."""
         if not self._runtime:
             return True
-        
+
         # Cleanup MCP++ features first
         self._cleanup_mcplusplus_features()
-        
+
         try:
             ok = bool(self._runtime.stop(timeout_s=2.0))
             self._restore_env()
@@ -252,7 +258,9 @@ class P2PServiceManager:
 
         last_error = ""
         try:
-            last_error = str(getattr(self._runtime, "last_error", "") or "") if self._runtime else ""
+            last_error = (
+                str(getattr(self._runtime, "last_error", "") or "") if self._runtime else ""
+            )
         except P2PServiceError as e:
             logger.warning(f"P2P service error getting last error: {e}")
             last_error = str(e)
@@ -296,10 +304,10 @@ class P2PServiceManager:
         workflow_scheduler_available = self._workflow_scheduler is not None
         peer_registry_available = self._peer_registry is not None
         bootstrap_available = self._mcplusplus_available and self.enable_bootstrap
-        
+
         connected_peers = 0
         active_workflows = 0
-        
+
         # Best-effort connected peer count.
         # Prefer using the p2p_tasks service state if available (works even
         # when MCP++ peer registry is not present).
@@ -311,7 +319,7 @@ class P2PServiceManager:
                 connected_peers = len(peers)
         except (ImportError, ModuleNotFoundError):
             pass
-        
+
         # Try to get active workflows count
         if self._workflow_scheduler is not None:
             try:
@@ -340,13 +348,13 @@ class P2PServiceManager:
         try:
             # Try to import MCP++ modules
             mcplusplus = importlib.import_module("ipfs_datasets_py.mcp_server.mcplusplus")
-            
+
             self._mcplusplus_available = mcplusplus.HAVE_MCPLUSPLUS
-            
+
             if not self._mcplusplus_available:
                 logger.info("MCP++ module not available - running with basic P2P only")
                 return
-            
+
             # Initialize workflow scheduler
             if self.enable_workflow_scheduler and mcplusplus.HAVE_WORKFLOW_SCHEDULER:
                 try:
@@ -355,7 +363,7 @@ class P2PServiceManager:
                         logger.info("P2P workflow scheduler initialized")
                 except Exception as e:
                     logger.warning(f"Failed to initialize workflow scheduler: {e}")
-            
+
             # Initialize peer registry
             if self.enable_peer_registry and mcplusplus.HAVE_PEER_REGISTRY:
                 try:
@@ -366,7 +374,7 @@ class P2PServiceManager:
                         logger.info("P2P peer registry initialized")
                 except Exception as e:
                     logger.warning(f"Failed to initialize peer registry: {e}")
-            
+
             # Perform bootstrap if enabled
             if self.enable_bootstrap and mcplusplus.HAVE_BOOTSTRAP:
                 try:
@@ -374,7 +382,7 @@ class P2PServiceManager:
                     logger.info("P2P bootstrap enabled (will connect on demand)")
                 except Exception as e:
                     logger.warning(f"Failed to initialize bootstrap: {e}")
-                    
+
         except Exception as e:
             logger.warning(f"Failed to initialize MCP++ features: {e}")
             self._mcplusplus_available = False
@@ -390,17 +398,17 @@ class P2PServiceManager:
                 except (ImportError, AttributeError):
                     pass
                 self._workflow_scheduler = None
-            
+
             # Cleanup peer registry
             self._peer_registry = None
             self._mcplusplus_available = False
-            
+
         except Exception as e:
             logger.warning(f"Error during MCP++ cleanup: {e}")
 
     def get_workflow_scheduler(self) -> Optional[Any]:
         """Get the workflow scheduler instance if available.
-        
+
         Returns:
             P2P workflow scheduler or None if not available
         """
@@ -408,7 +416,7 @@ class P2PServiceManager:
 
     def get_peer_registry(self) -> Optional[Any]:
         """Get the peer registry instance if available.
-        
+
         Returns:
             Peer registry wrapper or None if not available
         """
@@ -416,7 +424,7 @@ class P2PServiceManager:
 
     def has_advanced_features(self) -> bool:
         """Check if advanced MCP++ features are available.
-        
+
         Returns:
             True if MCP++ features are available and initialized
         """
@@ -504,9 +512,7 @@ class P2PServiceManager:
         """
         with self._pool_lock:
             total = self._pool_hits + self._pool_misses
-            hit_rate: Optional[float] = (
-                self._pool_hits / total if total > 0 else None
-            )
+            hit_rate: Optional[float] = self._pool_hits / total if total > 0 else None
             return {
                 "size": len(self._connection_pool),
                 "max_size": self._pool_max_size,
@@ -517,7 +523,7 @@ class P2PServiceManager:
 
     def get_capabilities(self) -> Dict[str, Any]:
         """Get capabilities of this P2P service manager.
-        
+
         Returns:
             Dictionary with capability information
         """

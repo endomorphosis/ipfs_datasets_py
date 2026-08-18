@@ -121,9 +121,9 @@ def _semantic_plan(case: cases.BenchmarkCase) -> ablation.AblationPlan:
 
 class _RequestRecorder:
     def __init__(self) -> None:
-        self.requests: dict[
-            contracts.StageName, list[adapters.StageRequest]
-        ] = {stage: [] for stage in contracts.StageName}
+        self.requests: dict[contracts.StageName, list[adapters.StageRequest]] = {
+            stage: [] for stage in contracts.StageName
+        }
 
     def mapping(
         self,
@@ -161,9 +161,7 @@ class _RequestRecorder:
                     "entities": ["alice"],
                     "completeness": {
                         field: True
-                        for field in (
-                            contracts.SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2
-                        )
+                        for field in (contracts.SEMANTIC_PROJECTION_COMPLETENESS_FIELDS_V2)
                     },
                     "ambiguity_flags": [],
                     "confidence_millionths": 900_000,
@@ -183,31 +181,20 @@ class _RequestRecorder:
             )
             if stage is contracts.StageName.COMPILER:
                 data = {
-                    "schema": (
-                        "ipfs-datasets.logic-pipeline-benchmark."
-                        "compiler-output.v2"
-                    ),
-                    "semantic_protocol_cid": (
-                        contracts.SEMANTIC_PROTOCOL_V2_CID
-                    ),
+                    "schema": ("ipfs-datasets.logic-pipeline-benchmark.compiler-output.v2"),
+                    "semantic_protocol_cid": (contracts.SEMANTIC_PROTOCOL_V2_CID),
                     "source_cid": request.source_cid,
                     "modal_ir": _MODAL_IR,
                     "modal_ir_cid": evidence_cid,
-                    "modal_ir_canonical_bytes": len(
-                        canonical_dag_json_bytes(_MODAL_IR)
-                    ),
+                    "modal_ir_canonical_bytes": len(canonical_dag_json_bytes(_MODAL_IR)),
                     "retained_modal_ir_cid": evidence_cid,
-                    "retained_modal_ir_canonical_bytes": len(
-                        canonical_dag_json_bytes(_MODAL_IR)
-                    ),
+                    "retained_modal_ir_canonical_bytes": len(canonical_dag_json_bytes(_MODAL_IR)),
                     "semantic_projection": projection.to_dict(),
                 }
             elif stage is contracts.StageName.SPACY:
                 data = {
                     "schema": adapters.SPACY_EVIDENCE_SCHEMA_V2,
-                    "semantic_protocol_cid": (
-                        contracts.SEMANTIC_PROTOCOL_V2_CID
-                    ),
+                    "semantic_protocol_cid": (contracts.SEMANTIC_PROTOCOL_V2_CID),
                     "document": {
                         "source_cid": request.source_cid,
                         "normalized_text": source_text,
@@ -224,14 +211,10 @@ class _RequestRecorder:
                 )
                 data = {
                     "schema": adapters.SYMAI_EVIDENCE_SCHEMA_V2,
-                    "semantic_protocol_cid": (
-                        contracts.SEMANTIC_PROTOCOL_V2_CID
-                    ),
+                    "semantic_protocol_cid": (contracts.SEMANTIC_PROTOCOL_V2_CID),
                     "source_cid": request.source_cid,
                     "raw_output": raw_output,
-                    "raw_output_cid": cid_for_bytes(
-                        raw_output.encode("utf-8")
-                    ),
+                    "raw_output_cid": cid_for_bytes(raw_output.encode("utf-8")),
                     "validated_response": validated_response,
                     "validated_response_cid": evidence_cid,
                     "semantic_projection": projection.to_dict(),
@@ -240,11 +223,7 @@ class _RequestRecorder:
                 data=data,
                 effective_identity={
                     **dict(request.requested_identity),
-                    **(
-                        {"mode": "full_model"}
-                        if stage is contracts.StageName.SPACY
-                        else {}
-                    ),
+                    **({"mode": "full_model"} if stage is contracts.StageName.SPACY else {}),
                 },
             )
 
@@ -255,12 +234,8 @@ def test_semantic_case_projection_never_stores_reviewed_fields() -> None:
     reviewed = _reviewed_case()
     forged = _forged_reviewed_case()
 
-    projected = ablation.AblationCase.from_benchmark_case_semantic_v2(
-        reviewed
-    )
-    forged_projected = (
-        ablation.AblationCase.from_benchmark_case_semantic_v2(forged)
-    )
+    projected = ablation.AblationCase.from_benchmark_case_semantic_v2(reviewed)
+    forged_projected = ablation.AblationCase.from_benchmark_case_semantic_v2(forged)
 
     assert ablation._thaw(projected.input_data) == {"text": _SOURCE}
     assert projected == forged_projected
@@ -291,10 +266,7 @@ def test_semantic_execution_is_source_only_and_suppresses_g210_proofs(
         assert len(recorder.requests[stage]) == 1
         request = recorder.requests[stage][0]
         assert request.input_data == {"text": _SOURCE}
-        assert (
-            request.semantic_protocol_cid
-            == contracts.SEMANTIC_PROTOCOL_V2_CID
-        )
+        assert request.semantic_protocol_cid == contracts.SEMANTIC_PROTOCOL_V2_CID
         assert request.source_cid is not None
         assert request.proof_context is None
         assert request.proof_context_cid is None
@@ -311,19 +283,12 @@ def test_semantic_execution_is_source_only_and_suppresses_g210_proofs(
             record.provenance.effective_identity["policy_reason"]
             == ablation.SEMANTIC_V2_PROOF_SUPPRESSION_REASON
         )
-        assert record.data["reason"] == (
-            ablation.SEMANTIC_V2_PROOF_SUPPRESSION_REASON
-        )
+        assert record.data["reason"] == (ablation.SEMANTIC_V2_PROOF_SUPPRESSION_REASON)
 
     profile = json.loads(
-        (root / "state" / "semantic-execution-profile.json").read_text(
-            encoding="utf-8"
-        )
+        (root / "state" / "semantic-execution-profile.json").read_text(encoding="utf-8")
     )
-    assert (
-        profile["semantic_protocol_cid"]
-        == contracts.SEMANTIC_PROTOCOL_V2_CID
-    )
+    assert profile["semantic_protocol_cid"] == contracts.SEMANTIC_PROTOCOL_V2_CID
     assert profile["producer_input_fields"] == ["text"]
     assert profile["profile_cid"].startswith("b")
     assert (
@@ -372,17 +337,11 @@ def test_forged_evaluator_answers_cannot_change_model_facing_inputs(
         contracts.StageName.SPACY,
         contracts.StageName.SYMAI,
     ):
-        assert reviewed_recorder.requests[stage] == forged_recorder.requests[
-            stage
-        ]
+        assert reviewed_recorder.requests[stage] == forged_recorder.requests[stage]
 
-    reviewed_request = reviewed_recorder.requests[
-        contracts.StageName.SYMAI
-    ][0]
+    reviewed_request = reviewed_recorder.requests[contracts.StageName.SYMAI][0]
     forged_request = forged_recorder.requests[contracts.StageName.SYMAI][0]
-    config = adapters.SymaiAdapterConfig(
-        semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID
-    )
+    config = adapters.SymaiAdapterConfig(semantic_protocol_cid=contracts.SEMANTIC_PROTOCOL_V2_CID)
     reviewed_namespace = adapters._symai_cache_namespace(reviewed_request)
     forged_namespace = adapters._symai_cache_namespace(forged_request)
     reviewed_prompt = adapters._symai_prompt(

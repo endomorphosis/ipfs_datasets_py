@@ -35,9 +35,7 @@ DEFAULT_BOOTSTRAP_NODES = [
 
 
 async def bootstrap_network(
-    bootstrap_nodes: Optional[List[str]] = None,
-    timeout: float = 60.0,
-    **kwargs: Any
+    bootstrap_nodes: Optional[List[str]] = None, timeout: float = 60.0, **kwargs: Any
 ) -> Dict[str, Any]:
     """Bootstrap the P2P network by connecting to bootstrap nodes.
 
@@ -87,10 +85,7 @@ async def bootstrap_network(
         }
 
 
-async def quick_bootstrap(
-    peer_count: int = 5,
-    timeout: float = 30.0
-) -> bool:
+async def quick_bootstrap(peer_count: int = 5, timeout: float = 30.0) -> bool:
     """Quick bootstrap to a minimum number of peers.
 
     Args:

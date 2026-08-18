@@ -23,14 +23,13 @@ from unittest.mock import MagicMock
 _MISSING = object()
 
 _numpy_available = bool(importlib.util.find_spec("numpy"))
-_skip_no_numpy = pytest.mark.skipif(
-    not _numpy_available, reason="numpy not installed"
-)
+_skip_no_numpy = pytest.mark.skipif(not _numpy_available, reason="numpy not installed")
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _reload_with_absent_dep(module_name: str, absent_deps: list[str]):
     """
@@ -130,6 +129,7 @@ def _reload_with_mock_dep(module_name: str, mock_deps: dict[str, object]):
 
     return fresh
 
+
 class TestReasoningTypesNumpyAbsent:
     """
     GIVEN numpy is not importable
@@ -167,6 +167,7 @@ class TestReasoningTypesNumpyAbsent:
 # lineage/core.py:18-20 — networkx ImportError except
 # ---------------------------------------------------------------------------
 
+
 class TestLineageCoreNetworkxAbsent:
     """
     GIVEN networkx is not importable
@@ -202,6 +203,7 @@ class TestLineageCoreNetworkxAbsent:
 # ---------------------------------------------------------------------------
 # neo4j_compat/driver.py:35-38 — router_deps ImportError except
 # ---------------------------------------------------------------------------
+
 
 class TestNeo4jCompatDriverDepsAbsent:
     """
@@ -247,6 +249,7 @@ class TestNeo4jCompatDriverDepsAbsent:
 # reasoning/cross_document.py:31-32 — numpy ImportError except
 # ---------------------------------------------------------------------------
 
+
 class TestCrossDocumentNumpyAbsent:
     """
     GIVEN numpy is not importable
@@ -274,6 +277,7 @@ class TestCrossDocumentNumpyAbsent:
 # ---------------------------------------------------------------------------
 # reasoning/cross_document.py:64-66 — optimizer ImportError except
 # ---------------------------------------------------------------------------
+
 
 class TestCrossDocumentOptimizerAbsent:
     """
@@ -311,6 +315,7 @@ class TestCrossDocumentOptimizerAbsent:
 # ---------------------------------------------------------------------------
 # ipld.py:98 — HAVE_IPLD_CAR=True when ipld_car import succeeds
 # ---------------------------------------------------------------------------
+
 
 class TestIpldCarAvailable:
     """

@@ -4,11 +4,13 @@ Test stubs for investigation_mcp_client module.
 Feature: Investigation MCP Client
   Client for MCP-based investigations
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def mcp_server_connection_details():
@@ -83,6 +85,7 @@ def multiple_tool_invocations():
 
 
 # Test scenarios
+
 
 def test_connect_to_mcp_server():
     """
@@ -173,6 +176,7 @@ def test_stream_tool_responses():
 
 
 # Step definitions
+
 
 # Given steps
 @given("MCP server connection details")
@@ -343,4 +347,3 @@ def the_tool_executes_and_returns_results():
     """Step: Then the tool executes and returns results"""
     # TODO: Implement step
     pass
-

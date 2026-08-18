@@ -3,6 +3,7 @@
 Tests --input (JSON), --from-file (JSON), and --from-file (YAML) paths.
 Monkeypatches LogicTheoremOptimizer to avoid requiring z3.
 """
+
 from __future__ import annotations
 
 import json

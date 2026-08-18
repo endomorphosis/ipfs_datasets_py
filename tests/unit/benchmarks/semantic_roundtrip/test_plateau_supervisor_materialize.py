@@ -234,16 +234,11 @@ def _rejected_packet(
 
 
 def test_interface_constants_and_defaults() -> None:
-    assert (
-        PLATEAU_SUPERVISOR_MATERIALIZER_INTERFACE
-        == "PlateauSupervisorMaterializer@1"
-    )
+    assert PLATEAU_SUPERVISOR_MATERIALIZER_INTERFACE == "PlateauSupervisorMaterializer@1"
     assert PLATEAU_SUPERVISOR_MATERIALIZER_EVIDENCE == "PLATEV070SUP"
     assert PLATEAU_SUPERVISOR_TASK_INTERFACE.endswith("Task@1")
     assert PLATEAU_SUPERVISOR_NOTE_INTERFACE.endswith("Note@1")
-    assert DEFAULT_MERGE_TARGET_BRANCH == (
-        "benchmark/semantic-roundtrip-20260726"
-    )
+    assert DEFAULT_MERGE_TARGET_BRANCH == ("benchmark/semantic-roundtrip-20260726")
     assert DEFAULT_MAX_LANES == 4
     assert DEFAULT_TASK_PREFIX == "## PLAT-"
     assert "typed_deontic" in " ".join(MATERIALIZER_PREDICTED_FILE_PREFIXES)
@@ -265,9 +260,7 @@ def test_predicted_file_allowlist_typed_deontic_realizer_tests() -> None:
     assert is_materializer_allowed_path(
         "benchmarks/semantic_roundtrip/constructors/typed_deontic.py"
     )
-    assert is_materializer_allowed_path(
-        "benchmarks/semantic_roundtrip/realizers/deterministic.py"
-    )
+    assert is_materializer_allowed_path("benchmarks/semantic_roundtrip/realizers/deterministic.py")
     assert is_materializer_allowed_path(
         "tests/unit/benchmarks/semantic_roundtrip/test_typed_constructor.py"
     )
@@ -300,9 +293,7 @@ def test_predicted_file_allowlist_typed_deontic_realizer_tests() -> None:
     )
 
     # Empty / all-rejected falls back to default det. surface.
-    fallback = filter_supervisor_predicted_files(
-        ["docs/benchmarks/only-docs.md"]
-    )
+    fallback = filter_supervisor_predicted_files(["docs/benchmarks/only-docs.md"])
     assert fallback == DEFAULT_MATERIALIZER_PREDICTED_FILES
 
 
@@ -338,10 +329,7 @@ def test_implementable_packet_becomes_edit_task() -> None:
     assert item.residual_ref_ids == ("resid-legal-object",)
     assert item.proposal_ids == ("prop-leanstral-1",)
     assert item.admitted_field_changes
-    assert all(
-        change["canonical_field"] == "object"
-        for change in item.admitted_field_changes
-    )
+    assert all(change["canonical_field"] == "object" for change in item.admitted_field_changes)
     payload = item.to_dict()
     assert payload["implementable"] is True
     assert payload["semantic_authority"] is False
@@ -436,21 +424,10 @@ def test_materialize_strips_disallowed_predicted_files() -> None:
         predicted_files_override=wide_files,
     )
     assert item.kind is MaterializedKind.IMPLEMENTABLE
-    assert (
-        "docs/benchmarks/semantic_roundtrip_plateau_codex_packet.md"
-        not in item.predicted_files
-    )
-    assert (
-        "benchmarks/semantic_roundtrip/constructors/modal_spacy.py"
-        not in item.predicted_files
-    )
-    assert (
-        "benchmarks/semantic_roundtrip/constructors/typed_deontic.py"
-        in item.predicted_files
-    )
-    assert (
-        "tests/unit/benchmarks/semantic_roundtrip/" in item.predicted_files
-    )
+    assert "docs/benchmarks/semantic_roundtrip_plateau_codex_packet.md" not in item.predicted_files
+    assert "benchmarks/semantic_roundtrip/constructors/modal_spacy.py" not in item.predicted_files
+    assert "benchmarks/semantic_roundtrip/constructors/typed_deontic.py" in item.predicted_files
+    assert "tests/unit/benchmarks/semantic_roundtrip/" in item.predicted_files
 
 
 def test_coerce_packet_and_digest_verification() -> None:
@@ -577,9 +554,7 @@ def test_main_print_launch(capsys: pytest.CaptureFixture[str]) -> None:
     assert "--merge-target-branch" in out
 
 
-def test_main_materialize_to_files(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
+def test_main_materialize_to_files(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     packet = _accepted_packet(packet_id="pkt-cli-1")
     packet_path = tmp_path / "packet.json"
     packet_path.write_text(packet.to_json(), encoding="utf-8")
@@ -612,13 +587,11 @@ def test_implementable_defaults_include_typed_deontic_and_tests() -> None:
     packet = _accepted_packet(packet_id="pkt-default-files")
     item = materialize_packet(packet)
     assert (
-        "benchmarks/semantic_roundtrip/constructors/typed_deontic.py"
-        in item.predicted_files
+        "benchmarks/semantic_roundtrip/constructors/typed_deontic.py" in item.predicted_files
         or any("typed_deontic" in p for p in item.predicted_files)
     )
     assert any(
-        p.startswith("tests/unit/benchmarks/semantic_roundtrip")
-        for p in item.predicted_files
+        p.startswith("tests/unit/benchmarks/semantic_roundtrip") for p in item.predicted_files
     )
 
 
@@ -635,12 +608,7 @@ def test_edit_wave_mapping_for_all_nonzero_pilots() -> None:
 
 def test_launch_doc_exists_and_lists_required_launch_fields() -> None:
     root = Path(__file__).resolve().parents[4]
-    launch_doc = (
-        root
-        / "docs"
-        / "benchmarks"
-        / "semantic_roundtrip_plateau_supervisor_launch.md"
-    )
+    launch_doc = root / "docs" / "benchmarks" / "semantic_roundtrip_plateau_supervisor_launch.md"
     assert launch_doc.is_file(), f"missing launch doc: {launch_doc}"
     text = launch_doc.read_text(encoding="utf-8")
     assert "bundle_supervisor" in text
@@ -793,9 +761,7 @@ def test_holdout_implementable_packet_emits_det_only_task() -> None:
     assert item.population_kind == "holdout"
     assert item.board_namespace == HOLDOUT_BOARD_NAMESPACE
     assert item.bundle == HOLDOUT_BUNDLE
-    assert item.edit_wave_task_id == HOLDOUT_CASE_TO_EDIT_WAVE_TASK[
-        "low_confidence_object"
-    ]
+    assert item.edit_wave_task_id == HOLDOUT_CASE_TO_EDIT_WAVE_TASK["low_confidence_object"]
     assert item.predicted_files
     for path in item.predicted_files:
         assert is_materializer_allowed_path(path)
@@ -856,9 +822,7 @@ def test_materialize_holdout_packets_one_task_per_implementable() -> None:
         packet_id="holdout-pkt-batch-b",
         case_id="contradictory_modality",
     )
-    rejected = _holdout_rejected_packet(
-        _reject_gate, packet_id="holdout-pkt-batch-rej"
-    )
+    rejected = _holdout_rejected_packet(_reject_gate, packet_id="holdout-pkt-batch-rej")
 
     receipt = materialize_holdout_packets([accepted_a, accepted_b, rejected])
     assert receipt.implementable_count == 2
@@ -1004,12 +968,8 @@ def test_repair_dev_launch_spec_and_materialize_det_only() -> None:
     assert not any(path.startswith("docs/") for path in item.predicted_files)
     assert item.validation_commands == DEFAULT_REPAIR_DEV_VALIDATION_COMMANDS
     assert any("test_holdout_baseline" in cmd for cmd in item.validation_commands)
-    assert any(
-        "test_plateau_codex_packet" in cmd for cmd in item.validation_commands
-    )
-    assert any(
-        "test_structural_admission" in cmd for cmd in item.validation_commands
-    )
+    assert any("test_plateau_codex_packet" in cmd for cmd in item.validation_commands)
+    assert any("test_structural_admission" in cmd for cmd in item.validation_commands)
     assert "Repair-development case" in item.body
     assert item.authorize_merge is False
     assert item.semantic_authority is False

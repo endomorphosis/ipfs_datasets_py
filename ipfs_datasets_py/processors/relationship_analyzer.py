@@ -8,9 +8,10 @@ from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 # ===== TypedDict Definitions for Return Types =====
 
+
 class EntityRelationshipsDict(TypedDict, total=False):
     """Result of entity relationship analysis."""
-    
+
     entities: List[Dict[str, Any]]
     relationships: List[Dict[str, Any]]
     total_relationships: int
@@ -20,7 +21,7 @@ class EntityRelationshipsDict(TypedDict, total=False):
 
 class CrossDocRelationshipsDict(TypedDict, total=False):
     """Cross-document relationship analysis result."""
-    
+
     relationships: List[Dict[str, Any]]
     document_pairs: List[Tuple[str, str]]
     relationship_count: int
@@ -29,7 +30,7 @@ class CrossDocRelationshipsDict(TypedDict, total=False):
 
 class EntityPropertiesDict(TypedDict, total=False):
     """Entity properties extraction result."""
-    
+
     properties: Dict[str, Any]
     confidence: float
     data_types: Dict[str, str]
@@ -38,7 +39,7 @@ class EntityPropertiesDict(TypedDict, total=False):
 
 class RelationshipTypesDict(TypedDict, total=False):
     """Relationship type classification result."""
-    
+
     classifications: List[Dict[str, Any]]
     type_distribution: Dict[str, int]
     confidence_metrics: Dict[str, float]
@@ -46,7 +47,7 @@ class RelationshipTypesDict(TypedDict, total=False):
 
 class GraphVisualizationDict(TypedDict, total=False):
     """Graph visualization data structure."""
-    
+
     nodes: List[Dict[str, Any]]
     edges: List[Dict[str, Any]]
     metadata: Dict[str, Any]
@@ -108,9 +109,7 @@ class RelationshipAnalyzer:
                 citations.extend([c for c in network_citations if isinstance(c, dict)])
 
         citations = [
-            c
-            for c in citations
-            if float(c.get("confidence", 1.0) or 1.0) >= min_confidence
+            c for c in citations if float(c.get("confidence", 1.0) or 1.0) >= min_confidence
         ]
 
         self._last_processing_time = time.monotonic() - start
@@ -194,7 +193,9 @@ class RelationshipAnalyzer:
 
         entity_results = results.get("entity_relationships") or {}
         entities = entity_results.get("entities") if isinstance(entity_results, dict) else None
-        relationships = entity_results.get("relationships") if isinstance(entity_results, dict) else None
+        relationships = (
+            entity_results.get("relationships") if isinstance(entity_results, dict) else None
+        )
 
         for entity in entities or []:
             entity_id = self._entity_id(entity)
@@ -208,11 +209,13 @@ class RelationshipAnalyzer:
                 continue
             nodes.setdefault(source_id, {"id": source_id, "label": source_id})
             nodes.setdefault(target_id, {"id": target_id, "label": target_id})
-            edges.append({
-                "source": source_id,
-                "target": target_id,
-                "type": rel.get("relationship_type") or rel.get("type") or "related_to",
-            })
+            edges.append(
+                {
+                    "source": source_id,
+                    "target": target_id,
+                    "type": rel.get("relationship_type") or rel.get("type") or "related_to",
+                }
+            )
 
         if include_cross_document:
             cross_doc = results.get("cross_document_relationships") or []
@@ -224,11 +227,13 @@ class RelationshipAnalyzer:
                     continue
                 nodes.setdefault(source_id, {"id": source_id, "label": source_id})
                 nodes.setdefault(target_id, {"id": target_id, "label": target_id})
-                edges.append({
-                    "source": source_id,
-                    "target": target_id,
-                    "type": rel.get("relationship_type") or rel.get("type") or "cross_document",
-                })
+                edges.append(
+                    {
+                        "source": source_id,
+                        "target": target_id,
+                        "type": rel.get("relationship_type") or rel.get("type") or "cross_document",
+                    }
+                )
 
         return {
             "nodes": list(nodes.values()),
@@ -244,7 +249,9 @@ class RelationshipAnalyzer:
                 candidates = doc_entities
             else:
                 entity_bundle = doc.get("entity_relationships") or {}
-                candidates = entity_bundle.get("entities") if isinstance(entity_bundle, dict) else []
+                candidates = (
+                    entity_bundle.get("entities") if isinstance(entity_bundle, dict) else []
+                )
             for entity in candidates or []:
                 if not isinstance(entity, dict):
                     continue
@@ -262,7 +269,9 @@ class RelationshipAnalyzer:
             if isinstance(doc_relationships, list):
                 relationships.extend([r for r in doc_relationships if isinstance(r, dict)])
             entity_bundle = doc.get("entity_relationships") or {}
-            bundle_relationships = entity_bundle.get("relationships") if isinstance(entity_bundle, dict) else None
+            bundle_relationships = (
+                entity_bundle.get("relationships") if isinstance(entity_bundle, dict) else None
+            )
             if isinstance(bundle_relationships, list):
                 relationships.extend([r for r in bundle_relationships if isinstance(r, dict)])
         return relationships
@@ -284,7 +293,9 @@ class RelationshipAnalyzer:
     def _entity_label(self, entity: Dict[str, Any]) -> str:
         return str(entity.get("name") or entity.get("label") or self._entity_id(entity) or "")
 
-    def _relationship_endpoints(self, relationship: Dict[str, Any]) -> Tuple[Optional[str], Optional[str]]:
+    def _relationship_endpoints(
+        self, relationship: Dict[str, Any]
+    ) -> Tuple[Optional[str], Optional[str]]:
         source = relationship.get("source_entity_id") or relationship.get("source")
         target = relationship.get("target_entity_id") or relationship.get("target")
 

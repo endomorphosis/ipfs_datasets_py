@@ -68,10 +68,7 @@ from ipfs_datasets_py.logic.CEC.native import Prover, ProofAttempt
 
 # Pure Python, 87 inference rules
 prover = Prover()
-attempt = ProofAttempt(
-    goal=goal_formula,
-    assumptions=assumptions_list
-)
+attempt = ProofAttempt(goal=goal_formula, assumptions=assumptions_list)
 result = prover.prove(attempt)
 ```
 
@@ -173,6 +170,7 @@ def test_old_parsing():
     result = old_parse("P")
     assert result is not None
 
+
 # New test (GIVEN-WHEN-THEN format)
 def test_native_parsing():
     """
@@ -182,10 +180,10 @@ def test_native_parsing():
     """
     # GIVEN
     text = "P"
-    
+
     # WHEN
     formula = parse_dcec_string(text)
-    
+
     # THEN
     assert formula is not None
     assert isinstance(formula, Formula)
@@ -310,6 +308,7 @@ RuntimeError: SPASS binary not found
 ```python
 # Use native prover (no binary needed)
 from ipfs_datasets_py.logic.CEC.native import Prover
+
 prover = Prover()  # Pure Python
 ```
 
@@ -418,6 +417,7 @@ from ipfs_datasets_py.logic.CEC.native import Prover
 
 ```python
 from ipfs_datasets_py.logic.CEC.native import Formula
+
 
 def process_formula(formula: Formula) -> str:
     """Type hints help catch migration issues."""

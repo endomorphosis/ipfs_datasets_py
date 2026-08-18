@@ -151,9 +151,7 @@ def _timestamp(value: Any, name: str, *, allow_empty: bool = False) -> str:
         raise ReceiptError(f"{name} must be a non-empty ISO-8601 timestamp")
     text = _text(value, name, max_chars=64)
     if not _ISO8601_RE.fullmatch(text):
-        raise ReceiptError(
-            f"{name} must be an ISO-8601 UTC/offset timestamp"
-        )
+        raise ReceiptError(f"{name} must be an ISO-8601 UTC/offset timestamp")
     return text
 
 
@@ -163,14 +161,10 @@ def _mapping(value: Any, name: str) -> Mapping[str, Any]:
     return value
 
 
-def _reject_unknown(
-    value: Mapping[str, Any], allowed: frozenset[str], record_name: str
-) -> None:
+def _reject_unknown(value: Mapping[str, Any], allowed: frozenset[str], record_name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise ReceiptError(
-            f"unknown {record_name} field(s): {', '.join(unknown)}"
-        )
+        raise ReceiptError(f"unknown {record_name} field(s): {', '.join(unknown)}")
 
 
 def _enum(value: Any, enum_type: type[Enum], name: str) -> Any:
@@ -192,9 +186,7 @@ def _unique_sorted_ids(
 ) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise ReceiptError(f"{name} must be a sequence of strings")
     if len(values) > max_items:
         raise ReceiptError(f"{name} exceeds maximum of {max_items} items")
@@ -210,9 +202,7 @@ def _unique_sorted_ids(
 def _unique_sorted_digests(values: Any, name: str) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise ReceiptError(f"{name} must be a sequence of digests")
     if len(values) > MAX_COLLECTION_ITEMS:
         raise ReceiptError(f"{name} exceeds maximum collection size")
@@ -283,9 +273,7 @@ class BoundRoots:
     schema_version: str = BOUND_ROOTS_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "policy_root", _text(self.policy_root, "policy_root")
-        )
+        object.__setattr__(self, "policy_root", _text(self.policy_root, "policy_root"))
         object.__setattr__(
             self,
             "corpus_roots",
@@ -312,9 +300,7 @@ class BoundRoots:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != BOUND_ROOTS_SCHEMA_VERSION:
-            raise ReceiptError(
-                f"unsupported bound-roots schema: {self.schema_version!r}"
-            )
+            raise ReceiptError(f"unsupported bound-roots schema: {self.schema_version!r}")
 
     @property
     def digest(self) -> str:
@@ -353,9 +339,7 @@ class BoundRoots:
             revocation_root=value.get("revocation_root", ""),
             circuit_roots=tuple(value.get("circuit_roots", ())),
             vk_roots=tuple(value.get("vk_roots", ())),
-            schema_version=value.get(
-                "schema_version", BOUND_ROOTS_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", BOUND_ROOTS_SCHEMA_VERSION),
         )
 
     def matches(self, other: "BoundRoots") -> bool:
@@ -405,15 +389,9 @@ class BoundContext:
             "arguments_digest",
             _digest(self.arguments_digest, "arguments_digest"),
         )
-        object.__setattr__(
-            self, "actor_id", _identifier(self.actor_id, "actor_id")
-        )
-        object.__setattr__(
-            self, "audience_id", _identifier(self.audience_id, "audience_id")
-        )
-        object.__setattr__(
-            self, "tool_id", _optional_identifier(self.tool_id, "tool_id")
-        )
+        object.__setattr__(self, "actor_id", _identifier(self.actor_id, "actor_id"))
+        object.__setattr__(self, "audience_id", _identifier(self.audience_id, "audience_id"))
+        object.__setattr__(self, "tool_id", _optional_identifier(self.tool_id, "tool_id"))
         object.__setattr__(
             self,
             "tool_version",
@@ -422,9 +400,7 @@ class BoundContext:
         object.__setattr__(
             self,
             "effect_ids",
-            _unique_sorted_ids(
-                self.effect_ids, "effect_ids", require_identifier=True
-            ),
+            _unique_sorted_ids(self.effect_ids, "effect_ids", require_identifier=True),
         )
         object.__setattr__(
             self,
@@ -439,9 +415,7 @@ class BoundContext:
         object.__setattr__(
             self,
             "delegation_ids",
-            _unique_sorted_ids(
-                self.delegation_ids, "delegation_ids", require_identifier=True
-            ),
+            _unique_sorted_ids(self.delegation_ids, "delegation_ids", require_identifier=True),
         )
         object.__setattr__(
             self,
@@ -451,26 +425,18 @@ class BoundContext:
         object.__setattr__(
             self,
             "resource_ids",
-            _unique_sorted_ids(
-                self.resource_ids, "resource_ids", require_identifier=True
-            ),
+            _unique_sorted_ids(self.resource_ids, "resource_ids", require_identifier=True),
         )
         object.__setattr__(
             self,
             "capability_ids",
-            _unique_sorted_ids(
-                self.capability_ids, "capability_ids", require_identifier=True
-            ),
+            _unique_sorted_ids(self.capability_ids, "capability_ids", require_identifier=True),
         )
-        object.__setattr__(
-            self, "nonce", _text(self.nonce, "nonce", max_chars=128)
-        )
+        object.__setattr__(self, "nonce", _text(self.nonce, "nonce", max_chars=128))
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
         object.__setattr__(
             self,
@@ -478,9 +444,7 @@ class BoundContext:
             _text(self.schema_version, "schema_version"),
         )
         if self.schema_version != BOUND_CONTEXT_SCHEMA_VERSION:
-            raise ReceiptError(
-                f"unsupported bound-context schema: {self.schema_version!r}"
-            )
+            raise ReceiptError(f"unsupported bound-context schema: {self.schema_version!r}")
 
     @property
     def digest(self) -> str:
@@ -549,9 +513,7 @@ class BoundContext:
             capability_ids=tuple(value.get("capability_ids", ())),
             nonce=value.get("nonce", ""),
             metadata=FrozenMap(value.get("metadata", {})),
-            schema_version=value.get(
-                "schema_version", BOUND_CONTEXT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", BOUND_CONTEXT_SCHEMA_VERSION),
         )
 
 
@@ -600,21 +562,15 @@ class DecisionReceipt:
     schema_version: str = DECISION_RECEIPT_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "receipt_id", _identifier(self.receipt_id, "receipt_id")
-        )
+        object.__setattr__(self, "receipt_id", _identifier(self.receipt_id, "receipt_id"))
         if not isinstance(self.context, BoundContext):
             if isinstance(self.context, Mapping):
-                object.__setattr__(
-                    self, "context", BoundContext.from_dict(self.context)
-                )
+                object.__setattr__(self, "context", BoundContext.from_dict(self.context))
             else:
                 raise ReceiptError("context must be a BoundContext")
         if not isinstance(self.roots, BoundRoots):
             if isinstance(self.roots, Mapping):
-                object.__setattr__(
-                    self, "roots", BoundRoots.from_dict(self.roots)
-                )
+                object.__setattr__(self, "roots", BoundRoots.from_dict(self.roots))
             else:
                 raise ReceiptError("roots must be a BoundRoots")
 
@@ -652,9 +608,7 @@ class DecisionReceipt:
         object.__setattr__(
             self,
             "selected_evidence_cids",
-            _unique_sorted_ids(
-                self.selected_evidence_cids, "selected_evidence_cids"
-            ),
+            _unique_sorted_ids(self.selected_evidence_cids, "selected_evidence_cids"),
         )
         object.__setattr__(
             self,
@@ -686,18 +640,10 @@ class DecisionReceipt:
             "decision_digest",
             _digest(self.decision_digest, "decision_digest"),
         )
-        object.__setattr__(
-            self, "policy_digest", _digest(self.policy_digest, "policy_digest")
-        )
-        object.__setattr__(
-            self, "profile_id", _identifier(self.profile_id, "profile_id")
-        )
-        object.__setattr__(
-            self, "issued_at", _timestamp(self.issued_at, "issued_at")
-        )
-        object.__setattr__(
-            self, "deadline", _timestamp(self.deadline, "deadline")
-        )
+        object.__setattr__(self, "policy_digest", _digest(self.policy_digest, "policy_digest"))
+        object.__setattr__(self, "profile_id", _identifier(self.profile_id, "profile_id"))
+        object.__setattr__(self, "issued_at", _timestamp(self.issued_at, "issued_at"))
+        object.__setattr__(self, "deadline", _timestamp(self.deadline, "deadline"))
         object.__setattr__(self, "expiry", _timestamp(self.expiry, "expiry"))
         if self.deadline < self.issued_at:
             raise ReceiptError("deadline must not precede issued_at")
@@ -705,18 +651,14 @@ class DecisionReceipt:
             raise ReceiptError("expiry must not precede issued_at")
         if self.expiry < self.deadline:
             raise ReceiptError("expiry must not precede deadline")
-        object.__setattr__(
-            self, "producer_id", _identifier(self.producer_id, "producer_id")
-        )
+        object.__setattr__(self, "producer_id", _identifier(self.producer_id, "producer_id"))
         object.__setattr__(
             self,
             "decision_interface",
             _text(self.decision_interface, "decision_interface"),
         )
         if self.decision_interface != AUTHORIZATION_DECISION_INTERFACE:
-            raise ReceiptError(
-                f"unsupported decision interface: {self.decision_interface!r}"
-            )
+            raise ReceiptError(f"unsupported decision interface: {self.decision_interface!r}")
         object.__setattr__(
             self,
             "identity_algorithm",
@@ -725,26 +667,18 @@ class DecisionReceipt:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
-        object.__setattr__(
-            self, "interface", _text(self.interface, "interface")
-        )
+        object.__setattr__(self, "interface", _text(self.interface, "interface"))
         object.__setattr__(
             self,
             "schema_version",
             _text(self.schema_version, "schema_version"),
         )
         if self.interface != DECISION_RECEIPT_INTERFACE:
-            raise ReceiptError(
-                f"unsupported decision receipt interface: {self.interface!r}"
-            )
+            raise ReceiptError(f"unsupported decision receipt interface: {self.interface!r}")
         if self.schema_version != DECISION_RECEIPT_SCHEMA_VERSION:
-            raise ReceiptError(
-                f"unsupported decision receipt schema: {self.schema_version!r}"
-            )
+            raise ReceiptError(f"unsupported decision receipt schema: {self.schema_version!r}")
 
         body = self._identity_payload()
         digest_hex = _sha256_hex(body)
@@ -757,13 +691,9 @@ class DecisionReceipt:
             else:
                 provided_hex = provided
             if provided_hex != digest_hex:
-                raise ReceiptError(
-                    "content_digest does not match recomputed receipt identity"
-                )
+                raise ReceiptError("content_digest does not match recomputed receipt identity")
         if self.content_cid and self.content_cid != cid:
-            raise ReceiptError(
-                "content_cid does not match recomputed receipt identity"
-            )
+            raise ReceiptError("content_cid does not match recomputed receipt identity")
         object.__setattr__(self, "content_digest", digest_tag)
         object.__setattr__(self, "content_cid", cid)
 
@@ -893,12 +823,8 @@ class DecisionReceipt:
             wire_status=value.get("wire_status", ""),
             reasons=tuple(value.get("reasons", ())),
             reason_codes=tuple(value.get("reason_codes", ())),
-            selected_evidence_cids=tuple(
-                value.get("selected_evidence_cids", ())
-            ),
-            selected_evidence_digest=value.get(
-                "selected_evidence_digest", ""
-            ),
+            selected_evidence_cids=tuple(value.get("selected_evidence_cids", ())),
+            selected_evidence_digest=value.get("selected_evidence_digest", ""),
             obligation_ids=tuple(value.get("obligation_ids", ())),
             residual_duties=tuple(value.get("residual_duties", ())),
             attempt_digests=tuple(value.get("attempt_digests", ())),
@@ -910,19 +836,13 @@ class DecisionReceipt:
             deadline=value.get("deadline", ""),
             expiry=value.get("expiry", ""),
             producer_id=value.get("producer_id", ""),
-            decision_interface=value.get(
-                "decision_interface", AUTHORIZATION_DECISION_INTERFACE
-            ),
-            identity_algorithm=value.get(
-                "identity_algorithm", DEFAULT_IDENTITY_ALGORITHM
-            ),
+            decision_interface=value.get("decision_interface", AUTHORIZATION_DECISION_INTERFACE),
+            identity_algorithm=value.get("identity_algorithm", DEFAULT_IDENTITY_ALGORITHM),
             content_digest=value.get("content_digest", ""),
             content_cid=value.get("content_cid", ""),
             metadata=FrozenMap(value.get("metadata", {})),
             interface=value.get("interface", DECISION_RECEIPT_INTERFACE),
-            schema_version=value.get(
-                "schema_version", DECISION_RECEIPT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", DECISION_RECEIPT_SCHEMA_VERSION),
         )
 
     def verify_integrity(self) -> "DecisionReceipt":
@@ -937,9 +857,7 @@ class DecisionReceipt:
                 "content_digest does not match recomputed receipt identity"
             )
         if cid != self.content_cid:
-            raise ReceiptVerificationError(
-                "content_cid does not match recomputed receipt identity"
-            )
+            raise ReceiptVerificationError("content_cid does not match recomputed receipt identity")
         return self
 
 
@@ -986,17 +904,13 @@ class AuthorizationCapability:
             "capability_id",
             _identifier(self.capability_id, "capability_id"),
         )
-        object.__setattr__(
-            self, "receipt_id", _identifier(self.receipt_id, "receipt_id")
-        )
+        object.__setattr__(self, "receipt_id", _identifier(self.receipt_id, "receipt_id"))
         object.__setattr__(
             self,
             "receipt_digest",
             _digest(self.receipt_digest, "receipt_digest"),
         )
-        object.__setattr__(
-            self, "audience_id", _identifier(self.audience_id, "audience_id")
-        )
+        object.__setattr__(self, "audience_id", _identifier(self.audience_id, "audience_id"))
         object.__setattr__(
             self,
             "request_digest",
@@ -1012,57 +926,37 @@ class AuthorizationCapability:
             ),
         )
         if not self.allowed_effects:
-            raise ReceiptError(
-                "allowed_effects must be a non-empty attenuated set"
-            )
+            raise ReceiptError("allowed_effects must be a non-empty attenuated set")
         object.__setattr__(
             self,
             "resource_ids",
-            _unique_sorted_ids(
-                self.resource_ids, "resource_ids", require_identifier=True
-            ),
+            _unique_sorted_ids(self.resource_ids, "resource_ids", require_identifier=True),
         )
-        object.__setattr__(
-            self, "tool_id", _optional_identifier(self.tool_id, "tool_id")
-        )
+        object.__setattr__(self, "tool_id", _optional_identifier(self.tool_id, "tool_id"))
         if not isinstance(self.roots, BoundRoots):
             if isinstance(self.roots, Mapping):
-                object.__setattr__(
-                    self, "roots", BoundRoots.from_dict(self.roots)
-                )
+                object.__setattr__(self, "roots", BoundRoots.from_dict(self.roots))
             else:
                 raise ReceiptError("roots must be a BoundRoots")
         if not isinstance(self.one_time, bool):
             raise ReceiptError("one_time must be a bool")
         if not self.one_time:
-            raise ReceiptError(
-                "authorization capabilities must carry the one-time marker"
-            )
-        object.__setattr__(
-            self, "nonce", _text(self.nonce, "nonce", max_chars=128)
-        )
-        object.__setattr__(
-            self, "issued_at", _timestamp(self.issued_at, "issued_at")
-        )
+            raise ReceiptError("authorization capabilities must carry the one-time marker")
+        object.__setattr__(self, "nonce", _text(self.nonce, "nonce", max_chars=128))
+        object.__setattr__(self, "issued_at", _timestamp(self.issued_at, "issued_at"))
         object.__setattr__(self, "expiry", _timestamp(self.expiry, "expiry"))
         if self.expiry < self.issued_at:
             raise ReceiptError("capability expiry must not precede issued_at")
-        object.__setattr__(
-            self, "producer_id", _identifier(self.producer_id, "producer_id")
-        )
+        object.__setattr__(self, "producer_id", _identifier(self.producer_id, "producer_id"))
         object.__setattr__(
             self,
             "parent_capability_id",
-            _optional_identifier(
-                self.parent_capability_id, "parent_capability_id"
-            ),
+            _optional_identifier(self.parent_capability_id, "parent_capability_id"),
         )
         object.__setattr__(
             self,
             "parent_capability_digest",
-            _optional_digest(
-                self.parent_capability_digest, "parent_capability_digest"
-            ),
+            _optional_digest(self.parent_capability_digest, "parent_capability_digest"),
         )
         object.__setattr__(
             self,
@@ -1072,26 +966,18 @@ class AuthorizationCapability:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
-        object.__setattr__(
-            self, "interface", _text(self.interface, "interface")
-        )
+        object.__setattr__(self, "interface", _text(self.interface, "interface"))
         object.__setattr__(
             self,
             "schema_version",
             _text(self.schema_version, "schema_version"),
         )
         if self.interface != AUTHORIZATION_CAPABILITY_INTERFACE:
-            raise ReceiptError(
-                f"unsupported capability interface: {self.interface!r}"
-            )
+            raise ReceiptError(f"unsupported capability interface: {self.interface!r}")
         if self.schema_version != AUTHORIZATION_CAPABILITY_SCHEMA_VERSION:
-            raise ReceiptError(
-                f"unsupported capability schema: {self.schema_version!r}"
-            )
+            raise ReceiptError(f"unsupported capability schema: {self.schema_version!r}")
 
         body = self._identity_payload()
         digest_hex = _sha256_hex(body)
@@ -1104,13 +990,9 @@ class AuthorizationCapability:
             else:
                 provided_hex = provided
             if provided_hex != digest_hex:
-                raise ReceiptError(
-                    "content_digest does not match recomputed capability identity"
-                )
+                raise ReceiptError("content_digest does not match recomputed capability identity")
         if self.content_cid and self.content_cid != cid:
-            raise ReceiptError(
-                "content_cid does not match recomputed capability identity"
-            )
+            raise ReceiptError("content_cid does not match recomputed capability identity")
         object.__setattr__(self, "content_digest", digest_tag)
         object.__setattr__(self, "content_cid", cid)
 
@@ -1197,21 +1079,13 @@ class AuthorizationCapability:
             expiry=value.get("expiry", ""),
             producer_id=value.get("producer_id", ""),
             parent_capability_id=value.get("parent_capability_id", ""),
-            parent_capability_digest=value.get(
-                "parent_capability_digest", ""
-            ),
-            identity_algorithm=value.get(
-                "identity_algorithm", DEFAULT_IDENTITY_ALGORITHM
-            ),
+            parent_capability_digest=value.get("parent_capability_digest", ""),
+            identity_algorithm=value.get("identity_algorithm", DEFAULT_IDENTITY_ALGORITHM),
             content_digest=value.get("content_digest", ""),
             content_cid=value.get("content_cid", ""),
             metadata=FrozenMap(value.get("metadata", {})),
-            interface=value.get(
-                "interface", AUTHORIZATION_CAPABILITY_INTERFACE
-            ),
-            schema_version=value.get(
-                "schema_version", AUTHORIZATION_CAPABILITY_SCHEMA_VERSION
-            ),
+            interface=value.get("interface", AUTHORIZATION_CAPABILITY_INTERFACE),
+            schema_version=value.get("schema_version", AUTHORIZATION_CAPABILITY_SCHEMA_VERSION),
         )
 
     def verify_integrity(self) -> "AuthorizationCapability":
@@ -1290,9 +1164,7 @@ def build_decision_receipt(
         if not reason_codes:
             reason_codes = decision.reason_codes
         if not result_digests:
-            result_digests = tuple(
-                item.digest for item in decision.job_results
-            )
+            result_digests = tuple(item.digest for item in decision.job_results)
         profile_id = profile_id or decision.profile_id
 
     outcome_enum = _enum(outcome, InternalDecisionStatus, "outcome")
@@ -1380,9 +1252,7 @@ def derive_capability(
     """
 
     if not isinstance(receipt, DecisionReceipt):
-        raise CapabilityDerivationError(
-            "capability derivation requires a DecisionReceipt"
-        )
+        raise CapabilityDerivationError("capability derivation requires a DecisionReceipt")
     receipt.verify_integrity()
 
     if not receipt.permits_capability_derivation:
@@ -1412,13 +1282,9 @@ def derive_capability(
         else:
             effects = (receipt_effects[0],)
     else:
-        effects = _unique_sorted_ids(
-            allowed_effects, "allowed_effects", require_identifier=True
-        )
+        effects = _unique_sorted_ids(allowed_effects, "allowed_effects", require_identifier=True)
         if not effects:
-            raise CapabilityDerivationError(
-                "allowed_effects must be non-empty"
-            )
+            raise CapabilityDerivationError("allowed_effects must be non-empty")
         if receipt_effects and not _is_subset(effects, receipt_effects):
             raise CapabilityDerivationError(
                 "capability allowed_effects must be a subset of receipt effects "
@@ -1431,17 +1297,14 @@ def derive_capability(
             and not _is_strict_subset(effects, receipt_effects)
         ):
             raise CapabilityDerivationError(
-                "capability derivation requires strict subset attenuation "
-                "of receipt effects"
+                "capability derivation requires strict subset attenuation of receipt effects"
             )
 
     parent_resources = receipt.context.resource_ids
     if resource_ids is None:
         resources = parent_resources
     else:
-        resources = _unique_sorted_ids(
-            resource_ids, "resource_ids", require_identifier=True
-        )
+        resources = _unique_sorted_ids(resource_ids, "resource_ids", require_identifier=True)
         if parent_resources and not _is_subset(resources, parent_resources):
             raise CapabilityDerivationError(
                 "capability resource_ids must be a subset of receipt resources "
@@ -1450,24 +1313,16 @@ def derive_capability(
 
     tool = tool_id if tool_id is not None else receipt.context.tool_id
     if receipt.context.tool_id and tool and tool != receipt.context.tool_id:
-        raise CapabilityDerivationError(
-            "capability tool_id must match the receipt tool binding"
-        )
+        raise CapabilityDerivationError("capability tool_id must match the receipt tool binding")
 
     cap_issued = issued_at if issued_at is not None else receipt.issued_at
     cap_expiry = expiry if expiry is not None else receipt.expiry
     if cap_issued < receipt.issued_at:
-        raise CapabilityDerivationError(
-            "capability issued_at must not precede receipt issued_at"
-        )
+        raise CapabilityDerivationError("capability issued_at must not precede receipt issued_at")
     if cap_expiry > receipt.expiry:
-        raise CapabilityDerivationError(
-            "capability expiry must not exceed receipt expiry"
-        )
+        raise CapabilityDerivationError("capability expiry must not exceed receipt expiry")
     if cap_expiry < cap_issued:
-        raise CapabilityDerivationError(
-            "capability expiry must not precede issued_at"
-        )
+        raise CapabilityDerivationError("capability expiry must not precede issued_at")
 
     return AuthorizationCapability(
         capability_id=capability_id,
@@ -1505,18 +1360,12 @@ def attenuate_capability(
     """
 
     if not isinstance(parent, AuthorizationCapability):
-        raise CapabilityDerivationError(
-            "attenuation requires an AuthorizationCapability parent"
-        )
+        raise CapabilityDerivationError("attenuation requires an AuthorizationCapability parent")
     parent.verify_integrity()
     if not parent.one_time:
-        raise CapabilityDerivationError(
-            "parent capability missing one-time marker"
-        )
+        raise CapabilityDerivationError("parent capability missing one-time marker")
 
-    effects = _unique_sorted_ids(
-        allowed_effects, "allowed_effects", require_identifier=True
-    )
+    effects = _unique_sorted_ids(allowed_effects, "allowed_effects", require_identifier=True)
     if not effects:
         raise CapabilityDerivationError("allowed_effects must be non-empty")
     if not _is_strict_subset(effects, parent.allowed_effects):
@@ -1528,25 +1377,17 @@ def attenuate_capability(
     if resource_ids is None:
         resources = parent.resource_ids
     else:
-        resources = _unique_sorted_ids(
-            resource_ids, "resource_ids", require_identifier=True
-        )
-        if parent.resource_ids and not _is_subset(
-            resources, parent.resource_ids
-        ):
+        resources = _unique_sorted_ids(resource_ids, "resource_ids", require_identifier=True)
+        if parent.resource_ids and not _is_subset(resources, parent.resource_ids):
             raise CapabilityDerivationError(
                 "attenuated resource_ids must be a subset of parent resources"
             )
 
     cap_expiry = expiry if expiry is not None else parent.expiry
     if cap_expiry > parent.expiry:
-        raise CapabilityDerivationError(
-            "attenuated expiry must not exceed parent expiry"
-        )
+        raise CapabilityDerivationError("attenuated expiry must not exceed parent expiry")
     if cap_expiry < parent.issued_at:
-        raise CapabilityDerivationError(
-            "attenuated expiry must not precede parent issued_at"
-        )
+        raise CapabilityDerivationError("attenuated expiry must not precede parent issued_at")
 
     return AuthorizationCapability(
         capability_id=capability_id,
@@ -1595,9 +1436,7 @@ def verify_decision_receipt(
     if isinstance(receipt, Mapping):
         receipt = DecisionReceipt.from_dict(receipt)
     elif not isinstance(receipt, DecisionReceipt):
-        raise ReceiptVerificationError(
-            "receipt must be a DecisionReceipt or mapping"
-        )
+        raise ReceiptVerificationError("receipt must be a DecisionReceipt or mapping")
 
     receipt.verify_integrity()
 
@@ -1608,27 +1447,18 @@ def verify_decision_receipt(
         )
     if expected_actor is not None and receipt.actor_id != expected_actor:
         raise ReceiptVerificationError(
-            f"actor mismatch: receipt has {receipt.actor_id!r}, "
-            f"expected {expected_actor!r}"
+            f"actor mismatch: receipt has {receipt.actor_id!r}, expected {expected_actor!r}"
         )
     if expected_nonce is not None and receipt.nonce != expected_nonce:
         raise ReceiptVerificationError(
-            f"nonce mismatch: receipt has {receipt.nonce!r}, "
-            f"expected {expected_nonce!r}"
+            f"nonce mismatch: receipt has {receipt.nonce!r}, expected {expected_nonce!r}"
         )
-    if (
-        expected_request_digest is not None
-        and receipt.request_digest != _digest(
-            expected_request_digest, "expected_request_digest"
-        )
+    if expected_request_digest is not None and receipt.request_digest != _digest(
+        expected_request_digest, "expected_request_digest"
     ):
-        raise ReceiptVerificationError(
-            "request_digest mismatch (context mutation detected)"
-        )
-    if (
-        expected_decision_digest is not None
-        and receipt.decision_digest
-        != _digest(expected_decision_digest, "expected_decision_digest")
+        raise ReceiptVerificationError("request_digest mismatch (context mutation detected)")
+    if expected_decision_digest is not None and receipt.decision_digest != _digest(
+        expected_decision_digest, "expected_decision_digest"
     ):
         raise ReceiptVerificationError("decision_digest mismatch")
 
@@ -1673,38 +1503,28 @@ def verify_capability(
     if isinstance(capability, Mapping):
         capability = AuthorizationCapability.from_dict(capability)
     elif not isinstance(capability, AuthorizationCapability):
-        raise ReceiptVerificationError(
-            "capability must be an AuthorizationCapability or mapping"
-        )
+        raise ReceiptVerificationError("capability must be an AuthorizationCapability or mapping")
 
     capability.verify_integrity()
 
     if not capability.one_time:
-        raise ReceiptVerificationError(
-            "capability missing required one-time marker"
-        )
+        raise ReceiptVerificationError("capability missing required one-time marker")
 
     if expected_audience is not None and capability.audience_id != expected_audience:
         raise ReceiptVerificationError(
             f"capability audience mismatch: has {capability.audience_id!r}, "
             f"expected {expected_audience!r}"
         )
-    if (
-        expected_request_digest is not None
-        and capability.request_digest
-        != _digest(expected_request_digest, "expected_request_digest")
+    if expected_request_digest is not None and capability.request_digest != _digest(
+        expected_request_digest, "expected_request_digest"
     ):
-        raise ReceiptVerificationError(
-            "capability request_digest mismatch"
-        )
+        raise ReceiptVerificationError("capability request_digest mismatch")
 
     if expected_roots is not None:
         if isinstance(expected_roots, Mapping):
             expected_roots = BoundRoots.from_dict(expected_roots)
         if not capability.roots.matches(expected_roots):
-            raise ReceiptVerificationError(
-                "capability roots are stale or mismatched"
-            )
+            raise ReceiptVerificationError("capability roots are stale or mismatched")
 
     if require_not_expired and now is not None:
         now_ts = _timestamp(now, "now")
@@ -1718,55 +1538,33 @@ def verify_capability(
             receipt = DecisionReceipt.from_dict(receipt)
         receipt.verify_integrity()
         if not receipt.permits_capability_derivation:
-            raise ReceiptVerificationError(
-                "capability cannot be bound to a non-allow receipt"
-            )
+            raise ReceiptVerificationError("capability cannot be bound to a non-allow receipt")
         if capability.receipt_id != receipt.receipt_id:
             raise ReceiptVerificationError("capability receipt_id mismatch")
         if capability.receipt_digest != receipt.digest:
-            raise ReceiptVerificationError(
-                "capability receipt_digest mismatch (receipt mutation)"
-            )
+            raise ReceiptVerificationError("capability receipt_digest mismatch (receipt mutation)")
         if capability.audience_id != receipt.audience_id:
-            raise ReceiptVerificationError(
-                "capability audience does not match receipt audience"
-            )
+            raise ReceiptVerificationError("capability audience does not match receipt audience")
         if capability.request_digest != receipt.request_digest:
-            raise ReceiptVerificationError(
-                "capability request_digest does not match receipt"
-            )
+            raise ReceiptVerificationError("capability request_digest does not match receipt")
         if capability.nonce != receipt.nonce:
-            raise ReceiptVerificationError(
-                "capability nonce does not match receipt nonce"
-            )
+            raise ReceiptVerificationError("capability nonce does not match receipt nonce")
         if not capability.roots.matches(receipt.roots):
-            raise ReceiptVerificationError(
-                "capability roots do not match receipt roots"
-            )
-        if receipt.effect_ids and not _is_subset(
-            capability.allowed_effects, receipt.effect_ids
-        ):
-            raise ReceiptVerificationError(
-                "capability effects widen beyond receipt effects"
-            )
+            raise ReceiptVerificationError("capability roots do not match receipt roots")
+        if receipt.effect_ids and not _is_subset(capability.allowed_effects, receipt.effect_ids):
+            raise ReceiptVerificationError("capability effects widen beyond receipt effects")
         if receipt.context.resource_ids and not _is_subset(
             capability.resource_ids, receipt.context.resource_ids
         ):
-            raise ReceiptVerificationError(
-                "capability resources widen beyond receipt resources"
-            )
+            raise ReceiptVerificationError("capability resources widen beyond receipt resources")
         if capability.expiry > receipt.expiry:
-            raise ReceiptVerificationError(
-                "capability expiry exceeds receipt expiry"
-            )
+            raise ReceiptVerificationError("capability expiry exceeds receipt expiry")
         if (
             receipt.context.tool_id
             and capability.tool_id
             and capability.tool_id != receipt.context.tool_id
         ):
-            raise ReceiptVerificationError(
-                "capability tool_id does not match receipt tool binding"
-            )
+            raise ReceiptVerificationError("capability tool_id does not match receipt tool binding")
 
     return capability
 

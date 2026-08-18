@@ -24,7 +24,7 @@ class TestSortEntities:
         """
         entities = [{"id": "e1", "type": "Person", "text": "Alice", "confidence": 0.9}]
         sorted_ents = sort_entities(entities)
-        
+
         assert len(sorted_ents) == 1
         assert sorted_ents[0]["id"] == "e1"
 
@@ -40,7 +40,7 @@ class TestSortEntities:
             {"id": "e2", "type": "Person", "text": "Bob", "confidence": 0.85},
         ]
         sorted_ents = sort_entities(entities)
-        
+
         assert [e["id"] for e in sorted_ents] == ["e1", "e2", "e3"]
 
     def test_sort_entities_same_id_different_type(self):
@@ -54,7 +54,7 @@ class TestSortEntities:
             {"id": "e1", "type": "Person", "text": "Alice", "confidence": 0.9},
         ]
         sorted_ents = sort_entities(entities)
-        
+
         # Org comes before Person alphabetically
         assert sorted_ents[0]["type"] == "Org"
         assert sorted_ents[1]["type"] == "Person"
@@ -70,7 +70,7 @@ class TestSortEntities:
             {"id": "e1", "type": "Person", "text": "Alice", "confidence": 0.9},
         ]
         sorted_ents = sort_entities(entities)
-        
+
         assert sorted_ents[0]["text"] == "Alice"
         assert sorted_ents[1]["text"] == "Zoe"
 
@@ -85,7 +85,7 @@ class TestSortEntities:
             {"id": "e1", "type": "Person", "text": "Alice", "confidence": 0.9},
         ]
         sorted_ents = sort_entities(entities)
-        
+
         # Higher confidence (0.9) should come first due to negative confidence in sort key
         assert sorted_ents[0]["confidence"] == 0.9
         assert sorted_ents[1]["confidence"] == 0.7
@@ -110,7 +110,7 @@ class TestSortEntities:
             {"id": "e1", "type": "Person"},  # missing text, confidence
         ]
         sorted_ents = sort_entities(entities)
-        
+
         # Should not crash, e1 comes before e2 by ID
         assert len(sorted_ents) == 2
         assert sorted_ents[0]["id"] == "e1"
@@ -126,9 +126,9 @@ class TestSortEntities:
             {"id": "e1", "type": "Person"},
         ]
         original_ids = [e["id"] for e in original]
-        
+
         sorted_ents = sort_entities(original)
-        
+
         # Original should be unchanged
         assert [e["id"] for e in original] == original_ids
         assert [e["id"] for e in sorted_ents] == ["e1", "e2"]
@@ -145,7 +145,7 @@ class TestSortRelationships:
         """
         rels = [{"source": "e1", "target": "e2", "type": "knows", "confidence": 0.8}]
         sorted_rels = sort_relationships(rels)
-        
+
         assert len(sorted_rels) == 1
         assert sorted_rels[0]["source"] == "e1"
 
@@ -161,7 +161,7 @@ class TestSortRelationships:
             {"source": "e1", "target": "e2", "type": "knows", "confidence": 0.8},
         ]
         sorted_rels = sort_relationships(rels)
-        
+
         # Should sort by (source, target)
         assert sorted_rels[0]["source"] == "e1" and sorted_rels[0]["target"] == "e2"
         assert sorted_rels[1]["source"] == "e1" and sorted_rels[1]["target"] == "e3"
@@ -178,7 +178,7 @@ class TestSortRelationships:
             {"source": "e1", "target": "e2", "type": "knows", "confidence": 0.8},
         ]
         sorted_rels = sort_relationships(rels)
-        
+
         # "knows" < "works_for" alphabetically
         assert sorted_rels[0]["type"] == "knows"
         assert sorted_rels[1]["type"] == "works_for"
@@ -194,7 +194,7 @@ class TestSortRelationships:
             {"source": "e1", "target": "e2", "type": "knows", "confidence": 0.9},
         ]
         sorted_rels = sort_relationships(rels)
-        
+
         assert sorted_rels[0]["confidence"] == 0.9
         assert sorted_rels[1]["confidence"] == 0.7
 
@@ -218,9 +218,9 @@ class TestSortRelationships:
             {"source": "e1", "target": "e2", "type": "knows"},
         ]
         original_sources = [r["source"] for r in original]
-        
+
         sorted_rels = sort_relationships(original)
-        
+
         # Original unchanged
         assert [r["source"] for r in original] == original_sources
         # Sorted has different order
@@ -241,7 +241,7 @@ class TestSortOntology:
             "relationships": [],
         }
         sorted_onto = sort_ontology(ontology)
-        
+
         assert sorted_onto["entities"][0]["id"] == "e1"
         assert sorted_onto["entities"][1]["id"] == "e2"
 
@@ -265,10 +265,10 @@ class TestSortOntology:
             "metadata": {},
         }
         sorted_onto = sort_ontology(ontology)
-        
+
         # Entities sorted by ID
         assert [e["id"] for e in sorted_onto["entities"]] == ["e1", "e2", "e3"]
-        
+
         # Relationships sorted
         rels = sorted_onto["relationships"]
         assert rels[0]["source"] == "e1" and rels[0]["target"] == "e2"
@@ -286,7 +286,7 @@ class TestSortOntology:
             "custom_field": "custom_value",
         }
         sorted_onto = sort_ontology(ontology)
-        
+
         assert sorted_onto["metadata"]["version"] == "1.0"
         assert sorted_onto["custom_field"] == "custom_value"
 
@@ -330,10 +330,10 @@ class TestSortOntology:
                 {"source": "e1", "target": "e2", "type": "knows"},
             ],
         }
-        
+
         sorted_once = sort_ontology(ontology)
         sorted_twice = sort_ontology(sorted_once)
-        
+
         # Entity IDs should be identical
         e1_ids = [e["id"] for e in sorted_once["entities"]]
         e2_ids = [e["id"] for e in sorted_twice["entities"]]
@@ -352,7 +352,7 @@ class TestSortOntology:
             ],
             "relationships": [],
         }
-        
+
         ontology2 = {
             "entities": [
                 {"id": "e2", "type": "Person"},
@@ -360,10 +360,10 @@ class TestSortOntology:
             ],
             "relationships": [],
         }
-        
+
         sorted1 = sort_ontology(ontology1)
         sorted2 = sort_ontology(ontology2)
-        
+
         # After sorting, entity IDs should be in same order
         ids1 = [e["id"] for e in sorted1["entities"]]
         ids2 = [e["id"] for e in sorted2["entities"]]

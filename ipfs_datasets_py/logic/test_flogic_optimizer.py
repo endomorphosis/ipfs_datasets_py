@@ -7,15 +7,11 @@ from ipfs_datasets_py.logic.flogic_optimizer import (
 
 
 def _optimizer() -> FLogicSemanticOptimizer:
-    return FLogicSemanticOptimizer(
-        config=FLogicOptimizerConfig(check_ontology_consistency=False)
-    )
+    return FLogicSemanticOptimizer(config=FLogicOptimizerConfig(check_ontology_consistency=False))
 
 
 def _consistent_optimizer() -> FLogicSemanticOptimizer:
-    return FLogicSemanticOptimizer(
-        config=FLogicOptimizerConfig(check_ontology_consistency=True)
-    )
+    return FLogicSemanticOptimizer(config=FLogicOptimizerConfig(check_ontology_consistency=True))
 
 
 def test_frame_ontology_constraints_reject_ungrounded_selected_frame() -> None:
@@ -285,9 +281,7 @@ def test_frame_ontology_terms_include_packet_modal_frame_logic_view_features() -
     assert "quality:frame:rank-top" in metadata["frame_audit_feature_keys"]
     assert "modal_frame_logic" in metadata["frame_ontology_terms"]
     assert "quality_frame_rank_top" in metadata["frame_ontology_terms"]
-    assert "legal_ir_view_modal_frame_logic" in metadata[
-        "frame_ontology_contextualized_terms"
-    ]
+    assert "legal_ir_view_modal_frame_logic" in metadata["frame_ontology_contextualized_terms"]
 
 
 def test_frame_ontology_terms_include_contextualized_suffix_count_features() -> None:
@@ -312,12 +306,11 @@ def test_frame_ontology_terms_include_contextualized_suffix_count_features() -> 
     metadata = result.metadata
     assert "citation_section_suffix_consonant_count_1" in metadata["frame_ontology_terms"]
     assert (
-        "source_id_section_suffix_consonant_count_positioned_1"
-        in metadata["frame_ontology_terms"]
+        "source_id_section_suffix_consonant_count_positioned_1" in metadata["frame_ontology_terms"]
     )
-    assert "citation_section_suffix_consonant_count_1" in metadata[
-        "frame_ontology_high_signal_terms"
-    ]
+    assert (
+        "citation_section_suffix_consonant_count_1" in metadata["frame_ontology_high_signal_terms"]
+    )
 
 
 def test_frame_ontology_terms_include_contextualized_parity_audit_features() -> None:
@@ -342,9 +335,7 @@ def test_frame_ontology_terms_include_contextualized_parity_audit_features() -> 
     assert "citation_title_number_parity_even" in metadata["frame_ontology_terms"]
     assert "source_id_title_number_parity_even" in metadata["frame_ontology_terms"]
     assert "codification" in metadata["frame_ontology_high_signal_terms"]
-    assert "citation_title_number_parity_even" in metadata[
-        "frame_ontology_high_signal_terms"
-    ]
+    assert "citation_title_number_parity_even" in metadata["frame_ontology_high_signal_terms"]
 
 
 def test_frame_ontology_terms_contextualize_condition_modal_family_and_operator() -> None:
@@ -370,12 +361,8 @@ def test_frame_ontology_terms_contextualize_condition_modal_family_and_operator(
         "citation_title_section_primary_number_span_thousands_block_2"
         in metadata["frame_ontology_terms"]
     )
-    assert "condition_modal_family_frame" in metadata[
-        "frame_ontology_contextualized_terms"
-    ]
-    assert "condition_modal_operator_frame" in metadata[
-        "frame_ontology_contextualized_terms"
-    ]
+    assert "condition_modal_family_frame" in metadata["frame_ontology_contextualized_terms"]
+    assert "condition_modal_operator_frame" in metadata["frame_ontology_contextualized_terms"]
 
 
 def test_frame_ontology_terms_audit_zero_digit_predicates_as_contextual_terms() -> None:
@@ -543,10 +530,7 @@ def test_frame_ontology_terms_extract_compiler_guidance_view_evidence_fields() -
 
     metadata = result.metadata
     assert "legal-ir-view:modal.frame_logic" in metadata["frame_audit_feature_keys"]
-    assert (
-        "legal-ir-view:knowledge_graphs.neo4j_compat"
-        in metadata["frame_audit_feature_keys"]
-    )
+    assert "legal-ir-view:knowledge_graphs.neo4j_compat" in metadata["frame_audit_feature_keys"]
     assert "modal_frame_logic" in metadata["frame_ontology_terms"]
     assert "legal_ir_view_modal_frame_logic" in metadata["frame_ontology_terms"]
     assert "knowledge_graphs_neo4j_compat" in metadata["frame_ontology_terms"]
@@ -574,12 +558,14 @@ def test_frame_ontology_terms_skip_low_signal_positioned_alnum_segments() -> Non
     metadata = result.metadata
     assert "in" not in metadata["frame_ontology_terms"]
     assert "91" not in metadata["frame_ontology_terms"]
-    assert "condition_alnum_segment_positioned_in" not in metadata[
-        "frame_ontology_contextualized_terms"
-    ]
-    assert "fallback_surface_text_alnum_segment_positioned_91" not in metadata[
-        "frame_ontology_high_signal_terms_from_contextualized"
-    ]
+    assert (
+        "condition_alnum_segment_positioned_in"
+        not in metadata["frame_ontology_contextualized_terms"]
+    )
+    assert (
+        "fallback_surface_text_alnum_segment_positioned_91"
+        not in metadata["frame_ontology_high_signal_terms_from_contextualized"]
+    )
     assert "voucher" in metadata["frame_ontology_terms"]
     assert (
         "fallback_surface_text_alnum_segment_kind_positioned_numeric"

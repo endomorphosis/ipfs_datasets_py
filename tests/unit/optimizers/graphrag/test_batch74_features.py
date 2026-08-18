@@ -32,6 +32,7 @@ from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _mediator():
     gen = OntologyGenerator()
     crit = OntologyCritic(use_llm=False)
@@ -61,6 +62,7 @@ def _result(*entities, rels=None) -> EntityExtractionResult:
 # ---------------------------------------------------------------------------
 # OntologyOptimizer.best_ontology
 # ---------------------------------------------------------------------------
+
 
 class TestBestOntology:
     def test_empty_history_returns_none(self):
@@ -97,6 +99,7 @@ class TestBestOntology:
 # OntologyMediator.undo_last_action
 # ---------------------------------------------------------------------------
 
+
 class TestUndoLastAction:
     def test_empty_stack_raises(self):
         with pytest.raises(IndexError):
@@ -132,6 +135,7 @@ class TestUndoLastAction:
 # ---------------------------------------------------------------------------
 # OntologyGenerator.filter_entities
 # ---------------------------------------------------------------------------
+
 
 class TestFilterEntities:
     def test_returns_extraction_result(self):
@@ -190,6 +194,7 @@ class TestFilterEntities:
 # OntologyGenerator.extract_noun_phrases
 # ---------------------------------------------------------------------------
 
+
 class TestExtractNounPhrases:
     def test_returns_list(self):
         gen = OntologyGenerator()
@@ -214,6 +219,7 @@ class TestExtractNounPhrases:
 # ---------------------------------------------------------------------------
 # OntologyLearningAdapter.reset_feedback
 # ---------------------------------------------------------------------------
+
 
 class TestResetFeedback:
     def test_returns_int(self):

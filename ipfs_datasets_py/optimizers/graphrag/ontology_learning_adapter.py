@@ -123,10 +123,8 @@ class OntologyLearningAdapter:
                 reported at extraction time (optional, used for correlation).
         """
         action_types: List[str] = []
-        for entry in (actions or []):
-            action_str = (
-                entry.get("action", "") if isinstance(entry, dict) else str(entry)
-            )
+        for entry in actions or []:
+            action_str = entry.get("action", "") if isinstance(entry, dict) else str(entry)
             if action_str:
                 action_types.append(action_str)
 
@@ -243,13 +241,15 @@ class OntologyLearningAdapter:
         for action, count in self._action_count.items():
             if count > 0:
                 mean_success = self._action_success[action] / count
-                results.append({
-                    "action": action,
-                    "count": count,
-                    "mean_success": round(mean_success, 4),
-                })
+                results.append(
+                    {
+                        "action": action,
+                        "count": count,
+                        "mean_success": round(mean_success, 4),
+                    }
+                )
         results.sort(key=lambda x: float(x["mean_success"]), reverse=True)
-        return results[:max(1, n)]
+        return results[: max(1, n)]
 
     # ------------------------------------------------------------------ #
     # Internal helpers                                                     #
@@ -265,8 +265,7 @@ class OntologyLearningAdapter:
         # (trigger LLM fallback more aggressively).
         target = self._score_to_threshold(recent_mean)
         self._current_threshold = (
-            self._ema_alpha * target
-            + (1.0 - self._ema_alpha) * self._current_threshold
+            self._ema_alpha * target + (1.0 - self._ema_alpha) * self._current_threshold
         )
         # Clamp to [0.1, 0.9]
         self._current_threshold = max(0.1, min(0.9, self._current_threshold))
@@ -312,9 +311,7 @@ class OntologyLearningAdapter:
             ema_alpha=float(data.get("ema_alpha", _EMA_ALPHA)),
             min_samples=int(data.get("min_samples", _MIN_SAMPLES_FOR_ADJUSTMENT)),
         )
-        adapter._current_threshold = float(
-            data.get("current_threshold", adapter._base_threshold)
-        )
+        adapter._current_threshold = float(data.get("current_threshold", adapter._base_threshold))
         for rec in data.get("feedback", []):
             adapter._feedback.append(
                 FeedbackRecord(
@@ -339,6 +336,7 @@ class OntologyLearningAdapter:
             UTF-8 encoded JSON bytes representing the full adapter state.
         """
         import json as _json
+
         return _json.dumps(self.to_dict(), indent=None, separators=(",", ":")).encode("utf-8")
 
     @classmethod
@@ -352,6 +350,7 @@ class OntologyLearningAdapter:
             New :class:`OntologyLearningAdapter` with restored state.
         """
         import json as _json
+
         return cls.from_dict(_json.loads(data.decode("utf-8")))
 
     @staticmethod
@@ -432,10 +431,11 @@ class OntologyLearningAdapter:
             >>> adapter.serialize_to_file("/tmp/adapter.json")
         """
         import json as _json
+
         # Validate output path
         base_dir = _Path(path).parent if _Path(path).is_absolute() else None
         safe_path = validate_output_path(path, allow_overwrite=True, base_dir=base_dir)
-        
+
         payload = {
             "current_threshold": self._current_threshold,
             "action_count": dict(self._action_count),
@@ -468,10 +468,11 @@ class OntologyLearningAdapter:
             >>> adapter2 = OntologyLearningAdapter.from_file("/tmp/adapter.json")
         """
         import json as _json
+
         # Validate input path
         base_dir = _Path(path).parent if _Path(path).is_absolute() else None
         safe_path = validate_input_path(path, must_exist=True, base_dir=base_dir)
-        
+
         with open(safe_path, "r", encoding="utf-8") as fh:
             payload = _json.load(fh)
         instance = cls(**init_kwargs)
@@ -791,6 +792,7 @@ class OntologyLearningAdapter:
             Numeric fields are ``0.0`` when no feedback has been recorded.
         """
         import math as _math
+
         if not self._feedback:
             return {"count": 0, "mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0}
         scores = [r.final_score for r in self._feedback]
@@ -976,10 +978,7 @@ class OntologyLearningAdapter:
         recent = self._feedback[-window:]
         if len(recent) < 2:
             return 0.0
-        diffs = [
-            recent[i + 1].final_score - recent[i].final_score
-            for i in range(len(recent) - 1)
-        ]
+        diffs = [recent[i + 1].final_score - recent[i].final_score for i in range(len(recent) - 1)]
         return sum(diffs) / len(diffs)
 
     def feedback_streak(self, threshold: float = 0.6) -> int:
@@ -1030,10 +1029,7 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         domains = {getattr(r, "domain", "_default") for r in self._feedback}
-        covered = {
-            getattr(r, "domain", "_default")
-            for r in self._feedback if r.final_score > 0.5
-        }
+        covered = {getattr(r, "domain", "_default") for r in self._feedback if r.final_score > 0.5}
         if not domains:
             return 0.0
         return len(covered) / len(domains)
@@ -1082,6 +1078,7 @@ class OntologyLearningAdapter:
         if variance == 0:
             return 0.0
         import math
+
         std = math.sqrt(variance)
         return (value - mean) / std
 
@@ -1119,6 +1116,7 @@ class OntologyLearningAdapter:
             Float skewness; ``0.0`` when fewer than 3 records or std is zero.
         """
         import math
+
         if len(self._feedback) < 3:
             return 0.0
         vals = [r.final_score for r in self._feedback]
@@ -1140,6 +1138,7 @@ class OntologyLearningAdapter:
             Float excess kurtosis; ``0.0`` when fewer than 4 records or std is zero.
         """
         import math
+
         if len(self._feedback) < 4:
             return 0.0
         vals = [r.final_score for r in self._feedback]
@@ -1213,12 +1212,8 @@ class OntologyLearningAdapter:
         variance = sum((s - mean) ** 2 for s in scores) / n
         if variance == 0.0:
             return 0.0
-        cov = sum(
-            (scores[i] - mean) * (scores[i - lag] - mean)
-            for i in range(lag, n)
-        ) / n
+        cov = sum((scores[i] - mean) * (scores[i - lag] - mean) for i in range(lag, n)) / n
         return cov / variance
-
 
     def worst_domain(self) -> str:
         """Return the domain with the lowest average ``final_score`` in feedback.
@@ -1460,7 +1455,7 @@ class OntologyLearningAdapter:
         scores = [r.final_score for r in self._feedback]
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return float(variance ** 0.5)
+        return float(variance**0.5)
 
     def feedback_last_improvement(self) -> float:
         """Return the score delta at the last improving transition.
@@ -1492,7 +1487,9 @@ class OntologyLearningAdapter:
         if len(self._feedback) < 2:
             return 0.0
         scores = [r.final_score for r in self._feedback]
-        return sum(abs(scores[i] - scores[i - 1]) for i in range(1, len(scores))) / (len(scores) - 1)
+        return sum(abs(scores[i] - scores[i - 1]) for i in range(1, len(scores))) / (
+            len(scores) - 1
+        )
 
     def feedback_trend_direction(self) -> str:  # type: ignore[no-redef]
         """Return the overall trend direction of feedback scores.
@@ -1572,7 +1569,7 @@ class OntologyLearningAdapter:
         k = int(n * trim)
         if k == 0 or k * 2 >= n:
             return sum(scores) / n
-        trimmed = scores[k:n - k]
+        trimmed = scores[k : n - k]
         return sum(trimmed) / len(trimmed)
 
     def feedback_rate_of_change(self) -> float:
@@ -1656,6 +1653,7 @@ class OntologyLearningAdapter:
             Float; 0.0 when fewer than 2 feedback records.
         """
         import math
+
         if len(self._feedback) < 2:
             return 0.0
         scores = [r.final_score for r in self._feedback]
@@ -1935,7 +1933,7 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         entries = list(reversed(self._feedback))
-        return sum(r.final_score * (decay ** i) for i, r in enumerate(entries))
+        return sum(r.final_score * (decay**i) for i, r in enumerate(entries))
 
     def feedback_variance(self) -> float:
         """Return the variance of final_score values across all feedback.
@@ -1983,7 +1981,7 @@ class OntologyLearningAdapter:
         vals = sorted(r.final_score for r in self._feedback)
         n = len(vals)
         cut = int(n * trim)
-        trimmed = vals[cut: n - cut] if cut > 0 else vals
+        trimmed = vals[cut : n - cut] if cut > 0 else vals
         if not trimmed:
             return sum(vals) / n
         return sum(trimmed) / len(trimmed)
@@ -1997,6 +1995,7 @@ class OntologyLearningAdapter:
         if not self._feedback:
             return 0.0
         from collections import Counter
+
         rounded = [round(r.final_score, 1) for r in self._feedback]
         return float(Counter(rounded).most_common(1)[0][0])
 
@@ -2126,7 +2125,7 @@ class OntologyLearningAdapter:
             return 0.0
         mean = sum(tail) / len(tail)
         var = sum((v - mean) ** 2 for v in tail) / len(tail)
-        return float(var ** 0.5)
+        return float(var**0.5)
 
     def feedback_recovery_count(self, threshold: float = 0.5) -> int:
         """Count recoveries: steps where score was below then above *threshold*.
@@ -2159,7 +2158,7 @@ class OntologyLearningAdapter:
         vals = [r.final_score for r in self._feedback]
         mean = sum(vals) / len(vals)
         var = sum((v - mean) ** 2 for v in vals) / len(vals)
-        std = var ** 0.5
+        std = var**0.5
         if std == 0:
             return 0.0
         return float((vals[-1] - mean) / std)
@@ -2225,7 +2224,7 @@ class OntologyLearningAdapter:
         scores = [r.final_score for r in self._feedback]
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        std = variance ** 0.5
+        std = variance**0.5
         return float(max(0.0, 1.0 - std / 0.5))
 
     def feedback_geometric_mean(self) -> float:
@@ -2270,7 +2269,7 @@ class OntologyLearningAdapter:
         scores = [r.final_score for r in self._feedback]
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return float(variance ** 0.5)
+        return float(variance**0.5)
 
     def feedback_coefficient_of_variation(self) -> float:
         """Return the coefficient of variation (std / mean) of feedback scores.
@@ -2285,7 +2284,7 @@ class OntologyLearningAdapter:
         if mean == 0.0:
             return 0.0
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-        return float((variance ** 0.5) / mean)
+        return float((variance**0.5) / mean)
 
     def feedback_relative_std(self) -> float:
         """Alias for :meth:`feedback_coefficient_of_variation`.
@@ -2325,10 +2324,7 @@ class OntologyLearningAdapter:
         scores = [r.final_score for r in self._feedback]
         if len(scores) < window:
             return []
-        return [
-            sum(scores[i:i + window]) / window
-            for i in range(len(scores) - window + 1)
-        ]
+        return [sum(scores[i : i + window]) / window for i in range(len(scores) - window + 1)]
 
     def feedback_rolling_std(self, window: int = 3) -> list[float]:
         """Return a list of rolling standard deviations over ``window``-sized windows.
@@ -2347,10 +2343,10 @@ class OntologyLearningAdapter:
             return []
         result = []
         for i in range(len(scores) - window + 1):
-            chunk = scores[i:i + window]
+            chunk = scores[i : i + window]
             mean = sum(chunk) / window
             variance = sum((v - mean) ** 2 for v in chunk) / window
-            result.append(variance ** 0.5)
+            result.append(variance**0.5)
         return result
 
     def feedback_trend_intercept(self) -> float:
@@ -2375,7 +2371,6 @@ class OntologyLearningAdapter:
             return 0.0
         slope = num / den
         return y_mean - slope * x_mean
-
 
     def feedback_above_mean_ratio(self) -> float:
         """Return the fraction of feedback scores strictly above their collective mean.
@@ -2416,7 +2411,7 @@ class OntologyLearningAdapter:
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
         if variance == 0.0:
             return [0.0] * len(scores)
-        std = variance ** 0.5
+        std = variance**0.5
         return [(s - mean) / std for s in scores]
 
     def feedback_percentile(self, p: float) -> float:  # type: ignore[no-redef]

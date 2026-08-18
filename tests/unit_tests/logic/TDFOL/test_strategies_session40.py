@@ -17,6 +17,7 @@ Coverage focuses on:
   log, prefer_low_cost=True path, select_multiple with no applicable
 - __init__.py: ImportError pass blocks in lazy imports
 """
+
 from __future__ import annotations
 
 import time
@@ -50,6 +51,7 @@ import ipfs_datasets_py.logic.TDFOL.strategies.cec_delegate as cec_mod
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _pred(name: str = "P") -> Predicate:
     return Predicate(name, ())
@@ -98,6 +100,7 @@ class _MockStrategy(ProverStrategy):
 # ===========================================================================
 # ModalTableauxStrategy — missing coverage
 # ===========================================================================
+
 
 class TestModalTableauxIsModalFormula:
     """Lines 207, 209 — QuantifiedFormula + False branch."""
@@ -260,9 +263,7 @@ class TestModalTableauxProveExceptionPath:
         formula = _deontic()
         kb = _kb()
 
-        with patch.object(
-            strat, "_prove_with_shadowprover", side_effect=RuntimeError("boom")
-        ):
+        with patch.object(strat, "_prove_with_shadowprover", side_effect=RuntimeError("boom")):
             result = strat.prove(formula, kb)
         assert result.status == ProofStatus.ERROR
         assert "boom" in result.message
@@ -351,6 +352,7 @@ class TestModalTableauxSelectModalLogicType:
 # CECDelegateStrategy — missing coverage
 # ===========================================================================
 
+
 class TestCECDelegateTryLoadSuccess:
     """Lines 43–46 — _try_load_cec_prover exception / success paths."""
 
@@ -417,16 +419,18 @@ class TestCECDelegateInitEngineFailure:
         cec_mod.HAVE_CEC_PROVER = False
         cec_mod.InferenceEngine = None
 
-        with patch.object(cec_mod, "_try_load_cec_prover", return_value=True), \
-             patch.object(cec_mod, "HAVE_CEC_PROVER", True, create=True), \
-             patch.object(cec_mod, "InferenceEngine", mock_engine_class, create=True):
+        with (
+            patch.object(cec_mod, "_try_load_cec_prover", return_value=True),
+            patch.object(cec_mod, "HAVE_CEC_PROVER", True, create=True),
+            patch.object(cec_mod, "InferenceEngine", mock_engine_class, create=True),
+        ):
             from ipfs_datasets_py.logic.TDFOL.strategies.cec_delegate import CECDelegateStrategy
+
             strat = CECDelegateStrategy.__new__(CECDelegateStrategy)
             # Manually trigger __init__ logic that would fail
             from ipfs_datasets_py.logic.TDFOL.strategies.base import StrategyType
-            super(CECDelegateStrategy, strat).__init__(
-                "CEC Delegate", StrategyType.CEC_DELEGATE
-            )
+
+            super(CECDelegateStrategy, strat).__init__("CEC Delegate", StrategyType.CEC_DELEGATE)
             strat.cec_engine = None
             if cec_mod._try_load_cec_prover():
                 try:
@@ -458,6 +462,7 @@ class TestCECDelegateCanHandleTrue:
 # ===========================================================================
 # StrategySelector — missing coverage
 # ===========================================================================
+
 
 class TestStrategySelectorImportErrorBranches:
     """Lines 71–72, 77–78, 83–84 — ImportError warnings in _get_default_strategies."""
@@ -493,14 +498,17 @@ class TestStrategySelectorNoStrategiesError:
 
     def test_no_strategies_error_logged(self):
         """GIVEN all imports fail THEN logger.error called."""
-        with patch.dict(
-            "sys.modules",
-            {
-                "ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining": None,
-                "ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux": None,
-                "ipfs_datasets_py.logic.TDFOL.strategies.cec_delegate": None,
-            },
-        ), patch("ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector.logger") as mock_log:
+        with (
+            patch.dict(
+                "sys.modules",
+                {
+                    "ipfs_datasets_py.logic.TDFOL.strategies.forward_chaining": None,
+                    "ipfs_datasets_py.logic.TDFOL.strategies.modal_tableaux": None,
+                    "ipfs_datasets_py.logic.TDFOL.strategies.cec_delegate": None,
+                },
+            ),
+            patch("ipfs_datasets_py.logic.TDFOL.strategies.strategy_selector.logger") as mock_log,
+        ):
             selector = StrategySelector()
         mock_log.error.assert_called_once()
         assert "No strategies" in mock_log.error.call_args[0][0]
@@ -569,6 +577,7 @@ class TestStrategySelectorSelectMultipleNoApplicable:
 # strategies/__init__.py — ImportError pass blocks (lines 47–48, 53–54, 59–60, 65–66)
 # ===========================================================================
 
+
 class TestStrategiesInitImportErrors:
     """Test that __init__.py gracefully handles ImportError for all strategy imports."""
 
@@ -590,6 +599,7 @@ class TestStrategiesInitImportErrors:
             saved = sys.modules.pop(init_key, None)
             try:
                 import ipfs_datasets_py.logic.TDFOL.strategies as strats
+
                 # The module should still import (just without the strategy classes)
                 assert hasattr(strats, "ProverStrategy")
             except Exception:
@@ -606,6 +616,7 @@ class TestStrategiesInitImportErrors:
             ModalTableauxStrategy,
             StrategySelector,
         )
+
         assert ProverStrategy is not None
         assert StrategyType is not None
         assert ModalTableauxStrategy is not None
@@ -615,6 +626,7 @@ class TestStrategiesInitImportErrors:
 # ===========================================================================
 # Modal tableaux — _prove_basic_modal covered formula in theorems
 # ===========================================================================
+
 
 class TestModalTableauxProveBasicModal:
     """Ensure _prove_basic_modal handles formula in KB correctly."""
@@ -654,6 +666,7 @@ class TestModalTableauxProveBasicModal:
 # ===========================================================================
 # StrategySelector — add_strategy re-sorts
 # ===========================================================================
+
 
 class TestStrategySelectorAddStrategy:
     """Line 180 in strategy_selector.py — add_strategy re-sorts."""

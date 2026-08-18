@@ -462,7 +462,7 @@ After removing submodules, run:
    from ipfs_datasets_py.processors.file_converter import (
        FileConverter,
        UniversalKnowledgeGraphPipeline,
-       VectorEmbeddingPipeline
+       VectorEmbeddingPipeline,
    )
    ```
 

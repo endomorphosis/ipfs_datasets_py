@@ -140,8 +140,10 @@
 
 ```python
 from ipfs_datasets_py.logic.TDFOL import (
-    create_universal, create_implication,
-    create_obligation, create_always
+    create_universal,
+    create_implication,
+    create_obligation,
+    create_always,
 )
 
 # Build: ∀x.(Agent(x) → O(□Report(x)))
@@ -198,9 +200,7 @@ if result.is_proved():
 ### 4. Format Conversion
 
 ```python
-from ipfs_datasets_py.logic.TDFOL import (
-    parse_tdfol, tdfol_to_dcec, tdfol_to_fol, tdfol_to_tptp
-)
+from ipfs_datasets_py.logic.TDFOL import parse_tdfol, tdfol_to_dcec, tdfol_to_fol, tdfol_to_tptp
 
 formula = parse_tdfol("O(P(x))")
 

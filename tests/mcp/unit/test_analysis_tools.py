@@ -32,8 +32,11 @@ class TestClusteringAnalysis:
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
             perform_clustering_analysis,
         )
+
         vectors = np.random.rand(30, 8).tolist()
-        result = await perform_clustering_analysis(vectors=vectors, algorithm="kmeans", n_clusters=3)
+        result = await perform_clustering_analysis(
+            vectors=vectors, algorithm="kmeans", n_clusters=3
+        )
         assert result is not None
         assert result["success"] is True
         assert "cluster_labels" in result or "clusters" in result
@@ -49,6 +52,7 @@ class TestClusteringAnalysis:
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
             perform_clustering_analysis,
         )
+
         vectors = np.random.rand(20, 4).tolist()
         result = await perform_clustering_analysis(vectors=vectors, algorithm="dbscan")
         assert result is not None
@@ -64,6 +68,7 @@ class TestClusteringAnalysis:
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
             perform_clustering_analysis,
         )
+
         vectors = np.random.rand(10, 4).tolist()
         with pytest.raises(ValueError):
             await perform_clustering_analysis(vectors=vectors, algorithm="nonexistent_algo")
@@ -78,6 +83,7 @@ class TestClusteringAnalysis:
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
             perform_clustering_analysis,
         )
+
         vectors = np.random.rand(40, 6).tolist()
         result = await perform_clustering_analysis(vectors=vectors, n_clusters=4)
         assert result is not None
@@ -97,6 +103,7 @@ class TestEmbeddingQuality:
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
             assess_embedding_quality,
         )
+
         embeddings = np.random.rand(25, 8).tolist()
         result = await assess_embedding_quality(embeddings=embeddings)
         assert result is not None
@@ -114,6 +121,7 @@ class TestEmbeddingQuality:
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
             assess_embedding_quality,
         )
+
         embeddings = np.random.rand(30, 12).tolist()
         result = await assess_embedding_quality(embeddings=embeddings)
         assert "outliers" in result or "n_outliers" in result
@@ -132,6 +140,7 @@ class TestDimensionalityReduction:
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
             reduce_dimensionality,
         )
+
         vectors = np.random.rand(20, 16).tolist()
         result = await reduce_dimensionality(vectors=vectors, n_components=4, method="pca")
         assert result is not None
@@ -147,6 +156,7 @@ class TestDimensionalityReduction:
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
             reduce_dimensionality,
         )
+
         vectors = np.random.rand(15, 10).tolist()
         result = await reduce_dimensionality(vectors=vectors)
         assert result is not None
@@ -162,6 +172,7 @@ class TestSynchronousAnalysisFunctions:
         """
         import numpy as np
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import detect_outliers
+
         data = np.random.rand(50, 4)
         # Add obvious outlier
         data[0] = [100.0, 100.0, 100.0, 100.0]
@@ -176,7 +187,10 @@ class TestSynchronousAnalysisFunctions:
         THEN a dict of diversity metrics is returned
         """
         import numpy as np
-        from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import analyze_diversity
+        from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
+            analyze_diversity,
+        )
+
         data = np.random.rand(20, 6)
         result = analyze_diversity(data=data)
         assert isinstance(result, dict)
@@ -189,6 +203,7 @@ class TestSynchronousAnalysisFunctions:
         """
         import numpy as np
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import detect_drift
+
         reference = np.random.rand(30, 4)
         current = np.random.rand(20, 4)
         result = detect_drift(old_data=reference, new_data=current)
@@ -203,6 +218,7 @@ class TestSynchronousAnalysisFunctions:
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
             analyze_similarity_patterns,
         )
+
         data = np.random.rand(15, 5)
         result = analyze_similarity_patterns(data=data)
         assert isinstance(result, dict)
@@ -221,6 +237,7 @@ class TestAnalysisToolsIntegration:
         from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
             perform_clustering_analysis,
         )
+
         vectors = np.random.rand(10, 4).tolist()
         with pytest.raises(ValueError, match="Valid algorithms"):
             await perform_clustering_analysis(vectors=vectors, algorithm="invalid_algorithm")
@@ -236,6 +253,7 @@ class TestAnalysisToolsIntegration:
             perform_clustering_analysis,
             assess_embedding_quality,
         )
+
         vectors = np.random.rand(50, 8).tolist()
 
         cluster_result = await perform_clustering_analysis(vectors=vectors, n_clusters=3)

@@ -69,9 +69,7 @@ LOWER_IS_BETTER = frozenset(
     }
 )
 FAMILY_METRIC_NAMES = METRIC_NAMES + ("semantic_equivalence",)
-REQUIRED_FAMILY_OBSERVED_METRICS = frozenset(
-    {"ir_cross_entropy_loss", "ir_cosine_similarity"}
-)
+REQUIRED_FAMILY_OBSERVED_METRICS = frozenset({"ir_cross_entropy_loss", "ir_cosine_similarity"})
 SEED_SENSITIVE_AUTOENCODER_METRICS = (
     "autoencoder_cross_entropy_loss",
     "autoencoder_cosine_similarity",
@@ -289,9 +287,7 @@ def extract_summary_metrics(
         sample_count = _finite(row.get("sample_count"))
         coverage = _finite(row.get("metric_coverage"))
         observed = {
-            str(name)
-            for name in row.get("observed_metrics", ())
-            if isinstance(name, str) and name
+            str(name) for name in row.get("observed_metrics", ()) if isinstance(name, str) and name
         }
         if sample_count is None or sample_count < 1:
             raise ValueError(f"missing sample coverage for {context}")
@@ -376,9 +372,7 @@ def extract_summary_metrics(
         "ir_cosine_similarity": learned_cos,
         "autoencoder_cross_entropy_loss": global_auto_ce,
         "autoencoder_cosine_similarity": global_auto_cosine,
-        "symbolic_validity_success_rate": macro(
-            "symbolic_validity_success_rate"
-        ),
+        "symbolic_validity_success_rate": macro("symbolic_validity_success_rate"),
         "hammer_proof_success_rate": macro("hammer_proof_success_rate"),
         "reconstruction_success_rate": macro("reconstruction_success_rate"),
         "round_trip_success_rate": macro("round_trip_success_rate"),
@@ -431,9 +425,7 @@ def _aggregate_family_metrics(
     result: dict[str, dict[str, Any]] = {}
     for family in DEFAULT_REQUIRED_FAMILIES:
         candidate = {
-            name: statistics.fmean(
-                float(seed[family][name]) for seed in seed_families
-            )
+            name: statistics.fmean(float(seed[family][name]) for seed in seed_families)
             for name in FAMILY_METRIC_NAMES
         }
         result[family] = {
@@ -480,14 +472,17 @@ def verify_baseline_receipt(
         raise ValueError("task-117 baseline evidence is not an accepted smoke")
     receipt_body = dict(evidence)
     claimed_manifest = str(receipt_body.pop("manifest_sha256", ""))
-    calculated_manifest = "sha256:" + hashlib.sha256(
-        json.dumps(
-            receipt_body,
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-        ).encode("utf-8")
-    ).hexdigest()
+    calculated_manifest = (
+        "sha256:"
+        + hashlib.sha256(
+            json.dumps(
+                receipt_body,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+        ).hexdigest()
+    )
     if claimed_manifest != calculated_manifest:
         raise ValueError("task-117 evidence manifest digest mismatch")
     artifacts = _mapping(evidence.get("artifacts"))
@@ -498,17 +493,11 @@ def verify_baseline_receipt(
     lineage = _mapping(evidence.get("lineage"))
     if summary_artifact.get("sha256") != summary_sha:
         raise ValueError("baseline summary does not match task-117 evidence")
-    if (
-        state_artifact.get("sha256") != state_sha
-        or lineage.get("final_state_sha256") != state_sha
-    ):
+    if state_artifact.get("sha256") != state_sha or lineage.get("final_state_sha256") != state_sha:
         raise ValueError("baseline state does not match task-117 evidence")
     summary = _load_json(baseline_summary)
     expected_summary_run_id = f"{evidence.get('run_id')}-autoencoder"
-    if (
-        summary.get("final") is not True
-        or summary.get("run_id") != expected_summary_run_id
-    ):
+    if summary.get("final") is not True or summary.get("run_id") != expected_summary_run_id:
         raise ValueError("baseline summary identity or completion marker is invalid")
     raw_indices = summary.get("validation_canary_indices")
     if not isinstance(raw_indices, list):
@@ -684,14 +673,12 @@ class SeedRun:
             and self.summary.get("autoencoder_compute_device_request") == "cuda"
             and self.summary.get("autoencoder_cuda_residency_applied") == "true"
             and int(self.summary.get("cycles", 0) or 0) == self.fidelity_profile.max_cycles
-            and int(self.summary.get("max_cycles", 0) or 0)
-            == self.fidelity_profile.max_cycles
+            and int(self.summary.get("max_cycles", 0) or 0) == self.fidelity_profile.max_cycles
             and tuple(self.summary.get("validation_canary_indices", ()))
             == self.expected_validation_canary_indices
             and int(self.summary.get("validation_canary_count", 0) or 0)
             == len(self.expected_validation_canary_indices)
-            and self.summary.get("validation_canary_indices_source")
-            == "operator_pinned"
+            and self.summary.get("validation_canary_indices_source") == "operator_pinned"
             and int(self.summary.get("max_sample_text_chars", 0) or 0)
             == self.fidelity_profile.max_sample_text_chars
             and self.active_seconds > 0
@@ -726,9 +713,7 @@ class SeedRun:
                 _sha256_file(self.summary_path) if self.summary_path.is_file() else None
             ),
             "state_path": str(self.state_path),
-            "state_sha256": (
-                _sha256_file(self.state_path) if self.state_path.is_file() else None
-            ),
+            "state_sha256": (_sha256_file(self.state_path) if self.state_path.is_file() else None),
             "stdout_path": str(self.stdout_path),
             "stderr_path": str(self.stderr_path),
         }
@@ -898,10 +883,7 @@ def _execute_seed(
     fidelity_profile: FidelityProfile,
 ) -> SeedRun:
     seconds = max(1, math.ceil(item.additional_budget_seconds / len(item.candidate.seeds)))
-    run_id = (
-        f"{base_run_id}-{item.candidate.candidate_id}-"
-        f"r{item.rung.index:02d}-s{seed}"
-    )
+    run_id = f"{base_run_id}-{item.candidate.candidate_id}-r{item.rung.index:02d}-s{seed}"
     summary_path = repo_root / "workspace/test-logs" / f"{run_id}.summary"
     state_path = repo_root / "workspace/todo-queues" / f"{run_id}.state.json"
     stdout_path = work_root / f"{run_id}.stdout.log"
@@ -919,7 +901,14 @@ def _execute_seed(
     started = time.monotonic()
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join(
-        filter(None, (str(repo_root), str(repo_root.parent / "ipfs_accelerate_py"), env.get("PYTHONPATH", "")))
+        filter(
+            None,
+            (
+                str(repo_root),
+                str(repo_root.parent / "ipfs_accelerate_py"),
+                env.get("PYTHONPATH", ""),
+            ),
+        )
     )
     returncode = 125
     error = ""
@@ -1051,13 +1040,10 @@ def extract_candidate_metrics(
         or aggregate.get("complete") is not True
         or not state_version
         or state_version != str(published_versions.get("state_version") or "")
-        or int(evaluation.get("sequence", 0) or 0)
-        != int(published.get("sequence", -1) or -1)
+        or int(evaluation.get("sequence", 0) or 0) != int(published.get("sequence", -1) or -1)
     ):
         raise ValueError("post-update snapshot receipt is incomplete or has stale lineage")
-    metrics, families = extract_summary_metrics(
-        _projection_metric_summary(summary, side="after")
-    )
+    metrics, families = extract_summary_metrics(_projection_metric_summary(summary, side="after"))
     validation = _mapping(snapshot_metrics.get("validation"))
     snapshot_losses = _mapping(validation.get("legal_ir_losses"))
     snapshot_values = {
@@ -1123,10 +1109,7 @@ def _paired_delta_estimate(
 
     metrics = {name: float(baseline_metrics[name]) for name in METRIC_NAMES}
     families = {
-        family: {
-            name: float(baseline_families[family][name])
-            for name in FAMILY_METRIC_NAMES
-        }
+        family: {name: float(baseline_families[family][name]) for name in FAMILY_METRIC_NAMES}
         for family in DEFAULT_REQUIRED_FAMILIES
     }
     for run in sorted(runs, key=lambda item: item.rung_index):
@@ -1142,10 +1125,7 @@ def _paired_delta_estimate(
     return (
         {name: _bounded_estimate(name, value) for name, value in metrics.items()},
         {
-            family: {
-                name: _bounded_estimate(name, value)
-                for name, value in values.items()
-            }
+            family: {name: _bounded_estimate(name, value) for name, value in values.items()}
             for family, values in families.items()
         },
     )
@@ -1172,11 +1152,7 @@ def _final_rung_metric_estimate(
     metrics, families = extract_candidate_metrics(run.summary)
     paired_metrics, paired_families = _paired_delta_estimate(
         runs=[
-            *(
-                prior
-                for prior in prior_runs
-                if prior.seed == run.seed and prior.succeeded
-            ),
+            *(prior for prior in prior_runs if prior.seed == run.seed and prior.succeeded),
             run,
         ],
         baseline_metrics=baseline_metrics,
@@ -1258,16 +1234,14 @@ def _snapshot_from_runs(
         multi_seed_evidence_complete=complete,
         compute_backend="torch_cuda" if complete else "",
         cpu_fallback_used=any(
-            run.summary.get("autoencoder_compute_backend") != "torch_cuda"
-            for run in runs
+            run.summary.get("autoencoder_compute_backend") != "torch_cuda" for run in runs
         ),
         state_revision=scheduler.config.baseline.revision,
         evidence_created_at_epoch=time.time(),
         stale=False,
-        evaluation_lane_complete=complete and all(
-            bool(_family_rows(run.summary)) for run in runs
-        ),
-        proof_lane_complete=complete and all(
+        evaluation_lane_complete=complete and all(bool(_family_rows(run.summary)) for run in runs),
+        proof_lane_complete=complete
+        and all(
             bool(
                 _mapping(
                     _mapping(
@@ -1284,28 +1258,20 @@ def _snapshot_from_runs(
 
 def _metric_extraction_policy() -> dict[str, Any]:
     return {
-        "candidate_metrics": (
-            "projection_after_cross_checked_with_state_versioned_snapshot"
-        ),
+        "candidate_metrics": ("projection_after_cross_checked_with_state_versioned_snapshot"),
         "paired_baseline": "projection_before_from_the_same_optimizer_cycle",
         "ir_metrics": "learned_ir_projection_objective",
-        "family_autoencoder_metrics": (
-            "observed_family_value_else_global_validation_broadcast"
-        ),
+        "family_autoencoder_metrics": ("observed_family_value_else_global_validation_broadcast"),
         "calibration_error": (
             "absolute_family_score_minus_symbolic_validity_proxy_until_ece_head_exists"
         ),
         "round_trip_success_rate": "family_reconstruction_success_rate",
         "confidence": "three_seed_student_t_95_percent",
-        "early_rung_comparison": (
-            "task_117_baseline_plus_cumulative_paired_before_after_deltas"
-        ),
+        "early_rung_comparison": ("task_117_baseline_plus_cumulative_paired_before_after_deltas"),
         "final_rung_comparison": (
             "absolute_task_117_full_8_canary_metrics_except_seed_sensitive_autoencoder"
         ),
-        "seed_sensitive_autoencoder_metrics": list(
-            SEED_SENSITIVE_AUTOENCODER_METRICS
-        ),
+        "seed_sensitive_autoencoder_metrics": list(SEED_SENSITIVE_AUTOENCODER_METRICS),
         "autoencoder_metric_comparison": (
             "task_117_baseline_plus_cumulative_same_seed_before_after_deltas"
         ),
@@ -1426,9 +1392,7 @@ def rescore_search_report(
         baseline_summary_payload,
         validation_canary_indices,
     )
-    if [profile.to_dict() for profile in fidelity_profiles] != source.get(
-        "fidelity_profiles"
-    ):
+    if [profile.to_dict() for profile in fidelity_profiles] != source.get("fidelity_profiles"):
         raise ValueError("source report fidelity ladder is inconsistent")
     scheduler, baseline_record = build_scheduler_from_baseline(
         evidence=evidence,
@@ -1473,9 +1437,7 @@ def rescore_search_report(
         training_revisions.add(training_revision)
     if len(training_revisions) != 1:
         raise ValueError("source runs were produced by different compiler revisions")
-    requested_resource_seconds = sum(
-        run.requested_seconds for run in records.values()
-    )
+    requested_resource_seconds = sum(run.requested_seconds for run in records.values())
     measured_active_seconds = sum(run.active_seconds for run in records.values())
     if requested_resource_seconds != IMMUTABLE_BUDGET_SECONDS:
         raise ValueError("source runs do not consume the immutable one-hour budget")
@@ -1525,10 +1487,7 @@ def rescore_search_report(
     scheduler_report = scheduler.report_dict()
     selected = scheduler.selected_candidate()
     selected_states = (
-        {
-            str(seed): str(latest_state[(selected.candidate_id, seed)])
-            for seed in selected.seeds
-        }
+        {str(seed): str(latest_state[(selected.candidate_id, seed)]) for seed in selected.seeds}
         if selected is not None
         else {}
     )
@@ -1684,10 +1643,7 @@ def execute_search(
     scheduler_report = scheduler.report_dict()
     selected = scheduler.selected_candidate()
     selected_states = (
-        {
-            str(seed): str(latest_state[(selected.candidate_id, seed)])
-            for seed in selected.seeds
-        }
+        {str(seed): str(latest_state[(selected.candidate_id, seed)]) for seed in selected.seeds}
         if selected is not None
         else {}
     )
@@ -1713,9 +1669,7 @@ def execute_search(
         "trainer_limit": trainer_limit,
         "fidelity_profiles": [profile.to_dict() for profile in fidelity_profiles],
         "validation_canary_indices": list(validation_canary_indices),
-        "validation_canary_indices_sha256": _sha256_value(
-            list(validation_canary_indices)
-        ),
+        "validation_canary_indices_sha256": _sha256_value(list(validation_canary_indices)),
         "run_records": sorted(
             run_records,
             key=lambda item: (item["rung_index"], item["candidate_id"], item["seed"]),
@@ -1723,9 +1677,7 @@ def execute_search(
         "scheduler_report": scheduler_report,
         "search_complete": scheduler_report["search_complete"],
         "promotion_eligible": scheduler_report["promotion_eligible"],
-        "selected_candidate": (
-            None if selected is None else selected.to_dict()
-        ),
+        "selected_candidate": (None if selected is None else selected.to_dict()),
         "selected_seed_states": selected_states,
         "metric_extraction_policy": _metric_extraction_policy(),
     }
@@ -1736,8 +1688,7 @@ def execute_search(
 
 def _default_paths(repo_root: Path, run_id: str) -> dict[str, Path]:
     evidence = (
-        repo_root
-        / "docs/implementation/reports/evidence/legal_ir_10_minute_integrated_smoke.json"
+        repo_root / "docs/implementation/reports/evidence/legal_ir_10_minute_integrated_smoke.json"
     )
     smoke_run_id = "legal-ir-10m-smoke-20260723T033130Z"
     return {
@@ -1777,19 +1728,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         raise SystemExit("exactly one of --run-id or --rescore-from is required")
     if args.rescore_from and args.dry_run:
         raise SystemExit("--dry-run cannot be combined with --rescore-from")
-    repo_root = (
-        args.repo_root.resolve()
-        if args.repo_root
-        else Path(__file__).resolve().parents[3]
-    )
+    repo_root = args.repo_root.resolve() if args.repo_root else Path(__file__).resolve().parents[3]
     if args.rescore_from:
         source_report = args.rescore_from.resolve()
         output = (
             args.output.resolve()
             if args.output
-            else source_report.with_name(
-                f"{source_report.stem}-causal-rescore.json"
-            )
+            else source_report.with_name(f"{source_report.stem}-causal-rescore.json")
         )
         python = None
         baseline_evidence = baseline_summary = baseline_state = work_root = None
@@ -1854,8 +1799,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         _signal_process_groups(signal.SIGTERM)
 
     previous_handlers = {
-        signum: signal.signal(signum, request_stop)
-        for signum in (signal.SIGINT, signal.SIGTERM)
+        signum: signal.signal(signum, request_stop) for signum in (signal.SIGINT, signal.SIGTERM)
     }
     try:
         with lock_path.open("a+") as lock:

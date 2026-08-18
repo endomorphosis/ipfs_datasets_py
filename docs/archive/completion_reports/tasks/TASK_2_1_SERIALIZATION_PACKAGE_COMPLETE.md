@@ -99,7 +99,9 @@ from ipfs_datasets_py.data_transformation.serialization.car_conversion import Da
 **Old Location (Deprecated but Working):**
 ```python
 from ipfs_datasets_py.data_transformation import car_conversion  # Shows DeprecationWarning
-from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils  # Shows DeprecationWarning
+from ipfs_datasets_py.data_transformation.car_conversion import (
+    DataInterchangeUtils,
+)  # Shows DeprecationWarning
 ```
 
 ### ✅ Deprecation Warnings Active
@@ -126,9 +128,15 @@ from ipfs_datasets_py.data_transformation.ipfs_parquet_to_car import ParquetToCa
 ### After (New Imports)
 ```python
 from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils
-from ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet import JSONLToParquetConverter
-from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import DatasetSerializer
-from ipfs_datasets_py.data_transformation.serialization.ipfs_parquet_to_car import ParquetToCarConverter
+from ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet import (
+    JSONLToParquetConverter,
+)
+from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import (
+    DatasetSerializer,
+)
+from ipfs_datasets_py.data_transformation.serialization.ipfs_parquet_to_car import (
+    ParquetToCarConverter,
+)
 ```
 
 **Or use package import:**

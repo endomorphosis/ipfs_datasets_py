@@ -37,23 +37,17 @@ from ipfs_datasets_py.p2p_networking.libp2p_kit import DistributedDatasetManager
 import pandas as pd
 
 # Initialize a manager
-manager = DistributedDatasetManager(
-    node_id="coordinator-node",
-    role=NodeRole.COORDINATOR
-)
+manager = DistributedDatasetManager(node_id="coordinator-node", role=NodeRole.COORDINATOR)
 
 # Create a dataset definition
 dataset = manager.create_dataset(
     name="Distributed Dataset",
     description="A dataset distributed across multiple nodes",
-    schema={"id": "integer", "text": "string", "vector": "float[]"}
+    schema={"id": "integer", "text": "string", "vector": "float[]"},
 )
 
 # Create sample data
-df = pd.DataFrame({
-    "id": list(range(1000)),
-    "text": [f"Sample text {i}" for i in range(1000)]
-})
+df = pd.DataFrame({"id": list(range(1000)), "text": [f"Sample text {i}" for i in range(1000)]})
 
 # Shard and distribute the dataset
 shards = await manager.shard_dataset(
@@ -61,7 +55,7 @@ shards = await manager.shard_dataset(
     data=df,
     format="parquet",
     shard_size=100,  # Records per shard
-    replication_factor=3  # Number of nodes to replicate each shard to
+    replication_factor=3,  # Number of nodes to replicate each shard to
 )
 ```
 
@@ -70,15 +64,12 @@ shards = await manager.shard_dataset(
 ```python
 # Perform a federated query across all nodes
 results = await manager.query(
-    dataset_id=dataset.dataset_id,
-    query="SELECT id, text FROM dataset WHERE id > 500 LIMIT 10"
+    dataset_id=dataset.dataset_id, query="SELECT id, text FROM dataset WHERE id > 500 LIMIT 10"
 )
 
 # For vector datasets, perform a similarity search
 vector_results = await manager.vector_search(
-    dataset_id=dataset.dataset_id,
-    query_vector=query_vector,
-    top_k=10
+    dataset_id=dataset.dataset_id, query_vector=query_vector, top_k=10
 )
 ```
 
@@ -101,7 +92,7 @@ coordinator = DistributedDatasetManager(
     node_id="coordinator",
     listen_addresses=["/ip4/0.0.0.0/tcp/0"],
     bootstrap_peers=["/ip4/104.131.131.82/tcp/4001/p2p/QmaCp..."],
-    role=NodeRole.COORDINATOR
+    role=NodeRole.COORDINATOR,
 )
 
 # Worker node
@@ -109,7 +100,7 @@ worker = DistributedDatasetManager(
     node_id="worker-1",
     listen_addresses=["/ip4/0.0.0.0/tcp/0"],
     bootstrap_peers=["/ip4/127.0.0.1/tcp/4001/p2p/QmCoord..."],
-    role=NodeRole.WORKER
+    role=NodeRole.WORKER,
 )
 
 # Hybrid node
@@ -117,14 +108,14 @@ hybrid = DistributedDatasetManager(
     node_id="hybrid-1",
     listen_addresses=["/ip4/0.0.0.0/tcp/0"],
     bootstrap_peers=["/ip4/127.0.0.1/tcp/4001/p2p/QmCoord..."],
-    role=NodeRole.HYBRID
+    role=NodeRole.HYBRID,
 )
 
 # Client node
 client = DistributedDatasetManager(
     node_id="client-1",
     bootstrap_peers=["/ip4/127.0.0.1/tcp/4001/p2p/QmCoord..."],
-    role=NodeRole.CLIENT
+    role=NodeRole.CLIENT,
 )
 ```
 
@@ -176,8 +167,8 @@ shards = await manager.shard_dataset(
     placement_strategy="balanced_load",  # Balances shards considering node load
     node_preferences=[
         {"node_id": "worker-1", "preference": 0.8},
-        {"node_id": "worker-2", "preference": 0.5}
-    ]
+        {"node_id": "worker-2", "preference": 0.5},
+    ],
 )
 ```
 
@@ -186,9 +177,7 @@ shards = await manager.shard_dataset(
 ```python
 # Rebalance shards when nodes join or leave
 rebalance_results = await manager.rebalance_shards(
-    dataset_id=dataset.dataset_id,
-    target_replication=3,
-    load_balanced=True
+    dataset_id=dataset.dataset_id, target_replication=3, load_balanced=True
 )
 print(f"Rebalanced {rebalance_results['total_shards_rebalanced']} shards")
 ```
@@ -202,8 +191,7 @@ Federated search enables querying across all nodes containing dataset shards.
 ```python
 # SQL-like query across all nodes
 results = await manager.query(
-    dataset_id=dataset.dataset_id,
-    query="SELECT * FROM dataset WHERE column = 'value'"
+    dataset_id=dataset.dataset_id, query="SELECT * FROM dataset WHERE column = 'value'"
 )
 ```
 
@@ -212,10 +200,7 @@ results = await manager.query(
 ```python
 # Vector search across all nodes
 results = await manager.vector_search(
-    dataset_id=dataset.dataset_id,
-    query_vector=query_vector,
-    top_k=10,
-    similarity_threshold=0.7
+    dataset_id=dataset.dataset_id, query_vector=query_vector, top_k=10, similarity_threshold=0.7
 )
 ```
 
@@ -228,7 +213,7 @@ results = await manager.graph_query(
     query_text="How does IPFS work?",
     query_vector=query_vector,
     max_hops=2,
-    top_k=5
+    top_k=5,
 )
 ```
 
@@ -241,11 +226,13 @@ The distributed system includes robust resilience features for handling failures
 ```python
 from ipfs_datasets_py.resilient_operations import resilient
 
+
 # Resilient operation with automatic retry
 @resilient(max_retries=3, backoff_factor=1.5)
 async def fetch_dataset_shard(shard_id, node_id):
     # Attempt to fetch the shard
     return await manager.get_shard(shard_id, node_id)
+
 
 # Use the resilient function
 shard = await fetch_dataset_shard("shard-123", "worker-1")
@@ -258,9 +245,7 @@ from ipfs_datasets_py.resilient_operations import CircuitBreaker
 
 # Create a circuit breaker
 breaker = CircuitBreaker(
-    failure_threshold=5,
-    recovery_timeout=60,
-    fallback_function=get_shard_from_fallback
+    failure_threshold=5, recovery_timeout=60, fallback_function=get_shard_from_fallback
 )
 
 # Use the circuit breaker
@@ -275,13 +260,12 @@ with breaker:
 result = await manager.execute_with_checkpoints(
     operation_func=process_large_dataset,
     checkpoint_interval=1000,  # Checkpoint every 1000 records
-    checkpoint_path="checkpoints/dataset-processing.json"
+    checkpoint_path="checkpoints/dataset-processing.json",
 )
 
 # Resume an operation from a checkpoint
 resumed_result = await manager.resume_from_checkpoint(
-    operation_func=process_large_dataset,
-    checkpoint_path="checkpoints/dataset-processing.json"
+    operation_func=process_large_dataset, checkpoint_path="checkpoints/dataset-processing.json"
 )
 ```
 
@@ -314,7 +298,7 @@ metrics = await manager.get_performance_metrics(
     node_id="worker-1",
     start_time=start_time,
     end_time=end_time,
-    metrics=["cpu", "memory", "disk", "network", "operations"]
+    metrics=["cpu", "memory", "disk", "network", "operations"],
 )
 
 # Analyze performance trends
@@ -331,16 +315,12 @@ Nodes can be configured with specialized capabilities:
 ```python
 # Vector index node
 vector_node = DistributedDatasetManager(
-    node_id="vector-node-1",
-    role=NodeRole.WORKER,
-    capabilities=["vector_search", "high_memory"]
+    node_id="vector-node-1", role=NodeRole.WORKER, capabilities=["vector_search", "high_memory"]
 )
 
 # Knowledge graph node
 kg_node = DistributedDatasetManager(
-    node_id="kg-node-1",
-    role=NodeRole.WORKER,
-    capabilities=["graph_processing", "high_cpu"]
+    node_id="kg-node-1", role=NodeRole.WORKER, capabilities=["graph_processing", "high_cpu"]
 )
 ```
 
@@ -351,14 +331,16 @@ You can extend the system with custom protocols:
 ```python
 from ipfs_datasets_py.p2p_networking.libp2p_kit import Protocol
 
+
 # Define a custom protocol
 class CustomAnalyticsProtocol(Protocol):
     protocol_id = "/ipfs-datasets/analytics/1.0.0"
-    
+
     async def handle_message(self, stream, message):
         # Process the analytics request
         result = process_analytics(message.data)
         await stream.write(encode_response(result))
+
 
 # Register the protocol
 manager.register_protocol(CustomAnalyticsProtocol())
@@ -374,21 +356,14 @@ geo_config = {
     "regions": {
         "us-east": ["node-1", "node-2"],
         "eu-west": ["node-3", "node-4"],
-        "asia-east": ["node-5", "node-6"]
+        "asia-east": ["node-5", "node-6"],
     },
-    "replication_policy": {
-        "min_regions": 2,
-        "default_region_replicas": 2
-    }
+    "replication_policy": {"min_regions": 2, "default_region_replicas": 2},
 }
 
 # Distribute with geographical awareness
 shards = await manager.shard_dataset(
-    dataset_id=dataset.dataset_id,
-    data=df,
-    format="parquet",
-    shard_size=100,
-    geo_config=geo_config
+    dataset_id=dataset.dataset_id, data=df, format="parquet", shard_size=100, geo_config=geo_config
 )
 ```
 
@@ -442,7 +417,7 @@ config = DistributedConfig(
     role="hybrid",
     listen_addresses=["/ip4/0.0.0.0/tcp/0"],
     bootstrap_peers=["/ip4/104.131.131.82/tcp/4001/p2p/QmaCp..."],
-    capabilities=["vector_search", "high_memory"]
+    capabilities=["vector_search", "high_memory"],
 )
 
 # Initialize with the configuration

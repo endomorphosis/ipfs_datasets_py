@@ -76,7 +76,9 @@ def test_build_state_admin_recovered_parquets_from_daemon_manifest(tmp_path):
     daemon_root = tmp_path / "daemon"
     _write_recovered_artifact(daemon_root, state="NY")
     output_root = tmp_path / "upload"
-    parquet_dir = output_root / "US_ADMINISTRATIVE_RULES" / "parsed" / "parquet" / "state_admin_rules_cid"
+    parquet_dir = (
+        output_root / "US_ADMINISTRATIVE_RULES" / "parsed" / "parquet" / "state_admin_rules_cid"
+    )
 
     result = merge_state_admin_recovered_rows.build_state_admin_recovered_parquet_artifacts(
         input_paths=[daemon_root],

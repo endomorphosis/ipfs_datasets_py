@@ -16,6 +16,7 @@ from pathlib import Path
 # Install CLI error handler early
 try:
     from ipfs_datasets_py.error_reporting.cli_error_reporter import install_cli_error_handler
+
     install_cli_error_handler()
 except ImportError:
     # Error reporting not available, continue without it
@@ -26,73 +27,74 @@ except ImportError:
 # Dynamic Tool Discovery and Execution (from enhanced_cli.py)
 # ============================================================================
 
+
 class DynamicToolRunner:
     """Dynamically discover and run MCP tools."""
-    
+
     def __init__(self):
         self.tools_dir = Path(__file__).parent / "ipfs_datasets_py" / "mcp_server" / "tools"
         self.discovered_tools = {}
         self.discover_tools()
-    
+
     def discover_tools(self):
         """Discover all available tools."""
         if not self.tools_dir.exists():
             return
-        
+
         for category_dir in self.tools_dir.iterdir():
-            if not category_dir.is_dir() or category_dir.name.startswith('_'):
+            if not category_dir.is_dir() or category_dir.name.startswith("_"):
                 continue
-            
+
             category_name = category_dir.name
             self.discovered_tools[category_name] = {}
-            
+
             # Look for Python files in the category
             for tool_file in category_dir.glob("*.py"):
-                if tool_file.name.startswith('_') or tool_file.name == "__init__.py":
+                if tool_file.name.startswith("_") or tool_file.name == "__init__.py":
                     continue
-                
+
                 tool_name = tool_file.stem
                 module_path = f"ipfs_datasets_py.mcp_server.tools.{category_name}.{tool_name}"
                 self.discovered_tools[category_name][tool_name] = module_path
-    
+
     def get_categories(self):
         """Get list of available tool categories."""
         return sorted(self.discovered_tools.keys())
-    
+
     def get_tools(self, category):
         """Get list of tools in a category."""
         return sorted(self.discovered_tools.get(category, {}).keys())
-    
+
     def get_tool_count(self, category):
         """Get count of tools in a category."""
         return len(self.discovered_tools.get(category, {}))
-    
+
     async def run_tool(self, category, tool, **kwargs):
         """Run a specific tool."""
         import importlib
         import inspect
-        
+
         if category not in self.discovered_tools:
             return {"status": "error", "error": f"Category '{category}' not found"}
-        
+
         if tool not in self.discovered_tools[category]:
             return {"status": "error", "error": f"Tool '{tool}' not found in category '{category}'"}
-        
+
         module_path = self.discovered_tools[category][tool]
-        
+
         try:
             # Import the module
             module = importlib.import_module(module_path)
-            
+
             # Find callable functions in the module.
             functions = []
             for name, obj in inspect.getmembers(module):
-                if inspect.isfunction(obj) and not name.startswith('_'):
+                if inspect.isfunction(obj) and not name.startswith("_"):
                     functions.append((name, obj))
-            
+
             if not functions:
                 return {"status": "error", "error": f"No callable functions found in {module_path}"}
-            
+
             # Resolve deterministically: exact match first, then <tool>_tool.
             functions_by_name = {name: fn for name, fn in functions}
             target_name = None
@@ -115,10 +117,10 @@ class DynamicToolRunner:
                 }
 
             target_function = functions_by_name[target_name]
-            
+
             # Get function signature
             sig = inspect.signature(target_function)
-            
+
             # Validate kwargs before invocation to avoid silent argument drops.
             supports_var_kwargs = any(
                 p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
@@ -130,7 +132,8 @@ class DynamicToolRunner:
                 allowed = {
                     name
                     for name, p in sig.parameters.items()
-                    if p.kind in (
+                    if p.kind
+                    in (
                         inspect.Parameter.POSITIONAL_OR_KEYWORD,
                         inspect.Parameter.KEYWORD_ONLY,
                     )
@@ -163,20 +166,21 @@ class DynamicToolRunner:
                         f"{sorted(missing_required)}"
                     ),
                 }
-            
+
             # Call the function
             import asyncio
+
             if asyncio.iscoroutinefunction(target_function):
                 result = await target_function(**filtered_kwargs)
             else:
                 result = target_function(**filtered_kwargs)
-            
+
             # Ensure result is a dict
             if not isinstance(result, dict):
                 result = {"status": "success", "result": str(result)}
-            
+
             return result
-            
+
         except ImportError as e:
             return {"status": "error", "error": f"Failed to import {module_path}: {e}"}
         except Exception as e:
@@ -188,7 +192,7 @@ def print_result(result, format_type="pretty"):
     if format_type == "json":
         print(json.dumps(result, indent=2))
         return
-    
+
     if result.get("status") == "success":
         print("✅ Success!")
         if "message" in result:
@@ -219,9 +223,9 @@ def parse_tool_args(args_list):
     i = 0
     while i < len(args_list):
         arg = args_list[i]
-        if arg.startswith('--'):
+        if arg.startswith("--"):
             key = arg[2:]  # Remove --
-            if i + 1 < len(args_list) and not args_list[i + 1].startswith('--'):
+            if i + 1 < len(args_list) and not args_list[i + 1].startswith("--"):
                 value = args_list[i + 1]
                 # Try to parse as JSON, otherwise keep as string
                 try:
@@ -241,6 +245,7 @@ def parse_tool_args(args_list):
 # ============================================================================
 # Original CLI Functions
 # ============================================================================
+
 
 def show_help():
     """Show CLI help without importing anything heavy."""
@@ -540,17 +545,17 @@ def execute_heavy_command(args):
         import importlib
         from typing import Any, Dict, List
         from pathlib import Path as PathLib
-        
+
         # Setup sys path for imports
-        current_dir = PathLib(__file__).parent  
+        current_dir = PathLib(__file__).parent
         if str(current_dir) not in sys.path:
             sys.path.insert(0, str(current_dir))
-        
+
         # Detect global JSON flag and strip it from args
         json_output = False
-        if '--json' in args:
+        if "--json" in args:
             json_output = True
-            args = [a for a in args if a != '--json']
+            args = [a for a in args if a != "--json"]
 
         # Heavy command execution logic here
         command = args[0] if args else None
@@ -611,23 +616,33 @@ def execute_heavy_command(args):
                 parameters = {str(k).replace("-", "_"): v for k, v in parameters.items()}
 
                 if not parameters.get("collection_name"):
-                    print("Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]")
+                    print(
+                        "Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]"
+                    )
                     return
 
                 if "query_vector" not in parameters:
                     query_text = str(parameters.get("query_text") or "").strip()
                     if not query_text:
-                        print("Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]")
+                        print(
+                            "Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]"
+                        )
                         return
 
                     try:
                         from ipfs_datasets_py.embeddings_router import embed_text
 
                         embedding_model = (
-                            str(parameters.get("embedding_model") or parameters.get("model_name") or "").strip()
+                            str(
+                                parameters.get("embedding_model")
+                                or parameters.get("model_name")
+                                or ""
+                            ).strip()
                             or "thenlper/gte-small"
                         )
-                        embedding_provider = str(parameters.get("embedding_provider") or "").strip() or None
+                        embedding_provider = (
+                            str(parameters.get("embedding_provider") or "").strip() or None
+                        )
                         query_vector = embed_text(
                             query_text,
                             model_name=embedding_model,
@@ -652,6 +667,7 @@ def execute_heavy_command(args):
                     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
                         search_court_rules_corpus_from_parameters,
                     )
+
                     result = anyio.run(search_court_rules_corpus_from_parameters, parameters)
                     if json_output:
                         print(json.dumps(result))
@@ -692,10 +708,16 @@ def execute_heavy_command(args):
                         from ipfs_datasets_py.embeddings_router import embed_text
 
                         embedding_model = (
-                            str(parameters.get("embedding_model") or parameters.get("model_name") or "").strip()
+                            str(
+                                parameters.get("embedding_model")
+                                or parameters.get("model_name")
+                                or ""
+                            ).strip()
                             or "thenlper/gte-small"
                         )
-                        embedding_provider = str(parameters.get("embedding_provider") or "").strip() or None
+                        embedding_provider = (
+                            str(parameters.get("embedding_provider") or "").strip() or None
+                        )
                         query_vector = embed_text(
                             query_text,
                             model_name=embedding_model,
@@ -768,11 +790,17 @@ def execute_heavy_command(args):
                         print(json.dumps(err, indent=2))
                 return
 
-            print("Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]")
-            print("       ipfs-datasets legal search-federal-register --collection_name NAME (--query_vector '[...]' | --query_text '...')")
-            print("       ipfs-datasets legal scrape-netherlands-laws (--document_urls '[\"https://wetten.overheid.nl/BWBR...\"]' | --seed_urls '[\"https://wetten.overheid.nl/zoeken/zoekresultaat/...\" ]' | --use_default_seeds true)")
+            print(
+                "Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]"
+            )
+            print(
+                "       ipfs-datasets legal search-federal-register --collection_name NAME (--query_vector '[...]' | --query_text '...')"
+            )
+            print(
+                "       ipfs-datasets legal scrape-netherlands-laws (--document_urls '[\"https://wetten.overheid.nl/BWBR...\"]' | --seed_urls '[\"https://wetten.overheid.nl/zoeken/zoekresultaat/...\" ]' | --use_default_seeds true)"
+            )
             return
-        
+
         if command == "tools":
             subcommand = args[1] if len(args) > 1 else None
             # parse global option --config first
@@ -782,46 +810,50 @@ def execute_heavy_command(args):
                     idx = args.index("--config")
                     if idx + 1 < len(args):
                         config_override = args[idx + 1]
-                        args = args[:idx] + args[idx+2:]
+                        args = args[:idx] + args[idx + 2 :]
                 except Exception:
                     pass
             host, port = _default_host_port(config_override)
-            
+
             # Handle enhanced "tools run" command
             if subcommand == "run":
                 try:
                     import anyio
+
                     runner = DynamicToolRunner()
-                    
+
                     # Parse: tools run <category> <tool> [--arg value ...]
                     if len(args) < 4:
                         print("Usage: ipfs-datasets tools run <category> <tool> [--arg value ...]")
                         print("\nExamples:")
                         print("  ipfs-datasets tools run dataset_tools load_dataset --source squad")
                         print("  ipfs-datasets tools run ipfs_tools get_from_ipfs --cid QmHash123")
-                        print("  ipfs-datasets tools run vector_tools create_vector_index --data 'text'")
+                        print(
+                            "  ipfs-datasets tools run vector_tools create_vector_index --data 'text'"
+                        )
                         return
-                    
+
                     category = args[2]
                     tool = args[3]
                     tool_args = args[4:]
-                    
+
                     # Parse tool arguments
                     kwargs = parse_tool_args(tool_args)
-                    
+
                     # Run the tool
                     result = anyio.run(runner.run_tool, category, tool, **kwargs)
-                    
+
                     # Print result
                     print_result(result, "json" if json_output else "pretty")
                     return
-                    
+
                 except Exception as e:
                     print(f"Error running tool: {e}")
                     import traceback
+
                     traceback.print_exc()
                     return
-            
+
             # Parse common options for tools
             extra = args[2:]
             i = 0
@@ -850,6 +882,7 @@ def execute_heavy_command(args):
             base = f"http://{host}:{port}/api/mcp"
             try:
                 import requests
+
                 if subcommand == "categories":
                     # Use enhanced discovery if MCP server is not running
                     try:
@@ -861,7 +894,7 @@ def execute_heavy_command(args):
                         # Fallback to local discovery
                         runner = DynamicToolRunner()
                         cats = runner.get_categories()
-                    
+
                     if json_output:
                         print(json.dumps({"categories": cats}))
                     else:
@@ -875,7 +908,7 @@ def execute_heavy_command(args):
                     if not category_arg:
                         print("Usage: ipfs-datasets tools list <category> [--host H --port P]")
                         return
-                    
+
                     # Try MCP server first, fallback to local discovery
                     try:
                         r = requests.get(f"{base}/tools", timeout=3)
@@ -887,7 +920,7 @@ def execute_heavy_command(args):
                         runner = DynamicToolRunner()
                         tool_names = runner.get_tools(category_arg)
                         tools = [{"name": name} for name in tool_names]
-                    
+
                     if not tools:
                         print(f"No tools found for category '{category_arg}'")
                         return
@@ -905,7 +938,9 @@ def execute_heavy_command(args):
                     return
                 elif subcommand == "describe":
                     if not category_arg or not tool_arg:
-                        print("Usage: ipfs-datasets tools describe <category> <tool> [--host H --port P]")
+                        print(
+                            "Usage: ipfs-datasets tools describe <category> <tool> [--host H --port P]"
+                        )
                         return
                     url = f"{base}/tools/{category_arg}/{tool_arg}"
                     r = requests.get(url, timeout=5)
@@ -922,7 +957,9 @@ def execute_heavy_command(args):
                     return
                 elif subcommand == "execute":
                     if not category_arg or not tool_arg:
-                        print("Usage: ipfs-datasets tools execute <category> <tool> [--params JSON] [--host H --port P]")
+                        print(
+                            "Usage: ipfs-datasets tools execute <category> <tool> [--params JSON] [--host H --port P]"
+                        )
                         return
                     try:
                         body = json.loads(params_json) if params_json else {}
@@ -945,7 +982,7 @@ def execute_heavy_command(args):
             except Exception as e:
                 print(f"Tools command failed: {e}")
                 return
-        
+
         if command == "ipfs":
             subcommand = args[1] if len(args) > 1 else None
             config_override = None
@@ -954,7 +991,7 @@ def execute_heavy_command(args):
                     idx = args.index("--config")
                     if idx + 1 < len(args):
                         config_override = args[idx + 1]
-                        args = args[:idx] + args[idx+2:]
+                        args = args[:idx] + args[idx + 2 :]
                 except Exception:
                     pass
             host, port = _default_host_port(config_override)
@@ -966,7 +1003,9 @@ def execute_heavy_command(args):
             gateway = None
             # load default gateway from env or config
             if not gateway:
-                gw_env = os.environ.get("IPFS_HTTP_GATEWAY") or os.environ.get("IPFS_DATASETS_IPFS_GATEWAY")
+                gw_env = os.environ.get("IPFS_HTTP_GATEWAY") or os.environ.get(
+                    "IPFS_DATASETS_IPFS_GATEWAY"
+                )
                 if gw_env:
                     gateway = gw_env
                 else:
@@ -997,9 +1036,12 @@ def execute_heavy_command(args):
             base = f"http://{host}:{port}/api/mcp/tools"
             try:
                 import requests
+
                 if subcommand == "get":
                     if not cid_arg:
-                        print("Usage: ipfs-datasets ipfs get <cid> [--out PATH] [--host H --port P]")
+                        print(
+                            "Usage: ipfs-datasets ipfs get <cid> [--out PATH] [--host H --port P]"
+                        )
                         return
                     url = f"{base}/ipfs_tools/get_from_ipfs/execute"
                     body = {"cid": cid_arg}
@@ -1040,7 +1082,7 @@ def execute_heavy_command(args):
             except Exception as e:
                 print(f"IPFS command failed: {e}")
                 return
-        
+
         if command == "mcp":
             subcommand = args[1] if len(args) > 1 else None
             if subcommand == "start":
@@ -1050,7 +1092,7 @@ def execute_heavy_command(args):
                         idx = args.index("--config")
                         if idx + 1 < len(args):
                             config_override = args[idx + 1]
-                            args = args[:idx] + args[idx+2:]
+                            args = args[:idx] + args[idx + 2 :]
                     except Exception:
                         pass
                 host, port = _default_host_port(config_override)
@@ -1093,6 +1135,7 @@ def execute_heavy_command(args):
                         # Quick readiness probe so users get fast feedback
                         import time as _time
                         import urllib.request as _url
+
                         ready = False
                         status_url = f"http://{host}:{port}/api/mcp/status"
                         for _ in range(20):  # ~5s total
@@ -1106,12 +1149,18 @@ def execute_heavy_command(args):
                         if ready:
                             print(f"MCP dashboard is up: {status_url}")
                         else:
-                            print("MCP dashboard did not respond yet. It may still be booting or failed to start.")
-                            print(f"Tip: tail -n 100 {log_path} to see logs, or run 'ipfs-datasets mcp start --blocking' for diagnostics.")
+                            print(
+                                "MCP dashboard did not respond yet. It may still be booting or failed to start."
+                            )
+                            print(
+                                f"Tip: tail -n 100 {log_path} to see logs, or run 'ipfs-datasets mcp start --blocking' for diagnostics."
+                            )
                             # If process exited immediately, surface that
                             _time.sleep(0.2)
                             if proc.poll() is not None:
-                                print(f"Warning: dashboard process exited with code {proc.returncode}. See logs: {log_path}")
+                                print(
+                                    f"Warning: dashboard process exited with code {proc.returncode}. See logs: {log_path}"
+                                )
                     return
                 except Exception as e:
                     print(f"Failed to start MCP dashboard: {e}")
@@ -1136,7 +1185,7 @@ def execute_heavy_command(args):
                         idx = args.index("--config")
                         if idx + 1 < len(args):
                             config_override = args[idx + 1]
-                            args = args[:idx] + args[idx+2:]
+                            args = args[:idx] + args[idx + 2 :]
                     except Exception:
                         pass
                 host, port = _default_host_port(config_override)
@@ -1154,6 +1203,7 @@ def execute_heavy_command(args):
                         i += 1
                 try:
                     import requests
+
                     url = f"http://{host}:{port}/api/mcp/status"
                     r = requests.get(url, timeout=2)
                     if r.ok:
@@ -1163,10 +1213,15 @@ def execute_heavy_command(args):
                             print(f"MCP Dashboard status at {url}: {r.status_code}")
                             try:
                                 data = r.json()
-                                print(json.dumps({
-                                    "status": data.get("status"),
-                                    "tools_available": data.get("tools_available")
-                                }, indent=2))
+                                print(
+                                    json.dumps(
+                                        {
+                                            "status": data.get("status"),
+                                            "tools_available": data.get("tools_available"),
+                                        },
+                                        indent=2,
+                                    )
+                                )
                             except Exception:
                                 print(r.text[:300])
                     else:
@@ -1198,7 +1253,9 @@ def execute_heavy_command(args):
 
                 log_path = Path.home() / ".ipfs_datasets" / "mcp_dashboard.log"
                 if not log_path.exists():
-                    print(f"No log file found at {log_path}. Start the dashboard first with 'ipfs-datasets mcp start'.")
+                    print(
+                        f"No log file found at {log_path}. Start the dashboard first with 'ipfs-datasets mcp start'."
+                    )
                     return
 
                 # Print last N lines
@@ -1218,6 +1275,7 @@ def execute_heavy_command(args):
                         # Seek to end
                         f.seek(0, 2)
                         import time as _time
+
                         while True:
                             pos = f.tell()
                             line = f.readline()
@@ -1231,14 +1289,14 @@ def execute_heavy_command(args):
                 except Exception as e:
                     print(f"Error reading logs: {e}")
                 return
-        
+
         if command == "vscode":
             # VSCode CLI management commands
             subcommand = args[1] if len(args) > 1 else None
-            
+
             try:
                 from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
-                
+
                 if subcommand == "status":
                     # Show VSCode CLI status
                     extra = args[2:]
@@ -1251,10 +1309,10 @@ def execute_heavy_command(args):
                             i += 2
                         else:
                             i += 1
-                    
+
                     cli = VSCodeCLI(install_dir=install_dir)
                     status = cli.get_status()
-                    
+
                     if json_output:
                         print(json.dumps(status, indent=2))
                     else:
@@ -1265,10 +1323,10 @@ def execute_heavy_command(args):
                         print(f"  Executable: {status['executable']}")
                         print(f"  Platform: {status['platform']}")
                         print(f"  Architecture: {status['architecture']}")
-                        if status['extensions']:
+                        if status["extensions"]:
                             print(f"  Extensions: {len(status['extensions'])}")
                     return
-                
+
                 elif subcommand == "install":
                     # Install VSCode CLI
                     extra = args[2:]
@@ -1289,11 +1347,11 @@ def execute_heavy_command(args):
                             i += 2
                         else:
                             i += 1
-                    
+
                     cli = VSCodeCLI(install_dir=install_dir, commit=commit)
                     print("Installing VSCode CLI...")
                     success = cli.download_and_install(force=force)
-                    
+
                     if success:
                         status = cli.get_status()
                         if json_output:
@@ -1307,7 +1365,7 @@ def execute_heavy_command(args):
                         else:
                             print("VSCode CLI installation failed")
                     return
-                
+
                 elif subcommand == "execute":
                     # Execute VSCode CLI command
                     extra = args[2:]
@@ -1329,25 +1387,34 @@ def execute_heavy_command(args):
                         else:
                             cmd_args.append(token)
                             i += 1
-                    
+
                     if not cmd_args:
-                        print("Usage: ipfs-datasets vscode execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]")
+                        print(
+                            "Usage: ipfs-datasets vscode execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]"
+                        )
                         return
-                    
+
                     cli = VSCodeCLI(install_dir=install_dir)
                     if not cli.is_installed():
-                        print("VSCode CLI is not installed. Run 'ipfs-datasets vscode install' first.")
+                        print(
+                            "VSCode CLI is not installed. Run 'ipfs-datasets vscode install' first."
+                        )
                         return
-                    
+
                     result = cli.execute(cmd_args, timeout=timeout)
-                    
+
                     if json_output:
-                        print(json.dumps({
-                            "success": result.returncode == 0,
-                            "returncode": result.returncode,
-                            "stdout": result.stdout,
-                            "stderr": result.stderr
-                        }, indent=2))
+                        print(
+                            json.dumps(
+                                {
+                                    "success": result.returncode == 0,
+                                    "returncode": result.returncode,
+                                    "stdout": result.stdout,
+                                    "stderr": result.stderr,
+                                },
+                                indent=2,
+                            )
+                        )
                     else:
                         if result.stdout:
                             print(result.stdout)
@@ -1356,7 +1423,7 @@ def execute_heavy_command(args):
                         if result.returncode != 0:
                             print(f"Command failed with exit code {result.returncode}")
                     return
-                
+
                 elif subcommand == "extensions":
                     # Manage extensions
                     extra = args[2:]
@@ -1382,16 +1449,22 @@ def execute_heavy_command(args):
                             i += 2
                         else:
                             i += 1
-                    
+
                     cli = VSCodeCLI(install_dir=install_dir)
                     if not cli.is_installed():
-                        print("VSCode CLI is not installed. Run 'ipfs-datasets vscode install' first.")
+                        print(
+                            "VSCode CLI is not installed. Run 'ipfs-datasets vscode install' first."
+                        )
                         return
-                    
+
                     if action == "list":
                         extensions = cli.list_extensions()
                         if json_output:
-                            print(json.dumps({"extensions": extensions, "count": len(extensions)}, indent=2))
+                            print(
+                                json.dumps(
+                                    {"extensions": extensions, "count": len(extensions)}, indent=2
+                                )
+                            )
                         else:
                             print(f"Installed extensions ({len(extensions)}):")
                             for ext in extensions:
@@ -1405,7 +1478,9 @@ def execute_heavy_command(args):
                         if json_output:
                             print(json.dumps({"success": success, "extension_id": extension_id}))
                         else:
-                            print(f"Extension {extension_id} {'installed' if success else 'failed to install'}")
+                            print(
+                                f"Extension {extension_id} {'installed' if success else 'failed to install'}"
+                            )
                     elif action == "uninstall":
                         if not extension_id:
                             print("Usage: ipfs-datasets vscode extensions uninstall <extension-id>")
@@ -1415,9 +1490,11 @@ def execute_heavy_command(args):
                         if json_output:
                             print(json.dumps({"success": success, "extension_id": extension_id}))
                         else:
-                            print(f"Extension {extension_id} {'uninstalled' if success else 'failed to uninstall'}")
+                            print(
+                                f"Extension {extension_id} {'uninstalled' if success else 'failed to uninstall'}"
+                            )
                     return
-                
+
                 elif subcommand == "auth" or subcommand == "configure-auth":
                     # Configure authentication (convenience command)
                     extra = args[2:]
@@ -1434,42 +1511,46 @@ def execute_heavy_command(args):
                             i += 2
                         else:
                             i += 1
-                    
+
                     cli = VSCodeCLI(install_dir=install_dir)
-                    
+
                     # Check if installed, offer to install if not
                     if not cli.is_installed():
                         print("VSCode CLI is not installed.")
                         if not json_output:
                             response = input("Would you like to install it now? (y/n): ").lower()
-                            if response == 'y':
+                            if response == "y":
                                 print("Installing VSCode CLI...")
                                 success = cli.download_and_install()
                                 if not success:
-                                    print("Installation failed. Cannot proceed with authentication.")
+                                    print(
+                                        "Installation failed. Cannot proceed with authentication."
+                                    )
                                     return
                             else:
                                 print("Authentication requires VSCode CLI to be installed.")
                                 print("Run 'ipfs-datasets vscode install' first.")
                                 return
                         else:
-                            print(json.dumps({"success": False, "error": "VSCode CLI not installed"}))
+                            print(
+                                json.dumps({"success": False, "error": "VSCode CLI not installed"})
+                            )
                             return
-                    
+
                     # Configure authentication
                     print(f"Configuring authentication with {provider}...")
                     result = cli.configure_auth(provider=provider)
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        print(result['message'])
-                        if result['success'] and result.get('stdout'):
-                            print(result['stdout'])
-                        if result.get('stderr'):
-                            print(result['stderr'], file=sys.stderr)
+                        print(result["message"])
+                        if result["success"] and result.get("stdout"):
+                            print(result["stdout"])
+                        if result.get("stderr"):
+                            print(result["stderr"], file=sys.stderr)
                     return
-                
+
                 elif subcommand == "install-with-auth":
                     # Install and configure authentication in one step
                     extra = args[2:]
@@ -1490,24 +1571,26 @@ def execute_heavy_command(args):
                             i += 1
                         else:
                             i += 1
-                    
+
                     cli = VSCodeCLI(install_dir=install_dir)
-                    
-                    print(f"Installing VSCode CLI and configuring authentication with {provider}...")
+
+                    print(
+                        f"Installing VSCode CLI and configuring authentication with {provider}..."
+                    )
                     result = cli.install_with_auth(provider=provider, force=force)
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        print(result['message'])
-                        for msg in result.get('messages', []):
+                        print(result["message"])
+                        for msg in result.get("messages", []):
                             print(f"  • {msg}")
-                        
-                        if result.get('auth_details', {}).get('stdout'):
+
+                        if result.get("auth_details", {}).get("stdout"):
                             print("\nAuthentication details:")
-                            print(result['auth_details']['stdout'])
+                            print(result["auth_details"]["stdout"])
                     return
-                
+
                 elif subcommand == "tunnel":
                     # Manage tunnel
                     extra = args[2:]
@@ -1535,67 +1618,84 @@ def execute_heavy_command(args):
                             i += 2
                         else:
                             i += 1
-                    
+
                     if not action:
-                        print("Usage: ipfs-datasets vscode tunnel <login|install-service> [options]")
+                        print(
+                            "Usage: ipfs-datasets vscode tunnel <login|install-service> [options]"
+                        )
                         return
-                    
+
                     cli = VSCodeCLI(install_dir=install_dir)
                     if not cli.is_installed():
-                        print("VSCode CLI is not installed. Run 'ipfs-datasets vscode install' first.")
+                        print(
+                            "VSCode CLI is not installed. Run 'ipfs-datasets vscode install' first."
+                        )
                         return
-                    
+
                     if action == "login":
                         print(f"Logging in to tunnel with {provider}...")
                         result = cli.tunnel_user_login(provider=provider)
                         if json_output:
-                            print(json.dumps({
-                                "success": result.returncode == 0,
-                                "stdout": result.stdout,
-                                "stderr": result.stderr
-                            }))
+                            print(
+                                json.dumps(
+                                    {
+                                        "success": result.returncode == 0,
+                                        "stdout": result.stdout,
+                                        "stderr": result.stderr,
+                                    }
+                                )
+                            )
                         else:
                             if result.stdout:
                                 print(result.stdout)
                             if result.stderr:
                                 print(result.stderr, file=sys.stderr)
                     elif action == "install-service":
-                        print(f"Installing tunnel service{' with name ' + tunnel_name if tunnel_name else ''}...")
+                        print(
+                            f"Installing tunnel service{' with name ' + tunnel_name if tunnel_name else ''}..."
+                        )
                         result = cli.tunnel_service_install(name=tunnel_name)
                         if json_output:
-                            print(json.dumps({
-                                "success": result.returncode == 0,
-                                "stdout": result.stdout,
-                                "stderr": result.stderr
-                            }))
+                            print(
+                                json.dumps(
+                                    {
+                                        "success": result.returncode == 0,
+                                        "stdout": result.stdout,
+                                        "stderr": result.stderr,
+                                    }
+                                )
+                            )
                         else:
                             if result.stdout:
                                 print(result.stdout)
                             if result.stderr:
                                 print(result.stderr, file=sys.stderr)
                     return
-                
+
                 else:
                     print(f"Unknown vscode subcommand: {subcommand}")
-                    print("Available subcommands: status, install, auth, install-with-auth, execute, extensions, tunnel")
+                    print(
+                        "Available subcommands: status, install, auth, install-with-auth, execute, extensions, tunnel"
+                    )
                     return
-                    
+
             except ImportError as e:
                 print(f"Error: VSCode CLI module not available: {e}")
                 return
             except Exception as e:
                 print(f"Error executing vscode command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         if command == "github":
             # GitHub CLI management commands
             subcommand = args[1] if len(args) > 1 else None
-            
+
             try:
                 from ipfs_datasets_py.utils.github_cli import GitHubCLI
-                
+
                 if subcommand == "status":
                     # Show GitHub CLI status
                     extra = args[2:]
@@ -1608,10 +1708,10 @@ def execute_heavy_command(args):
                             i += 2
                         else:
                             i += 1
-                    
+
                     cli = GitHubCLI(install_dir=install_dir)
                     status = cli.get_status()
-                    
+
                     if json_output:
                         print(json.dumps(status, indent=2))
                     else:
@@ -1624,7 +1724,7 @@ def execute_heavy_command(args):
                         print(f"  Architecture: {status['architecture']}")
                         print(f"  Auth Status: {status.get('auth_status', 'Unknown')}")
                     return
-                
+
                 elif subcommand == "install":
                     # Install GitHub CLI
                     extra = args[2:]
@@ -1645,11 +1745,11 @@ def execute_heavy_command(args):
                             i += 2
                         else:
                             i += 1
-                    
+
                     cli = GitHubCLI(install_dir=install_dir, version=version)
                     print("Installing GitHub CLI...")
                     success = cli.download_and_install(force=force)
-                    
+
                     if success:
                         status = cli.get_status()
                         if json_output:
@@ -1663,7 +1763,7 @@ def execute_heavy_command(args):
                         else:
                             print("GitHub CLI installation failed")
                     return
-                
+
                 elif subcommand == "execute":
                     # Execute GitHub CLI command
                     extra = args[2:]
@@ -1685,25 +1785,34 @@ def execute_heavy_command(args):
                         else:
                             cmd_args.append(token)
                             i += 1
-                    
+
                     if not cmd_args:
-                        print("Usage: ipfs-datasets github execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]")
+                        print(
+                            "Usage: ipfs-datasets github execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]"
+                        )
                         return
-                    
+
                     cli = GitHubCLI(install_dir=install_dir)
                     if not cli.is_installed():
-                        print("GitHub CLI is not installed. Run 'ipfs-datasets github install' first.")
+                        print(
+                            "GitHub CLI is not installed. Run 'ipfs-datasets github install' first."
+                        )
                         return
-                    
+
                     result = cli.execute(cmd_args, timeout=timeout)
-                    
+
                     if json_output:
-                        print(json.dumps({
-                            "success": result.returncode == 0,
-                            "returncode": result.returncode,
-                            "stdout": result.stdout,
-                            "stderr": result.stderr
-                        }, indent=2))
+                        print(
+                            json.dumps(
+                                {
+                                    "success": result.returncode == 0,
+                                    "returncode": result.returncode,
+                                    "stdout": result.stdout,
+                                    "stderr": result.stderr,
+                                },
+                                indent=2,
+                            )
+                        )
                     else:
                         if result.stdout:
                             print(result.stdout)
@@ -1712,7 +1821,7 @@ def execute_heavy_command(args):
                         if result.returncode != 0:
                             print(f"Command failed with exit code {result.returncode}")
                     return
-                
+
                 elif subcommand == "auth":
                     # Manage authentication
                     extra = args[2:]
@@ -1740,20 +1849,27 @@ def execute_heavy_command(args):
                             i += 1
                         else:
                             i += 1
-                    
+
                     cli = GitHubCLI(install_dir=install_dir)
                     if not cli.is_installed():
-                        print("GitHub CLI is not installed. Run 'ipfs-datasets github install' first.")
+                        print(
+                            "GitHub CLI is not installed. Run 'ipfs-datasets github install' first."
+                        )
                         return
-                    
+
                     if action == "login":
                         result = cli.auth_login(hostname=hostname, web=web)
                         if json_output:
-                            print(json.dumps({
-                                "success": result.returncode == 0,
-                                "stdout": result.stdout,
-                                "stderr": result.stderr
-                            }, indent=2))
+                            print(
+                                json.dumps(
+                                    {
+                                        "success": result.returncode == 0,
+                                        "stdout": result.stdout,
+                                        "stderr": result.stderr,
+                                    },
+                                    indent=2,
+                                )
+                            )
                         else:
                             if result.stdout:
                                 print(result.stdout)
@@ -1762,39 +1878,45 @@ def execute_heavy_command(args):
                     else:  # status
                         result = cli.auth_status()
                         if json_output:
-                            print(json.dumps({
-                                "success": result.returncode == 0,
-                                "stdout": result.stdout,
-                                "stderr": result.stderr
-                            }, indent=2))
+                            print(
+                                json.dumps(
+                                    {
+                                        "success": result.returncode == 0,
+                                        "stdout": result.stdout,
+                                        "stderr": result.stderr,
+                                    },
+                                    indent=2,
+                                )
+                            )
                         else:
                             if result.stdout:
                                 print(result.stdout)
                             if result.stderr:
                                 print(result.stderr, file=sys.stderr)
                     return
-                
+
                 else:
                     print(f"Unknown github subcommand: {subcommand}")
                     print("Available subcommands: status, install, execute, auth")
                     return
-                    
+
             except ImportError as e:
                 print(f"Error: GitHub CLI module not available: {e}")
                 return
             except Exception as e:
                 print(f"Error executing github command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         if command == "copilot":
             # GitHub Copilot CLI management commands
             subcommand = args[1] if len(args) > 1 else None
-            
+
             try:
                 from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
-                
+
                 if subcommand == "status":
                     # Show Copilot CLI status
                     extra = args[2:]
@@ -1807,10 +1929,10 @@ def execute_heavy_command(args):
                             i += 2
                         else:
                             i += 1
-                    
+
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
                     status = copilot.get_status()
-                    
+
                     if json_output:
                         print(json.dumps(status, indent=2))
                     else:
@@ -1818,9 +1940,13 @@ def execute_heavy_command(args):
                         print(f"  Installed: {status['installed']}")
                         print(f"  GitHub CLI Available: {status['github_cli_available']}")
                         print(f"  GitHub CLI Path: {status['github_cli_path'] or 'Not found'}")
-                        print(f"  Copilot Extension Installed: {status.get('copilot_extension_installed', False)}")
-                        print(f"  Agent Task Available: {status.get('agent_task_available', False)}")
-                        if status.get('version_info'):
+                        print(
+                            f"  Copilot Extension Installed: {status.get('copilot_extension_installed', False)}"
+                        )
+                        print(
+                            f"  Agent Task Available: {status.get('agent_task_available', False)}"
+                        )
+                        if status.get("version_info"):
                             print(f"  Version: {status['version_info']}")
                     return
 
@@ -1847,9 +1973,9 @@ def execute_heavy_command(args):
                         print("Standalone Copilot CLI Status:")
                         print(f"  Installed: {status['installed']}")
                         print(f"  Copilot CLI Path: {status['copilot_cli_path'] or 'Not found'}")
-                        if status.get('version_info'):
+                        if status.get("version_info"):
                             print(f"  Version: {status['version_info']}")
-                        if status.get('command_template'):
+                        if status.get("command_template"):
                             print(f"  Default Command Template: {status['command_template']}")
                     return
 
@@ -1881,12 +2007,14 @@ def execute_heavy_command(args):
                             i += 1
                         else:
                             if prompt is None:
-                                prompt = ' '.join(extra[i:])
+                                prompt = " ".join(extra[i:])
                                 break
                             i += 1
 
                     if not prompt:
-                        print("Usage: ipfs-datasets copilot prompt <prompt> [--model MODEL] [--timeout SECONDS] [--allow-all-paths] [--autopilot] [--copilot-cli-path PATH]")
+                        print(
+                            "Usage: ipfs-datasets copilot prompt <prompt> [--model MODEL] [--timeout SECONDS] [--allow-all-paths] [--autopilot] [--copilot-cli-path PATH]"
+                        )
                         return
 
                     from ipfs_datasets_py.utils.cli_tools import StandaloneCopilot
@@ -1903,12 +2031,14 @@ def execute_heavy_command(args):
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
-                            print(result['response'])
+                        if result["success"]:
+                            print(result["response"])
                         else:
-                            print(f"Failed to execute standalone Copilot prompt: {result.get('error')}")
+                            print(
+                                f"Failed to execute standalone Copilot prompt: {result.get('error')}"
+                            )
                     return
-                
+
                 elif subcommand == "install":
                     # Install Copilot CLI
                     extra = args[2:]
@@ -1925,24 +2055,24 @@ def execute_heavy_command(args):
                             i += 1
                         else:
                             i += 1
-                    
+
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
                     print("Installing GitHub Copilot gh extension...")
                     result = copilot.install(force=force)
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
-                            print(result['message'])
-                            if result.get('stdout'):
-                                print(result['stdout'])
+                        if result["success"]:
+                            print(result["message"])
+                            if result.get("stdout"):
+                                print(result["stdout"])
                         else:
                             print(f"Installation failed: {result.get('error')}")
-                            if result.get('stderr'):
-                                print(result['stderr'], file=sys.stderr)
+                            if result.get("stderr"):
+                                print(result["stderr"], file=sys.stderr)
                     return
-                
+
                 elif subcommand == "explain":
                     # Explain code using Copilot
                     extra = args[2:]
@@ -1964,31 +2094,35 @@ def execute_heavy_command(args):
                         else:
                             # Treat remaining args as code if not specified
                             if code is None:
-                                code = ' '.join(extra[i:])
+                                code = " ".join(extra[i:])
                                 break
                             i += 1
-                    
+
                     if not code:
-                        print("Usage: ipfs-datasets copilot explain <code> [--language LANG] [--github-cli-path PATH]")
+                        print(
+                            "Usage: ipfs-datasets copilot explain <code> [--language LANG] [--github-cli-path PATH]"
+                        )
                         print("   or: ipfs-datasets copilot explain --code '<code>' [options]")
                         return
-                    
+
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
                     if not copilot.installed:
-                        print("GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first.")
+                        print(
+                            "GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first."
+                        )
                         return
-                    
+
                     result = copilot.explain_code(code, language=language)
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
-                            print(result['explanation'])
+                        if result["success"]:
+                            print(result["explanation"])
                         else:
                             print(f"Failed to explain code: {result.get('error')}")
                     return
-                
+
                 elif subcommand == "suggest":
                     # Get command suggestions from Copilot
                     extra = args[2:]
@@ -2007,30 +2141,34 @@ def execute_heavy_command(args):
                         else:
                             # Treat remaining args as description
                             if description is None:
-                                description = ' '.join(extra[i:])
+                                description = " ".join(extra[i:])
                                 break
                             i += 1
-                    
+
                     if not description:
-                        print("Usage: ipfs-datasets copilot suggest <description> [--shell SHELL] [--github-cli-path PATH]")
+                        print(
+                            "Usage: ipfs-datasets copilot suggest <description> [--shell SHELL] [--github-cli-path PATH]"
+                        )
                         return
-                    
+
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
                     if not copilot.installed:
-                        print("GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first.")
+                        print(
+                            "GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first."
+                        )
                         return
-                    
+
                     result = copilot.suggest_command(description, shell=shell)
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
-                            print(result['suggestions'])
+                        if result["success"]:
+                            print(result["suggestions"])
                         else:
                             print(f"Failed to get suggestions: {result.get('error')}")
                     return
-                
+
                 elif subcommand == "git":
                     # Get Git command suggestions from Copilot
                     extra = args[2:]
@@ -2045,51 +2183,58 @@ def execute_heavy_command(args):
                         else:
                             # Treat remaining args as description
                             if description is None:
-                                description = ' '.join(extra[i:])
+                                description = " ".join(extra[i:])
                                 break
                             i += 1
-                    
+
                     if not description:
-                        print("Usage: ipfs-datasets copilot git <description> [--github-cli-path PATH]")
+                        print(
+                            "Usage: ipfs-datasets copilot git <description> [--github-cli-path PATH]"
+                        )
                         return
-                    
+
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
                     if not copilot.installed:
-                        print("GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first.")
+                        print(
+                            "GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first."
+                        )
                         return
-                    
+
                     result = copilot.suggest_git_command(description)
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
-                            print(result['suggestions'])
+                        if result["success"]:
+                            print(result["suggestions"])
                         else:
                             print(f"Failed to get Git suggestions: {result.get('error')}")
                     return
-                
+
                 else:
                     print(f"Unknown copilot subcommand: {subcommand}")
-                    print("Available subcommands: status, local-status, install, explain, suggest, git, prompt")
+                    print(
+                        "Available subcommands: status, local-status, install, explain, suggest, git, prompt"
+                    )
                     return
-                    
+
             except ImportError as e:
                 print(f"Error: Copilot CLI module not available: {e}")
                 return
             except Exception as e:
                 print(f"Error executing copilot command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         if command == "gemini":
             # Google Gemini CLI management commands
             subcommand = args[1] if len(args) > 1 else None
-            
+
             try:
                 from ipfs_datasets_py.utils.gemini_cli import GeminiCLI
-                
+
                 if subcommand == "status":
                     # Show Gemini CLI status
                     extra = args[2:]
@@ -2102,10 +2247,10 @@ def execute_heavy_command(args):
                             i += 2
                         else:
                             i += 1
-                    
+
                     cli = GeminiCLI(install_dir=install_dir)
                     status = cli.get_status()
-                    
+
                     if json_output:
                         print(json.dumps(status, indent=2))
                     else:
@@ -2116,7 +2261,7 @@ def execute_heavy_command(args):
                         print(f"  API Key Configured: {status['api_key_configured']}")
                         print(f"  Package: {status['package']}")
                     return
-                
+
                 elif subcommand == "install":
                     # Install Gemini CLI
                     extra = args[2:]
@@ -2133,11 +2278,11 @@ def execute_heavy_command(args):
                             i += 1
                         else:
                             i += 1
-                    
+
                     cli = GeminiCLI(install_dir=install_dir)
                     print("Installing Google Gemini CLI...")
                     success = cli.install(force=force)
-                    
+
                     if success:
                         status = cli.get_status()
                         if json_output:
@@ -2151,7 +2296,7 @@ def execute_heavy_command(args):
                         else:
                             print("Google Gemini CLI installation failed")
                     return
-                
+
                 elif subcommand == "config":
                     # Configure API key
                     extra = args[2:]
@@ -2173,12 +2318,14 @@ def execute_heavy_command(args):
                             i += 1
                         else:
                             i += 1
-                    
+
                     cli = GeminiCLI(install_dir=install_dir)
                     if not cli.is_installed():
-                        print("Google Gemini CLI is not installed. Run 'ipfs-datasets gemini install' first.")
+                        print(
+                            "Google Gemini CLI is not installed. Run 'ipfs-datasets gemini install' first."
+                        )
                         return
-                    
+
                     if action == "set-api-key":
                         if not api_key:
                             print("Usage: ipfs-datasets gemini config set-api-key <API_KEY>")
@@ -2196,16 +2343,16 @@ def execute_heavy_command(args):
                         if json_output:
                             print(json.dumps(result, indent=2))
                         else:
-                            if result['success']:
+                            if result["success"]:
                                 print("Connection successful!")
-                                if result.get('response'):
+                                if result.get("response"):
                                     print(f"Response: {result['response']}")
                             else:
                                 print(f"Connection failed: {result.get('error')}")
                     else:
                         print("Usage: ipfs-datasets gemini config <set-api-key|test>")
                     return
-                
+
                 elif subcommand == "execute":
                     # Execute Gemini CLI command
                     extra = args[2:]
@@ -2227,25 +2374,34 @@ def execute_heavy_command(args):
                         else:
                             cmd_args.append(token)
                             i += 1
-                    
+
                     if not cmd_args:
-                        print("Usage: ipfs-datasets gemini execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]")
+                        print(
+                            "Usage: ipfs-datasets gemini execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]"
+                        )
                         return
-                    
+
                     cli = GeminiCLI(install_dir=install_dir)
                     if not cli.is_installed():
-                        print("Google Gemini CLI is not installed. Run 'ipfs-datasets gemini install' first.")
+                        print(
+                            "Google Gemini CLI is not installed. Run 'ipfs-datasets gemini install' first."
+                        )
                         return
-                    
+
                     result = cli.execute(cmd_args, timeout=timeout)
-                    
+
                     if json_output:
-                        print(json.dumps({
-                            "success": result.returncode == 0,
-                            "returncode": result.returncode,
-                            "stdout": result.stdout,
-                            "stderr": result.stderr
-                        }, indent=2))
+                        print(
+                            json.dumps(
+                                {
+                                    "success": result.returncode == 0,
+                                    "returncode": result.returncode,
+                                    "stdout": result.stdout,
+                                    "stderr": result.stderr,
+                                },
+                                indent=2,
+                            )
+                        )
                     else:
                         if result.stdout:
                             print(result.stdout)
@@ -2254,28 +2410,29 @@ def execute_heavy_command(args):
                         if result.returncode != 0:
                             print(f"Command failed with exit code {result.returncode}")
                     return
-                
+
                 else:
                     print(f"Unknown gemini subcommand: {subcommand}")
                     print("Available subcommands: status, install, config, execute")
                     return
-                    
+
             except ImportError as e:
                 print(f"Error: Google Gemini CLI module not available: {e}")
                 return
             except Exception as e:
                 print(f"Error executing gemini command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         if command == "claude":
             # Anthropic Claude CLI management commands
             subcommand = args[1] if len(args) > 1 else None
-            
+
             try:
                 from ipfs_datasets_py.utils.claude_cli import ClaudeCLI
-                
+
                 if subcommand == "status":
                     # Show Claude CLI status
                     extra = args[2:]
@@ -2288,10 +2445,10 @@ def execute_heavy_command(args):
                             i += 2
                         else:
                             i += 1
-                    
+
                     cli = ClaudeCLI(install_dir=install_dir)
                     status = cli.get_status()
-                    
+
                     if json_output:
                         print(json.dumps(status, indent=2))
                     else:
@@ -2302,7 +2459,7 @@ def execute_heavy_command(args):
                         print(f"  API Key Configured: {status['api_key_configured']}")
                         print(f"  Package: {status['package']}")
                     return
-                
+
                 elif subcommand == "install":
                     # Install Claude CLI
                     extra = args[2:]
@@ -2319,11 +2476,11 @@ def execute_heavy_command(args):
                             i += 1
                         else:
                             i += 1
-                    
+
                     cli = ClaudeCLI(install_dir=install_dir)
                     print("Installing Anthropic Claude CLI...")
                     success = cli.install(force=force)
-                    
+
                     if success:
                         status = cli.get_status()
                         if json_output:
@@ -2337,7 +2494,7 @@ def execute_heavy_command(args):
                         else:
                             print("Anthropic Claude CLI installation failed")
                     return
-                
+
                 elif subcommand == "config":
                     # Configure API key
                     extra = args[2:]
@@ -2359,12 +2516,14 @@ def execute_heavy_command(args):
                             i += 1
                         else:
                             i += 1
-                    
+
                     cli = ClaudeCLI(install_dir=install_dir)
                     if not cli.is_installed():
-                        print("Anthropic Claude CLI is not installed. Run 'ipfs-datasets claude install' first.")
+                        print(
+                            "Anthropic Claude CLI is not installed. Run 'ipfs-datasets claude install' first."
+                        )
                         return
-                    
+
                     if action == "set-api-key":
                         if not api_key:
                             print("Usage: ipfs-datasets claude config set-api-key <API_KEY>")
@@ -2382,16 +2541,16 @@ def execute_heavy_command(args):
                         if json_output:
                             print(json.dumps(result, indent=2))
                         else:
-                            if result['success']:
+                            if result["success"]:
                                 print("Connection successful!")
-                                if result.get('response'):
+                                if result.get("response"):
                                     print(f"Response: {result['response']}")
                             else:
                                 print(f"Connection failed: {result.get('error')}")
                     else:
                         print("Usage: ipfs-datasets claude config <set-api-key|test>")
                     return
-                
+
                 elif subcommand == "execute":
                     # Execute Claude CLI command
                     extra = args[2:]
@@ -2413,25 +2572,34 @@ def execute_heavy_command(args):
                         else:
                             cmd_args.append(token)
                             i += 1
-                    
+
                     if not cmd_args:
-                        print("Usage: ipfs-datasets claude execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]")
+                        print(
+                            "Usage: ipfs-datasets claude execute <command> [args...] [--install-dir DIR] [--timeout SECONDS]"
+                        )
                         return
-                    
+
                     cli = ClaudeCLI(install_dir=install_dir)
                     if not cli.is_installed():
-                        print("Anthropic Claude CLI is not installed. Run 'ipfs-datasets claude install' first.")
+                        print(
+                            "Anthropic Claude CLI is not installed. Run 'ipfs-datasets claude install' first."
+                        )
                         return
-                    
+
                     result = cli.execute(cmd_args, timeout=timeout)
-                    
+
                     if json_output:
-                        print(json.dumps({
-                            "success": result.returncode == 0,
-                            "returncode": result.returncode,
-                            "stdout": result.stdout,
-                            "stderr": result.stderr
-                        }, indent=2))
+                        print(
+                            json.dumps(
+                                {
+                                    "success": result.returncode == 0,
+                                    "returncode": result.returncode,
+                                    "stdout": result.stdout,
+                                    "stderr": result.stderr,
+                                },
+                                indent=2,
+                            )
+                        )
                     else:
                         if result.stdout:
                             print(result.stdout)
@@ -2440,26 +2608,27 @@ def execute_heavy_command(args):
                         if result.returncode != 0:
                             print(f"Command failed with exit code {result.returncode}")
                     return
-                
+
                 else:
                     print(f"Unknown claude subcommand: {subcommand}")
                     print("Available subcommands: status, install, config, execute")
                     return
-                    
+
             except ImportError as e:
                 print(f"Error: Anthropic Claude CLI module not available: {e}")
                 return
             except Exception as e:
                 print(f"Error executing claude command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         if command == "finance":
             """Handle finance dashboard commands."""
             subcommand = args[1] if len(args) > 1 else None
-            
-            if not subcommand or subcommand in ['-h', '--help']:
+
+            if not subcommand or subcommand in ["-h", "--help"]:
                 print("""
 ipfs-datasets finance - Financial Analysis and Data Pipelines
 
@@ -2484,7 +2653,7 @@ Examples:
 For detailed help: ipfs-datasets finance <subcommand> --help
 """)
                 return
-            
+
             try:
                 # Parse common options
                 config_override = None
@@ -2494,9 +2663,9 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                     idx = args.index("--config")
                     if idx + 1 < len(args):
                         config_override = args[idx + 1]
-                
+
                 host, port = _default_host_port(config_override)
-                
+
                 # Parse host/port overrides
                 extra = args[2:]
                 i = 0
@@ -2510,21 +2679,23 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                         i += 2
                     else:
                         i += 1
-                
+
                 base_url = f"http://{host}:{port}/api/mcp"
                 import requests
-                
+
                 if subcommand == "stock":
                     # Fetch stock data
                     symbol = args[2] if len(args) > 2 else None
                     if not symbol:
-                        print("Usage: ipfs-datasets finance stock <SYMBOL> [--start DATE] [--end DATE] [--interval INTERVAL]")
+                        print(
+                            "Usage: ipfs-datasets finance stock <SYMBOL> [--start DATE] [--end DATE] [--interval INTERVAL]"
+                        )
                         return
-                    
+
                     start_date = None
                     end_date = None
                     interval = "1d"
-                    
+
                     i = 3
                     while i < len(args):
                         if args[i] == "--start" and i + 1 < len(args):
@@ -2538,34 +2709,39 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                             i += 2
                         else:
                             i += 1
-                    
+
                     params = {
                         "symbol": symbol,
                         "start_date": start_date,
                         "end_date": end_date,
-                        "interval": interval
+                        "interval": interval,
                     }
-                    
+
                     print(f"Fetching stock data for {symbol}...")
-                    r = requests.post(f"{base_url}/tools/finance_data_tools/fetch_stock_data/execute", 
-                                     json=params, timeout=30)
+                    r = requests.post(
+                        f"{base_url}/tools/finance_data_tools/fetch_stock_data/execute",
+                        json=params,
+                        timeout=30,
+                    )
                     if r.ok:
                         result = r.json()
                         if json_output:
                             print(json.dumps(result))
                         else:
-                            print(f"✓ Retrieved {len(result.get('data', []))} data points for {symbol}")
+                            print(
+                                f"✓ Retrieved {len(result.get('data', []))} data points for {symbol}"
+                            )
                             print(json.dumps(result, indent=2))
                     else:
                         print(f"Error: {r.status_code} - {r.text}")
                     return
-                
+
                 elif subcommand == "news":
                     # Scrape financial news
                     query = args[2] if len(args) > 2 else "financial news"
                     sources = ["reuters", "bloomberg", "ap"]
                     max_results = 100
-                    
+
                     i = 3
                     while i < len(args):
                         if args[i] == "--sources" and i + 1 < len(args):
@@ -2576,43 +2752,46 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                             i += 2
                         else:
                             i += 1
-                    
-                    params = {
-                        "query": query,
-                        "sources": sources,
-                        "max_results": max_results
-                    }
-                    
+
+                    params = {"query": query, "sources": sources, "max_results": max_results}
+
                     print(f"Scraping news for '{query}' from {', '.join(sources)}...")
-                    r = requests.post(f"{base_url}/tools/finance_data_tools/fetch_financial_news/execute",
-                                     json=params, timeout=60)
+                    r = requests.post(
+                        f"{base_url}/tools/finance_data_tools/fetch_financial_news/execute",
+                        json=params,
+                        timeout=60,
+                    )
                     if r.ok:
                         result = r.json()
                         if json_output:
                             print(json.dumps(result))
                         else:
-                            articles = result.get('articles', [])
+                            articles = result.get("articles", [])
                             print(f"✓ Retrieved {len(articles)} articles")
                             for art in articles[:5]:
-                                print(f"  - {art.get('title', 'Untitled')} ({art.get('source', 'Unknown')})")
+                                print(
+                                    f"  - {art.get('title', 'Untitled')} ({art.get('source', 'Unknown')})"
+                                )
                     else:
                         print(f"Error: {r.status_code} - {r.text}")
                     return
-                
+
                 elif subcommand == "executives":
                     # Analyze executive performance
                     print("Executive performance analysis requires news and stock data files")
-                    print("Usage: ipfs-datasets finance executives --news news.json --stocks stocks.json")
+                    print(
+                        "Usage: ipfs-datasets finance executives --news news.json --stocks stocks.json"
+                    )
                     print("       --hypothesis 'Female CEOs outperform male CEOs'")
                     print("       --attribute gender --group-a female --group-b male")
-                    
+
                     news_file = None
                     stocks_file = None
                     hypothesis = None
                     attribute = None
                     group_a = None
                     group_b = None
-                    
+
                     i = 2
                     while i < len(args):
                         if args[i] == "--news" and i + 1 < len(args):
@@ -2635,25 +2814,28 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                             i += 2
                         else:
                             i += 1
-                    
+
                     if news_file and stocks_file and hypothesis:
                         with open(news_file) as f:
                             news_data = json.load(f)
                         with open(stocks_file) as f:
                             stock_data = json.load(f)
-                        
+
                         params = {
                             "news_articles_json": json.dumps(news_data),
                             "stock_data_json": json.dumps(stock_data),
                             "hypothesis": hypothesis,
                             "attribute": attribute,
                             "group_a": group_a,
-                            "group_b": group_b
+                            "group_b": group_b,
                         }
-                        
+
                         print(f"Testing hypothesis: {hypothesis}...")
-                        r = requests.post(f"{base_url}/tools/finance_data_tools/analyze_executive_performance/execute",
-                                         json=params, timeout=120)
+                        r = requests.post(
+                            f"{base_url}/tools/finance_data_tools/analyze_executive_performance/execute",
+                            json=params,
+                            timeout=120,
+                        )
                         if r.ok:
                             result = r.json()
                             if json_output:
@@ -2664,17 +2846,17 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                         else:
                             print(f"Error: {r.status_code} - {r.text}")
                     return
-                
+
                 elif subcommand == "embeddings":
                     # Multimodal embedding analysis
                     print("Embedding analysis requires news data file")
                     print("Usage: ipfs-datasets finance embeddings --news news.json")
                     print("       [--multimodal] [--clusters N]")
-                    
+
                     news_file = None
                     multimodal = False
                     clusters = 10
-                    
+
                     i = 2
                     while i < len(args):
                         if args[i] == "--news" and i + 1 < len(args):
@@ -2688,20 +2870,25 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                             i += 2
                         else:
                             i += 1
-                    
+
                     if news_file:
                         with open(news_file) as f:
                             news_data = json.load(f)
-                        
+
                         params = {
                             "news_articles_json": json.dumps(news_data),
                             "enable_multimodal": multimodal,
-                            "n_clusters": clusters
+                            "n_clusters": clusters,
                         }
-                        
-                        print(f"Analyzing embeddings ({'multimodal' if multimodal else 'text-only'})...")
-                        r = requests.post(f"{base_url}/tools/finance_data_tools/analyze_embedding_market_correlation/execute",
-                                         json=params, timeout=120)
+
+                        print(
+                            f"Analyzing embeddings ({'multimodal' if multimodal else 'text-only'})..."
+                        )
+                        r = requests.post(
+                            f"{base_url}/tools/finance_data_tools/analyze_embedding_market_correlation/execute",
+                            json=params,
+                            timeout=120,
+                        )
                         if r.ok:
                             result = r.json()
                             if json_output:
@@ -2712,31 +2899,36 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                         else:
                             print(f"Error: {r.status_code} - {r.text}")
                     return
-                
+
                 elif subcommand == "theorems":
                     # List or apply financial theorems
                     action = args[2] if len(args) > 2 else "list"
-                    
+
                     if action == "--list" or action == "list":
                         print("Fetching financial theorems...")
-                        r = requests.post(f"{base_url}/tools/finance_data_tools/list_financial_theorems/execute",
-                                         json={}, timeout=30)
+                        r = requests.post(
+                            f"{base_url}/tools/finance_data_tools/list_financial_theorems/execute",
+                            json={},
+                            timeout=30,
+                        )
                         if r.ok:
                             result = r.json()
                             if json_output:
                                 print(json.dumps(result))
                             else:
-                                theorems = result.get('theorems', [])
+                                theorems = result.get("theorems", [])
                                 print(f"✓ Found {len(theorems)} financial theorems:")
                                 for thm in theorems:
-                                    print(f"  - {thm.get('theorem_id', 'unknown')}: {thm.get('name', 'Unnamed')}")
+                                    print(
+                                        f"  - {thm.get('theorem_id', 'unknown')}: {thm.get('name', 'Unnamed')}"
+                                    )
                                     print(f"    Confidence: {thm.get('confidence_level', 0):.0%}")
                         else:
                             print(f"Error: {r.status_code} - {r.text}")
                     elif action == "--apply" or action == "apply":
                         theorem_id = args[3] if len(args) > 3 else None
                         data_file = None
-                        
+
                         i = 4
                         while i < len(args):
                             if args[i] == "--data" and i + 1 < len(args):
@@ -2744,19 +2936,22 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                                 i += 2
                             else:
                                 i += 1
-                        
+
                         if theorem_id and data_file:
                             with open(data_file) as f:
                                 event_data = json.load(f)
-                            
+
                             params = {
                                 "theorem_id": theorem_id,
-                                "event_data_json": json.dumps(event_data)
+                                "event_data_json": json.dumps(event_data),
                             }
-                            
+
                             print(f"Applying theorem {theorem_id}...")
-                            r = requests.post(f"{base_url}/tools/finance_data_tools/apply_financial_theorem/execute",
-                                             json=params, timeout=30)
+                            r = requests.post(
+                                f"{base_url}/tools/finance_data_tools/apply_financial_theorem/execute",
+                                json=params,
+                                timeout=30,
+                            )
                             if r.ok:
                                 result = r.json()
                                 if json_output:
@@ -2767,13 +2962,15 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                             else:
                                 print(f"Error: {r.status_code} - {r.text}")
                         else:
-                            print("Usage: ipfs-datasets finance theorems apply <THEOREM_ID> --data event.json")
+                            print(
+                                "Usage: ipfs-datasets finance theorems apply <THEOREM_ID> --data event.json"
+                            )
                     return
-                
+
                 elif subcommand == "workflow":
                     # Execute workflow pipeline
                     pipeline_type = args[2] if len(args) > 2 else None
-                    
+
                     if pipeline_type == "pipeline":
                         print("Workflow pipeline execution")
                         print("This would orchestrate the complete pipeline:")
@@ -2784,16 +2981,20 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                         print("  5. Transform and augment data")
                         print("  6. Export synthetic dataset")
                         print()
-                        print("Visit http://{}:{}/mcp/finance/workflow for interactive pipeline".format(host, port))
+                        print(
+                            "Visit http://{}:{}/mcp/finance/workflow for interactive pipeline".format(
+                                host, port
+                            )
+                        )
                     else:
                         print("Usage: ipfs-datasets finance workflow pipeline [--config FILE]")
                     return
-                
+
                 else:
                     print(f"Unknown finance subcommand: {subcommand}")
                     print("Run 'ipfs-datasets finance --help' for usage")
                     return
-                
+
             except ImportError as e:
                 print(f"Error: Missing dependencies for finance tools: {e}")
                 print("Install with: pip install requests")
@@ -2801,21 +3002,30 @@ For detailed help: ipfs-datasets finance <subcommand> --help
             except Exception as e:
                 print(f"Error executing finance command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         if command == "p2p":
             # P2P workflow scheduling commands
             subcommand = args[1] if len(args) > 1 else "status"
-            
+
             try:
                 # Import directly to avoid mcp_server dependencies
                 import importlib.util
-                tools_path = PathLib(__file__).parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "p2p_workflow_tools" / "p2p_workflow_tools.py"
+
+                tools_path = (
+                    PathLib(__file__).parent
+                    / "ipfs_datasets_py"
+                    / "mcp_server"
+                    / "tools"
+                    / "p2p_workflow_tools"
+                    / "p2p_workflow_tools.py"
+                )
                 spec = importlib.util.spec_from_file_location("p2p_workflow_tools", tools_path)
                 p2p_tools_module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(p2p_tools_module)
-                
+
                 initialize_p2p_scheduler = p2p_tools_module.initialize_p2p_scheduler
                 schedule_p2p_workflow = p2p_tools_module.schedule_p2p_workflow
                 get_next_p2p_workflow = p2p_tools_module.get_next_p2p_workflow
@@ -2824,13 +3034,13 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                 get_p2p_scheduler_status = p2p_tools_module.get_p2p_scheduler_status
                 get_workflow_tags = p2p_tools_module.get_workflow_tags
                 get_assigned_workflows = p2p_tools_module.get_assigned_workflows
-                
+
                 if subcommand == "init":
                     # Initialize P2P scheduler
                     extra = args[2:]
                     peer_id = None
                     peers = []
-                    
+
                     i = 0
                     while i < len(extra):
                         token = extra[i]
@@ -2838,26 +3048,26 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                             peer_id = extra[i + 1]
                             i += 2
                         elif token in ("--peers", "-p") and i + 1 < len(extra):
-                            peers = [p.strip() for p in extra[i + 1].split(',')]
+                            peers = [p.strip() for p in extra[i + 1].split(",")]
                             i += 2
                         else:
                             i += 1
-                    
+
                     result = anyio.run(initialize_p2p_scheduler(peer_id=peer_id, peers=peers))
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
+                        if result["success"]:
                             print(f"✓ {result['message']}")
-                            status = result.get('status', {})
+                            status = result.get("status", {})
                             print(f"Peer ID: {status.get('peer_id', 'N/A')}")
                             print(f"Known peers: {status.get('num_peers', 0)}")
                             print(f"Queue size: {status.get('queue_size', 0)}")
                         else:
                             print(f"✗ Error: {result.get('error', 'Unknown error')}")
                     return
-                
+
                 elif subcommand == "schedule":
                     # Schedule a workflow
                     extra = args[2:]
@@ -2865,7 +3075,7 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                     name = None
                     tags = []
                     priority = 1.0
-                    
+
                     i = 0
                     while i < len(extra):
                         token = extra[i]
@@ -2876,7 +3086,7 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                             name = extra[i + 1]
                             i += 2
                         elif token in ("--tags", "-t") and i + 1 < len(extra):
-                            tags = [t.strip() for t in extra[i + 1].split(',')]
+                            tags = [t.strip() for t in extra[i + 1].split(",")]
                             i += 2
                         elif token in ("--priority", "-p") and i + 1 < len(extra):
                             try:
@@ -2886,42 +3096,43 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                             i += 2
                         else:
                             i += 1
-                    
+
                     if not workflow_id or not name:
-                        print("Usage: ipfs-datasets p2p schedule --id ID --name NAME --tags TAGS [--priority PRIORITY]")
+                        print(
+                            "Usage: ipfs-datasets p2p schedule --id ID --name NAME --tags TAGS [--priority PRIORITY]"
+                        )
                         print("Tags: p2p_eligible, p2p_only, code_gen, web_scrape, data_processing")
                         return
-                    
-                    result = anyio.run(schedule_p2p_workflow(
-                        workflow_id=workflow_id,
-                        name=name,
-                        tags=tags,
-                        priority=priority
-                    ))
-                    
+
+                    result = anyio.run(
+                        schedule_p2p_workflow(
+                            workflow_id=workflow_id, name=name, tags=tags, priority=priority
+                        )
+                    )
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
+                        if result["success"]:
                             print(f"✓ Workflow {workflow_id} scheduled")
-                            wf_result = result.get('result', {})
+                            wf_result = result.get("result", {})
                             print(f"Assigned to: {wf_result.get('assigned_peer', 'N/A')}")
                             print(f"Is local: {wf_result.get('is_local', False)}")
-                            if wf_result.get('is_local'):
+                            if wf_result.get("is_local"):
                                 print(f"Queue size: {wf_result.get('queue_size', 0)}")
                         else:
                             print(f"✗ Error: {result.get('error', 'Unknown error')}")
                     return
-                
+
                 elif subcommand == "next":
                     # Get next workflow from queue
                     result = anyio.run(get_next_p2p_workflow())
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
-                            workflow = result.get('workflow')
+                        if result["success"]:
+                            workflow = result.get("workflow")
                             if workflow:
                                 print(f"✓ Next workflow:")
                                 print(f"ID: {workflow.get('workflow_id', 'N/A')}")
@@ -2933,109 +3144,111 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                         else:
                             print(f"✗ Error: {result.get('error', 'Unknown error')}")
                     return
-                
+
                 elif subcommand == "status":
                     # Get scheduler status
                     result = anyio.run(get_p2p_scheduler_status())
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
-                            status = result.get('status', {})
+                        if result["success"]:
+                            status = result.get("status", {})
                             print("P2P Scheduler Status:")
                             print(f"Peer ID: {status.get('peer_id', 'N/A')}")
                             print(f"Known peers: {status.get('num_peers', 0)}")
                             print(f"Queue size: {status.get('queue_size', 0)}")
                             print(f"Assigned workflows: {status.get('assigned_workflows', 0)}")
                             print(f"Total workflows: {status.get('total_workflows', 0)}")
-                            clock = status.get('clock', {})
+                            clock = status.get("clock", {})
                             print(f"Clock counter: {clock.get('counter', 0)}")
                             print(f"Clock hash: {clock.get('hash', 'N/A')[:16]}...")
                         else:
                             print(f"✗ Error: {result.get('error', 'Unknown error')}")
                     return
-                
+
                 elif subcommand == "add-peer":
                     # Add a peer
                     extra = args[2:]
                     peer_id = extra[0] if extra else None
-                    
+
                     if not peer_id:
                         print("Usage: ipfs-datasets p2p add-peer <peer-id>")
                         return
-                    
+
                     result = anyio.run(add_p2p_peer(peer_id))
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
+                        if result["success"]:
                             print(f"✓ {result['message']}")
                             print(f"Total peers: {result.get('num_peers', 0)}")
                         else:
                             print(f"✗ Error: {result.get('error', 'Unknown error')}")
                     return
-                
+
                 elif subcommand == "remove-peer":
                     # Remove a peer
                     extra = args[2:]
                     peer_id = extra[0] if extra else None
-                    
+
                     if not peer_id:
                         print("Usage: ipfs-datasets p2p remove-peer <peer-id>")
                         return
-                    
+
                     result = anyio.run(remove_p2p_peer(peer_id))
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
+                        if result["success"]:
                             print(f"✓ {result['message']}")
                             print(f"Total peers: {result.get('num_peers', 0)}")
                         else:
                             print(f"✗ Error: {result.get('error', 'Unknown error')}")
                     return
-                
+
                 elif subcommand == "tags":
                     # List workflow tags
                     result = anyio.run(get_workflow_tags())
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
+                        if result["success"]:
                             print("Available workflow tags:")
-                            descriptions = result.get('descriptions', {})
-                            for tag in result.get('tags', []):
-                                desc = descriptions.get(tag, '')
+                            descriptions = result.get("descriptions", {})
+                            for tag in result.get("tags", []):
+                                desc = descriptions.get(tag, "")
                                 print(f"  {tag:20} - {desc}")
                         else:
                             print(f"✗ Error: {result.get('error', 'Unknown error')}")
                     return
-                
+
                 elif subcommand == "assigned":
                     # Get assigned workflows
                     result = anyio.run(get_assigned_workflows())
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
-                        if result['success']:
-                            workflows = result.get('assigned_workflows', [])
+                        if result["success"]:
+                            workflows = result.get("assigned_workflows", [])
                             print(f"Assigned workflows ({result.get('count', 0)}):")
                             for wf_id in workflows:
                                 print(f"  - {wf_id}")
                         else:
                             print(f"✗ Error: {result.get('error', 'Unknown error')}")
                     return
-                
+
                 else:
                     print(f"Unknown p2p subcommand: {subcommand}")
-                    print("Available subcommands: init, schedule, next, status, add-peer, remove-peer, tags, assigned")
+                    print(
+                        "Available subcommands: init, schedule, next, status, add-peer, remove-peer, tags, assigned"
+                    )
                     return
-                
+
             except ImportError as e:
                 print(f"P2P workflow tools not available: {e}")
                 print("Make sure ipfs_datasets_py package is properly installed")
@@ -3043,14 +3256,15 @@ For detailed help: ipfs-datasets finance <subcommand> --help
             except Exception as e:
                 print(f"Error executing p2p command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         if command == "discord":
             """Handle Discord data export and analysis commands."""
             subcommand = args[1] if len(args) > 1 else None
-            
-            if not subcommand or subcommand in ['-h', '--help']:
+
+            if not subcommand or subcommand in ["-h", "--help"]:
                 print("""
 ipfs-datasets discord - Discord Data Export and Analysis
 
@@ -3084,16 +3298,16 @@ Examples:
 For detailed help: ipfs-datasets discord <subcommand> --help
 """)
                 return
-            
+
             try:
                 # Import and delegate to discord_cli module
                 from ipfs_datasets_py.cli.discord_cli import main as discord_main
-                
+
                 # Pass remaining args to discord CLI
                 discord_args = args[1:]
                 exit_code = discord_main(discord_args)
                 sys.exit(exit_code)
-                
+
             except ImportError as e:
                 print(f"Error: Discord CLI module not available: {e}")
                 print("Make sure ipfs_datasets_py package is properly installed")
@@ -3101,14 +3315,15 @@ For detailed help: ipfs-datasets discord <subcommand> --help
             except Exception as e:
                 print(f"Error executing discord command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         if command == "email":
             """Handle email ingestion and analysis commands."""
             subcommand = args[1] if len(args) > 1 else None
-            
-            if not subcommand or subcommand in ['-h', '--help']:
+
+            if not subcommand or subcommand in ["-h", "--help"]:
                 print("""
 ipfs-datasets email - Email Ingestion and Analysis
 
@@ -3174,24 +3389,28 @@ Examples:
 For detailed help: ipfs-datasets email <subcommand> --help
 """)
                 return
-            
+
             try:
                 import importlib.util
                 from pathlib import Path
 
-                email_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "email_cli.py"
-                spec = importlib.util.spec_from_file_location("ipfs_datasets_email_cli", email_cli_path)
+                email_cli_path = (
+                    Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "email_cli.py"
+                )
+                spec = importlib.util.spec_from_file_location(
+                    "ipfs_datasets_email_cli", email_cli_path
+                )
                 if spec is None or spec.loader is None:
                     raise ImportError(f"Unable to load email CLI from {email_cli_path}")
                 email_cli_module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(email_cli_module)
                 email_main = email_cli_module.main
-                
+
                 # Pass remaining args to email CLI
                 email_args = args[1:]
                 exit_code = email_main(email_args)
                 sys.exit(exit_code)
-                
+
             except ImportError as e:
                 print(f"Error: Email CLI module not available: {e}")
                 print("Make sure ipfs_datasets_py package is properly installed")
@@ -3199,6 +3418,7 @@ For detailed help: ipfs-datasets email <subcommand> --help
             except Exception as e:
                 print(f"Error executing email command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
 
@@ -3206,7 +3426,7 @@ For detailed help: ipfs-datasets email <subcommand> --help
             """Handle DuckDB history index search commands."""
             subcommand = args[1] if len(args) > 1 else None
 
-            if not subcommand or subcommand in ['-h', '--help']:
+            if not subcommand or subcommand in ["-h", "--help"]:
                 print("""
 ipfs-datasets history-index - Search the persisted DuckDB history index
 
@@ -3231,8 +3451,15 @@ Examples:
                 import importlib.util
                 from pathlib import Path
 
-                history_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "history_index_cli.py"
-                spec = importlib.util.spec_from_file_location("ipfs_datasets_history_index_cli", history_cli_path)
+                history_cli_path = (
+                    Path(__file__).resolve().parent
+                    / "ipfs_datasets_py"
+                    / "cli"
+                    / "history_index_cli.py"
+                )
+                spec = importlib.util.spec_from_file_location(
+                    "ipfs_datasets_history_index_cli", history_cli_path
+                )
                 if spec is None or spec.loader is None:
                     raise ImportError(f"Unable to load history index CLI from {history_cli_path}")
                 history_cli_module = importlib.util.module_from_spec(spec)
@@ -3240,8 +3467,8 @@ Examples:
                 history_index_main = history_cli_module.main
 
                 history_args = list(args[1:])
-                if json_output and '--json' not in history_args:
-                    history_args = ['--json', *history_args]
+                if json_output and "--json" not in history_args:
+                    history_args = ["--json", *history_args]
                 exit_code = history_index_main(history_args)
                 sys.exit(exit_code)
 
@@ -3252,6 +3479,7 @@ Examples:
             except Exception as e:
                 print(f"Error executing history-index command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
 
@@ -3259,7 +3487,7 @@ Examples:
             """Handle docket dataset import commands."""
             subcommand = args[1] if len(args) > 1 else None
 
-            if not subcommand or subcommand in ['-h', '--help']:
+            if not subcommand or subcommand in ["-h", "--help"]:
                 print("""
 ipfs-datasets docket - Import, search, inspect, and package docket datasets
 
@@ -3301,8 +3529,12 @@ Examples:
                 import importlib.util
                 from pathlib import Path
 
-                docket_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "docket_cli.py"
-                spec = importlib.util.spec_from_file_location("ipfs_datasets_docket_cli", docket_cli_path)
+                docket_cli_path = (
+                    Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "docket_cli.py"
+                )
+                spec = importlib.util.spec_from_file_location(
+                    "ipfs_datasets_docket_cli", docket_cli_path
+                )
                 if spec is None or spec.loader is None:
                     raise ImportError(f"Unable to load docket CLI from {docket_cli_path}")
                 docket_cli_module = importlib.util.module_from_spec(spec)
@@ -3310,8 +3542,8 @@ Examples:
                 docket_main = docket_cli_module.main
 
                 docket_args = list(args[1:])
-                if json_output and '--json' not in docket_args:
-                    docket_args = ['--json', *docket_args]
+                if json_output and "--json" not in docket_args:
+                    docket_args = ["--json", *docket_args]
                 exit_code = docket_main(docket_args)
                 sys.exit(exit_code)
 
@@ -3322,6 +3554,7 @@ Examples:
             except Exception as e:
                 print(f"Error executing docket command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
 
@@ -3329,7 +3562,7 @@ Examples:
             """Handle workspace dataset bundle inspection commands."""
             subcommand = args[1] if len(args) > 1 else None
 
-            if not subcommand or subcommand in ['-h', '--help']:
+            if not subcommand or subcommand in ["-h", "--help"]:
                 print("""
 ipfs-datasets workspace - Inspect, search, export, and package workspace dataset bundles
 
@@ -3366,8 +3599,15 @@ Examples:
                 import importlib.util
                 from pathlib import Path
 
-                workspace_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "workspace_cli.py"
-                spec = importlib.util.spec_from_file_location("ipfs_datasets_workspace_cli", workspace_cli_path)
+                workspace_cli_path = (
+                    Path(__file__).resolve().parent
+                    / "ipfs_datasets_py"
+                    / "cli"
+                    / "workspace_cli.py"
+                )
+                spec = importlib.util.spec_from_file_location(
+                    "ipfs_datasets_workspace_cli", workspace_cli_path
+                )
                 if spec is None or spec.loader is None:
                     raise ImportError(f"Unable to load workspace CLI from {workspace_cli_path}")
                 workspace_cli_module = importlib.util.module_from_spec(spec)
@@ -3375,8 +3615,8 @@ Examples:
                 workspace_main = workspace_cli_module.main
 
                 workspace_args = list(args[1:])
-                if json_output and '--json' not in workspace_args:
-                    workspace_args = ['--json', *workspace_args]
+                if json_output and "--json" not in workspace_args:
+                    workspace_args = ["--json", *workspace_args]
                 exit_code = workspace_main(workspace_args)
                 sys.exit(exit_code)
 
@@ -3387,6 +3627,7 @@ Examples:
             except Exception as e:
                 print(f"Error executing workspace command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
 
@@ -3394,7 +3635,7 @@ Examples:
             """Handle legal PDF rendering commands."""
             subcommand = args[1] if len(args) > 1 else None
 
-            if not subcommand or subcommand in ['-h', '--help']:
+            if not subcommand or subcommand in ["-h", "--help"]:
                 print("""
 ipfs-datasets legal-pdf - Render legal PDF artifacts from shared package helpers
 
@@ -3433,8 +3674,15 @@ Examples:
                 import importlib.util
                 from pathlib import Path
 
-                legal_pdf_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "legal_pdf_cli.py"
-                spec = importlib.util.spec_from_file_location("ipfs_datasets_legal_pdf_cli", legal_pdf_cli_path)
+                legal_pdf_cli_path = (
+                    Path(__file__).resolve().parent
+                    / "ipfs_datasets_py"
+                    / "cli"
+                    / "legal_pdf_cli.py"
+                )
+                spec = importlib.util.spec_from_file_location(
+                    "ipfs_datasets_legal_pdf_cli", legal_pdf_cli_path
+                )
                 if spec is None or spec.loader is None:
                     raise ImportError(f"Unable to load legal PDF CLI from {legal_pdf_cli_path}")
                 legal_pdf_cli_module = importlib.util.module_from_spec(spec)
@@ -3442,8 +3690,8 @@ Examples:
                 legal_pdf_main = legal_pdf_cli_module.main
 
                 legal_pdf_args = list(args[1:])
-                if json_output and '--json' not in legal_pdf_args:
-                    legal_pdf_args = ['--json', *legal_pdf_args]
+                if json_output and "--json" not in legal_pdf_args:
+                    legal_pdf_args = ["--json", *legal_pdf_args]
                 exit_code = legal_pdf_main(legal_pdf_args)
                 sys.exit(exit_code)
 
@@ -3454,28 +3702,26 @@ Examples:
             except Exception as e:
                 print(f"Error executing legal-pdf command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         if command == "detect-type":
             # File type detection commands
             subcommand = args[1] if len(args) > 1 else "detect"
-            
+
             try:
                 from ipfs_datasets_py.utils.file_detector import FileTypeDetector
-                
+
                 detector = FileTypeDetector()
-                
+
                 if subcommand == "methods":
                     # List available detection methods
                     methods = detector.get_available_methods()
                     strategies = detector.get_supported_strategies()
-                    
+
                     if json_output:
-                        print(json.dumps({
-                            "methods": methods,
-                            "strategies": strategies
-                        }, indent=2))
+                        print(json.dumps({"methods": methods, "strategies": strategies}, indent=2))
                     else:
                         print("Available detection methods:")
                         for method in methods:
@@ -3484,20 +3730,20 @@ Examples:
                         for strategy in strategies:
                             print(f"  - {strategy}")
                     return
-                
+
                 elif subcommand == "detect":
                     # Detect single file type
                     extra = args[2:]
                     file_path = None
                     methods = None
                     strategy = None
-                    
+
                     i = 0
                     while i < len(extra):
                         token = extra[i]
                         if token in ("--method", "-m") and i + 1 < len(extra):
                             method_str = extra[i + 1]
-                            methods = [m.strip() for m in method_str.split(',')]
+                            methods = [m.strip() for m in method_str.split(",")]
                             i += 2
                         elif token in ("--strategy", "-s") and i + 1 < len(extra):
                             strategy = extra[i + 1]
@@ -3507,15 +3753,17 @@ Examples:
                             i += 1
                         else:
                             i += 1
-                    
+
                     if not file_path:
-                        print("Usage: ipfs-datasets detect-type detect <file> [--method METHOD] [--strategy STRATEGY]")
+                        print(
+                            "Usage: ipfs-datasets detect-type detect <file> [--method METHOD] [--strategy STRATEGY]"
+                        )
                         print("Methods: extension, magic, magika, all")
                         print("Strategies: fast, accurate, voting, conservative")
                         return
-                    
+
                     result = detector.detect_type(file_path, methods=methods, strategy=strategy)
-                    
+
                     if json_output:
                         print(json.dumps(result, indent=2))
                     else:
@@ -3524,14 +3772,16 @@ Examples:
                         print(f"Extension: {result.get('extension', 'Unknown')}")
                         print(f"Confidence: {result.get('confidence', 0):.2f}")
                         print(f"Method: {result.get('method', 'Unknown')}")
-                        if result.get('error'):
+                        if result.get("error"):
                             print(f"Error: {result['error']}")
-                        if result.get('all_results'):
+                        if result.get("all_results"):
                             print("\nAll results:")
-                            for method_name, method_result in result['all_results'].items():
-                                print(f"  {method_name}: {method_result.get('mime_type', 'N/A')} (confidence: {method_result.get('confidence', 0):.2f})")
+                            for method_name, method_result in result["all_results"].items():
+                                print(
+                                    f"  {method_name}: {method_result.get('mime_type', 'N/A')} (confidence: {method_result.get('confidence', 0):.2f})"
+                                )
                     return
-                
+
                 elif subcommand == "batch":
                     # Batch detect multiple files
                     extra = args[2:]
@@ -3542,13 +3792,13 @@ Examples:
                     recursive = False
                     pattern = "*"
                     export_path = None
-                    
+
                     i = 0
                     while i < len(extra):
                         token = extra[i]
                         if token in ("--method", "-m") and i + 1 < len(extra):
                             method_str = extra[i + 1]
-                            methods = [m.strip() for m in method_str.split(',')]
+                            methods = [m.strip() for m in method_str.split(",")]
                             i += 2
                         elif token in ("--strategy", "-s") and i + 1 < len(extra):
                             strategy = extra[i + 1]
@@ -3569,10 +3819,11 @@ Examples:
                             if os.path.exists(token):
                                 file_paths.append(token)
                             i += 1
-                    
+
                     # If directory specified, collect files from it
                     if directory:
                         from pathlib import Path
+
                         dir_path = Path(directory)
                         if dir_path.is_dir():
                             if recursive:
@@ -3582,10 +3833,14 @@ Examples:
                         else:
                             print(f"Error: {directory} is not a directory")
                             return
-                    
+
                     if not file_paths:
-                        print("Usage: ipfs-datasets detect-type batch <file1> <file2> ... [OPTIONS]")
-                        print("       ipfs-datasets detect-type batch --directory DIR [--recursive] [OPTIONS]")
+                        print(
+                            "Usage: ipfs-datasets detect-type batch <file1> <file2> ... [OPTIONS]"
+                        )
+                        print(
+                            "       ipfs-datasets detect-type batch --directory DIR [--recursive] [OPTIONS]"
+                        )
                         print("Options:")
                         print("  --method, -m METHOD      Detection methods (comma-separated)")
                         print("  --strategy, -s STRATEGY  Detection strategy")
@@ -3594,50 +3849,52 @@ Examples:
                         print("  --pattern, -p PATTERN    File pattern (default: *)")
                         print("  --export, -e PATH        Export results to JSON file")
                         return
-                    
+
                     results = detector.batch_detect(file_paths, methods=methods, strategy=strategy)
-                    
+
                     # Export to file if requested
                     if export_path:
-                        with open(export_path, 'w') as f:
+                        with open(export_path, "w") as f:
                             json.dump(results, f, indent=2)
                         print(f"Results exported to {export_path}")
-                    
+
                     if json_output:
                         print(json.dumps(results, indent=2))
                     else:
                         print(f"Analyzed {len(results)} files:\n")
                         for file_path, result in results.items():
-                            mime_type = result.get('mime_type', 'Unknown')
-                            confidence = result.get('confidence', 0)
-                            method = result.get('method', 'Unknown')
+                            mime_type = result.get("mime_type", "Unknown")
+                            confidence = result.get("confidence", 0)
+                            method = result.get("method", "Unknown")
                             print(f"{file_path}:")
                             print(f"  Type: {mime_type}")
                             print(f"  Confidence: {confidence:.2f}")
                             print(f"  Method: {method}")
-                            if result.get('error'):
+                            if result.get("error"):
                                 print(f"  Error: {result['error']}")
                             print()
                     return
-                
+
                 else:
                     print(f"Unknown detect-type subcommand: {subcommand}")
                     print("Available subcommands: detect, batch, methods")
                     return
-                    
+
             except ImportError as e:
                 print(f"Error: FileTypeDetector module not available: {e}")
                 return
             except Exception as e:
                 print(f"Error executing detect-type command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         # Handle common-crawl commands
-        if command in ['common-crawl', 'cc']:
+        if command in ["common-crawl", "cc"]:
             try:
                 from ipfs_datasets_py.cli.common_crawl_cli import handle_common_crawl_command
+
                 handle_common_crawl_command(args)
                 return
             except ImportError as e:
@@ -3646,48 +3903,56 @@ Examples:
             except Exception as e:
                 print(f"Error executing common-crawl command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         # Handle knowledge graph commands
-        if command == 'graph':
+        if command == "graph":
             try:
                 import asyncio
                 from ipfs_datasets_py.core_operations import KnowledgeGraphManager
-                
+
                 subcommand = args[1] if len(args) > 1 else None
                 if not subcommand:
                     print("Usage: ipfs-datasets graph <subcommand> [options]")
-                    print("Subcommands: create, add-entity, add-rel, query, search, tx-begin, tx-commit, tx-rollback, index, constraint")
+                    print(
+                        "Subcommands: create, add-entity, add-rel, query, search, tx-begin, tx-commit, tx-rollback, index, constraint"
+                    )
                     print("For help: ipfs-datasets graph --help")
                     return
-                
+
                 # Parse common options
                 driver_url = None
                 extra_args = args[2:]
                 kwargs = parse_tool_args(extra_args)
-                
+
                 # Get driver URL from kwargs or default
-                driver_url = kwargs.pop('driver_url', kwargs.pop('driver-url', None)) or "ipfs://localhost:5001"
-                
+                driver_url = (
+                    kwargs.pop("driver_url", kwargs.pop("driver-url", None))
+                    or "ipfs://localhost:5001"
+                )
+
                 # Create manager
                 manager = KnowledgeGraphManager(driver_url=driver_url)
-                
+
                 # Handle subcommands
-                if subcommand == 'create':
+                if subcommand == "create":
                     result = anyio.run(manager.create_graph)
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'add-entity':
-                    entity_id = kwargs.get('id', kwargs.get('entity_id'))
-                    entity_type = kwargs.get('type', kwargs.get('entity_type'))
-                    properties = kwargs.get('props', kwargs.get('properties', {}))
-                    
+
+                elif subcommand == "add-entity":
+                    entity_id = kwargs.get("id", kwargs.get("entity_id"))
+                    entity_type = kwargs.get("type", kwargs.get("entity_type"))
+                    properties = kwargs.get("props", kwargs.get("properties", {}))
+
                     if not entity_id or not entity_type:
                         print("Error: --id and --type are required")
-                        print("Usage: ipfs-datasets graph add-entity --id ID --type TYPE [--props JSON]")
+                        print(
+                            "Usage: ipfs-datasets graph add-entity --id ID --type TYPE [--props JSON]"
+                        )
                         return
-                    
+
                     # Parse properties if it's a JSON string
                     if isinstance(properties, str):
                         try:
@@ -3695,116 +3960,128 @@ Examples:
                         except:
                             print(f"Warning: Could not parse properties as JSON: {properties}")
                             properties = {}
-                    
+
                     result = anyio.run(manager.add_entity, entity_id, entity_type, properties)
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand in ['add-rel', 'add-relationship']:
-                    source_id = kwargs.get('source', kwargs.get('source_id'))
-                    target_id = kwargs.get('target', kwargs.get('target_id'))
-                    rel_type = kwargs.get('type', kwargs.get('rel_type'))
-                    properties = kwargs.get('props', kwargs.get('properties', {}))
-                    
+
+                elif subcommand in ["add-rel", "add-relationship"]:
+                    source_id = kwargs.get("source", kwargs.get("source_id"))
+                    target_id = kwargs.get("target", kwargs.get("target_id"))
+                    rel_type = kwargs.get("type", kwargs.get("rel_type"))
+                    properties = kwargs.get("props", kwargs.get("properties", {}))
+
                     if not source_id or not target_id or not rel_type:
                         print("Error: --source, --target, and --type are required")
-                        print("Usage: ipfs-datasets graph add-rel --source ID1 --target ID2 --type TYPE [--props JSON]")
+                        print(
+                            "Usage: ipfs-datasets graph add-rel --source ID1 --target ID2 --type TYPE [--props JSON]"
+                        )
                         return
-                    
+
                     # Parse properties if it's a JSON string
                     if isinstance(properties, str):
                         try:
                             properties = json.loads(properties)
                         except:
                             properties = {}
-                    
-                    result = anyio.run(manager.add_relationship, source_id, target_id, rel_type, properties)
+
+                    result = anyio.run(
+                        manager.add_relationship, source_id, target_id, rel_type, properties
+                    )
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'query':
-                    cypher = kwargs.get('cypher', kwargs.get('query'))
-                    parameters = kwargs.get('params', kwargs.get('parameters', {}))
-                    
+
+                elif subcommand == "query":
+                    cypher = kwargs.get("cypher", kwargs.get("query"))
+                    parameters = kwargs.get("params", kwargs.get("parameters", {}))
+
                     if not cypher:
                         print("Error: --cypher is required")
-                        print("Usage: ipfs-datasets graph query --cypher 'MATCH (n) RETURN n LIMIT 10' [--params JSON]")
+                        print(
+                            "Usage: ipfs-datasets graph query --cypher 'MATCH (n) RETURN n LIMIT 10' [--params JSON]"
+                        )
                         return
-                    
+
                     # Parse parameters if it's a JSON string
                     if isinstance(parameters, str):
                         try:
                             parameters = json.loads(parameters)
                         except:
                             parameters = {}
-                    
+
                     result = anyio.run(manager.query_cypher, cypher, parameters)
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'search':
-                    query = kwargs.get('query', kwargs.get('q'))
-                    search_type = kwargs.get('type', 'hybrid')
-                    limit = int(kwargs.get('limit', 10))
-                    
+
+                elif subcommand == "search":
+                    query = kwargs.get("query", kwargs.get("q"))
+                    search_type = kwargs.get("type", "hybrid")
+                    limit = int(kwargs.get("limit", 10))
+
                     if not query:
                         print("Error: --query is required")
-                        print("Usage: ipfs-datasets graph search --query 'search text' [--type hybrid|semantic|keyword] [--limit N]")
+                        print(
+                            "Usage: ipfs-datasets graph search --query 'search text' [--type hybrid|semantic|keyword] [--limit N]"
+                        )
                         return
-                    
+
                     result = anyio.run(manager.search_hybrid, query, search_type, limit)
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'tx-begin':
+
+                elif subcommand == "tx-begin":
                     result = anyio.run(manager.transaction_begin)
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'tx-commit':
-                    tx_id = kwargs.get('tx_id', kwargs.get('id'))
+
+                elif subcommand == "tx-commit":
+                    tx_id = kwargs.get("tx_id", kwargs.get("id"))
                     if not tx_id:
                         print("Error: --tx-id is required")
                         print("Usage: ipfs-datasets graph tx-commit --tx-id ID")
                         return
                     result = anyio.run(manager.transaction_commit, tx_id)
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'tx-rollback':
-                    tx_id = kwargs.get('tx_id', kwargs.get('id'))
+
+                elif subcommand == "tx-rollback":
+                    tx_id = kwargs.get("tx_id", kwargs.get("id"))
                     if not tx_id:
                         print("Error: --tx-id is required")
                         print("Usage: ipfs-datasets graph tx-rollback --tx-id ID")
                         return
                     result = anyio.run(manager.transaction_rollback, tx_id)
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'index':
-                    label = kwargs.get('label')
-                    property_key = kwargs.get('property', kwargs.get('prop'))
-                    
+
+                elif subcommand == "index":
+                    label = kwargs.get("label")
+                    property_key = kwargs.get("property", kwargs.get("prop"))
+
                     if not label or not property_key:
                         print("Error: --label and --property are required")
                         print("Usage: ipfs-datasets graph index --label LABEL --property PROP")
                         return
-                    
+
                     result = anyio.run(manager.create_index, label, property_key)
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'constraint':
-                    label = kwargs.get('label')
-                    property_key = kwargs.get('property', kwargs.get('prop'))
-                    constraint_type = kwargs.get('type', 'unique')
-                    
+
+                elif subcommand == "constraint":
+                    label = kwargs.get("label")
+                    property_key = kwargs.get("property", kwargs.get("prop"))
+                    constraint_type = kwargs.get("type", "unique")
+
                     if not label or not property_key:
                         print("Error: --label and --property are required")
-                        print("Usage: ipfs-datasets graph constraint --label LABEL --property PROP [--type unique|exists]")
+                        print(
+                            "Usage: ipfs-datasets graph constraint --label LABEL --property PROP [--type unique|exists]"
+                        )
                         return
-                    
+
                     result = anyio.run(manager.add_constraint, label, property_key, constraint_type)
                     print_result(result, "json" if json_output else "pretty")
-                    
+
                 else:
                     print(f"Unknown graph subcommand: {subcommand}")
-                    print("Available subcommands: create, add-entity, add-rel, query, search, tx-begin, tx-commit, tx-rollback, index, constraint")
-                
+                    print(
+                        "Available subcommands: create, add-entity, add-rel, query, search, tx-begin, tx-commit, tx-rollback, index, constraint"
+                    )
+
                 return
-                
+
             except ImportError as e:
                 print(f"Error: Knowledge graph module not available: {e}")
                 print("Try: pip install -e . to install all dependencies")
@@ -3812,108 +4089,99 @@ Examples:
             except Exception as e:
                 print(f"Error executing graph command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         # Handle dataset commands
-        if command == 'dataset':
+        if command == "dataset":
             try:
                 from ipfs_datasets_py.core_operations import DataProcessor
-                
+
                 subcommand = args[1] if len(args) > 1 else None
                 if not subcommand:
                     print("Usage: ipfs-datasets dataset <subcommand> [options]")
                     print("Subcommands: validate, info, list, process")
                     print("For help: ipfs-datasets dataset --help")
                     return
-                
+
                 # Parse common options
                 extra_args = args[2:]
                 kwargs = parse_tool_args(extra_args)
-                
+
                 # Create processor
                 processor = DataProcessor()
-                
+
                 # Handle subcommands
-                if subcommand == 'validate':
-                    path = kwargs.get('path')
+                if subcommand == "validate":
+                    path = kwargs.get("path")
                     if not path:
                         print("Error: --path is required")
                         print("Usage: ipfs-datasets dataset validate --path PATH")
                         return
-                    
+
                     # Validate dataset
                     result = {
                         "valid": True,
                         "path": path,
-                        "message": "Dataset validation successful"
+                        "message": "Dataset validation successful",
                     }
-                    
+
                     try:
                         import os
+
                         if not os.path.exists(path):
-                            result = {
-                                "valid": False,
-                                "path": path,
-                                "error": "Path does not exist"
-                            }
+                            result = {"valid": False, "path": path, "error": "Path does not exist"}
                     except Exception as e:
-                        result = {
-                            "valid": False,
-                            "path": path,
-                            "error": str(e)
-                        }
-                    
+                        result = {"valid": False, "path": path, "error": str(e)}
+
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'info':
-                    name = kwargs.get('name')
+
+                elif subcommand == "info":
+                    name = kwargs.get("name")
                     if not name:
                         print("Error: --name is required")
                         print("Usage: ipfs-datasets dataset info --name NAME")
                         return
-                    
+
                     # Get dataset info
                     result = {
                         "name": name,
                         "status": "available",
-                        "info": "Dataset information retrieval would go here"
+                        "info": "Dataset information retrieval would go here",
                     }
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'list':
+
+                elif subcommand == "list":
                     # List available datasets
-                    result = {
-                        "datasets": [],
-                        "message": "Dataset listing would go here"
-                    }
+                    result = {"datasets": [], "message": "Dataset listing would go here"}
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'process':
-                    input_path = kwargs.get('input')
-                    output_path = kwargs.get('output')
-                    
+
+                elif subcommand == "process":
+                    input_path = kwargs.get("input")
+                    output_path = kwargs.get("output")
+
                     if not input_path or not output_path:
                         print("Error: --input and --output are required")
                         print("Usage: ipfs-datasets dataset process --input PATH --output PATH")
                         return
-                    
+
                     # Process dataset
                     result = {
                         "input": input_path,
                         "output": output_path,
                         "status": "processed",
-                        "message": "Dataset processing would go here"
+                        "message": "Dataset processing would go here",
                     }
                     print_result(result, "json" if json_output else "pretty")
-                    
+
                 else:
                     print(f"Unknown dataset subcommand: {subcommand}")
                     print("Available subcommands: validate, info, list, process")
                     return
-                
+
                 return
-                
+
             except ImportError as e:
                 print(f"Error: Dataset module not available: {e}")
                 print("Try: pip install -e . to install all dependencies")
@@ -3921,11 +4189,12 @@ Examples:
             except Exception as e:
                 print(f"Error executing dataset command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         # Handle search commands
-        if command == 'search':
+        if command == "search":
             try:
                 subcommand = args[1] if len(args) > 1 else None
                 if not subcommand:
@@ -3933,55 +4202,55 @@ Examples:
                     print("Subcommands: basic, semantic, hybrid")
                     print("For help: ipfs-datasets search --help")
                     return
-                
+
                 # Parse query and options
                 query = args[2] if len(args) > 2 else None
                 if not query:
                     print(f"Error: query is required for search {subcommand}")
                     print(f"Usage: ipfs-datasets search {subcommand} <query> [options]")
                     return
-                
+
                 extra_args = args[3:]
                 kwargs = parse_tool_args(extra_args)
-                
+
                 # Handle subcommands
-                if subcommand == 'basic':
+                if subcommand == "basic":
                     # Basic text search
                     result = {
                         "query": query,
                         "type": "basic",
                         "results": [],
-                        "message": "Basic search functionality would go here"
+                        "message": "Basic search functionality would go here",
                     }
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'semantic':
+
+                elif subcommand == "semantic":
                     # Semantic vector search
                     result = {
                         "query": query,
                         "type": "semantic",
                         "results": [],
-                        "message": "Semantic search functionality would go here"
+                        "message": "Semantic search functionality would go here",
                     }
                     print_result(result, "json" if json_output else "pretty")
-                    
-                elif subcommand == 'hybrid':
+
+                elif subcommand == "hybrid":
                     # Hybrid search (basic + semantic)
                     result = {
                         "query": query,
                         "type": "hybrid",
                         "results": [],
-                        "message": "Hybrid search functionality would go here"
+                        "message": "Hybrid search functionality would go here",
                     }
                     print_result(result, "json" if json_output else "pretty")
-                    
+
                 else:
                     print(f"Unknown search subcommand: {subcommand}")
                     print("Available subcommands: basic, semantic, hybrid")
                     return
-                
+
                 return
-                
+
             except ImportError as e:
                 print(f"Error: Search module not available: {e}")
                 print("Try: pip install -e . to install all dependencies")
@@ -3989,15 +4258,16 @@ Examples:
             except Exception as e:
                 print(f"Error executing search command: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-        
+
         print(f"Command '{' '.join(args)}' requires full system - importing modules...")
-        
+
         # For complex operations, import the full original functionality
     # Heavy subsystem imports would go here when needed
-        # Continue with heavy operations...
-        
+    # Continue with heavy operations...
+
     except ImportError as e:
         print(f"Error: Missing dependencies for command '{' '.join(args)}': {e}")
         print("Try: pip install -e . to install all dependencies")
@@ -4010,33 +4280,33 @@ def main():
     args = sys.argv[1:]
     # Global format flag support
     json_output = False
-    if '--format' in args:
+    if "--format" in args:
         try:
-            idx = args.index('--format')
-            if idx + 1 < len(args) and args[idx + 1].lower() == 'json':
+            idx = args.index("--format")
+            if idx + 1 < len(args) and args[idx + 1].lower() == "json":
                 json_output = True
                 # Remove the pair from args
-                args = args[:idx] + args[idx+2:]
+                args = args[:idx] + args[idx + 2 :]
         except Exception:
             pass
-    if '--json' in args:
+    if "--json" in args:
         json_output = True
-        args = [a for a in args if a != '--json']
-    
+        args = [a for a in args if a != "--json"]
+
     # Handle help and version immediately without any imports
-    if not args or args[0] in ['-h', '--help', 'help']:
+    if not args or args[0] in ["-h", "--help", "help"]:
         show_help()
         return
-        
-    if args[0] in ['--version', 'version']:
+
+    if args[0] in ["--version", "version"]:
         show_version()
         return
-    
+
     # Handle basic info commands without heavy imports
-    if args[0] == 'info':
+    if args[0] == "info":
         if len(args) > 1:
             sub = args[1]
-            if sub == 'status':
+            if sub == "status":
                 # Parse optional overrides to reflect resolved defaults in JSON
                 config_override = None
                 host_override = None
@@ -4046,16 +4316,16 @@ def main():
                 i = 0
                 while i < len(extra):
                     token = extra[i]
-                    if token == '--config' and i + 1 < len(extra):
+                    if token == "--config" and i + 1 < len(extra):
                         config_override = extra[i + 1]
                         i += 2
-                    elif token in ('--host', '-H') and i + 1 < len(extra):
+                    elif token in ("--host", "-H") and i + 1 < len(extra):
                         host_override = str(extra[i + 1])
                         i += 2
-                    elif token in ('--port', '-p') and i + 1 < len(extra):
+                    elif token in ("--port", "-p") and i + 1 < len(extra):
                         port_override = str(extra[i + 1])
                         i += 2
-                    elif token in ('--gateway', '-g') and i + 1 < len(extra):
+                    elif token in ("--gateway", "-g") and i + 1 < len(extra):
                         gateway_override = extra[i + 1]
                         i += 2
                     else:
@@ -4078,7 +4348,7 @@ def main():
                         "port": port_res,
                         "gateway": gateway_res,
                         "dashboard_status_url": f"http://{host_res}:{port_res}/api/mcp/status",
-                        "dashboard_url": f"http://{host_res}:{port_res}/mcp"
+                        "dashboard_url": f"http://{host_res}:{port_res}/mcp",
                     }
                     print(json.dumps(out))
                 else:
@@ -4092,13 +4362,13 @@ def main():
                     print(f"Dashboard: http://{host_res}:{port_res}/mcp")
                     print(f"Status API: http://{host_res}:{port_res}/api/mcp/status")
                 return
-            if sub == 'version':
+            if sub == "version":
                 if json_output:
                     print(json.dumps({"version": "1.0.0"}))
                 else:
                     show_version()
                 return
-            if sub == 'defaults':
+            if sub == "defaults":
                 # Parse options for host/port/gateway/config
                 config_override = None
                 host_override = None
@@ -4108,16 +4378,16 @@ def main():
                 i = 0
                 while i < len(extra):
                     token = extra[i]
-                    if token == '--config' and i + 1 < len(extra):
+                    if token == "--config" and i + 1 < len(extra):
                         config_override = extra[i + 1]
                         i += 2
-                    elif token in ('--host', '-H') and i + 1 < len(extra):
+                    elif token in ("--host", "-H") and i + 1 < len(extra):
                         host_override = str(extra[i + 1])
                         i += 2
-                    elif token in ('--port', '-p') and i + 1 < len(extra):
+                    elif token in ("--port", "-p") and i + 1 < len(extra):
                         port_override = str(extra[i + 1])
                         i += 2
-                    elif token in ('--gateway', '-g') and i + 1 < len(extra):
+                    elif token in ("--gateway", "-g") and i + 1 < len(extra):
                         gateway_override = extra[i + 1]
                         i += 2
                     else:
@@ -4132,17 +4402,13 @@ def main():
                 gateway = _default_gateway(config_override, gateway_override)
 
                 if json_output:
-                    print(json.dumps({
-                        "host": host,
-                        "port": port,
-                        "gateway": gateway
-                    }))
+                    print(json.dumps({"host": host, "port": port, "gateway": gateway}))
                 else:
                     print(f"Host: {host}")
                     print(f"Port: {port}")
                     print(f"Gateway: {gateway or 'None'}")
                 return
-            if sub == 'save-defaults':
+            if sub == "save-defaults":
                 # Persist host/port/gateway to config file
                 config_path = None
                 host_val = None
@@ -4152,16 +4418,16 @@ def main():
                 i = 0
                 while i < len(extra):
                     token = extra[i]
-                    if token == '--config' and i + 1 < len(extra):
+                    if token == "--config" and i + 1 < len(extra):
                         config_path = extra[i + 1]
                         i += 2
-                    elif token in ('--host', '-H') and i + 1 < len(extra):
+                    elif token in ("--host", "-H") and i + 1 < len(extra):
                         host_val = str(extra[i + 1])
                         i += 2
-                    elif token in ('--port', '-p') and i + 1 < len(extra):
+                    elif token in ("--port", "-p") and i + 1 < len(extra):
                         port_val = str(extra[i + 1])
                         i += 2
-                    elif token in ('--gateway', '-g') and i + 1 < len(extra):
+                    elif token in ("--gateway", "-g") and i + 1 < len(extra):
                         gateway_val = extra[i + 1]
                         i += 2
                     else:
@@ -4176,7 +4442,9 @@ def main():
                 # Determine config file path
                 if not config_path:
                     env_cfg = os.environ.get("IPFS_DATASETS_CLI_CONFIG")
-                    config_path = env_cfg if env_cfg else str(Path.home() / ".ipfs_datasets" / "cli.json")
+                    config_path = (
+                        env_cfg if env_cfg else str(Path.home() / ".ipfs_datasets" / "cli.json")
+                    )
 
                 try:
                     cfg_path = Path(config_path)
@@ -4184,7 +4452,7 @@ def main():
                     data = {
                         "host": str(resolved_host),
                         "port": str(resolved_port),
-                        **({"gateway": str(resolved_gateway)} if resolved_gateway else {})
+                        **({"gateway": str(resolved_gateway)} if resolved_gateway else {}),
                     }
                     cfg_path.write_text(json.dumps(data, indent=2))
                     if json_output:
@@ -4200,11 +4468,9 @@ def main():
                     else:
                         print(f"Failed to save defaults: {e}")
                 return
-            if sub in ['list-tools', 'listtools', 'tools']:
+            if sub in ["list-tools", "listtools", "tools"]:
                 # Minimal categories view without heavy imports
-                cats = [
-                    'dataset_tools', 'ipfs_tools', 'vector_tools', 'analysis_tools'
-                ]
+                cats = ["dataset_tools", "ipfs_tools", "vector_tools", "analysis_tools"]
                 if json_output:
                     print(json.dumps({"categories": cats}))
                 else:
@@ -4212,12 +4478,42 @@ def main():
                     for c in cats:
                         print(f"- {c}")
                 return
-    
+
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'legal-pdf', 'workflow-automation', 'wallet', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'history-index', 'docket', 'workspace', 'copilot', 'common-crawl', 'cc']:
+    if args[0] in [
+        "mcp",
+        "tools",
+        "ipfs",
+        "dataset",
+        "alerts",
+        "vector",
+        "graph",
+        "search",
+        "logic",
+        "legal",
+        "legal-pdf",
+        "workflow-automation",
+        "wallet",
+        "p2p-networking",
+        "vscode",
+        "github",
+        "gemini",
+        "claude",
+        "finance",
+        "detect-type",
+        "p2p",
+        "discord",
+        "email",
+        "history-index",
+        "docket",
+        "workspace",
+        "copilot",
+        "common-crawl",
+        "cc",
+    ]:
         heavy_args = list(args)
-        if json_output and '--json' not in heavy_args:
-            heavy_args = ['--json', *heavy_args]
+        if json_output and "--json" not in heavy_args:
+            heavy_args = ["--json", *heavy_args]
         execute_heavy_command(heavy_args)
         return
 

@@ -110,7 +110,9 @@ def _cluster_by_simhash(paths: List[Path], max_distance: int) -> Dict[str, List[
 
     out: Dict[str, List[Path]] = {}
     for _, group_paths in grouped.items():
-        key = hashlib.sha1("\n".join(sorted(str(p) for p in group_paths)).encode("utf-8")).hexdigest()
+        key = hashlib.sha1(
+            "\n".join(sorted(str(p) for p in group_paths)).encode("utf-8")
+        ).hexdigest()
         out[key] = group_paths
     return out
 
@@ -143,14 +145,18 @@ def _apply_conservative_removals(groups: Dict[str, List[Path]], dry_run: bool) -
 
 
 def _dedupe_noncanonical_exact(raw_html_dir: Path, dry_run: bool = False) -> Dict[str, Any]:
-    files = sorted([p for p in raw_html_dir.iterdir() if p.is_file() and p.suffix.lower() == ".html"])
+    files = sorted(
+        [p for p in raw_html_dir.iterdir() if p.is_file() and p.suffix.lower() == ".html"]
+    )
 
     by_hash: Dict[str, List[Path]] = defaultdict(list)
     for path in files:
         by_hash[_sha256(path)].append(path)
     applied = _apply_conservative_removals(by_hash, dry_run=dry_run)
 
-    remaining_files = sorted([p for p in raw_html_dir.iterdir() if p.is_file() and p.suffix.lower() == ".html"])
+    remaining_files = sorted(
+        [p for p in raw_html_dir.iterdir() if p.is_file() and p.suffix.lower() == ".html"]
+    )
 
     return {
         "mode": "noncanonical_only_exact",
@@ -168,10 +174,14 @@ def _dedupe_noncanonical_semantic(
     dry_run: bool = False,
     semantic_distance: int = 3,
 ) -> Dict[str, Any]:
-    files = sorted([p for p in raw_html_dir.iterdir() if p.is_file() and p.suffix.lower() == ".html"])
+    files = sorted(
+        [p for p in raw_html_dir.iterdir() if p.is_file() and p.suffix.lower() == ".html"]
+    )
     groups = _cluster_by_simhash(files, max_distance=max(0, int(semantic_distance)))
     applied = _apply_conservative_removals(groups, dry_run=dry_run)
-    remaining_files = sorted([p for p in raw_html_dir.iterdir() if p.is_file() and p.suffix.lower() == ".html"])
+    remaining_files = sorted(
+        [p for p in raw_html_dir.iterdir() if p.is_file() and p.suffix.lower() == ".html"]
+    )
 
     return {
         "mode": "noncanonical_only_semantic",

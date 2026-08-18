@@ -35,7 +35,7 @@ results = searcher.search("EPA regulations on water pollution in California")
 
 # View results
 print(f"Found {len(results['results'])} results")
-for result in results['results'][:5]:
+for result in results["results"][:5]:
     print(f"  {result['title']}: {result['url']}")
 ```
 
@@ -176,12 +176,12 @@ Execute natural language legal search.
 **Returns:**
 ```python
 {
-    'query': str,              # Original query
-    'intent': dict,            # Parsed query intent
-    'search_terms': list,      # Generated search terms
-    'results': list,           # Search results with relevance scores
-    'strategy': dict,          # Complete search strategy
-    'metadata': dict           # Knowledge base stats and info
+    "query": str,  # Original query
+    "intent": dict,  # Parsed query intent
+    "search_terms": list,  # Generated search terms
+    "results": list,  # Search results with relevance scores
+    "strategy": dict,  # Complete search strategy
+    "metadata": dict,  # Knowledge base stats and info
 }
 ```
 
@@ -274,6 +274,7 @@ searcher = BraveLegalSearch(knowledge_base_dir="/path/to/jsonl/files")
 
 # Or load directly
 from ipfs_datasets_py.processors.legal_scrapers import load_knowledge_base
+
 kb = load_knowledge_base("/path/to/directory")
 stats = kb.get_statistics()
 ```

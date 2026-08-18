@@ -435,8 +435,7 @@ def test_flogic_optimizer_keeps_direct_frame_terms_when_audit_key_cap_is_exceede
     )
 
     dense_contextual_features = [
-        f"flogic:citation_section_component:{1000 + index}"
-        for index in range(1200)
+        f"flogic:citation_section_component:{1000 + index}" for index in range(1200)
     ]
     result = optimizer.evaluate(
         source_text="source",
@@ -635,10 +634,7 @@ def test_flogic_optimizer_audits_packet_view_quality_frame_features() -> None:
     assert "quality:symbolic:has-formula" in result.metadata["frame_audit_feature_keys"]
     assert "bias" in result.metadata["frame_ontology_terms"]
     assert "symbolic_has_formula" in result.metadata["frame_ontology_terms"]
-    assert (
-        "quality_symbolic_has_formula"
-        in result.metadata["frame_ontology_contextualized_terms"]
-    )
+    assert "quality_symbolic_has_formula" in result.metadata["frame_ontology_contextualized_terms"]
 
 
 def test_flogic_optimizer_extracts_semantic_frame_fields_from_structured_features() -> None:
@@ -732,6 +728,7 @@ def test_flogic_optimizer_audits_family_scoring_view_quality_features() -> None:
         "quality_symbolic_has_formula",
     ]:
         assert term in result.metadata["frame_ontology_contextualized_terms"]
+
 
 def test_flogic_optimizer_audits_packet_000045_modal_frame_logic_features() -> None:
     optimizer = FLogicSemanticOptimizer(

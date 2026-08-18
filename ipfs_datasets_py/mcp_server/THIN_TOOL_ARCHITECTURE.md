@@ -80,17 +80,16 @@ Core implementation: ipfs_datasets_py.core_operations.dataset_loader.DatasetLoad
 
 from ipfs_datasets_py.core_operations import DatasetLoader  # ← Core module import
 
+
 async def load_dataset(
-    source: str,
-    format: Optional[str] = None,
-    options: Optional[Dict[str, Any]] = None
+    source: str, format: Optional[str] = None, options: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Load a dataset from a source."""
-    
+
     # Minimal validation
     if not source:
         return mcp_error_response("Missing required field: source")
-    
+
     # Call core module - ALL business logic is here
     try:
         loader = DatasetLoader()  # ← Core class
@@ -122,18 +121,19 @@ from ipfs_datasets_py.search.search_tools_api import (
     similarity_search_from_parameters,
 )
 
+
 class SemanticSearchTool(ClaudeMCPTool):
     """Tool for performing semantic search."""
-    
+
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         # Validate parameters
         validator.validate_json_schema(parameters, self.input_schema)
-        
+
         # Extract and normalize params
         query = parameters["query"]
         model = parameters.get("model", "default-model")
         top_k = parameters.get("top_k", 5)
-        
+
         # Call core module function - ALL business logic is here
         return await semantic_search_from_parameters(
             vector_service=self.vector_service,
@@ -158,23 +158,24 @@ class SemanticSearchTool(ClaudeMCPTool):
 # ❌ BAD: Business logic in tool file
 async def load_dataset_bad(source: str) -> Dict:
     """BAD: Contains business logic in tool."""
-    
+
     # ❌ File I/O logic in tool
-    if source.endswith('.json'):
+    if source.endswith(".json"):
         with open(source) as f:
             data = json.load(f)
-    elif source.endswith('.csv'):
+    elif source.endswith(".csv"):
         import pandas as pd
+
         data = pd.read_csv(source)
-    
+
     # ❌ Processing logic in tool
-    data = data[data['value'] > 0]  # Filtering
-    data['new_col'] = data['a'] + data['b']  # Computation
-    
+    data = data[data["value"] > 0]  # Filtering
+    data["new_col"] = data["a"] + data["b"]  # Computation
+
     # ❌ Validation logic in tool
     if len(data) > 10000:
         raise ValueError("Dataset too large")
-    
+
     return {"data": data}
 ```
 
@@ -197,18 +198,14 @@ async def load_dataset_bad(source: str) -> Dict:
 ```python
 # ipfs_datasets_py/search/search_tools_api.py
 async def semantic_search_from_parameters(
-    vector_service,
-    query: str,
-    model: str,
-    top_k: int = 5,
-    **kwargs
+    vector_service, query: str, model: str, top_k: int = 5, **kwargs
 ) -> Dict[str, Any]:
     """
     Perform semantic search.
-    
+
     This is a core API function designed for reuse by:
     - MCP server tools
-    - CLI tools  
+    - CLI tools
     - Third-party packages
     """
     # All business logic here
@@ -291,7 +288,7 @@ LOAD_DATASET_SCHEMA = {
         "required": True,
         "description": "Source identifier of the dataset",
         "cli_arg": "--source",
-        "mcp_key": "source"
+        "mcp_key": "source",
     },
     "format": {
         "type": "string",
@@ -299,8 +296,8 @@ LOAD_DATASET_SCHEMA = {
         "description": "Format of the dataset (json, csv, parquet)",
         "cli_arg": "--format",
         "mcp_key": "format",
-        "default": "auto"
-    }
+        "default": "auto",
+    },
 }
 ```
 
@@ -347,18 +344,12 @@ def cli_load_dataset(args):
 async def mcp_load_dataset(parameters: Dict) -> Dict:
     """MCP implementation using core modules."""
     # Use shared validation
-    validate_load_dataset_params(
-        parameters["source"],
-        parameters.get("format")
-    )
-    
+    validate_load_dataset_params(parameters["source"], parameters.get("format"))
+
     # Use same core service
     loader = DatasetLoader()
-    result = await loader.load(
-        parameters["source"],
-        format=parameters.get("format")
-    )
-    
+    result = await loader.load(parameters["source"], format=parameters.get("format"))
+
     # Format for MCP protocol
     return {"status": "success", "data": result}
 ```
@@ -478,8 +469,8 @@ from ipfs_datasets_py.logic.fol import convert_text_to_fol
 **❌ DON'T:**
 ```python
 from pandas import DataFrame  # Use core module's pandas wrapper
-from sklearn import model     # Use core module's ML utilities
-import requests              # Use core module's HTTP client
+from sklearn import model  # Use core module's ML utilities
+import requests  # Use core module's HTTP client
 ```
 
 ### When to Create New Core Modules
@@ -513,7 +504,8 @@ If you find a tool with embedded business logic:
    ```python
    # Replace thick_tool.py with thin wrapper
    from ipfs_datasets_py.core_operations import new_service
-   
+
+
    async def tool_function(params):
        return await new_service.do_work(params)
    ```
@@ -537,7 +529,7 @@ If you find a tool with embedded business logic:
 from ipfs_datasets_py.mcp_server.tools.dataset_tools import load_dataset
 
 # Requires MCP protocol knowledge
-result = await load_dataset({"source": "data.json"})  
+result = await load_dataset({"source": "data.json"})
 ```
 
 ### After (Thin Tool - Easy to Reuse)

@@ -119,11 +119,17 @@ def _provenance(formula: Any) -> Any:
 
 
 def _formula_id(formula: Any, index: int) -> str:
-    return str(_get(formula, "formula_id") or _as_mapping(formula).get("formula_id") or f"formula-{index}")
+    return str(
+        _get(formula, "formula_id") or _as_mapping(formula).get("formula_id") or f"formula-{index}"
+    )
 
 
 def _source_span_hash(sample_or_document: Any, formula: Any) -> str:
-    text = str(_get(sample_or_document, "normalized_text") or _get(_document(sample_or_document), "normalized_text") or "")
+    text = str(
+        _get(sample_or_document, "normalized_text")
+        or _get(_document(sample_or_document), "normalized_text")
+        or ""
+    )
     provenance = _provenance(formula)
     try:
         start = max(0, int(_get(provenance, "start_char") or 0))
@@ -142,7 +148,9 @@ def _source_span_hash(sample_or_document: Any, formula: Any) -> str:
 
 
 def _predicate_signature(predicate: Any) -> str:
-    name = _atom(_get(predicate, "name") or _as_mapping(predicate).get("name"), fallback="predicate")
+    name = _atom(
+        _get(predicate, "name") or _as_mapping(predicate).get("name"), fallback="predicate"
+    )
     args = _sequence(_get(predicate, "arguments") or _as_mapping(predicate).get("arguments", []))
     role = _atom(_get(predicate, "role") or _as_mapping(predicate).get("role") or "none")
     return f"{name}/arity:{len(args)}/role:{role}"
@@ -151,7 +159,13 @@ def _predicate_signature(predicate: Any) -> str:
 def _family_view(family: str, symbol: str) -> str:
     normalized_family = _atom(family)
     normalized_symbol = _atom(symbol)
-    if normalized_family == "deontic" or normalized_symbol in {"shall", "must", "may", "shall_not", "may_not"}:
+    if normalized_family == "deontic" or normalized_symbol in {
+        "shall",
+        "must",
+        "may",
+        "shall_not",
+        "may_not",
+    }:
         return "deontic.ir"
     if normalized_family in {"temporal", "dynamic"}:
         return "TDFOL.prover"
@@ -303,9 +317,7 @@ def _required_field_obligation(
     )
 
 
-def _semantic_contract_statement(
-    contract: LegalIRViewContract, obligation_family: str
-) -> str:
+def _semantic_contract_statement(contract: LegalIRViewContract, obligation_family: str) -> str:
     """Build the deterministic invariant represented by a local family."""
 
     contract_ref = f"contract:{contract.contract_id}"
@@ -444,9 +456,7 @@ def generate_legal_ir_contract_coverage_obligations(
 
     for contract in contracts:
         required_families = tuple(
-            family
-            for family in contract.obligation_families
-            if family.endswith("_required_fields")
+            family for family in contract.obligation_families if family.endswith("_required_fields")
         )
         for obligation_family in required_families:
             obligations.extend(
@@ -524,15 +534,15 @@ def generate_legal_ir_proof_obligations(
                 legal_ir_view="modal.frame_logic",
                 logic_family="modal",
                 statement=f"legal_ir_document_has_modal_formula(document:{sample_id}, hash:{document_hash[:16]})",
-                premise_hints=("legal_ir_document_requires_modal_formula_or_explicit_empty_reason",),
+                premise_hints=(
+                    "legal_ir_document_requires_modal_formula_or_explicit_empty_reason",
+                ),
                 metadata={"document_hash": document_hash},
             )
         )
         return obligations
 
-    obligations.extend(
-        generate_legal_ir_contract_coverage_obligations(sample_or_document)
-    )
+    obligations.extend(generate_legal_ir_contract_coverage_obligations(sample_or_document))
     if limit is not None and len(obligations) >= limit:
         return obligations
     obligations.extend(
@@ -556,9 +566,15 @@ def generate_legal_ir_proof_obligations(
         formula_id = _formula_id(formula, index)
         operator = _operator(formula)
         predicate = _predicate(formula)
-        family = _atom(_get(operator, "family") or _as_mapping(operator).get("family"), fallback="modal")
-        system = _atom(_get(operator, "system") or _as_mapping(operator).get("system"), fallback="system")
-        symbol = _atom(_get(operator, "symbol") or _as_mapping(operator).get("symbol"), fallback="operator")
+        family = _atom(
+            _get(operator, "family") or _as_mapping(operator).get("family"), fallback="modal"
+        )
+        system = _atom(
+            _get(operator, "system") or _as_mapping(operator).get("system"), fallback="system"
+        )
+        symbol = _atom(
+            _get(operator, "symbol") or _as_mapping(operator).get("symbol"), fallback="operator"
+        )
         predicate_sig = _predicate_signature(predicate)
         span_hash = _source_span_hash(sample_or_document, formula)
         view = _family_view(family, symbol)
@@ -610,7 +626,9 @@ def generate_legal_ir_proof_obligations(
                     metadata=base_metadata,
                 )
             )
-        exceptions = _sequence(_get(formula, "exceptions") or _as_mapping(formula).get("exceptions", []))
+        exceptions = _sequence(
+            _get(formula, "exceptions") or _as_mapping(formula).get("exceptions", [])
+        )
         if exceptions:
             obligations.append(
                 _obligation(
@@ -620,7 +638,10 @@ def generate_legal_ir_proof_obligations(
                     legal_ir_view="deontic.ir",
                     logic_family="conditional_normative",
                     statement=f"exception_scope_precedes_norm({formula_id}, exception_count:{len(exceptions)})",
-                    premise_hints=("exception_scope_precedence", "defeasible_priority_orders_exceptions"),
+                    premise_hints=(
+                        "exception_scope_precedence",
+                        "defeasible_priority_orders_exceptions",
+                    ),
                     metadata={**base_metadata, "exception_count": len(exceptions)},
                 )
             )
@@ -659,8 +680,7 @@ def generate_legal_ir_proof_obligations(
                 legal_ir_view="modal.decompiler",
                 logic_family=family,
                 statement=(
-                    f"decompiler_emits_structural_summary({formula_id}, "
-                    f"predicate:{predicate_sig})"
+                    f"decompiler_emits_structural_summary({formula_id}, predicate:{predicate_sig})"
                 ),
                 premise_hints=(
                     "decompiler_preserves_structural_summary",
@@ -680,8 +700,7 @@ def generate_legal_ir_proof_obligations(
                 legal_ir_view="modal.decompiler",
                 logic_family=family,
                 statement=(
-                    f"decompiler_retains_modality({formula_id}, "
-                    f"family:{family}, operator:{symbol})"
+                    f"decompiler_retains_modality({formula_id}, family:{family}, operator:{symbol})"
                 ),
                 premise_hints=(
                     "decompiler_retains_modal_operator",
@@ -737,8 +756,12 @@ def generate_legal_ir_proof_obligations(
         if limit is not None and len(obligations) >= limit:
             break
         triple_map = _as_mapping(triple)
-        subject = _atom(_get(triple, "subject") or triple_map.get("subject"), fallback=f"subject_{index}")
-        predicate = _atom(_get(triple, "predicate") or triple_map.get("predicate"), fallback="predicate")
+        subject = _atom(
+            _get(triple, "subject") or triple_map.get("subject"), fallback=f"subject_{index}"
+        )
+        predicate = _atom(
+            _get(triple, "predicate") or triple_map.get("predicate"), fallback="predicate"
+        )
         obj = _atom(_get(triple, "object") or triple_map.get("object"), fallback=f"object_{index}")
         statement = f"kg_edge_typed(subject:{subject}, predicate:{predicate}, object:{obj})"
         obligations.append(

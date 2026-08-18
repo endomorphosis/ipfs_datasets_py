@@ -25,22 +25,24 @@ from ipfs_datasets_py.audit.enhanced_security import EnhancedSecurityManager, Ac
 
 class ResponseAction(Enum):
     """Types of security response actions."""
-    MONITOR = auto()        # Enhanced monitoring
-    RESTRICT = auto()       # Access restriction
-    THROTTLE = auto()       # Rate limiting
-    LOCKOUT = auto()        # Account lockout
-    ISOLATE = auto()        # Resource isolation
-    NOTIFY = auto()         # Security notification
-    ESCALATE = auto()       # Escalate to security team
-    ROLLBACK = auto()       # Roll back changes
-    SNAPSHOT = auto()       # Create security snapshot
-    ENCRYPT = auto()        # Enforce encryption
-    AUDIT = auto()          # Enhanced audit logging
+
+    MONITOR = auto()  # Enhanced monitoring
+    RESTRICT = auto()  # Access restriction
+    THROTTLE = auto()  # Rate limiting
+    LOCKOUT = auto()  # Account lockout
+    ISOLATE = auto()  # Resource isolation
+    NOTIFY = auto()  # Security notification
+    ESCALATE = auto()  # Escalate to security team
+    ROLLBACK = auto()  # Roll back changes
+    SNAPSHOT = auto()  # Create security snapshot
+    ENCRYPT = auto()  # Enforce encryption
+    AUDIT = auto()  # Enhanced audit logging
 
 
 @dataclass
 class RuleCondition:
     """Condition for response rule matching."""
+
     field: str  # Field path in the alert, e.g., "alert.details.source_ip"
     operator: str  # "==", "!=", ">", "<", ">=", "<=", "in", "contains"
     value: Any  # Value to compare against
@@ -56,7 +58,7 @@ class RuleCondition:
             bool: Whether the condition is met
         """
         # Extract field value from alert using dot notation
-        field_parts = self.field.split('.')
+        field_parts = self.field.split(".")
         field_value = alert
 
         for part in field_parts:
@@ -91,6 +93,7 @@ class RuleCondition:
 @dataclass
 class SecurityResponse:
     """Definition of a security response to a threat."""
+
     response_id: str
     alert_id: str  # Related security alert
     rule_id: str
@@ -112,22 +115,24 @@ class SecurityResponse:
         if not self.expires_at:
             return False
 
-        now = datetime.datetime.utcnow().isoformat() + 'Z'
+        now = datetime.datetime.utcnow().isoformat() + "Z"
         return self.expires_at < now
 
 
 class ResponseRule:
     """Rule for determining appropriate security responses to alerts."""
 
-    def __init__(self,
-                 rule_id: str,
-                 name: str,
-                 alert_type: str,
-                 severity_levels: List[str],
-                 actions: List[Dict[str, Any]],
-                 conditions: Optional[List[RuleCondition]] = None,
-                 description: str = "",
-                 enabled: bool = True):
+    def __init__(
+        self,
+        rule_id: str,
+        name: str,
+        alert_type: str,
+        severity_levels: List[str],
+        actions: List[Dict[str, Any]],
+        conditions: Optional[List[RuleCondition]] = None,
+        description: str = "",
+        enabled: bool = True,
+    ):
         """
         Initialize a response rule.
 
@@ -221,17 +226,19 @@ class AdaptiveSecurityManager:
     _instance = None
 
     @classmethod
-    def get_instance(cls) -> 'AdaptiveSecurityManager':
+    def get_instance(cls) -> "AdaptiveSecurityManager":
         """Get the singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
-    def __init__(self,
-                 security_manager=None,
-                 alert_manager=None,
-                 audit_logger=None,
-                 response_storage_path: Optional[str] = None):
+    def __init__(
+        self,
+        security_manager=None,
+        alert_manager=None,
+        audit_logger=None,
+        response_storage_path: Optional[str] = None,
+    ):
         """
         Initialize the adaptive security manager.
 
@@ -250,7 +257,9 @@ class AdaptiveSecurityManager:
         self.response_history: List[SecurityResponse] = []
         self.response_storage_path = response_storage_path
 
-        self._response_handlers: Dict[ResponseAction, Callable[[SecurityResponse], Dict[str, Any]]] = {}
+        self._response_handlers: Dict[
+            ResponseAction, Callable[[SecurityResponse], Dict[str, Any]]
+        ] = {}
         self._lock = threading.RLock()
         self.logger = logging.getLogger(__name__)
 
@@ -264,10 +273,7 @@ class AdaptiveSecurityManager:
         self._register_default_rules()
 
         # Start maintenance thread
-        self._maintenance_thread = threading.Thread(
-            target=self._maintenance_loop,
-            daemon=True
-        )
+        self._maintenance_thread = threading.Thread(target=self._maintenance_loop, daemon=True)
         self._maintenance_thread.start()
 
         # Load response history if storage path provided
@@ -287,9 +293,9 @@ class AdaptiveSecurityManager:
     # Alias for backward compatibility
     add_response_rule = add_rule
 
-    def register_response_handler(self,
-                                action_type: ResponseAction,
-                                handler: Callable[[SecurityResponse], Dict[str, Any]]) -> None:
+    def register_response_handler(
+        self, action_type: ResponseAction, handler: Callable[[SecurityResponse], Dict[str, Any]]
+    ) -> None:
         """
         Register a handler for a response action.
 
@@ -300,9 +306,9 @@ class AdaptiveSecurityManager:
         with self._lock:
             self._response_handlers[action_type] = handler
 
-    def get_active_responses(self,
-                           target_id: Optional[str] = None,
-                           action_type: Optional[ResponseAction] = None) -> List[SecurityResponse]:
+    def get_active_responses(
+        self, target_id: Optional[str] = None, action_type: Optional[ResponseAction] = None
+    ) -> List[SecurityResponse]:
         """
         Get active security responses, optionally filtered.
 
@@ -344,8 +350,8 @@ class AdaptiveSecurityManager:
                     "target_id": response.target_id,
                     "target_type": response.target_type,
                     "duration_minutes": response.duration_minutes,
-                    "expiration": response.expiration
-                }
+                    "expiration": response.expiration,
+                },
             )
 
             # Save response history if storage path provided
@@ -379,8 +385,8 @@ class AdaptiveSecurityManager:
                     "response_id": response_id,
                     "response_type": response.action_type.name,
                     "target_id": response.target_id,
-                    "target_type": response.target_type
-                }
+                    "target_type": response.target_type,
+                },
             )
 
             return True
@@ -453,10 +459,11 @@ class AdaptiveSecurityManager:
 
             # Create response record
             response_id = str(uuid.uuid4())
-            created_at = datetime.datetime.utcnow().isoformat() + 'Z'
+            created_at = datetime.datetime.utcnow().isoformat() + "Z"
             duration_minutes = action.get("duration_minutes", 60)
-            expiration = (datetime.datetime.utcnow() +
-                         datetime.timedelta(minutes=duration_minutes)).isoformat() + 'Z'
+            expiration = (
+                datetime.datetime.utcnow() + datetime.timedelta(minutes=duration_minutes)
+            ).isoformat() + "Z"
 
             response = SecurityResponse(
                 response_id=response_id,
@@ -467,7 +474,7 @@ class AdaptiveSecurityManager:
                 created_at=created_at,
                 duration_minutes=duration_minutes,
                 expiration=expiration,
-                parameters=action.get("parameters", {})
+                parameters=action.get("parameters", {}),
             )
 
             # Execute the action
@@ -497,8 +504,8 @@ class AdaptiveSecurityManager:
                     "duration_minutes": duration_minutes,
                     "expiration": expiration,
                     "parameters": response.parameters,
-                    "result": result
-                }
+                    "result": result,
+                },
             )
 
             # Save response history if storage path provided
@@ -534,10 +541,7 @@ class AdaptiveSecurityManager:
                 {
                     "type": "LOCKOUT",
                     "duration_minutes": 30,
-                    "parameters": {
-                        "user_id": "$user",
-                        "reason": "Brute force login detection"
-                    }
+                    "parameters": {"user_id": "$user", "reason": "Brute force login detection"},
                 },
                 {
                     "type": "MONITOR",
@@ -545,8 +549,8 @@ class AdaptiveSecurityManager:
                     "parameters": {
                         "user_id": "$user",
                         "level": "enhanced",
-                        "reason": "Post-brute-force monitoring"
-                    }
+                        "reason": "Post-brute-force monitoring",
+                    },
                 },
                 {
                     "type": "NOTIFY",
@@ -554,11 +558,11 @@ class AdaptiveSecurityManager:
                         "recipient": "security_team",
                         "message": "Brute force login attempt detected",
                         "severity": "high",
-                        "include_details": True
-                    }
-                }
+                        "include_details": True,
+                    },
+                },
             ],
-            description="Respond to brute force login attempts with account lockout and monitoring"
+            description="Respond to brute force login attempts with account lockout and monitoring",
         )
         self.add_response_rule(brute_force_rule)
 
@@ -572,10 +576,7 @@ class AdaptiveSecurityManager:
                 {
                     "type": "RESTRICT",
                     "duration_minutes": 60,
-                    "parameters": {
-                        "user_id": "$user",
-                        "reason": "Potential data exfiltration"
-                    }
+                    "parameters": {"user_id": "$user", "reason": "Potential data exfiltration"},
                 },
                 {
                     "type": "AUDIT",
@@ -583,19 +584,19 @@ class AdaptiveSecurityManager:
                     "parameters": {
                         "user_id": "$user",
                         "level": "forensic",
-                        "reason": "Data exfiltration investigation"
-                    }
+                        "reason": "Data exfiltration investigation",
+                    },
                 },
                 {
                     "type": "ESCALATE",
                     "parameters": {
                         "priority": "high",
                         "team": "security_incident_response",
-                        "message": "Potential data exfiltration detected"
-                    }
-                }
+                        "message": "Potential data exfiltration detected",
+                    },
+                },
             ],
-            description="Respond to potential data exfiltration with access restriction and enhanced auditing"
+            description="Respond to potential data exfiltration with access restriction and enhanced auditing",
         )
         self.add_response_rule(exfiltration_rule)
 
@@ -610,8 +611,8 @@ class AdaptiveSecurityManager:
                     "type": "ROLLBACK",
                     "parameters": {
                         "user_id": "$user",
-                        "reason": "Unauthorized configuration change"
-                    }
+                        "reason": "Unauthorized configuration change",
+                    },
                 },
                 {
                     "type": "RESTRICT",
@@ -619,18 +620,18 @@ class AdaptiveSecurityManager:
                     "parameters": {
                         "user_id": "$user",
                         "resource_type": "configuration",
-                        "reason": "Unauthorized configuration change"
-                    }
+                        "reason": "Unauthorized configuration change",
+                    },
                 },
                 {
                     "type": "SNAPSHOT",
                     "parameters": {
                         "reason": "Configuration security snapshot",
-                        "retention_days": 30
-                    }
-                }
+                        "retention_days": 30,
+                    },
+                },
             ],
-            description="Respond to unauthorized configuration changes by rolling back and restricting access"
+            description="Respond to unauthorized configuration changes by rolling back and restricting access",
         )
         self.add_response_rule(config_rule)
 
@@ -644,17 +645,14 @@ class AdaptiveSecurityManager:
                 {
                     "type": "LOCKOUT",
                     "duration_minutes": 60,
-                    "parameters": {
-                        "user_id": "$user",
-                        "reason": "Potential account compromise"
-                    }
+                    "parameters": {"user_id": "$user", "reason": "Potential account compromise"},
                 },
                 {
                     "type": "ENCRYPT",
                     "parameters": {
                         "user_id": "$user",
-                        "reason": "Secure sensitive data after potential compromise"
-                    }
+                        "reason": "Secure sensitive data after potential compromise",
+                    },
                 },
                 {
                     "type": "NOTIFY",
@@ -662,19 +660,19 @@ class AdaptiveSecurityManager:
                         "recipient": "security_team",
                         "message": "Account compromise detected",
                         "severity": "critical",
-                        "include_details": True
-                    }
+                        "include_details": True,
+                    },
                 },
                 {
                     "type": "ESCALATE",
                     "parameters": {
                         "priority": "critical",
                         "team": "security_incident_response",
-                        "message": "Account compromise requires immediate attention"
-                    }
-                }
+                        "message": "Account compromise requires immediate attention",
+                    },
+                },
             ],
-            description="Respond to account compromise by locking the account and securing data"
+            description="Respond to account compromise by locking the account and securing data",
         )
         self.add_response_rule(compromise_rule)
 
@@ -691,8 +689,8 @@ class AdaptiveSecurityManager:
                     "parameters": {
                         "user_id": "$user",
                         "level": "detailed",
-                        "reason": "Suspicious sensitive data access"
-                    }
+                        "reason": "Suspicious sensitive data access",
+                    },
                 },
                 {
                     "type": "THROTTLE",
@@ -701,11 +699,11 @@ class AdaptiveSecurityManager:
                         "user_id": "$user",
                         "resource_type": "sensitive_data",
                         "rate_limit": 10,  # requests per minute
-                        "reason": "Unusual access pattern to sensitive data"
-                    }
-                }
+                        "reason": "Unusual access pattern to sensitive data",
+                    },
+                },
             ],
-            description="Respond to suspicious sensitive data access with detailed auditing and throttling"
+            description="Respond to suspicious sensitive data access with detailed auditing and throttling",
         )
         self.add_response_rule(sensitive_data_rule)
 
@@ -749,7 +747,7 @@ class AdaptiveSecurityManager:
 
     def _expire_responses(self) -> None:
         """Check for and expire timed-out responses."""
-        now = datetime.datetime.utcnow().isoformat() + 'Z'
+        now = datetime.datetime.utcnow().isoformat() + "Z"
         expired_ids = []
 
         with self._lock:
@@ -769,10 +767,7 @@ class AdaptiveSecurityManager:
         for response_id in expired_ids:
             self.audit_logger.security(
                 action="expire_security_response",
-                details={
-                    "response_id": response_id,
-                    "expired_at": now
-                }
+                details={"response_id": response_id, "expired_at": now},
             )
 
     def _load_responses(self) -> None:
@@ -781,7 +776,7 @@ class AdaptiveSecurityManager:
             return
 
         try:
-            with open(self.response_storage_path, 'r', encoding='utf-8') as f:
+            with open(self.response_storage_path, "r", encoding="utf-8") as f:
                 responses_data = json.load(f)
 
             # Parse response data
@@ -805,7 +800,9 @@ class AdaptiveSecurityManager:
                 if response.status == "active" and not response.is_expired():
                     self.active_responses[response.response_id] = response
 
-            self.logger.info(f"Loaded {len(self.response_history)} responses, {len(self.active_responses)} active")
+            self.logger.info(
+                f"Loaded {len(self.response_history)} responses, {len(self.active_responses)} active"
+            )
 
         except Exception as e:
             self.logger.error(f"Error loading responses: {str(e)}")
@@ -828,7 +825,7 @@ class AdaptiveSecurityManager:
                 response_dicts.append(response_dict)
 
             # Write to file
-            with open(self.response_storage_path, 'w', encoding='utf-8') as f:
+            with open(self.response_storage_path, "w", encoding="utf-8") as f:
                 json.dump(response_dicts, f, indent=2)
 
             self.logger.debug(f"Saved {len(self.response_history)} responses to storage")
@@ -848,14 +845,17 @@ class AdaptiveSecurityManager:
         Returns:
             Dict[str, Any]: Result of the response
         """
-        user_id = response.target_id if response.target_type == "user" else response.parameters.get("user_id")
+        user_id = (
+            response.target_id
+            if response.target_type == "user"
+            else response.parameters.get("user_id")
+        )
         level = response.parameters.get("level", "enhanced")
         reason = response.parameters.get("reason", "Security alert response")
 
         if user_id:
             self.security_manager.set_enhanced_monitoring(
-                user_id=user_id,
-                duration_minutes=response.duration_minutes
+                user_id=user_id, duration_minutes=response.duration_minutes
             )
 
         return {
@@ -863,7 +863,7 @@ class AdaptiveSecurityManager:
             "user_id": user_id,
             "level": level,
             "duration_minutes": response.duration_minutes,
-            "expiration": response.expiration
+            "expiration": response.expiration,
         }
 
     def _handle_restrict_response(self, response: SecurityResponse) -> Dict[str, Any]:
@@ -876,15 +876,18 @@ class AdaptiveSecurityManager:
         Returns:
             Dict[str, Any]: Result of the response
         """
-        resource_id = response.target_id if response.target_type == "resource" else response.parameters.get("resource_id")
+        resource_id = (
+            response.target_id
+            if response.target_type == "resource"
+            else response.parameters.get("resource_id")
+        )
         resource_type = response.parameters.get("resource_type", "resource")
         user_id = response.parameters.get("user_id")
         reason = response.parameters.get("reason", "Security alert response")
 
         if resource_id:
             self.security_manager.add_temporary_access_restriction(
-                resource_id=resource_id,
-                duration_minutes=response.duration_minutes
+                resource_id=resource_id, duration_minutes=response.duration_minutes
             )
 
         # If user_id is provided, restrict that user specifically
@@ -898,7 +901,7 @@ class AdaptiveSecurityManager:
             "resource_type": resource_type,
             "user_id": user_id,
             "duration_minutes": response.duration_minutes,
-            "expiration": response.expiration
+            "expiration": response.expiration,
         }
 
     def _handle_throttle_response(self, response: SecurityResponse) -> Dict[str, Any]:
@@ -925,7 +928,7 @@ class AdaptiveSecurityManager:
             "resource_type": resource_type,
             "rate_limit": rate_limit,
             "duration_minutes": response.duration_minutes,
-            "expiration": response.expiration
+            "expiration": response.expiration,
         }
 
     def _handle_lockout_response(self, response: SecurityResponse) -> Dict[str, Any]:
@@ -938,7 +941,11 @@ class AdaptiveSecurityManager:
         Returns:
             Dict[str, Any]: Result of the response
         """
-        user_id = response.target_id if response.target_type == "user" else response.parameters.get("user_id")
+        user_id = (
+            response.target_id
+            if response.target_type == "user"
+            else response.parameters.get("user_id")
+        )
         reason = response.parameters.get("reason", "Security alert response")
 
         if not user_id:
@@ -956,15 +963,15 @@ class AdaptiveSecurityManager:
                 "user_id": user_id,
                 "reason": reason,
                 "duration_minutes": response.duration_minutes,
-                "response_id": response.response_id
-            }
+                "response_id": response.response_id,
+            },
         )
 
         return {
             "status": "success",
             "user_id": user_id,
             "duration_minutes": response.duration_minutes,
-            "expiration": response.expiration
+            "expiration": response.expiration,
         }
 
     def _handle_isolate_response(self, response: SecurityResponse) -> Dict[str, Any]:
@@ -977,7 +984,11 @@ class AdaptiveSecurityManager:
         Returns:
             Dict[str, Any]: Result of the response
         """
-        resource_id = response.target_id if response.target_type == "resource" else response.parameters.get("resource_id")
+        resource_id = (
+            response.target_id
+            if response.target_type == "resource"
+            else response.parameters.get("resource_id")
+        )
         isolation_level = response.parameters.get("isolation_level", "full")
         reason = response.parameters.get("reason", "Security alert response")
 
@@ -997,8 +1008,8 @@ class AdaptiveSecurityManager:
                 "isolation_level": isolation_level,
                 "reason": reason,
                 "duration_minutes": response.duration_minutes,
-                "response_id": response.response_id
-            }
+                "response_id": response.response_id,
+            },
         )
 
         return {
@@ -1006,7 +1017,7 @@ class AdaptiveSecurityManager:
             "resource_id": resource_id,
             "isolation_level": isolation_level,
             "duration_minutes": response.duration_minutes,
-            "expiration": response.expiration
+            "expiration": response.expiration,
         }
 
     def _handle_notify_response(self, response: SecurityResponse) -> Dict[str, Any]:
@@ -1035,15 +1046,15 @@ class AdaptiveSecurityManager:
                 "recipient": recipient,
                 "message": message,
                 "severity": severity,
-                "response_id": response.response_id
-            }
+                "response_id": response.response_id,
+            },
         )
 
         return {
             "status": "success",
             "recipient": recipient,
             "severity": severity,
-            "message": message
+            "message": message,
         }
 
     def _handle_escalate_response(self, response: SecurityResponse) -> Dict[str, Any]:
@@ -1075,16 +1086,11 @@ class AdaptiveSecurityManager:
                 "priority": priority,
                 "team": team,
                 "message": message,
-                "response_id": response.response_id
-            }
+                "response_id": response.response_id,
+            },
         )
 
-        return {
-            "status": "success",
-            "incident_id": incident_id,
-            "priority": priority,
-            "team": team
-        }
+        return {"status": "success", "incident_id": incident_id, "priority": priority, "team": team}
 
     def _handle_rollback_response(self, response: SecurityResponse) -> Dict[str, Any]:
         """
@@ -1096,7 +1102,11 @@ class AdaptiveSecurityManager:
         Returns:
             Dict[str, Any]: Result of the response
         """
-        resource_id = response.target_id if response.target_type == "resource" else response.parameters.get("resource_id")
+        resource_id = (
+            response.target_id
+            if response.target_type == "resource"
+            else response.parameters.get("resource_id")
+        )
         user_id = response.parameters.get("user_id")
         reason = response.parameters.get("reason", "Security alert response")
 
@@ -1111,15 +1121,11 @@ class AdaptiveSecurityManager:
                 "resource_id": resource_id,
                 "user_id": user_id,
                 "reason": reason,
-                "response_id": response.response_id
-            }
+                "response_id": response.response_id,
+            },
         )
 
-        return {
-            "status": "success",
-            "resource_id": resource_id,
-            "user_id": user_id
-        }
+        return {"status": "success", "resource_id": resource_id, "user_id": user_id}
 
     def _handle_snapshot_response(self, response: SecurityResponse) -> Dict[str, Any]:
         """
@@ -1148,15 +1154,11 @@ class AdaptiveSecurityManager:
                 "snapshot_id": snapshot_id,
                 "reason": reason,
                 "retention_days": retention_days,
-                "response_id": response.response_id
-            }
+                "response_id": response.response_id,
+            },
         )
 
-        return {
-            "status": "success",
-            "snapshot_id": snapshot_id,
-            "retention_days": retention_days
-        }
+        return {"status": "success", "snapshot_id": snapshot_id, "retention_days": retention_days}
 
     def _handle_encrypt_response(self, response: SecurityResponse) -> Dict[str, Any]:
         """
@@ -1186,15 +1188,11 @@ class AdaptiveSecurityManager:
                 "target_id": target_id,
                 "target_type": target_type,
                 "reason": reason,
-                "response_id": response.response_id
-            }
+                "response_id": response.response_id,
+            },
         )
 
-        return {
-            "status": "success",
-            "target_id": target_id,
-            "target_type": target_type
-        }
+        return {"status": "success", "target_id": target_id, "target_type": target_type}
 
     def _handle_audit_response(self, response: SecurityResponse) -> Dict[str, Any]:
         """
@@ -1227,8 +1225,8 @@ class AdaptiveSecurityManager:
                 "audit_level": level,
                 "reason": reason,
                 "duration_minutes": response.duration_minutes,
-                "response_id": response.response_id
-            }
+                "response_id": response.response_id,
+            },
         )
 
         return {
@@ -1237,5 +1235,5 @@ class AdaptiveSecurityManager:
             "target_type": target_type,
             "audit_level": level,
             "duration_minutes": response.duration_minutes,
-            "expiration": response.expiration
+            "expiration": response.expiration,
         }

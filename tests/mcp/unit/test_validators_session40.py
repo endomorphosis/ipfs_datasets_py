@@ -29,6 +29,7 @@ def _make_validator() -> EnhancedParameterValidator:
 # TestTextSuspiciousPatterns
 # ---------------------------------------------------------------------------
 
+
 class TestTextSuspiciousPatterns:
     """Tests for validate_text_input suspicious-pattern detection."""
 
@@ -88,6 +89,7 @@ class TestTextSuspiciousPatterns:
 # ---------------------------------------------------------------------------
 # TestModelNameValidation
 # ---------------------------------------------------------------------------
+
 
 class TestModelNameValidation:
     """Tests for validate_model_name edge cases."""
@@ -163,6 +165,7 @@ class TestModelNameValidation:
 # TestIPFSHashNonString
 # ---------------------------------------------------------------------------
 
+
 class TestIPFSHashNonString:
     """Tests for validate_ipfs_hash non-string path."""
 
@@ -190,6 +193,7 @@ class TestIPFSHashNonString:
 # ---------------------------------------------------------------------------
 # TestCollectionNameEdgeCases
 # ---------------------------------------------------------------------------
+
 
 class TestCollectionNameEdgeCases:
     """Tests for validate_collection_name edge cases."""
@@ -238,6 +242,7 @@ class TestCollectionNameEdgeCases:
 # ---------------------------------------------------------------------------
 # TestSearchFiltersEdgeCases
 # ---------------------------------------------------------------------------
+
 
 class TestSearchFiltersEdgeCases:
     """Tests for validate_search_filters edge cases."""
@@ -328,6 +333,7 @@ class TestSearchFiltersEdgeCases:
 # TestFilePathEdgeCases
 # ---------------------------------------------------------------------------
 
+
 class TestFilePathEdgeCases:
     """Tests for validate_file_path edge cases."""
 
@@ -402,6 +408,7 @@ class TestFilePathEdgeCases:
 # TestJSONSchemaValidation
 # ---------------------------------------------------------------------------
 
+
 class TestJSONSchemaValidation:
     """Tests for validate_json_schema ValidationError re-raise path."""
 
@@ -415,15 +422,16 @@ class TestJSONSchemaValidation:
         schema = {"type": "object"}
 
         # Mock jsonschema.validate to raise our custom ValidationError
-        with patch("ipfs_datasets_py.mcp_server.validators.ValidationError",
-                   ValidationError):
+        with patch("ipfs_datasets_py.mcp_server.validators.ValidationError", ValidationError):
             import sys
             import types
 
             # Create a fake jsonschema module that raises our ValidationError
             fake_jsonschema = types.ModuleType("jsonschema")
+
             def raise_ve(data, schema):
                 raise ValidationError("schema", "custom validation error")
+
             fake_jsonschema.validate = raise_ve
 
             with patch.dict(sys.modules, {"jsonschema": fake_jsonschema}):
@@ -441,8 +449,10 @@ class TestJSONSchemaValidation:
         import types
 
         fake_jsonschema = types.ModuleType("jsonschema")
+
         def raise_generic(data, schema):
             raise RuntimeError("schema format error")
+
         fake_jsonschema.validate = raise_generic
 
         with patch.dict(sys.modules, {"jsonschema": fake_jsonschema}):
@@ -453,6 +463,7 @@ class TestJSONSchemaValidation:
 # ---------------------------------------------------------------------------
 # TestURLEdgeCases
 # ---------------------------------------------------------------------------
+
 
 class TestURLEdgeCases:
     """Tests for validate_url edge cases."""

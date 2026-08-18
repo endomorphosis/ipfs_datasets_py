@@ -4,11 +4,13 @@ Test stubs for advanced_web_archiving module.
 Feature: Advanced Web Archiving
   Enhanced web content archiving capabilities
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_url():
@@ -83,6 +85,7 @@ def web_pages_to_archive():
 
 
 # Test scenarios
+
 
 def test_archive_website_with_full_rendering():
     """
@@ -173,6 +176,7 @@ def test_replay_archived_page():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a URL")
@@ -343,4 +347,3 @@ def the_site_is_archived_on_schedule():
     """Step: Then the site is archived on schedule"""
     # TODO: Implement step
     pass
-

@@ -66,11 +66,13 @@ Phase 9 successfully implemented a pragmatic multimedia consolidation strategy, 
 ```python
 # Video Downloading
 from ipfs_datasets_py.processors.multimedia import YtDlpWrapper
+
 ytdlp = YtDlpWrapper()
 info = ytdlp.download_video("https://youtube.com/watch?v=...")
 
 # File Conversion
 from ipfs_datasets_py.processors.multimedia import UnifiedConverter
+
 converter = UnifiedConverter()
 text = converter.convert_file("document.pdf")
 ```
@@ -191,10 +193,13 @@ result = convert_file("document.pdf")  # One-liner!
 ```python
 try:
     from ..infrastructure.monitoring import monitor
+
     MONITORING_AVAILABLE = True
 except ImportError:
+
     def monitor(func):
         return func  # Graceful fallback
+
     MONITORING_AVAILABLE = False
 ```
 
@@ -344,8 +349,8 @@ YtDlpWrapper.download_video:
 **Use root multimedia processors first:**
 ```python
 from ipfs_datasets_py.processors.multimedia import (
-    YtDlpWrapper,    # Video downloading (1000+ sites)
-    FFmpegWrapper,   # Audio/video processing
+    YtDlpWrapper,  # Video downloading (1000+ sites)
+    FFmpegWrapper,  # Audio/video processing
     MediaProcessor,  # High-level orchestration
 )
 ```
@@ -366,17 +371,21 @@ if result.success:
 ```python
 # Still supported (but will show deprecation warnings in v1.11+)
 from ipfs_datasets_py.processors.multimedia.omni_converter_mk2 import OmniConverter
-from ipfs_datasets_py.processors.multimedia.convert_to_txt_based_on_mime_type import ConversionPipeline
+from ipfs_datasets_py.processors.multimedia.convert_to_txt_based_on_mime_type import (
+    ConversionPipeline,
+)
 ```
 
 **Recommended migration:**
 ```python
 # Old way
 from ipfs_datasets_py.processors.multimedia.omni_converter_mk2 import OmniConverter
+
 converter = OmniConverter()
 
 # New way
 from ipfs_datasets_py.processors.multimedia import UnifiedConverter
+
 converter = UnifiedConverter()
 ```
 

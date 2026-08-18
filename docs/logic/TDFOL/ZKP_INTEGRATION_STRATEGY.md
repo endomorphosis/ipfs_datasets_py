@@ -51,26 +51,27 @@ This document outlines the integration strategy between TDFOL (Temporal Deontic 
 from dataclasses import dataclass
 from typing import Optional, Any, List
 
+
 @dataclass
 class UnifiedProofResult:
     """Unified proof result supporting both standard and ZKP proofs."""
-    
+
     # Common fields
     is_proved: bool
     formula: Any
     method: str  # "tdfol_standard", "tdfol_zkp", "hybrid"
     proof_time: float
-    
+
     # Standard TDFOL proof fields
     proof_steps: Optional[List[Any]] = None
     inference_rules: Optional[List[str]] = None
-    
+
     # ZKP proof fields
     zkp_proof: Optional[Any] = None  # ZKPProof object
     is_private: bool = False  # True if axioms are hidden
     backend: Optional[str] = None  # "simulated", "groth16"
     security_level: int = 0  # Security bits
-    
+
     # Caching
     cache_hit: bool = False
     cache_cid: Optional[str] = None
@@ -116,10 +117,7 @@ cache = ProofCache(maxsize=10000, ttl=3600)
 # Cache standard proof
 standard_result = tdfol_prover.prove(formula)
 cache.set(
-    formula,
-    standard_result,
-    prover_name="tdfol_standard",
-    metadata={'method': 'forward_chaining'}
+    formula, standard_result, prover_name="tdfol_standard", metadata={"method": "forward_chaining"}
 )
 
 # Cache ZKP proof (different CID due to private axioms)
@@ -128,11 +126,7 @@ cache.set(
     formula,
     zkp_result,
     prover_name="tdfol_zkp",
-    metadata={
-        'method': 'zkp',
-        'backend': 'simulated',
-        'private': True
-    }
+    metadata={"method": "zkp", "backend": "simulated", "private": True},
 )
 
 # Retrieve from cache
@@ -144,22 +138,26 @@ if cached:
 **Cache Key Computation:**
 ```python
 # Standard proof: CID(formula + axioms + prover_config)
-standard_cid = cid_for_obj({
-    'formula': formula.to_string(),
-    'axioms': [ax.to_string() for ax in kb.axioms],
-    'prover': 'tdfol_standard',
-    'config': prover.config
-})
+standard_cid = cid_for_obj(
+    {
+        "formula": formula.to_string(),
+        "axioms": [ax.to_string() for ax in kb.axioms],
+        "prover": "tdfol_standard",
+        "config": prover.config,
+    }
+)
 
 # ZKP proof: CID(formula + ZKP_commitment + prover_config)
 # Note: Axioms are NOT included (privacy-preserving)
-zkp_cid = cid_for_obj({
-    'formula': formula.to_string(),
-    'zkp_commitment': zkp_proof.commitment,  # ~32 bytes
-    'prover': 'tdfol_zkp',
-    'backend': 'simulated',
-    'security_level': 128
-})
+zkp_cid = cid_for_obj(
+    {
+        "formula": formula.to_string(),
+        "zkp_commitment": zkp_proof.commitment,  # ~32 bytes
+        "prover": "tdfol_zkp",
+        "backend": "simulated",
+        "security_level": 128,
+    }
+)
 ```
 
 ---
@@ -256,20 +254,20 @@ from ..common.proof_cache import ProofCache
 class ZKPTDFOLProver:
     """
     TDFOL prover with zero-knowledge proof support.
-    
+
     This prover extends the standard TDFOL prover with ZKP capabilities,
     enabling privacy-preserving theorem proving.
-    
+
     Proving Modes:
         - standard: Traditional TDFOL proving (no privacy)
         - zkp: Zero-knowledge proving (privacy-preserving)
         - hybrid: Try ZKP first, fall back to standard
-    
+
     Example:
         >>> kb = TDFOLKnowledgeBase()
         >>> kb.add_axiom(parse_tdfol("P"))
         >>> kb.add_axiom(parse_tdfol("P -> Q"))
-        >>> 
+        >>>
         >>> # Create hybrid prover
         >>> prover = ZKPTDFOLProver(
         ...     kb,
@@ -277,7 +275,7 @@ class ZKPTDFOLProver:
         ...     zkp_backend="simulated",
         ...     zkp_fallback="standard"
         ... )
-        >>> 
+        >>>
         >>> # Prove with privacy (ZKP)
         >>> result = prover.prove(
         ...     parse_tdfol("Q"),
@@ -287,17 +285,17 @@ class ZKPTDFOLProver:
         >>> print(f"Method: {result.method}")  # "tdfol_zkp"
         >>> print(f"Private: {result.is_private}")  # True
         >>> print(f"Proof size: {len(result.zkp_proof.proof_bytes)} bytes")
-    
+
     ZKP Backends:
         - "simulated": Educational simulation (NOT cryptographically secure)
         - "groth16": Production zkSNARK (future, requires cryptography library)
-    
+
     Security Considerations:
         The "simulated" backend is for educational purposes only. It is NOT
         cryptographically secure and should NOT be used for production systems
         requiring real zero-knowledge proofs.
     """
-    
+
     def __init__(
         self,
         knowledge_base: TDFOLKnowledgeBase,
@@ -306,11 +304,11 @@ class ZKPTDFOLProver:
         zkp_security_level: int = 128,
         zkp_fallback: str = "standard",
         enable_cache: bool = True,
-        cache: Optional[ProofCache] = None
+        cache: Optional[ProofCache] = None,
     ):
         """
         Initialize ZKP-TDFOL prover.
-        
+
         Args:
             knowledge_base: TDFOL knowledge base with axioms
             enable_zkp: Enable zero-knowledge proving
@@ -325,59 +323,54 @@ class ZKPTDFOLProver:
         self.zkp_backend = zkp_backend
         self.zkp_security_level = zkp_security_level
         self.zkp_fallback = zkp_fallback
-        
+
         # Standard TDFOL prover
-        self.standard_prover = TDFOLProver(
-            knowledge_base,
-            enable_cache=enable_cache
-        )
-        
+        self.standard_prover = TDFOLProver(knowledge_base, enable_cache=enable_cache)
+
         # ZKP prover (if enabled)
         self.zkp_prover: Optional[ZKPProver] = None
         if enable_zkp:
             self.zkp_prover = ZKPProver(
-                security_level=zkp_security_level,
-                enable_caching=enable_cache,
-                backend=zkp_backend
+                security_level=zkp_security_level, enable_caching=enable_cache, backend=zkp_backend
             )
-        
+
         # Proof cache (unified)
         self.cache = cache or ProofCache(maxsize=10000, ttl=3600)
-        
+
         # Statistics
         self.stats = {
-            'standard_proofs': 0,
-            'zkp_proofs': 0,
-            'hybrid_proofs': 0,
-            'zkp_failures': 0,
-            'cache_hits': 0,
+            "standard_proofs": 0,
+            "zkp_proofs": 0,
+            "hybrid_proofs": 0,
+            "zkp_failures": 0,
+            "cache_hits": 0,
         }
-    
+
     def prove(
         self,
         formula: Formula,
         prefer_zkp: bool = False,
         private_axioms: bool = False,
         timeout: float = 60.0,
-        max_iterations: int = 100
+        max_iterations: int = 100,
     ) -> UnifiedProofResult:
         """
         Prove formula with hybrid ZKP/standard mode.
-        
+
         Args:
             formula: Formula to prove
             prefer_zkp: Prefer ZKP if enabled
             private_axioms: Keep axioms private (requires ZKP)
             timeout: Proof timeout (seconds)
             max_iterations: Max forward chaining iterations
-        
+
         Returns:
             UnifiedProofResult with proof information
-        
+
         Raises:
             ProofError: If proof fails in all modes
             ZKPProofError: If ZKP fails and no fallback
-        
+
         Proving Logic:
             1. Check cache first (both standard and ZKP)
             2. If prefer_zkp and enable_zkp: try ZKP
@@ -385,68 +378,56 @@ class ZKPTDFOLProver:
             4. If neither works: raise ProofError
         """
         start_time = time.time()
-        
+
         # Check cache first
         cache_result = self._check_cache(formula, prefer_zkp)
         if cache_result:
-            self.stats['cache_hits'] += 1
+            self.stats["cache_hits"] += 1
             return cache_result
-        
+
         # Determine proving mode
         if private_axioms and not self.enable_zkp:
             raise ProofError(
                 "Private axioms require ZKP, but ZKP is disabled",
                 formula=formula,
-                suggestion="Enable ZKP with enable_zkp=True"
+                suggestion="Enable ZKP with enable_zkp=True",
             )
-        
+
         use_zkp = (prefer_zkp or private_axioms) and self.enable_zkp
-        
+
         # Try ZKP first
         if use_zkp:
             try:
-                return self._prove_with_zkp(
-                    formula,
-                    timeout=timeout,
-                    start_time=start_time
-                )
+                return self._prove_with_zkp(formula, timeout=timeout, start_time=start_time)
             except ZKPProofError as e:
-                self.stats['zkp_failures'] += 1
-                
+                self.stats["zkp_failures"] += 1
+
                 # Check fallback mode
                 if self.zkp_fallback == "none" or private_axioms:
                     # No fallback allowed
                     raise
-                
+
                 # Fall back to standard proving
                 logging.warning(
-                    f"ZKP failed ({e.backend}): {e.message}. "
-                    f"Falling back to standard proving."
+                    f"ZKP failed ({e.backend}): {e.message}. Falling back to standard proving."
                 )
-        
+
         # Standard proving
         return self._prove_standard(
-            formula,
-            timeout=timeout,
-            max_iterations=max_iterations,
-            start_time=start_time
+            formula, timeout=timeout, max_iterations=max_iterations, start_time=start_time
         )
-    
-    def verify_zkp_proof(
-        self,
-        zkp_proof: ZKPProof,
-        formula: Formula
-    ) -> bool:
+
+    def verify_zkp_proof(self, zkp_proof: ZKPProof, formula: Formula) -> bool:
         """
         Verify a zero-knowledge proof.
-        
+
         Args:
             zkp_proof: ZKP proof to verify
             formula: Formula that was proved
-        
+
         Returns:
             True if proof is valid, False otherwise
-        
+
         Example:
             >>> result = prover.prove(formula, prefer_zkp=True)
             >>> assert prover.verify_zkp_proof(result.zkp_proof, formula)
@@ -454,12 +435,12 @@ class ZKPTDFOLProver:
         if not self.enable_zkp:
             raise ProofError(
                 "ZKP verification requires ZKP to be enabled",
-                suggestion="Enable ZKP with enable_zkp=True"
+                suggestion="Enable ZKP with enable_zkp=True",
             )
-        
+
         verifier = ZKPVerifier(backend=self.zkp_backend)
         return verifier.verify_proof(zkp_proof)
-    
+
     # ... (additional methods)
 ```
 
@@ -498,18 +479,13 @@ kb.add_axiom(parse_tdfol("SensitiveAxiom1"))  # Private!
 kb.add_axiom(parse_tdfol("SensitiveAxiom2"))  # Private!
 
 # Create ZKP-enabled prover
-prover = ZKPTDFOLProver(
-    kb,
-    enable_zkp=True,
-    zkp_backend="simulated",
-    zkp_security_level=128
-)
+prover = ZKPTDFOLProver(kb, enable_zkp=True, zkp_backend="simulated", zkp_security_level=128)
 
 # Prove with privacy
 result = prover.prove(
     parse_tdfol("Conclusion"),
     prefer_zkp=True,
-    private_axioms=True  # Axioms will NOT be revealed
+    private_axioms=True,  # Axioms will NOT be revealed
 )
 
 print(f"Proved: {result.is_proved}")  # True
@@ -530,14 +506,11 @@ prover = ZKPTDFOLProver(
     kb,
     enable_zkp=True,
     zkp_backend="simulated",
-    zkp_fallback="standard"  # Fall back if ZKP fails
+    zkp_fallback="standard",  # Fall back if ZKP fails
 )
 
 # Try ZKP first, fall back to standard if it fails
-result = prover.prove(
-    formula,
-    prefer_zkp=True
-)
+result = prover.prove(formula, prefer_zkp=True)
 
 if result.method == "tdfol_zkp":
     print(f"Proved with ZKP (private, {len(result.zkp_proof.proof_bytes)} bytes)")
@@ -629,7 +602,7 @@ For production use with real zero-knowledge proofs:
        kb,
        enable_zkp=True,
        zkp_backend="groth16",  # Production backend
-       zkp_security_level=256   # 256-bit security
+       zkp_security_level=256,  # 256-bit security
    )
    ```
 3. **Perform trusted setup** (one-time, per circuit)

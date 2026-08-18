@@ -3,6 +3,7 @@
 Covers: apply_feedback, get_extraction_hint, threshold adaptation,
 per-action success rates, reset, and edge cases.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -131,7 +132,14 @@ class TestGetStats:
     def test_stats_has_expected_keys(self):
         adapter = OntologyLearningAdapter()
         stats = adapter.get_stats()
-        for key in ("domain", "current_threshold", "base_threshold", "sample_count", "mean_score", "action_success_rates"):
+        for key in (
+            "domain",
+            "current_threshold",
+            "base_threshold",
+            "sample_count",
+            "mean_score",
+            "action_success_rates",
+        ):
             assert key in stats
 
     def test_stats_domain_matches(self):
@@ -142,5 +150,6 @@ class TestGetStats:
 class TestPublicImport:
     def test_importable_from_graphrag_package(self):
         from ipfs_datasets_py.optimizers.graphrag import OntologyLearningAdapter, FeedbackRecord  # noqa: F401
+
         assert OntologyLearningAdapter is not None
         assert FeedbackRecord is not None

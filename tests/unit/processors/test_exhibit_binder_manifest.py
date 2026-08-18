@@ -10,8 +10,12 @@ def test_build_exhibit_binder_from_manifest(tmp_path: Path):
     covers.mkdir()
     exhibits.mkdir()
 
-    (covers / "EXHIBIT_BINDER_FRONT_SHEET.md").write_text("## Test Binder\n\n- Front matter\n", encoding="utf-8")
-    (covers / "Exhibit_A_tab_cover_page.md").write_text("`EXHIBIT LABEL` `Exhibit A`\n`SECTION` `Test`\n`SHORT TITLE` `Divider`\n", encoding="utf-8")
+    (covers / "EXHIBIT_BINDER_FRONT_SHEET.md").write_text(
+        "## Test Binder\n\n- Front matter\n", encoding="utf-8"
+    )
+    (covers / "Exhibit_A_tab_cover_page.md").write_text(
+        "`EXHIBIT LABEL` `Exhibit A`\n`SECTION` `Test`\n`SHORT TITLE` `Divider`\n", encoding="utf-8"
+    )
     (covers / "Exhibit_A_cover_page.md").write_text(
         "\n".join(
             [

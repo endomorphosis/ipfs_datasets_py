@@ -48,11 +48,11 @@ class AsyncContextError(RuntimeError):
 
 
 if anyio is None:
+
     class _FallbackToThread:
         @staticmethod
         async def run_sync(func: Callable[..., T], /, *args: Any, **kwargs: Any) -> T:
             return await _stdlib_asyncio.to_thread(func, *args, **kwargs)
-
 
     class _FallbackTaskGroup:
         def __init__(self) -> None:
@@ -67,7 +67,6 @@ if anyio is None:
 
         def start_soon(self, func: Callable[..., Awaitable[Any]], /, *args: Any) -> None:
             self._tasks.append(_stdlib_asyncio.create_task(func(*args)))
-
 
     class _FallbackAnyIO:
         Event = _stdlib_asyncio.Event
@@ -106,7 +105,6 @@ if anyio is None:
         @staticmethod
         def create_task_group() -> _FallbackTaskGroup:
             return _FallbackTaskGroup()
-
 
     anyio = _FallbackAnyIO()
 

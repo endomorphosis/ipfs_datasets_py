@@ -283,7 +283,9 @@ from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
 from ipfs_datasets_py.processors.multimedia.omni_converter_mk2.interfaces import OmniConverter
 
 # convert_to_txt - also nested
-from ipfs_datasets_py.processors.multimedia.convert_to_txt_based_on_mime_type.converter_system import ConversionPipeline
+from ipfs_datasets_py.processors.multimedia.convert_to_txt_based_on_mime_type.converter_system import (
+    ConversionPipeline,
+)
 ```
 
 **Issues:**
@@ -448,7 +450,9 @@ text = converter.convert_file("document.pdf")
 ```python
 # Still supported
 from ipfs_datasets_py.processors.multimedia.omni_converter_mk2 import OmniConverter
-from ipfs_datasets_py.processors.multimedia.convert_to_txt_based_on_mime_type import ConversionPipeline
+from ipfs_datasets_py.processors.multimedia.convert_to_txt_based_on_mime_type import (
+    ConversionPipeline,
+)
 ```
 
 ### Migration Timeline

@@ -27,40 +27,37 @@ The mixin provides five categories of validation methods:
 ```python
 from ipfs_datasets_py.optimizers.common.query_validation import QueryValidationMixin
 
+
 class MyOptimizer(QueryValidationMixin):
     def __init__(self):
         self.cache_enabled = True
         self.cache_ttl = 300.0
         self.query_cache = {}
         self.logger = logging.getLogger(__name__)
-    
+
     def optimize_query(self, query, max_depth=None):
         # Validate query structure
-        if not self.validate_query_structure(query, required_fields=['vector']):
-            query = self.ensure_query_defaults(query, {'vector': [], 'max_results': 10})
-        
+        if not self.validate_query_structure(query, required_fields=["vector"]):
+            query = self.ensure_query_defaults(query, {"vector": [], "max_results": 10})
+
         # Validate numeric parameter
         max_depth = self.validate_numeric_param(
-            max_depth,
-            param_name='max_depth',
-            min_value=1,
-            max_value=10,
-            default=2
+            max_depth, param_name="max_depth", min_value=1, max_value=10, default=2
         )
-        
+
         # Check cache
-        cache_key = self.generate_cache_key(query['vector'], max_depth=max_depth)
+        cache_key = self.generate_cache_key(query["vector"], max_depth=max_depth)
         if self.validate_cache_entry(cache_key):
             return self.get_from_cache(cache_key)
-        
+
         # Execute query...
         result = self._execute_query(query, max_depth)
-        
+
         # Validate and cache result
         if self.validate_result_for_caching(result):
             clean_result = self.sanitize_for_cache(result)
             self.query_cache[cache_key] = (clean_result, time.time())
-        
+
         return result
 ```
 
@@ -85,11 +82,7 @@ Validates a numeric parameter with optional range checking.
 **Example:**
 ```python
 max_depth = self.validate_numeric_param(
-    query.get('max_depth'),
-    param_name='max_depth',
-    min_value=1,
-    max_value=10,
-    default=2
+    query.get("max_depth"), param_name="max_depth", min_value=1, max_value=10, default=2
 )
 ```
 
@@ -111,11 +104,11 @@ Validates a list parameter with optional element type and length checking.
 **Example:**
 ```python
 edge_types = self.validate_list_param(
-    query.get('edge_types'),
-    param_name='edge_types',
+    query.get("edge_types"),
+    param_name="edge_types",
     element_type=str,
     min_length=1,
-    default=['mentions', 'related_to']
+    default=["mentions", "related_to"],
 )
 ```
 
@@ -136,10 +129,10 @@ Validates a string parameter with optional allowed values checking.
 **Example:**
 ```python
 graph_type = self.validate_string_param(
-    query.get('graph_type'),
-    param_name='graph_type',
-    allowed_values=['wikipedia', 'ipld', 'general'],
-    default='general'
+    query.get("graph_type"),
+    param_name="graph_type",
+    allowed_values=["wikipedia", "ipld", "general"],
+    default="general",
 )
 ```
 
@@ -189,11 +182,7 @@ Generates a cache key from arguments.
 
 **Example:**
 ```python
-cache_key = self.generate_cache_key(
-    query_vector,
-    max_results=10,
-    max_depth=2
-)
+cache_key = self.generate_cache_key(query_vector, max_results=10, max_depth=2)
 ```
 
 ### Query Structure Validation Methods
@@ -210,7 +199,7 @@ Validates that query is a dictionary with required fields.
 
 **Example:**
 ```python
-if not self.validate_query_structure(query, required_fields=['vector', 'max_results']):
+if not self.validate_query_structure(query, required_fields=["vector", "max_results"]):
     query = self.ensure_query_defaults(query)
 ```
 
@@ -226,11 +215,9 @@ Ensures query has default values for missing fields.
 
 **Example:**
 ```python
-query = self.ensure_query_defaults(query, {
-    'max_depth': 2,
-    'max_results': 10,
-    'min_similarity': 0.5
-})
+query = self.ensure_query_defaults(
+    query, {"max_depth": 2, "max_results": 10, "min_similarity": 0.5}
+)
 ```
 
 #### `ensure_nested_dict()`
@@ -247,12 +234,7 @@ Ensures nested dictionary keys exist.
 **Example:**
 ```python
 # Ensure query['traversal']['max_depth'] exists
-query = self.ensure_nested_dict(
-    query,
-    'traversal',
-    'max_depth',
-    default_value=2
-)
+query = self.ensure_nested_dict(query, "traversal", "max_depth", default_value=2)
 ```
 
 ### Result Validation Methods
@@ -323,20 +305,20 @@ class GraphRAGQueryOptimizer(QueryValidationMixin):
         # Clean validation using mixin
         max_vector_results = self.validate_numeric_param(
             max_vector_results,
-            param_name='max_vector_results',
+            param_name="max_vector_results",
             min_value=1,
             max_value=100,
-            default=5
+            default=5,
         )
-        
+
         max_traversal_depth = self.validate_numeric_param(
             max_traversal_depth,
-            param_name='max_traversal_depth',
+            param_name="max_traversal_depth",
             min_value=1,
             max_value=10,
-            default=2
+            default=2,
         )
-        
+
         # ... rest of implementation
 ```
 

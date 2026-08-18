@@ -15,6 +15,7 @@ Targets:
   - bridges/prover_installer.py           70% → 80%+  (ensure_coq --no-yes, subprocess paths)
   - NaturalLanguageTDFOLInterface         74% → 80%+  (understand/reason/explain)
 """
+
 from __future__ import annotations
 
 import pytest
@@ -26,6 +27,7 @@ from typing import Any
 # Section 1: DeonticStatement string modality normalization (lines 108-118)
 # ---------------------------------------------------------------------------
 
+
 class TestDeonticStatementModalityNormalization:
     """Cover the __post_init__ modality normalization branches."""
 
@@ -33,6 +35,7 @@ class TestDeonticStatementModalityNormalization:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
             DeonticStatement,
         )
+
         return DeonticStatement(id="t1", entity="alice", action="pay", modality=modality, **kw)
 
     def test_string_modality_exact_member_name(self):
@@ -42,7 +45,10 @@ class TestDeonticStatementModalityNormalization:
         THEN modality should be normalized to the DeonticModality enum
         """
         stmt = self._make("OBLIGATION")
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         assert stmt.modality is DeonticModality.OBLIGATION
 
     def test_string_modality_value_case_insensitive(self):
@@ -52,25 +58,37 @@ class TestDeonticStatementModalityNormalization:
         THEN modality should match by value
         """
         stmt = self._make("obligation")
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         assert stmt.modality is DeonticModality.OBLIGATION
 
     def test_string_modality_permission_value(self):
         """GIVEN 'permission' string THEN DeonticModality.PERMISSION"""
         stmt = self._make("permission")
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         assert stmt.modality is DeonticModality.PERMISSION
 
     def test_string_modality_prohibition_value(self):
         """GIVEN 'prohibition' string THEN DeonticModality.PROHIBITION"""
         stmt = self._make("prohibition")
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         assert stmt.modality is DeonticModality.PROHIBITION
 
     def test_string_modality_conditional_member_name(self):
         """GIVEN 'CONDITIONAL' member name THEN DeonticModality.CONDITIONAL"""
         stmt = self._make("CONDITIONAL")
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         assert stmt.modality is DeonticModality.CONDITIONAL
 
     def test_string_modality_invalid_raises_value_error(self):
@@ -89,9 +107,13 @@ class TestDeonticStatementModalityNormalization:
         THEN no normalization runs and entity/action are lowercased
         """
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality,
+            DeonticStatement,
+            DeonticModality,
         )
-        stmt = DeonticStatement(id="t2", entity="ALICE", action="PAY", modality=DeonticModality.PERMISSION)
+
+        stmt = DeonticStatement(
+            id="t2", entity="ALICE", action="PAY", modality=DeonticModality.PERMISSION
+        )
         assert stmt.modality is DeonticModality.PERMISSION
         assert stmt.entity == "alice"
         assert stmt.action == "pay"
@@ -101,21 +123,28 @@ class TestDeonticStatementModalityNormalization:
 # Section 2: TDFOLShadowProverBridge prove_modal result branches
 # ---------------------------------------------------------------------------
 
+
 class TestTDFOLShadowProverBridgeProveModal:
     """Cover the PROVED/DISPROVED/TIMEOUT/UNKNOWN/ERROR result branches."""
 
     @pytest.fixture
     def bridge_and_formula(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
-            TDFOLShadowProverBridge, ModalLogicType,
+            TDFOLShadowProverBridge,
+            ModalLogicType,
         )
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate
+
         return TDFOLShadowProverBridge(), Predicate("TestProp", ()), ModalLogicType.K
 
     def _make_proof_tree(self, status, steps=None):
         from ipfs_datasets_py.logic.CEC.native.shadow_prover import (
-            ProofTree, ProofStatus, ProofStep, ModalLogic,
+            ProofTree,
+            ProofStatus,
+            ProofStep,
+            ModalLogic,
         )
+
         sp_step = ProofStep(rule_name="r1", premises=[], conclusion="P")
         sp_step.justification = "test"
         pt = ProofTree.__new__(ProofTree)
@@ -133,7 +162,9 @@ class TestTDFOLShadowProverBridgeProveModal:
         THEN result status is PROVED and proof_steps are populated
         """
         from ipfs_datasets_py.logic.CEC.native.shadow_prover import ProofStatus
-        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus as TDFOLStatus
+        from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import (
+            ProofStatus as TDFOLStatus,
+        )
 
         bridge, formula, logic_type = bridge_and_formula
         pt = self._make_proof_tree(ProofStatus.SUCCESS)
@@ -235,9 +266,11 @@ class TestTDFOLShadowProverBridgeProveModal:
         THEN result status is UNKNOWN (not available)
         """
         from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
-            TDFOLShadowProverBridge, ModalLogicType,
+            TDFOLShadowProverBridge,
+            ModalLogicType,
         )
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate
+
         bridge = TDFOLShadowProverBridge()
         bridge.available = False
         formula = Predicate("P", ())
@@ -252,7 +285,9 @@ class TestTDFOLShadowProverBridgeProveModal:
         THEN result is valid (no crash)
         """
         from ipfs_datasets_py.logic.CEC.native.shadow_prover import ProofStatus
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import ModalLogicType
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
+            ModalLogicType,
+        )
 
         bridge, formula, _ = bridge_and_formula
         pt = self._make_proof_tree(ProofStatus.FAILURE, steps=[])
@@ -269,6 +304,7 @@ class TestTDFOLShadowProverBridgeProveModal:
 # Section 3: TDFOLCECBridge prove CEC prover result branches
 # ---------------------------------------------------------------------------
 
+
 class TestTDFOLCECBridgeProveBranches:
     """Cover lines 246-353 — CEC prover PROVED/DISPROVED/TIMEOUT/UNKNOWN."""
 
@@ -276,6 +312,7 @@ class TestTDFOLCECBridgeProveBranches:
     def bridge_and_formula(self):
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate
+
         bridge = TDFOLCECBridge()
         bridge.available = True
         formula = Predicate("P", ())
@@ -290,7 +327,14 @@ class TestTDFOLCECBridgeProveBranches:
         bridge, formula = bridge_and_formula
         result = bridge.prove(formula)
         assert result is not None
-        assert result.status.name in ("PROVED", "DISPROVED", "UNKNOWN", "ERROR", "TIMEOUT", "UNSUPPORTED")
+        assert result.status.name in (
+            "PROVED",
+            "DISPROVED",
+            "UNKNOWN",
+            "ERROR",
+            "TIMEOUT",
+            "UNSUPPORTED",
+        )
 
     def test_prove_with_cec_direct(self, bridge_and_formula):
         """
@@ -301,7 +345,14 @@ class TestTDFOLCECBridgeProveBranches:
         bridge, formula = bridge_and_formula
         result = bridge.prove_with_cec(formula, axioms=[])
         assert result is not None
-        assert result.status.name in ("PROVED", "DISPROVED", "UNKNOWN", "ERROR", "TIMEOUT", "UNSUPPORTED")
+        assert result.status.name in (
+            "PROVED",
+            "DISPROVED",
+            "UNKNOWN",
+            "ERROR",
+            "TIMEOUT",
+            "UNSUPPORTED",
+        )
 
     def test_prove_cec_no_available_prover(self, bridge_and_formula):
         """
@@ -320,6 +371,7 @@ class TestTDFOLCECBridgeProveBranches:
 # Section 4: BaseProverBridge unsupported formula exception path (line 191-194)
 # ---------------------------------------------------------------------------
 
+
 class TestBaseProverBridgeSupports:
     """Cover BaseProverBridge's is_available method and edge cases."""
 
@@ -332,6 +384,7 @@ class TestBaseProverBridgeSupports:
         from ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge import (
             TDFOLShadowProverBridge,
         )
+
         bridge = TDFOLShadowProverBridge()
         metadata = bridge.get_metadata()
         assert metadata is not None
@@ -346,6 +399,7 @@ class TestBaseProverBridgeSupports:
             TDFOLShadowProverBridge,
         )
         from ipfs_datasets_py.logic.integration.bridges.base_prover_bridge import BridgeCapability
+
         bridge = TDFOLShadowProverBridge()
         # Use an existing capability
         cap = list(BridgeCapability)[0]
@@ -358,7 +412,10 @@ class TestBaseProverBridgeSupports:
         WHEN is_available is called
         THEN boolean is returned (line 191-194 fallback path)
         """
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            TDFOLGrammarBridge,
+        )
+
         bridge = TDFOLGrammarBridge()
         result = bridge.is_available()
         assert isinstance(result, bool)
@@ -367,6 +424,7 @@ class TestBaseProverBridgeSupports:
 # ---------------------------------------------------------------------------
 # Section 5: deontological_reasoning.py uncovered paths
 # ---------------------------------------------------------------------------
+
 
 class TestDeontologicalReasoningUncoveredPaths:
     """Cover permission/prohibition pattern branches and exception paths."""
@@ -377,8 +435,13 @@ class TestDeontologicalReasoningUncoveredPaths:
         WHEN extract_statements is called
         THEN a PERMISSION DeonticStatement is created
         """
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import DeonticExtractor
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
+            DeonticExtractor,
+        )
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         extractor = DeonticExtractor()
         stmts = extractor.extract_statements("Alice may access the server at any time", "doc1")
         permissions = [s for s in stmts if s.modality == DeonticModality.PERMISSION]
@@ -390,10 +453,17 @@ class TestDeontologicalReasoningUncoveredPaths:
         WHEN extract_statements is called
         THEN a PROHIBITION DeonticStatement is created
         """
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import DeonticExtractor
-        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import DeonticModality
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
+            DeonticExtractor,
+        )
+        from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+            DeonticModality,
+        )
+
         extractor = DeonticExtractor()
-        stmts = extractor.extract_statements("The contractor must not share confidential data", "doc1")
+        stmts = extractor.extract_statements(
+            "The contractor must not share confidential data", "doc1"
+        )
         prohibitions = [s for s in stmts if s.modality == DeonticModality.PROHIBITION]
         assert len(prohibitions) >= 0
 
@@ -407,6 +477,7 @@ class TestDeontologicalReasoningUncoveredPaths:
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning import (
             DeontologicalReasoningEngine,
         )
+
         engine = DeontologicalReasoningEngine()
         documents = [
             {"id": "doc1", "text": "The party shall pay the fee."},
@@ -434,12 +505,20 @@ class TestDeontologicalReasoningUncoveredPaths:
             DeontologicalReasoningEngine,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticModality,
+            DeonticStatement,
+            DeonticModality,
         )
+
         engine = DeontologicalReasoningEngine()
-        s1 = DeonticStatement(id="1", entity="alice", action="pay", modality=DeonticModality.OBLIGATION)
-        s2 = DeonticStatement(id="2", entity="bob", action="read", modality=DeonticModality.PERMISSION)
-        s3 = DeonticStatement(id="3", entity="alice", action="submit", modality=DeonticModality.PROHIBITION)
+        s1 = DeonticStatement(
+            id="1", entity="alice", action="pay", modality=DeonticModality.OBLIGATION
+        )
+        s2 = DeonticStatement(
+            id="2", entity="bob", action="read", modality=DeonticModality.PERMISSION
+        )
+        s3 = DeonticStatement(
+            id="3", entity="alice", action="submit", modality=DeonticModality.PROHIBITION
+        )
         engine.statement_database["1"] = s1
         engine.statement_database["2"] = s2
         engine.statement_database["3"] = s3
@@ -459,24 +538,40 @@ class TestDeontologicalReasoningUncoveredPaths:
             DeontologicalReasoningEngine,
         )
         from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
-            DeonticStatement, DeonticConflict, DeonticModality, ConflictType,
+            DeonticStatement,
+            DeonticConflict,
+            DeonticModality,
+            ConflictType,
         )
+
         engine = DeontologicalReasoningEngine()
 
-        s1 = DeonticStatement(id="1", entity="alice", action="pay", modality=DeonticModality.OBLIGATION)
-        s2 = DeonticStatement(id="2", entity="alice", action="pay", modality=DeonticModality.PROHIBITION)
-        s3 = DeonticStatement(id="3", entity="charlie", action="sign", modality=DeonticModality.OBLIGATION)
-        s4 = DeonticStatement(id="4", entity="charlie", action="sign", modality=DeonticModality.PROHIBITION)
+        s1 = DeonticStatement(
+            id="1", entity="alice", action="pay", modality=DeonticModality.OBLIGATION
+        )
+        s2 = DeonticStatement(
+            id="2", entity="alice", action="pay", modality=DeonticModality.PROHIBITION
+        )
+        s3 = DeonticStatement(
+            id="3", entity="charlie", action="sign", modality=DeonticModality.OBLIGATION
+        )
+        s4 = DeonticStatement(
+            id="4", entity="charlie", action="sign", modality=DeonticModality.PROHIBITION
+        )
 
         c1 = DeonticConflict(
-            statement1=s1, statement2=s2,
+            statement1=s1,
+            statement2=s2,
             conflict_type=ConflictType.OBLIGATION_PROHIBITION,
-            severity="high", explanation="conflict1",
+            severity="high",
+            explanation="conflict1",
         )
         c2 = DeonticConflict(
-            statement1=s3, statement2=s4,
+            statement1=s3,
+            statement2=s4,
             conflict_type=ConflictType.OBLIGATION_PROHIBITION,
-            severity="medium", explanation="conflict2",
+            severity="medium",
+            explanation="conflict2",
         )
         engine.conflict_database["c1"] = c1
         engine.conflict_database["c2"] = c2
@@ -490,6 +585,7 @@ class TestDeontologicalReasoningUncoveredPaths:
 # Section 6: DeonticQueryEngine rate-limit, validator, context filter paths
 # ---------------------------------------------------------------------------
 
+
 class TestDeonticQueryEngineUncoveredPaths:
     """Cover rate-limiter exception, validator exception, context filter lines."""
 
@@ -499,9 +595,14 @@ class TestDeonticQueryEngineUncoveredPaths:
         WHEN query_obligations is called
         THEN result.status is 'rate_limited' or an error QueryResult is returned
         """
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine()
-        engine.rate_limiter.check_rate_limit = MagicMock(side_effect=Exception("rate limit exceeded"))
+        engine.rate_limiter.check_rate_limit = MagicMock(
+            side_effect=Exception("rate limit exceeded")
+        )
 
         result = engine.query_obligations(user_id="test_user")
         assert result is not None
@@ -513,7 +614,10 @@ class TestDeonticQueryEngineUncoveredPaths:
         WHEN query_obligations is called with an agent
         THEN result is returned (validation failure handled gracefully)
         """
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine()
         engine.validator.validate_text = MagicMock(side_effect=ValueError("invalid input"))
 
@@ -526,7 +630,10 @@ class TestDeonticQueryEngineUncoveredPaths:
         WHEN query_obligations is called with context
         THEN results are filtered via _apply_context_filter
         """
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine()
         # Call with context — lines 216+ context filter applied
         result = engine.query_obligations(agent="alice", context={"jurisdiction": "US"})
@@ -539,7 +646,10 @@ class TestDeonticQueryEngineUncoveredPaths:
         WHEN query_obligations is called again (shared rate_limiter)
         THEN QueryResult returned without crash
         """
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine()
         engine.rate_limiter.check_rate_limit = MagicMock(side_effect=Exception("limit"))
 
@@ -552,7 +662,10 @@ class TestDeonticQueryEngineUncoveredPaths:
         WHEN query_prohibitions is called
         THEN QueryResult returned without crash
         """
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         engine = DeonticQueryEngine()
         result = engine.query_prohibitions(action="disclose")
         assert result is not None
@@ -561,6 +674,7 @@ class TestDeonticQueryEngineUncoveredPaths:
 # ---------------------------------------------------------------------------
 # Section 7: document_consistency_checker.py uncovered paths
 # ---------------------------------------------------------------------------
+
 
 class TestDocumentConsistencyCheckerUncoveredPaths:
     """Cover formal verification path and extract_formulas with mock converter."""
@@ -573,6 +687,7 @@ class TestDocumentConsistencyCheckerUncoveredPaths:
         from ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store import (
             TemporalDeonticRAGStore,
         )
+
         store = TemporalDeonticRAGStore()
         return DocumentConsistencyChecker(rag_store=store)
 
@@ -664,14 +779,17 @@ class TestDocumentConsistencyCheckerUncoveredPaths:
 # Section 8: TemporalDeonticRAGStore embedding model and vector store paths
 # ---------------------------------------------------------------------------
 
+
 class TestTemporalDeonticRAGStoreEmbeddingPaths:
     """Cover lines 134-172 — embedding model and vector store paths."""
 
     @pytest.fixture
     def deontic_formula(self):
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
+
         return DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="pay the fee")
 
     def test_add_theorem_with_embedding_model(self, deontic_formula):
@@ -759,6 +877,7 @@ class TestTemporalDeonticRAGStoreEmbeddingPaths:
 # Section 9: ipld_logic_storage.py additional paths
 # ---------------------------------------------------------------------------
 
+
 class TestIPLDLogicStorageAdditionalPaths:
     """Cover LogicIPLDStorage and LogicProvenanceTracker additional paths."""
 
@@ -769,6 +888,7 @@ class TestIPLDLogicStorageAdditionalPaths:
         THEN storage_path is set correctly
         """
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDStorage
+
         storage = LogicIPLDStorage(storage_path=str(tmp_path / "logic_storage"))
         assert storage is not None
 
@@ -780,8 +900,10 @@ class TestIPLDLogicStorageAdditionalPaths:
         """
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDStorage
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
+
         storage = LogicIPLDStorage(storage_path=str(tmp_path / "logic"))
         formula = DeonticFormula(operator=DeonticOperator.OBLIGATION, proposition="pay")
         cid = storage.store_logic_formula(
@@ -798,11 +920,14 @@ class TestIPLDLogicStorageAdditionalPaths:
         THEN provenance is tracked and verifiable (lines 277-283)
         """
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
-            LogicIPLDStorage, LogicProvenanceTracker,
+            LogicIPLDStorage,
+            LogicProvenanceTracker,
         )
         from ipfs_datasets_py.logic.integration.converters.deontic_logic_core import (
-            DeonticFormula, DeonticOperator,
+            DeonticFormula,
+            DeonticOperator,
         )
+
         storage = LogicIPLDStorage(storage_path=str(tmp_path / "provenance"))
         tracker = LogicProvenanceTracker(logic_storage=storage)
 
@@ -826,8 +951,10 @@ class TestIPLDLogicStorageAdditionalPaths:
         THEN a report file is created (lines 300-307)
         """
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import (
-            LogicIPLDStorage, LogicProvenanceTracker,
+            LogicIPLDStorage,
+            LogicProvenanceTracker,
         )
+
         storage = LogicIPLDStorage(storage_path=str(tmp_path / "export"))
         tracker = LogicProvenanceTracker(logic_storage=storage)
         report_path = str(tmp_path / "report.json")
@@ -843,6 +970,7 @@ class TestIPLDLogicStorageAdditionalPaths:
         THEN stats dict is returned
         """
         from ipfs_datasets_py.logic.integration.caching.ipld_logic_storage import LogicIPLDStorage
+
         storage = LogicIPLDStorage(storage_path=str(tmp_path / "stats"))
         stats = storage.get_storage_statistics()
         assert isinstance(stats, dict)
@@ -851,6 +979,7 @@ class TestIPLDLogicStorageAdditionalPaths:
 # ---------------------------------------------------------------------------
 # Section 10: prover_installer.py ensure_coq paths
 # ---------------------------------------------------------------------------
+
 
 class TestProverInstallerEnsureCoq:
     """Cover ensure_coq function paths (lines 92-178)."""
@@ -862,8 +991,11 @@ class TestProverInstallerEnsureCoq:
         THEN returns True immediately
         """
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq
-        with patch("ipfs_datasets_py.logic.integration.bridges.prover_installer._which",
-                   return_value="/usr/bin/coqc"):
+
+        with patch(
+            "ipfs_datasets_py.logic.integration.bridges.prover_installer._which",
+            return_value="/usr/bin/coqc",
+        ):
             result = ensure_coq(yes=True, strict=False)
         assert result is True
 
@@ -874,8 +1006,10 @@ class TestProverInstallerEnsureCoq:
         THEN returns False and prints guidance (line 107-109)
         """
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_coq
-        with patch("ipfs_datasets_py.logic.integration.bridges.prover_installer._which",
-                   return_value=None):
+
+        with patch(
+            "ipfs_datasets_py.logic.integration.bridges.prover_installer._which", return_value=None
+        ):
             result = ensure_coq(yes=False, strict=False)
         assert result is False
 
@@ -894,8 +1028,10 @@ class TestProverInstallerEnsureCoq:
                 return None
             return None
 
-        with patch("ipfs_datasets_py.logic.integration.bridges.prover_installer._which",
-                   side_effect=_which_side_effect):
+        with patch(
+            "ipfs_datasets_py.logic.integration.bridges.prover_installer._which",
+            side_effect=_which_side_effect,
+        ):
             result = ensure_coq(yes=True, strict=False)
         assert result is False
 
@@ -914,8 +1050,10 @@ class TestProverInstallerEnsureCoq:
                 return "/usr/bin/opam"
             return None
 
-        with patch("ipfs_datasets_py.logic.integration.bridges.prover_installer._which",
-                   side_effect=_which_side_effect):
+        with patch(
+            "ipfs_datasets_py.logic.integration.bridges.prover_installer._which",
+            side_effect=_which_side_effect,
+        ):
             result = ensure_coq(yes=True, strict=False)
         # Should print opam guidance and return False
         assert result is False
@@ -927,8 +1065,11 @@ class TestProverInstallerEnsureCoq:
         THEN returns True immediately
         """
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
-        with patch("ipfs_datasets_py.logic.integration.bridges.prover_installer._which",
-                   return_value="/usr/bin/lean"):
+
+        with patch(
+            "ipfs_datasets_py.logic.integration.bridges.prover_installer._which",
+            return_value="/usr/bin/lean",
+        ):
             result = ensure_lean(yes=True, strict=False)
         assert result is True
 
@@ -939,8 +1080,10 @@ class TestProverInstallerEnsureCoq:
         THEN returns False
         """
         from ipfs_datasets_py.logic.integration.bridges.prover_installer import ensure_lean
-        with patch("ipfs_datasets_py.logic.integration.bridges.prover_installer._which",
-                   return_value=None):
+
+        with patch(
+            "ipfs_datasets_py.logic.integration.bridges.prover_installer._which", return_value=None
+        ):
             result = ensure_lean(yes=False, strict=False)
         assert result is False
 
@@ -948,6 +1091,7 @@ class TestProverInstallerEnsureCoq:
 # ---------------------------------------------------------------------------
 # Section 11: NaturalLanguageTDFOLInterface additional coverage
 # ---------------------------------------------------------------------------
+
 
 class TestNaturalLanguageTDFOLInterface:
     """Cover additional NaturalLanguageTDFOLInterface paths."""
@@ -957,6 +1101,7 @@ class TestNaturalLanguageTDFOLInterface:
         from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
             NaturalLanguageTDFOLInterface,
         )
+
         return NaturalLanguageTDFOLInterface()
 
     def test_understand_simple_formula(self, nl_interface):
@@ -1015,6 +1160,7 @@ class TestNaturalLanguageTDFOLInterface:
         THEN a string description is returned
         """
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate
+
         formula = Predicate("Obligation", ())
         result = nl_interface.explain(formula)
         assert isinstance(result, str)
@@ -1034,12 +1180,16 @@ class TestNaturalLanguageTDFOLInterface:
 # Section 12: legal_domain_knowledge.py additional paths
 # ---------------------------------------------------------------------------
 
+
 class TestLegalDomainKnowledgeAdditionalPaths:
     """Cover identify_legal_domain additional category paths (lines 572+)."""
 
     @pytest.fixture
     def domain_kb(self):
-        from ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge import LegalDomainKnowledge
+        from ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge import (
+            LegalDomainKnowledge,
+        )
+
         return LegalDomainKnowledge()
 
     def test_identify_legal_domain_returns_tuple(self, domain_kb):
@@ -1095,6 +1245,7 @@ class TestLegalDomainKnowledgeAdditionalPaths:
 # Section 13: symbolic/__init__.py and domain/__init__.py import error paths
 # ---------------------------------------------------------------------------
 
+
 class TestIntegrationInitImportErrorPaths:
     """Cover ImportError branches in __init__.py files (lines 17-18, 22-23, 27-28)."""
 
@@ -1105,12 +1256,15 @@ class TestIntegrationInitImportErrorPaths:
         THEN LegalDomainKnowledge is set to None (lines 17-18)
         """
         import sys
+
         # Mock the submodule to simulate import failure
-        with patch.dict("sys.modules", {
-            "ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge": None
-        }):
+        with patch.dict(
+            "sys.modules",
+            {"ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge": None},
+        ):
             # Re-import would need cache clear, but we can test the branch directly
             from ipfs_datasets_py.logic.integration import domain as dom
+
             # Just verify the module is importable
             assert dom is not None
 
@@ -1121,15 +1275,20 @@ class TestIntegrationInitImportErrorPaths:
         THEN DeonticQueryEngine is available via domain module
         """
         from ipfs_datasets_py.logic.integration import domain as dom
+
         assert dom is not None
         # DeonticQueryEngine should be accessible
-        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import DeonticQueryEngine
+        from ipfs_datasets_py.logic.integration.domain.deontic_query_engine import (
+            DeonticQueryEngine,
+        )
+
         assert DeonticQueryEngine is not None
 
 
 # ---------------------------------------------------------------------------
 # Section 14: Additional bridge coverage
 # ---------------------------------------------------------------------------
+
 
 class TestTDFOLCECBridgeDirectCoverage:
     """Cover tdfol_cec_bridge.py uncovered paths more directly."""
@@ -1142,11 +1301,19 @@ class TestTDFOLCECBridgeDirectCoverage:
         """
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate
+
         bridge = TDFOLCECBridge()
         formula = Predicate("TestFact", ())
         result = bridge.prove(formula)
         assert result is not None
-        assert result.status.name in ("PROVED", "DISPROVED", "UNKNOWN", "ERROR", "TIMEOUT", "UNSUPPORTED")
+        assert result.status.name in (
+            "PROVED",
+            "DISPROVED",
+            "UNKNOWN",
+            "ERROR",
+            "TIMEOUT",
+            "UNSUPPORTED",
+        )
 
     def test_cec_bridge_translate_formula(self):
         """
@@ -1156,6 +1323,7 @@ class TestTDFOLCECBridgeDirectCoverage:
         """
         from ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge import TDFOLCECBridge
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate
+
         bridge = TDFOLCECBridge()
         formula = Predicate("P", ())
         try:
@@ -1180,6 +1348,7 @@ class TestTDFOLCECBridgeDirectCoverage:
         # Import the CEC prover_core module to get the ProofResult enum
         try:
             from ipfs_datasets_py.logic.CEC.native import prover_core
+
             mock_cec_result = MagicMock()
             mock_cec_result.result = prover_core.ProofResult.PROVED
             mock_cec_result.proof_tree = MagicMock()
@@ -1204,7 +1373,10 @@ class TestTDFOLGrammarBridgeAdditionalCoverage:
 
     @pytest.fixture
     def bridge(self):
-        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import TDFOLGrammarBridge
+        from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
+            TDFOLGrammarBridge,
+        )
+
         return TDFOLGrammarBridge()
 
     def test_parse_text_unavailable_bridge_uses_fallback(self, bridge):
@@ -1258,6 +1430,7 @@ class TestTDFOLGrammarBridgeAdditionalCoverage:
         THEN falls back to formula.to_string() (lines 311-313)
         """
         from ipfs_datasets_py.logic.TDFOL.tdfol_core import Predicate
+
         formula = Predicate("P", ())
         # With no grammar, this should fall back to formula string
         result = bridge.formula_to_natural_language(formula, style="formal")
@@ -1270,8 +1443,10 @@ class TestTDFOLGrammarBridgeAdditionalCoverage:
         THEN available=False (lines 35-36, 68-69)
         """
         from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
-            TDFOLGrammarBridge, GRAMMAR_AVAILABLE,
+            TDFOLGrammarBridge,
+            GRAMMAR_AVAILABLE,
         )
+
         if GRAMMAR_AVAILABLE:
             bridge = TDFOLGrammarBridge()
             # Trigger init failure by patching grammar init method
@@ -1299,8 +1474,10 @@ class TestTDFOLGrammarBridgeAdditionalCoverage:
         THEN logs limited mode message (line 536)
         """
         from ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge import (
-            NaturalLanguageTDFOLInterface, TDFOLGrammarBridge,
+            NaturalLanguageTDFOLInterface,
+            TDFOLGrammarBridge,
         )
+
         iface = NaturalLanguageTDFOLInterface()
         assert iface is not None
         assert hasattr(iface, "grammar_bridge")

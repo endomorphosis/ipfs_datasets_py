@@ -112,19 +112,22 @@ def _copy_package_layers(
         "data/laws.parquet": base_dir / "parquet/laws/train-00000-of-00001.parquet",
         "data/articles.parquet": base_dir / "parquet/articles/train-00000-of-00001.parquet",
         "data/cid_index.parquet": base_dir / "parquet/cid_index/train-00000-of-00001.parquet",
-        "indexes/vector/vector_mapping.parquet": vector_dir / "parquet/mapping/train-00000-of-00001.parquet",
+        "indexes/vector/vector_mapping.parquet": vector_dir
+        / "parquet/mapping/train-00000-of-00001.parquet",
         "indexes/vector/faiss.index": vector_dir / "artifacts/faiss.index",
         "indexes/vector/vectorizer.pkl": vector_dir / "artifacts/vectorizer.pkl",
         "indexes/vector/svd.pkl": vector_dir / "artifacts/svd.pkl",
         "indexes/vector/metadata.json": vector_dir / "artifacts/metadata.json",
-        "indexes/bm25/bm25_documents.parquet": bm25_dir / "parquet/documents/train-00000-of-00001.parquet",
+        "indexes/bm25/bm25_documents.parquet": bm25_dir
+        / "parquet/documents/train-00000-of-00001.parquet",
         "indexes/bm25/bm25_terms.parquet": bm25_dir / "parquet/terms/train-00000-of-00001.parquet",
         "indexes/bm25/metadata.json": bm25_dir / "artifacts/metadata.json",
         "graph/kg_nodes.parquet": kg_dir / "parquet/nodes/train-00000-of-00001.parquet",
         "graph/kg_edges.parquet": kg_dir / "parquet/edges/train-00000-of-00001.parquet",
         "graph/graph.jsonld": kg_dir / "data/graph/ipfs_netherlands_laws_kg.jsonld",
         "graph/metadata.json": kg_dir / "artifacts/metadata.json",
-        "reports/run_metadata.json": base_dir / "data/metadata/netherlands_laws_run_metadata_latest.json",
+        "reports/run_metadata.json": base_dir
+        / "data/metadata/netherlands_laws_run_metadata_latest.json",
     }
 
     report_paths = _select_reports(reports_dir)
@@ -133,7 +136,9 @@ def _copy_package_layers(
     copied: dict[str, str] = {}
     for rel, source in copies.items():
         if not source.exists():
-            raise FileNotFoundError(f"Cannot build unified package; missing source file for {rel}: {source}")
+            raise FileNotFoundError(
+                f"Cannot build unified package; missing source file for {rel}: {source}"
+            )
         destination = out_dir / rel
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
@@ -179,19 +184,24 @@ def _select_reports(reports_dir: Path) -> dict[str, Path]:
         "reports/duplicate_report.json": quality_dir / "duplicate_report.json",
         "reports/parser_noise_report.json": quality_dir / "parser_noise_report.json",
         "reports/hierarchy_report.json": quality_dir / "hierarchy_report.json",
-        "reports/retrieval_validation_report.json": quality_dir / "retrieval_validation_report.json",
+        "reports/retrieval_validation_report.json": quality_dir
+        / "retrieval_validation_report.json",
     }
 
 
 def _first_existing_or_latest(directory: Path, patterns: list[str]) -> Path:
     for pattern in patterns:
-        matches = sorted(directory.glob(pattern), key=lambda path: path.stat().st_mtime, reverse=True)
+        matches = sorted(
+            directory.glob(pattern), key=lambda path: path.stat().st_mtime, reverse=True
+        )
         if matches:
             return matches[0]
     raise FileNotFoundError(f"No report matched any of {patterns} in {directory}")
 
 
-def _write_source_manifests(out_dir: Path, base_dir: Path, vector_dir: Path, bm25_dir: Path, kg_dir: Path) -> None:
+def _write_source_manifests(
+    out_dir: Path, base_dir: Path, vector_dir: Path, bm25_dir: Path, kg_dir: Path
+) -> None:
     sources = {
         "ipfs_netherlands_laws_manifest.json": base_dir / "dataset_manifest.json",
         "ipfs_netherlands_laws_vector_index_manifest.json": vector_dir / "dataset_manifest.json",
@@ -271,7 +281,9 @@ def _write_logic_relationship_summaries(out_dir: Path) -> list[dict[str, Any]]:
                     source=article,
                     target_cid=str(previous.get("cid") or ""),
                     target_record_type="article",
-                    target_label=str(previous.get("citation") or previous.get("article_identifier") or ""),
+                    target_label=str(
+                        previous.get("citation") or previous.get("article_identifier") or ""
+                    ),
                     target_identifier=str(previous.get("article_identifier") or ""),
                     note="Previous article relationship derived from source article ordering within the same law.",
                 )
@@ -284,7 +296,9 @@ def _write_logic_relationship_summaries(out_dir: Path) -> list[dict[str, Any]]:
                     source=article,
                     target_cid=str(following.get("cid") or ""),
                     target_record_type="article",
-                    target_label=str(following.get("citation") or following.get("article_identifier") or ""),
+                    target_label=str(
+                        following.get("citation") or following.get("article_identifier") or ""
+                    ),
                     target_identifier=str(following.get("article_identifier") or ""),
                     note="Next article relationship derived from source article ordering within the same law.",
                 )
@@ -297,7 +311,9 @@ def _write_logic_relationship_summaries(out_dir: Path) -> list[dict[str, Any]]:
                     source=article,
                     target_cid=str(target.get("cid") or ""),
                     target_record_type="article",
-                    target_label=str(target.get("citation") or target.get("article_identifier") or ""),
+                    target_label=str(
+                        target.get("citation") or target.get("article_identifier") or ""
+                    ),
                     target_identifier=str(target.get("article_identifier") or ""),
                     confidence="low",
                     note="Candidate same-law article reference derived from article text mention.",
@@ -390,7 +406,9 @@ def _append_relationship(
     rows.append(row)
 
 
-def _write_unified_manifest(out_dir: Path, repo_id: str, copied_sources: dict[str, str]) -> dict[str, Any]:
+def _write_unified_manifest(
+    out_dir: Path, repo_id: str, copied_sources: dict[str, str]
+) -> dict[str, Any]:
     records = _record_counts(out_dir)
     source_manifests = _load_source_manifests(out_dir)
     coverage = _read_json(out_dir / "reports/coverage_report.json")
@@ -416,14 +434,17 @@ def _write_unified_manifest(out_dir: Path, repo_id: str, copied_sources: dict[st
             "counts": coverage.get("counts"),
             "percent_complete": coverage.get("percent_complete"),
             "completion_semantics": coverage.get("completion_semantics"),
-            "law_status_counts": coverage.get("law_status_counts") or run_metadata.get("law_status_counts"),
+            "law_status_counts": coverage.get("law_status_counts")
+            or run_metadata.get("law_status_counts"),
             "article_extraction_status_counts": coverage.get("article_extraction_status_counts"),
         },
         "quality_audit": {
             "generated_at": quality.get("generated_at"),
             "records": quality.get("records"),
             "issue_summary": quality.get("issue_summary"),
-            "current_gate_pass": (quality.get("quality_gate_recommendation") or {}).get("current_gate_pass"),
+            "current_gate_pass": (quality.get("quality_gate_recommendation") or {}).get(
+                "current_gate_pass"
+            ),
         },
         "integrity": {
             "generated_at": integrity.get("generated_at"),
@@ -437,13 +458,16 @@ def _write_unified_manifest(out_dir: Path, repo_id: str, copied_sources: dict[st
         ),
         "source_local_files": copied_sources,
         "source_manifest_records": {
-            name: manifest_data.get("records", {}) for name, manifest_data in source_manifests.items()
+            name: manifest_data.get("records", {})
+            for name, manifest_data in source_manifests.items()
         },
         "sample_cids": _sample_cids(out_dir),
         "files": {},
     }
 
-    for path in sorted(p for p in out_dir.rglob("*") if p.is_file() and p.name != "dataset_manifest.json"):
+    for path in sorted(
+        p for p in out_dir.rglob("*") if p.is_file() and p.name != "dataset_manifest.json"
+    ):
         rel = path.relative_to(out_dir).as_posix()
         manifest["files"][rel] = file_manifest_entry(path, _records_for_file(rel, records))
 
@@ -657,14 +681,18 @@ def _write_gitattributes(out_dir: Path) -> None:
     )
 
 
-def load_parquet_head(path: Path, *, columns: list[str] | None = None, limit: int = 5) -> list[dict[str, Any]]:
+def load_parquet_head(
+    path: Path, *, columns: list[str] | None = None, limit: int = 5
+) -> list[dict[str, Any]]:
     """Small verification helper for local/remote downloaded Parquet files."""
 
     parquet = pq.ParquetFile(path)
     read_columns = columns or parquet.schema_arrow.names
     if parquet.metadata.num_rows == 0:
         return []
-    table = parquet.read_row_group(0, columns=[column for column in read_columns if column in parquet.schema_arrow.names])
+    table = parquet.read_row_group(
+        0, columns=[column for column in read_columns if column in parquet.schema_arrow.names]
+    )
     return table.slice(0, limit).to_pylist()
 
 
@@ -693,11 +721,19 @@ def validate_unified_package(out_dir: Path | None = None) -> dict[str, Any]:
             "rebuild with include_relationship_summaries=True before upload."
         )
 
-    manifest = _read_json(out_dir / "dataset_manifest.json") if "dataset_manifest.json" not in missing else {}
-    article_rows = [] if "data/articles.parquet" in missing else load_parquet_head(
-        out_dir / "data/articles.parquet",
-        columns=["cid", "law_cid"],
-        limit=1,
+    manifest = (
+        _read_json(out_dir / "dataset_manifest.json")
+        if "dataset_manifest.json" not in missing
+        else {}
+    )
+    article_rows = (
+        []
+        if "data/articles.parquet" in missing
+        else load_parquet_head(
+            out_dir / "data/articles.parquet",
+            columns=["cid", "law_cid"],
+            limit=1,
+        )
     )
     if not article_rows and "data/articles.parquet" not in missing:
         messages.append("Required parquet has no article rows: data/articles.parquet")
@@ -722,8 +758,12 @@ def validate_unified_package(out_dir: Path | None = None) -> dict[str, Any]:
         "source_cid",
         article_cid,
     )
-    node_match = _parquet_contains_if_present(out_dir, missing, "graph/kg_nodes.parquet", "cid", article_cid)
-    edge_match = _parquet_contains_if_present(out_dir, missing, "graph/kg_edges.parquet", "source_cid", article_cid)
+    node_match = _parquet_contains_if_present(
+        out_dir, missing, "graph/kg_nodes.parquet", "cid", article_cid
+    )
+    edge_match = _parquet_contains_if_present(
+        out_dir, missing, "graph/kg_edges.parquet", "source_cid", article_cid
+    )
     relationship_match = _parquet_contains_if_present(
         out_dir,
         missing,
@@ -731,7 +771,9 @@ def validate_unified_package(out_dir: Path | None = None) -> dict[str, Any]:
         "source_cid",
         article_cid,
     )
-    parent_match = _parquet_contains_if_present(out_dir, missing, "data/laws.parquet", "cid", law_cid)
+    parent_match = _parquet_contains_if_present(
+        out_dir, missing, "data/laws.parquet", "cid", law_cid
+    )
 
     checks = {
         "missing_required_files": missing,
@@ -754,7 +796,9 @@ def validate_unified_package(out_dir: Path | None = None) -> dict[str, Any]:
     }
 
 
-def _parquet_contains_if_present(out_dir: Path, missing: list[str], rel: str, column: str, value: Any) -> bool:
+def _parquet_contains_if_present(
+    out_dir: Path, missing: list[str], rel: str, column: str, value: Any
+) -> bool:
     if value is None or rel in missing:
         return False
     return _parquet_contains(out_dir / rel, column, value)

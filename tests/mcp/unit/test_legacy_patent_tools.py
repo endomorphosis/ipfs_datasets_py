@@ -5,6 +5,7 @@ The module is a DEPRECATED legacy tool that raises DeprecationWarning on import.
 All 5 async functions try to import and use patent_engine.  We mock that engine
 to prevent real USPTO network calls while still exercising all code paths.
 """
+
 import asyncio
 import sys
 import unittest
@@ -112,6 +113,7 @@ class TestLegacyPatentDeprecationWarning(unittest.TestCase):
 
     def test_deprecation_warning_emitted_on_reload(self):
         import importlib
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             importlib.reload(_mod)
@@ -120,6 +122,7 @@ class TestLegacyPatentDeprecationWarning(unittest.TestCase):
 
     def test_deprecation_message_mentions_legal_dataset_tools(self):
         import importlib
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             importlib.reload(_mod)
@@ -128,7 +131,6 @@ class TestLegacyPatentDeprecationWarning(unittest.TestCase):
 
 
 class TestScrapeUsptoPatents(unittest.TestCase):
-
     def test_returns_dict(self):
         result = _run(_mod.scrape_uspto_patents())
         self.assertIsInstance(result, dict)
@@ -151,7 +153,6 @@ class TestScrapeUsptoPatents(unittest.TestCase):
 
 
 class TestSearchPatentsByKeyword(unittest.TestCase):
-
     def test_returns_dict(self):
         result = _run(_mod.search_patents_by_keyword(keywords=["AI"]))
         self.assertIsInstance(result, dict)
@@ -166,7 +167,6 @@ class TestSearchPatentsByKeyword(unittest.TestCase):
 
 
 class TestSearchPatentsByInventor(unittest.TestCase):
-
     def test_returns_dict(self):
         result = _run(_mod.search_patents_by_inventor(inventor_name="Tesla"))
         self.assertIsInstance(result, dict)
@@ -177,7 +177,6 @@ class TestSearchPatentsByInventor(unittest.TestCase):
 
 
 class TestSearchPatentsByAssignee(unittest.TestCase):
-
     def test_returns_dict(self):
         result = _run(_mod.search_patents_by_assignee(assignee_name="Google"))
         self.assertIsInstance(result, dict)
@@ -188,7 +187,6 @@ class TestSearchPatentsByAssignee(unittest.TestCase):
 
 
 class TestBuildPatentDataset(unittest.TestCase):
-
     def test_returns_dict(self):
         result = _run(_mod.build_patent_dataset())
         self.assertIsInstance(result, dict)
@@ -198,9 +196,9 @@ class TestBuildPatentDataset(unittest.TestCase):
         self.assertIn("status", result)
 
     def test_search_criteria_param_accepted(self):
-        result = _run(_mod.build_patent_dataset(
-            search_criteria={"keywords": ["neural network"], "limit": 5}
-        ))
+        result = _run(
+            _mod.build_patent_dataset(search_criteria={"keywords": ["neural network"], "limit": 5})
+        )
         self.assertIsInstance(result, dict)
 
     def test_graphrag_format_false_accepted(self):
@@ -215,7 +213,6 @@ class TestBuildPatentDataset(unittest.TestCase):
 
 
 class TestPatentToolsList(unittest.TestCase):
-
     def test_tools_list_is_non_empty(self):
         self.assertGreater(len(_mod.PATENT_DATASET_MCP_TOOLS), 0)
 

@@ -129,6 +129,7 @@ def _make_pipeline(scores):
 # Tests: OntologyOptimizer.score_above_target_count
 # ---------------------------------------------------------------------------
 
+
 class TestScoreAboveTargetCount:
     def test_empty_history_returns_zero(self):
         opt = _make_opt()
@@ -182,6 +183,7 @@ class TestScoreAboveTargetCount:
 # Tests: OntologyCritic.score_dimension_mean_abs_deviation
 # ---------------------------------------------------------------------------
 
+
 class TestScoreDimensionMeanAbsDeviation:
     def test_uniform_returns_zero(self):
         critic = _make_critic()
@@ -190,8 +192,14 @@ class TestScoreDimensionMeanAbsDeviation:
 
     def test_all_zero_returns_zero(self):
         critic = _make_critic()
-        s = _make_score(completeness=0.0, consistency=0.0, clarity=0.0,
-                        granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0)
+        s = _make_score(
+            completeness=0.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
+        )
         assert critic.score_dimension_mean_abs_deviation(s) == pytest.approx(0.0)
 
     def test_non_negative(self):
@@ -201,8 +209,14 @@ class TestScoreDimensionMeanAbsDeviation:
 
     def test_returns_float(self):
         critic = _make_critic()
-        s = _make_score(completeness=1.0, consistency=0.0, clarity=0.0,
-                        granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0)
+        s = _make_score(
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
+        )
         assert isinstance(critic.score_dimension_mean_abs_deviation(s), float)
 
     def test_known_value(self):
@@ -211,18 +225,36 @@ class TestScoreDimensionMeanAbsDeviation:
         # |1 - 1/6| = 5/6, five |0 - 1/6| = 1/6 each
         # MAD = (5/6 + 5*(1/6)) / 6 = (5/6 + 5/6) / 6 = (10/6)/6 = 10/36 = 5/18
         critic = _make_critic()
-        s = _make_score(completeness=1.0, consistency=0.0, clarity=0.0,
-                        granularity=0.0, relationship_coherence=0.0, domain_alignment=0.0)
+        s = _make_score(
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.0,
+            granularity=0.0,
+            relationship_coherence=0.0,
+            domain_alignment=0.0,
+        )
         expected = 5 / 18
         assert critic.score_dimension_mean_abs_deviation(s) == pytest.approx(expected)
 
     def test_scale_invariance(self):
         # Multiplying all dims by 2 doubles the MAD
         critic = _make_critic()
-        s1 = _make_score(completeness=0.8, consistency=0.2, clarity=0.5,
-                         granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
-        s2 = _make_score(completeness=1.6, consistency=0.4, clarity=1.0,
-                         granularity=1.0, relationship_coherence=1.0, domain_alignment=1.0)
+        s1 = _make_score(
+            completeness=0.8,
+            consistency=0.2,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
+        )
+        s2 = _make_score(
+            completeness=1.6,
+            consistency=0.4,
+            clarity=1.0,
+            granularity=1.0,
+            relationship_coherence=1.0,
+            domain_alignment=1.0,
+        )
         assert critic.score_dimension_mean_abs_deviation(s2) == pytest.approx(
             2 * critic.score_dimension_mean_abs_deviation(s1)
         )
@@ -230,20 +262,29 @@ class TestScoreDimensionMeanAbsDeviation:
     def test_two_opposite_dims(self):
         # [1, 0, 0.5, 0.5, 0.5, 0.5] → mean=0.5, MAD=(0.5+0.5+0+0+0+0)/6 = 1/6
         critic = _make_critic()
-        s = _make_score(completeness=1.0, consistency=0.0, clarity=0.5,
-                        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5)
+        s = _make_score(
+            completeness=1.0,
+            consistency=0.0,
+            clarity=0.5,
+            granularity=0.5,
+            relationship_coherence=0.5,
+            domain_alignment=0.5,
+        )
         assert critic.score_dimension_mean_abs_deviation(s) == pytest.approx(1 / 6)
 
     def test_larger_spread_gives_larger_mad(self):
         critic = _make_critic()
         narrow = _make_score(completeness=0.6, consistency=0.4)
         wide = _make_score(completeness=1.0, consistency=0.0)
-        assert critic.score_dimension_mean_abs_deviation(wide) > critic.score_dimension_mean_abs_deviation(narrow)
+        assert critic.score_dimension_mean_abs_deviation(
+            wide
+        ) > critic.score_dimension_mean_abs_deviation(narrow)
 
 
 # ---------------------------------------------------------------------------
 # Tests: OntologyPipeline.run_score_velocity_std
 # ---------------------------------------------------------------------------
+
 
 class TestRunScoreVelocityStd:
     def test_empty_history_returns_zero(self):
@@ -279,6 +320,7 @@ class TestRunScoreVelocityStd:
         # = (16/9 + 64/9 + 16/9) / 3 = (96/9) / 3 = 96/27 = 32/9
         # std = sqrt(32/9) ≈ 1.8856
         import math
+
         p = _make_pipeline([0.0, 2.0, 0.0, 2.0])
         expected = math.sqrt(32 / 9)
         assert p.run_score_velocity_std() == pytest.approx(expected)
@@ -292,6 +334,7 @@ class TestRunScoreVelocityStd:
     def test_std_leq_velocity_range(self):
         # For any sequence, std(fd) <= range(fd) because range = max-min
         import math
+
         p = _make_pipeline([0.1, 0.4, 0.2, 0.8, 0.5])
         std = p.run_score_velocity_std()
         vrange = p.run_score_velocity_range()
@@ -306,6 +349,7 @@ class TestRunScoreVelocityStd:
 # ---------------------------------------------------------------------------
 # Tests: LogicValidator.node_in_cycle_fraction
 # ---------------------------------------------------------------------------
+
 
 class TestNodeInCycleFraction:
     def _lv(self):
@@ -323,7 +367,9 @@ class TestNodeInCycleFraction:
 
     def test_empty_graph(self):
         lv = self._lv()
-        assert lv.node_in_cycle_fraction({"entities": [], "relationships": []}) == pytest.approx(0.0)
+        assert lv.node_in_cycle_fraction({"entities": [], "relationships": []}) == pytest.approx(
+            0.0
+        )
 
     def test_single_node_no_edges(self):
         lv = self._lv()
@@ -403,6 +449,7 @@ class TestNodeInCycleFraction:
 # ---------------------------------------------------------------------------
 # Stale smoke tests
 # ---------------------------------------------------------------------------
+
 
 class TestStaleEntityTypeRatio:
     """entity_type_ratio already exists (line 5796) — smoke-test the dict API."""

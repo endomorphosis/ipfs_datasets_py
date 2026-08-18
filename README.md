@@ -381,11 +381,7 @@ from ipfs_datasets_py.vector_stores.ipld_vector_store import IPLDVectorStore
 from ipfs_datasets_py.vector_stores.config import create_ipld_config
 
 # Create IPLD vector store with distributed sharding
-config = create_ipld_config(
-    use_ipfs_router=True,
-    enable_sharding=True,
-    replication_factor=3
-)
+config = create_ipld_config(use_ipfs_router=True, enable_sharding=True, replication_factor=3)
 store = IPLDVectorStore(config)
 
 # Add vectors
@@ -555,10 +551,10 @@ from ipfs_datasets_py.config import config
 cfg = config()
 
 # Access configuration
-database_url = cfg.baseConfig['database']['url']
+database_url = cfg.baseConfig["database"]["url"]
 
 # Override configuration
-cfg.overrideToml(cfg.baseConfig, {'database': {'url': 'new_url'}})
+cfg.overrideToml(cfg.baseConfig, {"database": {"url": "new_url"}})
 ```
 
 **Features:**
@@ -951,9 +947,7 @@ framework.initialize()
 
 # Full pipeline: NL → Logic → Prove
 task = framework.reason_about(
-    "The agent is obligated to perform action X",
-    prove=True,
-    axioms=["rule1", "rule2"]
+    "The agent is obligated to perform action X", prove=True, axioms=["rule1", "rule2"]
 )
 print(f"Formula: {task.dcec_formula}")
 print(f"Proof: {task.proof_result}")
@@ -982,7 +976,9 @@ AI-powered optimization systems for knowledge graphs and logic.
 
 ```python
 from ipfs_datasets_py.optimizers.graphrag import (
-    OntologyHarness, MetricsCollector, OntologyVisualizer
+    OntologyHarness,
+    MetricsCollector,
+    OntologyVisualizer,
 )
 
 # Run ontology optimization with parallel execution
@@ -990,10 +986,7 @@ harness = OntologyHarness(parallelism=4)
 metrics = MetricsCollector()
 
 cycle_results = harness.run_sgd_cycle(
-    data_sources=documents,
-    contexts=contexts,
-    num_cycles=10,
-    convergence_threshold=0.85
+    data_sources=documents, contexts=contexts, num_cycles=10, convergence_threshold=0.85
 )
 
 # Track and visualize results
@@ -1030,7 +1023,7 @@ Privacy-preserving theorem verification — prove that a theorem follows from pr
 from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
 
 # ⚠️ WARNING: simulation backend — NOT cryptographically secure
-prover = ZKPProver()                          # defaults to "simulated"
+prover = ZKPProver()  # defaults to "simulated"
 proof = prover.generate_proof(
     theorem="Company is compliant with regulation X",
     private_axioms=[
@@ -1061,7 +1054,7 @@ export IPFS_DATASETS_ENABLE_GROTH16=1
 from ipfs_datasets_py.logic.zkp.backends import get_backend
 
 backend = get_backend("groth16")
-backend.ensure_setup(version=1)          # run trusted setup once
+backend.ensure_setup(version=1)  # run trusted setup once
 proof = backend.generate_proof(
     theorem="Q",
     private_axioms=["P", "P -> Q"],
@@ -1079,8 +1072,8 @@ config = EthereumConfig(
     rpc_url="https://sepolia.infura.io/v3/YOUR_KEY",
     network_id=11155111,
     network_name="sepolia",
-    verifier_contract_address="0x...",    # deployed GrothVerifier.sol
-    registry_contract_address="0x...",   # deployed ComplaintRegistry.sol
+    verifier_contract_address="0x...",  # deployed GrothVerifier.sol
+    registry_contract_address="0x...",  # deployed ComplaintRegistry.sol
 )
 client = EthereumProofClient(config)
 result = client.submit_and_verify(proof)

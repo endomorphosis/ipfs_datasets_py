@@ -142,9 +142,7 @@ def test_only_failed_shard_is_retried_and_budget_is_bounded() -> None:
 
     assert result.succeeded
     assert attempts["cec"] == 3
-    assert all(
-        count == 1 for family, count in attempts.items() if family != "cec"
-    )
+    assert all(count == 1 for family, count in attempts.items() if family != "cec")
     assert result.results["cec"].attempt_count == 3
     assert len(result.results["cec"].attempt_errors) == 2
     assert evaluator.summary()["shard_retries"] == 2
@@ -174,9 +172,7 @@ def test_exhausted_failure_is_preserved_and_disables_macro_score() -> None:
     assert report["family_results"]["provenance"]["status"] == "failed"
     assert report["family_results"]["deontic"]["status"] == "succeeded"
     assert attempts["provenance"] == 2
-    assert all(
-        count == 1 for family, count in attempts.items() if family != "provenance"
-    )
+    assert all(count == 1 for family, count in attempts.items() if family != "provenance")
     assert evaluator.summary()["retry_budget_exhausted"] == 1
 
 
@@ -240,8 +236,7 @@ def test_mistagged_callback_evidence_fails_closed_without_retry(change) -> None:
 
     assert not result.succeeded
     assert all(
-        shard.error.startswith("result_identity_mismatch:")
-        for shard in result.results.values()
+        shard.error.startswith("result_identity_mismatch:") for shard in result.results.values()
     )
     assert calls == len(LEGAL_IR_EVALUATION_FAMILIES)
     assert evaluator.summary()["shard_retries"] == 0
@@ -309,9 +304,7 @@ def test_family_metrics_and_serialized_results_are_immutable_copies() -> None:
     assert result.results["deontic"].metrics["nested"]["values"] == (1, 2)
     with pytest.raises(TypeError):
         result.results["deontic"].metrics["new"] = 1
-    assert result.to_dict()["family_results"]["deontic"]["metrics"]["nested"] == {
-        "values": [1, 2]
-    }
+    assert result.to_dict()["family_results"]["deontic"]["metrics"]["nested"] == {"values": [1, 2]}
 
 
 def test_max_workers_bounds_concurrency_without_changing_completeness() -> None:
@@ -330,10 +323,7 @@ def test_max_workers_bounds_concurrency_without_changing_completeness() -> None:
             active -= 1
         return {"score": 1.0}
 
-    result = LegalIRFamilyEvaluator(
-        evaluate, max_retries=0, max_workers=2
-    ).evaluate(item)
+    result = LegalIRFamilyEvaluator(evaluate, max_retries=0, max_workers=2).evaluate(item)
 
     assert result.succeeded
     assert maximum == 2
-

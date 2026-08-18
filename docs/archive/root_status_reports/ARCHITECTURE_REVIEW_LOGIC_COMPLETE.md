@@ -167,8 +167,11 @@ CEC/
    class InferenceRule(ABC):
        @abstractmethod
        def apply(self, formula: Formula) -> Optional[Formula]: ...
-   
+
+
    class ModusPonensRule(InferenceRule): ...
+
+
    class NegationRule(InferenceRule): ...
    ```
 
@@ -314,8 +317,11 @@ integration/
        def to_target_format(self, formula: TDFOLFormula) -> str: ...
        @abstractmethod
        def from_target_format(self, result: str) -> ProofResult: ...
-   
+
+
    class TDFOLCECBridge(BaseProverBridge): ...
+
+
    class TDFOLShadowBridge(BaseProverBridge): ...
    ```
 
@@ -484,12 +490,12 @@ security/
 1. **Wire rate limiting to all entry points** (P0)
    ```python
    from ipfs_datasets_py.logic.security.rate_limiting import RateLimiter
-   
+
    rate_limiter = RateLimiter(calls=100, period=60)
-   
+
+
    @rate_limiter.limit
-   def prove_theorem(formula):
-       ...
+   def prove_theorem(formula): ...
    ```
 
 2. **Add complexity checks to parsers** (P0)

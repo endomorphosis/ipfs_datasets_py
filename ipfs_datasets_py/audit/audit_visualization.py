@@ -31,17 +31,20 @@ try:
     from datetime import UTC  # Python 3.11+
 except ImportError:
     from datetime import timezone
+
     UTC = timezone.utc
 
 try:
     import numpy as np
     import pandas as pd
     import matplotlib
-    matplotlib.use('Agg')  # Non-interactive backend for server environments
+
+    matplotlib.use("Agg")  # Non-interactive backend for server environments
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
     from matplotlib.ticker import MaxNLocator
     import seaborn as sns
+
     VISUALIZATION_LIBS_AVAILABLE = True
 except ImportError:
     VISUALIZATION_LIBS_AVAILABLE = False
@@ -50,19 +53,25 @@ try:
     import plotly.graph_objects as go
     import plotly.express as px
     from plotly.subplots import make_subplots
+
     INTERACTIVE_VISUALIZATION_AVAILABLE = True
 except ImportError:
     INTERACTIVE_VISUALIZATION_AVAILABLE = False
 
 try:
     from jinja2 import Template
+
     TEMPLATE_ENGINE_AVAILABLE = True
 except ImportError:
     TEMPLATE_ENGINE_AVAILABLE = False
 
 # Import from audit_logger module
 from ipfs_datasets_py.audit.audit_logger import (
-    AuditLogger, AuditEvent, AuditLevel, AuditCategory, AuditHandler
+    AuditLogger,
+    AuditEvent,
+    AuditLevel,
+    AuditCategory,
+    AuditHandler,
 )
 
 
@@ -75,9 +84,11 @@ class AuditMetricsAggregator:
     operational monitoring.
     """
 
-    def __init__(self,
-                window_size: int = 3600,  # 1 hour window
-                bucket_size: int = 60):   # 1 minute buckets
+    def __init__(
+        self,
+        window_size: int = 3600,  # 1 hour window
+        bucket_size: int = 60,
+    ):  # 1 minute buckets
         """
         Initialize the metrics aggregator.
 
@@ -101,67 +112,69 @@ class AuditMetricsAggregator:
             # Time series data (bucketed by time)
             self.time_series = {
                 # Format: {bucket_timestamp: {category: {action: count}}}
-                'by_category_action': defaultdict(lambda: defaultdict(lambda: defaultdict(int))),
+                "by_category_action": defaultdict(lambda: defaultdict(lambda: defaultdict(int))),
                 # Format: {bucket_timestamp: {level: count}}
-                'by_level': defaultdict(lambda: defaultdict(int)),
+                "by_level": defaultdict(lambda: defaultdict(int)),
                 # Format: {bucket_timestamp: {status: count}}
-                'by_status': defaultdict(lambda: defaultdict(int)),
+                "by_status": defaultdict(lambda: defaultdict(int)),
                 # Format: {bucket_timestamp: {user: count}}
-                'by_user': defaultdict(lambda: defaultdict(int)),
+                "by_user": defaultdict(lambda: defaultdict(int)),
                 # Format: {bucket_timestamp: {resource_type: count}}
-                'by_resource_type': defaultdict(lambda: defaultdict(int)),
+                "by_resource_type": defaultdict(lambda: defaultdict(int)),
             }
 
             # Aggregated metrics (totals)
             self.totals = {
-                'by_category': defaultdict(int),
-                'by_action': defaultdict(int),
-                'by_level': defaultdict(int),
-                'by_status': defaultdict(int),
-                'by_user': defaultdict(int),
-                'by_resource_type': defaultdict(int),
-                'by_client_ip': defaultdict(int),
-                'by_category_action': defaultdict(lambda: defaultdict(int)),
-                'total_events': 0,
-                'failed_events': 0,
-                'critical_events': 0,
-                'start_time': time.time(),
-                'most_recent_time': time.time()
+                "by_category": defaultdict(int),
+                "by_action": defaultdict(int),
+                "by_level": defaultdict(int),
+                "by_status": defaultdict(int),
+                "by_user": defaultdict(int),
+                "by_resource_type": defaultdict(int),
+                "by_client_ip": defaultdict(int),
+                "by_category_action": defaultdict(lambda: defaultdict(int)),
+                "total_events": 0,
+                "failed_events": 0,
+                "critical_events": 0,
+                "start_time": time.time(),
+                "most_recent_time": time.time(),
             }
 
             # Detailed metrics for specific analysis
             self.detailed = {
                 # Auth metrics
-                'login_failures': defaultdict(int),  # by user
-                'login_successes': defaultdict(int), # by user
-                'auth_failure_rate': defaultdict(float),  # by user
-
+                "login_failures": defaultdict(int),  # by user
+                "login_successes": defaultdict(int),  # by user
+                "auth_failure_rate": defaultdict(float),  # by user
                 # Resource access metrics
-                'resource_access': defaultdict(lambda: defaultdict(int)),  # by resource_id, user
-                'resource_modifications': defaultdict(lambda: defaultdict(int)),  # by resource_id, user
-
+                "resource_access": defaultdict(lambda: defaultdict(int)),  # by resource_id, user
+                "resource_modifications": defaultdict(
+                    lambda: defaultdict(int)
+                ),  # by resource_id, user
                 # Performance metrics
-                'operation_durations': defaultdict(list),  # by action, list of durations
-                'avg_duration': defaultdict(float),  # by action
-                'max_duration': defaultdict(float),  # by action
-                'p95_duration': defaultdict(float),  # by action
-
+                "operation_durations": defaultdict(list),  # by action, list of durations
+                "avg_duration": defaultdict(float),  # by action
+                "max_duration": defaultdict(float),  # by action
+                "p95_duration": defaultdict(float),  # by action
                 # Error metrics
-                'error_counts': defaultdict(lambda: defaultdict(int)),  # by category, action
-                'error_details': defaultdict(Counter),  # by category, error message counts
-
+                "error_counts": defaultdict(lambda: defaultdict(int)),  # by category, action
+                "error_details": defaultdict(Counter),  # by category, error message counts
                 # Compliance metrics
-                'compliance_violations': defaultdict(int),  # by requirement_id
-                'data_access_by_sensitivity': defaultdict(lambda: defaultdict(int)),  # by sensitivity, action
+                "compliance_violations": defaultdict(int),  # by requirement_id
+                "data_access_by_sensitivity": defaultdict(
+                    lambda: defaultdict(int)
+                ),  # by sensitivity, action
             }
 
             # Statistical insights
             self.insights = {
-                'anomaly_scores': defaultdict(float),  # by category_action
-                'trend_slopes': defaultdict(float),  # by category_action
-                'hourly_patterns': defaultdict(lambda: defaultdict(float)),  # by category_action, hour
-                'recent_spikes': [],  # list of {category, action, timestamp, magnitude}
-                'correlated_events': [],  # list of {source, target, correlation}
+                "anomaly_scores": defaultdict(float),  # by category_action
+                "trend_slopes": defaultdict(float),  # by category_action
+                "hourly_patterns": defaultdict(
+                    lambda: defaultdict(float)
+                ),  # by category_action, hour
+                "recent_spikes": [],  # list of {category, action, timestamp, magnitude}
+                "correlated_events": [],  # list of {source, target, correlation}
             }
 
     def _get_bucket_timestamp(self, timestamp: float) -> int:
@@ -176,8 +189,7 @@ class AuditMetricsAggregator:
             # Clean time series data
             for metric_type in self.time_series:
                 self.time_series[metric_type] = {
-                    ts: data for ts, data in self.time_series[metric_type].items()
-                    if ts >= cutoff
+                    ts: data for ts, data in self.time_series[metric_type].items() if ts >= cutoff
                 }
 
     def process_event(self, event: AuditEvent) -> None:
@@ -191,9 +203,9 @@ class AuditMetricsAggregator:
             # Convert timestamp to float for calculations
             if isinstance(event.timestamp, str):
                 # Parse ISO format, removing the Z suffix if present
-                ts = event.timestamp.rstrip('Z')
+                ts = event.timestamp.rstrip("Z")
                 # Handle microseconds if present
-                if '.' in ts:
+                if "." in ts:
                     dt = datetime.datetime.fromisoformat(ts)
                 else:
                     dt = datetime.datetime.fromisoformat(ts)
@@ -202,92 +214,100 @@ class AuditMetricsAggregator:
                 timestamp = float(event.timestamp)
 
             # Update most recent time
-            self.totals['most_recent_time'] = max(self.totals['most_recent_time'], timestamp)
+            self.totals["most_recent_time"] = max(self.totals["most_recent_time"], timestamp)
 
             # Get bucket timestamp
             bucket_ts = self._get_bucket_timestamp(timestamp)
 
             # Extract event data
-            category = event.category.name if hasattr(event.category, 'name') else str(event.category)
-            level = event.level.name if hasattr(event.level, 'name') else str(event.level)
+            category = (
+                event.category.name if hasattr(event.category, "name") else str(event.category)
+            )
+            level = event.level.name if hasattr(event.level, "name") else str(event.level)
             action = event.action
             status = event.status
-            user = event.user or 'anonymous'
-            resource_type = event.resource_type or 'unknown'
-            client_ip = event.client_ip or 'unknown'
-            resource_id = event.resource_id or 'unknown'
+            user = event.user or "anonymous"
+            resource_type = event.resource_type or "unknown"
+            client_ip = event.client_ip or "unknown"
+            resource_id = event.resource_id or "unknown"
 
             # Update time series data
-            self.time_series['by_category_action'][bucket_ts][category][action] += 1
-            self.time_series['by_level'][bucket_ts][level] += 1
-            self.time_series['by_status'][bucket_ts][status] += 1
-            self.time_series['by_user'][bucket_ts][user] += 1
-            self.time_series['by_resource_type'][bucket_ts][resource_type] += 1
+            self.time_series["by_category_action"][bucket_ts][category][action] += 1
+            self.time_series["by_level"][bucket_ts][level] += 1
+            self.time_series["by_status"][bucket_ts][status] += 1
+            self.time_series["by_user"][bucket_ts][user] += 1
+            self.time_series["by_resource_type"][bucket_ts][resource_type] += 1
 
             # Update totals
-            self.totals['by_category'][category] += 1
-            self.totals['by_action'][action] += 1
-            self.totals['by_level'][level] += 1
-            self.totals['by_status'][status] += 1
-            self.totals['by_user'][user] += 1
-            self.totals['by_resource_type'][resource_type] += 1
-            self.totals['by_client_ip'][client_ip] += 1
-            self.totals['by_category_action'][category][action] += 1
-            self.totals['total_events'] += 1
+            self.totals["by_category"][category] += 1
+            self.totals["by_action"][action] += 1
+            self.totals["by_level"][level] += 1
+            self.totals["by_status"][status] += 1
+            self.totals["by_user"][user] += 1
+            self.totals["by_resource_type"][resource_type] += 1
+            self.totals["by_client_ip"][client_ip] += 1
+            self.totals["by_category_action"][category][action] += 1
+            self.totals["total_events"] += 1
 
-            if status.lower() != 'success':
-                self.totals['failed_events'] += 1
+            if status.lower() != "success":
+                self.totals["failed_events"] += 1
 
             if level in [AuditLevel.CRITICAL.name, AuditLevel.EMERGENCY.name]:
-                self.totals['critical_events'] += 1
+                self.totals["critical_events"] += 1
 
             # Update detailed metrics
 
             # Auth metrics
-            if category == 'AUTHENTICATION' and action == 'login':
-                if status.lower() == 'success':
-                    self.detailed['login_successes'][user] += 1
+            if category == "AUTHENTICATION" and action == "login":
+                if status.lower() == "success":
+                    self.detailed["login_successes"][user] += 1
                 else:
-                    self.detailed['login_failures'][user] += 1
+                    self.detailed["login_failures"][user] += 1
 
                 # Calculate failure rate
-                total_logins = self.detailed['login_successes'][user] + self.detailed['login_failures'][user]
+                total_logins = (
+                    self.detailed["login_successes"][user] + self.detailed["login_failures"][user]
+                )
                 if total_logins > 0:
-                    self.detailed['auth_failure_rate'][user] = (
-                        self.detailed['login_failures'][user] / total_logins
+                    self.detailed["auth_failure_rate"][user] = (
+                        self.detailed["login_failures"][user] / total_logins
                     )
 
             # Resource access metrics
-            if category == 'DATA_ACCESS':
-                self.detailed['resource_access'][resource_id][user] += 1
+            if category == "DATA_ACCESS":
+                self.detailed["resource_access"][resource_id][user] += 1
 
-            if category == 'DATA_MODIFICATION':
-                self.detailed['resource_modifications'][resource_id][user] += 1
+            if category == "DATA_MODIFICATION":
+                self.detailed["resource_modifications"][resource_id][user] += 1
 
             # Performance metrics
             if event.duration_ms:
-                self.detailed['operation_durations'][action].append(event.duration_ms)
+                self.detailed["operation_durations"][action].append(event.duration_ms)
 
             # Error metrics
-            if level in [AuditLevel.ERROR.name, AuditLevel.CRITICAL.name, AuditLevel.EMERGENCY.name]:
-                self.detailed['error_counts'][category][action] += 1
+            if level in [
+                AuditLevel.ERROR.name,
+                AuditLevel.CRITICAL.name,
+                AuditLevel.EMERGENCY.name,
+            ]:
+                self.detailed["error_counts"][category][action] += 1
 
                 # Extract error message from details if available
                 error_msg = (
-                    event.details.get('error') or
-                    event.details.get('error_message') or
-                    event.details.get('message') or
-                    'Unknown error'
+                    event.details.get("error")
+                    or event.details.get("error_message")
+                    or event.details.get("message")
+                    or "Unknown error"
                 )
-                self.detailed['error_details'][category][error_msg] += 1
+                self.detailed["error_details"][category][error_msg] += 1
 
             # Compliance metrics - extract from details if available
-            sensitivity = event.details.get('data_sensitivity', 'unknown')
-            self.detailed['data_access_by_sensitivity'][sensitivity][action] += 1
+            sensitivity = event.details.get("data_sensitivity", "unknown")
+            self.detailed["data_access_by_sensitivity"][sensitivity][action] += 1
 
-            if event.details.get('compliance_violation'):
-                requirement_id = event.details.get('requirement_id', 'unknown')
-                self.detailed['compliance_violations'][requirement_id] += 1
+            if event.details.get("compliance_violation"):
+                requirement_id = event.details.get("requirement_id", "unknown")
+                self.detailed["compliance_violations"][requirement_id] += 1
 
             # Calculate derived metrics if enough time has passed
             current_time = time.time()
@@ -303,32 +323,41 @@ class AuditMetricsAggregator:
         """Calculate derived metrics from raw data."""
         with self._lock:
             # Calculate performance metrics
-            for action, durations in self.detailed['operation_durations'].items():
+            for action, durations in self.detailed["operation_durations"].items():
                 if durations:
-                    self.detailed['avg_duration'][action] = sum(durations) / len(durations)
-                    self.detailed['max_duration'][action] = max(durations)
+                    self.detailed["avg_duration"][action] = sum(durations) / len(durations)
+                    self.detailed["max_duration"][action] = max(durations)
 
                     if len(durations) >= 20:  # Only calculate p95 if we have enough data
-                        self.detailed['p95_duration'][action] = sorted(durations)[int(len(durations) * 0.95)]
+                        self.detailed["p95_duration"][action] = sorted(durations)[
+                            int(len(durations) * 0.95)
+                        ]
 
             # Calculate trends and anomalies
             now = time.time()
             window_start = now - self.window_size
 
             # Create a sorted list of buckets
-            buckets = sorted(k for k in self.time_series['by_category_action'].keys() if k >= window_start)
+            buckets = sorted(
+                k for k in self.time_series["by_category_action"].keys() if k >= window_start
+            )
 
             if len(buckets) < 5:  # Need enough data for trends
                 return
 
             # Calculate trend slopes for each category/action
-            for category, actions in self.totals['by_category_action'].items():
+            for category, actions in self.totals["by_category_action"].items():
                 for action in actions:
                     values = []
                     times = []
 
                     for bucket in buckets:
-                        count = self.time_series['by_category_action'].get(bucket, {}).get(category, {}).get(action, 0)
+                        count = (
+                            self.time_series["by_category_action"]
+                            .get(bucket, {})
+                            .get(category, {})
+                            .get(action, 0)
+                        )
                         values.append(count)
                         times.append(bucket)
 
@@ -337,36 +366,40 @@ class AuditMetricsAggregator:
                         if VISUALIZATION_LIBS_AVAILABLE:
                             try:
                                 slope, _ = np.polyfit(times, values, 1)
-                                self.insights['trend_slopes'][f"{category}_{action}"] = slope
+                                self.insights["trend_slopes"][f"{category}_{action}"] = slope
                             except:
                                 pass
                         else:
                             # Simple slope calculation
                             if len(values) > 1:
                                 slope = (values[-1] - values[0]) / (times[-1] - times[0])
-                                self.insights['trend_slopes'][f"{category}_{action}"] = slope
+                                self.insights["trend_slopes"][f"{category}_{action}"] = slope
 
                         # Check for spikes
                         if len(values) >= 10:
                             mean = sum(values[:-5]) / len(values[:-5])
-                            std_dev = (sum((x - mean) ** 2 for x in values[:-5]) / len(values[:-5])) ** 0.5
+                            std_dev = (
+                                sum((x - mean) ** 2 for x in values[:-5]) / len(values[:-5])
+                            ) ** 0.5
 
                             if std_dev > 0:
                                 for i in range(max(0, len(values) - 5), len(values)):
                                     # Check if value is 3 standard deviations above mean
                                     if values[i] > mean + 3 * std_dev:
-                                        self.insights['recent_spikes'].append({
-                                            'category': category,
-                                            'action': action,
-                                            'timestamp': times[i],
-                                            'magnitude': (values[i] - mean) / std_dev
-                                        })
+                                        self.insights["recent_spikes"].append(
+                                            {
+                                                "category": category,
+                                                "action": action,
+                                                "timestamp": times[i],
+                                                "magnitude": (values[i] - mean) / std_dev,
+                                            }
+                                        )
 
             # Limit spikes list to most recent 20
-            self.insights['recent_spikes'] = sorted(
-                self.insights['recent_spikes'],
-                key=lambda x: (x['timestamp'], x['magnitude']),
-                reverse=True
+            self.insights["recent_spikes"] = sorted(
+                self.insights["recent_spikes"],
+                key=lambda x: (x["timestamp"], x["magnitude"]),
+                reverse=True,
             )[:20]
 
     def get_metrics_summary(self) -> Dict[str, Any]:
@@ -378,41 +411,41 @@ class AuditMetricsAggregator:
         """
         with self._lock:
             # Calculate some derived metrics
-            event_rate = self.totals['total_events'] / (time.time() - self.totals['start_time'])
-            error_rate = self.totals['failed_events'] / max(1, self.totals['total_events'])
-            critical_rate = self.totals['critical_events'] / max(1, self.totals['total_events'])
+            event_rate = self.totals["total_events"] / (time.time() - self.totals["start_time"])
+            error_rate = self.totals["failed_events"] / max(1, self.totals["total_events"])
+            critical_rate = self.totals["critical_events"] / max(1, self.totals["total_events"])
 
             return {
-                'total_events': self.totals['total_events'],
-                'event_rate': event_rate,
-                'error_rate': error_rate,
-                'critical_rate': critical_rate,
-                'by_category': dict(self.totals['by_category']),
-                'by_level': dict(self.totals['by_level']),
-                'by_status': dict(self.totals['by_status']),
-                'top_users': dict(sorted(
-                    self.totals['by_user'].items(),
-                    key=lambda x: x[1],
-                    reverse=True
-                )[:10]),
-                'top_resources': dict(sorted(
-                    self.totals['by_resource_type'].items(),
-                    key=lambda x: x[1],
-                    reverse=True
-                )[:10]),
-                'top_actions': dict(sorted(
-                    self.totals['by_action'].items(),
-                    key=lambda x: x[1],
-                    reverse=True
-                )[:10]),
-                'recent_spikes': self.insights['recent_spikes'][:5],
-                'top_errors': dict(sorted(
-                    [(f"{cat}_{act}", count)
-                     for cat, actions in self.detailed['error_counts'].items()
-                     for act, count in actions.items()],
-                    key=lambda x: x[1],
-                    reverse=True
-                )[:10])
+                "total_events": self.totals["total_events"],
+                "event_rate": event_rate,
+                "error_rate": error_rate,
+                "critical_rate": critical_rate,
+                "by_category": dict(self.totals["by_category"]),
+                "by_level": dict(self.totals["by_level"]),
+                "by_status": dict(self.totals["by_status"]),
+                "top_users": dict(
+                    sorted(self.totals["by_user"].items(), key=lambda x: x[1], reverse=True)[:10]
+                ),
+                "top_resources": dict(
+                    sorted(
+                        self.totals["by_resource_type"].items(), key=lambda x: x[1], reverse=True
+                    )[:10]
+                ),
+                "top_actions": dict(
+                    sorted(self.totals["by_action"].items(), key=lambda x: x[1], reverse=True)[:10]
+                ),
+                "recent_spikes": self.insights["recent_spikes"][:5],
+                "top_errors": dict(
+                    sorted(
+                        [
+                            (f"{cat}_{act}", count)
+                            for cat, actions in self.detailed["error_counts"].items()
+                            for act, count in actions.items()
+                        ],
+                        key=lambda x: x[1],
+                        reverse=True,
+                    )[:10]
+                ),
             }
 
     def get_time_series_data(self) -> Dict[str, Any]:
@@ -427,24 +460,26 @@ class AuditMetricsAggregator:
 
             # Process by_category_action to make it JSON serializable
             category_action_series = {}
-            buckets = sorted(self.time_series['by_category_action'].keys())
+            buckets = sorted(self.time_series["by_category_action"].keys())
 
-            for category in self.totals['by_category']:
-                for action in self.totals['by_action']:
+            for category in self.totals["by_category"]:
+                for action in self.totals["by_action"]:
                     key = f"{category}_{action}"
                     category_action_series[key] = []
 
                     for bucket in buckets:
-                        count = self.time_series['by_category_action'].get(bucket, {}).get(category, {}).get(action, 0)
-                        category_action_series[key].append({
-                            'timestamp': bucket,
-                            'count': count
-                        })
+                        count = (
+                            self.time_series["by_category_action"]
+                            .get(bucket, {})
+                            .get(category, {})
+                            .get(action, 0)
+                        )
+                        category_action_series[key].append({"timestamp": bucket, "count": count})
 
-            result['by_category_action'] = category_action_series
+            result["by_category_action"] = category_action_series
 
             # Process other time series
-            for metric_type in ['by_level', 'by_status', 'by_user', 'by_resource_type']:
+            for metric_type in ["by_level", "by_status", "by_user", "by_resource_type"]:
                 result[metric_type] = {}
                 buckets = sorted(self.time_series[metric_type].keys())
 
@@ -453,10 +488,7 @@ class AuditMetricsAggregator:
 
                     for bucket in buckets:
                         count = self.time_series[metric_type].get(bucket, {}).get(key, 0)
-                        result[metric_type][key].append({
-                            'timestamp': bucket,
-                            'count': count
-                        })
+                        result[metric_type][key].append({"timestamp": bucket, "count": count})
 
             return result
 
@@ -469,9 +501,9 @@ class AuditMetricsAggregator:
         """
         with self._lock:
             return {
-                'avg_duration': dict(self.detailed['avg_duration']),
-                'max_duration': dict(self.detailed['max_duration']),
-                'p95_duration': dict(self.detailed['p95_duration'])
+                "avg_duration": dict(self.detailed["avg_duration"]),
+                "max_duration": dict(self.detailed["max_duration"]),
+                "p95_duration": dict(self.detailed["p95_duration"]),
             }
 
     def get_security_insights(self) -> Dict[str, Any]:
@@ -484,33 +516,30 @@ class AuditMetricsAggregator:
         with self._lock:
             # Get login failure rates
             failure_rates = {}
-            for user, rate in self.detailed['auth_failure_rate'].items():
+            for user, rate in self.detailed["auth_failure_rate"].items():
                 if rate > 0.1:  # Only include users with failure rates > 10%
                     failure_rates[user] = rate
 
             # Get trending actions (highest slope)
-            trending_actions = dict(sorted(
-                self.insights['trend_slopes'].items(),
-                key=lambda x: x[1],
-                reverse=True
-            )[:10])
+            trending_actions = dict(
+                sorted(self.insights["trend_slopes"].items(), key=lambda x: x[1], reverse=True)[:10]
+            )
 
             # Get declining actions (lowest slope)
-            declining_actions = dict(sorted(
-                self.insights['trend_slopes'].items(),
-                key=lambda x: x[1]
-            )[:10])
+            declining_actions = dict(
+                sorted(self.insights["trend_slopes"].items(), key=lambda x: x[1])[:10]
+            )
 
             return {
-                'auth_failure_rates': failure_rates,
-                'trending_actions': trending_actions,
-                'declining_actions': declining_actions,
-                'recent_spikes': self.insights['recent_spikes'],
-                'anomalies': dict(sorted(
-                    self.insights['anomaly_scores'].items(),
-                    key=lambda x: x[1],
-                    reverse=True
-                )[:10])
+                "auth_failure_rates": failure_rates,
+                "trending_actions": trending_actions,
+                "declining_actions": declining_actions,
+                "recent_spikes": self.insights["recent_spikes"],
+                "anomalies": dict(
+                    sorted(
+                        self.insights["anomaly_scores"].items(), key=lambda x: x[1], reverse=True
+                    )[:10]
+                ),
             }
 
     def get_compliance_metrics(self) -> Dict[str, Any]:
@@ -525,37 +554,39 @@ class AuditMetricsAggregator:
             sensitivity_summary = {}
 
             # Process sensitivity access data
-            for sensitivity, actions in self.detailed['data_access_by_sensitivity'].items():
+            for sensitivity, actions in self.detailed["data_access_by_sensitivity"].items():
                 sensitivity_summary[sensitivity] = sum(actions.values())
 
             # Get violation counts by requirement ID
-            violations = dict(self.detailed['compliance_violations'])
+            violations = dict(self.detailed["compliance_violations"])
 
             # Calculate compliance statistics
             total_violations = sum(violations.values())
-            total_events = max(1, self.totals['total_events'])  # Avoid division by zero
+            total_events = max(1, self.totals["total_events"])  # Avoid division by zero
             violation_rate = total_violations / total_events
 
             # Get most frequently violated requirements
-            top_violations = dict(sorted(
-                violations.items(),
-                key=lambda x: x[1],
-                reverse=True
-            )[:5])
+            top_violations = dict(sorted(violations.items(), key=lambda x: x[1], reverse=True)[:5])
 
             # Return complete compliance metrics
             return {
-                'violations_by_requirement': violations,
-                'top_violations': top_violations,
-                'data_sensitivity_access': sensitivity_summary,
-                'violation_rate': violation_rate,
-                'total_violations': total_violations,
-                'violation_categories': {
+                "violations_by_requirement": violations,
+                "top_violations": top_violations,
+                "data_sensitivity_access": sensitivity_summary,
+                "violation_rate": violation_rate,
+                "total_violations": total_violations,
+                "violation_categories": {
                     # Group violations by category prefix if available
                     # E.g., "GDPR-*", "HIPAA-*", etc.
-                    category: sum(count for req_id, count in violations.items() if req_id.startswith(f"{category}-"))
-                    for category in set(req_id.split('-')[0] for req_id in violations.keys() if '-' in req_id)
-                }
+                    category: sum(
+                        count
+                        for req_id, count in violations.items()
+                        if req_id.startswith(f"{category}-")
+                    )
+                    for category in set(
+                        req_id.split("-")[0] for req_id in violations.keys() if "-" in req_id
+                    )
+                },
             }
 
     def to_json(self) -> Dict[str, Any]:
@@ -566,19 +597,22 @@ class AuditMetricsAggregator:
             Dict[str, Any]: Complete metrics in JSON-serializable format
         """
         return {
-            'summary': self.get_metrics_summary(),
-            'performance': self.get_performance_metrics(),
-            'security': self.get_security_insights(),
-            'compliance': self.get_compliance_metrics(),
-            'collected_at': datetime.datetime.now().isoformat()
+            "summary": self.get_metrics_summary(),
+            "performance": self.get_performance_metrics(),
+            "security": self.get_security_insights(),
+            "compliance": self.get_compliance_metrics(),
+            "collected_at": datetime.datetime.now().isoformat(),
         }
 
-def create_interactive_audit_trends(metrics_aggregator: AuditMetricsAggregator,
-                                  period: str = 'daily',
-                                  lookback_days: int = 30,
-                                  categories: Optional[List[str]] = None,
-                                  levels: Optional[List[str]] = None,
-                                  output_file: Optional[str] = None) -> Optional[Any]:
+
+def create_interactive_audit_trends(
+    metrics_aggregator: AuditMetricsAggregator,
+    period: str = "daily",
+    lookback_days: int = 30,
+    categories: Optional[List[str]] = None,
+    levels: Optional[List[str]] = None,
+    output_file: Optional[str] = None,
+) -> Optional[Any]:
     """
     Create interactive visualizations of audit event trends over time.
 
@@ -598,7 +632,9 @@ def create_interactive_audit_trends(metrics_aggregator: AuditMetricsAggregator,
         plotly.graph_objects.Figure or None: Interactive figure object if successful
     """
     if not INTERACTIVE_VISUALIZATION_AVAILABLE:
-        logging.warning("Interactive visualization libraries (plotly) not available. Cannot create interactive trends.")
+        logging.warning(
+            "Interactive visualization libraries (plotly) not available. Cannot create interactive trends."
+        )
         return None
 
     try:
@@ -607,8 +643,8 @@ def create_interactive_audit_trends(metrics_aggregator: AuditMetricsAggregator,
         start_time = now - (lookback_days * 86400)  # 86400 seconds in a day
 
         # Get time series data
-        category_action_series = metrics_aggregator.time_series['by_category_action']
-        level_series = metrics_aggregator.time_series['by_level']
+        category_action_series = metrics_aggregator.time_series["by_category_action"]
+        level_series = metrics_aggregator.time_series["by_level"]
 
         # Filter buckets by time range
         buckets = [b for b in sorted(category_action_series.keys()) if b >= start_time]
@@ -621,49 +657,47 @@ def create_interactive_audit_trends(metrics_aggregator: AuditMetricsAggregator,
         if categories is None:
             # Use top categories by event count
             categories = sorted(
-                metrics_aggregator.totals['by_category'].items(),
-                key=lambda x: x[1],
-                reverse=True
+                metrics_aggregator.totals["by_category"].items(), key=lambda x: x[1], reverse=True
             )[:5]
             categories = [cat[0] for cat in categories]
 
         # Process levels
         if levels is None:
             # Use all available levels
-            levels = list(metrics_aggregator.totals['by_level'].keys())
+            levels = list(metrics_aggregator.totals["by_level"].keys())
 
         # Aggregate data by period
         period_data = {
-            'timestamp': [],
-            'category_data': defaultdict(list),
-            'level_data': defaultdict(list)
+            "timestamp": [],
+            "category_data": defaultdict(list),
+            "level_data": defaultdict(list),
         }
 
         for bucket in buckets:
             bucket_time = datetime.datetime.fromtimestamp(bucket)
 
             # Create period key based on specified aggregation period
-            if period == 'hourly':
-                period_key = bucket_time.strftime('%Y-%m-%d %H:00')
-                display_time = bucket_time.strftime('%Y-%m-%d %H:00')
-            elif period == 'daily':
-                period_key = bucket_time.strftime('%Y-%m-%d')
-                display_time = bucket_time.strftime('%Y-%m-%d')
-            elif period == 'weekly':
+            if period == "hourly":
+                period_key = bucket_time.strftime("%Y-%m-%d %H:00")
+                display_time = bucket_time.strftime("%Y-%m-%d %H:00")
+            elif period == "daily":
+                period_key = bucket_time.strftime("%Y-%m-%d")
+                display_time = bucket_time.strftime("%Y-%m-%d")
+            elif period == "weekly":
                 # Use ISO calendar week
                 year, week, _ = bucket_time.isocalendar()
                 period_key = f"{year}-W{week:02d}"
                 display_time = f"{year}-W{week:02d}"
             else:
                 # Default to daily
-                period_key = bucket_time.strftime('%Y-%m-%d')
-                display_time = bucket_time.strftime('%Y-%m-%d')
+                period_key = bucket_time.strftime("%Y-%m-%d")
+                display_time = bucket_time.strftime("%Y-%m-%d")
 
             # Skip if this period is already processed
-            if period_key in period_data['timestamp']:
+            if period_key in period_data["timestamp"]:
                 continue
 
-            period_data['timestamp'].append(display_time)
+            period_data["timestamp"].append(display_time)
 
             # Aggregate category data
             for category in categories:
@@ -671,14 +705,14 @@ def create_interactive_audit_trends(metrics_aggregator: AuditMetricsAggregator,
                 # Sum all actions for this category in this bucket
                 if bucket in category_action_series and category in category_action_series[bucket]:
                     category_count = sum(category_action_series[bucket][category].values())
-                period_data['category_data'][category].append(category_count)
+                period_data["category_data"][category].append(category_count)
 
             # Aggregate level data
             for level in levels:
                 level_count = 0
                 if bucket in level_series:
                     level_count = level_series[bucket].get(level, 0)
-                period_data['level_data'][level].append(level_count)
+                period_data["level_data"][level].append(level_count)
 
         # Create subplots: category trends and level trends
         fig = make_subplots(
@@ -686,64 +720,63 @@ def create_interactive_audit_trends(metrics_aggregator: AuditMetricsAggregator,
             cols=1,
             subplot_titles=["Audit Events by Category", "Audit Events by Level"],
             vertical_spacing=0.13,
-            specs=[[{"type": "scatter"}], [{"type": "scatter"}]]
+            specs=[[{"type": "scatter"}], [{"type": "scatter"}]],
         )
 
         # Add category traces
         for category in categories:
             fig.add_trace(
                 go.Scatter(
-                    x=period_data['timestamp'],
-                    y=period_data['category_data'][category],
-                    mode='lines+markers',
+                    x=period_data["timestamp"],
+                    y=period_data["category_data"][category],
+                    mode="lines+markers",
                     name=category,
-                    hovertemplate='%{y} events<extra>%{x}</extra>'
+                    hovertemplate="%{y} events<extra>%{x}</extra>",
                 ),
-                row=1, col=1
+                row=1,
+                col=1,
             )
 
         # Add level traces
         for level in levels:
             fig.add_trace(
                 go.Scatter(
-                    x=period_data['timestamp'],
-                    y=period_data['level_data'][level],
-                    mode='lines+markers',
+                    x=period_data["timestamp"],
+                    y=period_data["level_data"][level],
+                    mode="lines+markers",
                     name=level,
-                    hovertemplate='%{y} events<extra>%{x}</extra>'
+                    hovertemplate="%{y} events<extra>%{x}</extra>",
                 ),
-                row=2, col=1
+                row=2,
+                col=1,
             )
 
         # Update layout
         fig.update_layout(
-            title='Interactive Audit Event Trends',
-            template='plotly_white',
+            title="Interactive Audit Event Trends",
+            template="plotly_white",
             height=800,
             width=1000,
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                x=1
-            ),
-            hovermode='x unified'
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            hovermode="x unified",
         )
 
         # Add range selector for interactive time filtering
         fig.update_xaxes(
             title_text="Date",
-            row=2, col=1,
+            row=2,
+            col=1,
             rangeslider_visible=True,
             rangeselector=dict(
-                buttons=list([
-                    dict(count=1, label="1d", step="day", stepmode="backward"),
-                    dict(count=7, label="1w", step="day", stepmode="backward"),
-                    dict(count=1, label="1m", step="month", stepmode="backward"),
-                    dict(step="all")
-                ])
-            )
+                buttons=list(
+                    [
+                        dict(count=1, label="1d", step="day", stepmode="backward"),
+                        dict(count=7, label="1w", step="day", stepmode="backward"),
+                        dict(count=1, label="1m", step="month", stepmode="backward"),
+                        dict(step="all"),
+                    ]
+                )
+            ),
         )
 
         # Update y-axis labels
@@ -759,7 +792,7 @@ def create_interactive_audit_trends(metrics_aggregator: AuditMetricsAggregator,
                 os.makedirs(dir_path, exist_ok=True)
 
             # Save as HTML for interactivity
-            if output_file.endswith('.html'):
+            if output_file.endswith(".html"):
                 fig.write_html(output_file)
             # Save as image (but will lose interactivity)
             else:
@@ -770,6 +803,7 @@ def create_interactive_audit_trends(metrics_aggregator: AuditMetricsAggregator,
     except Exception as e:
         logging.error(f"Error creating interactive audit trends: {str(e)}")
         import traceback
+
         logging.error(traceback.format_exc())
         return None
 
@@ -779,10 +813,10 @@ def create_query_audit_timeline(
     audit_metrics,
     hours_back: int = 24,
     interval_minutes: int = 30,
-    theme: str = 'light',
+    theme: str = "light",
     figsize: Tuple[int, int] = (12, 8),
     output_file: Optional[str] = None,
-    show_plot: bool = False
+    show_plot: bool = False,
 ) -> Optional[Any]:
     """
     Create a comprehensive visualization showing both RAG query performance and audit events.
@@ -816,48 +850,50 @@ def create_query_audit_timeline(
         start_time = end_time - datetime.timedelta(hours=hours_back)
 
         # Setup theme colors
-        if theme == 'dark':
-            plt.style.use('dark_background')
-            query_color = '#81A1C1'  # Light blue
-            error_color = '#BF616A'  # Red
-            grid_color = '#434C5E'   # Dark gray
-            text_color = '#D8DEE9'   # Light gray
+        if theme == "dark":
+            plt.style.use("dark_background")
+            query_color = "#81A1C1"  # Light blue
+            error_color = "#BF616A"  # Red
+            grid_color = "#434C5E"  # Dark gray
+            text_color = "#D8DEE9"  # Light gray
             category_colors = plt.cm.viridis
             level_colors = {
-                'DEBUG': '#5E81AC',    # Blue
-                'INFO': '#A3BE8C',     # Green
-                'WARNING': '#EBCB8B',  # Yellow
-                'ERROR': '#BF616A',    # Red
-                'CRITICAL': '#B48EAD', # Purple
-                'EMERGENCY': '#FF66AA' # Pink
+                "DEBUG": "#5E81AC",  # Blue
+                "INFO": "#A3BE8C",  # Green
+                "WARNING": "#EBCB8B",  # Yellow
+                "ERROR": "#BF616A",  # Red
+                "CRITICAL": "#B48EAD",  # Purple
+                "EMERGENCY": "#FF66AA",  # Pink
             }
         else:
-            plt.style.use('default')
-            query_color = '#3572C6'   # Blue
-            error_color = '#E57373'   # Light red
-            grid_color = '#DDDDDD'    # Light gray
-            text_color = '#333333'    # Dark gray
+            plt.style.use("default")
+            query_color = "#3572C6"  # Blue
+            error_color = "#E57373"  # Light red
+            grid_color = "#DDDDDD"  # Light gray
+            text_color = "#333333"  # Dark gray
             category_colors = plt.cm.viridis
             level_colors = {
-                'DEBUG': '#4B9CFF',    # Light blue
-                'INFO': '#81C784',     # Green
-                'WARNING': '#FFD54F',  # Yellow
-                'ERROR': '#E57373',    # Red
-                'CRITICAL': '#9575CD', # Purple
-                'EMERGENCY': '#FF66AA' # Pink
+                "DEBUG": "#4B9CFF",  # Light blue
+                "INFO": "#81C784",  # Green
+                "WARNING": "#FFD54F",  # Yellow
+                "ERROR": "#E57373",  # Red
+                "CRITICAL": "#9575CD",  # Purple
+                "EMERGENCY": "#FF66AA",  # Pink
             }
 
         # Extract query data from collector
         query_data = []
         for query_id, metrics in query_metrics_collector.query_metrics.items():
-            if 'start_time' in metrics and 'duration' in metrics:
-                query_time = datetime.datetime.fromtimestamp(metrics['start_time'])
+            if "start_time" in metrics and "duration" in metrics:
+                query_time = datetime.datetime.fromtimestamp(metrics["start_time"])
                 if query_time >= start_time:
-                    query_data.append({
-                        'timestamp': query_time,
-                        'duration': metrics['duration'],
-                        'status': metrics.get('status', 'unknown')
-                    })
+                    query_data.append(
+                        {
+                            "timestamp": query_time,
+                            "duration": metrics["duration"],
+                            "status": metrics.get("status", "unknown"),
+                        }
+                    )
 
         # Extract audit data from aggregator
         try:
@@ -865,11 +901,13 @@ def create_query_audit_timeline(
 
             # Filter to relevant time range
             filtered_categories = {}
-            for category, events in audit_time_series.get('by_category', {}).items():
+            for category, events in audit_time_series.get("by_category", {}).items():
                 filtered_events = []
                 for event in events:
                     try:
-                        event_time = datetime.datetime.fromisoformat(event['timestamp'].replace('Z', '+00:00'))
+                        event_time = datetime.datetime.fromisoformat(
+                            event["timestamp"].replace("Z", "+00:00")
+                        )
                         if start_time <= event_time <= end_time:
                             filtered_events.append(event)
                     except (ValueError, TypeError):
@@ -879,11 +917,13 @@ def create_query_audit_timeline(
                     filtered_categories[category] = filtered_events
 
             filtered_levels = {}
-            for level, events in audit_time_series.get('by_level', {}).items():
+            for level, events in audit_time_series.get("by_level", {}).items():
                 filtered_events = []
                 for event in events:
                     try:
-                        event_time = datetime.datetime.fromisoformat(event['timestamp'].replace('Z', '+00:00'))
+                        event_time = datetime.datetime.fromisoformat(
+                            event["timestamp"].replace("Z", "+00:00")
+                        )
                         if start_time <= event_time <= end_time:
                             filtered_events.append(event)
                     except (ValueError, TypeError):
@@ -898,46 +938,74 @@ def create_query_audit_timeline(
             filtered_levels = {}
 
         # Create figure with three subplots
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=figsize, sharex=True,
-                                           gridspec_kw={'height_ratios': [2, 1, 1]})
+        fig, (ax1, ax2, ax3) = plt.subplots(
+            3, 1, figsize=figsize, sharex=True, gridspec_kw={"height_ratios": [2, 1, 1]}
+        )
 
         # Plot 1: Query durations
         if query_data:
             # Sort by timestamp
-            query_data.sort(key=lambda x: x['timestamp'])
+            query_data.sort(key=lambda x: x["timestamp"])
 
             # Extract data for plotting
-            timestamps = [q['timestamp'] for q in query_data]
-            durations = [q['duration'] for q in query_data]
-            error_timestamps = [q['timestamp'] for q in query_data if q['status'] == 'error']
-            error_durations = [q['duration'] for q in query_data if q['status'] == 'error']
+            timestamps = [q["timestamp"] for q in query_data]
+            durations = [q["duration"] for q in query_data]
+            error_timestamps = [q["timestamp"] for q in query_data if q["status"] == "error"]
+            error_durations = [q["duration"] for q in query_data if q["status"] == "error"]
 
             # Plot all durations as bars
-            ax1.bar(timestamps, durations, width=0.02, alpha=0.7, color=query_color, label='Query Duration')
+            ax1.bar(
+                timestamps,
+                durations,
+                width=0.02,
+                alpha=0.7,
+                color=query_color,
+                label="Query Duration",
+            )
 
             # Add error markers if any
             if error_timestamps:
-                ax1.scatter(error_timestamps, error_durations, color=error_color, marker='x', s=100,
-                          label='Error Queries', zorder=3)
+                ax1.scatter(
+                    error_timestamps,
+                    error_durations,
+                    color=error_color,
+                    marker="x",
+                    s=100,
+                    label="Error Queries",
+                    zorder=3,
+                )
 
             # Add rolling average
             if len(durations) >= 3:
                 window_size = min(5, len(durations))
-                query_df = pd.DataFrame({'timestamp': timestamps, 'duration': durations})
-                query_df = query_df.sort_values('timestamp')
-                query_df['rolling_avg'] = query_df['duration'].rolling(window=window_size, min_periods=1).mean()
+                query_df = pd.DataFrame({"timestamp": timestamps, "duration": durations})
+                query_df = query_df.sort_values("timestamp")
+                query_df["rolling_avg"] = (
+                    query_df["duration"].rolling(window=window_size, min_periods=1).mean()
+                )
 
-                ax1.plot(query_df['timestamp'], query_df['rolling_avg'], 'k--', linewidth=2,
-                       label=f'{window_size}-pt Moving Avg')
+                ax1.plot(
+                    query_df["timestamp"],
+                    query_df["rolling_avg"],
+                    "k--",
+                    linewidth=2,
+                    label=f"{window_size}-pt Moving Avg",
+                )
 
             # Set labels and title
-            ax1.set_ylabel('Query Duration (s)', color=text_color, fontsize=11)
-            ax1.set_title('RAG Query Performance', fontsize=12)
-            ax1.grid(True, linestyle='--', alpha=0.6, color=grid_color)
-            ax1.legend(loc='upper right')
+            ax1.set_ylabel("Query Duration (s)", color=text_color, fontsize=11)
+            ax1.set_title("RAG Query Performance", fontsize=12)
+            ax1.grid(True, linestyle="--", alpha=0.6, color=grid_color)
+            ax1.legend(loc="upper right")
         else:
-            ax1.text(0.5, 0.5, 'No query data available', horizontalalignment='center',
-                   verticalalignment='center', transform=ax1.transAxes)
+            ax1.text(
+                0.5,
+                0.5,
+                "No query data available",
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax1.transAxes,
+            )
 
         # Plot 2: Audit events by category
         if filtered_categories:
@@ -951,39 +1019,50 @@ def create_query_audit_timeline(
 
                 # Process events
                 for event in events:
-                    event_time = datetime.datetime.fromisoformat(event['timestamp'].replace('Z', '+00:00'))
-                    count = event.get('count', 1)
+                    event_time = datetime.datetime.fromisoformat(
+                        event["timestamp"].replace("Z", "+00:00")
+                    )
+                    count = event.get("count", 1)
 
                     # Find or create interval bucket
                     found = False
                     for interval in category_data[category]:
-                        if abs((event_time - interval['time']).total_seconds()) < interval_seconds:
-                            interval['count'] += count
+                        if abs((event_time - interval["time"]).total_seconds()) < interval_seconds:
+                            interval["count"] += count
                             found = True
                             break
 
                     if not found:
-                        category_data[category].append({
-                            'time': event_time,
-                            'count': count
-                        })
+                        category_data[category].append({"time": event_time, "count": count})
 
             # Plot data for each category
             for i, (category, intervals) in enumerate(category_data.items()):
-                times = [interval['time'] for interval in intervals]
-                counts = [interval['count'] for interval in intervals]
+                times = [interval["time"] for interval in intervals]
+                counts = [interval["count"] for interval in intervals]
 
-                color = category_colors(i / len(category_data)) if len(category_data) > 1 else category_colors(0.5)
-                ax2.plot(times, counts, 'o-', label=category, linewidth=2, color=color, markersize=5)
+                color = (
+                    category_colors(i / len(category_data))
+                    if len(category_data) > 1
+                    else category_colors(0.5)
+                )
+                ax2.plot(
+                    times, counts, "o-", label=category, linewidth=2, color=color, markersize=5
+                )
 
             # Set labels
-            ax2.set_ylabel('Event Count', color=text_color, fontsize=11)
-            ax2.set_title('Audit Events by Category', fontsize=12)
-            ax2.grid(True, linestyle='--', alpha=0.6, color=grid_color)
-            ax2.legend(loc='upper right')
+            ax2.set_ylabel("Event Count", color=text_color, fontsize=11)
+            ax2.set_title("Audit Events by Category", fontsize=12)
+            ax2.grid(True, linestyle="--", alpha=0.6, color=grid_color)
+            ax2.legend(loc="upper right")
         else:
-            ax2.text(0.5, 0.5, 'No category data available', horizontalalignment='center',
-                   verticalalignment='center', transform=ax2.transAxes)
+            ax2.text(
+                0.5,
+                0.5,
+                "No category data available",
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax2.transAxes,
+            )
 
         # Plot 3: Audit events by level
         if filtered_levels:
@@ -997,54 +1076,59 @@ def create_query_audit_timeline(
 
                 # Process events
                 for event in events:
-                    event_time = datetime.datetime.fromisoformat(event['timestamp'].replace('Z', '+00:00'))
-                    count = event.get('count', 1)
+                    event_time = datetime.datetime.fromisoformat(
+                        event["timestamp"].replace("Z", "+00:00")
+                    )
+                    count = event.get("count", 1)
 
                     # Find or create interval bucket
                     found = False
                     for interval in level_data[level]:
-                        if abs((event_time - interval['time']).total_seconds()) < interval_seconds:
-                            interval['count'] += count
+                        if abs((event_time - interval["time"]).total_seconds()) < interval_seconds:
+                            interval["count"] += count
                             found = True
                             break
 
                     if not found:
-                        level_data[level].append({
-                            'time': event_time,
-                            'count': count
-                        })
+                        level_data[level].append({"time": event_time, "count": count})
 
             # Plot data for each level
             for level, intervals in level_data.items():
-                times = [interval['time'] for interval in intervals]
-                counts = [interval['count'] for interval in intervals]
+                times = [interval["time"] for interval in intervals]
+                counts = [interval["count"] for interval in intervals]
 
-                color = level_colors.get(level, '#AAAAAA')
-                ax3.plot(times, counts, 'o-', label=level, linewidth=2, color=color, markersize=5)
+                color = level_colors.get(level, "#AAAAAA")
+                ax3.plot(times, counts, "o-", label=level, linewidth=2, color=color, markersize=5)
 
             # Set labels
-            ax3.set_ylabel('Event Count', color=text_color, fontsize=11)
-            ax3.set_title('Audit Events by Level', fontsize=12)
-            ax3.grid(True, linestyle='--', alpha=0.6, color=grid_color)
-            ax3.legend(loc='upper right')
+            ax3.set_ylabel("Event Count", color=text_color, fontsize=11)
+            ax3.set_title("Audit Events by Level", fontsize=12)
+            ax3.grid(True, linestyle="--", alpha=0.6, color=grid_color)
+            ax3.legend(loc="upper right")
         else:
-            ax3.text(0.5, 0.5, 'No level data available', horizontalalignment='center',
-                   verticalalignment='center', transform=ax3.transAxes)
+            ax3.text(
+                0.5,
+                0.5,
+                "No level data available",
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax3.transAxes,
+            )
 
         # Format x-axis on bottom plot
-        ax3.set_xlabel('Time', color=text_color, fontsize=11)
-        ax3.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
-        plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45, ha='right')
+        ax3.set_xlabel("Time", color=text_color, fontsize=11)
+        ax3.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d %H:%M"))
+        plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45, ha="right")
 
         # Add overall title
-        fig.suptitle('Query Performance & Audit Events Timeline', fontsize=14)
+        fig.suptitle("Query Performance & Audit Events Timeline", fontsize=14)
 
         # Adjust layout
         plt.tight_layout()
 
         # Save if output file provided
         if output_file:
-            plt.savefig(output_file, dpi=100, bbox_inches='tight')
+            plt.savefig(output_file, dpi=100, bbox_inches="tight")
 
         # Show if requested
         if show_plot:
@@ -1057,8 +1141,10 @@ def create_query_audit_timeline(
     except Exception as e:
         logging.error(f"Error creating query audit timeline: {str(e)}")
         import traceback
+
         logging.error(traceback.format_exc())
         return None
+
 
 class AuditVisualizer:
     """
@@ -1079,11 +1165,13 @@ class AuditVisualizer:
         self.metrics = metrics_aggregator
         self.visualization_available = VISUALIZATION_LIBS_AVAILABLE
 
-    def plot_events_by_category(self,
-                              top: int = 10,
-                              figsize: Tuple[int, int] = (10, 6),
-                              output_file: Optional[str] = None,
-                              show_plot: bool = False) -> Optional[Any]:
+    def plot_events_by_category(
+        self,
+        top: int = 10,
+        figsize: Tuple[int, int] = (10, 6),
+        output_file: Optional[str] = None,
+        show_plot: bool = False,
+    ) -> Optional[Any]:
         """
         Create a bar chart of events by category.
 
@@ -1101,14 +1189,10 @@ class AuditVisualizer:
             return None
 
         # Get category counts
-        category_counts = self.metrics.totals['by_category']
+        category_counts = self.metrics.totals["by_category"]
 
         # Sort by count and get top categories
-        top_categories = sorted(
-            category_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:top]
+        top_categories = sorted(category_counts.items(), key=lambda x: x[1], reverse=True)[:top]
 
         # Create figure
         fig, ax = plt.subplots(figsize=figsize)
@@ -1118,23 +1202,23 @@ class AuditVisualizer:
         counts = [c[1] for c in top_categories]
 
         # Use seaborn barplot for nicer appearance
-        sns.barplot(x=counts, y=categories, ax=ax, palette='viridis')
+        sns.barplot(x=counts, y=categories, ax=ax, palette="viridis")
 
         # Add labels and title
-        ax.set_title('Audit Events by Category', fontsize=14)
-        ax.set_xlabel('Count', fontsize=12)
-        ax.set_ylabel('Category', fontsize=12)
+        ax.set_title("Audit Events by Category", fontsize=14)
+        ax.set_xlabel("Count", fontsize=12)
+        ax.set_ylabel("Category", fontsize=12)
 
         # Add count values to bars
         for i, count in enumerate(counts):
-            ax.text(count + 1, i, str(count), va='center')
+            ax.text(count + 1, i, str(count), va="center")
 
         # Adjust layout
         plt.tight_layout()
 
         # Save to file if output_file is specified
         if output_file:
-            plt.savefig(output_file, dpi=100, bbox_inches='tight')
+            plt.savefig(output_file, dpi=100, bbox_inches="tight")
 
         # Show plot if requested
         if show_plot:
@@ -1144,10 +1228,12 @@ class AuditVisualizer:
 
         return fig
 
-    def plot_events_by_level(self,
-                           figsize: Tuple[int, int] = (8, 6),
-                           output_file: Optional[str] = None,
-                           show_plot: bool = False) -> Optional[Any]:
+    def plot_events_by_level(
+        self,
+        figsize: Tuple[int, int] = (8, 6),
+        output_file: Optional[str] = None,
+        show_plot: bool = False,
+    ) -> Optional[Any]:
         """
         Create a pie chart of events by severity level.
 
@@ -1164,7 +1250,7 @@ class AuditVisualizer:
             return None
 
         # Get level counts
-        level_counts = self.metrics.totals['by_level']
+        level_counts = self.metrics.totals["by_level"]
 
         # Create figure
         fig, ax = plt.subplots(figsize=figsize)
@@ -1175,25 +1261,25 @@ class AuditVisualizer:
 
         # Define colors based on severity
         colors = {
-            'DEBUG': '#7FDBFF',
-            'INFO': '#2ECC40',
-            'WARNING': '#FFDC00',
-            'ERROR': '#FF4136',
-            'CRITICAL': '#B10DC9',
-            'EMERGENCY': '#85144b'
+            "DEBUG": "#7FDBFF",
+            "INFO": "#2ECC40",
+            "WARNING": "#FFDC00",
+            "ERROR": "#FF4136",
+            "CRITICAL": "#B10DC9",
+            "EMERGENCY": "#85144b",
         }
 
         # Use default color if level not in colors dict
-        plot_colors = [colors.get(level, '#AAAAAA') for level in levels]
+        plot_colors = [colors.get(level, "#AAAAAA") for level in levels]
 
         # Create pie chart
         wedges, texts, autotexts = ax.pie(
             counts,
             labels=levels,
             colors=plot_colors,
-            autopct='%1.1f%%',
+            autopct="%1.1f%%",
             startangle=90,
-            explode=[0.05] * len(levels)  # Slight explode to separate slices
+            explode=[0.05] * len(levels),  # Slight explode to separate slices
         )
 
         # Enhance text appearance
@@ -1201,17 +1287,17 @@ class AuditVisualizer:
             text.set_fontsize(12)
         for autotext in autotexts:
             autotext.set_fontsize(10)
-            autotext.set_color('white')
+            autotext.set_color("white")
 
         # Add title
-        ax.set_title('Audit Events by Severity Level', fontsize=14)
+        ax.set_title("Audit Events by Severity Level", fontsize=14)
 
         # Equal aspect ratio ensures circular pie
-        ax.axis('equal')
+        ax.axis("equal")
 
         # Save to file if output_file is specified
         if output_file:
-            plt.savefig(output_file, dpi=100, bbox_inches='tight')
+            plt.savefig(output_file, dpi=100, bbox_inches="tight")
 
         # Show plot if requested
         if show_plot:
@@ -1221,12 +1307,14 @@ class AuditVisualizer:
 
         return fig
 
-    def plot_event_timeline(self,
-                          hours: int = 24,
-                          interval_minutes: int = 15,
-                          figsize: Tuple[int, int] = (12, 6),
-                          output_file: Optional[str] = None,
-                          show_plot: bool = False) -> Optional[Any]:
+    def plot_event_timeline(
+        self,
+        hours: int = 24,
+        interval_minutes: int = 15,
+        figsize: Tuple[int, int] = (12, 6),
+        output_file: Optional[str] = None,
+        show_plot: bool = False,
+    ) -> Optional[Any]:
         """
         Create a timeline visualization of audit events.
 
@@ -1245,12 +1333,12 @@ class AuditVisualizer:
             return None
 
         # Calculate time range
-        end_time = self.metrics.totals['most_recent_time']
+        end_time = self.metrics.totals["most_recent_time"]
         start_time = end_time - (hours * 3600)
 
         # Get bucketed events from time series
-        by_category_action = self.metrics.time_series['by_category_action']
-        by_level = self.metrics.time_series['by_level']
+        by_category_action = self.metrics.time_series["by_category_action"]
+        by_level = self.metrics.time_series["by_level"]
 
         # Filter buckets by time range
         buckets = [ts for ts in sorted(by_category_action.keys()) if ts >= start_time]
@@ -1282,7 +1370,14 @@ class AuditVisualizer:
             while len(counts) < len(bucket_times):
                 counts.append(0)
 
-            ax1.plot(bucket_times[:len(counts)], counts, label=category, linewidth=2, marker='o', markersize=4)
+            ax1.plot(
+                bucket_times[: len(counts)],
+                counts,
+                label=category,
+                linewidth=2,
+                marker="o",
+                markersize=4,
+            )
 
         # Plot levels over time
         levels = {}
@@ -1296,12 +1391,12 @@ class AuditVisualizer:
 
         # Plot each level as a separate line
         level_colors = {
-            'DEBUG': '#7FDBFF',
-            'INFO': '#2ECC40',
-            'WARNING': '#FFDC00',
-            'ERROR': '#FF4136',
-            'CRITICAL': '#B10DC9',
-            'EMERGENCY': '#85144b'
+            "DEBUG": "#7FDBFF",
+            "INFO": "#2ECC40",
+            "WARNING": "#FFDC00",
+            "ERROR": "#FF4136",
+            "CRITICAL": "#B10DC9",
+            "EMERGENCY": "#85144b",
         }
 
         for level, counts in levels.items():
@@ -1310,24 +1405,31 @@ class AuditVisualizer:
             while len(counts) < len(bucket_times):
                 counts.append(0)
 
-            color = level_colors.get(level, '#AAAAAA')
-            ax2.plot(bucket_times[:len(counts)], counts, label=level,
-                    linewidth=2, marker='o', markersize=4, color=color)
+            color = level_colors.get(level, "#AAAAAA")
+            ax2.plot(
+                bucket_times[: len(counts)],
+                counts,
+                label=level,
+                linewidth=2,
+                marker="o",
+                markersize=4,
+                color=color,
+            )
 
         # Configure axes
-        ax1.set_title('Audit Events by Category Over Time', fontsize=14)
-        ax1.set_ylabel('Event Count', fontsize=12)
-        ax1.legend(loc='upper left', fontsize=10)
-        ax1.grid(True, linestyle='--', alpha=0.7)
+        ax1.set_title("Audit Events by Category Over Time", fontsize=14)
+        ax1.set_ylabel("Event Count", fontsize=12)
+        ax1.legend(loc="upper left", fontsize=10)
+        ax1.grid(True, linestyle="--", alpha=0.7)
 
-        ax2.set_title('Audit Events by Level Over Time', fontsize=14)
-        ax2.set_xlabel('Time', fontsize=12)
-        ax2.set_ylabel('Event Count', fontsize=12)
-        ax2.legend(loc='upper left', fontsize=10)
-        ax2.grid(True, linestyle='--', alpha=0.7)
+        ax2.set_title("Audit Events by Level Over Time", fontsize=14)
+        ax2.set_xlabel("Time", fontsize=12)
+        ax2.set_ylabel("Event Count", fontsize=12)
+        ax2.legend(loc="upper left", fontsize=10)
+        ax2.grid(True, linestyle="--", alpha=0.7)
 
         # Format time axis
-        ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
         plt.xticks(rotation=45)
 
         # Adjust layout
@@ -1335,7 +1437,7 @@ class AuditVisualizer:
 
         # Save to file if output_file is specified
         if output_file:
-            plt.savefig(output_file, dpi=100, bbox_inches='tight')
+            plt.savefig(output_file, dpi=100, bbox_inches="tight")
 
         # Show plot if requested
         if show_plot:
@@ -1345,14 +1447,16 @@ class AuditVisualizer:
 
         return fig
 
-    def create_query_audit_timeline(self,
-                                  query_metrics_collector,
-                                  hours_back: int = 24,
-                                  interval_minutes: int = 30,
-                                  theme: str = 'light',
-                                  figsize: Tuple[int, int] = (12, 8),
-                                  output_file: Optional[str] = None,
-                                  show_plot: bool = False) -> Optional[Any]:
+    def create_query_audit_timeline(
+        self,
+        query_metrics_collector,
+        hours_back: int = 24,
+        interval_minutes: int = 30,
+        theme: str = "light",
+        figsize: Tuple[int, int] = (12, 8),
+        output_file: Optional[str] = None,
+        show_plot: bool = False,
+    ) -> Optional[Any]:
         """
         Create a timeline visualization showing both audit events and RAG queries.
 
@@ -1382,161 +1486,223 @@ class AuditVisualizer:
 
             # Create time buckets for x-axis
             num_intervals = int(hours_back * 60 / interval_minutes)
-            bucket_times = [end_time - datetime.timedelta(minutes=i * interval_minutes)
-                          for i in range(num_intervals, -1, -1)]
+            bucket_times = [
+                end_time - datetime.timedelta(minutes=i * interval_minutes)
+                for i in range(num_intervals, -1, -1)
+            ]
 
             # Setup theme colors
-            if theme == 'dark':
-                plt.style.use('dark_background')
-                bg_color = '#1a1a1a'
-                text_color = '#f5f5f5'
-                grid_color = '#444444'
-                query_color = '#5E81AC'
-                error_color = '#BF616A'
-                warning_color = '#EBCB8B'
-                info_color = '#A3BE8C'
+            if theme == "dark":
+                plt.style.use("dark_background")
+                bg_color = "#1a1a1a"
+                text_color = "#f5f5f5"
+                grid_color = "#444444"
+                query_color = "#5E81AC"
+                error_color = "#BF616A"
+                warning_color = "#EBCB8B"
+                info_color = "#A3BE8C"
             else:
-                plt.style.use('default')
-                bg_color = '#ffffff'
-                text_color = '#333333'
-                grid_color = '#dddddd'
-                query_color = '#3572C6'
-                error_color = '#E57373'
-                warning_color = '#FFD54F'
-                info_color = '#81C784'
+                plt.style.use("default")
+                bg_color = "#ffffff"
+                text_color = "#333333"
+                grid_color = "#dddddd"
+                query_color = "#3572C6"
+                error_color = "#E57373"
+                warning_color = "#FFD54F"
+                info_color = "#81C784"
 
             # Create figure with three subplots
-            fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=figsize, sharex=True,
-                                             gridspec_kw={'height_ratios': [2, 1, 1]})
+            fig, (ax1, ax2, ax3) = plt.subplots(
+                3, 1, figsize=figsize, sharex=True, gridspec_kw={"height_ratios": [2, 1, 1]}
+            )
 
             # Plot #1: Query Performance
             # Extract query data from the collector
             query_data = []
             for query_id, metrics in query_metrics_collector.query_metrics.items():
-                if 'start_time' in metrics and 'duration' in metrics:
-                    query_time = datetime.datetime.fromtimestamp(metrics['start_time'])
+                if "start_time" in metrics and "duration" in metrics:
+                    query_time = datetime.datetime.fromtimestamp(metrics["start_time"])
                     if query_time >= start_time:
-                        query_data.append({
-                            'timestamp': query_time,
-                            'duration': metrics['duration'],
-                            'status': metrics.get('status', 'unknown'),
-                            'results_count': metrics.get('results_count', 0)
-                        })
+                        query_data.append(
+                            {
+                                "timestamp": query_time,
+                                "duration": metrics["duration"],
+                                "status": metrics.get("status", "unknown"),
+                                "results_count": metrics.get("results_count", 0),
+                            }
+                        )
 
             # Sort by timestamp
-            query_data = sorted(query_data, key=lambda x: x['timestamp'])
+            query_data = sorted(query_data, key=lambda x: x["timestamp"])
 
             # Extract timestamps and durations
             if query_data:
-                timestamps = [q['timestamp'] for q in query_data]
-                durations = [q['duration'] * 1000 for q in query_data]  # Convert to ms
+                timestamps = [q["timestamp"] for q in query_data]
+                durations = [q["duration"] * 1000 for q in query_data]  # Convert to ms
 
                 # Plot query durations as bars
-                bar_width = (timestamps[-1] - timestamps[0]) / len(timestamps) * 0.8 if len(timestamps) > 1 else datetime.timedelta(minutes=5)
-                bar_width = min(bar_width, datetime.timedelta(minutes=5)).total_seconds() * 1000  # Convert to ms
+                bar_width = (
+                    (timestamps[-1] - timestamps[0]) / len(timestamps) * 0.8
+                    if len(timestamps) > 1
+                    else datetime.timedelta(minutes=5)
+                )
+                bar_width = (
+                    min(bar_width, datetime.timedelta(minutes=5)).total_seconds() * 1000
+                )  # Convert to ms
 
-                ax1.bar(timestamps, durations, width=bar_width/86400000, color=query_color, alpha=0.7, label='Query Duration (ms)')
+                ax1.bar(
+                    timestamps,
+                    durations,
+                    width=bar_width / 86400000,
+                    color=query_color,
+                    alpha=0.7,
+                    label="Query Duration (ms)",
+                )
 
                 # Highlight errors
                 for i, q in enumerate(query_data):
-                    if q['status'] == 'error':
-                        ax1.scatter(timestamps[i], durations[i], color=error_color, s=100, marker='x', zorder=10)
+                    if q["status"] == "error":
+                        ax1.scatter(
+                            timestamps[i],
+                            durations[i],
+                            color=error_color,
+                            s=100,
+                            marker="x",
+                            zorder=10,
+                        )
 
                 # Add running average
                 window_size = min(5, len(durations))
                 if window_size > 1:
-                    running_avg = np.convolve(durations, np.ones(window_size)/window_size, mode='valid')
-                    avg_timestamps = timestamps[window_size-1:]
-                    ax1.plot(avg_timestamps, running_avg, color='white', linestyle='--', linewidth=2, label=f'{window_size}-point Avg')
+                    running_avg = np.convolve(
+                        durations, np.ones(window_size) / window_size, mode="valid"
+                    )
+                    avg_timestamps = timestamps[window_size - 1 :]
+                    ax1.plot(
+                        avg_timestamps,
+                        running_avg,
+                        color="white",
+                        linestyle="--",
+                        linewidth=2,
+                        label=f"{window_size}-point Avg",
+                    )
             else:
-                ax1.text(0.5, 0.5, 'No query data in selected time period',
-                      horizontalalignment='center', verticalalignment='center',
-                      transform=ax1.transAxes, fontsize=12, color=text_color)
+                ax1.text(
+                    0.5,
+                    0.5,
+                    "No query data in selected time period",
+                    horizontalalignment="center",
+                    verticalalignment="center",
+                    transform=ax1.transAxes,
+                    fontsize=12,
+                    color=text_color,
+                )
 
             # Configure query plot
-            ax1.set_title('RAG Query Performance Timeline', fontsize=14, color=text_color)
-            ax1.set_ylabel('Duration (ms)', fontsize=12, color=text_color)
-            ax1.tick_params(axis='y', colors=text_color)
-            ax1.grid(True, linestyle='--', alpha=0.7, color=grid_color)
+            ax1.set_title("RAG Query Performance Timeline", fontsize=14, color=text_color)
+            ax1.set_ylabel("Duration (ms)", fontsize=12, color=text_color)
+            ax1.tick_params(axis="y", colors=text_color)
+            ax1.grid(True, linestyle="--", alpha=0.7, color=grid_color)
             if query_data:
-                ax1.legend(loc='upper right', fontsize=10)
+                ax1.legend(loc="upper right", fontsize=10)
 
             # Plot #2: Audit Events by Category
             categories = {}
 
             # Process category-based time series data
-            for category_action, time_series in audit_time_series.get('by_category_action', {}).items():
-                category = category_action.split('_')[0] if '_' in category_action else category_action
+            for category_action, time_series in audit_time_series.get(
+                "by_category_action", {}
+            ).items():
+                category = (
+                    category_action.split("_")[0] if "_" in category_action else category_action
+                )
 
                 if category not in categories:
                     categories[category] = [0] * len(bucket_times)
 
                 # Map each count to the appropriate time bucket
                 for item in time_series:
-                    event_time = datetime.datetime.fromisoformat(item['timestamp'].replace('Z', '+00:00'))
+                    event_time = datetime.datetime.fromisoformat(
+                        item["timestamp"].replace("Z", "+00:00")
+                    )
                     for i, bucket_time in enumerate(bucket_times[:-1]):
                         next_bucket = bucket_times[i + 1]
                         if next_bucket <= event_time <= bucket_time:
-                            categories[category][i] += item['count']
+                            categories[category][i] += item["count"]
                             break
 
             # Plot each category as a stacked area
             bottom = np.zeros(len(bucket_times))
             category_colors = {
-                'AUTHENTICATION': '#8C9EFF',  # Indigo
-                'AUTHORIZATION': '#82B1FF',   # Blue
-                'DATA_ACCESS': '#80D8FF',     # Light Blue
-                'DATA_MODIFICATION': '#84FFFF', # Cyan
-                'SYSTEM': '#A7FFEB',          # Teal
-                'COMPLIANCE': '#B9F6CA',      # Green
-                'SECURITY': '#FFD180',        # Orange
-                'APPLICATION': '#FFFF8D',     # Yellow
-                'RESOURCE': '#FF8A80',        # Red
+                "AUTHENTICATION": "#8C9EFF",  # Indigo
+                "AUTHORIZATION": "#82B1FF",  # Blue
+                "DATA_ACCESS": "#80D8FF",  # Light Blue
+                "DATA_MODIFICATION": "#84FFFF",  # Cyan
+                "SYSTEM": "#A7FFEB",  # Teal
+                "COMPLIANCE": "#B9F6CA",  # Green
+                "SECURITY": "#FFD180",  # Orange
+                "APPLICATION": "#FFFF8D",  # Yellow
+                "RESOURCE": "#FF8A80",  # Red
             }
 
             for category, counts in categories.items():
-                color = category_colors.get(category, '#AAAAAA')
-                ax2.fill_between(bucket_times[:len(counts)], bottom[:len(counts)],
-                              bottom[:len(counts)] + counts, label=category, alpha=0.7, color=color)
-                bottom[:len(counts)] += counts
+                color = category_colors.get(category, "#AAAAAA")
+                ax2.fill_between(
+                    bucket_times[: len(counts)],
+                    bottom[: len(counts)],
+                    bottom[: len(counts)] + counts,
+                    label=category,
+                    alpha=0.7,
+                    color=color,
+                )
+                bottom[: len(counts)] += counts
 
             # Configure category plot
-            ax2.set_title('Audit Events by Category', fontsize=14, color=text_color)
-            ax2.set_ylabel('Event Count', fontsize=12, color=text_color)
-            ax2.tick_params(axis='y', colors=text_color)
-            ax2.grid(True, linestyle='--', alpha=0.7, color=grid_color)
+            ax2.set_title("Audit Events by Category", fontsize=14, color=text_color)
+            ax2.set_ylabel("Event Count", fontsize=12, color=text_color)
+            ax2.tick_params(axis="y", colors=text_color)
+            ax2.grid(True, linestyle="--", alpha=0.7, color=grid_color)
             if categories:
-                ax2.legend(loc='upper right', fontsize=10)
+                ax2.legend(loc="upper right", fontsize=10)
             else:
-                ax2.text(0.5, 0.5, 'No audit category data in selected time period',
-                      horizontalalignment='center', verticalalignment='center',
-                      transform=ax2.transAxes, fontsize=12, color=text_color)
+                ax2.text(
+                    0.5,
+                    0.5,
+                    "No audit category data in selected time period",
+                    horizontalalignment="center",
+                    verticalalignment="center",
+                    transform=ax2.transAxes,
+                    fontsize=12,
+                    color=text_color,
+                )
 
             # Plot #3: Audit Events by Level
             levels = {}
 
             # Process level-based time series data
-            for level, time_series in audit_time_series.get('by_level', {}).items():
+            for level, time_series in audit_time_series.get("by_level", {}).items():
                 if level not in levels:
                     levels[level] = [0] * len(bucket_times)
 
                 # Map each count to the appropriate time bucket
                 for item in time_series:
-                    event_time = datetime.datetime.fromisoformat(item['timestamp'].replace('Z', '+00:00'))
+                    event_time = datetime.datetime.fromisoformat(
+                        item["timestamp"].replace("Z", "+00:00")
+                    )
                     for i, bucket_time in enumerate(bucket_times[:-1]):
                         next_bucket = bucket_times[i + 1]
                         if next_bucket <= event_time <= bucket_time:
-                            levels[level][i] += item['count']
+                            levels[level][i] += item["count"]
                             break
 
             # Plot each level as a separate line
             level_colors = {
-                'DEBUG': '#7FDBFF',
-                'INFO': info_color,
-                'WARNING': warning_color,
-                'ERROR': error_color,
-                'CRITICAL': '#B10DC9',
-                'EMERGENCY': '#85144b'
+                "DEBUG": "#7FDBFF",
+                "INFO": info_color,
+                "WARNING": warning_color,
+                "ERROR": error_color,
+                "CRITICAL": "#B10DC9",
+                "EMERGENCY": "#85144b",
             }
 
             for level, counts in levels.items():
@@ -1545,30 +1711,44 @@ class AuditVisualizer:
                 while len(counts) < len(bucket_times):
                     counts.append(0)
 
-                color = level_colors.get(level, '#AAAAAA')
-                ax3.plot(bucket_times[:len(counts)], counts, label=level,
-                      linewidth=2, marker='o', markersize=4, color=color)
+                color = level_colors.get(level, "#AAAAAA")
+                ax3.plot(
+                    bucket_times[: len(counts)],
+                    counts,
+                    label=level,
+                    linewidth=2,
+                    marker="o",
+                    markersize=4,
+                    color=color,
+                )
 
             # Configure level plot
-            ax3.set_title('Audit Events by Level', fontsize=14, color=text_color)
-            ax3.set_xlabel('Time', fontsize=12, color=text_color)
-            ax3.set_ylabel('Event Count', fontsize=12, color=text_color)
-            ax3.tick_params(axis='x', colors=text_color)
-            ax3.tick_params(axis='y', colors=text_color)
-            ax3.grid(True, linestyle='--', alpha=0.7, color=grid_color)
+            ax3.set_title("Audit Events by Level", fontsize=14, color=text_color)
+            ax3.set_xlabel("Time", fontsize=12, color=text_color)
+            ax3.set_ylabel("Event Count", fontsize=12, color=text_color)
+            ax3.tick_params(axis="x", colors=text_color)
+            ax3.tick_params(axis="y", colors=text_color)
+            ax3.grid(True, linestyle="--", alpha=0.7, color=grid_color)
             if levels:
-                ax3.legend(loc='upper right', fontsize=10)
+                ax3.legend(loc="upper right", fontsize=10)
             else:
-                ax3.text(0.5, 0.5, 'No audit level data in selected time period',
-                      horizontalalignment='center', verticalalignment='center',
-                      transform=ax3.transAxes, fontsize=12, color=text_color)
+                ax3.text(
+                    0.5,
+                    0.5,
+                    "No audit level data in selected time period",
+                    horizontalalignment="center",
+                    verticalalignment="center",
+                    transform=ax3.transAxes,
+                    fontsize=12,
+                    color=text_color,
+                )
 
             # Format time axis
-            ax3.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+            ax3.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
             plt.xticks(rotation=45)
 
             # Add an overall title
-            plt.suptitle('Query Performance & Audit Events Timeline', fontsize=16, color=text_color)
+            plt.suptitle("Query Performance & Audit Events Timeline", fontsize=16, color=text_color)
 
             # Adjust layout
             plt.tight_layout()
@@ -1576,7 +1756,7 @@ class AuditVisualizer:
 
             # Save to file if output_file is specified
             if output_file:
-                plt.savefig(output_file, dpi=100, bbox_inches='tight', facecolor=bg_color)
+                plt.savefig(output_file, dpi=100, bbox_inches="tight", facecolor=bg_color)
 
             # Show plot if requested
             if show_plot:
@@ -1589,14 +1769,17 @@ class AuditVisualizer:
         except Exception as e:
             logging.error(f"Error creating query audit timeline: {str(e)}")
             import traceback
+
             logging.error(traceback.format_exc())
             return None
 
-    def plot_operation_durations(self,
-                               top: int = 10,
-                               figsize: Tuple[int, int] = (10, 6),
-                               output_file: Optional[str] = None,
-                               show_plot: bool = False) -> Optional[Any]:
+    def plot_operation_durations(
+        self,
+        top: int = 10,
+        figsize: Tuple[int, int] = (10, 6),
+        output_file: Optional[str] = None,
+        show_plot: bool = False,
+    ) -> Optional[Any]:
         """
         Create a bar chart of operation durations.
 
@@ -1614,20 +1797,16 @@ class AuditVisualizer:
             return None
 
         # Get duration metrics
-        avg_durations = self.metrics.detailed['avg_duration']
-        max_durations = self.metrics.detailed['max_duration']
-        p95_durations = self.metrics.detailed['p95_duration']
+        avg_durations = self.metrics.detailed["avg_duration"]
+        max_durations = self.metrics.detailed["max_duration"]
+        p95_durations = self.metrics.detailed["p95_duration"]
 
         if not avg_durations:
             logging.warning("No duration data available.")
             return None
 
         # Sort by average duration and get top operations
-        top_operations = sorted(
-            avg_durations.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:top]
+        top_operations = sorted(avg_durations.items(), key=lambda x: x[1], reverse=True)[:top]
 
         # Create figure
         fig, ax = plt.subplots(figsize=figsize)
@@ -1643,29 +1822,29 @@ class AuditVisualizer:
         width = 0.25
 
         # Plot bars
-        ax.bar(x - width, avg_values, width, label='Average', color='#2ECC40')
-        ax.bar(x, p95_values, width, label='95th Percentile', color='#FFDC00')
-        ax.bar(x + width, max_values, width, label='Maximum', color='#FF4136')
+        ax.bar(x - width, avg_values, width, label="Average", color="#2ECC40")
+        ax.bar(x, p95_values, width, label="95th Percentile", color="#FFDC00")
+        ax.bar(x + width, max_values, width, label="Maximum", color="#FF4136")
 
         # Configure axes
-        ax.set_title('Operation Durations', fontsize=14)
-        ax.set_xlabel('Operation', fontsize=12)
-        ax.set_ylabel('Duration (ms)', fontsize=12)
+        ax.set_title("Operation Durations", fontsize=14)
+        ax.set_xlabel("Operation", fontsize=12)
+        ax.set_ylabel("Duration (ms)", fontsize=12)
         ax.set_xticks(x)
-        ax.set_xticklabels(operations, rotation=45, ha='right')
+        ax.set_xticklabels(operations, rotation=45, ha="right")
 
         # Add legend
         ax.legend()
 
         # Add grid
-        ax.grid(True, linestyle='--', alpha=0.7, axis='y')
+        ax.grid(True, linestyle="--", alpha=0.7, axis="y")
 
         # Adjust layout
         plt.tight_layout()
 
         # Save to file if output_file is specified
         if output_file:
-            plt.savefig(output_file, dpi=100, bbox_inches='tight')
+            plt.savefig(output_file, dpi=100, bbox_inches="tight")
 
         # Show plot if requested
         if show_plot:
@@ -1675,13 +1854,15 @@ class AuditVisualizer:
 
         return fig
 
-    def generate_dashboard_html(self,
-                              title: str = "Audit Metrics Dashboard",
-                              include_performance: bool = True,
-                              include_security: bool = True,
-                              include_compliance: bool = True,
-                              security_alerts: List[Dict[str, Any]] = None,
-                              anomaly_alerts: List[Dict[str, Any]] = None) -> str:
+    def generate_dashboard_html(
+        self,
+        title: str = "Audit Metrics Dashboard",
+        include_performance: bool = True,
+        include_security: bool = True,
+        include_compliance: bool = True,
+        security_alerts: List[Dict[str, Any]] = None,
+        anomaly_alerts: List[Dict[str, Any]] = None,
+    ) -> str:
         """
         Generate an HTML dashboard with metrics, visualizations, and security alerts.
 
@@ -1724,23 +1905,23 @@ class AuditVisualizer:
             # Generate category chart
             category_chart = os.path.join(temp_dir, "categories.png")
             self.plot_events_by_category(output_file=category_chart)
-            chart_paths['categories'] = category_chart
+            chart_paths["categories"] = category_chart
 
             # Generate level chart
             level_chart = os.path.join(temp_dir, "levels.png")
             self.plot_events_by_level(output_file=level_chart)
-            chart_paths['levels'] = level_chart
+            chart_paths["levels"] = level_chart
 
             # Generate timeline
             timeline_chart = os.path.join(temp_dir, "timeline.png")
             self.plot_event_timeline(output_file=timeline_chart)
-            chart_paths['timeline'] = timeline_chart
+            chart_paths["timeline"] = timeline_chart
 
             # Generate duration chart if performance metrics included
-            if include_performance and self.metrics.detailed['avg_duration']:
+            if include_performance and self.metrics.detailed["avg_duration"]:
                 duration_chart = os.path.join(temp_dir, "durations.png")
                 self.plot_operation_durations(output_file=duration_chart)
-                chart_paths['durations'] = duration_chart
+                chart_paths["durations"] = duration_chart
 
             # Create HTML template
             dashboard_template = """
@@ -2100,9 +2281,10 @@ class AuditVisualizer:
             chart_data = {}
             for name, path in chart_paths.items():
                 if os.path.exists(path):
-                    with open(path, 'rb') as f:
+                    with open(path, "rb") as f:
                         import base64
-                        chart_data[name] = base64.b64encode(f.read()).decode('utf-8')
+
+                        chart_data[name] = base64.b64encode(f.read()).decode("utf-8")
 
             # Ensure security_alerts is a list
             if security_alerts is None:
@@ -2116,14 +2298,14 @@ class AuditVisualizer:
             template = Template(dashboard_template)
             html = template.render(
                 title=title,
-                current_time=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                current_time=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 summary=summary,
                 performance=performance,
                 security=security,
                 compliance=compliance,
                 chart_data=chart_data,
                 security_alerts=security_alerts,
-                anomaly_alerts=anomaly_alerts
+                anomaly_alerts=anomaly_alerts,
             )
 
             return html
@@ -2132,9 +2314,9 @@ class AuditVisualizer:
             # Clean up temporary directory
             shutil.rmtree(temp_dir)
 
-    def export_metrics_report(self,
-                            format: str = "html",
-                            output_file: Optional[str] = None) -> Union[str, Dict[str, Any]]:
+    def export_metrics_report(
+        self, format: str = "html", output_file: Optional[str] = None
+    ) -> Union[str, Dict[str, Any]]:
         """
         Export metrics report in the specified format.
 
@@ -2149,7 +2331,7 @@ class AuditVisualizer:
             html = self.generate_dashboard_html()
 
             if output_file:
-                with open(output_file, 'w') as f:
+                with open(output_file, "w") as f:
                     f.write(html)
 
             return html
@@ -2159,7 +2341,7 @@ class AuditVisualizer:
             json_data = self.metrics.to_json()
 
             if output_file:
-                with open(output_file, 'w') as f:
+                with open(output_file, "w") as f:
                     json.dump(json_data, f, indent=2)
 
             return json_data
@@ -2176,12 +2358,14 @@ class MetricsCollectionHandler(AuditHandler):
     for later analysis and visualization.
     """
 
-    def __init__(self,
-                name: str,
-                metrics_aggregator: AuditMetricsAggregator,
-                min_level: AuditLevel = AuditLevel.INFO,
-                alert_on_anomalies: bool = False,
-                alert_handler: Optional[Callable[[Dict[str, Any]], None]] = None):
+    def __init__(
+        self,
+        name: str,
+        metrics_aggregator: AuditMetricsAggregator,
+        min_level: AuditLevel = AuditLevel.INFO,
+        alert_on_anomalies: bool = False,
+        alert_handler: Optional[Callable[[Dict[str, Any]], None]] = None,
+    ):
         """
         Initialize the metrics collection handler.
 
@@ -2221,7 +2405,9 @@ class MetricsCollectionHandler(AuditHandler):
 
             # Check for anomalies periodically
             current_time = time.time()
-            if self.alert_on_anomalies and (current_time - self.last_anomaly_check > self.anomaly_check_interval):
+            if self.alert_on_anomalies and (
+                current_time - self.last_anomaly_check > self.anomaly_check_interval
+            ):
                 self.check_for_anomalies()
                 self.last_anomaly_check = current_time
 
@@ -2282,8 +2468,9 @@ class MetricsCollectionHandler(AuditHandler):
             hour_ago = now - 3600
 
             # Get all buckets in the last hour
-            buckets = sorted([b for b in self.metrics.time_series['by_category_action'].keys()
-                            if b >= hour_ago])
+            buckets = sorted(
+                [b for b in self.metrics.time_series["by_category_action"].keys() if b >= hour_ago]
+            )
             logging.debug(f"Found {len(buckets)} time buckets in the last hour")
 
             # Alert on anomalies if handler is configured
@@ -2296,7 +2483,9 @@ class MetricsCollectionHandler(AuditHandler):
             if anomalies:
                 logging.debug(f"Detected {len(anomalies)} anomalies")
                 for i, anomaly in enumerate(anomalies):
-                    logging.debug(f"Anomaly {i+1}: {anomaly['type']} with z-score {anomaly['z_score']:.2f}")
+                    logging.debug(
+                        f"Anomaly {i + 1}: {anomaly['type']} with z-score {anomaly['z_score']:.2f}"
+                    )
             else:
                 logging.debug("No anomalies detected at the end of check")
 
@@ -2305,6 +2494,7 @@ class MetricsCollectionHandler(AuditHandler):
         except Exception as e:
             logging.error(f"Error checking for anomalies: {str(e)}")
             import traceback
+
             logging.error(traceback.format_exc())
             return []
 
@@ -2322,8 +2512,9 @@ class MetricsCollectionHandler(AuditHandler):
         hour_ago = now - 3600
 
         # Get all buckets in the last hour
-        buckets = sorted([b for b in self.metrics.time_series['by_category_action'].keys()
-                          if b >= hour_ago])
+        buckets = sorted(
+            [b for b in self.metrics.time_series["by_category_action"].keys() if b >= hour_ago]
+        )
 
         if len(buckets) < 3:  # Need enough data points (reduced from 5 to 3 for tests)
             # For test purposes, if we don't have enough buckets but we do have data,
@@ -2336,14 +2527,14 @@ class MetricsCollectionHandler(AuditHandler):
 
         # Calculate baseline for each category/action
         baselines = {}
-        for category, actions in self.metrics.totals['by_category_action'].items():
+        for category, actions in self.metrics.totals["by_category_action"].items():
             for action in actions:
                 key = f"{category}_{action}"
 
                 # Get counts for last hour
                 counts = []
                 for bucket in buckets:
-                    bucket_data = self.metrics.time_series['by_category_action'].get(bucket, {})
+                    bucket_data = self.metrics.time_series["by_category_action"].get(bucket, {})
                     category_data = bucket_data.get(category, {})
                     count = category_data.get(action, 0)
                     counts.append(count)
@@ -2364,7 +2555,7 @@ class MetricsCollectionHandler(AuditHandler):
                     variance = sum(squared_diffs) / len(squared_diffs) if squared_diffs else 0
                     # Ensure stddev is at least 1.0 to prevent division by zero and enable detection
                     # of large changes even when previous values were constant
-                    stddev = max(1.0, variance ** 0.5 if variance > 0 else 1.0)
+                    stddev = max(1.0, variance**0.5 if variance > 0 else 1.0)
 
                     # Current value (last value in the counts list)
                     current = counts[-1]
@@ -2373,40 +2564,52 @@ class MetricsCollectionHandler(AuditHandler):
                     z_score = abs(current - mean) / stddev
 
                     # Debug output to help diagnose test issues
-                    logging.debug(f"Category: {category}, Action: {action}, Current: {current}, Mean: {mean}, "
-                                 f"StdDev: {stddev}, Z-score: {z_score}, Threshold: {self.anomaly_threshold}")
+                    logging.debug(
+                        f"Category: {category}, Action: {action}, Current: {current}, Mean: {mean}, "
+                        f"StdDev: {stddev}, Z-score: {z_score}, Threshold: {self.anomaly_threshold}"
+                    )
 
                     # Check if this is an anomaly
                     if z_score > self.anomaly_threshold:
                         # High deviation from normal, potential anomaly
-                        anomalies.append({
-                            'type': 'frequency_anomaly',
-                            'category': category,
-                            'action': action,
-                            'value': current,
-                            'mean': mean,
-                            'stddev': stddev,
-                            'z_score': z_score,
-                            'timestamp': datetime.datetime.utcnow().isoformat() + 'Z',
-                            'severity': self._calculate_severity(z_score)
-                        })
+                        anomalies.append(
+                            {
+                                "type": "frequency_anomaly",
+                                "category": category,
+                                "action": action,
+                                "value": current,
+                                "mean": mean,
+                                "stddev": stddev,
+                                "z_score": z_score,
+                                "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+                                "severity": self._calculate_severity(z_score),
+                            }
+                        )
 
                     # For tests, handle extreme spikes: if current is way higher than mean,
                     # report it as an anomaly even if z-score calculation doesn't catch it
-                    if current > mean * 5 and current > 50:  # If 5x higher than mean and at least 50
+                    if (
+                        current > mean * 5 and current > 50
+                    ):  # If 5x higher than mean and at least 50
                         # Only add if not already added
-                        if not any(a['category'] == category and a['action'] == action for a in anomalies):
-                            anomalies.append({
-                                'type': 'frequency_anomaly',
-                                'category': category,
-                                'action': action,
-                                'value': current,
-                                'mean': mean,
-                                'stddev': stddev,
-                                'z_score': max(self.anomaly_threshold + 1, z_score),  # Ensure it meets threshold
-                                'timestamp': datetime.datetime.utcnow().isoformat() + 'Z',
-                                'severity': self._calculate_severity(z_score)
-                            })
+                        if not any(
+                            a["category"] == category and a["action"] == action for a in anomalies
+                        ):
+                            anomalies.append(
+                                {
+                                    "type": "frequency_anomaly",
+                                    "category": category,
+                                    "action": action,
+                                    "value": current,
+                                    "mean": mean,
+                                    "stddev": stddev,
+                                    "z_score": max(
+                                        self.anomaly_threshold + 1, z_score
+                                    ),  # Ensure it meets threshold
+                                    "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+                                    "severity": self._calculate_severity(z_score),
+                                }
+                            )
 
         return anomalies
 
@@ -2424,8 +2627,7 @@ class MetricsCollectionHandler(AuditHandler):
         hour_ago = now - 3600
 
         # Get all buckets in the last hour
-        buckets = sorted([b for b in self.metrics.time_series['by_level'].keys()
-                          if b >= hour_ago])
+        buckets = sorted([b for b in self.metrics.time_series["by_level"].keys() if b >= hour_ago])
 
         if len(buckets) < 3:  # Need enough data points (reduced from 5 to 3 for tests)
             # For test purposes, if we don't have enough buckets but we do have data,
@@ -2442,9 +2644,13 @@ class MetricsCollectionHandler(AuditHandler):
         error_counts = []
 
         for bucket in buckets:
-            bucket_data = self.metrics.time_series['by_level'].get(bucket, {})
+            bucket_data = self.metrics.time_series["by_level"].get(bucket, {})
 
-            error_count = bucket_data.get('ERROR', 0) + bucket_data.get('CRITICAL', 0) + bucket_data.get('EMERGENCY', 0)
+            error_count = (
+                bucket_data.get("ERROR", 0)
+                + bucket_data.get("CRITICAL", 0)
+                + bucket_data.get("EMERGENCY", 0)
+            )
             total_count = sum(bucket_data.values())
 
             if total_count > 0:
@@ -2472,7 +2678,7 @@ class MetricsCollectionHandler(AuditHandler):
             squared_diffs = [(r - mean) ** 2 for r in baseline_rates]
             variance = sum(squared_diffs) / len(squared_diffs) if squared_diffs else 0
             # Ensure stddev is at least 0.05 (5%) to prevent division by zero
-            stddev = max(0.05, variance ** 0.5 if variance > 0 else 0.05)
+            stddev = max(0.05, variance**0.5 if variance > 0 else 0.05)
 
             # Current value (last value in the rates list)
             current = error_rates[-1]
@@ -2483,36 +2689,46 @@ class MetricsCollectionHandler(AuditHandler):
             z_score = abs(current - mean) / stddev
 
             # Debug output to help diagnose test issues
-            logging.debug(f"Error rate - Current: {current:.2f}, Mean: {mean:.2f}, "
-                         f"StdDev: {stddev:.2f}, Z-score: {z_score:.2f}, "
-                         f"Current errors: {current_errors}/{current_total}")
+            logging.debug(
+                f"Error rate - Current: {current:.2f}, Mean: {mean:.2f}, "
+                f"StdDev: {stddev:.2f}, Z-score: {z_score:.2f}, "
+                f"Current errors: {current_errors}/{current_total}"
+            )
 
             # Check if this is an anomaly
             if z_score > self.anomaly_threshold and current > mean:
                 # High deviation from normal, potential anomaly
-                anomalies.append({
-                    'type': 'error_rate_anomaly',
-                    'value': current,
-                    'mean': mean,
-                    'stddev': stddev,
-                    'z_score': z_score,
-                    'timestamp': datetime.datetime.utcnow().isoformat() + 'Z',
-                    'severity': self._calculate_severity(z_score)
-                })
+                anomalies.append(
+                    {
+                        "type": "error_rate_anomaly",
+                        "value": current,
+                        "mean": mean,
+                        "stddev": stddev,
+                        "z_score": z_score,
+                        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+                        "severity": self._calculate_severity(z_score),
+                    }
+                )
 
             # For tests, handle extreme error rates: if error rate is very high and above baseline
             if current > 0.7 and current > mean + 0.3 and current_total >= 10:
                 # Only add if not already added
-                if not any(a['type'] == 'error_rate_anomaly' for a in anomalies):
-                    anomalies.append({
-                        'type': 'error_rate_anomaly',
-                        'value': current,
-                        'mean': mean,
-                        'stddev': stddev,
-                        'z_score': max(self.anomaly_threshold + 1, z_score),  # Ensure it meets threshold
-                        'timestamp': datetime.datetime.utcnow().isoformat() + 'Z',
-                        'severity': self._calculate_severity(max(z_score, 4.0))  # At least medium severity
-                    })
+                if not any(a["type"] == "error_rate_anomaly" for a in anomalies):
+                    anomalies.append(
+                        {
+                            "type": "error_rate_anomaly",
+                            "value": current,
+                            "mean": mean,
+                            "stddev": stddev,
+                            "z_score": max(
+                                self.anomaly_threshold + 1, z_score
+                            ),  # Ensure it meets threshold
+                            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+                            "severity": self._calculate_severity(
+                                max(z_score, 4.0)
+                            ),  # At least medium severity
+                        }
+                    )
 
         return anomalies
 
@@ -2530,8 +2746,7 @@ class MetricsCollectionHandler(AuditHandler):
         hour_ago = now - 3600
 
         # Get all buckets in the last hour
-        buckets = sorted([b for b in self.metrics.time_series['by_user'].keys()
-                          if b >= hour_ago])
+        buckets = sorted([b for b in self.metrics.time_series["by_user"].keys() if b >= hour_ago])
 
         if len(buckets) < 3:  # Need enough data points (reduced from 5 to 3 for tests)
             # For test purposes, if we don't have enough buckets but we do have data,
@@ -2548,7 +2763,7 @@ class MetricsCollectionHandler(AuditHandler):
         # First, collect baseline activity distribution
         all_user_counts = {}
         for bucket in buckets[:-1]:  # Use all but the most recent bucket for baseline
-            bucket_data = self.metrics.time_series['by_user'].get(bucket, {})
+            bucket_data = self.metrics.time_series["by_user"].get(bucket, {})
             for user, count in bucket_data.items():
                 if user not in all_user_counts:
                     all_user_counts[user] = []
@@ -2563,11 +2778,11 @@ class MetricsCollectionHandler(AuditHandler):
                 avg_user_counts[user] = 0
 
         # Now check each user's current activity
-        for user in self.metrics.totals['by_user']:
+        for user in self.metrics.totals["by_user"]:
             # Get counts for last hour
             counts = []
             for bucket in buckets:
-                bucket_data = self.metrics.time_series['by_user'].get(bucket, {})
+                bucket_data = self.metrics.time_series["by_user"].get(bucket, {})
                 count = bucket_data.get(user, 0)
                 counts.append(count)
 
@@ -2586,7 +2801,7 @@ class MetricsCollectionHandler(AuditHandler):
                 squared_diffs = [(c - mean) ** 2 for c in baseline_counts]
                 variance = sum(squared_diffs) / len(squared_diffs) if squared_diffs else 0
                 # Ensure stddev is at least 1.0 to prevent division by zero
-                stddev = max(1.0, variance ** 0.5 if variance > 0 else 1.0)
+                stddev = max(1.0, variance**0.5 if variance > 0 else 1.0)
 
                 # Current value
                 current = counts[-1]
@@ -2595,48 +2810,60 @@ class MetricsCollectionHandler(AuditHandler):
                 z_score = abs(current - mean) / stddev
 
                 # Debug output to help diagnose test issues
-                logging.debug(f"User: {user}, Current: {current}, Mean: {mean}, "
-                             f"StdDev: {stddev}, Z-score: {z_score}")
+                logging.debug(
+                    f"User: {user}, Current: {current}, Mean: {mean}, "
+                    f"StdDev: {stddev}, Z-score: {z_score}"
+                )
 
                 # Check if this is an anomaly
                 if z_score > self.anomaly_threshold:
                     # High deviation from normal, potential anomaly
-                    anomalies.append({
-                        'type': 'user_activity_anomaly',
-                        'user': user,
-                        'value': current,
-                        'mean': mean,
-                        'stddev': stddev,
-                        'z_score': z_score,
-                        'timestamp': datetime.datetime.utcnow().isoformat() + 'Z',
-                        'severity': self._calculate_severity(z_score)
-                    })
+                    anomalies.append(
+                        {
+                            "type": "user_activity_anomaly",
+                            "user": user,
+                            "value": current,
+                            "mean": mean,
+                            "stddev": stddev,
+                            "z_score": z_score,
+                            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+                            "severity": self._calculate_severity(z_score),
+                        }
+                    )
 
                 # For tests, handle extreme activity: if current activity is much higher than mean
                 # and user has a disproportionate share of activity
                 recent_bucket = buckets[-1] if buckets else None
                 if recent_bucket:
-                    recent_data = self.metrics.time_series['by_user'].get(recent_bucket, {})
+                    recent_data = self.metrics.time_series["by_user"].get(recent_bucket, {})
                     total_activity = sum(recent_data.values())
 
                     # If user has more than 40% of all activity and at least 30 events, and it's above baseline
-                    if (total_activity > 0 and
-                        current > mean * 2 and
-                        current > 30 and
-                        current / total_activity > 0.4):
-
+                    if (
+                        total_activity > 0
+                        and current > mean * 2
+                        and current > 30
+                        and current / total_activity > 0.4
+                    ):
                         # Only add if not already added
-                        if not any(a['type'] == 'user_activity_anomaly' and a['user'] == user for a in anomalies):
-                            anomalies.append({
-                                'type': 'user_activity_anomaly',
-                                'user': user,
-                                'value': current,
-                                'mean': mean,
-                                'stddev': stddev,
-                                'z_score': max(self.anomaly_threshold + 1, z_score),  # Ensure it meets threshold
-                                'timestamp': datetime.datetime.utcnow().isoformat() + 'Z',
-                                'severity': self._calculate_severity(z_score)
-                            })
+                        if not any(
+                            a["type"] == "user_activity_anomaly" and a["user"] == user
+                            for a in anomalies
+                        ):
+                            anomalies.append(
+                                {
+                                    "type": "user_activity_anomaly",
+                                    "user": user,
+                                    "value": current,
+                                    "mean": mean,
+                                    "stddev": stddev,
+                                    "z_score": max(
+                                        self.anomaly_threshold + 1, z_score
+                                    ),  # Ensure it meets threshold
+                                    "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+                                    "severity": self._calculate_severity(z_score),
+                                }
+                            )
 
         return anomalies
 
@@ -2651,13 +2878,13 @@ class MetricsCollectionHandler(AuditHandler):
             str: Severity level ('low', 'medium', 'high', 'critical')
         """
         if z_score < 4:
-            return 'low'
+            return "low"
         elif z_score < 6:
-            return 'medium'
+            return "medium"
         elif z_score < 8:
-            return 'high'
+            return "high"
         else:
-            return 'critical'
+            return "critical"
 
 
 class AuditAlertManager:
@@ -2669,8 +2896,12 @@ class AuditAlertManager:
     automated security responses.
     """
 
-    def __init__(self, audit_logger: Optional[AuditLogger] = None,
-                intrusion_detection=None, security_manager=None):
+    def __init__(
+        self,
+        audit_logger: Optional[AuditLogger] = None,
+        intrusion_detection=None,
+        security_manager=None,
+    ):
         """
         Initialize the audit alert manager.
 
@@ -2715,22 +2946,22 @@ class AuditAlertManager:
 
             # Log the anomaly
             if self.audit_logger:
-                level = self._get_audit_level_for_severity(anomaly.get('severity', 'low'))
+                level = self._get_audit_level_for_severity(anomaly.get("severity", "low"))
 
                 self.audit_logger.security(
                     action="audit_anomaly_detected",
                     level=level,
                     details={
-                        'anomaly_type': anomaly.get('type'),
-                        'severity': anomaly.get('severity'),
-                        'z_score': anomaly.get('z_score'),
-                        'category': anomaly.get('category'),
-                        'action': anomaly.get('action'),
-                        'user': anomaly.get('user'),
-                        'value': anomaly.get('value'),
-                        'mean': anomaly.get('mean'),
-                        'timestamp': anomaly.get('timestamp')
-                    }
+                        "anomaly_type": anomaly.get("type"),
+                        "severity": anomaly.get("severity"),
+                        "z_score": anomaly.get("z_score"),
+                        "category": anomaly.get("category"),
+                        "action": anomaly.get("action"),
+                        "user": anomaly.get("user"),
+                        "value": anomaly.get("value"),
+                        "mean": anomaly.get("mean"),
+                        "timestamp": anomaly.get("timestamp"),
+                    },
                 )
 
             # Create a security alert if intrusion detection is available
@@ -2761,22 +2992,25 @@ class AuditAlertManager:
             alert_id = f"audit-anomaly-{int(time.time())}"
 
             # Determine alert description based on anomaly type
-            alert_type = anomaly.get('type', 'unknown')
+            alert_type = anomaly.get("type", "unknown")
             description = self._get_alert_description(anomaly)
 
             # Create security alert
             alert = SecurityAlert(
                 alert_id=alert_id,
-                timestamp=anomaly.get('timestamp', datetime.datetime.utcnow().isoformat() + 'Z'),
-                level=anomaly.get('severity', 'low'),
+                timestamp=anomaly.get("timestamp", datetime.datetime.utcnow().isoformat() + "Z"),
+                level=anomaly.get("severity", "low"),
                 type=alert_type,
                 description=description,
                 source_events=[],  # No specific events (statistical anomaly)
-                details=anomaly
+                details=anomaly,
             )
 
             # Add to alert manager if available
-            if hasattr(self.intrusion_detection, 'alert_manager') and self.intrusion_detection.alert_manager:
+            if (
+                hasattr(self.intrusion_detection, "alert_manager")
+                and self.intrusion_detection.alert_manager
+            ):
                 self.intrusion_detection.alert_manager.add_alert(alert)
 
         except Exception as e:
@@ -2792,39 +3026,45 @@ class AuditAlertManager:
         Returns:
             str: Human-readable description
         """
-        anomaly_type = anomaly.get('type', 'unknown')
+        anomaly_type = anomaly.get("type", "unknown")
 
-        if anomaly_type == 'frequency_anomaly':
-            category = anomaly.get('category', 'unknown')
-            action = anomaly.get('action', 'unknown')
-            value = anomaly.get('value', 0)
-            mean = anomaly.get('mean', 0)
-            z_score = anomaly.get('z_score', 0)
+        if anomaly_type == "frequency_anomaly":
+            category = anomaly.get("category", "unknown")
+            action = anomaly.get("action", "unknown")
+            value = anomaly.get("value", 0)
+            mean = anomaly.get("mean", 0)
+            z_score = anomaly.get("z_score", 0)
 
-            return (f"Unusual frequency of {category}/{action} events detected "
-                    f"(current: {value}, normal: {mean:.2f}, deviation: {z_score:.2f}σ)")
+            return (
+                f"Unusual frequency of {category}/{action} events detected "
+                f"(current: {value}, normal: {mean:.2f}, deviation: {z_score:.2f}σ)"
+            )
 
-        elif anomaly_type == 'error_rate_anomaly':
-            value = anomaly.get('value', 0)
-            mean = anomaly.get('mean', 0)
-            z_score = anomaly.get('z_score', 0)
+        elif anomaly_type == "error_rate_anomaly":
+            value = anomaly.get("value", 0)
+            mean = anomaly.get("mean", 0)
+            z_score = anomaly.get("z_score", 0)
 
-            return (f"Abnormal error rate detected "
-                    f"(current: {value*100:.2f}%, normal: {mean*100:.2f}%, deviation: {z_score:.2f}σ)")
+            return (
+                f"Abnormal error rate detected "
+                f"(current: {value * 100:.2f}%, normal: {mean * 100:.2f}%, deviation: {z_score:.2f}σ)"
+            )
 
-        elif anomaly_type == 'user_activity_anomaly':
-            user = anomaly.get('user', 'unknown')
-            value = anomaly.get('value', 0)
-            mean = anomaly.get('mean', 0)
-            z_score = anomaly.get('z_score', 0)
+        elif anomaly_type == "user_activity_anomaly":
+            user = anomaly.get("user", "unknown")
+            value = anomaly.get("value", 0)
+            mean = anomaly.get("mean", 0)
+            z_score = anomaly.get("z_score", 0)
 
-            return (f"Unusual activity level for user {user} "
-                    f"(current: {value}, normal: {mean:.2f}, deviation: {z_score:.2f}σ)")
+            return (
+                f"Unusual activity level for user {user} "
+                f"(current: {value}, normal: {mean:.2f}, deviation: {z_score:.2f}σ)"
+            )
 
         else:
             return f"Unknown anomaly type: {anomaly_type}"
 
-    def _get_audit_level_for_severity(self, severity: str) -> 'AuditLevel':
+    def _get_audit_level_for_severity(self, severity: str) -> "AuditLevel":
         """
         Map severity string to AuditLevel.
 
@@ -2834,13 +3074,13 @@ class AuditAlertManager:
         Returns:
             AuditLevel: Corresponding audit level
         """
-        if severity == 'low':
+        if severity == "low":
             return AuditLevel.NOTICE
-        elif severity == 'medium':
+        elif severity == "medium":
             return AuditLevel.WARNING
-        elif severity == 'high':
+        elif severity == "high":
             return AuditLevel.ERROR
-        elif severity == 'critical':
+        elif severity == "critical":
             return AuditLevel.CRITICAL
         else:
             return AuditLevel.INFO
@@ -2855,8 +3095,7 @@ class AuditAlertManager:
         with self._lock:
             self.notification_handlers.append(handler)
 
-    def get_recent_alerts(self, limit: int = 10,
-                         min_severity: str = 'low') -> List[Dict[str, Any]]:
+    def get_recent_alerts(self, limit: int = 10, min_severity: str = "low") -> List[Dict[str, Any]]:
         """
         Get recent alerts, optionally filtered by severity.
 
@@ -2867,30 +3106,31 @@ class AuditAlertManager:
         Returns:
             List[Dict[str, Any]]: Recent alerts
         """
-        severity_levels = {'low': 0, 'medium': 1, 'high': 2, 'critical': 3}
+        severity_levels = {"low": 0, "medium": 1, "high": 2, "critical": 3}
         min_level = severity_levels.get(min_severity.lower(), 0)
 
         with self._lock:
             # Filter by severity
             filtered_alerts = [
-                alert for alert in self.alerts
-                if severity_levels.get(alert.get('severity', 'low').lower(), 0) >= min_level
+                alert
+                for alert in self.alerts
+                if severity_levels.get(alert.get("severity", "low").lower(), 0) >= min_level
             ]
 
             # Sort by timestamp (most recent first) and limit
             sorted_alerts = sorted(
-                filtered_alerts,
-                key=lambda x: x.get('timestamp', ''),
-                reverse=True
+                filtered_alerts, key=lambda x: x.get("timestamp", ""), reverse=True
             )[:limit]
 
             return sorted_alerts
 
 
-def setup_audit_visualization(audit_logger: AuditLogger,
-                            enable_anomaly_detection: bool = True,
-                            intrusion_detection=None,
-                            security_manager=None) -> Tuple[AuditMetricsAggregator, AuditVisualizer, AuditAlertManager]:
+def setup_audit_visualization(
+    audit_logger: AuditLogger,
+    enable_anomaly_detection: bool = True,
+    intrusion_detection=None,
+    security_manager=None,
+) -> Tuple[AuditMetricsAggregator, AuditVisualizer, AuditAlertManager]:
     """
     Set up the audit visualization system.
 
@@ -2913,7 +3153,7 @@ def setup_audit_visualization(audit_logger: AuditLogger,
     alert_manager = AuditAlertManager(
         audit_logger=audit_logger,
         intrusion_detection=intrusion_detection,
-        security_manager=security_manager
+        security_manager=security_manager,
     )
 
     # Create metrics collection handler with anomaly detection
@@ -2921,7 +3161,7 @@ def setup_audit_visualization(audit_logger: AuditLogger,
         name="metrics_collector",
         metrics_aggregator=metrics,
         alert_on_anomalies=enable_anomaly_detection,
-        alert_handler=alert_manager.handle_anomaly_alert if enable_anomaly_detection else None
+        alert_handler=alert_manager.handle_anomaly_alert if enable_anomaly_detection else None,
     )
 
     # Register handler with logger
@@ -2940,7 +3180,7 @@ def generate_audit_dashboard(
     alert_manager: Optional[AuditAlertManager] = None,
     title: str = "Audit Metrics Dashboard",
     include_security_alerts: bool = True,
-    include_anomalies: bool = True
+    include_anomalies: bool = True,
 ) -> str:
     """
     Generate an audit metrics dashboard.
@@ -2974,13 +3214,17 @@ def generate_audit_dashboard(
 
     # Get security alerts if available and enabled
     security_alerts = []
-    if include_security_alerts and hasattr(alert_manager, 'intrusion_detection') and alert_manager.intrusion_detection:
+    if (
+        include_security_alerts
+        and hasattr(alert_manager, "intrusion_detection")
+        and alert_manager.intrusion_detection
+    ):
         # Import SecurityAlertManager if not already imported
         try:
             from ipfs_datasets_py.audit.intrusion import SecurityAlertManager
 
             # Get alerts from SecurityAlertManager
-            if hasattr(alert_manager.intrusion_detection, 'alert_manager'):
+            if hasattr(alert_manager.intrusion_detection, "alert_manager"):
                 alert_mgr = alert_manager.intrusion_detection.alert_manager
                 if alert_mgr:
                     # Get recent alerts
@@ -2994,7 +3238,7 @@ def generate_audit_dashboard(
     anomaly_alerts = []
     if include_anomalies and alert_manager:
         try:
-            anomaly_alerts = alert_manager.get_recent_alerts(limit=10, min_severity='low')
+            anomaly_alerts = alert_manager.get_recent_alerts(limit=10, min_severity="low")
         except Exception as e:
             logging.warning(f"Could not retrieve anomaly alerts: {str(e)}")
 
@@ -3002,14 +3246,14 @@ def generate_audit_dashboard(
     html = visualizer.generate_dashboard_html(
         title=title,
         security_alerts=security_alerts if include_security_alerts else [],
-        anomaly_alerts=anomaly_alerts if include_anomalies else []
+        anomaly_alerts=anomaly_alerts if include_anomalies else [],
     )
 
     # Create output directory if it doesn't exist
     os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
 
     # Write dashboard to file
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         f.write(html)
 
     return output_file
@@ -3038,10 +3282,9 @@ class OptimizerLearningMetricsVisualizer:
         # Create output directory if it doesn't exist
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def visualize_learning_cycles(self,
-                                output_file: Optional[str] = None,
-                                theme: str = "light",
-                                interactive: bool = False) -> Optional[Any]:
+    def visualize_learning_cycles(
+        self, output_file: Optional[str] = None, theme: str = "light", interactive: bool = False
+    ) -> Optional[Any]:
         """
         Create a visualization of learning cycles over time.
 
@@ -3057,18 +3300,25 @@ class OptimizerLearningMetricsVisualizer:
             logging.warning("No metrics collector available for visualization")
             return None
 
-        if not hasattr(self.metrics_collector, 'learning_cycles') or not self.metrics_collector.learning_cycles:
+        if (
+            not hasattr(self.metrics_collector, "learning_cycles")
+            or not self.metrics_collector.learning_cycles
+        ):
             logging.warning("No learning cycle data available for visualization")
             return None
 
         # Default output file if not provided
         if not output_file:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = os.path.join(self.output_dir, f"learning_cycles_{timestamp}.{'html' if interactive else 'png'}")
+            output_file = os.path.join(
+                self.output_dir, f"learning_cycles_{timestamp}.{'html' if interactive else 'png'}"
+            )
 
         # Check if we have the necessary libraries
         if interactive and not INTERACTIVE_VISUALIZATION_AVAILABLE:
-            logging.warning("Plotly not available for interactive visualization. Falling back to static plot.")
+            logging.warning(
+                "Plotly not available for interactive visualization. Falling back to static plot."
+            )
             interactive = False
 
         if not VISUALIZATION_LIBS_AVAILABLE:
@@ -3080,19 +3330,20 @@ class OptimizerLearningMetricsVisualizer:
             cycles = self.metrics_collector.learning_cycles
 
             # Prepare data for visualization
-            timestamps = [cycle['timestamp'] for cycle in cycles]
-            analyzed_queries = [cycle['analyzed_queries'] for cycle in cycles]
-            patterns_identified = [cycle['patterns_identified'] for cycle in cycles]
-            parameters_adjusted = [cycle['parameters_adjusted'] for cycle in cycles]
-            execution_times = [cycle['execution_time'] for cycle in cycles]
+            timestamps = [cycle["timestamp"] for cycle in cycles]
+            analyzed_queries = [cycle["analyzed_queries"] for cycle in cycles]
+            patterns_identified = [cycle["patterns_identified"] for cycle in cycles]
+            parameters_adjusted = [cycle["parameters_adjusted"] for cycle in cycles]
+            execution_times = [cycle["execution_time"] for cycle in cycles]
 
             if interactive:
                 # Create interactive visualization with plotly
                 fig = make_subplots(
-                    rows=3, cols=1,
+                    rows=3,
+                    cols=1,
                     subplot_titles=("Queries & Patterns", "Parameters Adjusted", "Execution Time"),
                     shared_xaxes=True,
-                    vertical_spacing=0.1
+                    vertical_spacing=0.1,
                 )
 
                 # Plot for queries and patterns
@@ -3100,22 +3351,24 @@ class OptimizerLearningMetricsVisualizer:
                     go.Scatter(
                         x=timestamps,
                         y=analyzed_queries,
-                        mode='lines+markers',
-                        name='Analyzed Queries',
-                        marker=dict(color='#5E81AC')
+                        mode="lines+markers",
+                        name="Analyzed Queries",
+                        marker=dict(color="#5E81AC"),
                     ),
-                    row=1, col=1
+                    row=1,
+                    col=1,
                 )
 
                 fig.add_trace(
                     go.Scatter(
                         x=timestamps,
                         y=patterns_identified,
-                        mode='lines+markers',
-                        name='Patterns Identified',
-                        marker=dict(color='#8FBCBB')
+                        mode="lines+markers",
+                        name="Patterns Identified",
+                        marker=dict(color="#8FBCBB"),
                     ),
-                    row=1, col=1
+                    row=1,
+                    col=1,
                 )
 
                 # Plot for parameters adjusted
@@ -3123,10 +3376,11 @@ class OptimizerLearningMetricsVisualizer:
                     go.Bar(
                         x=timestamps,
                         y=parameters_adjusted,
-                        name='Parameters Adjusted',
-                        marker=dict(color='#EBCB8B')
+                        name="Parameters Adjusted",
+                        marker=dict(color="#EBCB8B"),
                     ),
-                    row=2, col=1
+                    row=2,
+                    col=1,
                 )
 
                 # Plot for execution time
@@ -3134,21 +3388,22 @@ class OptimizerLearningMetricsVisualizer:
                     go.Scatter(
                         x=timestamps,
                         y=execution_times,
-                        mode='lines+markers',
-                        name='Execution Time (s)',
-                        marker=dict(color='#BF616A')
+                        mode="lines+markers",
+                        name="Execution Time (s)",
+                        marker=dict(color="#BF616A"),
                     ),
-                    row=3, col=1
+                    row=3,
+                    col=1,
                 )
 
                 # Update layout
                 fig.update_layout(
                     title="RAG Query Optimizer Learning Cycles",
                     height=800,
-                    template='plotly_white' if theme == 'light' else 'plotly_dark',
+                    template="plotly_white" if theme == "light" else "plotly_dark",
                     showlegend=True,
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-                    margin=dict(l=40, r=40, t=80, b=40)
+                    margin=dict(l=40, r=40, t=80, b=40),
                 )
 
                 # Save the figure
@@ -3157,37 +3412,49 @@ class OptimizerLearningMetricsVisualizer:
 
             else:
                 # Create static visualization with matplotlib
-                plt.style.use('default' if theme == 'light' else 'dark_background')
+                plt.style.use("default" if theme == "light" else "dark_background")
 
                 fig, axes = plt.subplots(3, 1, figsize=(14, 10), sharex=True)
                 fig.suptitle("RAG Query Optimizer Learning Cycles", fontsize=16)
 
                 # Plot for queries and patterns
                 ax1 = axes[0]
-                ax1.plot(timestamps, analyzed_queries, 'o-', label='Analyzed Queries', color='#5E81AC')
-                ax1.plot(timestamps, patterns_identified, 's-', label='Patterns Identified', color='#8FBCBB')
-                ax1.set_ylabel('Count')
+                ax1.plot(
+                    timestamps, analyzed_queries, "o-", label="Analyzed Queries", color="#5E81AC"
+                )
+                ax1.plot(
+                    timestamps,
+                    patterns_identified,
+                    "s-",
+                    label="Patterns Identified",
+                    color="#8FBCBB",
+                )
+                ax1.set_ylabel("Count")
                 ax1.legend()
                 ax1.grid(True, alpha=0.3)
 
                 # Plot for parameters adjusted
                 ax2 = axes[1]
-                ax2.bar(timestamps, parameters_adjusted, label='Parameters Adjusted', color='#EBCB8B')
-                ax2.set_ylabel('Count')
+                ax2.bar(
+                    timestamps, parameters_adjusted, label="Parameters Adjusted", color="#EBCB8B"
+                )
+                ax2.set_ylabel("Count")
                 ax2.grid(True, alpha=0.3)
 
                 # Plot for execution time
                 ax3 = axes[2]
-                ax3.plot(timestamps, execution_times, 'o-', label='Execution Time (s)', color='#BF616A')
-                ax3.set_ylabel('Seconds')
-                ax3.set_xlabel('Time')
+                ax3.plot(
+                    timestamps, execution_times, "o-", label="Execution Time (s)", color="#BF616A"
+                )
+                ax3.set_ylabel("Seconds")
+                ax3.set_xlabel("Time")
                 ax3.grid(True, alpha=0.3)
 
                 # Format x-axis dates
                 fig.autofmt_xdate()
 
                 plt.tight_layout()
-                plt.savefig(output_file, dpi=150, bbox_inches='tight')
+                plt.savefig(output_file, dpi=150, bbox_inches="tight")
 
                 return fig
 
@@ -3195,10 +3462,9 @@ class OptimizerLearningMetricsVisualizer:
             logging.error(f"Error creating learning cycles visualization: {e}")
             return None
 
-    def visualize_parameter_adaptations(self,
-                                      output_file: Optional[str] = None,
-                                      theme: str = "light",
-                                      interactive: bool = False) -> Optional[Any]:
+    def visualize_parameter_adaptations(
+        self, output_file: Optional[str] = None, theme: str = "light", interactive: bool = False
+    ) -> Optional[Any]:
         """
         Create a visualization of parameter adaptations over time.
 
@@ -3214,19 +3480,26 @@ class OptimizerLearningMetricsVisualizer:
             logging.warning("No metrics collector available for visualization")
             return None
 
-        if (not hasattr(self.metrics_collector, 'parameter_adaptations') or
-            not self.metrics_collector.parameter_adaptations):
+        if (
+            not hasattr(self.metrics_collector, "parameter_adaptations")
+            or not self.metrics_collector.parameter_adaptations
+        ):
             logging.warning("No parameter adaptation data available for visualization")
             return None
 
         # Default output file if not provided
         if not output_file:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = os.path.join(self.output_dir, f"parameter_adaptations_{timestamp}.{'html' if interactive else 'png'}")
+            output_file = os.path.join(
+                self.output_dir,
+                f"parameter_adaptations_{timestamp}.{'html' if interactive else 'png'}",
+            )
 
         # Check if we have the necessary libraries
         if interactive and not INTERACTIVE_VISUALIZATION_AVAILABLE:
-            logging.warning("Plotly not available for interactive visualization. Falling back to static plot.")
+            logging.warning(
+                "Plotly not available for interactive visualization. Falling back to static plot."
+            )
             interactive = False
 
         if not VISUALIZATION_LIBS_AVAILABLE:
@@ -3238,91 +3511,96 @@ class OptimizerLearningMetricsVisualizer:
             adaptations = self.metrics_collector.parameter_adaptations
 
             # Group by parameter
-            parameters = defaultdict(lambda: {
-                'timestamps': [],
-                'old_values': [],
-                'new_values': [],
-                'relative_changes': []
-            })
+            parameters = defaultdict(
+                lambda: {
+                    "timestamps": [],
+                    "old_values": [],
+                    "new_values": [],
+                    "relative_changes": [],
+                }
+            )
 
             for adaptation in adaptations:
-                param_name = adaptation['parameter_name']
-                parameters[param_name]['timestamps'].append(adaptation['timestamp'])
-                parameters[param_name]['old_values'].append(adaptation['old_value'])
-                parameters[param_name]['new_values'].append(adaptation['new_value'])
+                param_name = adaptation["parameter_name"]
+                parameters[param_name]["timestamps"].append(adaptation["timestamp"])
+                parameters[param_name]["old_values"].append(adaptation["old_value"])
+                parameters[param_name]["new_values"].append(adaptation["new_value"])
 
                 # Calculate relative change
-                if isinstance(adaptation['old_value'], (int, float)) and adaptation['old_value'] != 0:
-                    rel_change = (adaptation['new_value'] - adaptation['old_value']) / adaptation['old_value']
-                    parameters[param_name]['relative_changes'].append(rel_change)
+                if (
+                    isinstance(adaptation["old_value"], (int, float))
+                    and adaptation["old_value"] != 0
+                ):
+                    rel_change = (adaptation["new_value"] - adaptation["old_value"]) / adaptation[
+                        "old_value"
+                    ]
+                    parameters[param_name]["relative_changes"].append(rel_change)
                 else:
-                    parameters[param_name]['relative_changes'].append(0)
+                    parameters[param_name]["relative_changes"].append(0)
 
             # Filter to most-adjusted parameters if there are many
             top_parameters = sorted(
-                parameters.keys(),
-                key=lambda p: len(parameters[p]['timestamps']),
-                reverse=True
+                parameters.keys(), key=lambda p: len(parameters[p]["timestamps"]), reverse=True
             )[:5]  # Limit to top 5 parameters
 
             if interactive:
                 # Create interactive visualization with plotly
                 fig = make_subplots(
-                    rows=len(top_parameters), cols=1,
+                    rows=len(top_parameters),
+                    cols=1,
                     subplot_titles=[p for p in top_parameters],
-                    vertical_spacing=0.05
+                    vertical_spacing=0.05,
                 )
 
-                colors = ['#5E81AC', '#8FBCBB', '#EBCB8B', '#BF616A', '#A3BE8C'] * 10
+                colors = ["#5E81AC", "#8FBCBB", "#EBCB8B", "#BF616A", "#A3BE8C"] * 10
 
                 for i, param in enumerate(top_parameters):
                     param_data = parameters[param]
 
                     fig.add_trace(
                         go.Scatter(
-                            x=param_data['timestamps'],
-                            y=param_data['new_values'],
-                            mode='lines+markers',
+                            x=param_data["timestamps"],
+                            y=param_data["new_values"],
+                            mode="lines+markers",
                             name=f"{param} value",
                             line=dict(color=colors[i]),
-                            showlegend=True if i == 0 else False
+                            showlegend=True if i == 0 else False,
                         ),
-                        row=i+1, col=1
+                        row=i + 1,
+                        col=1,
                     )
 
                     fig.add_trace(
                         go.Bar(
-                            x=param_data['timestamps'],
-                            y=param_data['relative_changes'],
+                            x=param_data["timestamps"],
+                            y=param_data["relative_changes"],
                             name=f"{param} change %",
                             marker=dict(color=colors[i], opacity=0.5),
-                            showlegend=True if i == 0 else False
+                            showlegend=True if i == 0 else False,
                         ),
-                        row=i+1, col=1
+                        row=i + 1,
+                        col=1,
                     )
 
                     # Add secondary y-axis for relative change
-                    fig.update_yaxes(
-                        title_text="Value",
-                        secondary_y=False,
-                        row=i+1, col=1
-                    )
+                    fig.update_yaxes(title_text="Value", secondary_y=False, row=i + 1, col=1)
 
                     fig.update_yaxes(
                         title_text="Relative Change",
                         secondary_y=True,
                         showgrid=False,
-                        row=i+1, col=1
+                        row=i + 1,
+                        col=1,
                     )
 
                 # Update layout
                 fig.update_layout(
                     title="Parameter Adaptations Over Time",
                     height=200 * len(top_parameters) + 100,
-                    template='plotly_white' if theme == 'light' else 'plotly_dark',
+                    template="plotly_white" if theme == "light" else "plotly_dark",
                     showlegend=True,
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-                    margin=dict(l=40, r=40, t=80, b=40)
+                    margin=dict(l=40, r=40, t=80, b=40),
                 )
 
                 # Save the figure
@@ -3331,12 +3609,10 @@ class OptimizerLearningMetricsVisualizer:
 
             else:
                 # Create static visualization with matplotlib
-                plt.style.use('default' if theme == 'light' else 'dark_background')
+                plt.style.use("default" if theme == "light" else "dark_background")
 
                 fig, axes = plt.subplots(
-                    len(top_parameters), 1,
-                    figsize=(14, 4 * len(top_parameters)),
-                    sharex=True
+                    len(top_parameters), 1, figsize=(14, 4 * len(top_parameters)), sharex=True
                 )
 
                 # Handle single subplot case
@@ -3352,37 +3628,37 @@ class OptimizerLearningMetricsVisualizer:
                     # Plot parameter value
                     color = sns.color_palette()[i % 10]
                     ax.plot(
-                        param_data['timestamps'],
-                        param_data['new_values'],
-                        'o-',
+                        param_data["timestamps"],
+                        param_data["new_values"],
+                        "o-",
                         label=f"{param} value",
-                        color=color
+                        color=color,
                     )
                     ax.set_ylabel("Value", color=color)
-                    ax.tick_params(axis='y', labelcolor=color)
+                    ax.tick_params(axis="y", labelcolor=color)
 
                     # Create secondary y-axis for relative change
                     ax2 = ax.twinx()
                     color2 = sns.color_palette()[i % 10 + 5]
                     ax2.bar(
-                        param_data['timestamps'],
-                        param_data['relative_changes'],
+                        param_data["timestamps"],
+                        param_data["relative_changes"],
                         alpha=0.3,
                         label=f"{param} rel. change",
-                        color=color2
+                        color=color2,
                     )
                     ax2.set_ylabel("Relative Change", color=color2)
-                    ax2.tick_params(axis='y', labelcolor=color2)
+                    ax2.tick_params(axis="y", labelcolor=color2)
 
                     ax.set_title(param)
                     ax.grid(True, alpha=0.3)
 
                 # Format x-axis dates on the last subplot
                 fig.autofmt_xdate()
-                axes[-1].set_xlabel('Time')
+                axes[-1].set_xlabel("Time")
 
                 plt.tight_layout()
-                plt.savefig(output_file, dpi=150, bbox_inches='tight')
+                plt.savefig(output_file, dpi=150, bbox_inches="tight")
 
                 return fig
 
@@ -3390,10 +3666,9 @@ class OptimizerLearningMetricsVisualizer:
             logging.error(f"Error creating parameter adaptations visualization: {e}")
             return None
 
-    def visualize_strategy_effectiveness(self,
-                                       output_file: Optional[str] = None,
-                                       theme: str = "light",
-                                       interactive: bool = False) -> Optional[Any]:
+    def visualize_strategy_effectiveness(
+        self, output_file: Optional[str] = None, theme: str = "light", interactive: bool = False
+    ) -> Optional[Any]:
         """
         Create a visualization of strategy effectiveness for different query types.
 
@@ -3409,19 +3684,26 @@ class OptimizerLearningMetricsVisualizer:
             logging.warning("No metrics collector available for visualization")
             return None
 
-        if (not hasattr(self.metrics_collector, 'strategy_effectiveness') or
-            not self.metrics_collector.strategy_effectiveness):
+        if (
+            not hasattr(self.metrics_collector, "strategy_effectiveness")
+            or not self.metrics_collector.strategy_effectiveness
+        ):
             logging.warning("No strategy effectiveness data available for visualization")
             return None
 
         # Default output file if not provided
         if not output_file:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = os.path.join(self.output_dir, f"strategy_effectiveness_{timestamp}.{'html' if interactive else 'png'}")
+            output_file = os.path.join(
+                self.output_dir,
+                f"strategy_effectiveness_{timestamp}.{'html' if interactive else 'png'}",
+            )
 
         # Check if we have the necessary libraries
         if interactive and not INTERACTIVE_VISUALIZATION_AVAILABLE:
-            logging.warning("Plotly not available for interactive visualization. Falling back to static plot.")
+            logging.warning(
+                "Plotly not available for interactive visualization. Falling back to static plot."
+            )
             interactive = False
 
         if not VISUALIZATION_LIBS_AVAILABLE:
@@ -3437,8 +3719,8 @@ class OptimizerLearningMetricsVisualizer:
             query_types = set()
 
             for entry in effectiveness_data:
-                strategy = entry['strategy']
-                query_type = entry['query_type']
+                strategy = entry["strategy"]
+                query_type = entry["query_type"]
                 query_types.add(query_type)
 
                 if strategy not in strategies:
@@ -3446,16 +3728,16 @@ class OptimizerLearningMetricsVisualizer:
 
                 if query_type not in strategies[strategy]:
                     strategies[strategy][query_type] = {
-                        'success_rates': [],
-                        'mean_latencies': [],
-                        'sample_sizes': [],
-                        'timestamps': []
+                        "success_rates": [],
+                        "mean_latencies": [],
+                        "sample_sizes": [],
+                        "timestamps": [],
                     }
 
-                strategies[strategy][query_type]['success_rates'].append(entry['success_rate'])
-                strategies[strategy][query_type]['mean_latencies'].append(entry['mean_latency'])
-                strategies[strategy][query_type]['sample_sizes'].append(entry['sample_size'])
-                strategies[strategy][query_type]['timestamps'].append(entry['timestamp'])
+                strategies[strategy][query_type]["success_rates"].append(entry["success_rate"])
+                strategies[strategy][query_type]["mean_latencies"].append(entry["mean_latency"])
+                strategies[strategy][query_type]["sample_sizes"].append(entry["sample_size"])
+                strategies[strategy][query_type]["timestamps"].append(entry["timestamp"])
 
             if interactive:
                 # Create interactive visualization with plotly
@@ -3468,27 +3750,25 @@ class OptimizerLearningMetricsVisualizer:
                         color_idx = (i * len(query_types) + j) % len(colors)
 
                         hover_data = [
-                            f"Strategy: {strategy}<br>" +
-                            f"Query Type: {query_type}<br>" +
-                            f"Success Rate: {sr:.2f}<br>" +
-                            f"Mean Latency: {ml:.2f} s<br>" +
-                            f"Sample Size: {ss}"
+                            f"Strategy: {strategy}<br>"
+                            + f"Query Type: {query_type}<br>"
+                            + f"Success Rate: {sr:.2f}<br>"
+                            + f"Mean Latency: {ml:.2f} s<br>"
+                            + f"Sample Size: {ss}"
                             for sr, ml, ss in zip(
-                                data['success_rates'],
-                                data['mean_latencies'],
-                                data['sample_sizes']
+                                data["success_rates"], data["mean_latencies"], data["sample_sizes"]
                             )
                         ]
 
                         fig.add_trace(
                             go.Scatter(
-                                x=data['timestamps'],
-                                y=data['success_rates'],
-                                mode='lines+markers',
+                                x=data["timestamps"],
+                                y=data["success_rates"],
+                                mode="lines+markers",
                                 name=f"{strategy} - {query_type}",
                                 marker=dict(color=colors[color_idx]),
                                 hovertext=hover_data,
-                                hoverinfo="text"
+                                hoverinfo="text",
                             )
                         )
 
@@ -3496,11 +3776,11 @@ class OptimizerLearningMetricsVisualizer:
                     title="Strategy Effectiveness by Query Type",
                     xaxis_title="Time",
                     yaxis_title="Success Rate",
-                    template='plotly_white' if theme == 'light' else 'plotly_dark',
+                    template="plotly_white" if theme == "light" else "plotly_dark",
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                     margin=dict(l=40, r=40, t=80, b=40),
                     height=600,
-                    showlegend=True
+                    showlegend=True,
                 )
 
                 # Save the figure
@@ -3509,14 +3789,14 @@ class OptimizerLearningMetricsVisualizer:
 
             else:
                 # Create static visualization with matplotlib
-                plt.style.use('default' if theme == 'light' else 'dark_background')
+                plt.style.use("default" if theme == "light" else "dark_background")
 
                 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10), sharex=True)
                 fig.suptitle("Strategy Effectiveness by Query Type", fontsize=16)
 
                 # Color palette for strategies and query types
                 strategy_colors = {}
-                marker_styles = ['o', 's', '^', 'D', 'p', '*']
+                marker_styles = ["o", "s", "^", "D", "p", "*"]
 
                 legend_handles = []
                 legend_labels = []
@@ -3528,13 +3808,13 @@ class OptimizerLearningMetricsVisualizer:
 
                     for j, (query_type, data) in enumerate(strategy_data.items()):
                         marker = marker_styles[j % len(marker_styles)]
-                        line, = ax1.plot(
-                            data['timestamps'],
-                            data['success_rates'],
+                        (line,) = ax1.plot(
+                            data["timestamps"],
+                            data["success_rates"],
                             marker=marker,
-                            linestyle='-',
+                            linestyle="-",
                             color=strategy_colors[strategy],
-                            label=f"{strategy} - {query_type}"
+                            label=f"{strategy} - {query_type}",
                         )
 
                         legend_handles.append(line)
@@ -3549,11 +3829,11 @@ class OptimizerLearningMetricsVisualizer:
                     for j, (query_type, data) in enumerate(strategy_data.items()):
                         marker = marker_styles[j % len(marker_styles)]
                         ax2.plot(
-                            data['timestamps'],
-                            data['mean_latencies'],
+                            data["timestamps"],
+                            data["mean_latencies"],
                             marker=marker,
-                            linestyle='-',
-                            color=strategy_colors[strategy]
+                            linestyle="-",
+                            color=strategy_colors[strategy],
                         )
 
                 ax2.set_ylabel("Mean Latency (s)")
@@ -3564,10 +3844,10 @@ class OptimizerLearningMetricsVisualizer:
                 fig.legend(
                     legend_handles,
                     legend_labels,
-                    loc='upper center',
+                    loc="upper center",
                     bbox_to_anchor=(0.5, 0.05),
                     ncol=min(4, len(legend_labels)),
-                    frameon=True
+                    frameon=True,
                 )
 
                 # Format x-axis dates
@@ -3575,7 +3855,7 @@ class OptimizerLearningMetricsVisualizer:
 
                 plt.tight_layout()
                 plt.subplots_adjust(bottom=0.15)  # Make room for the legend
-                plt.savefig(output_file, dpi=150, bbox_inches='tight')
+                plt.savefig(output_file, dpi=150, bbox_inches="tight")
 
                 return fig
 
@@ -3583,9 +3863,9 @@ class OptimizerLearningMetricsVisualizer:
             logging.error(f"Error creating strategy effectiveness visualization: {e}")
             return None
 
-    def generate_learning_metrics_dashboard(self,
-                                         output_file: Optional[str] = None,
-                                         theme: str = "light") -> Optional[str]:
+    def generate_learning_metrics_dashboard(
+        self, output_file: Optional[str] = None, theme: str = "light"
+    ) -> Optional[str]:
         """
         Generate a comprehensive dashboard for learning metrics.
 
@@ -3606,49 +3886,65 @@ class OptimizerLearningMetricsVisualizer:
         # Default output file if not provided
         if not output_file:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = os.path.join(self.output_dir, f"learning_metrics_dashboard_{timestamp}.html")
+            output_file = os.path.join(
+                self.output_dir, f"learning_metrics_dashboard_{timestamp}.html"
+            )
 
         try:
             # Generate visualizations
             cycles_viz = self.visualize_learning_cycles(
-                output_file=None,
-                theme=theme,
-                interactive=True
+                output_file=None, theme=theme, interactive=True
             )
 
             params_viz = self.visualize_parameter_adaptations(
-                output_file=None,
-                theme=theme,
-                interactive=True
+                output_file=None, theme=theme, interactive=True
             )
 
             strategy_viz = self.visualize_strategy_effectiveness(
-                output_file=None,
-                theme=theme,
-                interactive=True
+                output_file=None, theme=theme, interactive=True
             )
 
             # Get the HTML content from the visualizations
-            cycles_html = cycles_viz.to_html(include_plotlyjs=False, full_html=False) if cycles_viz else ""
-            params_html = params_viz.to_html(include_plotlyjs=False, full_html=False) if params_viz else ""
-            strategy_html = strategy_viz.to_html(include_plotlyjs=False, full_html=False) if strategy_viz else ""
+            cycles_html = (
+                cycles_viz.to_html(include_plotlyjs=False, full_html=False) if cycles_viz else ""
+            )
+            params_html = (
+                params_viz.to_html(include_plotlyjs=False, full_html=False) if params_viz else ""
+            )
+            strategy_html = (
+                strategy_viz.to_html(include_plotlyjs=False, full_html=False)
+                if strategy_viz
+                else ""
+            )
 
             # Get summary statistics
             if self.metrics_collector:
                 summary = {
-                    'total_learning_cycles': len(getattr(self.metrics_collector, 'learning_cycles', [])),
-                    'total_parameter_adaptations': len(getattr(self.metrics_collector, 'parameter_adaptations', [])),
-                    'learning_started': min([c['timestamp'] for c in self.metrics_collector.learning_cycles])
-                                      if hasattr(self.metrics_collector, 'learning_cycles') and self.metrics_collector.learning_cycles else None,
-                    'learning_updated': max([c['timestamp'] for c in self.metrics_collector.learning_cycles])
-                                      if hasattr(self.metrics_collector, 'learning_cycles') and self.metrics_collector.learning_cycles else None
+                    "total_learning_cycles": len(
+                        getattr(self.metrics_collector, "learning_cycles", [])
+                    ),
+                    "total_parameter_adaptations": len(
+                        getattr(self.metrics_collector, "parameter_adaptations", [])
+                    ),
+                    "learning_started": min(
+                        [c["timestamp"] for c in self.metrics_collector.learning_cycles]
+                    )
+                    if hasattr(self.metrics_collector, "learning_cycles")
+                    and self.metrics_collector.learning_cycles
+                    else None,
+                    "learning_updated": max(
+                        [c["timestamp"] for c in self.metrics_collector.learning_cycles]
+                    )
+                    if hasattr(self.metrics_collector, "learning_cycles")
+                    and self.metrics_collector.learning_cycles
+                    else None,
                 }
             else:
                 summary = {
-                    'total_learning_cycles': 0,
-                    'total_parameter_adaptations': 0,
-                    'learning_started': None,
-                    'learning_updated': None
+                    "total_learning_cycles": 0,
+                    "total_parameter_adaptations": 0,
+                    "learning_started": None,
+                    "learning_updated": None,
                 }
 
             # Create template for dashboard
@@ -3836,12 +4132,12 @@ class OptimizerLearningMetricsVisualizer:
                 cycles_html=cycles_html,
                 params_html=params_html,
                 strategy_html=strategy_html,
-                generated_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                generated_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             )
 
             # Write to file
             os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 f.write(html)
 
             return output_file
@@ -3853,11 +4149,11 @@ class OptimizerLearningMetricsVisualizer:
 
 def create_query_audit_timeline(
     query_metrics_collector,
-    audit_metrics: 'AuditMetricsAggregator',
+    audit_metrics: "AuditMetricsAggregator",
     output_file: Optional[str] = None,
     hours_back: int = 24,
     theme: str = "light",
-    figsize: Tuple[int, int] = (14, 8)
+    figsize: Tuple[int, int] = (14, 8),
 ) -> Optional[Any]:
     """
     Create a visualization showing the relationship between RAG queries and audit events.
@@ -3878,7 +4174,9 @@ def create_query_audit_timeline(
         matplotlib.figure.Figure or None if visualization libraries not available
     """
     if not VISUALIZATION_LIBS_AVAILABLE:
-        logging.warning("Visualization libraries not available. Cannot create query-audit timeline.")
+        logging.warning(
+            "Visualization libraries not available. Cannot create query-audit timeline."
+        )
         return None
 
     try:
@@ -3891,26 +4189,26 @@ def create_query_audit_timeline(
 
         # Configure colors based on theme
         if theme == "dark":
-            plt.style.use('dark_background')
+            plt.style.use("dark_background")
             event_colors = {
                 "INFO": "#5E81AC",
                 "WARNING": "#EBCB8B",
                 "ERROR": "#BF616A",
                 "CRITICAL": "#D08770",
-                "EMERGENCY": "#B48EAD"
+                "EMERGENCY": "#B48EAD",
             }
             query_color = "#A3BE8C"
             background_color = "#2E3440"
             text_color = "#ECEFF4"
             grid_color = "#4C566A"
         else:
-            plt.style.use('default')
+            plt.style.use("default")
             event_colors = {
                 "INFO": "#5E81AC",
                 "WARNING": "#EBCB8B",
                 "ERROR": "#BF616A",
                 "CRITICAL": "#D08770",
-                "EMERGENCY": "#B48EAD"
+                "EMERGENCY": "#B48EAD",
             }
             query_color = "#A3BE8C"
             background_color = "#FFFFFF"
@@ -3919,46 +4217,52 @@ def create_query_audit_timeline(
 
         # Get query execution data
         query_data = []
-        if hasattr(query_metrics_collector, 'query_metrics'):
+        if hasattr(query_metrics_collector, "query_metrics"):
             for query_id, metrics in query_metrics_collector.query_metrics.items():
-                if 'start_time' in metrics and 'end_time' in metrics:
+                if "start_time" in metrics and "end_time" in metrics:
                     # Convert timestamps to datetime objects
-                    start_ts = metrics['start_time']
-                    end_ts = metrics['end_time']
+                    start_ts = metrics["start_time"]
+                    end_ts = metrics["end_time"]
 
                     # Skip queries outside our time range
                     if start_ts < start_time:
                         continue
 
-                    query_data.append({
-                        'query_id': query_id,
-                        'start_time': datetime.datetime.fromtimestamp(start_ts),
-                        'end_time': datetime.datetime.fromtimestamp(end_ts),
-                        'duration': end_ts - start_ts,
-                        'query_text': metrics.get('query_params', {}).get('query_text', 'Unknown query'),
-                        'results_count': metrics.get('results_count', 0)
-                    })
+                    query_data.append(
+                        {
+                            "query_id": query_id,
+                            "start_time": datetime.datetime.fromtimestamp(start_ts),
+                            "end_time": datetime.datetime.fromtimestamp(end_ts),
+                            "duration": end_ts - start_ts,
+                            "query_text": metrics.get("query_params", {}).get(
+                                "query_text", "Unknown query"
+                            ),
+                            "results_count": metrics.get("results_count", 0),
+                        }
+                    )
 
         # Get audit events
         audit_events = []
         audit_time_series = audit_metrics.time_series
 
         # Process by category and level
-        for bucket_ts in sorted(audit_time_series['by_category_action'].keys()):
+        for bucket_ts in sorted(audit_time_series["by_category_action"].keys()):
             if bucket_ts < start_time:
                 continue
 
             bucket_time = datetime.datetime.fromtimestamp(bucket_ts)
 
             # Process each category
-            for category, actions in audit_time_series['by_category_action'][bucket_ts].items():
+            for category, actions in audit_time_series["by_category_action"][bucket_ts].items():
                 for action, count in actions.items():
                     # Get the level for this event (if available)
                     level = "INFO"  # Default
 
                     # Look through by_level data to find most severe level for this timestamp
-                    if bucket_ts in audit_time_series['by_level']:
-                        for level_name, level_count in audit_time_series['by_level'][bucket_ts].items():
+                    if bucket_ts in audit_time_series["by_level"]:
+                        for level_name, level_count in audit_time_series["by_level"][
+                            bucket_ts
+                        ].items():
                             if level_count > 0:
                                 if level_name in ["EMERGENCY", "CRITICAL", "ERROR"]:
                                     level = level_name
@@ -3966,16 +4270,18 @@ def create_query_audit_timeline(
                                 elif level_name == "WARNING" and level == "INFO":
                                     level = "WARNING"
 
-                    audit_events.append({
-                        'timestamp': bucket_time,
-                        'category': category,
-                        'action': action,
-                        'level': level,
-                        'count': count
-                    })
+                    audit_events.append(
+                        {
+                            "timestamp": bucket_time,
+                            "category": category,
+                            "action": action,
+                            "level": level,
+                            "count": count,
+                        }
+                    )
 
         # Sort events by timestamp
-        audit_events.sort(key=lambda x: x['timestamp'])
+        audit_events.sort(key=lambda x: x["timestamp"])
 
         # Create the timeline visualization
         fig, ax = plt.subplots(figsize=figsize)
@@ -3983,87 +4289,103 @@ def create_query_audit_timeline(
         # Plot audit events
         y_pos = 1
         for event in audit_events:
-            color = event_colors.get(event['level'], event_colors['INFO'])
-            marker_size = max(50, min(200, event['count'] * 20))  # Scale marker size based on count
+            color = event_colors.get(event["level"], event_colors["INFO"])
+            marker_size = max(50, min(200, event["count"] * 20))  # Scale marker size based on count
 
-            ax.scatter(event['timestamp'], y_pos, s=marker_size, color=color, alpha=0.7,
-                      marker='o', edgecolors='white', linewidth=1)
+            ax.scatter(
+                event["timestamp"],
+                y_pos,
+                s=marker_size,
+                color=color,
+                alpha=0.7,
+                marker="o",
+                edgecolors="white",
+                linewidth=1,
+            )
 
         # Plot query executions
         y_pos = 0
         for i, query in enumerate(query_data):
             # Draw a line for query duration
             ax.plot(
-                [query['start_time'], query['end_time']],
+                [query["start_time"], query["end_time"]],
                 [y_pos, y_pos],
                 color=query_color,
                 linewidth=4,
                 alpha=0.8,
-                solid_capstyle='round'
+                solid_capstyle="round",
             )
 
             # Add a dot for query start
             ax.scatter(
-                query['start_time'],
+                query["start_time"],
                 y_pos,
                 s=80,
                 color=query_color,
-                edgecolors='white',
+                edgecolors="white",
                 linewidth=1,
-                zorder=3
+                zorder=3,
             )
 
         # Configure axis
         ax.set_yticks([0, 1])
-        ax.set_yticklabels(['Queries', 'Audit Events'])
+        ax.set_yticklabels(["Queries", "Audit Events"])
 
         # Set title and labels
-        ax.set_title('RAG Query and Audit Event Timeline', fontsize=14)
-        ax.set_xlabel('Time', fontsize=12)
+        ax.set_title("RAG Query and Audit Event Timeline", fontsize=14)
+        ax.set_xlabel("Time", fontsize=12)
 
         # Format time axis
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
         ax.xaxis.set_major_locator(mdates.HourLocator())
         plt.xticks(rotation=45)
 
         # Add grid
-        ax.grid(True, linestyle='--', alpha=0.7, color=grid_color)
+        ax.grid(True, linestyle="--", alpha=0.7, color=grid_color)
 
         # Add legend
         legend_elements = [
-            plt.Line2D([0], [0], color=query_color, lw=4, label='Query Execution'),
+            plt.Line2D([0], [0], color=query_color, lw=4, label="Query Execution"),
         ]
 
         for level, color in event_colors.items():
             legend_elements.append(
-                plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color,
-                           markersize=10, label=f'{level} Events')
+                plt.Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    markerfacecolor=color,
+                    markersize=10,
+                    label=f"{level} Events",
+                )
             )
 
-        ax.legend(handles=legend_elements, loc='upper right')
+        ax.legend(handles=legend_elements, loc="upper right")
 
         # Adjust layout
         plt.tight_layout()
 
         # Save to file if output_file is specified
         if output_file:
-            plt.savefig(output_file, dpi=100, bbox_inches='tight')
+            plt.savefig(output_file, dpi=100, bbox_inches="tight")
 
         return fig
 
     except Exception as e:
         logging.error(f"Error creating query audit timeline: {str(e)}")
         import traceback
+
         logging.error(traceback.format_exc())
         return None
 
 
 def create_interactive_audit_trends(
-    metrics_aggregator: 'AuditMetricsAggregator',
-    period: str = 'daily',
+    metrics_aggregator: "AuditMetricsAggregator",
+    period: str = "daily",
     lookback_days: int = 7,
     output_file: Optional[str] = None,
-    theme: str = "light"
+    theme: str = "light",
 ) -> Optional[Any]:
     """
     Create an interactive visualization of audit event trends over time.
@@ -4099,54 +4421,62 @@ def create_interactive_audit_trends(
         events_by_status = pd.DataFrame()
 
         # Process time series data by level
-        if 'by_level' in time_series:
+        if "by_level" in time_series:
             level_data = []
-            for level, points in time_series['by_level'].items():
+            for level, points in time_series["by_level"].items():
                 for point in points:
-                    if point['timestamp'] >= start_time:
-                        level_data.append({
-                            'timestamp': datetime.datetime.fromtimestamp(point['timestamp']),
-                            'level': level,
-                            'count': point['count']
-                        })
+                    if point["timestamp"] >= start_time:
+                        level_data.append(
+                            {
+                                "timestamp": datetime.datetime.fromtimestamp(point["timestamp"]),
+                                "level": level,
+                                "count": point["count"],
+                            }
+                        )
 
             if level_data:
                 events_by_level = pd.DataFrame(level_data)
 
         # Process time series data by category
         category_action_data = []
-        if 'by_category_action' in time_series:
-            for key, points in time_series['by_category_action'].items():
+        if "by_category_action" in time_series:
+            for key, points in time_series["by_category_action"].items():
                 # Parse category and action from combined key
-                if '_' in key:
-                    category, action = key.split('_', 1)
+                if "_" in key:
+                    category, action = key.split("_", 1)
                 else:
-                    category, action = key, 'unknown'
+                    category, action = key, "unknown"
 
                 for point in points:
-                    if point['timestamp'] >= start_time:
-                        category_action_data.append({
-                            'timestamp': datetime.datetime.fromtimestamp(point['timestamp']),
-                            'category': category,
-                            'action': action,
-                            'count': point['count']
-                        })
+                    if point["timestamp"] >= start_time:
+                        category_action_data.append(
+                            {
+                                "timestamp": datetime.datetime.fromtimestamp(point["timestamp"]),
+                                "category": category,
+                                "action": action,
+                                "count": point["count"],
+                            }
+                        )
 
         if category_action_data:
             cat_action_df = pd.DataFrame(category_action_data)
-            events_by_category = cat_action_df.groupby(['timestamp', 'category']).sum().reset_index()
+            events_by_category = (
+                cat_action_df.groupby(["timestamp", "category"]).sum().reset_index()
+            )
 
         # Process time series data by status
-        if 'by_status' in time_series:
+        if "by_status" in time_series:
             status_data = []
-            for status, points in time_series['by_status'].items():
+            for status, points in time_series["by_status"].items():
                 for point in points:
-                    if point['timestamp'] >= start_time:
-                        status_data.append({
-                            'timestamp': datetime.datetime.fromtimestamp(point['timestamp']),
-                            'status': status,
-                            'count': point['count']
-                        })
+                    if point["timestamp"] >= start_time:
+                        status_data.append(
+                            {
+                                "timestamp": datetime.datetime.fromtimestamp(point["timestamp"]),
+                                "status": status,
+                                "count": point["count"],
+                            }
+                        )
 
             if status_data:
                 events_by_status = pd.DataFrame(status_data)
@@ -4169,92 +4499,78 @@ def create_interactive_audit_trends(
 
         # Create subplot figure
         fig = make_subplots(
-            rows=3, cols=1,
+            rows=3,
+            cols=1,
             subplot_titles=("Events by Level", "Events by Category", "Events by Status"),
             row_heights=[0.33, 0.33, 0.33],
-            vertical_spacing=0.1
+            vertical_spacing=0.1,
         )
 
         # Add Events by Level trace
         if not events_by_level.empty:
-            for level in events_by_level['level'].unique():
-                level_df = events_by_level[events_by_level['level'] == level]
+            for level in events_by_level["level"].unique():
+                level_df = events_by_level[events_by_level["level"] == level]
                 fig.add_trace(
                     go.Scatter(
-                        x=level_df['timestamp'],
-                        y=level_df['count'],
-                        mode='lines+markers',
+                        x=level_df["timestamp"],
+                        y=level_df["count"],
+                        mode="lines+markers",
                         name=f"{level}",
                         line=dict(width=2),
-                        marker=dict(size=6)
+                        marker=dict(size=6),
                     ),
-                    row=1, col=1
+                    row=1,
+                    col=1,
                 )
 
         # Add Events by Category trace
         if not events_by_category.empty:
-            for category in events_by_category['category'].unique():
-                cat_df = events_by_category[events_by_category['category'] == category]
+            for category in events_by_category["category"].unique():
+                cat_df = events_by_category[events_by_category["category"] == category]
                 fig.add_trace(
-                    go.Bar(
-                        x=cat_df['timestamp'],
-                        y=cat_df['count'],
-                        name=f"{category}"
-                    ),
-                    row=2, col=1
+                    go.Bar(x=cat_df["timestamp"], y=cat_df["count"], name=f"{category}"),
+                    row=2,
+                    col=1,
                 )
 
         # Add Events by Status trace
         if not events_by_status.empty:
-            for status in events_by_status['status'].unique():
-                status_df = events_by_status[events_by_status['status'] == status]
+            for status in events_by_status["status"].unique():
+                status_df = events_by_status[events_by_status["status"] == status]
                 fig.add_trace(
                     go.Scatter(
-                        x=status_df['timestamp'],
-                        y=status_df['count'],
-                        mode='lines+markers',
+                        x=status_df["timestamp"],
+                        y=status_df["count"],
+                        mode="lines+markers",
                         name=f"{status}",
                         line=dict(width=2),
-                        marker=dict(size=6)
+                        marker=dict(size=6),
                     ),
-                    row=3, col=1
+                    row=3,
+                    col=1,
                 )
 
         # Update layout
         fig.update_layout(
             title="Interactive Audit Event Trends",
             height=900,
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                x=1
-            ),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             template="plotly_white" if theme == "light" else "plotly_dark",
             paper_bgcolor=paper_bgcolor,
             plot_bgcolor=plot_bgcolor,
             font=dict(color=text_color),
             colorway=colorway,
             margin=dict(l=50, r=50, t=80, b=50),
-            hovermode="closest"
+            hovermode="closest",
         )
 
         # Update axes
         fig.update_xaxes(
-            title_text="Time",
-            showgrid=True,
-            gridcolor=grid_color,
-            gridwidth=1,
-            zeroline=False
+            title_text="Time", showgrid=True, gridcolor=grid_color, gridwidth=1, zeroline=False
         )
 
         fig.update_yaxes(
-            title_text="Count",
-            showgrid=True,
-            gridcolor=grid_color,
-            gridwidth=1,
-            zeroline=False
+            title_text="Count", showgrid=True, gridcolor=grid_color, gridwidth=1, zeroline=False
         )
 
         # Save if output_file provided
@@ -4266,6 +4582,7 @@ def create_interactive_audit_trends(
     except Exception as e:
         logging.error(f"Error creating interactive audit trends: {str(e)}")
         import traceback
+
         logging.error(traceback.format_exc())
         return None
 
@@ -4275,10 +4592,10 @@ def create_query_audit_timeline(
     audit_metrics,
     hours_back: int = 24,
     interval_minutes: int = 30,
-    theme: str = 'light',
+    theme: str = "light",
     figsize: Tuple[int, int] = (12, 8),
     output_file: Optional[str] = None,
-    show_plot: bool = False
+    show_plot: bool = False,
 ) -> Optional[Any]:
     """
     Create a comprehensive visualization showing both RAG query performance and audit events.
@@ -4312,48 +4629,50 @@ def create_query_audit_timeline(
         start_time = end_time - datetime.timedelta(hours=hours_back)
 
         # Setup theme colors
-        if theme == 'dark':
-            plt.style.use('dark_background')
-            query_color = '#81A1C1'  # Light blue
-            error_color = '#BF616A'  # Red
-            grid_color = '#434C5E'   # Dark gray
-            text_color = '#D8DEE9'   # Light gray
+        if theme == "dark":
+            plt.style.use("dark_background")
+            query_color = "#81A1C1"  # Light blue
+            error_color = "#BF616A"  # Red
+            grid_color = "#434C5E"  # Dark gray
+            text_color = "#D8DEE9"  # Light gray
             category_colors = plt.cm.viridis
             level_colors = {
-                'DEBUG': '#5E81AC',    # Blue
-                'INFO': '#A3BE8C',     # Green
-                'WARNING': '#EBCB8B',  # Yellow
-                'ERROR': '#BF616A',    # Red
-                'CRITICAL': '#B48EAD', # Purple
-                'EMERGENCY': '#FF66AA' # Pink
+                "DEBUG": "#5E81AC",  # Blue
+                "INFO": "#A3BE8C",  # Green
+                "WARNING": "#EBCB8B",  # Yellow
+                "ERROR": "#BF616A",  # Red
+                "CRITICAL": "#B48EAD",  # Purple
+                "EMERGENCY": "#FF66AA",  # Pink
             }
         else:
-            plt.style.use('default')
-            query_color = '#3572C6'   # Blue
-            error_color = '#E57373'   # Light red
-            grid_color = '#DDDDDD'    # Light gray
-            text_color = '#333333'    # Dark gray
+            plt.style.use("default")
+            query_color = "#3572C6"  # Blue
+            error_color = "#E57373"  # Light red
+            grid_color = "#DDDDDD"  # Light gray
+            text_color = "#333333"  # Dark gray
             category_colors = plt.cm.viridis
             level_colors = {
-                'DEBUG': '#4B9CFF',    # Light blue
-                'INFO': '#81C784',     # Green
-                'WARNING': '#FFD54F',  # Yellow
-                'ERROR': '#E57373',    # Red
-                'CRITICAL': '#9575CD', # Purple
-                'EMERGENCY': '#FF66AA' # Pink
+                "DEBUG": "#4B9CFF",  # Light blue
+                "INFO": "#81C784",  # Green
+                "WARNING": "#FFD54F",  # Yellow
+                "ERROR": "#E57373",  # Red
+                "CRITICAL": "#9575CD",  # Purple
+                "EMERGENCY": "#FF66AA",  # Pink
             }
 
         # Extract query data from collector
         query_data = []
         for query_id, metrics in query_metrics_collector.query_metrics.items():
-            if 'start_time' in metrics and 'duration' in metrics:
-                query_time = datetime.datetime.fromtimestamp(metrics['start_time'])
+            if "start_time" in metrics and "duration" in metrics:
+                query_time = datetime.datetime.fromtimestamp(metrics["start_time"])
                 if query_time >= start_time:
-                    query_data.append({
-                        'timestamp': query_time,
-                        'duration': metrics['duration'],
-                        'status': metrics.get('status', 'unknown')
-                    })
+                    query_data.append(
+                        {
+                            "timestamp": query_time,
+                            "duration": metrics["duration"],
+                            "status": metrics.get("status", "unknown"),
+                        }
+                    )
 
         # Extract audit data from aggregator
         try:
@@ -4361,11 +4680,13 @@ def create_query_audit_timeline(
 
             # Filter to relevant time range
             filtered_categories = {}
-            for category, events in audit_time_series.get('by_category', {}).items():
+            for category, events in audit_time_series.get("by_category", {}).items():
                 filtered_events = []
                 for event in events:
                     try:
-                        event_time = datetime.datetime.fromisoformat(event['timestamp'].replace('Z', '+00:00'))
+                        event_time = datetime.datetime.fromisoformat(
+                            event["timestamp"].replace("Z", "+00:00")
+                        )
                         if start_time <= event_time <= end_time:
                             filtered_events.append(event)
                     except (ValueError, TypeError):
@@ -4375,11 +4696,13 @@ def create_query_audit_timeline(
                     filtered_categories[category] = filtered_events
 
             filtered_levels = {}
-            for level, events in audit_time_series.get('by_level', {}).items():
+            for level, events in audit_time_series.get("by_level", {}).items():
                 filtered_events = []
                 for event in events:
                     try:
-                        event_time = datetime.datetime.fromisoformat(event['timestamp'].replace('Z', '+00:00'))
+                        event_time = datetime.datetime.fromisoformat(
+                            event["timestamp"].replace("Z", "+00:00")
+                        )
                         if start_time <= event_time <= end_time:
                             filtered_events.append(event)
                     except (ValueError, TypeError):
@@ -4394,46 +4717,74 @@ def create_query_audit_timeline(
             filtered_levels = {}
 
         # Create figure with three subplots
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=figsize, sharex=True,
-                                           gridspec_kw={'height_ratios': [2, 1, 1]})
+        fig, (ax1, ax2, ax3) = plt.subplots(
+            3, 1, figsize=figsize, sharex=True, gridspec_kw={"height_ratios": [2, 1, 1]}
+        )
 
         # Plot 1: Query durations
         if query_data:
             # Sort by timestamp
-            query_data.sort(key=lambda x: x['timestamp'])
+            query_data.sort(key=lambda x: x["timestamp"])
 
             # Extract data for plotting
-            timestamps = [q['timestamp'] for q in query_data]
-            durations = [q['duration'] for q in query_data]
-            error_timestamps = [q['timestamp'] for q in query_data if q['status'] == 'error']
-            error_durations = [q['duration'] for q in query_data if q['status'] == 'error']
+            timestamps = [q["timestamp"] for q in query_data]
+            durations = [q["duration"] for q in query_data]
+            error_timestamps = [q["timestamp"] for q in query_data if q["status"] == "error"]
+            error_durations = [q["duration"] for q in query_data if q["status"] == "error"]
 
             # Plot all durations as bars
-            ax1.bar(timestamps, durations, width=0.02, alpha=0.7, color=query_color, label='Query Duration')
+            ax1.bar(
+                timestamps,
+                durations,
+                width=0.02,
+                alpha=0.7,
+                color=query_color,
+                label="Query Duration",
+            )
 
             # Add error markers if any
             if error_timestamps:
-                ax1.scatter(error_timestamps, error_durations, color=error_color, marker='x', s=100,
-                          label='Error Queries', zorder=3)
+                ax1.scatter(
+                    error_timestamps,
+                    error_durations,
+                    color=error_color,
+                    marker="x",
+                    s=100,
+                    label="Error Queries",
+                    zorder=3,
+                )
 
             # Add rolling average
             if len(durations) >= 3:
                 window_size = min(5, len(durations))
-                query_df = pd.DataFrame({'timestamp': timestamps, 'duration': durations})
-                query_df = query_df.sort_values('timestamp')
-                query_df['rolling_avg'] = query_df['duration'].rolling(window=window_size, min_periods=1).mean()
+                query_df = pd.DataFrame({"timestamp": timestamps, "duration": durations})
+                query_df = query_df.sort_values("timestamp")
+                query_df["rolling_avg"] = (
+                    query_df["duration"].rolling(window=window_size, min_periods=1).mean()
+                )
 
-                ax1.plot(query_df['timestamp'], query_df['rolling_avg'], 'k--', linewidth=2,
-                       label=f'{window_size}-pt Moving Avg')
+                ax1.plot(
+                    query_df["timestamp"],
+                    query_df["rolling_avg"],
+                    "k--",
+                    linewidth=2,
+                    label=f"{window_size}-pt Moving Avg",
+                )
 
             # Set labels and title
-            ax1.set_ylabel('Query Duration (s)', color=text_color, fontsize=11)
-            ax1.set_title('RAG Query Performance', fontsize=12)
-            ax1.grid(True, linestyle='--', alpha=0.6, color=grid_color)
-            ax1.legend(loc='upper right')
+            ax1.set_ylabel("Query Duration (s)", color=text_color, fontsize=11)
+            ax1.set_title("RAG Query Performance", fontsize=12)
+            ax1.grid(True, linestyle="--", alpha=0.6, color=grid_color)
+            ax1.legend(loc="upper right")
         else:
-            ax1.text(0.5, 0.5, 'No query data available', horizontalalignment='center',
-                   verticalalignment='center', transform=ax1.transAxes)
+            ax1.text(
+                0.5,
+                0.5,
+                "No query data available",
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax1.transAxes,
+            )
 
         # Plot 2: Audit events by category
         if filtered_categories:
@@ -4447,39 +4798,50 @@ def create_query_audit_timeline(
 
                 # Process events
                 for event in events:
-                    event_time = datetime.datetime.fromisoformat(event['timestamp'].replace('Z', '+00:00'))
-                    count = event.get('count', 1)
+                    event_time = datetime.datetime.fromisoformat(
+                        event["timestamp"].replace("Z", "+00:00")
+                    )
+                    count = event.get("count", 1)
 
                     # Find or create interval bucket
                     found = False
                     for interval in category_data[category]:
-                        if abs((event_time - interval['time']).total_seconds()) < interval_seconds:
-                            interval['count'] += count
+                        if abs((event_time - interval["time"]).total_seconds()) < interval_seconds:
+                            interval["count"] += count
                             found = True
                             break
 
                     if not found:
-                        category_data[category].append({
-                            'time': event_time,
-                            'count': count
-                        })
+                        category_data[category].append({"time": event_time, "count": count})
 
             # Plot data for each category
             for i, (category, intervals) in enumerate(category_data.items()):
-                times = [interval['time'] for interval in intervals]
-                counts = [interval['count'] for interval in intervals]
+                times = [interval["time"] for interval in intervals]
+                counts = [interval["count"] for interval in intervals]
 
-                color = category_colors(i / len(category_data)) if len(category_data) > 1 else category_colors(0.5)
-                ax2.plot(times, counts, 'o-', label=category, linewidth=2, color=color, markersize=5)
+                color = (
+                    category_colors(i / len(category_data))
+                    if len(category_data) > 1
+                    else category_colors(0.5)
+                )
+                ax2.plot(
+                    times, counts, "o-", label=category, linewidth=2, color=color, markersize=5
+                )
 
             # Set labels
-            ax2.set_ylabel('Event Count', color=text_color, fontsize=11)
-            ax2.set_title('Audit Events by Category', fontsize=12)
-            ax2.grid(True, linestyle='--', alpha=0.6, color=grid_color)
-            ax2.legend(loc='upper right')
+            ax2.set_ylabel("Event Count", color=text_color, fontsize=11)
+            ax2.set_title("Audit Events by Category", fontsize=12)
+            ax2.grid(True, linestyle="--", alpha=0.6, color=grid_color)
+            ax2.legend(loc="upper right")
         else:
-            ax2.text(0.5, 0.5, 'No category data available', horizontalalignment='center',
-                   verticalalignment='center', transform=ax2.transAxes)
+            ax2.text(
+                0.5,
+                0.5,
+                "No category data available",
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax2.transAxes,
+            )
 
         # Plot 3: Audit events by level
         if filtered_levels:
@@ -4493,54 +4855,59 @@ def create_query_audit_timeline(
 
                 # Process events
                 for event in events:
-                    event_time = datetime.datetime.fromisoformat(event['timestamp'].replace('Z', '+00:00'))
-                    count = event.get('count', 1)
+                    event_time = datetime.datetime.fromisoformat(
+                        event["timestamp"].replace("Z", "+00:00")
+                    )
+                    count = event.get("count", 1)
 
                     # Find or create interval bucket
                     found = False
                     for interval in level_data[level]:
-                        if abs((event_time - interval['time']).total_seconds()) < interval_seconds:
-                            interval['count'] += count
+                        if abs((event_time - interval["time"]).total_seconds()) < interval_seconds:
+                            interval["count"] += count
                             found = True
                             break
 
                     if not found:
-                        level_data[level].append({
-                            'time': event_time,
-                            'count': count
-                        })
+                        level_data[level].append({"time": event_time, "count": count})
 
             # Plot data for each level
             for level, intervals in level_data.items():
-                times = [interval['time'] for interval in intervals]
-                counts = [interval['count'] for interval in intervals]
+                times = [interval["time"] for interval in intervals]
+                counts = [interval["count"] for interval in intervals]
 
-                color = level_colors.get(level, '#AAAAAA')
-                ax3.plot(times, counts, 'o-', label=level, linewidth=2, color=color, markersize=5)
+                color = level_colors.get(level, "#AAAAAA")
+                ax3.plot(times, counts, "o-", label=level, linewidth=2, color=color, markersize=5)
 
             # Set labels
-            ax3.set_ylabel('Event Count', color=text_color, fontsize=11)
-            ax3.set_title('Audit Events by Level', fontsize=12)
-            ax3.grid(True, linestyle='--', alpha=0.6, color=grid_color)
-            ax3.legend(loc='upper right')
+            ax3.set_ylabel("Event Count", color=text_color, fontsize=11)
+            ax3.set_title("Audit Events by Level", fontsize=12)
+            ax3.grid(True, linestyle="--", alpha=0.6, color=grid_color)
+            ax3.legend(loc="upper right")
         else:
-            ax3.text(0.5, 0.5, 'No level data available', horizontalalignment='center',
-                   verticalalignment='center', transform=ax3.transAxes)
+            ax3.text(
+                0.5,
+                0.5,
+                "No level data available",
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax3.transAxes,
+            )
 
         # Format x-axis on bottom plot
-        ax3.set_xlabel('Time', color=text_color, fontsize=11)
-        ax3.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d %H:%M'))
-        plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45, ha='right')
+        ax3.set_xlabel("Time", color=text_color, fontsize=11)
+        ax3.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d %H:%M"))
+        plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45, ha="right")
 
         # Add overall title
-        fig.suptitle('Query Performance & Audit Events Timeline', fontsize=14)
+        fig.suptitle("Query Performance & Audit Events Timeline", fontsize=14)
 
         # Adjust layout
         plt.tight_layout()
 
         # Save if output file provided
         if output_file:
-            plt.savefig(output_file, dpi=100, bbox_inches='tight')
+            plt.savefig(output_file, dpi=100, bbox_inches="tight")
 
         # Show if requested
         if show_plot:
@@ -4553,5 +4920,6 @@ def create_query_audit_timeline(
     except Exception as e:
         logging.error(f"Error creating query audit timeline: {str(e)}")
         import traceback
+
         logging.error(traceback.format_exc())
         return None

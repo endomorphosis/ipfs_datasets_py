@@ -37,7 +37,9 @@ BAD_LINK_RE = re.compile(
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Drill down candidate admin landing pages and rank likely child links")
+    p = argparse.ArgumentParser(
+        description="Drill down candidate admin landing pages and rank likely child links"
+    )
     p.add_argument("--report-json", help="Page-gap report JSON")
     p.add_argument("--input-json", help="Prior drilldown/probe JSON with `pages` or `rows`")
     p.add_argument(
@@ -95,7 +97,9 @@ def _load_report(path: Path) -> List[Dict[str, Any]]:
     return rows
 
 
-def _load_input_rows(path: Path, expand_child_links: bool, child_link_limit_per_page: int) -> List[Dict[str, Any]]:
+def _load_input_rows(
+    path: Path, expand_child_links: bool, child_link_limit_per_page: int
+) -> List[Dict[str, Any]]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     raw_rows = payload.get("pages")
     if not isinstance(raw_rows, list):
@@ -216,7 +220,9 @@ def _link_score(base_host: str, link: Dict[str, Any]) -> Tuple[int, Dict[str, An
     return score, payload
 
 
-def _dedupe_links(links: Iterable[Dict[str, Any]], base_host: str, limit: int) -> List[Dict[str, Any]]:
+def _dedupe_links(
+    links: Iterable[Dict[str, Any]], base_host: str, limit: int
+) -> List[Dict[str, Any]]:
     seen = set()
     scored: List[Tuple[int, Dict[str, Any]]] = []
     for link in links:
@@ -230,7 +236,15 @@ def _dedupe_links(links: Iterable[Dict[str, Any]], base_host: str, limit: int) -
             continue
         seen.add(key)
         scored.append(_link_score(base_host, link))
-    scored.sort(key=lambda item: (item[0], item[1]["same_domain"], item[1]["rule_body_signal"], item[1]["admin_signal"]), reverse=True)
+    scored.sort(
+        key=lambda item: (
+            item[0],
+            item[1]["same_domain"],
+            item[1]["rule_body_signal"],
+            item[1]["admin_signal"],
+        ),
+        reverse=True,
+    )
     return [payload for score, payload in scored if score > 0][: max(1, int(limit))]
 
 
@@ -253,10 +267,16 @@ def _fetch_page(row: Dict[str, Any], timeout_seconds: int, top_links: int) -> Di
         title = str(document.title or "") if document else ""
         links = []
         if document:
-            raw_links = document.metadata.get("links") or document.extraction_provenance.get("links") or []
+            raw_links = (
+                document.metadata.get("links") or document.extraction_provenance.get("links") or []
+            )
             if isinstance(raw_links, list):
                 links = raw_links
-        errors = [str(err.message or "") for err in (response.errors or []) if getattr(err, "message", None)]
+        errors = [
+            str(err.message or "")
+            for err in (response.errors or [])
+            if getattr(err, "message", None)
+        ]
         child_links = _dedupe_links(links, urlparse(url).netloc, top_links)
         return {
             "state": state,
@@ -264,7 +284,9 @@ def _fetch_page(row: Dict[str, Any], timeout_seconds: int, top_links: int) -> Di
             "page_category": row.get("page_category"),
             "success": bool(response.success),
             "quality_score": float(response.quality_score or 0.0),
-            "provider": str(response.trace.provider_selected) if response.trace and response.trace.provider_selected else "",
+            "provider": str(response.trace.provider_selected)
+            if response.trace and response.trace.provider_selected
+            else "",
             "title": title[:240],
             "text_len": len(text.strip()),
             "rule_body_signals": bool(RULE_BODY_RE.search(text)),
@@ -330,7 +352,9 @@ def main() -> int:
     if args.urls:
         rows = _load_url_rows(args.urls)
     elif args.input_json:
-        rows = _load_input_rows(source_path, bool(args.expand_child_links), int(args.child_link_limit_per_page))
+        rows = _load_input_rows(
+            source_path, bool(args.expand_child_links), int(args.child_link_limit_per_page)
+        )
     else:
         rows = _load_report(source_path)
     states_filter = {str(s).upper().strip() for s in args.states if str(s).strip()}
@@ -347,15 +371,26 @@ def main() -> int:
         target_rows = [
             row
             for row in rows
-            if str(row.get("page_category") or "") in categories and (not states_filter or str(row.get("state") or "") in states_filter)
+            if str(row.get("page_category") or "") in categories
+            and (not states_filter or str(row.get("state") or "") in states_filter)
         ]
     target_rows = _dedupe_target_rows(target_rows)
-    target_rows.sort(key=lambda row: (str(row.get("state") or ""), str(row.get("page_category") or ""), -int(row.get("text_len") or 0), str(row.get("url") or "")))
+    target_rows.sort(
+        key=lambda row: (
+            str(row.get("state") or ""),
+            str(row.get("page_category") or ""),
+            -int(row.get("text_len") or 0),
+            str(row.get("url") or ""),
+        )
+    )
     target_rows = target_rows[: max(1, int(args.top_pages))]
 
     pages: List[Dict[str, Any]] = []
     with ThreadPoolExecutor(max_workers=max(1, int(args.workers))) as executor:
-        futures = [executor.submit(_fetch_page, row, int(args.timeout_seconds), int(args.top_links)) for row in target_rows]
+        futures = [
+            executor.submit(_fetch_page, row, int(args.timeout_seconds), int(args.top_links))
+            for row in target_rows
+        ]
         for future in as_completed(futures):
             pages.append(future.result())
 
@@ -377,7 +412,13 @@ def main() -> int:
     out_md.parent.mkdir(parents=True, exist_ok=True)
     out_json.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     out_md.write_text(_markdown(payload), encoding="utf-8")
-    print(json.dumps({"output_json": str(out_json), "output_md": str(out_md), "summary": payload["summary"]}, indent=2, sort_keys=True))
+    print(
+        json.dumps(
+            {"output_json": str(out_json), "output_md": str(out_md), "summary": payload["summary"]},
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 

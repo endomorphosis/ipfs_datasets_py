@@ -13,11 +13,11 @@ Public API:
 
 Example:
     >>> from ipfs_datasets_py.utils.github import GitHubCLI
-    >>> 
+    >>>
     >>> gh = GitHubCLI(enable_cache=True)
     >>> repos = gh.list_repos(limit=10)
     >>> pr = gh.create_pr(title="Fix", body="Description")
-    >>> 
+    >>>
     >>> print(gh.report())
 """
 
@@ -31,16 +31,14 @@ from ..cache import GitHubCache, GitHubCacheEntry
 
 __all__ = [
     # Main API
-    'GitHubCLI',
-    'APICounter',
-    'APICallRecord',
-    'RateLimiter',
-    'GitHubCache',
-    
+    "GitHubCLI",
+    "APICounter",
+    "APICallRecord",
+    "RateLimiter",
+    "GitHubCache",
     # Additional classes
-    'GitHubCacheEntry',
-    
+    "GitHubCacheEntry",
     # Backward compatibility aliases
-    'GitHubAPICounter',
-    'AdaptiveRateLimiter',
+    "GitHubAPICounter",
+    "AdaptiveRateLimiter",
 ]

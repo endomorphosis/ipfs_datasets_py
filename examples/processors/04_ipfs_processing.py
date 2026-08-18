@@ -16,28 +16,28 @@ from ipfs_datasets_py.processors.core import UniversalProcessor
 
 async def main():
     """Demonstrate IPFS content processing with anyio."""
-    
+
     print("=" * 70)
     print("IPFS Content Processing with UniversalProcessor (Async)")
     print("=" * 70)
     print()
-    
+
     # Register all adapters
     print("Registering processor adapters...")
     count = register_all_adapters()
     print(f"✓ Registered {count} adapters")
     print()
-    
+
     # Create processor instance
     processor = UniversalProcessor()
-    
+
     # Example 1: Process direct CID
     print("Example 1: Processing IPFS CID")
     print("-" * 70)
-    
+
     # Using a known IPFS CID (IPFS white paper)
     cid = "QmV9tSDx9UiPeWExXEeH6aoDvmihvx6jD5eLb4jbTaKGps"
-    
+
     print(f"Input: {cid}")
     print("Automatic IPFS detection and processing...")
     print()
@@ -45,7 +45,7 @@ async def main():
     print("✓ Supports: CIDs, ipfs:// URLs, /ipfs/ paths, ipns:// URLs")
     print("✓ Multi-strategy fetching: daemon → ipfs_kit → gateway")
     print()
-    
+
     # Note: Uncomment to actually process (requires IPFS)
     # print("Processing...")
     # result = await processor.process(cid)
@@ -53,7 +53,7 @@ async def main():
     #     print(f"✓ Success! Extracted {len(result.knowledge_graph.get('entities', []))} entities")
     # else:
     #     print(f"✗ Failed: {result.errors}")
-    
+
     print("Example complete!")
     print()
 
@@ -68,7 +68,6 @@ if __name__ == "__main__":
     print()
     print("Starting example...")
     print()
-    
+
     # Use anyio.run() instead of asyncio.run()
     anyio.run(main)
-

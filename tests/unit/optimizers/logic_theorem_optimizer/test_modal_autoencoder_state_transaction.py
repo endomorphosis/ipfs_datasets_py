@@ -138,8 +138,7 @@ def test_journal_scales_with_touched_rows_and_preserves_untouched_references() -
     state = ModalAutoencoderTrainingState(feature_embedding_weights=rows)
     table_id = id(state.feature_embedding_weights)
     untouched_ids = {
-        key: id(state.feature_embedding_weights[key])
-        for key in ("row-0", "row-999", "row-1999")
+        key: id(state.feature_embedding_weights[key]) for key in ("row-0", "row-999", "row-1999")
     }
 
     transaction = state.transaction().begin()
@@ -149,9 +148,7 @@ def test_journal_scales_with_touched_rows_and_preserves_untouched_references() -
     transaction.rollback()
 
     assert id(state.feature_embedding_weights) == table_id
-    assert {
-        key: id(state.feature_embedding_weights[key]) for key in untouched_ids
-    } == untouched_ids
+    assert {key: id(state.feature_embedding_weights[key]) for key in untouched_ids} == untouched_ids
 
 
 def test_exceptional_context_exit_rolls_back() -> None:

@@ -14,20 +14,22 @@ import os
 from typing import Dict, Any, List
 
 # Ensure the parent directory is in the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 from ipfs_datasets_py.rag.rag_query_optimizer import (
     WikipediaKnowledgeGraphOptimizer,
     IPLDGraphRAGQueryOptimizer,
-    UnifiedGraphRAGQueryOptimizer
+    UnifiedGraphRAGQueryOptimizer,
 )
+
 
 def print_section(title: str) -> None:
     """Print a section title with formatting."""
     print("\n" + "=" * 80)
     print(f"  {title}")
     print("=" * 80 + "\n")
+
 
 def print_plan(plan: Dict[str, Any], indent: int = 2) -> None:
     """Print a plan with nice formatting."""
@@ -40,6 +42,7 @@ def print_plan(plan: Dict[str, Any], indent: int = 2) -> None:
             print(f"{indent_str}{key}: [list with {len(value)} items]")
         else:
             print(f"{indent_str}{key}: {value}")
+
 
 def wikipedia_optimizer_example() -> None:
     """Example of using the Wikipedia-specific optimizer."""
@@ -64,18 +67,18 @@ def wikipedia_optimizer_example() -> None:
                         "instance_of": 0.9,
                         "related_to": 0.7,
                         "works_for": 0.6,
-                        "located_in": 0.5
-                    }
+                        "located_in": 0.5,
+                    },
                 },
                 "knowledge_graph": {
                     "entities": [
                         {"entity_id": "e1", "name": "Microsoft", "entity_type": "organization"},
-                        {"entity_id": "e2", "name": "Bill Gates", "entity_type": "person"}
+                        {"entity_id": "e2", "name": "Bill Gates", "entity_type": "person"},
                     ],
                     "relationships": [
                         {"source": "e2", "target": "e1", "type": "founded", "confidence": 0.9}
-                    ]
-                }
+                    ],
+                },
             }
 
         def record_query_plan(self, trace_id, plan):
@@ -97,11 +100,9 @@ def wikipedia_optimizer_example() -> None:
     query_text = "Who founded Microsoft and what products did they create?"
 
     # Optimize the query
-    print(f"Optimizing query: \"{query_text}\"")
+    print(f'Optimizing query: "{query_text}"')
     plan = optimizer.optimize_query(
-        query_text=query_text,
-        query_vector=query_vector,
-        trace_id=trace_id
+        query_text=query_text, query_vector=query_vector, trace_id=trace_id
     )
 
     # Print the optimized plan
@@ -118,7 +119,7 @@ def wikipedia_optimizer_example() -> None:
         query_text=query_text,
         query_vector=query_vector,
         entity_types=entity_types,
-        trace_id=trace_id
+        trace_id=trace_id,
     )
 
     # Print the optimized plan
@@ -134,12 +135,13 @@ def wikipedia_optimizer_example() -> None:
     plan = optimizer.optimize_cross_document_query(
         query_text="How did Microsoft's development of Windows influence Office products?",
         query_vector=query_vector,
-        doc_trace_ids=doc_trace_ids
+        doc_trace_ids=doc_trace_ids,
     )
 
     # Print the optimized plan
     print("\nCross-Document Query Plan:")
     print_plan(plan)
+
 
 def ipld_optimizer_example() -> None:
     """Example of using the IPLD-specific optimizer."""
@@ -151,7 +153,7 @@ def ipld_optimizer_example() -> None:
         graph_weight=0.4,
         enable_multihash_prefetching=True,
         enable_block_batching=True,
-        dag_traversal_strategy="breadth_first"
+        dag_traversal_strategy="breadth_first",
     )
 
     # Create a query vector (in a real scenario this would be from an embedding model)
@@ -167,7 +169,7 @@ def ipld_optimizer_example() -> None:
         query_vector=query_vector,
         query_text="How does IPFS implement content addressing?",
         content_types=content_types,
-        root_cids=["QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"]
+        root_cids=["QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"],
     )
 
     # Print the optimized plan
@@ -179,7 +181,7 @@ def ipld_optimizer_example() -> None:
     root_cids = [
         "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco",  # IPFS docs
         "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG",  # Libp2p docs
-        "QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx"   # Filecoin docs
+        "QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx",  # Filecoin docs
     ]
 
     # Optimize the query with multiple CIDs
@@ -187,7 +189,7 @@ def ipld_optimizer_example() -> None:
     plan = optimizer.optimize_query(
         query_vector=query_vector,
         query_text="Compare DHT implementations across IPFS, libp2p, and Filecoin",
-        root_cids=root_cids
+        root_cids=root_cids,
     )
 
     # Print the optimized plan
@@ -202,7 +204,7 @@ def ipld_optimizer_example() -> None:
     plan = optimizer.optimize_multi_graph_query(
         query_vector=query_vector,
         query_text="How do distributed hash tables compare to other distributed data structures?",
-        graph_cids=root_cids
+        graph_cids=root_cids,
     )
 
     # Print the optimized plan
@@ -217,6 +219,7 @@ def ipld_optimizer_example() -> None:
     for content_type in content_types:
         weights = optimizer.optimize_for_content_type(content_type)
         print(f"  {content_type}: vector={weights['vector']:.2f}, graph={weights['graph']:.2f}")
+
 
 def unified_optimizer_example() -> None:
     """Example of using the Unified optimizer for mixed environments."""
@@ -241,9 +244,9 @@ def unified_optimizer_example() -> None:
                         "instance_of": 0.9,
                         "related_to": 0.7,
                         "works_for": 0.6,
-                        "located_in": 0.5
-                    }
-                }
+                        "located_in": 0.5,
+                    },
+                },
             }
 
         def record_query_plan(self, trace_id, plan):
@@ -259,7 +262,7 @@ def unified_optimizer_example() -> None:
     optimizer = UnifiedGraphRAGQueryOptimizer(
         wikipedia_optimizer=wikipedia_optimizer,
         ipld_optimizer=ipld_optimizer,
-        auto_detect_graph_type=True
+        auto_detect_graph_type=True,
     )
 
     # Create a query vector
@@ -272,9 +275,7 @@ def unified_optimizer_example() -> None:
     # Wikipedia query (detected by trace_id)
     print("Wikipedia query (with trace_id):")
     wiki_plan = optimizer.optimize_query(
-        query_vector=query_vector,
-        query_text=query_text,
-        trace_id="wikipedia-trace-123"
+        query_vector=query_vector, query_text=query_text, trace_id="wikipedia-trace-123"
     )
     print(f"  Detected optimizer type: {wiki_plan.get('optimizer_type', 'unknown')}")
 
@@ -283,7 +284,7 @@ def unified_optimizer_example() -> None:
     ipld_plan = optimizer.optimize_query(
         query_vector=query_vector,
         query_text=query_text,
-        root_cids=["QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"]
+        root_cids=["QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"],
     )
     print(f"  Detected optimizer type: {ipld_plan.get('optimizer_type', 'unknown')}")
 
@@ -296,7 +297,7 @@ def unified_optimizer_example() -> None:
         query_vector=query_vector,
         query_text=query_text,
         root_cids=["QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"],  # Would normally trigger IPLD
-        graph_type="wikipedia"  # Force Wikipedia
+        graph_type="wikipedia",  # Force Wikipedia
     )
     print(f"  Optimizer type: {force_wiki_plan.get('optimizer_type', 'unknown')}")
 
@@ -305,24 +306,18 @@ def unified_optimizer_example() -> None:
 
     # Define graph specifications
     graph_specs = [
-        {
-            "graph_type": "wikipedia",
-            "trace_id": "wiki-123",
-            "weight": 0.4
-        },
+        {"graph_type": "wikipedia", "trace_id": "wiki-123", "weight": 0.4},
         {
             "graph_type": "ipld",
             "root_cid": "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco",
-            "weight": 0.6
-        }
+            "weight": 0.6,
+        },
     ]
 
     # Optimize multi-graph query
     print("Optimizing query across Wikipedia and IPLD graphs:")
     multi_plan = optimizer.optimize_multi_graph_query(
-        query_vector=query_vector,
-        query_text=query_text,
-        graph_specs=graph_specs
+        query_vector=query_vector, query_text=query_text, graph_specs=graph_specs
     )
 
     # Print key aspects of the plan
@@ -330,13 +325,13 @@ def unified_optimizer_example() -> None:
     print(f"  Number of graph plans: {len(multi_plan.get('graph_plans', {}))}")
 
     # Check plan types
-    graph_plans = multi_plan.get('graph_plans', {})
+    graph_plans = multi_plan.get("graph_plans", {})
     for graph_id, plan in graph_plans.items():
         print(f"  - Graph {graph_id}: {plan.get('optimizer_type', 'unknown')}")
 
     # Print weights from combination plan
-    combination_plan = multi_plan.get('combination_plan', {})
-    weights = combination_plan.get('graph_weights', {})
+    combination_plan = multi_plan.get("combination_plan", {})
+    weights = combination_plan.get("graph_weights", {})
     print("  Graph weights:")
     for graph_id, weight in weights.items():
         print(f"  - {graph_id}: {weight:.2f}")
@@ -349,26 +344,32 @@ def unified_optimizer_example() -> None:
         optimizer.optimize_query(
             query_vector=np.random.rand(768),
             query_text="Random query for stats",
-            trace_id=f"wiki-{np.random.randint(1000)}"
+            trace_id=f"wiki-{np.random.randint(1000)}",
         )
 
     for _ in range(2):
         optimizer.optimize_query(
             query_vector=np.random.rand(768),
             query_text="Another random query",
-            root_cids=[f"Qm{np.random.randint(1000)}"]
+            root_cids=[f"Qm{np.random.randint(1000)}"],
         )
 
     # Get and print statistics
     stats = optimizer.get_optimization_stats()
     print("Optimizer Statistics:")
     print(f"  Total queries: {stats.get('total_queries', 0)}")
-    print(f"  Wikipedia queries: {stats.get('wikipedia_queries', 0)} " +
-          f"({stats.get('wikipedia_percentage', 0):.1f}%)")
-    print(f"  IPLD queries: {stats.get('ipld_queries', 0)} " +
-          f"({stats.get('ipld_percentage', 0):.1f}%)")
-    print(f"  Mixed queries: {stats.get('mixed_queries', 0)} " +
-          f"({stats.get('mixed_percentage', 0):.1f}%)")
+    print(
+        f"  Wikipedia queries: {stats.get('wikipedia_queries', 0)} "
+        + f"({stats.get('wikipedia_percentage', 0):.1f}%)"
+    )
+    print(
+        f"  IPLD queries: {stats.get('ipld_queries', 0)} "
+        + f"({stats.get('ipld_percentage', 0):.1f}%)"
+    )
+    print(
+        f"  Mixed queries: {stats.get('mixed_queries', 0)} "
+        + f"({stats.get('mixed_percentage', 0):.1f}%)"
+    )
 
     # Example 5: Performance analysis
     print("\nExample 5: Performance analysis")
@@ -376,14 +377,16 @@ def unified_optimizer_example() -> None:
     analysis = optimizer.analyze_query_performance()
     print("Performance Analysis:")
     print("  Recommendations:")
-    for i, rec in enumerate(analysis.get('recommendations', [])):
-        print(f"  {i+1}. {rec}")
+    for i, rec in enumerate(analysis.get("recommendations", [])):
+        print(f"  {i + 1}. {rec}")
+
 
 def run_all_examples() -> None:
     """Run all optimizer examples."""
     wikipedia_optimizer_example()
     ipld_optimizer_example()
     unified_optimizer_example()
+
 
 if __name__ == "__main__":
     run_all_examples()

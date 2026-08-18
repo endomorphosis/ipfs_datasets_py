@@ -1,18 +1,20 @@
 from typing import Any
 
+
 def generate_startup_report(processors: dict[str, tuple[str, Any, set]]) -> str:
     """
     Generate a startup summary report.
-    
+
     Args:
         processors: Dictionary of processor instances
-        
+
     Returns:
         Formatted startup report string
     """
     from logger import logger
+
     lines = ["", "=" * 60, "CONTENT PROCESSOR STARTUP REPORT", "=" * 60, ""]
-    
+
     # Sort by alphabetical order
     processors = dict(sorted(processors.items()))
     total_processors = len(processors)

@@ -38,12 +38,9 @@ def _prediction(packet: ExternalLegalExpertBenchmarkPacket) -> dict[str, object]
     return {
         "packet_id": packet.packet_id,
         "predicted_ir_families": list(packet.expected_ir_families),
-        "citations": [
-            {"citation": citation.citation} for citation in packet.citations
-        ],
+        "citations": [{"citation": citation.citation} for citation in packet.citations],
         "proof_obligations": [
-            {"obligation_id": obligation.obligation_id}
-            for obligation in packet.proof_obligations
+            {"obligation_id": obligation.obligation_id} for obligation in packet.proof_obligations
         ],
         "decompiled_text": packet.decompiler_expectations.expected_reading,
         "round_trip_success": True,
@@ -65,9 +62,10 @@ def test_fixture_loads_versioned_external_expert_packets() -> None:
     assert all(packet.proof_obligations for packet in packets)
     assert all(packet.decompiler_expectations.required_terms for packet in packets)
     assert all(packet.adjudication_metadata["external_evaluation_only"] for packet in packets)
-    assert packets[0].digest == ExternalLegalExpertBenchmarkPacket.from_mapping(
-        packets[0].to_dict()
-    ).digest
+    assert (
+        packets[0].digest
+        == ExternalLegalExpertBenchmarkPacket.from_mapping(packets[0].to_dict()).digest
+    )
 
 
 def test_external_packets_build_external_test_manifest_and_block_training_use() -> None:

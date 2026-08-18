@@ -53,11 +53,7 @@ pip install graphviz
 ### Basic Usage
 
 ```python
-from ipfs_datasets_py.logic.TDFOL import (
-    FormulaDependencyGraph,
-    ProofResult,
-    TDFOLKnowledgeBase
-)
+from ipfs_datasets_py.logic.TDFOL import FormulaDependencyGraph, ProofResult, TDFOLKnowledgeBase
 
 # From a proof result
 graph = FormulaDependencyGraph(proof_result=result)
@@ -196,8 +192,8 @@ proof = ProofResult(
     proof_steps=[
         ProofStep(p, "Given axiom", "Axiom", []),
         ProofStep(q, "All persons are mortal", "ModusPonens", [p]),
-        ProofStep(r, "All mortals die", "ModusPonens", [q])
-    ]
+        ProofStep(r, "All mortals die", "ModusPonens", [q]),
+    ],
 )
 
 # Build dependency graph
@@ -287,10 +283,7 @@ critical = graph.find_critical_path(start, end)
 
 # Export DOT with highlighted path
 graph.export_dot(
-    "dependencies.dot",
-    highlight_path=critical,
-    include_labels=True,
-    cluster_by_type=True
+    "dependencies.dot", highlight_path=critical, include_labels=True, cluster_by_type=True
 )
 
 # Export JSON
@@ -313,16 +306,15 @@ Analyze proof and export all formats:
 
 ```python
 def analyze_proof_dependencies(
-    proof_result: ProofResult,
-    output_dir: Optional[Path] = None
+    proof_result: ProofResult, output_dir: Optional[Path] = None
 ) -> FormulaDependencyGraph:
     """
     Analyze dependencies and export visualizations.
-    
+
     Args:
         proof_result: Proof to analyze
         output_dir: Optional directory for exports
-        
+
     Returns:
         FormulaDependencyGraph with analysis results
     """
@@ -334,20 +326,17 @@ Find shortest path between formulas:
 
 ```python
 def find_proof_chain(
-    start: Formula,
-    end: Formula,
-    kb: TDFOLKnowledgeBase,
-    proof_results: List[ProofResult]
+    start: Formula, end: Formula, kb: TDFOLKnowledgeBase, proof_results: List[ProofResult]
 ) -> Optional[List[Formula]]:
     """
     Find shortest proof chain from start to end.
-    
+
     Args:
         start: Starting formula
         end: Target formula
         kb: Knowledge base
         proof_results: Proofs to analyze
-        
+
     Returns:
         Shortest proof chain or None
     """
@@ -435,7 +424,7 @@ all_paths = graph.find_all_paths(start, end, max_length=10)
 
 print(f"Found {len(all_paths)} paths:")
 for i, path in enumerate(all_paths):
-    print(f"Path {i+1}: {' → '.join(str(f) for f in path)}")
+    print(f"Path {i + 1}: {' → '.join(str(f) for f in path)}")
 ```
 
 ### Transitive Dependencies

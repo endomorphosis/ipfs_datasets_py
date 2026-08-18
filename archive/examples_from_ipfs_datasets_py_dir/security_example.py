@@ -24,7 +24,7 @@ from ipfs_datasets_py.security import (
     SecurityConfig,
     require_authentication,
     require_access,
-    encrypted_context
+    encrypted_context,
 )
 
 
@@ -39,7 +39,7 @@ def create_sensitive_dataset():
             "email": f"user{i}@example.com",
             "ssn": f"123-45-{6789 - i}",  # Fake SSN
             "credit_card": f"4111-1111-1111-{1111 + i}",  # Fake credit card
-            "address": f"123 Main St, Apt {i}, Anytown, CA 9{i}123"
+            "address": f"123 Main St, Apt {i}, Anytown, CA 9{i}123",
         }
         data.append(user)
 
@@ -75,10 +75,7 @@ def save_sensitive_data(data, output_file):
     print(f"Saved metadata to {metadata_file}")
 
     # Create resource policy
-    manager.create_resource_policy(
-        resource_id=output_file,
-        resource_type="encrypted_file"
-    )
+    manager.create_resource_policy(resource_id=output_file, resource_type="encrypted_file")
 
     # Return key ID for later use
     return key_id
@@ -150,15 +147,12 @@ def record_dataset_provenance(output_file, source_dataset, process_description):
             {
                 "name": "redaction",
                 "description": process_description,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         ],
         parent_ids=[source_dataset],
         checksum=checksum,
-        metadata={
-            "output_type": "redacted_dataset",
-            "created_at": datetime.now().isoformat()
-        }
+        metadata={"output_type": "redacted_dataset", "created_at": datetime.now().isoformat()},
     )
 
     print(f"Recorded provenance for {output_file}")
@@ -230,7 +224,7 @@ def security_example():
             encryption_algorithm="AES-256",
             log_all_access=True,
             track_provenance=True,
-            audit_log_path=os.path.join(security_dir, "audit.log")
+            audit_log_path=os.path.join(security_dir, "audit.log"),
         )
 
         security = initialize_security(config)
@@ -304,9 +298,7 @@ def security_example():
         print("\n=== Step 7: Record Data Provenance ===")
 
         provenance = record_dataset_provenance(
-            redacted_file,
-            encrypted_file,
-            "Redacted sensitive fields: ssn, credit_card"
+            redacted_file, encrypted_file, "Redacted sensitive fields: ssn, credit_card"
         )
 
         # Step 8: Switch user and test access
@@ -333,10 +325,7 @@ def security_example():
         # Update policy to give read access to regular user
         security.update_resource_policy(
             resource_id=encrypted_file,
-            updates={
-                "read_access": ["admin", "user"],
-                "write_access": ["admin"]
-            }
+            updates={"read_access": ["admin", "user"], "write_access": ["admin"]},
         )
         print(f"Updated access policy for {encrypted_file}")
 
@@ -364,8 +353,8 @@ def security_example():
             "departments": [
                 {"name": "Engineering", "headcount": 45, "budget": 500000},
                 {"name": "Marketing", "headcount": 15, "budget": 300000},
-                {"name": "Sales", "headcount": 30, "budget": 400000}
-            ]
+                {"name": "Sales", "headcount": 30, "budget": 400000},
+            ],
         }
 
         # Convert to string
@@ -408,12 +397,13 @@ def security_example():
             "temp_dir": temp_dir,
             "sensitive_file": encrypted_file,
             "redacted_file": redacted_file,
-            "key_id": key_id
+            "key_id": key_id,
         }
 
     except Exception as e:
         print(f"\nError in security example: {str(e)}")
         import traceback
+
         traceback.print_exc()
         return None
 
@@ -422,6 +412,7 @@ if __name__ == "__main__":
     # Check for cryptography module
     try:
         import cryptography
+
         has_crypto = True
     except ImportError:
         has_crypto = False

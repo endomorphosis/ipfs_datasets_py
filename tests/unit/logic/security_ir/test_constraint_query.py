@@ -155,13 +155,9 @@ def test_query_requires_principal_and_as_of() -> None:
     with pytest.raises(SecurityConstraintQueryError):
         SecurityConstraintQuery(query_id="q", principal_id="", as_of="2024-01-01")
     with pytest.raises(SecurityConstraintQueryError):
-        SecurityConstraintQuery(
-            query_id="q", principal_id="principal:alice", as_of=""
-        )
+        SecurityConstraintQuery(query_id="q", principal_id="principal:alice", as_of="")
     with pytest.raises(SecurityConstraintQueryError):
-        SecurityConstraintQuery(
-            query_id="q", principal_id="principal:alice", as_of="not-a-date"
-        )
+        SecurityConstraintQuery(query_id="q", principal_id="principal:alice", as_of="not-a-date")
 
 
 def test_hard_filter_dimensions_are_documented() -> None:
@@ -229,10 +225,7 @@ def test_selects_applicable_constraint_under_matching_scope() -> None:
     assert result.evidence.retrieval_rank_used_for_authority is False
     assert result.evidence.artifact_families_distinct is True
     assert result.evidence.shared_applicability is not None
-    assert (
-        result.evidence.shared_applicability.status
-        is ApplicabilityStatus.APPLICABLE
-    )
+    assert result.evidence.shared_applicability.status is ApplicabilityStatus.APPLICABLE
     assert not result.grants_legal_compliance
     assert not result.grants_execution_authority
 
@@ -256,9 +249,7 @@ def test_capability_delegation_and_trust_zone_mutations() -> None:
     assert "capability_mismatch" in wrong_cap.assessments[0].reason_codes
 
     wrong_delegation = _query(delegation_ids=("delegation:other",)).select([base])
-    assert (
-        wrong_delegation.disposition is SecuritySelectionDisposition.NOT_APPLICABLE
-    )
+    assert wrong_delegation.disposition is SecuritySelectionDisposition.NOT_APPLICABLE
 
     wrong_zone = _query(trust_zone="zone:exchange").select([base])
     assert wrong_zone.disposition is SecuritySelectionDisposition.NOT_APPLICABLE
@@ -291,9 +282,7 @@ def test_asset_channel_network_filesystem_and_action_scope() -> None:
 
 
 def test_abstract_model_cannot_substitute_for_live_environment() -> None:
-    result = _query(
-        environment_kind=SecurityEnvironmentKind.LIVE_ENVIRONMENT
-    ).select(
+    result = _query(environment_kind=SecurityEnvironmentKind.LIVE_ENVIRONMENT).select(
         [
             _record(
                 environment_kind=SecurityEnvironmentKind.ABSTRACT_MODEL,
@@ -302,20 +291,13 @@ def test_abstract_model_cannot_substitute_for_live_environment() -> None:
         ]
     )
     assert result.disposition is SecuritySelectionDisposition.REVIEW_REQUIRED
-    assert (
-        result.assessments[0].disposition
-        is SecurityConstraintDisposition.ENVIRONMENT_MISMATCH
-    )
-    assert "abstract_model_live_environment_substitution" in (
-        result.assessments[0].reason_codes
-    )
+    assert result.assessments[0].disposition is SecurityConstraintDisposition.ENVIRONMENT_MISMATCH
+    assert "abstract_model_live_environment_substitution" in (result.assessments[0].reason_codes)
     assert result.evidence.environment_substitution_rejected is True
 
 
 def test_sandbox_cannot_substitute_for_live_environment() -> None:
-    result = _query(
-        environment_kind=SecurityEnvironmentKind.LIVE_ENVIRONMENT
-    ).select(
+    result = _query(environment_kind=SecurityEnvironmentKind.LIVE_ENVIRONMENT).select(
         [
             _record(
                 environment_kind=SecurityEnvironmentKind.SANDBOX,
@@ -323,10 +305,7 @@ def test_sandbox_cannot_substitute_for_live_environment() -> None:
             )
         ]
     )
-    assert (
-        result.assessments[0].disposition
-        is SecurityConstraintDisposition.ENVIRONMENT_MISMATCH
-    )
+    assert result.assessments[0].disposition is SecurityConstraintDisposition.ENVIRONMENT_MISMATCH
     assert "sandbox_live_environment_substitution" in result.assessments[0].reason_codes
 
 
@@ -356,10 +335,7 @@ def test_theorem_cannot_substitute_for_evidence_gate() -> None:
         ]
     )
     assert result.disposition is SecuritySelectionDisposition.AUTHORITY_MISMATCH
-    assert (
-        result.assessments[0].disposition
-        is SecurityConstraintDisposition.AUTHORITY_MISMATCH
-    )
+    assert result.assessments[0].disposition is SecurityConstraintDisposition.AUTHORITY_MISMATCH
     assert "result_authority_mismatch" in result.assessments[0].reason_codes
 
 
@@ -373,12 +349,9 @@ def test_monitor_policy_and_theorem_families_are_non_substitutable() -> None:
         result = _query(
             required_authority=AuthorityKind.EVIDENCE_READINESS,
             artifact_family=SecurityArtifactFamily.EVIDENCE_GATE,
-        ).select(
-            [_record(required_authority=authority, artifact_family=family)]
-        )
+        ).select([_record(required_authority=authority, artifact_family=family)])
         assert (
-            result.assessments[0].disposition
-            is SecurityConstraintDisposition.AUTHORITY_MISMATCH
+            result.assessments[0].disposition is SecurityConstraintDisposition.AUTHORITY_MISMATCH
         ), family
 
 
@@ -423,9 +396,7 @@ def test_stale_evidence_is_rejected() -> None:
         observed_at="2024-06-14T00:00:00Z",
         max_age_seconds=3600,
     )
-    result = _query(as_of="2024-06-15T12:00:00Z").select(
-        [record], evidence=[stale]
-    )
+    result = _query(as_of="2024-06-15T12:00:00Z").select([record], evidence=[stale])
     assert result.disposition is SecuritySelectionDisposition.STALE
     assert result.assessments[0].disposition is SecurityConstraintDisposition.STALE
     assert any(code.startswith("evidence_stale") for code in result.assessments[0].reason_codes)
@@ -441,8 +412,7 @@ def test_mismatched_evidence_digest_is_rejected() -> None:
     assert result.disposition is SecuritySelectionDisposition.NOT_APPLICABLE
     assert result.assessments[0].disposition is SecurityConstraintDisposition.MISMATCHED
     assert any(
-        code.startswith("evidence_digest_mismatch")
-        for code in result.assessments[0].reason_codes
+        code.startswith("evidence_digest_mismatch") for code in result.assessments[0].reason_codes
     )
 
 
@@ -469,10 +439,7 @@ def test_evidence_authority_family_must_match_query() -> None:
         required_authority=AuthorityKind.EVIDENCE_READINESS,
         artifact_family=SecurityArtifactFamily.EVIDENCE_GATE,
     ).select([record], evidence=[binding])
-    assert (
-        result.assessments[0].disposition
-        is SecurityConstraintDisposition.AUTHORITY_MISMATCH
-    )
+    assert result.assessments[0].disposition is SecurityConstraintDisposition.AUTHORITY_MISMATCH
 
 
 def test_abstract_evidence_cannot_satisfy_live_query() -> None:
@@ -483,13 +450,10 @@ def test_abstract_evidence_cannot_satisfy_live_query() -> None:
         content_digest="",
         max_age_seconds=None,
     )
-    result = _query(
-        environment_kind=SecurityEnvironmentKind.LIVE_ENVIRONMENT
-    ).select([record], evidence=[binding])
-    assert (
-        result.assessments[0].disposition
-        is SecurityConstraintDisposition.ENVIRONMENT_MISMATCH
+    result = _query(environment_kind=SecurityEnvironmentKind.LIVE_ENVIRONMENT).select(
+        [record], evidence=[binding]
     )
+    assert result.assessments[0].disposition is SecurityConstraintDisposition.ENVIRONMENT_MISMATCH
 
 
 # ---------------------------------------------------------------------------
@@ -507,10 +471,7 @@ def test_unknown_extension_vocabulary_fails_closed() -> None:
         ]
     )
     assert result.disposition is SecuritySelectionDisposition.REVIEW_REQUIRED
-    assert (
-        result.assessments[0].disposition
-        is SecurityConstraintDisposition.UNKNOWN_EXTENSION
-    )
+    assert result.assessments[0].disposition is SecurityConstraintDisposition.UNKNOWN_EXTENSION
     assert any(
         code.startswith("unknown_extension_vocabulary")
         for code in result.assessments[0].reason_codes
@@ -531,9 +492,7 @@ def test_known_extension_vocabularies_pass() -> None:
 
 
 def test_tainted_premise_requires_review_and_never_applies() -> None:
-    result = _query().select(
-        [_record(premise_taint=SecurityPremiseTaintStatus.TAINTED)]
-    )
+    result = _query().select([_record(premise_taint=SecurityPremiseTaintStatus.TAINTED)])
     assert result.disposition is SecuritySelectionDisposition.REVIEW_REQUIRED
     assert result.abstains
     assert result.assessments[0].disposition is SecurityConstraintDisposition.TAINTED
@@ -577,9 +536,7 @@ def test_higher_precedence_resolves_opposed_effects() -> None:
     result = _query().select([allow, deny])
     assert result.disposition is SecuritySelectionDisposition.APPLICABLE
     assert [item.constraint_id for item in result.selected] == ["sec:deny"]
-    loser = next(
-        item for item in result.assessments if item.constraint_id == "sec:allow"
-    )
+    loser = next(item for item in result.assessments if item.constraint_id == "sec:allow")
     assert loser.disposition is SecurityConstraintDisposition.SUPERSEDED
     assert "higher_precedence_constraint" in loser.reason_codes
 
@@ -621,9 +578,7 @@ def test_express_supersession_between_candidates() -> None:
     result = _query().select([old, new])
     assert result.disposition is SecuritySelectionDisposition.APPLICABLE
     assert [item.constraint_id for item in result.selected] == ["sec:new"]
-    old_assessment = next(
-        item for item in result.assessments if item.constraint_id == "sec:old"
-    )
+    old_assessment = next(item for item in result.assessments if item.constraint_id == "sec:old")
     assert old_assessment.disposition is SecurityConstraintDisposition.SUPERSEDED
     assert "sec:new" in old_assessment.defeated_by
 
@@ -703,9 +658,7 @@ def test_empty_candidates_yield_coverage_gap_abstain() -> None:
 
 
 def test_declaration_digest_mismatch() -> None:
-    result = _query(declaration_digest=DIGEST_A).select(
-        [_record(declaration_digest=DIGEST_B)]
-    )
+    result = _query(declaration_digest=DIGEST_A).select([_record(declaration_digest=DIGEST_B)])
     assert result.disposition is SecuritySelectionDisposition.NOT_APPLICABLE
     assert result.assessments[0].disposition is SecurityConstraintDisposition.MISMATCHED
     assert "declaration_digest_mismatch" in result.assessments[0].reason_codes
@@ -775,9 +728,7 @@ def test_priority_resolves_same_precedence_opposed_effects() -> None:
     )
     result = _query().select([low, high])
     assert [item.constraint_id for item in result.selected] == ["sec:high"]
-    loser = next(
-        item for item in result.assessments if item.constraint_id == "sec:low"
-    )
+    loser = next(item for item in result.assessments if item.constraint_id == "sec:low")
     assert "higher_priority_constraint" in loser.reason_codes
 
 

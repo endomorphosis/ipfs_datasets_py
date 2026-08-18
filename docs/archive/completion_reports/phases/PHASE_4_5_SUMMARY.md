@@ -125,9 +125,9 @@ analyzer = WorkflowAnalyzer()
 
 # Analyze a failure
 result = analyzer.analyze_failure(
-    workflow_file=Path('.github/workflows/ci.yml'),
-    error_log='Error: rate limit exceeded',
-    context={'job': 'test', 'step': 'run-tests'}
+    workflow_file=Path(".github/workflows/ci.yml"),
+    error_log="Error: rate limit exceeded",
+    context={"job": "test", "step": "run-tests"},
 )
 
 # Generate report
@@ -176,6 +176,7 @@ Suggested Fixes:
 ```python
 # Import from utils
 from ipfs_datasets_py.utils.workflows import WorkflowAnalyzer
+
 
 # Use in CLI
 def main():

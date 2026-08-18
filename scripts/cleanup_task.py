@@ -1,14 +1,18 @@
 import subprocess
 import os
 
+
 def check_dirty(path):
     if not os.path.isdir(path):
         return False
     try:
-        out = subprocess.check_output(["git", "-C", path, "status", "--porcelain"], stderr=subprocess.STDOUT).decode()
+        out = subprocess.check_output(
+            ["git", "-C", path, "status", "--porcelain"], stderr=subprocess.STDOUT
+        ).decode()
         return len(out.strip()) > 0
     except:
         return False
+
 
 def get_worktrees():
     out = subprocess.check_output(["git", "worktree", "list", "--porcelain"]).decode()
@@ -31,6 +35,7 @@ def get_worktrees():
         worktrees.append(current)
     return worktrees
 
+
 # Initial list
 worktrees = get_worktrees()
 main_path = worktrees[0]["path"] if worktrees else ""
@@ -42,7 +47,7 @@ for wt in worktrees:
     path = wt["path"]
     if path == main_path:
         continue
-    
+
     # Task: for each DETACHED non-main worktree path, force remove
     # "detached" implies non-main branch.
     if wt.get("detached"):
@@ -68,10 +73,10 @@ for wt in worktrees_post:
     if not os.path.exists(path):
         stale += 1
         continue
-    
+
     is_detached = wt.get("detached", False)
     branch = wt.get("branch", "")
-    
+
     if is_detached:
         if check_dirty(path):
             detached_dirty += 1
@@ -79,7 +84,7 @@ for wt in worktrees_post:
             detached_clean += 1
     elif branch:
         # refs/heads/branchname
-        bname = branch.split('/')[-1]
+        bname = branch.split("/")[-1]
         if bname != "main":
             named_non_main += 1
 

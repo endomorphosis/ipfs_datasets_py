@@ -34,20 +34,15 @@ from .runtime_confinement import (
 
 
 G240_BOOTSTRAP_CONFINEMENT_PROFILE_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g240-bootstrap-confinement-profile.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.g240-bootstrap-confinement-profile.v2"
 )
 G240_BOOTSTRAP_PRIVATE_POLICY_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g240-bootstrap-private-policy.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.g240-bootstrap-private-policy.v2"
 )
 G240_BOOTSTRAP_RECEIPT_SCHEMA_V2: Final = (
-    "ipfs-datasets.logic-pipeline-benchmark."
-    "g240-bootstrap-confinement-receipt.v2"
+    "ipfs-datasets.logic-pipeline-benchmark.g240-bootstrap-confinement-receipt.v2"
 )
-G240_TRACKED_SOURCE_BOOTSTRAP_PATH_V2: Final = (
-    "benchmarks/logic_pipeline/source_bootstrap.py"
-)
+G240_TRACKED_SOURCE_BOOTSTRAP_PATH_V2: Final = "benchmarks/logic_pipeline/source_bootstrap.py"
 G240_TRACKED_SOURCE_BOOTSTRAP_COMMAND_V2: Final = (
     "python",
     G240_TRACKED_SOURCE_BOOTSTRAP_PATH_V2,
@@ -72,34 +67,25 @@ def _profile_payload() -> dict[str, object]:
         "restrict_self_flags": G240_LANDLOCK_RESTRICT_SELF_FLAGS_V1,
         "landlock_policy_schema": G240_LANDLOCK_POLICY_SCHEMA_V1,
         "landlock_receipt_schema": G240_LANDLOCK_RECEIPT_SCHEMA_V1,
-        "approved_tcp_destination_ports": list(
-            G240_APPROVED_TCP_DESTINATION_PORTS_V2
-        ),
+        "approved_tcp_destination_ports": list(G240_APPROVED_TCP_DESTINATION_PORTS_V2),
         "tcp_destination_address_authenticated": False,
         "udp_restricted_by_landlock": False,
         "pathname_unix_socket_restricted_by_landlock": False,
         "close_fds_required": True,
-        "inherited_descriptor_policy": (
-            "stdio-plus-one-dedicated-one-shot-receipt-pipe"
-        ),
+        "inherited_descriptor_policy": ("stdio-plus-one-dedicated-one-shot-receipt-pipe"),
         "inherited_socket_count_required": 0,
         "git_observation_before_confinement": True,
         "execution_request_opened_after_confinement": True,
     }
 
 
-G240_BOOTSTRAP_CONFINEMENT_PROFILE_V2: Final[
-    Mapping[str, object]
-] = MappingProxyType(_profile_payload())
-G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2: Final = cid_for_dag_json(
+G240_BOOTSTRAP_CONFINEMENT_PROFILE_V2: Final[Mapping[str, object]] = MappingProxyType(
     _profile_payload()
 )
+G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2: Final = cid_for_dag_json(_profile_payload())
 _G240_APPROVED_TCP_PORT_SET_CID_V2: Final = cid_for_dag_json(
     {
-        "schema": (
-            "ipfs-datasets.logic-pipeline-benchmark."
-            "g240-landlock-tcp-port-set.v1"
-        ),
+        "schema": ("ipfs-datasets.logic-pipeline-benchmark.g240-landlock-tcp-port-set.v1"),
         "transport": "tcp",
         "authority": "destination-port-only",
         "ports": list(G240_APPROVED_TCP_DESTINATION_PORTS_V2),
@@ -112,12 +98,8 @@ class G240BootstrapContractError(ValueError):
 
 
 def _mapping(value: object, field: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping) or not all(
-        isinstance(key, str) for key in value
-    ):
-        raise G240BootstrapContractError(
-            f"{field} must be an object with string keys"
-        )
+    if not isinstance(value, Mapping) or not all(isinstance(key, str) for key in value):
+        raise G240BootstrapContractError(f"{field} must be an object with string keys")
     return value
 
 
@@ -125,9 +107,7 @@ def _canonical_cid(value: object, field: str) -> str:
     try:
         return validate_cid(value, codecs=("dag-json",))
     except (TypeError, ValueError) as exc:
-        raise G240BootstrapContractError(
-            f"{field} must be a canonical DAG-JSON CID"
-        ) from exc
+        raise G240BootstrapContractError(f"{field} must be a canonical DAG-JSON CID") from exc
 
 
 def g240_bootstrap_git_observation_cid(
@@ -142,19 +122,12 @@ def g240_bootstrap_git_observation_cid(
         or not _GIT_OBJECT.fullmatch(object_id)
         or role not in {"source", "ipfs-accelerate-gitlink"}
     ):
-        raise G240BootstrapContractError(
-            "bootstrap Git observation is invalid"
-        )
+        raise G240BootstrapContractError("bootstrap Git observation is invalid")
     return cid_for_dag_json(
         {
-            "schema": (
-                "ipfs-datasets.logic-pipeline-benchmark."
-                "g240-bootstrap-git-observation.v2"
-            ),
+            "schema": ("ipfs-datasets.logic-pipeline-benchmark.g240-bootstrap-git-observation.v2"),
             "role": role,
-            "object_format": (
-                "sha1" if len(object_id) == 40 else "sha256"
-            ),
+            "object_format": ("sha1" if len(object_id) == 40 else "sha256"),
             "object_type": "commit",
             "oid": object_id,
         }
@@ -185,20 +158,14 @@ class G240BootstrapConfinementReceiptV2:
 
     def __post_init__(self) -> None:
         if self.schema != G240_BOOTSTRAP_RECEIPT_SCHEMA_V2:
-            raise G240BootstrapContractError(
-                "unsupported G240 bootstrap receipt schema"
-            )
+            raise G240BootstrapContractError("unsupported G240 bootstrap receipt schema")
         profile_cid = _canonical_cid(
             self.confinement_profile_cid,
             "confinement_profile_cid",
         )
         if profile_cid != G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2:
-            raise G240BootstrapContractError(
-                "G240 bootstrap confinement profile changed"
-            )
-        object.__setattr__(
-            self, "confinement_profile_cid", profile_cid
-        )
+            raise G240BootstrapContractError("G240 bootstrap confinement profile changed")
+        object.__setattr__(self, "confinement_profile_cid", profile_cid)
         object.__setattr__(
             self,
             "source_commit_observation_cid",
@@ -223,9 +190,7 @@ class G240BootstrapConfinementReceiptV2:
         ):
             value = getattr(self, name)
             if type(value) is not int or value < 0:
-                raise G240BootstrapContractError(
-                    f"{name} must be a nonnegative observed count"
-                )
+                raise G240BootstrapContractError(f"{name} must be a nonnegative observed count")
         expected_descriptor_count = 3 if self.synthetic_test_only else 4
         if (
             self.inherited_descriptor_count != expected_descriptor_count
@@ -233,8 +198,7 @@ class G240BootstrapConfinementReceiptV2:
             or self.inherited_socket_count != 0
         ):
             raise G240BootstrapContractError(
-                "bootstrap inherited descriptors differ from stdio plus the "
-                "one-shot receipt pipe"
+                "bootstrap inherited descriptors differ from stdio plus the one-shot receipt pipe"
             )
         for name in (
             "close_fds_observed",
@@ -246,20 +210,15 @@ class G240BootstrapConfinementReceiptV2:
             "synthetic_test_only",
         ):
             if type(getattr(self, name)) is not bool:
-                raise G240BootstrapContractError(
-                    f"{name} must be boolean"
-                )
+                raise G240BootstrapContractError(f"{name} must be boolean")
         if (
             not self.close_fds_observed
-            or self.receipt_channel_one_shot
-            is not (not self.synthetic_test_only)
+            or self.receipt_channel_one_shot is not (not self.synthetic_test_only)
             or not self.git_observed_before_confinement
             or self.execution_request_opened_before_confinement
             or not self.stage2_authorized
         ):
-            raise G240BootstrapContractError(
-                "bootstrap sequencing or descriptor assurance changed"
-            )
+            raise G240BootstrapContractError("bootstrap sequencing or descriptor assurance changed")
         policy: G240LandlockPolicyV1 | None
         receipt: G240LandlockReceiptV1 | None
         if self.synthetic_test_only:
@@ -283,9 +242,7 @@ class G240BootstrapConfinementReceiptV2:
                     "production bootstrap requires applied Landlock evidence"
                 )
             try:
-                policy = validate_g240_landlock_policy_v1(
-                    self.landlock_policy
-                )
+                policy = validate_g240_landlock_policy_v1(self.landlock_policy)
                 receipt = validate_g240_landlock_receipt_v1(
                     self.landlock_receipt,
                     expected_policy=policy,
@@ -295,18 +252,12 @@ class G240BootstrapConfinementReceiptV2:
                 TypeError,
                 ValueError,
             ) as exc:
-                raise G240BootstrapContractError(
-                    "bootstrap Landlock evidence is invalid"
-                ) from exc
+                raise G240BootstrapContractError("bootstrap Landlock evidence is invalid") from exc
             if (
-                policy.approved_tcp_port_count
-                != len(G240_APPROVED_TCP_DESTINATION_PORTS_V2)
-                or policy.approved_tcp_port_set_cid
-                != _G240_APPROVED_TCP_PORT_SET_CID_V2
+                policy.approved_tcp_port_count != len(G240_APPROVED_TCP_DESTINATION_PORTS_V2)
+                or policy.approved_tcp_port_set_cid != _G240_APPROVED_TCP_PORT_SET_CID_V2
             ):
-                raise G240BootstrapContractError(
-                    "bootstrap Landlock TCP-port authority changed"
-                )
+                raise G240BootstrapContractError("bootstrap Landlock TCP-port authority changed")
             object.__setattr__(
                 self,
                 "landlock_policy",
@@ -320,12 +271,8 @@ class G240BootstrapConfinementReceiptV2:
         expected = cid_for_dag_json(self.identity_payload())
         if self.receipt_cid is None:
             object.__setattr__(self, "receipt_cid", expected)
-        elif (
-            _canonical_cid(self.receipt_cid, "receipt_cid") != expected
-        ):
-            raise G240BootstrapContractError(
-                "G240 bootstrap receipt CID changed"
-            )
+        elif _canonical_cid(self.receipt_cid, "receipt_cid") != expected:
+            raise G240BootstrapContractError("G240 bootstrap receipt CID changed")
 
     @property
     def typed_landlock_policy(self) -> G240LandlockPolicyV1 | None:
@@ -345,13 +292,7 @@ class G240BootstrapConfinementReceiptV2:
 
     def identity_payload(self) -> dict[str, object]:
         return {
-            name: (
-                None
-                if value is None
-                else dict(value)
-                if isinstance(value, Mapping)
-                else value
-            )
+            name: (None if value is None else dict(value) if isinstance(value, Mapping) else value)
             for name, value in (
                 (field, getattr(self, field))
                 for field in self.__dataclass_fields__
@@ -369,25 +310,19 @@ class G240BootstrapConfinementReceiptV2:
     def from_dict(cls, value: object) -> Self:
         data = _mapping(value, "G240 bootstrap receipt")
         if set(data) != set(cls.__dataclass_fields__):
-            raise G240BootstrapContractError(
-                "G240 bootstrap receipt fields changed"
-            )
+            raise G240BootstrapContractError("G240 bootstrap receipt fields changed")
         return cls(
             **{
                 **data,
                 "landlock_policy": (
                     None
                     if data["landlock_policy"] is None
-                    else _mapping(
-                        data["landlock_policy"], "landlock_policy"
-                    )
+                    else _mapping(data["landlock_policy"], "landlock_policy")
                 ),
                 "landlock_receipt": (
                     None
                     if data["landlock_receipt"] is None
-                    else _mapping(
-                        data["landlock_receipt"], "landlock_receipt"
-                    )
+                    else _mapping(data["landlock_receipt"], "landlock_receipt")
                 ),
             }
         )  # type: ignore[arg-type]
@@ -399,31 +334,20 @@ def g240_private_landlock_policy_payload_v2(
     """Serialize private enforcement inputs for the bootstrap-only file."""
 
     if not isinstance(sources, G240LandlockPrivatePolicySourcesV1):
-        raise G240BootstrapContractError(
-            "private bootstrap policy requires typed Landlock sources"
-        )
+        raise G240BootstrapContractError("private bootstrap policy requires typed Landlock sources")
     sources.revalidate()
-    if (
-        sources.approved_tcp_ports
-        != G240_APPROVED_TCP_DESTINATION_PORTS_V2
-    ):
+    if sources.approved_tcp_ports != G240_APPROVED_TCP_DESTINATION_PORTS_V2:
         raise G240BootstrapContractError(
             "private bootstrap policy must authorize TCP port 8080 only"
         )
     identity = {
         "schema": G240_BOOTSTRAP_PRIVATE_POLICY_SCHEMA_V2,
-        "confinement_profile_cid": (
-            G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
-        ),
+        "confinement_profile_cid": (G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2),
         "landlock_policy": sources.policy.to_dict(),
-        "read_only_paths": [
-            path.as_posix() for path in sources.read_only_paths
-        ],
+        "read_only_paths": [path.as_posix() for path in sources.read_only_paths],
         "state_path": sources.state_path.as_posix(),
         "output_path": sources.output_path.as_posix(),
-        "cache_paths": [
-            path.as_posix() for path in sources.cache_paths
-        ],
+        "cache_paths": [path.as_posix() for path in sources.cache_paths],
         "approved_tcp_ports": list(sources.approved_tcp_ports),
     }
     return {
@@ -450,9 +374,7 @@ def g240_private_landlock_sources_from_payload_v2(
         "private_policy_cid",
     }
     if set(data) != expected_fields:
-        raise G240BootstrapContractError(
-            "G240 bootstrap private policy fields changed"
-        )
+        raise G240BootstrapContractError("G240 bootstrap private policy fields changed")
     if (
         data["schema"] != G240_BOOTSTRAP_PRIVATE_POLICY_SCHEMA_V2
         or _canonical_cid(
@@ -461,19 +383,12 @@ def g240_private_landlock_sources_from_payload_v2(
         )
         != G240_BOOTSTRAP_CONFINEMENT_PROFILE_CID_V2
     ):
-        raise G240BootstrapContractError(
-            "G240 bootstrap private policy profile changed"
-        )
-    identity = {
-        key: data[key] for key in expected_fields - {"private_policy_cid"}
-    }
-    if (
-        _canonical_cid(data["private_policy_cid"], "private_policy_cid")
-        != cid_for_dag_json(identity)
+        raise G240BootstrapContractError("G240 bootstrap private policy profile changed")
+    identity = {key: data[key] for key in expected_fields - {"private_policy_cid"}}
+    if _canonical_cid(data["private_policy_cid"], "private_policy_cid") != cid_for_dag_json(
+        identity
     ):
-        raise G240BootstrapContractError(
-            "G240 bootstrap private policy CID changed"
-        )
+        raise G240BootstrapContractError("G240 bootstrap private policy CID changed")
     raw_read_only = data["read_only_paths"]
     raw_caches = data["cache_paths"]
     raw_ports = data["approved_tcp_ports"]
@@ -484,9 +399,7 @@ def g240_private_landlock_sources_from_payload_v2(
         or not isinstance(data["state_path"], str)
         or not isinstance(data["output_path"], str)
     ):
-        raise G240BootstrapContractError(
-            "G240 bootstrap private policy sources are malformed"
-        )
+        raise G240BootstrapContractError("G240 bootstrap private policy sources are malformed")
     try:
         policy = validate_g240_landlock_policy_v1(
             _mapping(data["landlock_policy"], "landlock_policy")
@@ -522,16 +435,9 @@ def validate_g240_bootstrap_confinement_receipt_v2(
         if isinstance(value, G240BootstrapConfinementReceiptV2)
         else G240BootstrapConfinementReceiptV2.from_dict(value)
     )
-    receipt = G240BootstrapConfinementReceiptV2.from_dict(
-        receipt.to_dict()
-    )
-    if (
-        synthetic_test_only is not None
-        and receipt.synthetic_test_only is not synthetic_test_only
-    ):
-        raise G240BootstrapContractError(
-            "bootstrap receipt synthetic/production mode changed"
-        )
+    receipt = G240BootstrapConfinementReceiptV2.from_dict(receipt.to_dict())
+    if synthetic_test_only is not None and receipt.synthetic_test_only is not synthetic_test_only:
+        raise G240BootstrapContractError("bootstrap receipt synthetic/production mode changed")
     if expected_policy is not None:
         policy = validate_g240_landlock_policy_v1(expected_policy)
         observed = receipt.typed_landlock_policy

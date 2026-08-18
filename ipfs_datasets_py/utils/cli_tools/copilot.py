@@ -198,7 +198,9 @@ class Copilot(BaseCLITool):
 
             return {
                 "success": success,
-                "message": "GitHub Copilot extension installed successfully" if success else "Failed to install GitHub Copilot extension",
+                "message": "GitHub Copilot extension installed successfully"
+                if success
+                else "Failed to install GitHub Copilot extension",
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "returncode": result.returncode,
@@ -344,7 +346,9 @@ class Copilot(BaseCLITool):
             "follow": follow,
         }
         if not result["success"]:
-            response["error"] = (result.get("stderr") or result.get("stdout") or "gh agent-task create failed").strip()
+            response["error"] = (
+                result.get("stderr") or result.get("stdout") or "gh agent-task create failed"
+            ).strip()
         return response
 
 

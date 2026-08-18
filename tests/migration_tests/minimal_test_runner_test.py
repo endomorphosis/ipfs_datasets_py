@@ -2,6 +2,7 @@
 """
 Minimal test for TestRunner
 """
+
 import sys
 import os
 from pathlib import Path
@@ -13,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 # Setup minimal test file
 temp_dir = tempfile.mkdtemp()
 test_file = Path(temp_dir) / "test_simple.py"
-with open(test_file, 'w') as f:
+with open(test_file, "w") as f:
     f.write("""
 import unittest
 
@@ -28,14 +29,15 @@ try:
     # Try to import and check only TestRunner class
     from ipfs_datasets_py.mcp_server.tools.development_tools.test_runner import TestRunner
     from ipfs_datasets_py.mcp_server.tools.development_tools.base_tool import BaseDevelopmentTool
-    
+
     # Create TestRunner
     runner = TestRunner()
     print(f"Created TestRunner instance: {runner}")
     print(f"Is BaseDevelopmentTool: {isinstance(runner, BaseDevelopmentTool)}")
-    
+
     # Basic run test
     import anyio
+
     async def run_test():
         try:
             print("Running test directly on temp dir")
@@ -46,7 +48,7 @@ try:
                 run_linting=False,
                 run_dataset_tests=False,
                 test_framework="unittest",
-                verbose=True
+                verbose=True,
             )
             print(f"Result: {type(result)}")
             print(f"Result details: {result}")
@@ -54,9 +56,10 @@ try:
         except Exception as e:
             print(f"Error running test: {e}")
             import traceback
+
             traceback.print_exc()
             return False
-    
+
     success = anyio.run(run_test())
     if success:
         print("SUCCESS: TestRunner works correctly!")
@@ -66,4 +69,5 @@ try:
 except Exception as e:
     print(f"Import or setup error: {e}")
     import traceback
+
     traceback.print_exc()

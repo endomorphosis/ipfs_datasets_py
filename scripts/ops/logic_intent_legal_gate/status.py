@@ -95,8 +95,7 @@ def _shard_rows(state_root: Path, shard_count: int) -> list[dict[str, Any]]:
         state = _load_json(state_path) or {}
         supervisor_pid = _read_pid_file(shard_dir / "supervisor.pid")
         managed_pids = [
-            _read_pid_file(path)
-            for path in sorted(state_dir.glob("*_managed_daemon.pid"))
+            _read_pid_file(path) for path in sorted(state_dir.glob("*_managed_daemon.pid"))
         ]
         managed_pids = [pid for pid in managed_pids if pid is not None]
         status_counts = Counter(
@@ -109,9 +108,7 @@ def _shard_rows(state_root: Path, shard_count: int) -> list[dict[str, Any]]:
                 "shard": shard,
                 "state_path": str(state_path) if state_path.is_file() else "",
                 "supervisor_pid": supervisor_pid,
-                "supervisor_alive": bool(
-                    supervisor_pid and _pid_alive(int(supervisor_pid))
-                ),
+                "supervisor_alive": bool(supervisor_pid and _pid_alive(int(supervisor_pid))),
                 "managed_daemon_pids": managed_pids,
                 "managed_daemon_alive": [
                     bool(pid and _pid_alive(int(pid))) for pid in managed_pids
@@ -133,15 +130,11 @@ def _shard_rows(state_root: Path, shard_count: int) -> list[dict[str, Any]]:
                     for task_id, status in (state.get("task_statuses") or {}).items()
                     if str(status).lower() == "merge-queued"
                 ),
-                "last_implementation_task_id": str(
-                    state.get("last_implementation_task_id") or ""
-                ),
-                "last_implementation_commit": str(
-                    state.get("last_implementation_commit") or ""
-                )[:12],
-                "last_implementation_branch": str(
-                    state.get("last_implementation_branch") or ""
-                ),
+                "last_implementation_task_id": str(state.get("last_implementation_task_id") or ""),
+                "last_implementation_commit": str(state.get("last_implementation_commit") or "")[
+                    :12
+                ],
+                "last_implementation_branch": str(state.get("last_implementation_branch") or ""),
                 "last_merge_error": str(state.get("last_merge_error") or "")[:200],
             }
         )
@@ -168,8 +161,8 @@ def _merge_queue_status(
 
     branch = str(merge_target_branch or "").strip() or "main"
     try:
-        queue_dir = Path(merge_queue_dir) if merge_queue_dir else merge_target_queue_dir(
-            repo_root, branch
+        queue_dir = (
+            Path(merge_queue_dir) if merge_queue_dir else merge_target_queue_dir(repo_root, branch)
         )
         repository_id = checkout_repository_id(repo_root)
         queue = MergeQueue(queue_dir)
@@ -260,10 +253,7 @@ def _print_human(report: Mapping[str, Any]) -> None:
             print(f"  last_merge_error: {row.get('last_merge_error')}")
         sc = row.get("status_counts") or {}
         if sc:
-            print(
-                "  projected: "
-                + ", ".join(f"{k}={v}" for k, v in sorted(sc.items()))
-            )
+            print("  projected: " + ", ".join(f"{k}={v}" for k, v in sorted(sc.items())))
     print()
     print("=== merge train ===")
     mq = report.get("merge_queue") or {}
@@ -306,9 +296,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     todo_path = Path(args.todo_path)
     if not todo_path.is_absolute():
         todo_path = (repo_root / todo_path).resolve()
-    merge_queue_dir = (
-        Path(args.merge_queue_dir).resolve() if args.merge_queue_dir else None
-    )
+    merge_queue_dir = Path(args.merge_queue_dir).resolve() if args.merge_queue_dir else None
 
     shards = _shard_rows(state_root, int(args.shard_count))
     merge_queue = _merge_queue_status(
@@ -337,9 +325,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="LIG multi-lane + merge-train operator status"
-    )
+    parser = argparse.ArgumentParser(description="LIG multi-lane + merge-train operator status")
     default_repo = _repo_root_from_script()
     parser.add_argument(
         "--repo-root",
@@ -360,9 +346,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--shard-count", type=int, default=4)
     parser.add_argument(
         "--merge-target-branch",
-        default=os.environ.get(
-            "MERGE_TARGET_BRANCH", "feature/logic-intent-legal-gate"
-        ),
+        default=os.environ.get("MERGE_TARGET_BRANCH", "feature/logic-intent-legal-gate"),
     )
     parser.add_argument(
         "--merge-queue-dir",

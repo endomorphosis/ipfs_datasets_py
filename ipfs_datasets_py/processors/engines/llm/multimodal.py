@@ -10,5 +10,5 @@ Future: Will contain extracted multi-modal logic
 from ipfs_datasets_py.processors.llm_optimizer import TextProcessor
 
 __all__ = [
-    'TextProcessor',
+    "TextProcessor",
 ]

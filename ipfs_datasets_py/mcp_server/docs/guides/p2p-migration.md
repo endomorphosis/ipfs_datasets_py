@@ -42,9 +42,9 @@ P2PServiceManager(
     enable_cache=True,
     # NEW MCP++ options
     enable_workflow_scheduler=True,  # Enable P2P workflow scheduler
-    enable_peer_registry=True,       # Enable peer discovery
-    enable_bootstrap=True,            # Enable bootstrap
-    bootstrap_nodes=[...],            # Custom bootstrap nodes
+    enable_peer_registry=True,  # Enable peer discovery
+    enable_bootstrap=True,  # Enable bootstrap
+    bootstrap_nodes=[...],  # Custom bootstrap nodes
 )
 ```
 
@@ -101,9 +101,9 @@ from ipfs_datasets_py.mcp_server import mcplusplus
 caps = mcplusplus.get_capabilities()
 print(f"MCP++ available: {caps['mcplusplus_available']}")
 
-if caps['mcplusplus_available']:
+if caps["mcplusplus_available"]:
     print("Features available:")
-    for feature, available in caps['capabilities'].items():
+    for feature, available in caps["capabilities"].items():
         print(f"  - {feature}: {available}")
 else:
     print("MCP++ not available - using graceful degradation")
@@ -119,10 +119,7 @@ Update your P2P service manager initialization to use new features:
 ```python
 from ipfs_datasets_py.mcp_server.p2p_service_manager import P2PServiceManager
 
-manager = P2PServiceManager(
-    enabled=True,
-    queue_path="/tmp/p2p_queue"
-)
+manager = P2PServiceManager(enabled=True, queue_path="/tmp/p2p_queue")
 ```
 
 **After (Enhanced P2P with MCP++):**
@@ -139,7 +136,7 @@ manager = P2PServiceManager(
     # Optional: Custom bootstrap nodes
     bootstrap_nodes=[
         "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
-    ]
+    ],
 )
 
 # Check what's available
@@ -182,9 +179,11 @@ def my_fastapi_tool(x):
     """Standard FastAPI tool."""
     return x
 
+
 async def my_trio_tool(x):
     """Trio-native P2P tool."""
     return x
+
 
 # Mark as Trio-native (optional, can be detected automatically)
 my_trio_tool._mcp_runtime = "trio"
@@ -242,7 +241,7 @@ scheduler = mcplusplus.get_scheduler()
 # Service manager works without MCP++
 manager = P2PServiceManager(
     enabled=True,
-    enable_workflow_scheduler=True  # Will degrade gracefully
+    enable_workflow_scheduler=True,  # Will degrade gracefully
 )
 # Manager created successfully
 # has_advanced_features() returns False
@@ -335,7 +334,7 @@ p2p:
    ```python
    manager = P2PServiceManager(
        enabled=True,
-       enable_workflow_scheduler=True  # Must be True
+       enable_workflow_scheduler=True,  # Must be True
    )
    ```
 3. Check capabilities:
@@ -358,6 +357,8 @@ p2p:
    ```python
    def my_tool():
        pass
+
+
    my_tool._mcp_runtime = "trio"
    ```
 

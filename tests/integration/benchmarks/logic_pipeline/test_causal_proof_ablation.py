@@ -46,21 +46,15 @@ def _controller(
                 "independent": True,
                 "accepted": accepted,
             },
-            failure_code=(
-                None
-                if accepted
-                else contracts.FailureCode.KERNEL_REJECTION
-            ),
+            failure_code=(None if accepted else contracts.FailureCode.KERNEL_REJECTION),
         )
 
     return runtime.CausalProofGraphController(
         kernel_checker=check,
         kernel_receipt_validator=lambda candidate, check: (
-            check.receipt.get("schema")
-            == "synthetic-independent-kernel-receipt.v1"
+            check.receipt.get("schema") == "synthetic-independent-kernel-receipt.v1"
             and check.receipt.get("independent") is True
-            and check.receipt.get("candidate_cid")
-            == candidate.candidate_cid
+            and check.receipt.get("candidate_cid") == candidate.candidate_cid
         ),
     )
 
@@ -87,8 +81,7 @@ def _execute(
 
 def test_protocol_is_additive_cid_bound_and_a0_gains_equal_kernel_exposure() -> None:
     assert contracts.HSSLEV2108F34() == (
-        "equal compiler-kernel exposure and distinct optional-component "
-        "rescue attribution"
+        "equal compiler-kernel exposure and distinct optional-component rescue attribution"
     )
     assert contracts.DEFAULT_PROTOCOL_SHA256 == (
         "a12067c4239b9628fde065db3fe10e623148c95a55891a642306e0c90dee8fa3"
@@ -97,26 +90,23 @@ def test_protocol_is_additive_cid_bound_and_a0_gains_equal_kernel_exposure() -> 
         contracts.SEMANTIC_PROTOCOL_V2_CID
     )
     assert contracts.CAUSAL_PROOF_PROTOCOL_V2.holdout_permitted is False
-    assert variants.get_variant_definition("A0").stages == (
-        contracts.StageName.COMPILER,
-    )
-    assert variants.get_causal_proof_variant_profile(
-        "A0"
-    ).effective_stages == (
+    assert variants.get_variant_definition("A0").stages == (contracts.StageName.COMPILER,)
+    assert variants.get_causal_proof_variant_profile("A0").effective_stages == (
         contracts.StageName.COMPILER,
         contracts.StageName.KERNEL,
     )
-    assert variants.effective_variant_stages(
-        "A0",
-        causal_proof_protocol_cid=contracts.CAUSAL_PROOF_PROTOCOL_V2_CID,
-    )[-1] is contracts.StageName.KERNEL
+    assert (
+        variants.effective_variant_stages(
+            "A0",
+            causal_proof_protocol_cid=contracts.CAUSAL_PROOF_PROTOCOL_V2_CID,
+        )[-1]
+        is contracts.StageName.KERNEL
+    )
     assert all(
         profile.effective_stages[-1] is contracts.StageName.KERNEL
         for profile in variants.CAUSAL_PROOF_VARIANT_PROFILES.values()
     )
-    assert variants.get_causal_proof_variant_profile(
-        "A12"
-    ).optional_order == (
+    assert variants.get_causal_proof_variant_profile("A12").optional_order == (
         contracts.StageName.LEANSTRAL,
         contracts.StageName.HAMMER,
     )
@@ -163,9 +153,7 @@ def test_compiler_acceptance_suppresses_all_optional_producers() -> None:
         },
     )
 
-    receipt = contracts.validate_causal_proof_selection_receipt(
-        result.receipt
-    )
+    receipt = contracts.validate_causal_proof_selection_receipt(result.receipt)
     assert calls == ["compiler"]
     assert producer_calls == []
     assert receipt["selected_source"] == "compiler"
@@ -205,17 +193,11 @@ def test_duplicate_hammer_gets_zero_credit_then_distinct_leanstral_rescues() -> 
         variant_id="A3",
         compiler=compiler,
         producers={
-            "hammer": lambda: _candidate(
-                "hammer", "duplicate certificate"
-            ),
-            "leanstral": lambda: _candidate(
-                "leanstral", "distinct leanstral certificate"
-            ),
+            "hammer": lambda: _candidate("hammer", "duplicate certificate"),
+            "leanstral": lambda: _candidate("leanstral", "distinct leanstral certificate"),
         },
     )
-    receipt = contracts.validate_causal_proof_selection_receipt(
-        result.receipt
-    )
+    receipt = contracts.validate_causal_proof_selection_receipt(result.receipt)
     hammer, leanstral = receipt["optional_candidates"]
 
     assert calls == ["compiler", "leanstral"]
@@ -249,30 +231,20 @@ def test_post_model_failure_is_continuation_not_recovery() -> None:
                 "leanstral_output_limit",
                 "bounded output was truncated",
             ),
-            "hammer": lambda: _candidate(
-                "hammer", "distinct hammer rescue"
-            ),
+            "hammer": lambda: _candidate("hammer", "distinct hammer rescue"),
         },
     )
-    receipt = contracts.validate_causal_proof_selection_receipt(
-        result.receipt
-    )
+    receipt = contracts.validate_causal_proof_selection_receipt(result.receipt)
     leanstral, hammer = receipt["optional_candidates"]
 
-    assert leanstral["continuation_kind"] == (
-        "post_model_failure_continuation"
-    )
+    assert leanstral["continuation_kind"] == ("post_model_failure_continuation")
     assert leanstral["causal_rescue"] is False
     assert leanstral["failure_code"] == "leanstral_output_limit"
-    assert hammer["continuation_kind"] == (
-        "selected_post_model_failure_continuation"
-    )
+    assert hammer["continuation_kind"] == ("selected_post_model_failure_continuation")
     assert hammer["causal_credit_eligible"] is False
     assert hammer["causal_rescue"] is False
     assert hammer["marginal_credit_millionths"] == 0
-    assert (
-        hammer["zero_credit_reason"] == "post_model_failure_continuation"
-    )
+    assert hammer["zero_credit_reason"] == "post_model_failure_continuation"
     assert receipt["selected_source"] == "hammer"
     assert receipt["denominators"]["hammer_unique_rescue"] is False
     assert calls == ["hammer"]
@@ -330,9 +302,7 @@ def test_invalid_protocol_failure_taxonomy_and_tampering_fail_closed() -> None:
     optional = [dict(item) for item in relabeled["optional_candidates"]]
     optional[0]["continuation_kind"] = "recovery"
     relabeled["optional_candidates"] = optional
-    body = {
-        key: value for key, value in relabeled.items() if key != "receipt_cid"
-    }
+    body = {key: value for key, value in relabeled.items() if key != "receipt_cid"}
     relabeled["receipt_cid"] = cid_for_dag_json(body)
     with pytest.raises(
         contracts.ProtocolContractError,
@@ -376,6 +346,4 @@ def test_live_runtime_additively_routes_a0_to_kernel_only_when_selected() -> Non
         contracts.StageName.COMPILER,
         contracts.StageName.KERNEL,
     )
-    assert causal.causal_proof_protocol_cid == (
-        contracts.CAUSAL_PROOF_PROTOCOL_V2_CID
-    )
+    assert causal.causal_proof_protocol_cid == (contracts.CAUSAL_PROOF_PROTOCOL_V2_CID)

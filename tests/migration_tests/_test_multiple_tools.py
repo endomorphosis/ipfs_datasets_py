@@ -12,6 +12,7 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(project_root))
 
+
 async def test_web_archive_tools():
     """Test all web archive tools."""
     tools_tested = 0
@@ -22,9 +23,11 @@ async def test_web_archive_tools():
 
     # Test extract_text_from_warc
     try:
-        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc import extract_text_from_warc
+        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_text_from_warc import (
+            extract_text_from_warc,
+        )
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.warc', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".warc", delete=False) as f:
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
@@ -44,9 +47,11 @@ async def test_web_archive_tools():
 
     # Test extract_metadata_from_warc
     try:
-        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc import extract_metadata_from_warc
+        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_metadata_from_warc import (
+            extract_metadata_from_warc,
+        )
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.warc', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".warc", delete=False) as f:
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
@@ -66,9 +71,11 @@ async def test_web_archive_tools():
 
     # Test extract_links_from_warc
     try:
-        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc import extract_links_from_warc
+        from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_links_from_warc import (
+            extract_links_from_warc,
+        )
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.warc', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".warc", delete=False) as f:
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
@@ -90,7 +97,7 @@ async def test_web_archive_tools():
     try:
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.index_warc import index_warc
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.warc', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".warc", delete=False) as f:
             f.write("WARC/1.0\nWARC-Type: response\n\nTest content")
             warc_path = f.name
 
@@ -110,6 +117,7 @@ async def test_web_archive_tools():
 
     return tools_tested, tools_passed
 
+
 def test_vector_tools():
     """Test vector tools."""
     tools_tested = 0
@@ -120,7 +128,9 @@ def test_vector_tools():
 
     # Test create_vector_index
     try:
-        from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index
+        from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import (
+            create_vector_index,
+        )
         import anyio
 
         vectors = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
@@ -140,7 +150,9 @@ def test_vector_tools():
 
     # Test search_vector_index
     try:
-        from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import search_vector_index
+        from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import (
+            search_vector_index,
+        )
         import anyio
 
         query_vector = [1.0, 0.0, 0.0]
@@ -158,6 +170,7 @@ def test_vector_tools():
 
     return tools_tested, tools_passed
 
+
 def test_graph_tools():
     """Test graph tools."""
     tools_tested = 0
@@ -168,14 +181,18 @@ def test_graph_tools():
 
     # Test query_knowledge_graph
     try:
-        from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import query_knowledge_graph
+        from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import (
+            query_knowledge_graph,
+        )
         import anyio
 
-        result = anyio.run(query_knowledge_graph(
-            graph_id="test_graph",
-            query="SELECT * WHERE { ?s ?p ?o } LIMIT 10",
-            query_type="sparql"
-        ))
+        result = anyio.run(
+            query_knowledge_graph(
+                graph_id="test_graph",
+                query="SELECT * WHERE { ?s ?p ?o } LIMIT 10",
+                query_type="sparql",
+            )
+        )
         tools_tested += 1
 
         if result.get("status") == "success":
@@ -188,6 +205,7 @@ def test_graph_tools():
         print(f"✗ query_knowledge_graph: {e}")
 
     return tools_tested, tools_passed
+
 
 def main():
     """Run tests for multiple tool categories."""
@@ -221,6 +239,7 @@ def main():
     else:
         print(f"⚠️  {total_tested - total_passed} tools need attention")
         return False
+
 
 if __name__ == "__main__":
     success = main()

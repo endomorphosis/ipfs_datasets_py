@@ -1,4 +1,5 @@
 """Tests for batch-45 features: stopwords, compare_versions, get_history_summary."""
+
 from __future__ import annotations
 
 import pytest
@@ -6,20 +7,29 @@ import pytest
 
 # ── ExtractionConfig.stopwords ────────────────────────────────────────────────
 
+
 class TestStopwordsFilter:
     @pytest.fixture
     def gen(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
         return OntologyGenerator(use_ipfs_accelerate=False)
 
     def _ctx(self, stopwords=None):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            ExtractionConfig, OntologyGenerationContext, DataType, ExtractionStrategy,
+            ExtractionConfig,
+            OntologyGenerationContext,
+            DataType,
+            ExtractionStrategy,
         )
+
         cfg = ExtractionConfig(stopwords=stopwords or [])
         return OntologyGenerationContext(
-            data_source="t", data_type=DataType.TEXT, domain="general",
-            extraction_strategy=ExtractionStrategy.RULE_BASED, config=cfg,
+            data_source="t",
+            data_type=DataType.TEXT,
+            domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+            config=cfg,
         )
 
     def test_stopword_filters_entity(self, gen):
@@ -43,24 +53,29 @@ class TestStopwordsFilter:
 
     def test_to_dict_includes_stopwords(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig(stopwords=["the", "a"])
         assert cfg.to_dict()["stopwords"] == ["the", "a"]
 
     def test_from_dict_reads_stopwords(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         cfg = ExtractionConfig.from_dict({"stopwords": ["is", "was"]})
         assert cfg.stopwords == ["is", "was"]
 
     def test_from_dict_defaults_to_empty(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         assert ExtractionConfig.from_dict({}).stopwords == []
 
 
 # ── ExtractionConfig round-trip ───────────────────────────────────────────────
 
+
 class TestExtractionConfigRoundTrip:
     def test_all_fields_survive_round_trip(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+
         original = ExtractionConfig(
             confidence_threshold=0.7,
             max_entities=50,
@@ -87,19 +102,26 @@ class TestExtractionConfigRoundTrip:
 
 # ── OntologyCritic.compare_versions ──────────────────────────────────────────
 
+
 class TestCompareVersions:
     @pytest.fixture
     def critic(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
         return OntologyCritic()
 
     @pytest.fixture
     def ctx(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_generator import (
-            OntologyGenerationContext, DataType, ExtractionStrategy,
+            OntologyGenerationContext,
+            DataType,
+            ExtractionStrategy,
         )
+
         return OntologyGenerationContext(
-            data_source="t", data_type=DataType.TEXT, domain="general",
+            data_source="t",
+            data_type=DataType.TEXT,
+            domain="general",
             extraction_strategy=ExtractionStrategy.RULE_BASED,
         )
 
@@ -142,10 +164,12 @@ class TestCompareVersions:
 
 # ── OntologyOptimizer.get_history_summary ────────────────────────────────────
 
+
 class TestGetHistorySummary:
     @pytest.fixture
     def optimizer(self):
         from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
         return OntologyOptimizer()
 
     def test_empty_history_returns_zero_count(self, optimizer):
@@ -156,6 +180,7 @@ class TestGetHistorySummary:
     def test_summary_after_one_report(self, optimizer):
         # Inject a fake report via the internal _history list
         from unittest.mock import MagicMock
+
         r = MagicMock()
         r.average_score = 0.75
         r.improvement_rate = 0.05
@@ -167,6 +192,7 @@ class TestGetHistorySummary:
 
     def test_trend_improving(self, optimizer):
         from unittest.mock import MagicMock
+
         for score in [0.5, 0.6, 0.75]:
             r = MagicMock()
             r.average_score = score
@@ -177,6 +203,7 @@ class TestGetHistorySummary:
 
     def test_trend_degrading(self, optimizer):
         from unittest.mock import MagicMock
+
         for score in [0.8, 0.6, 0.5]:
             r = MagicMock()
             r.average_score = score
@@ -187,6 +214,13 @@ class TestGetHistorySummary:
 
     def test_summary_keys_present(self, optimizer):
         s = optimizer.get_history_summary()
-        for key in ("count", "mean_score", "std_score", "min_score", "max_score",
-                    "mean_improvement_rate", "trend"):
+        for key in (
+            "count",
+            "mean_score",
+            "std_score",
+            "min_score",
+            "max_score",
+            "mean_improvement_rate",
+            "trend",
+        ):
             assert key in s

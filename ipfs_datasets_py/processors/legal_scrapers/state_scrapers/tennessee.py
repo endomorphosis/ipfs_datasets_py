@@ -55,7 +55,9 @@ class TennesseeScraper(BaseStateScraper):
     ) -> List[NormalizedStatute]:
         """Scrape Tennessee statutes from the public Justia code tree."""
         limit = self._effective_scrape_limit(max_statutes, default=160)
-        justia_statutes = await self._scrape_justia_code_tree(code_name=code_name, max_statutes=limit)
+        justia_statutes = await self._scrape_justia_code_tree(
+            code_name=code_name, max_statutes=limit
+        )
         if limit is None and justia_statutes:
             return justia_statutes
         if (limit is not None and len(justia_statutes) >= limit) or max_statutes:
@@ -111,7 +113,9 @@ class TennesseeScraper(BaseStateScraper):
         seen_titles = set()
         title_limit = None if max_statutes is None else max(1, int(max_statutes))
         for title_index_url in candidate_indexes:
-            title_payload = await self._fetch_justia_listing_html(title_index_url, timeout_seconds=30)
+            title_payload = await self._fetch_justia_listing_html(
+                title_index_url, timeout_seconds=30
+            )
             if not title_payload:
                 continue
             title_soup = BeautifulSoup(title_payload, "html.parser")
@@ -139,7 +143,9 @@ class TennesseeScraper(BaseStateScraper):
         intermediate_urls: List[str] = []
         seen_sections = set()
         seen_intermediate = set()
-        heartbeat_seconds = max(15.0, float(self._env_int("STATE_SCRAPER_HEARTBEAT_SECONDS", default=60)))
+        heartbeat_seconds = max(
+            15.0, float(self._env_int("STATE_SCRAPER_HEARTBEAT_SECONDS", default=60))
+        )
         last_heartbeat = time.monotonic()
 
         for title_url in title_urls:
@@ -173,7 +179,11 @@ class TennesseeScraper(BaseStateScraper):
             len(intermediate_urls),
         )
 
-        pages_to_scan = intermediate_urls if intermediate_limit is None else intermediate_urls[:intermediate_limit]
+        pages_to_scan = (
+            intermediate_urls
+            if intermediate_limit is None
+            else intermediate_urls[:intermediate_limit]
+        )
         for idx, page_url in enumerate(pages_to_scan, start=1):
             page_payload = await self._fetch_justia_listing_html(page_url, timeout_seconds=30)
             if not page_payload:
@@ -217,12 +227,17 @@ class TennesseeScraper(BaseStateScraper):
                 )
 
         out: List[NormalizedStatute] = []
-        urls_to_fetch = section_urls if max_statutes is None else section_urls[: max(24, int(max_statutes) * 4)]
+        urls_to_fetch = (
+            section_urls if max_statutes is None else section_urls[: max(24, int(max_statutes) * 4)]
+        )
         batch_size = 24
         last_heartbeat = time.monotonic()
         for offset in range(0, len(urls_to_fetch), batch_size):
             batch = urls_to_fetch[offset : offset + batch_size]
-            jobs = [_fetch_one(section_url, offset + idx) for idx, section_url in enumerate(batch, start=1)]
+            jobs = [
+                _fetch_one(section_url, offset + idx)
+                for idx, section_url in enumerate(batch, start=1)
+            ]
             for result in await asyncio.gather(*jobs, return_exceptions=True):
                 if isinstance(result, Exception) or result is None:
                     continue
@@ -254,7 +269,9 @@ class TennesseeScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        payload = await self._fetch_page_content_with_archival_fallback(code_url, timeout_seconds=45)
+        payload = await self._fetch_page_content_with_archival_fallback(
+            code_url, timeout_seconds=45
+        )
         if not payload:
             return []
 
@@ -306,7 +323,11 @@ class TennesseeScraper(BaseStateScraper):
         try:
             from playwright.async_api import async_playwright
         except Exception as exc:
-            self._record_fetch_event(provider="playwright_tn_justia", success=False, error=f"playwright_unavailable: {exc}")
+            self._record_fetch_event(
+                provider="playwright_tn_justia",
+                success=False,
+                error=f"playwright_unavailable: {exc}",
+            )
             return b""
 
         try:
@@ -330,12 +351,16 @@ class TennesseeScraper(BaseStateScraper):
         payload = content.encode("utf-8", errors="ignore")
         sample = payload[:12000].decode("utf-8", errors="ignore")
         if self._TN_CLOUDFLARE_CHALLENGE_RE.search(sample):
-            self._record_fetch_event(provider="playwright_tn_justia", success=False, error="cloudflare_challenge")
+            self._record_fetch_event(
+                provider="playwright_tn_justia", success=False, error="cloudflare_challenge"
+            )
             return b""
 
         self._record_fetch_event(provider="playwright_tn_justia", success=bool(payload))
         if payload:
-            await self._cache_successful_page_fetch(url=url, payload=payload, provider="playwright_tn_justia")
+            await self._cache_successful_page_fetch(
+                url=url, payload=payload, provider="playwright_tn_justia"
+            )
         return payload
 
     async def _fetch_justia_section_markdown(self, url: str, timeout_seconds: int = 25) -> str:

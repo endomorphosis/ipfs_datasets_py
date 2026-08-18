@@ -82,7 +82,10 @@ def test_backend_returns_zkpproof_envelope_with_attestation(tmp_path):
 
     assert proof.public_inputs["attestation_ref"]
     assert proof.public_inputs["attestation_view_version"] == 1
-    assert proof.metadata["attestation_view"]["attestation_ref"] == proof.public_inputs["attestation_ref"]
+    assert (
+        proof.metadata["attestation_view"]["attestation_ref"]
+        == proof.public_inputs["attestation_ref"]
+    )
     assert attestation_view_matches_proof(
         proof_data=proof.proof_data,
         public_inputs=proof.public_inputs,
@@ -256,11 +259,10 @@ def test_flattened_record_replaces_empty_duplicated_attestation_fields():
     assert completed["attestation_ref"] == proof.public_inputs["attestation_ref"]
     assert completed["attestation_view_version"] == 1
     assert completed["public_inputs"]["attestation_ref"] == completed["attestation_ref"]
-    assert completed["proof"]["public_inputs"]["attestation_ref"] == (
-        completed["attestation_ref"]
-    )
-    assert completed["proof"]["metadata"]["attestation_view"]["attestation_ref"] == (
-        completed["attestation_ref"]
+    assert completed["proof"]["public_inputs"]["attestation_ref"] == (completed["attestation_ref"])
+    assert (
+        completed["proof"]["metadata"]["attestation_view"]["attestation_ref"]
+        == (completed["attestation_ref"])
     )
     assert completed["proof_hash"] == proof.metadata["attestation_view"]["proof_digest"]
     assert completed["axioms_commitment"] == proof.public_inputs["axioms_commitment"]
@@ -295,8 +297,9 @@ def test_sparse_us_code_record_uses_citation_as_source_id():
 
     assert completed["source_id"] == "16 U.S.C. 1544"
     assert completed["attestation_ref"] == completed["public_inputs"]["attestation_ref"]
-    assert completed["proof"]["metadata"]["attestation_view"]["attestation_ref"] == (
-        completed["attestation_ref"]
+    assert (
+        completed["proof"]["metadata"]["attestation_view"]["attestation_ref"]
+        == (completed["attestation_ref"])
     )
     assert zkp_attestation_legal_ir_view_loss([sparse_record]) == 0.0
 
@@ -376,8 +379,9 @@ def test_proofless_us_code_sample_gets_source_attestation_view():
     assert completed["attestation_view"]["attestation_ref"] == completed["attestation_ref"]
     assert completed["circuit_ref"] == "legal_ir_source_attestation@v1"
     assert completed["proof"]["public_inputs"]["attestation_ref"] == completed["attestation_ref"]
-    assert completed["proof"]["metadata"]["attestation_view"]["attestation_ref"] == (
-        completed["attestation_ref"]
+    assert (
+        completed["proof"]["metadata"]["attestation_view"]["attestation_ref"]
+        == (completed["attestation_ref"])
     )
     assert completed["proof_hash"]
     assert completed["ruleset_id"] == "LegalIR_Source_Attestation_v1"

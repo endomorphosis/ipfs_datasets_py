@@ -92,7 +92,7 @@ This document provides a comprehensive testing strategy for Phase 3 of the MCP s
 async def test_tool_execution_with_timeout():
     """
     Test that tool execution respects timeout configuration.
-    
+
     This test verifies that:
     1. Slow tools are terminated when exceeding timeout
     2. Timeout error is raised with clear message
@@ -101,28 +101,29 @@ async def test_tool_execution_with_timeout():
     """
     # GIVEN: A server with 1-second timeout
     server = MCPServer(tool_timeout=1.0)
-    
+
     @mcp.tool()
     async def slow_tool():
         """Tool that sleeps for 5 seconds."""
         await asyncio.sleep(5)
         return "done"
-    
+
     server.register_tool(slow_tool)
-    
+
     # WHEN: We execute the slow tool
     # THEN: A TimeoutError is raised
     with pytest.raises(TimeoutError) as exc_info:
         await server.execute_tool("slow_tool", {})
-    
-    assert "exceeded timeout of 1.0s" in str(exc_info.value), \
+
+    assert "exceeded timeout of 1.0s" in str(exc_info.value), (
         "Error message should indicate timeout duration"
-    
+    )
+
     # AND: Server is still functional
     @mcp.tool()
     async def fast_tool():
         return "quick"
-    
+
     server.register_tool(fast_tool)
     result = await server.execute_tool("fast_tool", {})
     assert result == "quick", "Server should still be functional after timeout"
@@ -204,17 +205,12 @@ def test_validate_tool_schema_success():
     schema = {
         "name": "my_tool",
         "description": "Does something useful",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "input": {"type": "string"}
-            }
-        }
+        "parameters": {"type": "object", "properties": {"input": {"type": "string"}}},
     }
-    
+
     # WHEN: We validate the schema
     result = validate_tool_schema(schema)
-    
+
     # THEN: Validation succeeds
     assert result.is_valid
     assert result.errors == []
@@ -265,18 +261,18 @@ async def test_complete_dataset_processing_workflow():
     """Test complete workflow: load dataset, process, save to IPFS."""
     # GIVEN: A running server with all components
     server = await create_full_server()
-    
+
     # WHEN: We execute a complete workflow
     workflow = {
         "steps": [
             {"tool": "dataset/load", "params": {"source": "squad"}},
             {"tool": "dataset/process", "params": {"transform": "tokenize"}},
-            {"tool": "ipfs/add", "params": {"content": "$prev_result"}}
+            {"tool": "ipfs/add", "params": {"content": "$prev_result"}},
         ]
     }
-    
+
     result = await server.execute_workflow(workflow)
-    
+
     # THEN: All steps complete successfully
     assert result["status"] == "completed"
     assert "cid" in result["output"]
@@ -321,12 +317,13 @@ def test_no_hardcoded_secrets():
     """Regression test: Ensure no hardcoded secrets (Phase 1 fix)."""
     # Check that SECRET_KEY has no default value
     from ipfs_datasets_py.mcp_server.fastapi_config import Config
-    
+
     config_fields = Config.__fields__
-    secret_field = config_fields['secret_key']
-    
-    assert secret_field.default is None, \
+    secret_field = config_fields["secret_key"]
+
+    assert secret_field.default is None, (
         "SECRET_KEY must not have a default value (security regression)"
+    )
 ```
 
 ---
@@ -432,37 +429,38 @@ def test_register_single_tool_success():
     """Test successful registration of a single tool."""
     # GIVEN: A server and a tool
     server = MCPServer()
-    
+
     @mcp.tool()
     def my_tool(x: int) -> int:
         """Multiply by 2."""
         return x * 2
-    
+
     # WHEN: We register the tool
     result = server.register_tool(my_tool)
-    
+
     # THEN: Tool is registered successfully
     assert result.success
     assert "my_tool" in server.list_tools()
-    
+
     # AND: Tool metadata is correct
     schema = server.get_tool_schema("my_tool")
     assert schema["name"] == "my_tool"
     assert schema["description"] == "Multiply by 2."
+
 
 @pytest.mark.asyncio
 async def test_execute_tool_timeout():
     """Test that slow tools timeout correctly."""
     # GIVEN: A server with 1-second timeout
     server = MCPServer(tool_timeout=1.0)
-    
+
     @mcp.tool()
     async def slow_tool():
         await asyncio.sleep(5)
         return "done"
-    
+
     server.register_tool(slow_tool)
-    
+
     # WHEN: We execute the slow tool
     # THEN: It times out
     with pytest.raises(asyncio.TimeoutError):
@@ -640,7 +638,8 @@ class TestAuthentication:
        server = MCPServer()
        elapsed = time.time() - start
        assert elapsed < 1.0
-   
+
+
    def test_tool_discovery_performance():
        """Tool discovery should complete in <2s."""
        start = time.time()
@@ -691,11 +690,12 @@ class TestAuthentication:
    def test_memory_usage_under_500mb():
        """Server baseline memory should be <500MB."""
        import psutil
+
        process = psutil.Process()
-       
+
        server = MCPServer()
        memory_mb = process.memory_info().rss / 1024 / 1024
-       
+
        assert memory_mb < 500.0
    ```
 
@@ -711,30 +711,36 @@ class TestAuthentication:
 import pytest
 from unittest.mock import Mock, patch
 
+
 @pytest.fixture
 def mcp_server():
     """Create a test MCP server instance."""
     from ipfs_datasets_py.mcp_server import server
+
     srv = server.create_server(config={"test_mode": True})
     yield srv
     srv.cleanup()
+
 
 @pytest.fixture
 def server_context():
     """Create a test ServerContext."""
     from ipfs_datasets_py.mcp_server.server_context import ServerContext
+
     ctx = ServerContext()
     yield ctx
     ctx.cleanup()
 
+
 @pytest.fixture
 def mock_ipfs():
     """Mock IPFS client for testing."""
-    with patch('ipfs_datasets_py.mcp_server.ipfs_client') as mock:
+    with patch("ipfs_datasets_py.mcp_server.ipfs_client") as mock:
         mock.add_bytes.return_value = "QmTest123..."
         mock.cat.return_value = b"test data"
         mock.pin.add.return_value = {"Hash": "QmTest123..."}
         yield mock
+
 
 @pytest.fixture
 async def async_server():
@@ -743,22 +749,26 @@ async def async_server():
     yield server
     await server.cleanup()
 
+
 @pytest.fixture
 def mock_p2p_services():
     """Mock P2P services for testing."""
-    with patch('ipfs_datasets_py.mcp_server.p2p_service_manager') as mock:
+    with patch("ipfs_datasets_py.mcp_server.p2p_service_manager") as mock:
         mock.workflow_scheduler = Mock()
         mock.task_queue = Mock()
         mock.peer_registry = Mock()
         yield mock
 
+
 @pytest.fixture
 def sample_tool():
     """Create a sample tool for testing."""
+
     @mcp.tool()
     def my_tool(x: int) -> int:
         """Sample tool that doubles input."""
         return x * 2
+
     return my_tool
 ```
 
@@ -941,7 +951,7 @@ def test_register_tool_validates_schema():
 async def test_workflow_execution_with_p2p():
     """
     Test complete workflow execution via P2P.
-    
+
     Integration test covering:
     1. Workflow submission to P2P
     2. Task distribution
@@ -949,22 +959,22 @@ async def test_workflow_execution_with_p2p():
     """
     # GIVEN: Server with P2P enabled
     server = await create_server_with_p2p()
-    
+
     # AND: A workflow
     workflow = {
         "name": "test_workflow",
         "tasks": [
             {"tool": "dataset/load", "params": {"source": "squad"}},
-            {"tool": "ipfs/add", "params": {"data": "$prev"}}
-        ]
+            {"tool": "ipfs/add", "params": {"data": "$prev"}},
+        ],
     }
-    
+
     # WHEN: We submit the workflow
     task_id = await server.submit_workflow(workflow)
-    
+
     # AND: Wait for completion
     result = await server.wait_for_task(task_id, timeout=30)
-    
+
     # THEN: Workflow completes successfully
     assert result["status"] == "completed"
     assert "cid" in result

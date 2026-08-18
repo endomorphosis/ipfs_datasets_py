@@ -76,15 +76,14 @@ class GraphEngine:
    def _get_node(self, node_id: str) -> Optional[Node]:
        """Retrieve node by CID from IPLDBackend."""
        data = self.backend.get(node_id)
-       return Node(id=node_id, labels=data['labels'], 
-                   properties=data['properties'])
+       return Node(id=node_id, labels=data["labels"], properties=data["properties"])
    ```
 
 2. **Relationship Traversal** (10 hours)
    ```python
-   def _get_relationships(self, node_id: str, 
-                         direction: str = 'out',
-                         rel_type: Optional[str] = None) -> List[Relationship]:
+   def _get_relationships(
+       self, node_id: str, direction: str = "out", rel_type: Optional[str] = None
+   ) -> List[Relationship]:
        """Get relationships for a node."""
        # Use IPLDBackend relationship index
        # Filter by type if specified
@@ -117,11 +116,11 @@ assert len(result) == 10
 
 # Test 2: Relationship traversal
 result = engine.run("MATCH (n)-[r]->(m) RETURN n, r, m")
-assert all('r' in record for record in result)
+assert all("r" in record for record in result)
 
 # Test 3: Filtering
 result = engine.run("MATCH (n:Person) WHERE n.age > 30 RETURN n")
-assert all(record['n']['age'] > 30 for record in result)
+assert all(record["n"]["age"] > 30 for record in result)
 
 # Test 4: Multi-hop traversal
 result = engine.run("""
@@ -218,13 +217,16 @@ result = session.run("""
 
 ```python
 # Iterate over list and perform operations
-result = session.run("""
+result = session.run(
+    """
     MATCH (p:Person {name: 'Alice'})
     FOREACH (friend_name IN $friends |
         MERGE (f:Person {name: friend_name})
         CREATE (p)-[:KNOWS]->(f)
     )
-""", friends=['Bob', 'Charlie', 'David'])
+""",
+    friends=["Bob", "Charlie", "David"],
+)
 ```
 
 **5. Additional Operators (5 hours)**
@@ -387,42 +389,43 @@ search/graph_query/executor.py           2,000 lines IR execution
 ```python
 # knowledge_graphs/query/unified_engine.py
 
+
 class UnifiedQueryEngine:
     """Single entry point for all query types."""
-    
+
     def __init__(self, backend: IPLDBackend):
         self.backend = backend
         self.graph_engine = GraphEngine(backend)
         self.ir_executor = IRExecutor(backend)
         self.hybrid_search = HybridSearchEngine(backend)
         self.budget_manager = BudgetManager()
-    
-    def execute_cypher(self, query: str, params: Dict,
-                      budgets: ExecutionBudgets) -> Result:
+
+    def execute_cypher(self, query: str, params: Dict, budgets: ExecutionBudgets) -> Result:
         """Execute Cypher query with budget enforcement."""
         # Parse Cypher → AST → IR
         ir = self.cypher_compiler.compile(query, params)
         return self.execute_ir(ir, budgets)
-    
-    def execute_ir(self, ir: QueryIR,
-                  budgets: ExecutionBudgets) -> ExecutionResult:
+
+    def execute_ir(self, ir: QueryIR, budgets: ExecutionBudgets) -> ExecutionResult:
         """Execute IR-based query."""
         with self.budget_manager.track(budgets):
             return self.ir_executor.execute(ir)
-    
-    def execute_hybrid(self, query: str, embeddings: Dict,
-                      budgets: ExecutionBudgets) -> HybridResult:
+
+    def execute_hybrid(
+        self, query: str, embeddings: Dict, budgets: ExecutionBudgets
+    ) -> HybridResult:
         """Execute hybrid vector+graph search."""
         # Combine vector similarity with graph traversal
         vector_results = self.hybrid_search.vector_search(query, embeddings)
         graph_results = self.hybrid_search.expand_graph(vector_results)
         return self.hybrid_search.fuse_results(vector_results, graph_results)
-    
-    def execute_graphrag(self, question: str, context: Dict,
-                        budgets: ExecutionBudgets) -> GraphRAGResult:
+
+    def execute_graphrag(
+        self, question: str, context: Dict, budgets: ExecutionBudgets
+    ) -> GraphRAGResult:
         """Execute full GraphRAG pipeline with LLM reasoning."""
         # Use hybrid search + LLM reasoning
-        search_results = self.execute_hybrid(question, context['embeddings'], budgets)
+        search_results = self.execute_hybrid(question, context["embeddings"], budgets)
         reasoning = self.llm_reasoner.reason(question, search_results)
         return GraphRAGResult(results=search_results, reasoning=reasoning)
 ```
@@ -433,25 +436,28 @@ class UnifiedQueryEngine:
    ```python
    # search/graph_query/budgets.py becomes canonical
    from ipfs_datasets_py.search.graph_query.budgets import (
-       ExecutionBudgets, ExecutionCounters, budgets_from_preset
+       ExecutionBudgets,
+       ExecutionCounters,
+       budgets_from_preset,
    )
-   
+
    # All modules use this
-   budgets = budgets_from_preset('moderate')
+   budgets = budgets_from_preset("moderate")
    result = engine.execute_cypher(query, params, budgets)
    ```
 
 2. **Extract Hybrid Search** (20 hours)
    ```python
    # knowledge_graphs/query/hybrid_search.py
-   
+
+
    class HybridSearchEngine:
        def vector_search(self, query, embeddings, k=10):
            """Vector similarity search."""
-           
+
        def expand_graph(self, seed_nodes, depth=2):
            """Expand from seed nodes via graph traversal."""
-           
+
        def fuse_results(self, vector_results, graph_results, alpha=0.7):
            """Fuse vector and graph results with weighted combination."""
    ```
@@ -595,15 +601,14 @@ pytest tests/unit/knowledge_graphs/ -v
 2. **Implement node retrieval** (8 hours)
    ```python
    # In knowledge_graphs/core/query_executor.py
-   
+
+
    def _get_node(self, node_id: str) -> Optional[Node]:
        """Retrieve node from IPLD storage."""
        try:
            data = self.backend.get(node_id)
            return Node(
-               id=node_id,
-               labels=data.get('labels', []),
-               properties=data.get('properties', {})
+               id=node_id, labels=data.get("labels", []), properties=data.get("properties", {})
            )
        except KeyError:
            return None
@@ -626,24 +631,22 @@ pytest tests/unit/knowledge_graphs/ -v
 4. **Test end-to-end** (4 hours)
    ```python
    # tests/unit/knowledge_graphs/test_graph_engine.py
-   
+
+
    def test_simple_match_query(graph_engine, sample_graph):
        # Given: Graph with 10 Person nodes
        for i in range(10):
            graph_engine.backend.create_node(
-               labels=['Person'],
-               properties={'name': f'Person{i}', 'age': 20 + i}
+               labels=["Person"], properties={"name": f"Person{i}", "age": 20 + i}
            )
-       
+
        # When: Execute MATCH query
-       result = graph_engine.execute_query(
-           "MATCH (n:Person) RETURN n LIMIT 5"
-       )
-       
+       result = graph_engine.execute_query("MATCH (n:Person) RETURN n LIMIT 5")
+
        # Then: Returns 5 nodes
        assert len(result) == 5
-       assert all(isinstance(r['n'], Node) for r in result)
-       assert all('Person' in r['n'].labels for r in result)
+       assert all(isinstance(r["n"], Node) for r in result)
+       assert all("Person" in r["n"].labels for r in result)
    ```
 
 ### Week 1 Deliverable

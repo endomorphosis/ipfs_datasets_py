@@ -122,15 +122,17 @@ def test_manifest_emits_all_reproducibility_bindings() -> None:
 
     assert payload["schema_version"] == LEGAL_IR_BUILD_MANIFEST_SCHEMA_VERSION
     assert payload["compiler_commit"] == "abcdef0123456789"
-    assert payload["source_digests"][0]["sha256"] == hashlib.sha256(
-        SOURCE_TEXT.encode("utf-8")
-    ).hexdigest()
+    assert (
+        payload["source_digests"][0]["sha256"]
+        == hashlib.sha256(SOURCE_TEXT.encode("utf-8")).hexdigest()
+    )
     assert payload["schema_versions"]["build_manifest"] == LEGAL_IR_BUILD_MANIFEST_SCHEMA_VERSION
     assert payload["schema_versions"]["pass_manager"] == LEGAL_IR_PASS_MANAGER_SCHEMA_VERSION
     assert payload["schema_versions"]["pass_replay"] == LEGAL_IR_PASS_REPLAY_SCHEMA_VERSION
-    assert "legal-ir-stable-autoencoder-feature-export-v1" in payload["schema_versions"][
-        "artifact_schema_versions"
-    ]
+    assert (
+        "legal-ir-stable-autoencoder-feature-export-v1"
+        in payload["schema_versions"]["artifact_schema_versions"]
+    )
     assert payload["pass_graph"]["ordered_pass_ids"] == [
         "legal_ir.test_normalize",
         "legal_ir.test_lower",

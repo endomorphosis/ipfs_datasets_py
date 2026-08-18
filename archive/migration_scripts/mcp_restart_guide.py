@@ -73,12 +73,14 @@ print("""
 # Test if we can import the key modules
 try:
     from ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset import load_dataset
+
     print("✅ load_dataset tool available")
 except ImportError as e:
     print(f"❌ load_dataset import error: {e}")
 
 try:
     from ipfs_datasets_py.mcp_server.tools.development_tools.test_generator import test_generator
+
     print("✅ Development tools available")
 except ImportError as e:
     print(f"❌ Development tools import error: {e}")

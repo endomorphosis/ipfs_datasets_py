@@ -34,9 +34,7 @@ ABBY_VOICE_EVALUATION_V1: Final = "abby_voice_evaluation_v1"
 _HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 _LOCALE_RE = re.compile(r"^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$")
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
-_ALLOWED_CONSENT = frozenset(
-    {"granted", "not_required", "unknown", "denied", "withdrawn"}
-)
+_ALLOWED_CONSENT = frozenset({"granted", "not_required", "unknown", "denied", "withdrawn"})
 _ALLOWED_STATUS = frozenset({"completed", "degraded", "failed", "skipped"})
 _EVAL_SPLITS = frozenset({"validation", "test"})
 
@@ -72,9 +70,7 @@ EVALUATION_COLUMNS: tuple[ColumnSpec, ...] = (
     _c("consent_status"),
 )
 
-EVALUATION_COLUMN_NAMES: tuple[str, ...] = tuple(
-    column.name for column in EVALUATION_COLUMNS
-)
+EVALUATION_COLUMN_NAMES: tuple[str, ...] = tuple(column.name for column in EVALUATION_COLUMNS)
 
 
 def stable_evaluation_id(
@@ -162,9 +158,7 @@ class AbbyVoiceEvaluation:
 
     def __post_init__(self) -> None:
         for name in self.LIST_FIELDS:
-            object.__setattr__(
-                self, name, _tuple_of_strings(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _tuple_of_strings(getattr(self, name), name))
         for name in (
             "evaluation_id",
             "case_id",
@@ -218,8 +212,10 @@ class AbbyVoiceEvaluation:
             value = getattr(self, name)
             if not isinstance(value, str) or not value:
                 errors.append(f"{name} must be a non-empty string")
-        if isinstance(self.evaluation_id, str) and self.evaluation_id and not _ID_RE.fullmatch(
-            self.evaluation_id
+        if (
+            isinstance(self.evaluation_id, str)
+            and self.evaluation_id
+            and not _ID_RE.fullmatch(self.evaluation_id)
         ):
             errors.append("evaluation_id contains unsupported characters")
         if isinstance(self.case_id, str) and self.case_id and not _ID_RE.fullmatch(self.case_id):
@@ -229,9 +225,7 @@ class AbbyVoiceEvaluation:
         if self.split not in _EVAL_SPLITS:
             errors.append("split must be 'validation' or 'test'")
         if self.expected_status not in _ALLOWED_STATUS:
-            errors.append(
-                "expected_status must be one of " + ", ".join(sorted(_ALLOWED_STATUS))
-            )
+            errors.append("expected_status must be one of " + ", ".join(sorted(_ALLOWED_STATUS)))
         if not isinstance(self.wer_max, (int, float)) or isinstance(self.wer_max, bool):
             errors.append("wer_max must be a finite number >= 0")
         elif not math.isfinite(float(self.wer_max)) or float(self.wer_max) < 0:
@@ -246,14 +240,10 @@ class AbbyVoiceEvaluation:
                 errors.append("response_confidence must be a finite number in [0, 1]")
         if len(self.slot_names) != len(self.slot_values):
             errors.append("slot_names and slot_values must have equal lengths")
-        if not isinstance(self.content_sha256, str) or not _HASH_RE.fullmatch(
-            self.content_sha256
-        ):
+        if not isinstance(self.content_sha256, str) or not _HASH_RE.fullmatch(self.content_sha256):
             errors.append("content_sha256 must be a full lower-case SHA-256 digest")
         if self.consent_status not in _ALLOWED_CONSENT:
-            errors.append(
-                "consent_status must be one of " + ", ".join(sorted(_ALLOWED_CONSENT))
-            )
+            errors.append("consent_status must be one of " + ", ".join(sorted(_ALLOWED_CONSENT)))
         if not isinstance(self.license_id, str) or not self.license_id:
             errors.append("license_id must be a non-empty string")
         if not self.required_phrases:
@@ -275,13 +265,9 @@ class AbbyVoiceEvaluation:
         return result
 
     @classmethod
-    def from_dict(
-        cls, data: Mapping[str, Any], *, strict: bool = True
-    ) -> AbbyVoiceEvaluation:
+    def from_dict(cls, data: Mapping[str, Any], *, strict: bool = True) -> AbbyVoiceEvaluation:
         if not isinstance(data, Mapping):
-            raise AbbyVoiceSchemaError(
-                ABBY_VOICE_EVALUATION_V2, "record must be a mapping"
-            )
+            raise AbbyVoiceSchemaError(ABBY_VOICE_EVALUATION_V2, "record must be a mapping")
         if data.get("schema_version") == ABBY_VOICE_EVALUATION_V1:
             data = migrate_evaluation_v1(data)
         actual = data.get("schema_version")
@@ -403,20 +389,18 @@ def migrate_evaluation_v1(record: Mapping[str, Any]) -> dict[str, Any]:
         "forbidden_phrases": [str(item) for item in forbidden],
         "wer_max": float(expected.get("wer_max") or 0.0),
         "template_id": (
-            str(plan.get("template_id")).strip()
-            if plan and plan.get("template_id")
-            else None
+            str(plan.get("template_id")).strip() if plan and plan.get("template_id") else None
         ),
-        "intent": (
-            str(plan.get("intent")).strip() if plan and plan.get("intent") else None
-        ),
+        "intent": (str(plan.get("intent")).strip() if plan and plan.get("intent") else None),
         "response_confidence": confidence,
         "slot_names": slot_names,
         "slot_values": slot_values,
         "evidence_source_ids": evidence_source_ids,
         "evidence_cids": evidence_cids,
         "safety_labels": [str(item) for item in safety],
-        "content_sha256": sha256_text("\n".join((case_id, reference, str(expected.get("response_text") or "")))),
+        "content_sha256": sha256_text(
+            "\n".join((case_id, reference, str(expected.get("response_text") or "")))
+        ),
         "license_id": str(record.get("license_id") or "CC0-1.0"),
         "consent_status": str(record.get("consent_status") or "not_required"),
     }

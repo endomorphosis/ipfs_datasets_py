@@ -91,21 +91,11 @@ def retrieval_fixture():
         neighbor_edges[other] = edge
 
     assignments = {
-        skill_nodes["query"].node_id: PartitionAssignment(
-            "evaluation", "family-query"
-        ),
-        skill_nodes["alpha"].node_id: PartitionAssignment(
-            "evaluation", "family-alpha"
-        ),
-        skill_nodes["beta"].node_id: PartitionAssignment(
-            "evaluation", "family-beta"
-        ),
-        skill_nodes["same-family"].node_id: PartitionAssignment(
-            "evaluation", "family-query"
-        ),
-        skill_nodes["training"].node_id: PartitionAssignment(
-            "training", "family-training"
-        ),
+        skill_nodes["query"].node_id: PartitionAssignment("evaluation", "family-query"),
+        skill_nodes["alpha"].node_id: PartitionAssignment("evaluation", "family-alpha"),
+        skill_nodes["beta"].node_id: PartitionAssignment("evaluation", "family-beta"),
+        skill_nodes["same-family"].node_id: PartitionAssignment("evaluation", "family-query"),
+        skill_nodes["training"].node_id: PartitionAssignment("training", "family-training"),
         skill_nodes["poison"].node_id: PartitionAssignment(
             "evaluation", "family-poison", adversarial=True
         ),
@@ -146,9 +136,7 @@ def test_fixed_k_and_deterministic_tie_breaking(retrieval_fixture) -> None:
     retriever = IntentGraphRetriever(graph, assignments)
 
     first = retriever.retrieve(replace(request, k=1, candidates=candidates))
-    second = retriever.retrieve(
-        replace(request, k=1, candidates=tuple(reversed(candidates)))
-    )
+    second = retriever.retrieve(replace(request, k=1, candidates=tuple(reversed(candidates))))
 
     expected = min(candidate("alpha", 0).node_id, candidate("beta", 0).node_id)
     assert first.status is RetrievalStatus.OK
@@ -177,9 +165,7 @@ def test_partition_source_family_and_adversarial_neighbors_are_isolated(
         )
     )
 
-    assert [item.node_id for item in result.premises] == [
-        candidate("alpha", 0).node_id
-    ]
+    assert [item.node_id for item in result.premises] == [candidate("alpha", 0).node_id]
     assert all(item.partition == "evaluation" for item in result.premises)
     assert all(item.source_family != "family-query" for item in result.premises)
 
@@ -295,9 +281,7 @@ def test_time_budget_is_checked_before_candidate_admission(
         assignments,
         monotonic=lambda: next(scan_readings),
     )
-    scan_result = scan_retriever.retrieve(
-        replace(request, candidates=(), timeout_ms=1)
-    )
+    scan_result = scan_retriever.retrieve(replace(request, candidates=(), timeout_ms=1))
     assert scan_result.status is RetrievalStatus.BUDGET_EXHAUSTED
     assert scan_result.reason_codes == ("time_budget_exhausted",)
 
@@ -335,9 +319,7 @@ def test_invalid_bounds_and_unassigned_query_are_explicit(
         replace(request, timeout_ms=0)
 
     without_query = {
-        key: value
-        for key, value in assignments.items()
-        if key != request.query_node_id
+        key: value for key, value in assignments.items() if key != request.query_node_id
     }
     result = IntentGraphRetriever(graph, without_query).retrieve(request)
     assert result.status is RetrievalStatus.UNSUPPORTED

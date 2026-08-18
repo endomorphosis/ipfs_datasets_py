@@ -91,18 +91,10 @@ from benchmarks.semantic_roundtrip.statistics import (
 
 
 HYBRID_ROUND_TRIP_ARMS_INTERFACE: Final = "HybridRoundTripArms@1"
-HYBRID_EVAL_MODE_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-hybrid-eval-mode.v1"
-)
-HYBRID_ARM_REGISTRY_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-hybrid-arm-registry.v1"
-)
-HYBRID_COORDINATE_RECEIPT_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-hybrid-coordinate.v1"
-)
-HYBRID_SUCCESS_CLAIM_SCHEMA: Final = (
-    "ipfs-datasets.semantic-roundtrip-hybrid-success-claim.v1"
-)
+HYBRID_EVAL_MODE_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-hybrid-eval-mode.v1"
+HYBRID_ARM_REGISTRY_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-hybrid-arm-registry.v1"
+HYBRID_COORDINATE_RECEIPT_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-hybrid-coordinate.v1"
+HYBRID_SUCCESS_CLAIM_SCHEMA: Final = "ipfs-datasets.semantic-roundtrip-hybrid-success-claim.v1"
 
 # Promotion baseline remains the frozen deterministic arm identity.
 DETERMINISTIC_BASELINE_ARM_ID: Final = DEFAULT_DETERMINISTIC_BASELINE_ARM_ID
@@ -111,26 +103,14 @@ DETERMINISTIC_BASELINE_ARM_ID: Final = DEFAULT_DETERMINISTIC_BASELINE_ARM_ID
 # Preregistered research arm identities
 # ---------------------------------------------------------------------------
 
-CONSTRUCTOR_ONLY_BASELINE_ARM_ID: Final = (
-    "constructor_only__typed_deontic_baseline"
-)
-CONSTRUCTOR_ONLY_MODAL_SPACY_ARM_ID: Final = (
-    "constructor_only__modal_spacy_candidate"
-)
-CONSTRUCTOR_ONLY_MODEL_DIRECT_ARM_ID: Final = (
-    "constructor_only__model_direct_candidate"
-)
+CONSTRUCTOR_ONLY_BASELINE_ARM_ID: Final = "constructor_only__typed_deontic_baseline"
+CONSTRUCTOR_ONLY_MODAL_SPACY_ARM_ID: Final = "constructor_only__modal_spacy_candidate"
+CONSTRUCTOR_ONLY_MODEL_DIRECT_ARM_ID: Final = "constructor_only__model_direct_candidate"
 
-REALIZER_ONLY_DETERMINISTIC_ARM_ID: Final = (
-    "realizer_only__fixed_l1__deterministic"
-)
-REALIZER_ONLY_MODEL_DIRECT_ARM_ID: Final = (
-    "realizer_only__fixed_l1__leanstral_direct"
-)
+REALIZER_ONLY_DETERMINISTIC_ARM_ID: Final = "realizer_only__fixed_l1__deterministic"
+REALIZER_ONLY_MODEL_DIRECT_ARM_ID: Final = "realizer_only__fixed_l1__leanstral_direct"
 
-HYBRID_TYPED_DEONTIC_NO_REPAIR_ARM_ID: Final = (
-    "hybrid__typed_deontic__no_repair__deterministic"
-)
+HYBRID_TYPED_DEONTIC_NO_REPAIR_ARM_ID: Final = "hybrid__typed_deontic__no_repair__deterministic"
 HYBRID_TYPED_DEONTIC_SELECTIVE_ARM_ID: Final = (
     "hybrid__typed_deontic__optional_selective_repair__deterministic"
 )
@@ -217,8 +197,7 @@ def select_evaluation_mode(
         return select_evaluation_mode(token)  # type: ignore[arg-type]
     if not isinstance(mode, str) or not mode.strip():
         raise ContractError(
-            "evaluation mode must be one of "
-            f"{sorted(item.value for item in EvaluationMode)}"
+            f"evaluation mode must be one of {sorted(item.value for item in EvaluationMode)}"
         )
     cleaned = mode.strip().lower().replace("-", "_")
     aliases = {
@@ -263,32 +242,24 @@ class HybridArmSpec:
         object.__setattr__(self, "arm_id", _nonblank(self.arm_id, "arm_id"))
         if not isinstance(self.mode, EvaluationMode):
             object.__setattr__(self, "mode", select_evaluation_mode(self.mode))
-        object.__setattr__(
-            self, "description", _nonblank(self.description, "description")
-        )
+        object.__setattr__(self, "description", _nonblank(self.description, "description"))
         if self.baseline_role not in {
             "baseline",
             "candidate",
             "hybrid_path",
             "stage_local",
         }:
-            raise ContractError(
-                f"baseline_role is invalid for {self.arm_id!r}"
-            )
+            raise ContractError(f"baseline_role is invalid for {self.arm_id!r}")
         if self.repair not in {REPAIR_NONE, REPAIR_SELECTIVE, REPAIR_MODEL}:
             raise ContractError(f"repair is invalid for {self.arm_id!r}")
         if self.model_route is not None:
             route = _nonblank(self.model_route, "model_route")
             if route not in {"direct", "symai", "not_applicable"}:
-                raise ContractError(
-                    f"model_route is invalid for {self.arm_id!r}"
-                )
+                raise ContractError(f"model_route is invalid for {self.arm_id!r}")
             object.__setattr__(self, "model_route", route)
         object.__setattr__(self, "pipeline", tuple(self.pipeline))
         if self.promotion_eligible:
-            raise ContractError(
-                "research hybrid arms must not mark promotion_eligible"
-            )
+            raise ContractError("research hybrid arms must not mark promotion_eligible")
 
     @property
     def is_model_backed(self) -> bool:
@@ -296,10 +267,7 @@ class HybridArmSpec:
             self.requires_live_smoke
             or self.model_route in {"direct", "symai"}
             or self.repair == REPAIR_MODEL
-            or (
-                self.constructor_id == "model"
-                or (self.realizer_id or "").startswith("leanstral")
-            )
+            or (self.constructor_id == "model" or (self.realizer_id or "").startswith("leanstral"))
         )
 
     def to_dict(self) -> dict[str, object]:
@@ -313,9 +281,7 @@ class HybridArmSpec:
             "repair": self.repair,
             "model_route": self.model_route,
             "requires_live_smoke": self.requires_live_smoke,
-            "requires_causal_qualification": (
-                self.requires_causal_qualification
-            ),
+            "requires_causal_qualification": (self.requires_causal_qualification),
             "scores_forward": self.scores_forward,
             "scores_cycle": self.scores_cycle,
             "scores_end_to_end": self.scores_end_to_end,
@@ -334,24 +300,17 @@ class HybridArmSpec:
             "repair": (
                 "selective"
                 if self.repair == REPAIR_SELECTIVE
-                else (
-                    "always_on"
-                    if self.repair == REPAIR_MODEL
-                    else "no_repair"
-                )
+                else ("always_on" if self.repair == REPAIR_MODEL else "no_repair")
             ),
             "constructor_route": (
-                self.model_route
-                if self.model_route in {"direct", "symai"}
-                else "not_applicable"
+                self.model_route if self.model_route in {"direct", "symai"} else "not_applicable"
             ),
         }
         realizer: dict[str, object] = {
             "realizer_id": self.realizer_id or "not_applicable",
             "mode": (
                 "model"
-                if self.realizer_id
-                and self.realizer_id.startswith("leanstral")
+                if self.realizer_id and self.realizer_id.startswith("leanstral")
                 else "deterministic"
             ),
             "route": (
@@ -380,10 +339,7 @@ def build_preregistered_hybrid_arms() -> tuple[HybridArmSpec, ...]:
         HybridArmSpec(
             arm_id=CONSTRUCTOR_ONLY_BASELINE_ARM_ID,
             mode=EvaluationMode.CONSTRUCTOR_ONLY,
-            description=(
-                "Constructor-only baseline: typed deontic L1 vs gold "
-                "(forward only)."
-            ),
+            description=("Constructor-only baseline: typed deontic L1 vs gold (forward only)."),
             baseline_role="baseline",
             constructor_id="typed_deontic",
             realizer_id=None,
@@ -399,10 +355,7 @@ def build_preregistered_hybrid_arms() -> tuple[HybridArmSpec, ...]:
         HybridArmSpec(
             arm_id=CONSTRUCTOR_ONLY_MODAL_SPACY_ARM_ID,
             mode=EvaluationMode.CONSTRUCTOR_ONLY,
-            description=(
-                "Constructor-only candidate: modal_spacy L1 vs gold "
-                "(forward only)."
-            ),
+            description=("Constructor-only candidate: modal_spacy L1 vs gold (forward only)."),
             baseline_role="candidate",
             constructor_id="modal_spacy",
             realizer_id=None,
@@ -437,9 +390,7 @@ def build_preregistered_hybrid_arms() -> tuple[HybridArmSpec, ...]:
         HybridArmSpec(
             arm_id=REALIZER_ONLY_DETERMINISTIC_ARM_ID,
             mode=EvaluationMode.REALIZER_ONLY,
-            description=(
-                "Realizer-only on fixed L1 with the deterministic realizer."
-            ),
+            description=("Realizer-only on fixed L1 with the deterministic realizer."),
             baseline_role="stage_local",
             constructor_id=None,
             realizer_id="deterministic",
@@ -460,8 +411,7 @@ def build_preregistered_hybrid_arms() -> tuple[HybridArmSpec, ...]:
             arm_id=REALIZER_ONLY_MODEL_DIRECT_ARM_ID,
             mode=EvaluationMode.REALIZER_ONLY,
             description=(
-                "Realizer-only on fixed L1 with Leanstral direct realizer "
-                "(requires live smoke)."
+                "Realizer-only on fixed L1 with Leanstral direct realizer (requires live smoke)."
             ),
             baseline_role="stage_local",
             constructor_id=None,
@@ -553,9 +503,7 @@ def build_preregistered_hybrid_arms() -> tuple[HybridArmSpec, ...]:
     )
 
 
-PREREGISTERED_HYBRID_ARMS: Final[tuple[HybridArmSpec, ...]] = (
-    build_preregistered_hybrid_arms()
-)
+PREREGISTERED_HYBRID_ARMS: Final[tuple[HybridArmSpec, ...]] = build_preregistered_hybrid_arms()
 
 _ARM_INDEX: Final[Mapping[str, HybridArmSpec]] = MappingProxyType(
     {arm.arm_id: arm for arm in PREREGISTERED_HYBRID_ARMS}
@@ -566,11 +514,7 @@ def hybrid_arm_registry() -> dict[str, object]:
     """Return the CID-ready preregistered hybrid arm registry."""
 
     modes = {
-        mode.value: [
-            arm.arm_id
-            for arm in PREREGISTERED_HYBRID_ARMS
-            if arm.mode is mode
-        ]
+        mode.value: [arm.arm_id for arm in PREREGISTERED_HYBRID_ARMS if arm.mode is mode]
         for mode in EvaluationMode
     }
     payload = {
@@ -608,8 +552,7 @@ def get_hybrid_arm(arm_id: str) -> HybridArmSpec:
         return _ARM_INDEX[key]
     except KeyError as exc:
         raise ContractError(
-            f"unknown hybrid research arm {arm_id!r}; "
-            f"known={sorted(_ARM_INDEX)}"
+            f"unknown hybrid research arm {arm_id!r}; known={sorted(_ARM_INDEX)}"
         ) from exc
 
 
@@ -619,9 +562,7 @@ def arms_for_mode(
     """Return preregistered arms for one evaluation mode."""
 
     selected = select_evaluation_mode(mode)
-    return tuple(
-        arm for arm in PREREGISTERED_HYBRID_ARMS if arm.mode is selected
-    )
+    return tuple(arm for arm in PREREGISTERED_HYBRID_ARMS if arm.mode is selected)
 
 
 def select_hybrid_arm(
@@ -646,13 +587,10 @@ def select_hybrid_arm(
     candidates = arms_for_mode(selected_mode)
     if repair is not None:
         repair_token = _nonblank(repair, "repair")
-        candidates = tuple(
-            arm for arm in candidates if arm.repair == repair_token
-        )
+        candidates = tuple(arm for arm in candidates if arm.repair == repair_token)
     if not candidates:
         raise ContractError(
-            f"no preregistered arms for mode={selected_mode.value!r} "
-            f"repair={repair!r}"
+            f"no preregistered arms for mode={selected_mode.value!r} repair={repair!r}"
         )
     if len(candidates) == 1:
         return candidates[0]
@@ -724,9 +662,7 @@ def evaluate_hybrid_mode_preflight(
             else:
                 projected.append(arm)
         else:
-            raise ContractError(
-                "scheduled hybrid arms must be specs, mappings, or ids"
-            )
+            raise ContractError("scheduled hybrid arms must be specs, mappings, or ids")
 
     # Extra fail-closed checks for hybrid optional-repair arms that declare
     # live smoke even when evaluation_status route inference is ambiguous.
@@ -755,10 +691,7 @@ def evaluate_hybrid_mode_preflight(
                             {
                                 "arm_id": arm_id,
                                 "preflight": PREFLIGHT_CAUSAL_QUALIFICATION,
-                                "reason": (
-                                    "hybrid/research arm lacks causal "
-                                    "qualification"
-                                ),
+                                "reason": ("hybrid/research arm lacks causal qualification"),
                             }
                         )
 
@@ -782,10 +715,7 @@ def evaluate_hybrid_mode_preflight(
         seen.add(key)
         combined.append(item)
 
-    arm_ids = tuple(
-        str(arm.get("arm_id") or arm.get("cell_id") or "")
-        for arm in projected
-    )
+    arm_ids = tuple(str(arm.get("arm_id") or arm.get("cell_id") or "") for arm in projected)
     return {
         "interface": HYBRID_ROUND_TRIP_ARMS_INTERFACE,
         "schema_version": HYBRID_EVAL_MODE_SCHEMA,
@@ -820,26 +750,21 @@ def assert_hybrid_mode_preflight(
     )
 
 
-def _live_smoke_passed(
-    smokes: Mapping[str, object] | None, route: str
-) -> bool:
+def _live_smoke_passed(smokes: Mapping[str, object] | None, route: str) -> bool:
     if smokes is None:
         return False
     records: object = smokes
     if isinstance(smokes, Mapping):
         nested = smokes.get("records", smokes.get("routes", smokes))
         if isinstance(nested, Mapping) or (
-            isinstance(nested, Sequence)
-            and not isinstance(nested, (str, bytes, bytearray))
+            isinstance(nested, Sequence) and not isinstance(nested, (str, bytes, bytearray))
         ):
             records = nested
     if isinstance(records, Mapping):
         payload = records.get(route)
         if isinstance(payload, Mapping):
             return _receipt_is_live_smoke_pass(payload)
-    if isinstance(records, Sequence) and not isinstance(
-        records, (str, bytes, bytearray)
-    ):
+    if isinstance(records, Sequence) and not isinstance(records, (str, bytes, bytearray)):
         for item in records:
             if not isinstance(item, Mapping):
                 continue
@@ -863,9 +788,7 @@ def _receipt_is_live_smoke_pass(receipt: Mapping[str, object]) -> bool:
     return True
 
 
-def _causal_ok(
-    causal: Mapping[str, object] | None, arm_id: str
-) -> bool:
+def _causal_ok(causal: Mapping[str, object] | None, arm_id: str) -> bool:
     if not causal:
         return False
     disposition = str(causal.get("disposition") or "").strip()
@@ -876,9 +799,7 @@ def _causal_ok(
     if isinstance(arms, Mapping):
         payload = arms.get(arm_id)
         if isinstance(payload, Mapping):
-            arm_status = str(
-                payload.get("status", payload.get("disposition")) or ""
-            )
+            arm_status = str(payload.get("status", payload.get("disposition")) or "")
             if arm_status == "scored_supported":
                 return True
     return False
@@ -910,16 +831,10 @@ class StageLossReport:
             status = getattr(self, f"{name}_status")
             if status in {STAGE_SCORED, STAGE_FAILED}:
                 if value is None:
-                    raise ContractError(
-                        f"{name} loss required when status is {status}"
-                    )
-                object.__setattr__(
-                    self, name, _finite_unit_interval(value, name)
-                )
+                    raise ContractError(f"{name} loss required when status is {status}")
+                object.__setattr__(self, name, _finite_unit_interval(value, name))
             elif value is not None:
-                object.__setattr__(
-                    self, name, _finite_unit_interval(value, name)
-                )
+                object.__setattr__(self, name, _finite_unit_interval(value, name))
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -965,9 +880,7 @@ class StageLossReport:
             values = {
                 "forward": losses.get("forward", losses.get("forward_loss")),
                 "cycle": losses.get("cycle", losses.get("cycle_loss")),
-                "end_to_end": losses.get(
-                    "end_to_end", losses.get("end_to_end_loss")
-                ),
+                "end_to_end": losses.get("end_to_end", losses.get("end_to_end_loss")),
             }
 
         def _status(enabled: bool) -> str:
@@ -1020,18 +933,12 @@ class HybridCoordinateResult:
         object.__setattr__(self, "arm_id", _nonblank(self.arm_id, "arm_id"))
         if not isinstance(self.mode, EvaluationMode):
             object.__setattr__(self, "mode", select_evaluation_mode(self.mode))
-        object.__setattr__(
-            self, "case_id", _nonblank(self.case_id, "case_id")
-        )
+        object.__setattr__(self, "case_id", _nonblank(self.case_id, "case_id"))
         if not isinstance(self.disposition, HybridDisposition):
-            object.__setattr__(
-                self, "disposition", HybridDisposition(self.disposition)
-            )
+            object.__setattr__(self, "disposition", HybridDisposition(self.disposition))
         if not isinstance(self.stage_losses, StageLossReport):
             raise ContractError("stage_losses must be StageLossReport")
-        if self.result is not None and not isinstance(
-            self.result, RoundTripResult
-        ):
+        if self.result is not None and not isinstance(self.result, RoundTripResult):
             raise ContractError("result must be RoundTripResult or None")
         object.__setattr__(
             self,
@@ -1043,12 +950,8 @@ class HybridCoordinateResult:
             "evaluation_reason",
             _nonblank(self.evaluation_reason, "evaluation_reason"),
         )
-        object.__setattr__(
-            self, "diagnostics", MappingProxyType(dict(self.diagnostics))
-        )
-        object.__setattr__(
-            self, "receipt_cid", _nonblank(self.receipt_cid, "receipt_cid")
-        )
+        object.__setattr__(self, "diagnostics", MappingProxyType(dict(self.diagnostics)))
+        object.__setattr__(self, "receipt_cid", _nonblank(self.receipt_cid, "receipt_cid"))
 
     def to_dict(self) -> dict[str, object]:
         payload = self._payload()
@@ -1086,17 +989,9 @@ class HybridCoordinateResult:
                         else self.result.failure_reason.value
                     ),
                     "failure_detail": self.result.failure_detail,
-                    "l1": (
-                        None
-                        if self.result.l1 is None
-                        else self.result.l1.to_dict()
-                    ),
+                    "l1": (None if self.result.l1 is None else self.result.l1.to_dict()),
                     "reconstruction": self.result.reconstruction,
-                    "l2": (
-                        None
-                        if self.result.l2 is None
-                        else self.result.l2.to_dict()
-                    ),
+                    "l2": (None if self.result.l2 is None else self.result.l2.to_dict()),
                 }
             ),
             "diagnostics": _plain(dict(self.diagnostics)),
@@ -1186,17 +1081,13 @@ def run_constructor_only(
     else:
         spec = get_hybrid_arm(arm)
     if spec.mode is not EvaluationMode.CONSTRUCTOR_ONLY:
-        raise ContractError(
-            f"arm {spec.arm_id!r} is not a constructor_only arm"
-        )
+        raise ContractError(f"arm {spec.arm_id!r} is not a constructor_only arm")
     if not isinstance(gold_ir, CanonicalRuleIR):
         raise ContractError("gold_ir must be CanonicalRuleIR")
     if not isinstance(vocabulary, AllowedAtomVocabulary):
         raise ContractError("vocabulary must be AllowedAtomVocabulary")
 
-    request = ConstructorRequest(
-        source_text, vocabulary, dict(config or {})
-    )
+    request = ConstructorRequest(source_text, vocabulary, dict(config or {}))
     try:
         constructed = constructor.construct(request)
     except BaseException as exc:
@@ -1236,9 +1127,7 @@ def run_constructor_only(
             evaluation_status=EvaluationStatus.RUNTIME_FAILED.value,
             evaluation_reason="provider_error",
             diagnostics={
-                "constructor_identity": getattr(
-                    constructor, "identity", None
-                ),
+                "constructor_identity": getattr(constructor, "identity", None),
                 "constructor_failure": {
                     "reason": (
                         None
@@ -1251,9 +1140,7 @@ def run_constructor_only(
         )
 
     assert constructed.canonical_ir is not None
-    forward_loss = round(
-        1.0 - semantic_score(gold_ir, constructed.canonical_ir), 9
-    )
+    forward_loss = round(1.0 - semantic_score(gold_ir, constructed.canonical_ir), 9)
     comparison = compare_semantic_ir(gold_ir, constructed.canonical_ir)
     # Constructor-only does not run T1/L2; cycle/e2e are not_applicable.
     result = RoundTripResult(
@@ -1375,9 +1262,7 @@ def run_realizer_only(
         reconstructed = ConstructorResult(
             ComponentStatus.FAILED,
             failure_reason=FailureReason.EXCEPTION,
-            failure_detail=(
-                f"l2 constructor raised {type(exc).__name__}"
-            ),
+            failure_detail=(f"l2 constructor raised {type(exc).__name__}"),
         )
     if (
         not isinstance(reconstructed, ConstructorResult)
@@ -1418,16 +1303,12 @@ def run_realizer_only(
             evaluation_reason="provider_error",
             diagnostics={
                 "realizer_identity": getattr(realizer, "identity", None),
-                "l2_constructor_identity": getattr(
-                    reconstructor, "identity", None
-                ),
+                "l2_constructor_identity": getattr(reconstructor, "identity", None),
             },
         )
 
     assert reconstructed.canonical_ir is not None
-    result = make_round_trip_result(
-        gold_ir, fixed_l1, realized.text, reconstructed.canonical_ir
-    )
+    result = make_round_trip_result(gold_ir, fixed_l1, realized.text, reconstructed.canonical_ir)
     stage = StageLossReport.from_round_trip(
         result,
         score_forward=True,
@@ -1451,15 +1332,11 @@ def run_realizer_only(
             else EvaluationStatus.RUNTIME_FAILED.value
         ),
         evaluation_reason=(
-            "success"
-            if result.status is ComponentStatus.SUCCESS
-            else "provider_error"
+            "success" if result.status is ComponentStatus.SUCCESS else "provider_error"
         ),
         diagnostics={
             "realizer_identity": getattr(realizer, "identity", None),
-            "l2_constructor_identity": getattr(
-                reconstructor, "identity", None
-            ),
+            "l2_constructor_identity": getattr(reconstructor, "identity", None),
             "fixed_l1": fixed_l1.to_dict(),
             "stage_scope": "realizer_only",
         },
@@ -1540,8 +1417,7 @@ def run_hybrid_path(
                 evaluation_reason=NotMeasuredReason.PREFLIGHT_BLOCKED.value,
                 repair_status="abstained_missing_preflight",
                 abstention_reason=(
-                    "optional repair arm lacks required preflight; "
-                    "fail-closed abstention"
+                    "optional repair arm lacks required preflight; fail-closed abstention"
                 ),
                 diagnostics={
                     "preflight": verdict,
@@ -1551,9 +1427,7 @@ def run_hybrid_path(
 
     constructor = base_constructor or TypedDeonticCanonicalConstructor()
     det_realizer = realizer or CanonicalDeterministicRealizer()
-    request = ConstructorRequest(
-        source_text, vocabulary, dict(config or {})
-    )
+    request = ConstructorRequest(source_text, vocabulary, dict(config or {}))
 
     repair_status = REPAIR_NONE
     repair_receipt: Mapping[str, object] | None = None
@@ -1585,9 +1459,7 @@ def run_hybrid_path(
                 and base_result.failure_reason is not None
                 else FailureReason.INVALID_OUTPUT
             )
-            result = _failed_round_trip(
-                gold_ir, reason=reason, detail=detail or "construct failed"
-            )
+            result = _failed_round_trip(gold_ir, reason=reason, detail=detail or "construct failed")
             stage = StageLossReport.from_round_trip(
                 result,
                 score_forward=True,
@@ -1604,11 +1476,7 @@ def run_hybrid_path(
                 evaluation_status=EvaluationStatus.RUNTIME_FAILED.value,
                 evaluation_reason="provider_error",
                 repair_status=repair_status,
-                diagnostics={
-                    "constructor_identity": getattr(
-                        constructor, "identity", None
-                    )
-                },
+                diagnostics={"constructor_identity": getattr(constructor, "identity", None)},
             )
         assert base_result.canonical_ir is not None
         l1_ir = base_result.canonical_ir
@@ -1634,9 +1502,7 @@ def run_hybrid_path(
                 if hasattr(construction, "receipt"):
                     receipt = construction.receipt
                     repair_receipt = (
-                        receipt.to_dict()
-                        if hasattr(receipt, "to_dict")
-                        else dict(receipt)
+                        receipt.to_dict() if hasattr(receipt, "to_dict") else dict(receipt)
                     )
                     raw_status = getattr(receipt, "status", None)
                     if raw_status is None:
@@ -1650,12 +1516,8 @@ def run_hybrid_path(
                     else:
                         repair_status = str(raw_status)
                         # Enum str() may be "RepairAttemptStatus.NOT_TRIGGERED".
-                        if "." in repair_status and repair_status.rsplit(
-                            ".", 1
-                        )[-1].isupper():
-                            repair_status = repair_status.rsplit(".", 1)[
-                                -1
-                            ].lower()
+                        if "." in repair_status and repair_status.rsplit(".", 1)[-1].isupper():
+                            repair_status = repair_status.rsplit(".", 1)[-1].lower()
             else:
                 repaired = repairer.construct(request)
                 repair_status = "applied_opaque"
@@ -1690,10 +1552,7 @@ def run_hybrid_path(
             )
             repair_status = "failed"
 
-        if (
-            not isinstance(repaired, ConstructorResult)
-            or repaired.status is ComponentStatus.FAILED
-        ):
+        if not isinstance(repaired, ConstructorResult) or repaired.status is ComponentStatus.FAILED:
             # Fail-closed: do not silently fall back to an unadvertised path.
             detail = (
                 repaired.failure_detail
@@ -1702,8 +1561,7 @@ def run_hybrid_path(
             )
             reason = (
                 repaired.failure_reason
-                if isinstance(repaired, ConstructorResult)
-                and repaired.failure_reason is not None
+                if isinstance(repaired, ConstructorResult) and repaired.failure_reason is not None
                 else FailureReason.INVALID_OUTPUT
             )
             result = _failed_round_trip(
@@ -1737,9 +1595,7 @@ def run_hybrid_path(
 
     assert l1_ir is not None
     try:
-        realized = det_realizer.realize(
-            RealizerRequest(l1_ir, vocabulary, dict(config or {}))
-        )
+        realized = det_realizer.realize(RealizerRequest(l1_ir, vocabulary, dict(config or {})))
     except BaseException as exc:
         if isinstance(exc, (KeyboardInterrupt, SystemExit)):
             raise
@@ -1748,19 +1604,13 @@ def run_hybrid_path(
             failure_reason=FailureReason.EXCEPTION,
             failure_detail=f"realizer raised {type(exc).__name__}",
         )
-    if (
-        not isinstance(realized, RealizerResult)
-        or realized.status is ComponentStatus.FAILED
-    ):
+    if not isinstance(realized, RealizerResult) or realized.status is ComponentStatus.FAILED:
         detail = (
-            realized.failure_detail
-            if isinstance(realized, RealizerResult)
-            else "realizer invalid"
+            realized.failure_detail if isinstance(realized, RealizerResult) else "realizer invalid"
         )
         reason = (
             realized.failure_reason
-            if isinstance(realized, RealizerResult)
-            and realized.failure_reason is not None
+            if isinstance(realized, RealizerResult) and realized.failure_reason is not None
             else FailureReason.INVALID_OUTPUT
         )
         result = _failed_round_trip(
@@ -1802,19 +1652,13 @@ def run_hybrid_path(
             failure_reason=FailureReason.EXCEPTION,
             failure_detail=f"l2 constructor raised {type(exc).__name__}",
         )
-    if (
-        not isinstance(l2_result, ConstructorResult)
-        or l2_result.status is ComponentStatus.FAILED
-    ):
+    if not isinstance(l2_result, ConstructorResult) or l2_result.status is ComponentStatus.FAILED:
         detail = (
-            l2_result.failure_detail
-            if isinstance(l2_result, ConstructorResult)
-            else "l2 invalid"
+            l2_result.failure_detail if isinstance(l2_result, ConstructorResult) else "l2 invalid"
         )
         reason = (
             l2_result.failure_reason
-            if isinstance(l2_result, ConstructorResult)
-            and l2_result.failure_reason is not None
+            if isinstance(l2_result, ConstructorResult) and l2_result.failure_reason is not None
             else FailureReason.INVALID_OUTPUT
         )
         result = _failed_round_trip(
@@ -1844,9 +1688,7 @@ def run_hybrid_path(
         )
 
     assert l2_result.canonical_ir is not None
-    result = make_round_trip_result(
-        gold_ir, l1_ir, realized.text, l2_result.canonical_ir
-    )
+    result = make_round_trip_result(gold_ir, l1_ir, realized.text, l2_result.canonical_ir)
     stage = StageLossReport.from_round_trip(
         result,
         score_forward=True,
@@ -1870,9 +1712,7 @@ def run_hybrid_path(
             else EvaluationStatus.RUNTIME_FAILED.value
         ),
         evaluation_reason=(
-            "success"
-            if result.status is ComponentStatus.SUCCESS
-            else "provider_error"
+            "success" if result.status is ComponentStatus.SUCCESS else "provider_error"
         ),
         repair_status=repair_status,
         diagnostics={
@@ -1905,8 +1745,7 @@ class _AbstainingRepairClient:
         # Zero-trigger detectors never call the client.  If a call arrives
         # without a live model, abstain rather than inventing output.
         raise _RepairAbstention(
-            "optional model repair requires a live client; fail-closed "
-            "abstention"
+            "optional model repair requires a live client; fail-closed abstention"
         )
 
 
@@ -1991,8 +1830,7 @@ def authorize_hybrid_success_claim(
         )
     if not isinstance(paired_comparison, Mapping):
         raise HybridSuccessClaimError(
-            "paired_comparison must be a mapping produced by "
-            "paired_bootstrap_vs_baseline"
+            "paired_comparison must be a mapping produced by paired_bootstrap_vs_baseline"
         )
 
     report = paired_comparison.get("report", paired_comparison)
@@ -2000,9 +1838,7 @@ def authorize_hybrid_success_claim(
         raise HybridSuccessClaimError("paired comparison report is missing")
     comparisons = report.get("paired_comparisons", {})
     if not isinstance(comparisons, Mapping) or not comparisons:
-        raise HybridSuccessClaimError(
-            "paired comparison report has no paired_comparisons"
-        )
+        raise HybridSuccessClaimError("paired comparison report has no paired_comparisons")
 
     comparison_id = f"{candidate}__vs__{baseline}"
     comparison = comparisons.get(comparison_id)
@@ -2012,15 +1848,13 @@ def authorize_hybrid_success_claim(
             comparison = next(iter(comparisons.values()))
         else:
             raise HybridSuccessClaimError(
-                f"paired comparison {comparison_id!r} is absent; "
-                f"available={sorted(comparisons)}"
+                f"paired comparison {comparison_id!r} is absent; available={sorted(comparisons)}"
             )
     if not isinstance(comparison, Mapping):
         raise HybridSuccessClaimError("paired comparison entry is invalid")
-    if (
-        comparison.get("baseline_arm_id") not in {None, baseline}
-        or comparison.get("candidate_arm_id") not in {None, candidate}
-    ):
+    if comparison.get("baseline_arm_id") not in {None, baseline} or comparison.get(
+        "candidate_arm_id"
+    ) not in {None, candidate}:
         # Soft check: accept when comparison_id matched.
         pass
 
@@ -2037,17 +1871,14 @@ def authorize_hybrid_success_claim(
         )
     interval = metric_payload.get("confidence_interval", metric_payload)
     if not isinstance(interval, Mapping):
-        raise HybridSuccessClaimError(
-            "paired bootstrap confidence_interval is missing"
-        )
+        raise HybridSuccessClaimError("paired bootstrap confidence_interval is missing")
     if interval.get("method") != "seeded_percentile_case_cluster_bootstrap":
         # Accept nested form from statistics module.
         if metric_payload.get("confidence_interval") is None and (
             "low" not in interval and "high" not in metric_payload
         ):
             raise HybridSuccessClaimError(
-                "paired bootstrap must use seeded_percentile_case_cluster_"
-                "bootstrap"
+                "paired bootstrap must use seeded_percentile_case_cluster_bootstrap"
             )
 
     mean_delta = metric_payload.get(
@@ -2061,8 +1892,7 @@ def authorize_hybrid_success_claim(
     high = interval.get("high", metric_payload.get("high"))
     if mean_delta is None or low is None or high is None:
         raise HybridSuccessClaimError(
-            "paired bootstrap mean_delta/low/high are required for success "
-            "claims"
+            "paired bootstrap mean_delta/low/high are required for success claims"
         )
 
     beats = False
@@ -2080,9 +1910,7 @@ def authorize_hybrid_success_claim(
         "confidence_interval": {
             "low": float(low),
             "high": float(high),
-            "method": interval.get(
-                "method", "seeded_percentile_case_cluster_bootstrap"
-            ),
+            "method": interval.get("method", "seeded_percentile_case_cluster_bootstrap"),
         },
         "beats_baseline_ci": beats if require_negative_delta else None,
         "paired_bootstrap_required": True,

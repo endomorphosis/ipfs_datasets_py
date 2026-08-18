@@ -77,9 +77,7 @@ def _plain_json(value: object) -> object:
 
 def _freeze_json(value: object) -> object:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _freeze_json(item) for key, item in value.items()}
-        )
+        return MappingProxyType({str(key): _freeze_json(item) for key, item in value.items()})
     if isinstance(value, list):
         return tuple(_freeze_json(item) for item in value)
     if isinstance(value, tuple):
@@ -115,16 +113,12 @@ def source_copy_diagnostics(
     if not isinstance(source_text, str):
         raise ContractError("source_text must be a string")
     source_tokens = _tokens(source_text)
-    output_tokens = (
-        _tokens(reconstruction) if isinstance(reconstruction, str) else ()
-    )
+    output_tokens = _tokens(reconstruction) if isinstance(reconstruction, str) else ()
 
     def ngrams(tokens: tuple[str, ...]) -> Counter[tuple[str, ...]]:
         return Counter(
             tuple(tokens[index : index + COPY_NGRAM_WIDTH])
-            for index in range(
-                max(0, len(tokens) - COPY_NGRAM_WIDTH + 1)
-            )
+            for index in range(max(0, len(tokens) - COPY_NGRAM_WIDTH + 1))
         )
 
     source_ngrams = ngrams(source_tokens)
@@ -132,15 +126,11 @@ def source_copy_diagnostics(
     copied = sum((source_ngrams & output_ngrams).values())
     output_total = sum(output_ngrams.values())
     source_total = sum(source_ngrams.values())
-    exact = bool(
-        source_tokens and output_tokens and source_tokens == output_tokens
-    )
+    exact = bool(source_tokens and output_tokens and source_tokens == output_tokens)
     precision = copied / output_total if output_total else 0.0
     recall = copied / source_total if source_total else 0.0
     copy_risk = exact or precision >= COPY_PRECISION_LIMIT
-    evaluated = isinstance(reconstruction, str) and bool(
-        reconstruction.strip()
-    )
+    evaluated = isinstance(reconstruction, str) and bool(reconstruction.strip())
     return {
         "evaluated": evaluated,
         "normalization": "lowercase_token_plural_normalization_v1",
@@ -217,12 +207,8 @@ class MatrixCase:
             raise ContractError("case_id must be a nonblank string")
         if not isinstance(self.source_text, str) or not self.source_text.strip():
             raise ContractError("source_text must be a nonblank string")
-        if not isinstance(
-            self.allowed_atom_vocabulary, AllowedAtomVocabulary
-        ):
-            raise ContractError(
-                "allowed_atom_vocabulary must be AllowedAtomVocabulary"
-            )
+        if not isinstance(self.allowed_atom_vocabulary, AllowedAtomVocabulary):
+            raise ContractError("allowed_atom_vocabulary must be AllowedAtomVocabulary")
         if not isinstance(self.gold_ir, CanonicalRuleIR):
             raise ContractError("gold_ir must be CanonicalRuleIR")
         if self.gold_ir.is_empty:
@@ -234,9 +220,7 @@ class MatrixCase:
         if not isinstance(value, Mapping):
             raise ContractError("matrix case must be an object")
         case_id = value.get("case_id", value.get("id"))
-        vocabulary_value = value.get(
-            "allowed_atom_vocabulary", value.get("allowed_atoms")
-        )
+        vocabulary_value = value.get("allowed_atom_vocabulary", value.get("allowed_atoms"))
         vocabulary = AllowedAtomVocabulary.from_dict(vocabulary_value)
         gold = CanonicalRuleIR.from_dict(value.get("gold_ir"), vocabulary)
         return cls(
@@ -260,9 +244,7 @@ class MatrixCase:
             {
                 "case_id": self.case_id,
                 "source_text_cid": self.source_text_cid,
-                "allowed_atom_vocabulary": (
-                    self.allowed_atom_vocabulary.to_dict()
-                ),
+                "allowed_atom_vocabulary": (self.allowed_atom_vocabulary.to_dict()),
                 "gold_ir_cid": self.gold_ir_cid,
             }
         )
@@ -340,19 +322,11 @@ class MatrixCoordinateRecord:
                 }
             ),
             "artifacts": {
-                "l1": (
-                    self.result.l1.to_dict()
-                    if self.result.l1 is not None
-                    else None
-                ),
+                "l1": (self.result.l1.to_dict() if self.result.l1 is not None else None),
                 "l1_cid": self.l1_cid,
                 "t1": self.result.reconstruction,
                 "t1_cid": self.reconstruction_cid,
-                "l2": (
-                    self.result.l2.to_dict()
-                    if self.result.l2 is not None
-                    else None
-                ),
+                "l2": (self.result.l2.to_dict() if self.result.l2 is not None else None),
                 "l2_cid": self.l2_cid,
             },
             "losses": {
@@ -401,12 +375,8 @@ class MatrixCaseRecord:
             "source_text_cid": self.source_text_cid,
             "gold_ir_cid": self.gold_ir_cid,
             "coordinate_count": len(self.coordinates),
-            "coordinate_record_cids": [
-                coordinate.record_cid for coordinate in self.coordinates
-            ],
-            "coordinates": [
-                coordinate.to_dict() for coordinate in self.coordinates
-            ],
+            "coordinate_record_cids": [coordinate.record_cid for coordinate in self.coordinates],
+            "coordinates": [coordinate.to_dict() for coordinate in self.coordinates],
         }
 
     def to_dict(self) -> dict[str, object]:
@@ -427,11 +397,7 @@ class MatrixRunResult:
 
     @property
     def coordinates(self) -> tuple[MatrixCoordinateRecord, ...]:
-        return tuple(
-            coordinate
-            for case in self.cases
-            for coordinate in case.coordinates
-        )
+        return tuple(coordinate for case in self.cases for coordinate in case.coordinates)
 
     def _payload(self) -> dict[str, object]:
         return {
@@ -463,9 +429,7 @@ def _safe_construct(
         return ConstructorResult(
             status=ComponentStatus.FAILED,
             failure_reason=FailureReason.EXCEPTION,
-            failure_detail=(
-                f"constructor raised {type(exc).__name__}"
-            )[:1000],
+            failure_detail=(f"constructor raised {type(exc).__name__}")[:1000],
         )
     if not isinstance(result, ConstructorResult):
         return ConstructorResult(
@@ -589,9 +553,7 @@ def _lean_validator(lean_path: str | None) -> PostHocValidator:
             lean_exact_identity,
         )
 
-        return lean_exact_identity(
-            left.to_dict(), right.to_dict(), lean_path=lean_path
-        )
+        return lean_exact_identity(left.to_dict(), right.to_dict(), lean_path=lean_path)
 
     return validate
 
@@ -627,18 +589,12 @@ class SemanticRoundTripMatrix:
         supplied_constructors = dict(constructors)
         supplied_realizers = dict(realizers)
         if not supplied_constructors or not supplied_realizers:
-            raise ContractError(
-                "matrix requires nonempty constructor and realizer registries"
-            )
+            raise ContractError("matrix requires nonempty constructor and realizer registries")
         if require_eight_cells:
             if set(supplied_constructors) != set(MATRIX_CONSTRUCTOR_IDS):
-                raise ContractError(
-                    "constructor registry must contain the four frozen arms "
-                )
+                raise ContractError("constructor registry must contain the four frozen arms ")
             if set(supplied_realizers) != set(MATRIX_REALIZER_IDS):
-                raise ContractError(
-                    "realizer registry must contain the two frozen arms "
-                )
+                raise ContractError("realizer registry must contain the two frozen arms ")
             self._constructors = {
                 component_id: supplied_constructors[component_id]
                 for component_id in MATRIX_CONSTRUCTOR_IDS
@@ -662,19 +618,13 @@ class SemanticRoundTripMatrix:
             realizer_configs or {}, self._realizers, "realizer"
         )
         selected_validators = (
-            default_post_hoc_validators()
-            if validators is None
-            else dict(validators)
+            default_post_hoc_validators() if validators is None else dict(validators)
         )
         if any(
-            not isinstance(name, str)
-            or not name
-            or not callable(validator)
+            not isinstance(name, str) or not name or not callable(validator)
             for name, validator in selected_validators.items()
         ):
-            raise ContractError(
-                "validator registry must map nonblank ids to callables"
-            )
+            raise ContractError("validator registry must map nonblank ids to callables")
         self._validators = selected_validators
 
     @property
@@ -689,16 +639,12 @@ class SemanticRoundTripMatrix:
     ) -> dict[str, dict[str, object]]:
         extra = set(configs) - set(components)
         if extra:
-            raise ContractError(
-                f"{role} configs contain unknown ids: {sorted(extra)!r}"
-            )
+            raise ContractError(f"{role} configs contain unknown ids: {sorted(extra)!r}")
         result: dict[str, dict[str, object]] = {}
         for component_id in components:
             value = configs.get(component_id, {})
             if not isinstance(value, Mapping):
-                raise ContractError(
-                    f"{role} config {component_id!r} must be an object"
-                )
+                raise ContractError(f"{role} config {component_id!r} must be an object")
             # ConstructorRequest/RealizerRequest perform bounded deep freezing.
             detached = _plain_json(value)
             assert isinstance(detached, dict)
@@ -762,30 +708,18 @@ class SemanticRoundTripMatrix:
         result: RoundTripResult,
     ) -> MatrixCoordinateRecord:
         cell_id = f"{constructor_id}__{realizer_id}"
-        l1_cid = (
-            cid_for_dag_json(result.l1.to_dict())
-            if result.l1 is not None
-            else None
-        )
+        l1_cid = cid_for_dag_json(result.l1.to_dict()) if result.l1 is not None else None
         reconstruction_cid = (
             cid_for_bytes(result.reconstruction.encode("utf-8"))
             if result.reconstruction is not None
             else None
         )
-        l2_cid = (
-            cid_for_dag_json(result.l2.to_dict())
-            if result.l2 is not None
-            else None
-        )
-        copy = source_copy_diagnostics(
-            case.source_text, result.reconstruction
-        )
+        l2_cid = cid_for_dag_json(result.l2.to_dict()) if result.l2 is not None else None
+        copy = source_copy_diagnostics(case.source_text, result.reconstruction)
         polarity = polarity_diagnostics(case.gold_ir, result.l2)
         semantic_comparisons: dict[str, object | None] = {
             "forward_gold_to_l1": (
-                compare_semantic_ir(case.gold_ir, result.l1)
-                if result.l1 is not None
-                else None
+                compare_semantic_ir(case.gold_ir, result.l1) if result.l1 is not None else None
             ),
             "cycle_l1_to_l2": (
                 compare_semantic_ir(result.l1, result.l2)
@@ -793,9 +727,7 @@ class SemanticRoundTripMatrix:
                 else None
             ),
             "end_to_end_gold_to_l2": (
-                compare_semantic_ir(case.gold_ir, result.l2)
-                if result.l2 is not None
-                else None
+                compare_semantic_ir(case.gold_ir, result.l2) if result.l2 is not None else None
             ),
         }
         full_coverage = result.is_complete
@@ -811,15 +743,9 @@ class SemanticRoundTripMatrix:
             "polarity": polarity,
             "gates": gates,
             "l1_payload_cid": l1_cid,
-            "constructor_config_cid": cid_for_dag_json(
-                self._constructor_configs[constructor_id]
-            ),
-            "realizer_config_cid": cid_for_dag_json(
-                self._realizer_configs[realizer_id]
-            ),
-            "same_constructor_reapplied": bool(
-                result.reconstruction is not None
-            ),
+            "constructor_config_cid": cid_for_dag_json(self._constructor_configs[constructor_id]),
+            "realizer_config_cid": cid_for_dag_json(self._realizer_configs[realizer_id]),
+            "same_constructor_reapplied": bool(result.reconstruction is not None),
         }
         semantic_payload = _semantic_payload(
             case=case,
@@ -851,9 +777,7 @@ class SemanticRoundTripMatrix:
                 try:
                     receipt = validator(result.l1, result.l2, request_id)
                     if not isinstance(receipt, Mapping):
-                        raise TypeError(
-                            "validator returned a non-object receipt"
-                        )
+                        raise TypeError("validator returned a non-object receipt")
                     validation_results[validator_id] = _plain_json(receipt)
                 except (KeyboardInterrupt, SystemExit):
                     raise
@@ -862,9 +786,7 @@ class SemanticRoundTripMatrix:
                     validation_results[validator_id] = {
                         "status": "failed",
                         "failure_type": type(exc).__name__,
-                        "failure_detail": (
-                            f"post-hoc validator failed: {type(exc).__name__}"
-                        ),
+                        "failure_detail": (f"post-hoc validator failed: {type(exc).__name__}"),
                     }
         else:
             for validator_id in self._validators:
@@ -893,9 +815,7 @@ class SemanticRoundTripMatrix:
             == candidate_cid
         )
         if not candidate_unchanged:
-            raise ContractError(
-                "post-hoc validation changed a bound semantic candidate"
-            )
+            raise ContractError("post-hoc validation changed a bound semantic candidate")
         validation: Mapping[str, object] = {
             "phase": "post_hoc_after_candidate_binding",
             "status": validation_status,
@@ -952,9 +872,7 @@ class SemanticRoundTripMatrix:
             raise ContractError("case must be MatrixCase")
         coordinates: list[MatrixCoordinateRecord] = []
         for constructor_id, constructor in self._constructors.items():
-            constructor_identity = _identity(
-                constructor, role="constructor"
-            )
+            constructor_identity = _identity(constructor, role="constructor")
             constructor_config = self._constructor_configs[constructor_id]
             initial_request = ConstructorRequest(
                 source_text=case.source_text,
@@ -971,9 +889,7 @@ class SemanticRoundTripMatrix:
                             constructor_id=constructor_id,
                             constructor_identity=constructor_identity,
                             realizer_id=realizer_id,
-                            realizer_identity=_identity(
-                                realizer, role="realizer"
-                            ),
+                            realizer_identity=_identity(realizer, role="realizer"),
                             l1=None,
                             reconstruction=None,
                             reason=initial.failure_reason,
@@ -988,9 +904,7 @@ class SemanticRoundTripMatrix:
             # This makes the fan-out payload equality explicit and testable.
             l1_payload = {
                 "canonical_ir": l1.to_dict(),
-                "allowed_atom_vocabulary": (
-                    case.allowed_atom_vocabulary.to_dict()
-                ),
+                "allowed_atom_vocabulary": (case.allowed_atom_vocabulary.to_dict()),
                 "config": {},
             }
             for realizer_id, realizer in self._realizers.items():
@@ -1028,15 +942,11 @@ class SemanticRoundTripMatrix:
                     config=constructor_config,
                 )
                 second = _safe_construct(constructor, second_request)
-                if _identity(constructor, role="constructor") != (
-                    constructor_identity
-                ):
+                if _identity(constructor, role="constructor") != (constructor_identity):
                     second = ConstructorResult(
                         status=ComponentStatus.FAILED,
                         failure_reason=FailureReason.INVALID_OUTPUT,
-                        failure_detail=(
-                            "constructor identity changed between L1 and L2"
-                        ),
+                        failure_detail=("constructor identity changed between L1 and L2"),
                     )
                 if second.status is ComponentStatus.FAILED:
                     reason = second.failure_reason
@@ -1077,9 +987,7 @@ class SemanticRoundTripMatrix:
 
         expected_count = len(self._constructors) * len(self._realizers)
         if len(coordinates) != expected_count:
-            raise ContractError(
-                "matrix did not retain every scheduled coordinate"
-            )
+            raise ContractError("matrix did not retain every scheduled coordinate")
         provisional = MatrixCaseRecord(
             case_id=case.case_id,
             case_cid=case.case_cid,
@@ -1120,40 +1028,27 @@ class SemanticRoundTripMatrix:
         summaries: dict[str, object] = {}
         for cell_id in self.cell_ids:
             records = [
-                next(
-                    coordinate
-                    for coordinate in case.coordinates
-                    if coordinate.cell_id == cell_id
-                )
+                next(coordinate for coordinate in case.coordinates if coordinate.cell_id == cell_id)
                 for case in case_records
             ]
             denominator = len(records)
             summaries[cell_id] = {
                 "scheduled_case_count": denominator,
-                "denominator_policy": (
-                    "all_scheduled_cases_including_failures"
-                ),
+                "denominator_policy": ("all_scheduled_cases_including_failures"),
                 "success_count": sum(
-                    record.status is ComponentStatus.SUCCESS
-                    for record in records
+                    record.status is ComponentStatus.SUCCESS for record in records
                 ),
-                "failure_count": sum(
-                    record.status is ComponentStatus.FAILED
-                    for record in records
-                ),
+                "failure_count": sum(record.status is ComponentStatus.FAILED for record in records),
                 "mean_forward_loss": round(
-                    sum(record.result.forward_loss for record in records)
-                    / denominator,
+                    sum(record.result.forward_loss for record in records) / denominator,
                     9,
                 ),
                 "mean_cycle_loss": round(
-                    sum(record.result.cycle_loss for record in records)
-                    / denominator,
+                    sum(record.result.cycle_loss for record in records) / denominator,
                     9,
                 ),
                 "mean_end_to_end_loss": round(
-                    sum(record.result.end_to_end_loss for record in records)
-                    / denominator,
+                    sum(record.result.end_to_end_loss for record in records) / denominator,
                     9,
                 ),
                 "selection_eligible": all(
@@ -1164,9 +1059,7 @@ class SemanticRoundTripMatrix:
                     )
                     for record in records
                 ),
-                "coordinate_record_cids": [
-                    record.record_cid for record in records
-                ],
+                "coordinate_record_cids": [record.record_cid for record in records],
             }
         frozen_summaries = _freeze_json(summaries)
         provisional = MatrixRunResult(

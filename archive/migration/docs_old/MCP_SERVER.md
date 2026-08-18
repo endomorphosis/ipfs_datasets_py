@@ -165,7 +165,8 @@ Due to package-level import complexity, use direct imports for development tools
 
 ```python
 import sys
-sys.path.insert(0, './ipfs_datasets_py/mcp_server/tools/development_tools/')
+
+sys.path.insert(0, "./ipfs_datasets_py/mcp_server/tools/development_tools/")
 
 # Import development tools directly
 from test_generator import TestGeneratorTool
@@ -185,7 +186,7 @@ runner = TestRunner()
 test_spec = {
     "test_file": "test_example.py",
     "class_name": "TestExample",
-    "functions": ["test_basic_functionality"]
+    "functions": ["test_basic_functionality"],
 }
 result = test_gen.execute("generate_test", test_spec)
 ```

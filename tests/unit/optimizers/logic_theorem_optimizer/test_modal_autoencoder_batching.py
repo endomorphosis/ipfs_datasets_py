@@ -119,9 +119,7 @@ def test_autotuner_uses_measured_headroom_kernel_efficiency_and_quality() -> Non
 def test_quality_or_split_regression_blocks_an_otherwise_fast_batch() -> None:
     baseline = _measurement(1, 10.0, peak=200, efficiency=0.1)
     degraded = _measurement(32, 30.0, peak=700, efficiency=0.9, quality=0.89)
-    wrong_split = _measurement(
-        64, 40.0, peak=700, efficiency=0.9, split="contaminated-split"
-    )
+    wrong_split = _measurement(64, 40.0, peak=700, efficiency=0.9, split="contaminated-split")
 
     decision = BatchSizeAutotuner().tune(baseline, [wrong_split, degraded])
     violations = {item.batch_size: item.violations for item in decision.evaluations}
@@ -132,15 +130,16 @@ def test_quality_or_split_regression_blocks_an_otherwise_fast_batch() -> None:
 
 
 def test_dgx_spark_policy_admits_32_through_64_when_memory_allows() -> None:
-    tuner = BatchSizeAutotuner(
-        BatchAutotuneConfig(minimum_throughput_gain=1.5)
+    tuner = BatchSizeAutotuner(BatchAutotuneConfig(minimum_throughput_gain=1.5))
+    assert (
+        tuner.choose_batch_size(
+            memory_capacity_bytes=128_000,
+            memory_used_bytes=20_000,
+            bytes_per_sample=1_000,
+            kernel_efficiency_by_batch={8: 0.6, 16: 0.7, 32: 0.8, 64: 0.9},
+        )
+        == 64
     )
-    assert tuner.choose_batch_size(
-        memory_capacity_bytes=128_000,
-        memory_used_bytes=20_000,
-        bytes_per_sample=1_000,
-        kernel_efficiency_by_batch={8: 0.6, 16: 0.7, 32: 0.8, 64: 0.9},
-    ) == 64
     assert not GlobalResourceBounds().profile_violations(
         replace(
             ParallelismProfile(name="dgx-batch"),
@@ -151,9 +150,7 @@ def test_dgx_spark_policy_admits_32_through_64_when_memory_allows() -> None:
 
 
 def test_recoverable_oom_retries_smaller_batch_and_restores_state_identity() -> None:
-    state = ModalAutoencoderTrainingState(
-        feature_embedding_weights={"counter": [0.0]}
-    )
+    state = ModalAutoencoderTrainingState(feature_embedding_weights={"counter": [0.0]})
     object_id = id(state)
     identity_before = state.state_identity_record()
     oom_identities = []
@@ -189,7 +186,5 @@ def test_non_oom_failure_is_not_retried() -> None:
         raise ValueError("bad target")
 
     with pytest.raises(ValueError, match="bad target"):
-        ResourceSafeBatchRunner().run(
-            list(range(32)), fail, initial_batch_size=32
-        )
+        ResourceSafeBatchRunner().run(list(range(32)), fail, initial_batch_size=32)
     assert calls == [32]

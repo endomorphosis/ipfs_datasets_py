@@ -34,8 +34,7 @@ def _count_features(document: IntentIRDocument) -> dict[str, float]:
     edge_kinds = Counter(item.kind for item in document.control_edges)
 
     features: dict[str, float] = {
-        f"intent.kind.{kind.value}": float(document.intent_kind is kind)
-        for kind in IntentKind
+        f"intent.kind.{kind.value}": float(document.intent_kind is kind) for kind in IntentKind
     }
     features.update(
         {
@@ -45,17 +44,12 @@ def _count_features(document: IntentIRDocument) -> dict[str, float]:
     )
     features.update(
         {
-            f"statement.modality.{modality.value}.count": float(
-                modalities[modality]
-            )
+            f"statement.modality.{modality.value}.count": float(modalities[modality])
             for modality in IntentModality
         }
     )
     features.update(
-        {
-            f"control.kind.{kind.value}.count": float(edge_kinds[kind])
-            for kind in ControlEdgeKind
-        }
+        {f"control.kind.{kind.value}.count": float(edge_kinds[kind]) for kind in ControlEdgeKind}
     )
     for label, counts in (
         ("statement", statement_grounding),
@@ -63,9 +57,7 @@ def _count_features(document: IntentIRDocument) -> dict[str, float]:
         ("control", edge_grounding),
     ):
         for grounding in NodeGrounding:
-            features[f"{label}.grounding.{grounding.value}.count"] = float(
-                counts[grounding]
-            )
+            features[f"{label}.grounding.{grounding.value}.count"] = float(counts[grounding])
 
     features.update(
         {
@@ -73,9 +65,7 @@ def _count_features(document: IntentIRDocument) -> dict[str, float]:
             "action.effect.ref.count": float(
                 sum(len(item.effect_ids) for item in document.actions)
             ),
-            "action.input.ref.count": float(
-                sum(len(item.input_refs) for item in document.actions)
-            ),
+            "action.input.ref.count": float(sum(len(item.input_refs) for item in document.actions)),
             "action.object.ref.count": float(
                 sum(len(item.object_refs) for item in document.actions)
             ),
@@ -85,9 +75,7 @@ def _count_features(document: IntentIRDocument) -> dict[str, float]:
             "action.precondition.ref.count": float(
                 sum(len(item.precondition_ids) for item in document.actions)
             ),
-            "action.tool.ref.count": float(
-                sum(len(item.tool_refs) for item in document.actions)
-            ),
+            "action.tool.ref.count": float(sum(len(item.tool_refs) for item in document.actions)),
             "action.verification.ref.count": float(
                 sum(len(item.verification_ids) for item in document.actions)
             ),
@@ -147,9 +135,7 @@ def extract_intent_features(
     GraphRAG neighbors, compiler outputs, and proof/results are never read.
     """
 
-    return IntentFeatureExtractor().extract(
-        document, context_snapshot_ids=context_snapshot_ids
-    )
+    return IntentFeatureExtractor().extract(document, context_snapshot_ids=context_snapshot_ids)
 
 
 # Descriptive compatibility spelling for callers constructing advisor inputs.

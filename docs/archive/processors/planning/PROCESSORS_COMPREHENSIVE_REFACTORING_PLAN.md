@@ -117,43 +117,50 @@ from typing import Protocol, Any, Dict, List, Union
 from dataclasses import dataclass
 from enum import Enum
 
+
 class InputType(Enum):
     """Types of inputs that can be processed."""
+
     URL = "url"
     FILE = "file"
     FOLDER = "folder"
     TEXT = "text"
     BINARY = "binary"
 
+
 @dataclass
 class ProcessingContext:
     """Context information for processing."""
+
     input_type: InputType
     source: str
     metadata: Dict[str, Any]
     options: Dict[str, Any]
 
-@dataclass  
+
+@dataclass
 class ProcessingResult:
     """Standardized result from any processor."""
+
     success: bool
     knowledge_graph: Dict[str, Any]  # Entities, relationships
-    vectors: List[List[float]]       # Embeddings
+    vectors: List[List[float]]  # Embeddings
     metadata: Dict[str, Any]
     errors: List[str]
     warnings: List[str]
 
+
 class ProcessorProtocol(Protocol):
     """Protocol that all processors must implement."""
-    
+
     def can_handle(self, context: ProcessingContext) -> bool:
         """Check if this processor can handle the input."""
         ...
-    
+
     def process(self, context: ProcessingContext) -> ProcessingResult:
         """Process the input and return standardized result."""
         ...
-    
+
     def get_capabilities(self) -> Dict[str, Any]:
         """Return processor capabilities and metadata."""
         ...
@@ -205,23 +212,22 @@ class InputDetector:
 ```python
 class ProcessorRegistry:
     """Registry for discovering and managing processors."""
-    
+
     def __init__(self):
         self._processors: Dict[str, ProcessorProtocol] = {}
         self._priority_map: Dict[InputType, List[str]] = {}
-    
-    def register(self, name: str, processor: ProcessorProtocol, 
-                 priority: int = 50):
+
+    def register(self, name: str, processor: ProcessorProtocol, priority: int = 50):
         """Register a processor with optional priority."""
-        
+
     def find_processor(self, context: ProcessingContext) -> ProcessorProtocol:
         """Find best processor for given context."""
         # Try processors in priority order
         # Return first that can_handle()
-        
+
     def list_processors(self) -> List[Dict[str, Any]]:
         """List all registered processors with capabilities."""
-        
+
     def auto_discover(self):
         """Auto-discover and register processors from package."""
 ```
@@ -339,27 +345,27 @@ Strategy:
 ```python
 class GraphRAGAdapter:
     """Adapter to integrate UnifiedGraphRAG with UniversalProcessor."""
-    
+
     def __init__(self):
         self.graphrag = UnifiedGraphRAG()
-    
+
     def can_handle(self, context: ProcessingContext) -> bool:
         """Check if input is suitable for GraphRAG processing."""
         # URLs, text, documents → Yes
         # Raw binary, videos → No
-        
+
     def process(self, context: ProcessingContext) -> ProcessingResult:
         """Process input using UnifiedGraphRAG."""
         # 1. Convert input to text/content
         # 2. Run GraphRAG pipeline
         # 3. Convert to ProcessingResult format
-        
+
     def get_capabilities(self) -> Dict[str, Any]:
         return {
             "name": "GraphRAG",
             "handles": ["url", "text", "pdf", "html"],
             "outputs": ["knowledge_graph", "vectors"],
-            "features": ["entity_extraction", "relationship_mapping", "sparql"]
+            "features": ["entity_extraction", "relationship_mapping", "sparql"],
         }
 ```
 
@@ -382,7 +388,7 @@ warnings.warn(
     "  processor = UniversalProcessor()\n"
     "  result = processor.process(your_input)",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 ```
 
@@ -419,22 +425,24 @@ This module provides backward compatibility. Please update imports:
 
 Old:
     from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
-    
+
 New:
     from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
 """
+
 import warnings
 from ipfs_datasets_py.processors import multimedia as _new_multimedia
 
 warnings.warn(
-    "data_transformation.multimedia is deprecated. "
-    "Use processors.multimedia instead.",
+    "data_transformation.multimedia is deprecated. Use processors.multimedia instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Re-export everything from new location
 __all__ = _new_multimedia.__all__
+
+
 def __getattr__(name):
     return getattr(_new_multimedia, name)
 ```
@@ -446,22 +454,25 @@ Create migration script: `scripts/migrations/update_multimedia_imports.py`
 ```python
 #!/usr/bin/env python3
 """Update multimedia imports across codebase."""
+
 import os
 import re
 
-OLD_PATTERN = r'from ipfs_datasets_py\.data_transformation\.multimedia'
-NEW_PATTERN = 'from ipfs_datasets_py.processors.multimedia'
+OLD_PATTERN = r"from ipfs_datasets_py\.data_transformation\.multimedia"
+NEW_PATTERN = "from ipfs_datasets_py.processors.multimedia"
+
 
 def update_file(filepath):
-    with open(filepath, 'r') as f:
+    with open(filepath, "r") as f:
         content = f.read()
-    
+
     if OLD_PATTERN in content:
         new_content = re.sub(OLD_PATTERN, NEW_PATTERN, content)
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             f.write(new_content)
         return True
     return False
+
 
 # Scan and update all Python files
 ```
@@ -473,16 +484,16 @@ def update_file(filepath):
 ```python
 class MultimediaAdapter:
     """Adapter for multimedia processing."""
-    
+
     def can_handle(self, context: ProcessingContext) -> bool:
         """Handle video, audio, image files."""
-        formats = ['mp4', 'mp3', 'wav', 'jpg', 'png', 'gif']
-        return context.metadata.get('format') in formats
-    
+        formats = ["mp4", "mp3", "wav", "jpg", "png", "gif"]
+        return context.metadata.get("format") in formats
+
     def process(self, context: ProcessingContext) -> ProcessingResult:
         """
         Process multimedia using FFmpeg/yt-dlp.
-        
+
         Returns:
         - Extracted audio/video metadata
         - Transcripts (if audio)
@@ -579,19 +590,24 @@ class {Name}Adapter:
 ```python
 class ProcessorError(Exception):
     """Base exception for processor errors."""
-    
+
+
 class InputDetectionError(ProcessorError):
     """Failed to detect input type."""
-    
+
+
 class ProcessorNotFoundError(ProcessorError):
     """No processor can handle this input."""
-    
+
+
 class ProcessingError(ProcessorError):
     """Error during processing."""
-    
+
+
 class KnowledgeGraphError(ProcessorError):
     """Error building knowledge graph."""
-    
+
+
 class VectorGenerationError(ProcessorError):
     """Error generating vectors."""
 ```
@@ -626,16 +642,18 @@ class ProcessingCache:
 ```python
 class ParallelProcessor:
     """Process multiple inputs in parallel."""
-    
+
     def __init__(self, max_workers: int = 4):
         self.max_workers = max_workers
-        
-    def process_batch(self, processor: UniversalProcessor,
-                     inputs: List[Any], **kwargs) -> List[ProcessingResult]:
+
+    def process_batch(
+        self, processor: UniversalProcessor, inputs: List[Any], **kwargs
+    ) -> List[ProcessingResult]:
         """Process inputs in parallel using ThreadPoolExecutor."""
-        
-    def process_folder(self, processor: UniversalProcessor,
-                      folder: str, **kwargs) -> List[ProcessingResult]:
+
+    def process_folder(
+        self, processor: UniversalProcessor, folder: str, **kwargs
+    ) -> List[ProcessingResult]:
         """Process all files in folder in parallel."""
 ```
 
@@ -647,7 +665,7 @@ class ParallelProcessor:
 def benchmark_universal_processor():
     """Benchmark UniversalProcessor performance."""
     # Test input detection speed
-    # Test routing speed  
+    # Test routing speed
     # Test processing speed for various input types
     # Test batch processing throughput
     # Test cache hit rates
@@ -722,11 +740,13 @@ tests/
 ```python
 # OLD: Direct processor usage
 from ipfs_datasets_py.processors import graphrag_processor
+
 processor = graphrag_processor.GraphRAGProcessor()
 result = processor.process(url)
 
 # NEW: Universal processor
 from ipfs_datasets_py.processors import UniversalProcessor
+
 processor = UniversalProcessor()
 result = processor.process(url)  # Auto-routes to GraphRAG
 
@@ -747,6 +767,7 @@ result = processor.process(input)  # Handles any type
 
 # OLD: Manual knowledge graph building
 from ipfs_datasets_py.processors import build_knowledge_graph
+
 text = extract_text(file)
 entities = extract_entities(text)
 relationships = extract_relationships(text)

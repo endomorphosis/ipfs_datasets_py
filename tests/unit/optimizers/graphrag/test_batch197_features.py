@@ -9,11 +9,13 @@ Methods under test:
   - OntologyLearningAdapter.feedback_longest_negative_streak(threshold)
   - OntologyMediator.action_names()
 """
+
 import pytest
 from unittest.mock import MagicMock
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 class _FakeEntry:
     def __init__(self, avg):
@@ -26,14 +28,20 @@ def _push_opt(o, avg):
 
 def _make_optimizer():
     from ipfs_datasets_py.optimizers.graphrag.ontology_optimizer import OntologyOptimizer
+
     return OntologyOptimizer()
 
 
 def _make_score(**kwargs):
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import CriticScore
+
     defaults = dict(
-        completeness=0.5, consistency=0.5, clarity=0.5,
-        granularity=0.5, relationship_coherence=0.5, domain_alignment=0.5,
+        completeness=0.5,
+        consistency=0.5,
+        clarity=0.5,
+        granularity=0.5,
+        relationship_coherence=0.5,
+        domain_alignment=0.5,
     )
     defaults.update(kwargs)
     return CriticScore(**defaults)
@@ -41,40 +49,50 @@ def _make_score(**kwargs):
 
 def _make_critic():
     from ipfs_datasets_py.optimizers.graphrag.ontology_critic import OntologyCritic
+
     return OntologyCritic(use_llm=False)
 
 
 def _make_entity(eid, confidence=0.5):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity
+
     return Entity(id=eid, type="T", text=eid, confidence=confidence)
 
 
 def _make_result(entities=None):
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import EntityExtractionResult
+
     return EntityExtractionResult(entities=entities or [], relationships=[], confidence=1.0)
 
 
 def _make_generator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_generator import OntologyGenerator
+
     return OntologyGenerator()
 
 
 def _make_adapter():
-    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import OntologyLearningAdapter
+    from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import (
+        OntologyLearningAdapter,
+    )
+
     return OntologyLearningAdapter()
 
 
 def _push_feedback(a, score):
     from ipfs_datasets_py.optimizers.graphrag.ontology_learning_adapter import FeedbackRecord
+
     a._feedback.append(FeedbackRecord(final_score=score))
 
 
 def _make_mediator():
     from ipfs_datasets_py.optimizers.graphrag.ontology_mediator import OntologyMediator
+
     return OntologyMediator(generator=MagicMock(), critic=MagicMock())
 
 
 # ── OntologyOptimizer.history_above_threshold_rate ───────────────────────────
+
 
 class TestHistoryAboveThresholdRate:
     def test_empty_returns_zero(self):
@@ -101,6 +119,7 @@ class TestHistoryAboveThresholdRate:
 
 
 # ── OntologyOptimizer.history_improving_fraction ─────────────────────────────
+
 
 class TestHistoryImprovingFraction:
     def test_empty_returns_zero(self):
@@ -134,6 +153,7 @@ class TestHistoryImprovingFraction:
 
 # ── OntologyOptimizer.score_percentile_of_last ───────────────────────────────
 
+
 class TestScorePercentileOfLast:
     def test_empty_returns_zero(self):
         o = _make_optimizer()
@@ -155,6 +175,7 @@ class TestScorePercentileOfLast:
 
 # ── OntologyCritic.score_diff_from_mean ──────────────────────────────────────
 
+
 class TestScoreDiffFromMean:
     def test_uniform_dimensions_zero_diff(self):
         c = _make_critic()
@@ -165,8 +186,14 @@ class TestScoreDiffFromMean:
 
     def test_returns_float(self):
         c = _make_critic()
-        s = _make_score(completeness=0.8, consistency=0.6, clarity=0.7,
-                        granularity=0.5, relationship_coherence=0.4, domain_alignment=0.3)
+        s = _make_score(
+            completeness=0.8,
+            consistency=0.6,
+            clarity=0.7,
+            granularity=0.5,
+            relationship_coherence=0.4,
+            domain_alignment=0.3,
+        )
         result = c.score_diff_from_mean(s)
         # overall is computed from weights, dimension_mean is simple mean
         # result should be a float (positive or negative)
@@ -184,6 +211,7 @@ class TestScoreDiffFromMean:
 
 # ── OntologyGenerator.entity_confidence_sum ──────────────────────────────────
 
+
 class TestEntityConfidenceSum:
     def test_empty_returns_zero(self):
         g = _make_generator()
@@ -197,15 +225,18 @@ class TestEntityConfidenceSum:
 
     def test_sum_of_multiple(self):
         g = _make_generator()
-        r = _make_result([
-            _make_entity("e1", confidence=0.4),
-            _make_entity("e2", confidence=0.6),
-            _make_entity("e3", confidence=0.8),
-        ])
+        r = _make_result(
+            [
+                _make_entity("e1", confidence=0.4),
+                _make_entity("e2", confidence=0.6),
+                _make_entity("e3", confidence=0.8),
+            ]
+        )
         assert g.entity_confidence_sum(r) == pytest.approx(1.8)
 
 
 # ── OntologyLearningAdapter.feedback_longest_negative_streak ─────────────────
+
 
 class TestFeedbackLongestNegativeStreak:
     def test_empty_returns_zero(self):
@@ -233,6 +264,7 @@ class TestFeedbackLongestNegativeStreak:
 
 
 # ── OntologyMediator.action_names ────────────────────────────────────────────
+
 
 class TestActionNames:
     def test_no_actions_returns_empty_list(self):

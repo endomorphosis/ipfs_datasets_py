@@ -220,7 +220,10 @@ def test_security_model_shape_round_trip_and_validation_contract() -> None:
     model = _compat_model()
     assert security_ir.validate_ir(model) is model
     assert SecurityModelIR.from_dict(model.to_dict()).to_dict() == model.to_dict()
-    assert SecurityModelIR.from_untrusted_dict(model.to_dict(), strict=True).to_dict() == model.to_dict()
+    assert (
+        SecurityModelIR.from_untrusted_dict(model.to_dict(), strict=True).to_dict()
+        == model.to_dict()
+    )
 
     invalid = model.to_dict()
     invalid["unexpected"] = True
@@ -254,7 +257,9 @@ def test_canonicalization_and_both_legacy_identifier_paths(monkeypatch: pytest.M
     assert observed_payloads == [CANONICAL_COMPAT_MODEL.encode("utf-8")]
 
 
-def test_proof_report_and_receipt_round_trip_and_validators(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_proof_report_and_receipt_round_trip_and_validators(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(cid_module, "_load_cid_for_bytes", lambda: None)
     report = _proved_report()
 
@@ -270,7 +275,10 @@ def test_proof_report_and_receipt_round_trip_and_validators(monkeypatch: pytest.
         accepted_assumptions=["A1"],
     )
     assert validate_proof_receipt(receipt) is receipt
-    assert ProofReceipt.from_untrusted_dict(receipt.to_dict(), report=report).to_dict() == receipt.to_dict()
+    assert (
+        ProofReceipt.from_untrusted_dict(receipt.to_dict(), report=report).to_dict()
+        == receipt.to_dict()
+    )
     assert receipt.valid is True
     assert receipt.proof_report_cid == report.cid
 
@@ -306,7 +314,12 @@ def test_feature_loop_projector_and_examples() -> None:
     xaman = ir_api.example_xaman_wallet_security_model()
     projection = security_ir.SecurityIRFeatureLoopProjector().project_model(exchange)
 
-    assert (exchange.model_id, len(exchange.claims), len(exchange.policies), len(exchange.events)) == (
+    assert (
+        exchange.model_id,
+        len(exchange.claims),
+        len(exchange.policies),
+        len(exchange.events),
+    ) == (
         "minimal-btc-exchange",
         8,
         9,
@@ -377,7 +390,9 @@ def test_example_claim_registry_and_release_policies_are_frozen() -> None:
     assert decision_outcome_for_proof_status("PROVED") == "prove"
     assert blocking_claim_is_secure_outcome("prove") is True
     assert blocking_claim_is_secure_outcome("unknown") is False
-    assert classify_release_consumer_outcome({"status": "UNKNOWN"})["consumer_result"] == "non-secure"
+    assert (
+        classify_release_consumer_outcome({"status": "UNKNOWN"})["consumer_result"] == "non-secure"
+    )
 
 
 def test_assumption_and_evidence_policy_entry_points() -> None:

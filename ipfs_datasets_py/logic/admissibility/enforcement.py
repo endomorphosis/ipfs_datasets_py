@@ -45,13 +45,9 @@ from .receipt import (
 # ---------------------------------------------------------------------------
 
 PRE_INVOCATION_ENFORCEMENT_INTERFACE: Final = "PreInvocationEnforcement@1"
-PRE_INVOCATION_ENFORCEMENT_SCHEMA_VERSION: Final = (
-    "pre-invocation-enforcement/v1"
-)
+PRE_INVOCATION_ENFORCEMENT_SCHEMA_VERSION: Final = "pre-invocation-enforcement/v1"
 CAPABILITY_CONSUMPTION_STORE_INTERFACE: Final = "CapabilityConsumptionStore@1"
-CAPABILITY_CONSUMPTION_STORE_SCHEMA_VERSION: Final = (
-    "capability-consumption-store/v1"
-)
+CAPABILITY_CONSUMPTION_STORE_SCHEMA_VERSION: Final = "capability-consumption-store/v1"
 DISPATCH_OBSERVATION_SCHEMA_VERSION: Final = "dispatch-observation/v1"
 ENFORCEMENT_RESULT_SCHEMA_VERSION: Final = "enforcement-result/v1"
 INVOCATION_BINDING_SCHEMA_VERSION: Final = "invocation-binding/v1"
@@ -183,9 +179,7 @@ def _unique_sorted_ids(
 ) -> tuple[str, ...]:
     if values is None:
         return ()
-    if isinstance(values, (str, bytes, bytearray)) or not isinstance(
-        values, Sequence
-    ):
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
         raise EnforcementError(f"{name} must be a sequence of strings")
     if len(values) > MAX_COLLECTION_ITEMS:
         raise EnforcementError(f"{name} exceeds maximum collection size")
@@ -201,12 +195,7 @@ def _unique_sorted_ids(
 def _utc_now_iso() -> str:
     from datetime import datetime, timezone
 
-    return (
-        datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 # ---------------------------------------------------------------------------
@@ -266,15 +255,9 @@ class InvocationBinding:
     schema_version: str = INVOCATION_BINDING_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "tenant_id", _identifier(self.tenant_id, "tenant_id")
-        )
-        object.__setattr__(
-            self, "actor_id", _identifier(self.actor_id, "actor_id")
-        )
-        object.__setattr__(
-            self, "audience_id", _identifier(self.audience_id, "audience_id")
-        )
+        object.__setattr__(self, "tenant_id", _identifier(self.tenant_id, "tenant_id"))
+        object.__setattr__(self, "actor_id", _identifier(self.actor_id, "actor_id"))
+        object.__setattr__(self, "audience_id", _identifier(self.audience_id, "audience_id"))
         object.__setattr__(
             self,
             "request_digest",
@@ -285,9 +268,7 @@ class InvocationBinding:
             "arguments_digest",
             _digest(self.arguments_digest, "arguments_digest"),
         )
-        object.__setattr__(
-            self, "tool_id", _optional_identifier(self.tool_id, "tool_id")
-        )
+        object.__setattr__(self, "tool_id", _optional_identifier(self.tool_id, "tool_id"))
         object.__setattr__(
             self,
             "tool_version",
@@ -296,16 +277,12 @@ class InvocationBinding:
         object.__setattr__(
             self,
             "effect_ids",
-            _unique_sorted_ids(
-                self.effect_ids, "effect_ids", require_identifier=True
-            ),
+            _unique_sorted_ids(self.effect_ids, "effect_ids", require_identifier=True),
         )
         object.__setattr__(
             self,
             "delegation_ids",
-            _unique_sorted_ids(
-                self.delegation_ids, "delegation_ids", require_identifier=True
-            ),
+            _unique_sorted_ids(self.delegation_ids, "delegation_ids", require_identifier=True),
         )
         object.__setattr__(
             self,
@@ -325,18 +302,12 @@ class InvocationBinding:
         object.__setattr__(
             self,
             "resource_ids",
-            _unique_sorted_ids(
-                self.resource_ids, "resource_ids", require_identifier=True
-            ),
+            _unique_sorted_ids(self.resource_ids, "resource_ids", require_identifier=True),
         )
-        object.__setattr__(
-            self, "nonce", _text(self.nonce, "nonce", max_chars=128)
-        )
+        object.__setattr__(self, "nonce", _text(self.nonce, "nonce", max_chars=128))
         if self.roots is not None and not isinstance(self.roots, BoundRoots):
             if isinstance(self.roots, Mapping):
-                object.__setattr__(
-                    self, "roots", BoundRoots.from_dict(self.roots)
-                )
+                object.__setattr__(self, "roots", BoundRoots.from_dict(self.roots))
             else:
                 raise EnforcementError("roots must be a BoundRoots or mapping")
         if self.schema_version != INVOCATION_BINDING_SCHEMA_VERSION:
@@ -383,9 +354,7 @@ class InvocationBinding:
             resource_ids=tuple(value.get("resource_ids", ())),
             nonce=value.get("nonce", ""),
             roots=value.get("roots"),
-            schema_version=value.get(
-                "schema_version", INVOCATION_BINDING_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", INVOCATION_BINDING_SCHEMA_VERSION),
         )
 
     @classmethod
@@ -451,24 +420,12 @@ class CapabilityConsumptionRecord:
             "capability_digest",
             _digest(self.capability_digest, "capability_digest"),
         )
-        object.__setattr__(
-            self, "nonce", _text(self.nonce, "nonce", max_chars=128)
-        )
-        object.__setattr__(
-            self, "tenant_id", _identifier(self.tenant_id, "tenant_id")
-        )
-        object.__setattr__(
-            self, "audience_id", _identifier(self.audience_id, "audience_id")
-        )
-        object.__setattr__(
-            self, "receipt_id", _identifier(self.receipt_id, "receipt_id")
-        )
-        object.__setattr__(
-            self, "consumed_at", _text(self.consumed_at, "consumed_at")
-        )
-        object.__setattr__(
-            self, "consumer_id", _identifier(self.consumer_id, "consumer_id")
-        )
+        object.__setattr__(self, "nonce", _text(self.nonce, "nonce", max_chars=128))
+        object.__setattr__(self, "tenant_id", _identifier(self.tenant_id, "tenant_id"))
+        object.__setattr__(self, "audience_id", _identifier(self.audience_id, "audience_id"))
+        object.__setattr__(self, "receipt_id", _identifier(self.receipt_id, "receipt_id"))
+        object.__setattr__(self, "consumed_at", _text(self.consumed_at, "consumed_at"))
+        object.__setattr__(self, "consumer_id", _identifier(self.consumer_id, "consumer_id"))
         object.__setattr__(
             self,
             "request_digest",
@@ -477,9 +434,7 @@ class CapabilityConsumptionRecord:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -584,19 +539,13 @@ class InMemoryCapabilityConsumptionStore:
         metadata: Mapping[str, Any] | None = None,
     ) -> CapabilityConsumptionRecord:
         if not isinstance(capability, AuthorizationCapability):
-            raise ConsumptionStoreError(
-                "compare_and_consume requires an AuthorizationCapability"
-            )
+            raise ConsumptionStoreError("compare_and_consume requires an AuthorizationCapability")
         try:
             capability.verify_integrity()
         except ReceiptError as exc:
-            raise ConsumptionStoreError(
-                f"capability integrity failed: {exc}"
-            ) from exc
+            raise ConsumptionStoreError(f"capability integrity failed: {exc}") from exc
         if not capability.one_time:
-            raise ConsumptionStoreError(
-                "capability missing required one-time marker"
-            )
+            raise ConsumptionStoreError("capability missing required one-time marker")
 
         tenant = _identifier(tenant_id, "tenant_id")
         consumer = _identifier(consumer_id, "consumer_id")
@@ -609,8 +558,7 @@ class InMemoryCapabilityConsumptionStore:
             key = (tenant, cap_id)
             if key in self._records:
                 raise ConsumptionRaceError(
-                    f"capability {cap_id!r} already consumed for tenant "
-                    f"{tenant!r}",
+                    f"capability {cap_id!r} already consumed for tenant {tenant!r}",
                     capability_id=cap_id,
                 )
             nonce_key = (tenant, nonce)
@@ -701,15 +649,9 @@ class DispatchObservation:
             "capability_id",
             _identifier(self.capability_id, "capability_id"),
         )
-        object.__setattr__(
-            self, "receipt_id", _identifier(self.receipt_id, "receipt_id")
-        )
-        object.__setattr__(
-            self, "tenant_id", _identifier(self.tenant_id, "tenant_id")
-        )
-        object.__setattr__(
-            self, "audience_id", _identifier(self.audience_id, "audience_id")
-        )
+        object.__setattr__(self, "receipt_id", _identifier(self.receipt_id, "receipt_id"))
+        object.__setattr__(self, "tenant_id", _identifier(self.tenant_id, "tenant_id"))
+        object.__setattr__(self, "audience_id", _identifier(self.audience_id, "audience_id"))
         object.__setattr__(
             self,
             "dispatcher_id",
@@ -725,9 +667,7 @@ class DispatchObservation:
         object.__setattr__(
             self,
             "metadata",
-            self.metadata
-            if isinstance(self.metadata, FrozenMap)
-            else FrozenMap(self.metadata),
+            self.metadata if isinstance(self.metadata, FrozenMap) else FrozenMap(self.metadata),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -848,50 +788,30 @@ class EnforcementResult:
         # Observation is strictly post-dispatch (success or dispatch error).
         # Authorization rejection before dispatch must not produce one.
         if self.observation is not None and not self.dispatch_ran:
-            raise EnforcementError(
-                "observation present without dispatch attempt"
-            )
+            raise EnforcementError("observation present without dispatch attempt")
         if self.dispatch_ran and self.observation is None:
-            raise EnforcementError(
-                "dispatch_ran requires a post-dispatch observation"
-            )
+            raise EnforcementError("dispatch_ran requires a post-dispatch observation")
         # Full success requires both authorization and a successful dispatch.
         if self.allowed and not self.dispatch_ran and self.observation is not None:
-            raise EnforcementError(
-                "allowed with observation requires dispatch_ran"
-            )
+            raise EnforcementError("allowed with observation requires dispatch_ran")
         object.__setattr__(
             self,
             "details",
-            self.details
-            if isinstance(self.details, FrozenMap)
-            else FrozenMap(self.details),
+            self.details if isinstance(self.details, FrozenMap) else FrozenMap(self.details),
         )
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "allowed": self.allowed,
-            "capability": (
-                None if self.capability is None else self.capability.to_dict()
-            ),
-            "consumption": (
-                None
-                if self.consumption is None
-                else self.consumption.to_dict()
-            ),
+            "capability": (None if self.capability is None else self.capability.to_dict()),
+            "consumption": (None if self.consumption is None else self.consumption.to_dict()),
             "details": self.details.to_dict(),
             "dispatch_ran": self.dispatch_ran,
             "dispatch_result": (
-                None
-                if self.dispatch_result is None
-                else dict(self.dispatch_result)
+                None if self.dispatch_result is None else dict(self.dispatch_result)
             ),
             "interface": self.interface,
-            "observation": (
-                None
-                if self.observation is None
-                else self.observation.to_dict()
-            ),
+            "observation": (None if self.observation is None else self.observation.to_dict()),
             "reason": self.reason,
             "reason_code": self.reason_code,
             "receipt": None if self.receipt is None else self.receipt.to_dict(),
@@ -933,14 +853,8 @@ def _environment_digest_from(
 
     if not environment:
         return fallback_digest, fallback_id
-    env_id = _optional_identifier(
-        environment.get("environment_id", fallback_id), "environment_id"
-    )
-    raw = (
-        environment.get("environment_digest")
-        or environment.get("snapshot_digest")
-        or ""
-    )
+    env_id = _optional_identifier(environment.get("environment_id", fallback_id), "environment_id")
+    raw = environment.get("environment_digest") or environment.get("snapshot_digest") or ""
     if raw:
         digest = _digest(str(raw), "environment_digest")
     else:
@@ -1015,8 +929,7 @@ def verify_invocation_binding(
         )
     if ctx.tool_version != binding.tool_version:
         raise EnforcementRejection(
-            f"tool_version mismatch: receipt={ctx.tool_version!r} "
-            f"live={binding.tool_version!r}",
+            f"tool_version mismatch: receipt={ctx.tool_version!r} live={binding.tool_version!r}",
             reason_code=EnforcementReasonCode.CONTEXT_MISMATCH.value,
         )
     if tuple(sorted(ctx.effect_ids)) != tuple(sorted(binding.effect_ids)):
@@ -1042,9 +955,7 @@ def verify_invocation_binding(
                     "live effect_ids do not match capability allowed_effects",
                     reason_code=EnforcementReasonCode.CONTEXT_MISMATCH.value,
                 )
-    if tuple(sorted(ctx.delegation_ids)) != tuple(
-        sorted(binding.delegation_ids)
-    ):
+    if tuple(sorted(ctx.delegation_ids)) != tuple(sorted(binding.delegation_ids)):
         raise EnforcementRejection(
             "delegation_ids mismatch",
             reason_code=EnforcementReasonCode.CONTEXT_MISMATCH.value,
@@ -1068,10 +979,7 @@ def verify_invocation_binding(
                 "environment_digest mismatch (fresh environment changed)",
                 reason_code=EnforcementReasonCode.ENVIRONMENT_MISMATCH.value,
             )
-        if (
-            binding.environment_digest
-            and binding.environment_digest != ctx.environment_digest
-        ):
+        if binding.environment_digest and binding.environment_digest != ctx.environment_digest:
             raise EnforcementRejection(
                 "binding environment_digest mismatch",
                 reason_code=EnforcementReasonCode.ENVIRONMENT_MISMATCH.value,
@@ -1082,10 +990,7 @@ def verify_invocation_binding(
                 "environment_id mismatch (fresh environment changed)",
                 reason_code=EnforcementReasonCode.ENVIRONMENT_MISMATCH.value,
             )
-        if (
-            binding.environment_id
-            and binding.environment_id != ctx.environment_id
-        ):
+        if binding.environment_id and binding.environment_id != ctx.environment_id:
             raise EnforcementRejection(
                 "binding environment_id mismatch",
                 reason_code=EnforcementReasonCode.ENVIRONMENT_MISMATCH.value,
@@ -1159,20 +1064,12 @@ class PreInvocationEnforcement:
             required = ("compare_and_consume", "is_consumed", "get_record")
             for name in required:
                 if not callable(getattr(self.store, name, None)):
-                    raise EnforcementError(
-                        f"store missing required method {name!r}"
-                    )
-        object.__setattr__(
-            self, "consumer_id", _identifier(self.consumer_id, "consumer_id")
-        )
+                    raise EnforcementError(f"store missing required method {name!r}")
+        object.__setattr__(self, "consumer_id", _identifier(self.consumer_id, "consumer_id"))
         if self.interface != PRE_INVOCATION_ENFORCEMENT_INTERFACE:
-            raise EnforcementError(
-                f"unsupported enforcement interface: {self.interface!r}"
-            )
+            raise EnforcementError(f"unsupported enforcement interface: {self.interface!r}")
         if self.schema_version != PRE_INVOCATION_ENFORCEMENT_SCHEMA_VERSION:
-            raise EnforcementError(
-                f"unsupported enforcement schema: {self.schema_version!r}"
-            )
+            raise EnforcementError(f"unsupported enforcement schema: {self.schema_version!r}")
 
     def enforce(
         self,
@@ -1359,14 +1256,10 @@ class PreInvocationEnforcement:
         # Tenant isolation on metadata when present.
         receipt_tenant = ""
         if isinstance(receipt_obj.context.metadata, FrozenMap):
-            receipt_tenant = str(
-                receipt_obj.context.metadata.to_dict().get("tenant_id", "")
-                or ""
-            )
+            receipt_tenant = str(receipt_obj.context.metadata.to_dict().get("tenant_id", "") or "")
         if receipt_tenant and receipt_tenant != bind.tenant_id:
             return self._finish_reject(
-                f"tenant mismatch: receipt={receipt_tenant!r} "
-                f"binding={bind.tenant_id!r}",
+                f"tenant mismatch: receipt={receipt_tenant!r} binding={bind.tenant_id!r}",
                 EnforcementReasonCode.TENANT_MISMATCH.value,
                 receipt=receipt_obj,
                 capability=cap_obj,
@@ -1444,9 +1337,7 @@ class PreInvocationEnforcement:
                 receipt_id=cap_obj.receipt_id,
                 tenant_id=bind.tenant_id,
                 audience_id=bind.audience_id,
-                dispatcher_id=getattr(
-                    dispatcher, "dispatcher_id", DEFAULT_DISPATCHER_ID
-                ),
+                dispatcher_id=getattr(dispatcher, "dispatcher_id", DEFAULT_DISPATCHER_ID),
                 dispatch_status="ok",
                 started_at=started,
                 completed_at=completed,
@@ -1456,11 +1347,7 @@ class PreInvocationEnforcement:
                 if result_digest
                 and len(result_digest) == 64
                 and all(c in "0123456789abcdef" for c in result_digest)
-                else (
-                    stable_digest(dispatch_result)
-                    if dispatch_result
-                    else ""
-                ),
+                else (stable_digest(dispatch_result) if dispatch_result else ""),
                 metadata=FrozenMap(
                     {
                         "observation_kind": "post_dispatch",
@@ -1476,9 +1363,7 @@ class PreInvocationEnforcement:
                 receipt_id=cap_obj.receipt_id,
                 tenant_id=bind.tenant_id,
                 audience_id=bind.audience_id,
-                dispatcher_id=getattr(
-                    dispatcher, "dispatcher_id", DEFAULT_DISPATCHER_ID
-                ),
+                dispatcher_id=getattr(dispatcher, "dispatcher_id", DEFAULT_DISPATCHER_ID),
                 dispatch_status="error",
                 started_at=started,
                 completed_at=completed,
@@ -1533,9 +1418,7 @@ class PreInvocationEnforcement:
             details=details,
         )
         if self.raise_on_reject:
-            raise EnforcementRejection(
-                reason, reason_code=reason_code, details=details
-            )
+            raise EnforcementRejection(reason, reason_code=reason_code, details=details)
         return result
 
 
@@ -1556,9 +1439,7 @@ def consume_dispatch_capability(
     if isinstance(capability, Mapping):
         capability = AuthorizationCapability.from_dict(capability)
     if not isinstance(capability, AuthorizationCapability):
-        raise ConsumptionStoreError(
-            "capability must be an AuthorizationCapability or mapping"
-        )
+        raise ConsumptionStoreError("capability must be an AuthorizationCapability or mapping")
     capability.verify_integrity()
     return store.compare_and_consume(
         capability,

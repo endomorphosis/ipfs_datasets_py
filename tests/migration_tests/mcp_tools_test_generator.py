@@ -14,7 +14,8 @@ import anyio
 from pathlib import Path
 from typing import Dict, List, Any, Set, Tuple
 
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 class MCPToolsTestGenerator:
     def __init__(self):
@@ -28,9 +29,16 @@ class MCPToolsTestGenerator:
         self.total_count = 0
 
         self.tool_categories = [
-            "audit_tools", "dataset_tools", "web_archive_tools",
-            "cli", "functions", "security_tools", "vector_tools",
-            "graph_tools", "provenance_tools", "ipfs_tools"
+            "audit_tools",
+            "dataset_tools",
+            "web_archive_tools",
+            "cli",
+            "functions",
+            "security_tools",
+            "vector_tools",
+            "graph_tools",
+            "provenance_tools",
+            "ipfs_tools",
         ]
 
     def discover_all_tools(self) -> Dict[str, List[str]]:
@@ -108,8 +116,12 @@ class MCPToolsTestGenerator:
             params = {}
             for name, param in sig.parameters.items():
                 params[name] = {
-                    "annotation": str(param.annotation) if param.annotation != inspect.Parameter.empty else "Any",
-                    "default": None if param.default == inspect.Parameter.empty else repr(param.default),
+                    "annotation": str(param.annotation)
+                    if param.annotation != inspect.Parameter.empty
+                    else "Any",
+                    "default": None
+                    if param.default == inspect.Parameter.empty
+                    else repr(param.default),
                     "required": param.default == inspect.Parameter.empty,
                 }
 
@@ -146,9 +158,9 @@ class MCPToolsTestGenerator:
                 elif "query" in name.lower():
                     test_params.append(f'{name}="SELECT * LIMIT 10"')
                 elif "code" in name.lower():
-                    test_params.append(f'{name}="print(\'Hello\')"')
+                    test_params.append(f"{name}=\"print('Hello')\"")
                 elif "vector" in name.lower():
-                    test_params.append(f'{name}=[[1.0, 2.0], [3.0, 4.0]]')
+                    test_params.append(f"{name}=[[1.0, 2.0], [3.0, 4.0]]")
                 else:
                     test_params.append(f'{name}="test_{name}"')
 
@@ -189,22 +201,22 @@ class Test{tool.title().replace("_", "")}(unittest.TestCase):
 
     def test_{tool}_returns_valid_result(self):
         \"\"\"Test that {tool} returns a valid result.\"\"\"
-        {'async ' if is_async else ''}def run_test():
+        {"async " if is_async else ""}def run_test():
             # Import the tool
             from ipfs_datasets_py.mcp_server.tools.{category} import {tool}
 
             # Create mock for any dependencies
             # with patch('dependency.module.function') as mock_func:
-            #     mock_func.return_value = {'expected': 'value'}
+            #     mock_func.return_value = {"expected": 'value'}
 
             # Call the function
-            result = {'await ' if is_async else ''}{tool}({params_str})
+            result = {"await " if is_async else ""}{tool}({params_str})
 
             # Assert the result has expected structure
             self.assertIsInstance(result, dict)
             self.assertIn('status', result)
 
-        {'self.loop.run_until_complete(run_test())' if is_async else 'run_test()'}
+        {"self.loop.run_until_complete(run_test())" if is_async else "run_test()"}
 
 if __name__ == '__main__':
     unittest.main()
@@ -256,6 +268,7 @@ if __name__ == '__main__':
         self.generate_tests_for_untested_tools()
         print("\nTo run all tests, execute:")
         print("python -m pytest test/test_mcp_*.py -v")
+
 
 if __name__ == "__main__":
     generator = MCPToolsTestGenerator()

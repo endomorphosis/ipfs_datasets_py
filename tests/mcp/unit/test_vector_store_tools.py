@@ -5,6 +5,7 @@ Covers:
 - vector_retrieval: retrieve vectors by IDs
 - vector_metadata: manage vector metadata (get/set)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -33,14 +34,14 @@ def _make_vector_service(**method_returns):
 # vector_index
 # ---------------------------------------------------------------------------
 
+
 class TestVectorIndex:
     def test_info_with_mock_service_returns_dict(self):
         from ipfs_datasets_py.mcp_server.tools.vector_store_tools.vector_store_tools import (
             vector_index,
         )
-        svc = _make_vector_service(
-            get_index_info={"name": "my_idx", "dimension": 128}
-        )
+
+        svc = _make_vector_service(get_index_info={"name": "my_idx", "dimension": 128})
         r = _run(vector_index("info", "my_idx", vector_service=svc))
         assert isinstance(r, dict)
 
@@ -48,9 +49,8 @@ class TestVectorIndex:
         from ipfs_datasets_py.mcp_server.tools.vector_store_tools.vector_store_tools import (
             vector_index,
         )
-        svc = _make_vector_service(
-            get_index_info={"name": "my_idx"}
-        )
+
+        svc = _make_vector_service(get_index_info={"name": "my_idx"})
         r = _run(vector_index("info", "my_idx", vector_service=svc))
         assert "index_name" in r or "action" in r
 
@@ -58,20 +58,16 @@ class TestVectorIndex:
         from ipfs_datasets_py.mcp_server.tools.vector_store_tools.vector_store_tools import (
             vector_index,
         )
-        svc = _make_vector_service(
-            create_index={"created": True}
-        )
-        r = _run(
-            vector_index(
-                "create", "new_idx", config={"dimension": 256}, vector_service=svc
-            )
-        )
+
+        svc = _make_vector_service(create_index={"created": True})
+        r = _run(vector_index("create", "new_idx", config={"dimension": 256}, vector_service=svc))
         assert isinstance(r, dict)
 
     def test_without_service_raises_or_returns_dict(self):
         from ipfs_datasets_py.mcp_server.tools.vector_store_tools.vector_store_tools import (
             vector_index,
         )
+
         # Without a vector_service the tool raises AttributeError from the API layer.
         # The important thing is that the tool is importable and callable.
         try:
@@ -85,14 +81,14 @@ class TestVectorIndex:
 # vector_retrieval
 # ---------------------------------------------------------------------------
 
+
 class TestVectorRetrieval:
     def test_returns_list_with_mock_service(self):
         from ipfs_datasets_py.mcp_server.tools.vector_store_tools.vector_store_tools import (
             vector_retrieval,
         )
-        svc = _make_vector_service(
-            retrieve_vectors=[{"id": "1", "vector": [0.1, 0.2]}]
-        )
+
+        svc = _make_vector_service(retrieve_vectors=[{"id": "1", "vector": [0.1, 0.2]}])
         r = _run(vector_retrieval("my_col", ["1", "2"], vector_service=svc))
         # The function returns the raw list from the service
         assert isinstance(r, (list, dict))
@@ -101,6 +97,7 @@ class TestVectorRetrieval:
         from ipfs_datasets_py.mcp_server.tools.vector_store_tools.vector_store_tools import (
             vector_retrieval,
         )
+
         svc = _make_vector_service(retrieve_vectors=[])
         r = _run(vector_retrieval("my_col", [], vector_service=svc))
         assert isinstance(r, (list, dict))
@@ -109,6 +106,7 @@ class TestVectorRetrieval:
         from ipfs_datasets_py.mcp_server.tools.vector_store_tools.vector_store_tools import (
             vector_retrieval,
         )
+
         # Without a service, the function will fail — verify it doesn't hang
         try:
             r = _run(vector_retrieval("col", ["id1"]))
@@ -121,6 +119,7 @@ class TestVectorRetrieval:
             vector_retrieval,
         )
         import inspect
+
         params = list(inspect.signature(vector_retrieval).parameters.keys())
         assert "filters" in params
         assert "limit" in params
@@ -129,6 +128,7 @@ class TestVectorRetrieval:
 # ---------------------------------------------------------------------------
 # vector_metadata
 # ---------------------------------------------------------------------------
+
 
 class TestVectorMetadata:
     """vector_metadata passes 'ids' but the engine expects 'vector_id'.
@@ -142,6 +142,7 @@ class TestVectorMetadata:
             vector_metadata,
         )
         import inspect
+
         assert callable(vector_metadata)
         params = list(inspect.signature(vector_metadata).parameters.keys())
         assert "action" in params
@@ -152,6 +153,7 @@ class TestVectorMetadata:
             vector_metadata,
         )
         import inspect
+
         params = list(inspect.signature(vector_metadata).parameters.keys())
         assert "ids" in params
 
@@ -160,5 +162,6 @@ class TestVectorMetadata:
             vector_metadata,
         )
         import inspect
+
         params = list(inspect.signature(vector_metadata).parameters.keys())
         assert "metadata" in params

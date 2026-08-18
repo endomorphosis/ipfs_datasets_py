@@ -40,9 +40,7 @@ def test_production_snapshot_bundle_is_complete_and_version_matched() -> None:
     validation = [
         _sample("8", "1101", "The applicant must file before the deadline."),
     ]
-    state = ModalAutoencoderTrainingState(
-        decoded_embeddings={train[0].sample_id: [0.1, 0.2, 0.3]}
-    )
+    state = ModalAutoencoderTrainingState(decoded_embeddings={train[0].sample_id: [0.1, 0.2, 0.3]})
     trainer = AdaptiveModalAutoencoder(state=state, compute_device="python")
     snapshot = build_autoencoder_evaluation_snapshot(
         trainer.state,
@@ -99,15 +97,10 @@ def test_production_snapshot_bundle_is_complete_and_version_matched() -> None:
     assert bundle["snapshot_complete"] is True
     assert bundle["promotion"]["snapshot_complete"] is True
     assert aggregate["missing_roles"] == []
-    assert set(PRODUCTION_SNAPSHOT_REQUIRED_ROLES).issubset(
-        set(aggregate["roles_present"])
-    )
+    assert set(PRODUCTION_SNAPSHOT_REQUIRED_ROLES).issubset(set(aggregate["roles_present"]))
     assert bundle["promotion"]["gate"]["promotion_allowed"] is True
     assert set(compiler_state_hashes) == {snapshot.versions.state_version}
-    assert all(
-        shard["versions"] == snapshot.versions.to_dict()
-        for shard in bundle["shards"]
-    )
+    assert all(shard["versions"] == snapshot.versions.to_dict() for shard in bundle["shards"])
     assert aggregate["metrics_by_role"]["train"]["all"]["sample_count"] == 2
     assert aggregate["metrics_by_role"]["validation"]["all"]["sample_count"] == 1
 
@@ -172,8 +165,6 @@ def test_snapshot_summary_exposes_production_queue_health_and_promotion_state() 
         assert summary["dropped_work_count"] == summary["dropped_snapshot_count"]
         assert summary["evaluator_health"]["ready_result_count"] == 0
         assert summary["snapshot_complete_promotion_state"]["complete"] is True
-        assert summary["snapshot_complete_promotion_state"][
-            "latest_promoted_sequence"
-        ] == 1
+        assert summary["snapshot_complete_promotion_state"]["latest_promoted_sequence"] == 1
     finally:
         evaluator.close(cancel_pending=True)

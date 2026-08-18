@@ -14,8 +14,9 @@ import json
 
 from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraphExtractor
 from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+
 # TODO WikipediaKnowledgeGraphOptimizer is hallucinated. Needs to be implemented.
-from ipfs_datasets_py.rag.rag_query_optimizer import WikipediaKnowledgeGraphOptimizer 
+from ipfs_datasets_py.rag.rag_query_optimizer import WikipediaKnowledgeGraphOptimizer
 
 
 def get_embedding(text: str) -> np.ndarray:
@@ -55,9 +56,7 @@ def main():
         try:
             # Extract and validate in a single step to get tracing
             result = extractor.extract_and_validate_wikipedia_graph(
-                page_title=page,
-                extraction_temperature=0.7,
-                structure_temperature=0.5
+                page_title=page, extraction_temperature=0.7, structure_temperature=0.5
             )
             if "trace_id" in result:
                 trace_id = result["trace_id"]
@@ -71,11 +70,11 @@ def main():
     queries = [
         "What is the architecture of IPFS and how does it handle content addressing?",
         "Who created the blockchain technology and when was it introduced?",
-        "What are the security challenges in decentralized computing systems?"
+        "What are the security challenges in decentralized computing systems?",
     ]
 
     for i, query in enumerate(queries):
-        print(f"\nQuery {i+1}: {query}")
+        print(f"\nQuery {i + 1}: {query}")
         # Get query embedding
         query_vector = get_embedding(query)
 
@@ -84,30 +83,30 @@ def main():
 
         # Optimize query
         plan = optimizer.optimize_query(
-            query_text=query,
-            query_vector=query_vector,
-            trace_id=trace_id
+            query_text=query, query_vector=query_vector, trace_id=trace_id
         )
 
         # Print optimization results
         print("Query optimization results:")
         print(f"- Detected entity types: {', '.join(plan['detected_types'])}")
         print(f"- Important edge types: {', '.join(plan['important_edge_types'][:3])}...")
-        print(f"- Vector/graph weights: {plan['weights']['vector']:.2f}/{plan['weights']['graph']:.2f}")
+        print(
+            f"- Vector/graph weights: {plan['weights']['vector']:.2f}/{plan['weights']['graph']:.2f}"
+        )
         print(f"- Max vector results: {plan['params']['max_vector_results']}")
         print(f"- Max traversal depth: {plan['params']['max_traversal_depth']}")
 
     # Demonstrate cross-document query optimization
     if len(trace_ids) >= 2:
         print("\nOptimizing cross-document queries...")
-        cross_doc_query = "Compare the approach to decentralization in IPFS and blockchain technologies."
+        cross_doc_query = (
+            "Compare the approach to decentralization in IPFS and blockchain technologies."
+        )
         query_vector = get_embedding(cross_doc_query)
 
         # Optimize cross-document query
         cross_doc_plan = optimizer.optimize_cross_document_query(
-            query_text=cross_doc_query,
-            query_vector=query_vector,
-            doc_trace_ids=trace_ids
+            query_text=cross_doc_query, query_vector=query_vector, doc_trace_ids=trace_ids
         )
 
         # Print cross-document optimization results
@@ -117,9 +116,11 @@ def main():
         print(f"- Traversal paths found: {len(cross_doc_plan['traversal_paths'])}")
 
         # Print top traversal path if available
-        if cross_doc_plan['traversal_paths']:
-            top_path = cross_doc_plan['traversal_paths'][0]
-            print(f"- Top path connects through: {top_path['entity_name']} ({top_path['entity_type']})")
+        if cross_doc_plan["traversal_paths"]:
+            top_path = cross_doc_plan["traversal_paths"][0]
+            print(
+                f"- Top path connects through: {top_path['entity_name']} ({top_path['entity_type']})"
+            )
             print(f"- Starting document: {top_path['start_doc']}")
             print(f"- Connected documents: {len(top_path['connected_docs'])}")
 

@@ -22,12 +22,23 @@ import pytest
 numpy = pytest.importorskip("numpy", reason="numpy required for file_converter_tools")
 
 try:
-    from ipfs_datasets_py.mcp_server.tools.file_converter_tools.convert_file import convert_file_tool
-    from ipfs_datasets_py.mcp_server.tools.file_converter_tools.batch_convert import batch_convert_tool
+    from ipfs_datasets_py.mcp_server.tools.file_converter_tools.convert_file import (
+        convert_file_tool,
+    )
+    from ipfs_datasets_py.mcp_server.tools.file_converter_tools.batch_convert import (
+        batch_convert_tool,
+    )
     from ipfs_datasets_py.mcp_server.tools.file_converter_tools.file_info import file_info_tool
-    from ipfs_datasets_py.mcp_server.tools.file_converter_tools.extract_archive import extract_archive_tool
-    from ipfs_datasets_py.mcp_server.tools.file_converter_tools.generate_summary import generate_summary_tool
-    from ipfs_datasets_py.mcp_server.tools.file_converter_tools.download_url import download_url_tool
+    from ipfs_datasets_py.mcp_server.tools.file_converter_tools.extract_archive import (
+        extract_archive_tool,
+    )
+    from ipfs_datasets_py.mcp_server.tools.file_converter_tools.generate_summary import (
+        generate_summary_tool,
+    )
+    from ipfs_datasets_py.mcp_server.tools.file_converter_tools.download_url import (
+        download_url_tool,
+    )
+
     _IMPORT_OK = True
 except Exception:
     _IMPORT_OK = False
@@ -51,6 +62,7 @@ class TestConvertFileTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.convert_file import (
             convert_file_tool,
         )
+
         result = await convert_file_tool(input_path="/tmp/does_not_exist_b2.pdf")
         assert isinstance(result, dict)
 
@@ -64,6 +76,7 @@ class TestConvertFileTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.convert_file import (
             convert_file_tool,
         )
+
         result = await convert_file_tool(
             input_path="/tmp/does_not_exist_b2.docx",
             backend="native",
@@ -80,6 +93,7 @@ class TestConvertFileTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.convert_file import (
             convert_file_tool,
         )
+
         result = await convert_file_tool(
             input_path="/tmp/does_not_exist_b2.txt",
             output_format="json",
@@ -100,6 +114,7 @@ class TestBatchConvertTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.batch_convert import (
             batch_convert_tool,
         )
+
         result = await batch_convert_tool(input_paths=[])
         assert isinstance(result, dict)
 
@@ -113,6 +128,7 @@ class TestBatchConvertTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.batch_convert import (
             batch_convert_tool,
         )
+
         result = await batch_convert_tool(
             input_paths=["/tmp/no_a.pdf", "/tmp/no_b.docx"],
             max_concurrent=2,
@@ -133,6 +149,7 @@ class TestFileInfoTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.file_info import (
             file_info_tool,
         )
+
         result = await file_info_tool(input_path="/tmp/does_not_exist_b2_info.dat")
         assert isinstance(result, dict)
 
@@ -146,6 +163,7 @@ class TestFileInfoTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.file_info import (
             file_info_tool,
         )
+
         result = await file_info_tool(input_path="https://example.com/test.pdf")
         assert isinstance(result, dict)
 
@@ -163,6 +181,7 @@ class TestExtractArchiveTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.extract_archive import (
             extract_archive_tool,
         )
+
         result = await extract_archive_tool(archive_path="/tmp/no_archive_b2.zip")
         assert isinstance(result, dict)
 
@@ -176,6 +195,7 @@ class TestExtractArchiveTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.extract_archive import (
             extract_archive_tool,
         )
+
         result = await extract_archive_tool(
             archive_path="/tmp/no_archive_b2.tar.gz",
             max_depth=2,
@@ -197,6 +217,7 @@ class TestGenerateSummaryTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.generate_summary import (
             generate_summary_tool,
         )
+
         result = await generate_summary_tool(input_path="/tmp/no_summary_b2.pdf")
         assert isinstance(result, dict)
 
@@ -214,6 +235,7 @@ class TestDownloadUrlTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.download_url import (
             download_url_tool,
         )
+
         # Use a clearly invalid/unreachable URL so the test doesn't make real requests
         result = await download_url_tool(
             url="http://127.0.0.1:19999/does_not_exist_b2.pdf",
@@ -231,6 +253,7 @@ class TestDownloadUrlTool:
         from ipfs_datasets_py.mcp_server.tools.file_converter_tools.download_url import (
             download_url_tool,
         )
+
         result = await download_url_tool(url="ftp://example.com/file.dat")
         assert isinstance(result, dict)
 

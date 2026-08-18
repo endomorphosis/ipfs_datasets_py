@@ -77,15 +77,9 @@ AUTOENCODER_GUIDED_CANONICAL_CONSTRUCTOR_INTERFACE: Final = (
 PINNED_AUTOENCODER_STATE_CID: Final = AUTOENCODER_STATE_CID
 PINNED_AUTOENCODER_STATE_SHA256: Final = AUTOENCODER_STATE_SHA256
 PINNED_AUTOENCODER_STATE_SCHEMA: Final = AUTOENCODER_STATE_SCHEMA
-PINNED_AUTOENCODER_DECLARED_ARCHITECTURE: Final = (
-    AUTOENCODER_DECLARED_ARCHITECTURE
-)
-PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE: Final = (
-    AUTOENCODER_EFFECTIVE_ARCHITECTURE
-)
-DEFAULT_AUTOENCODER_STATE_PATH: Final = (
-    REPO_ROOT / AUTOENCODER_STATE_RELATIVE_PATH
-)
+PINNED_AUTOENCODER_DECLARED_ARCHITECTURE: Final = AUTOENCODER_DECLARED_ARCHITECTURE
+PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE: Final = AUTOENCODER_EFFECTIVE_ARCHITECTURE
+DEFAULT_AUTOENCODER_STATE_PATH: Final = REPO_ROOT / AUTOENCODER_STATE_RELATIVE_PATH
 COMMON_REALIZER_IDENTITIES: Final = (
     CANONICAL_DETERMINISTIC_REALIZER_INTERFACE,
     LEANSTRAL_CANONICAL_REALIZER_INTERFACE,
@@ -148,19 +142,13 @@ class CanonicalFieldChange:
 
     def __post_init__(self) -> None:
         if self.canonical_field not in RULE_FIELDS:
-            raise ContractError(
-                f"unknown canonical field: {self.canonical_field!r}"
-            )
+            raise ContractError(f"unknown canonical field: {self.canonical_field!r}")
         for name in ("baseline_rule_index", "guided_rule_index"):
             value = getattr(self, name)
             if value is not None and (
-                isinstance(value, bool)
-                or not isinstance(value, int)
-                or value < 0
+                isinstance(value, bool) or not isinstance(value, int) or value < 0
             ):
-                raise ContractError(
-                    f"{name} must be a nonnegative integer or null"
-                )
+                raise ContractError(f"{name} must be a nonnegative integer or null")
 
     @property
     def field(self) -> str:
@@ -176,10 +164,7 @@ class CanonicalFieldChange:
             return f"rules[+{self.guided_rule_index}].{self.canonical_field}"
         if self.guided_rule_index is None:
             return f"rules[-{self.baseline_rule_index}].{self.canonical_field}"
-        return (
-            f"rules[{self.baseline_rule_index}"
-            f"->{self.guided_rule_index}].{self.canonical_field}"
-        )
+        return f"rules[{self.baseline_rule_index}->{self.guided_rule_index}].{self.canonical_field}"
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -210,18 +195,12 @@ class FrozenAutoencoderGuidance:
             "state_cid": PINNED_AUTOENCODER_STATE_CID,
             "state_sha256": PINNED_AUTOENCODER_STATE_SHA256,
             "state_schema": PINNED_AUTOENCODER_STATE_SCHEMA,
-            "declared_architecture": (
-                PINNED_AUTOENCODER_DECLARED_ARCHITECTURE
-            ),
-            "effective_architecture": (
-                PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE
-            ),
+            "declared_architecture": (PINNED_AUTOENCODER_DECLARED_ARCHITECTURE),
+            "effective_architecture": (PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE),
         }
         for field, pinned in expected.items():
             if getattr(self, field) != pinned:
-                raise ContractError(
-                    f"{field} differs from the frozen autoencoder identity"
-                )
+                raise ContractError(f"{field} differs from the frozen autoencoder identity")
         if self.sample_memory_used:
             raise ContractError("sample-memory guidance is forbidden")
         if self.target_embedding_selection_used:
@@ -252,24 +231,16 @@ class CausalGuidanceApplication:
             raise ContractError("composition_supported must be a boolean")
         if self.composition_supported:
             if not isinstance(self.canonical_ir, CanonicalRuleIR):
-                raise ContractError(
-                    "supported guidance requires a CanonicalRuleIR"
-                )
+                raise ContractError("supported guidance requires a CanonicalRuleIR")
             if self.detail is not None:
-                raise ContractError(
-                    "supported guidance cannot carry failure detail"
-                )
+                raise ContractError("supported guidance cannot carry failure detail")
         elif self.canonical_ir is not None:
-            raise ContractError(
-                "unsupported guidance cannot return canonical IR"
-            )
+            raise ContractError("unsupported guidance cannot return canonical IR")
         if self.detail is not None and not self.detail.strip():
             raise ContractError("guidance detail must be nonblank")
 
     @classmethod
-    def supported(
-        cls, canonical_ir: CanonicalRuleIR
-    ) -> "CausalGuidanceApplication":
+    def supported(cls, canonical_ir: CanonicalRuleIR) -> "CausalGuidanceApplication":
         return cls(True, canonical_ir=canonical_ir)
 
     @classmethod
@@ -311,9 +282,7 @@ class AutoencoderGuidanceDiagnostics:
     def __post_init__(self) -> None:
         if not isinstance(self.arm, AutoencoderGuidanceArm):
             raise ContractError("guidance arm is invalid")
-        if not isinstance(
-            self.composition_status, AutoencoderCompositionStatus
-        ):
+        if not isinstance(self.composition_status, AutoencoderCompositionStatus):
             raise ContractError("composition status is invalid")
         if (
             not isinstance(self.base_constructor_identity, str)
@@ -325,43 +294,29 @@ class AutoencoderGuidanceDiagnostics:
         if self.state_sha256 != PINNED_AUTOENCODER_STATE_SHA256:
             raise ContractError("diagnostic state digest differs from the pin")
         if (
-            self.declared_architecture
-            != PINNED_AUTOENCODER_DECLARED_ARCHITECTURE
-            or self.effective_architecture
-            != PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE
+            self.declared_architecture != PINNED_AUTOENCODER_DECLARED_ARCHITECTURE
+            or self.effective_architecture != PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE
         ):
-            raise ContractError(
-                "diagnostic architecture differs from the pin"
-            )
+            raise ContractError("diagnostic architecture differs from the pin")
         if tuple(self.common_realizer_identities) != COMMON_REALIZER_IDENTITIES:
-            raise ContractError(
-                "guidance arms must use the frozen common realizers"
-            )
+            raise ContractError("guidance arms must use the frozen common realizers")
         if self.sample_memory_used:
             raise ContractError("sample-memory guidance is forbidden")
         if self.target_embedding_selection_used:
             raise ContractError("target-embedding selection is forbidden")
         if not isinstance(self.field_changes, tuple) or not all(
-            isinstance(change, CanonicalFieldChange)
-            for change in self.field_changes
+            isinstance(change, CanonicalFieldChange) for change in self.field_changes
         ):
-            raise ContractError(
-                "field_changes must contain CanonicalFieldChange records"
-            )
-        if (
-            self.arm is AutoencoderGuidanceArm.NO_GUIDANCE
-            and (
-                self.composition_status
-                not in {
-                    AutoencoderCompositionStatus.NO_GUIDANCE,
-                    AutoencoderCompositionStatus.FAILED,
-                }
-                or self.field_changes
-            )
+            raise ContractError("field_changes must contain CanonicalFieldChange records")
+        if self.arm is AutoencoderGuidanceArm.NO_GUIDANCE and (
+            self.composition_status
+            not in {
+                AutoencoderCompositionStatus.NO_GUIDANCE,
+                AutoencoderCompositionStatus.FAILED,
+            }
+            or self.field_changes
         ):
-            raise ContractError(
-                "no-guidance attribution cannot contain guidance changes"
-            )
+            raise ContractError("no-guidance attribution cannot contain guidance changes")
         if (
             self.composition_status is AutoencoderCompositionStatus.APPLIED
             and self.arm is not AutoencoderGuidanceArm.GUIDANCE
@@ -397,17 +352,13 @@ class AutoencoderGuidanceDiagnostics:
             "canonical_l1_changed": self.canonical_l1_changed,
             "changed_field_paths": list(self.changed_field_paths),
             "changed_fields": list(self.changed_fields),
-            "common_realizer_identities": list(
-                self.common_realizer_identities
-            ),
+            "common_realizer_identities": list(self.common_realizer_identities),
             "composition_status": self.composition_status.value,
             "composition_supported": self.composition_supported,
             "declared_architecture": self.declared_architecture,
             "detail": self.detail,
             "effective_architecture": self.effective_architecture,
-            "field_changes": [
-                change.to_dict() for change in self.field_changes
-            ],
+            "field_changes": [change.to_dict() for change in self.field_changes],
             "guidance_export_id": self.guidance_export_id,
             "sample_memory_used": False,
             "state_cid": self.state_cid,
@@ -426,12 +377,8 @@ class AutoencoderGuidedConstruction:
     def __post_init__(self) -> None:
         if not isinstance(self.result, ConstructorResult):
             raise ContractError("result must be a ConstructorResult")
-        if not isinstance(
-            self.diagnostics, AutoencoderGuidanceDiagnostics
-        ):
-            raise ContractError(
-                "diagnostics must be AutoencoderGuidanceDiagnostics"
-            )
+        if not isinstance(self.diagnostics, AutoencoderGuidanceDiagnostics):
+            raise ContractError("diagnostics must be AutoencoderGuidanceDiagnostics")
 
     @property
     def attribution(self) -> AutoencoderGuidanceDiagnostics:
@@ -478,9 +425,7 @@ def _json_value(value: object) -> object:
 
 def _freeze_json(value: object) -> object:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _freeze_json(item) for key, item in value.items()}
-        )
+        return MappingProxyType({str(key): _freeze_json(item) for key, item in value.items()})
     if isinstance(value, list):
         return tuple(_freeze_json(item) for item in value)
     return value
@@ -496,23 +441,17 @@ def _thaw_json(value: object) -> object:
     return value
 
 
-def _validate_stable_export(
-    value: object, path: str = "stable_export"
-) -> None:
+def _validate_stable_export(value: object, path: str = "stable_export") -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
             normalized = _normalize_key(key)
             if normalized in _FORBIDDEN_GUIDANCE_KEYS:
-                raise ContractError(
-                    f"guidance may not contain {path}.{key}"
-                )
+                raise ContractError(f"guidance may not contain {path}.{key}")
             if normalized == "sample_memory_included" and item is not False:
                 raise ContractError("sample-memory guidance is forbidden")
             _validate_stable_export(item, f"{path}.{key}")
         return
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, item in enumerate(value):
             _validate_stable_export(item, f"{path}[{index}]")
         return
@@ -522,36 +461,26 @@ def _validate_stable_export(
         if ".excluded_categories" not in path and any(
             marker in normalized for marker in _FORBIDDEN_FEATURE_MARKERS
         ):
-            raise ContractError(
-                f"guidance contains a forbidden feature at {path}"
-            )
+            raise ContractError(f"guidance contains a forbidden feature at {path}")
 
 
 def _config_forbidden_path(value: object, path: str = "config") -> str | None:
     if isinstance(value, Mapping):
         for key, item in value.items():
             normalized = _normalize_key(key)
-            if any(
-                marker in normalized
-                for marker in _FORBIDDEN_REQUEST_CONFIG_MARKERS
-            ):
+            if any(marker in normalized for marker in _FORBIDDEN_REQUEST_CONFIG_MARKERS):
                 return f"{path}.{key}"
             nested = _config_forbidden_path(item, f"{path}.{key}")
             if nested:
                 return nested
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, item in enumerate(value):
             nested = _config_forbidden_path(item, f"{path}[{index}]")
             if nested:
                 return nested
     elif isinstance(value, str):
         normalized = _normalize_key(value)
-        if any(
-            marker in normalized
-            for marker in _FORBIDDEN_REQUEST_CONFIG_MARKERS
-        ):
+        if any(marker in normalized for marker in _FORBIDDEN_REQUEST_CONFIG_MARKERS):
             return path
     return None
 
@@ -577,26 +506,20 @@ def _read_pinned_state(path: Path) -> bytes:
             remaining -= len(chunk)
         raw = b"".join(chunks)
         after = os.fstat(descriptor)
-        if (
-            len(raw) != before.st_size
-            or (
-                before.st_dev,
-                before.st_ino,
-                before.st_size,
-                before.st_mtime_ns,
-                before.st_ctime_ns,
-            )
-            != (
-                after.st_dev,
-                after.st_ino,
-                after.st_size,
-                after.st_mtime_ns,
-                after.st_ctime_ns,
-            )
+        if len(raw) != before.st_size or (
+            before.st_dev,
+            before.st_ino,
+            before.st_size,
+            before.st_mtime_ns,
+            before.st_ctime_ns,
+        ) != (
+            after.st_dev,
+            after.st_ino,
+            after.st_size,
+            after.st_mtime_ns,
+            after.st_ctime_ns,
         ):
-            raise ContractError(
-                "frozen autoencoder state changed during its read"
-            )
+            raise ContractError("frozen autoencoder state changed during its read")
         return raw
     finally:
         os.close(descriptor)
@@ -610,21 +533,15 @@ def load_frozen_autoencoder_guidance(
     raw = _read_pinned_state(Path(path))
     digest = hashlib.sha256(raw).hexdigest()
     if digest != PINNED_AUTOENCODER_STATE_SHA256:
-        raise ContractError(
-            "autoencoder state SHA-256 differs from the frozen identity"
-        )
+        raise ContractError("autoencoder state SHA-256 differs from the frozen identity")
     try:
         from benchmarks.logic_pipeline.content_addressing import cid_for_bytes
 
         cid = cid_for_bytes(raw)
     except ImportError as exc:
-        raise ContractError(
-            "CID implementation is unavailable for state verification"
-        ) from exc
+        raise ContractError("CID implementation is unavailable for state verification") from exc
     if cid != PINNED_AUTOENCODER_STATE_CID:
-        raise ContractError(
-            "autoencoder state CID differs from the frozen identity"
-        )
+        raise ContractError("autoencoder state CID differs from the frozen identity")
     try:
         payload = json.loads(raw.decode("utf-8"))
         if not isinstance(payload, Mapping):
@@ -633,24 +550,15 @@ def load_frozen_autoencoder_guidance(
             modal_autoencoder,
         )
 
-        state = modal_autoencoder.ModalAutoencoderTrainingState.from_dict(
-            payload
-        )
-        if (
-            state.architecture_version
-            != PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE
-        ):
-            raise ContractError(
-                "loaded autoencoder architecture differs from the pin"
-            )
+        state = modal_autoencoder.ModalAutoencoderTrainingState.from_dict(payload)
+        if state.architecture_version != PINNED_AUTOENCODER_EFFECTIVE_ARCHITECTURE:
+            raise ContractError("loaded autoencoder architecture differs from the pin")
         revision = state.state_revision
         exported = modal_autoencoder.AdaptiveModalAutoencoder(
             state=state
         ).export_stable_legal_ir_features(())
         if state.state_revision != revision:
-            raise ContractError(
-                "stable autoencoder export attempted to mutate frozen state"
-            )
+            raise ContractError("stable autoencoder export attempted to mutate frozen state")
         stable_export = exported.to_dict()
     except ContractError:
         raise
@@ -662,9 +570,7 @@ def load_frozen_autoencoder_guidance(
         AttributeError,
         ImportError,
     ) as exc:
-        raise ContractError(
-            f"frozen autoencoder state load failed: {type(exc).__name__}"
-        ) from exc
+        raise ContractError(f"frozen autoencoder state load failed: {type(exc).__name__}") from exc
 
     return FrozenAutoencoderGuidance(
         state_cid=cid,
@@ -687,14 +593,11 @@ def canonical_field_changes(
 ) -> tuple[CanonicalFieldChange, ...]:
     """Return an exact, assignment-aware canonical field mutation receipt."""
 
-    if not isinstance(baseline, CanonicalRuleIR) or not isinstance(
-        guided, CanonicalRuleIR
-    ):
+    if not isinstance(baseline, CanonicalRuleIR) or not isinstance(guided, CanonicalRuleIR):
         raise ContractError("field diff inputs must be CanonicalRuleIR")
     left, right = list(baseline.rules), list(guided.rules)
     weights = [
-        [rule_similarity(left_rule, right_rule) for right_rule in right]
-        for left_rule in left
+        [rule_similarity(left_rule, right_rule) for right_rule in right] for left_rule in left
     ]
     pairs = maximum_weight_assignment(weights)
     matched_left = {left_index for left_index, _ in pairs}
@@ -742,12 +645,8 @@ def canonical_field_changes(
         sorted(
             changes,
             key=lambda item: (
-                item.baseline_rule_index
-                if item.baseline_rule_index is not None
-                else len(left),
-                item.guided_rule_index
-                if item.guided_rule_index is not None
-                else len(right),
+                item.baseline_rule_index if item.baseline_rule_index is not None else len(left),
+                item.guided_rule_index if item.guided_rule_index is not None else len(right),
                 field_order[item.canonical_field],
             ),
         )
@@ -771,9 +670,7 @@ class AutoencoderGuidedCanonicalConstructor:
         self,
         base_constructor: RoundTripConstructor | None = None,
         *,
-        arm: AutoencoderGuidanceArm | str = (
-            AutoencoderGuidanceArm.GUIDANCE
-        ),
+        arm: AutoencoderGuidanceArm | str = (AutoencoderGuidanceArm.GUIDANCE),
         guidance_applicator: CanonicalGuidanceApplicator | None = None,
         guidance_loader: GuidanceLoader = load_frozen_autoencoder_guidance,
         state_path: Path = DEFAULT_AUTOENCODER_STATE_PATH,
@@ -785,18 +682,12 @@ class AutoencoderGuidedCanonicalConstructor:
 
             base_constructor = TypedDeonticCanonicalConstructor()
         if not isinstance(base_constructor, RoundTripConstructor):
-            raise ContractError(
-                "base_constructor must implement RoundTripConstructor"
-            )
+            raise ContractError("base_constructor must implement RoundTripConstructor")
         try:
             resolved_arm = AutoencoderGuidanceArm(arm)
         except ValueError as exc:
-            raise ContractError(
-                f"unsupported autoencoder guidance arm: {arm!r}"
-            ) from exc
-        if guidance_applicator is not None and not callable(
-            guidance_applicator
-        ):
+            raise ContractError(f"unsupported autoencoder guidance arm: {arm!r}") from exc
+        if guidance_applicator is not None and not callable(guidance_applicator):
             raise ContractError("guidance_applicator must be callable")
         if not callable(guidance_loader):
             raise ContractError("guidance_loader must be callable")
@@ -843,9 +734,7 @@ class AutoencoderGuidedCanonicalConstructor:
             composition_status=status,
             base_constructor_identity=self._base_constructor.identity,
             field_changes=changes,
-            guidance_export_id=(
-                guidance.export_id if guidance is not None else None
-            ),
+            guidance_export_id=(guidance.export_id if guidance is not None else None),
             detail=detail,
         )
 
@@ -853,9 +742,7 @@ class AutoencoderGuidedCanonicalConstructor:
         if self._loaded_guidance is None:
             loaded = self._guidance_loader(self._state_path)
             if not isinstance(loaded, FrozenAutoencoderGuidance):
-                raise ContractError(
-                    "guidance_loader must return FrozenAutoencoderGuidance"
-                )
+                raise ContractError("guidance_loader must return FrozenAutoencoderGuidance")
             self._loaded_guidance = loaded
         return self._loaded_guidance
 
@@ -868,9 +755,7 @@ class AutoencoderGuidedCanonicalConstructor:
             detail = "request must be ConstructorRequest"
             return AutoencoderGuidedConstruction(
                 _failure(FailureReason.INVALID_OUTPUT, detail),
-                self._diagnostics(
-                    AutoencoderCompositionStatus.FAILED, detail=detail
-                ),
+                self._diagnostics(AutoencoderCompositionStatus.FAILED, detail=detail),
             )
         forbidden = _config_forbidden_path(request.config)
         if forbidden:
@@ -880,9 +765,7 @@ class AutoencoderGuidedCanonicalConstructor:
             )
             return AutoencoderGuidedConstruction(
                 _failure(FailureReason.INVALID_OUTPUT, detail),
-                self._diagnostics(
-                    AutoencoderCompositionStatus.FAILED, detail=detail
-                ),
+                self._diagnostics(AutoencoderCompositionStatus.FAILED, detail=detail),
             )
 
         try:
@@ -891,41 +774,30 @@ class AutoencoderGuidedCanonicalConstructor:
             if isinstance(exc, (KeyboardInterrupt, SystemExit)):
                 raise
             detail = (
-                "base constructor raised "
-                f"{type(exc).__name__} before the guidance intervention"
+                f"base constructor raised {type(exc).__name__} before the guidance intervention"
             )
             return AutoencoderGuidedConstruction(
                 _failure(FailureReason.EXCEPTION, detail),
-                self._diagnostics(
-                    AutoencoderCompositionStatus.FAILED, detail=detail
-                ),
+                self._diagnostics(AutoencoderCompositionStatus.FAILED, detail=detail),
             )
         if not isinstance(baseline, ConstructorResult):
             detail = "base constructor returned a non-ConstructorResult"
             return AutoencoderGuidedConstruction(
                 _failure(FailureReason.INVALID_OUTPUT, detail),
-                self._diagnostics(
-                    AutoencoderCompositionStatus.FAILED, detail=detail
-                ),
+                self._diagnostics(AutoencoderCompositionStatus.FAILED, detail=detail),
             )
         if baseline.status is ComponentStatus.FAILED:
-            detail = (
-                "base constructor failed before the guidance intervention"
-            )
+            detail = "base constructor failed before the guidance intervention"
             return AutoencoderGuidedConstruction(
                 baseline,
-                self._diagnostics(
-                    AutoencoderCompositionStatus.FAILED, detail=detail
-                ),
+                self._diagnostics(AutoencoderCompositionStatus.FAILED, detail=detail),
             )
         assert baseline.canonical_ir is not None
 
         if self._arm is AutoencoderGuidanceArm.NO_GUIDANCE:
             return AutoencoderGuidedConstruction(
                 baseline,
-                self._diagnostics(
-                    AutoencoderCompositionStatus.NO_GUIDANCE
-                ),
+                self._diagnostics(AutoencoderCompositionStatus.NO_GUIDANCE),
             )
 
         if self._guidance_applicator is None:
@@ -950,15 +822,10 @@ class AutoencoderGuidedCanonicalConstructor:
             ImportError,
             PermissionError,
         ) as exc:
-            detail = (
-                "frozen autoencoder guidance unavailable: "
-                f"{type(exc).__name__}"
-            )
+            detail = f"frozen autoencoder guidance unavailable: {type(exc).__name__}"
             return AutoencoderGuidedConstruction(
                 _failure(FailureReason.CAPABILITY_UNAVAILABLE, detail),
-                self._diagnostics(
-                    AutoencoderCompositionStatus.FAILED, detail=detail
-                ),
+                self._diagnostics(AutoencoderCompositionStatus.FAILED, detail=detail),
             )
 
         try:
@@ -968,9 +835,7 @@ class AutoencoderGuidedCanonicalConstructor:
                 guidance,
             )
             if isinstance(raw_application, CanonicalRuleIR):
-                application = CausalGuidanceApplication.supported(
-                    raw_application
-                )
+                application = CausalGuidanceApplication.supported(raw_application)
             elif raw_application is None:
                 application = CausalGuidanceApplication.unsupported(
                     "causal guidance applicator returned no canonical L1"
@@ -978,21 +843,13 @@ class AutoencoderGuidedCanonicalConstructor:
             elif isinstance(raw_application, CausalGuidanceApplication):
                 application = raw_application
             else:
-                raise ContractError(
-                    "guidance applicator returned an unsupported value"
-                )
+                raise ContractError("guidance applicator returned an unsupported value")
             if not application.composition_supported:
-                detail = (
-                    "unsupported composition: "
-                    + (
-                        application.detail
-                        or "guidance cannot causally affect canonical L1"
-                    )
+                detail = "unsupported composition: " + (
+                    application.detail or "guidance cannot causally affect canonical L1"
                 )
                 return AutoencoderGuidedConstruction(
-                    _failure(
-                        FailureReason.CAPABILITY_UNAVAILABLE, detail
-                    ),
+                    _failure(FailureReason.CAPABILITY_UNAVAILABLE, detail),
                     self._diagnostics(
                         AutoencoderCompositionStatus.UNSUPPORTED,
                         guidance=guidance,
@@ -1000,9 +857,7 @@ class AutoencoderGuidedCanonicalConstructor:
                     ),
                 )
             assert application.canonical_ir is not None
-            application.canonical_ir.validate_vocabulary(
-                request.allowed_atom_vocabulary
-            )
+            application.canonical_ir.validate_vocabulary(request.allowed_atom_vocabulary)
             if application.canonical_ir.is_empty:
                 detail = "guidance applicator produced empty canonical L1"
                 return AutoencoderGuidedConstruction(
@@ -1013,27 +868,18 @@ class AutoencoderGuidedCanonicalConstructor:
                         detail=detail,
                     ),
                 )
-            changes = canonical_field_changes(
-                baseline.canonical_ir, application.canonical_ir
-            )
+            changes = canonical_field_changes(baseline.canonical_ir, application.canonical_ir)
         except ContractError as exc:
             detail = f"autoencoder guidance rejected: {exc}"
             return AutoencoderGuidedConstruction(
                 _failure(FailureReason.INVALID_OUTPUT, detail),
-                self._diagnostics(
-                    AutoencoderCompositionStatus.FAILED, detail=detail
-                ),
+                self._diagnostics(AutoencoderCompositionStatus.FAILED, detail=detail),
             )
         except Exception as exc:
-            detail = (
-                "autoencoder guidance raised "
-                f"{type(exc).__name__}"
-            )
+            detail = f"autoencoder guidance raised {type(exc).__name__}"
             return AutoencoderGuidedConstruction(
                 _failure(FailureReason.EXCEPTION, detail),
-                self._diagnostics(
-                    AutoencoderCompositionStatus.FAILED, detail=detail
-                ),
+                self._diagnostics(AutoencoderCompositionStatus.FAILED, detail=detail),
             )
 
         return AutoencoderGuidedConstruction(
@@ -1065,30 +911,19 @@ class AutoencoderGuidancePair:
     def __post_init__(self) -> None:
         if (
             self.guidance.arm is not AutoencoderGuidanceArm.GUIDANCE
-            or self.no_guidance.arm
-            is not AutoencoderGuidanceArm.NO_GUIDANCE
+            or self.no_guidance.arm is not AutoencoderGuidanceArm.NO_GUIDANCE
         ):
             raise ContractError("autoencoder guidance pair has wrong arms")
-        if (
-            self.guidance.base_constructor
-            is not self.no_guidance.base_constructor
-        ):
-            raise ContractError(
-                "paired arms must share the same base constructor instance"
-            )
+        if self.guidance.base_constructor is not self.no_guidance.base_constructor:
+            raise ContractError("paired arms must share the same base constructor instance")
         if tuple(self.common_realizer_identities) != COMMON_REALIZER_IDENTITIES:
-            raise ContractError(
-                "paired arms must use the frozen common realizers"
-            )
+            raise ContractError("paired arms must use the frozen common realizers")
         if (
             self.guidance.compatible_realizer_identities
             != self.no_guidance.compatible_realizer_identities
-            or self.guidance.compatible_realizer_identities
-            != self.common_realizer_identities
+            or self.guidance.compatible_realizer_identities != self.common_realizer_identities
         ):
-            raise ContractError(
-                "paired arms expose different realizer inventories"
-            )
+            raise ContractError("paired arms expose different realizer inventories")
 
     @property
     def arms(
@@ -1139,9 +974,7 @@ AutoencoderGuidedConstructor = AutoencoderGuidedCanonicalConstructor
 
 
 assert isinstance(
-    AutoencoderGuidedCanonicalConstructor(
-        arm=AutoencoderGuidanceArm.NO_GUIDANCE
-    ),
+    AutoencoderGuidedCanonicalConstructor(arm=AutoencoderGuidanceArm.NO_GUIDANCE),
     RoundTripConstructor,
 )
 

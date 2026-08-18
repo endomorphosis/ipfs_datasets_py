@@ -146,7 +146,9 @@ def export_introspection_packet(
     guidance_map = dict(compiler_guidance or {})
     context_map = dict(export_context or {})
     compiler_metric_map = _mapping(compiler_metrics)
-    canonical_ir_obj = canonical_legal_ir if canonical_legal_ir is not None else _get(sample, "modal_ir")
+    canonical_ir_obj = (
+        canonical_legal_ir if canonical_legal_ir is not None else _get(sample, "modal_ir")
+    )
     canonical_ir = _object_to_mapping(canonical_ir_obj) or _mapping(sample_map.get("modal_ir"))
     sample_id = _sample_id(sample, sample_map, introspection_map, canonical_ir)
     source_text = str(_get(sample, "text") or sample_map.get("text") or "")
@@ -237,9 +239,7 @@ def export_introspection_packet(
         "evidence_id": "",
         "evidence_hashes": {
             "canonical_modal_ir_hash": modal_ir_hash,
-            "causal_feature_attribution_hash": _hash_json(
-                causal_feature_attribution
-            ),
+            "causal_feature_attribution_hash": _hash_json(causal_feature_attribution),
             "compiler_guidance_hash": _hash_json(guidance_map),
             "compiler_metrics_hash": _hash_json(compiler_decompiler_metrics),
             "learned_view_gaps_hash": _hash_json(learned_view_gaps),
@@ -469,14 +469,18 @@ def append_disagreement_packets_jsonl(
     bytes_written = 0
     with destination.open("a", encoding="utf-8") as handle:
         for packet in packets:
-            payload = packet.to_dict() if isinstance(packet, LegalIRDisagreementPacket) else dict(packet)
+            payload = (
+                packet.to_dict() if isinstance(packet, LegalIRDisagreementPacket) else dict(packet)
+            )
             failures = validate_disagreement_packet(payload)
             if failures:
                 schema_failures.append(
                     {
                         "evidence_id": str(payload.get("evidence_id") or ""),
                         "failures": failures,
-                        "sample_id": str(_mapping(payload.get("sample_hashes")).get("sample_id") or ""),
+                        "sample_id": str(
+                            _mapping(payload.get("sample_hashes")).get("sample_id") or ""
+                        ),
                     }
                 )
                 continue
@@ -604,9 +608,15 @@ def _predicted_family_distribution(
     predicted_probability = _float_or_none(introspection.get("predicted_probability"))
     target_probability = _float_or_none(introspection.get("target_probability"))
     if predicted_family:
-        distribution[predicted_family] = predicted_probability if predicted_probability is not None else 1.0
+        distribution[predicted_family] = (
+            predicted_probability if predicted_probability is not None else 1.0
+        )
     if target_family:
-        distribution[target_family] = target_probability if target_probability is not None else distribution.get(target_family, 0.0)
+        distribution[target_family] = (
+            target_probability
+            if target_probability is not None
+            else distribution.get(target_family, 0.0)
+        )
     return _normalize_distribution(distribution)
 
 
@@ -836,18 +846,14 @@ def _learned_view_gaps(
         "cross_entropy_excess_loss": round(
             _float_or_zero(
                 introspection.get("legal_ir_view_cross_entropy_excess_loss")
-                or _mapping(guidance.get("legal_ir_view_metrics")).get(
-                    "cross_entropy_excess_loss"
-                )
+                or _mapping(guidance.get("legal_ir_view_metrics")).get("cross_entropy_excess_loss")
             ),
             12,
         ),
         "cross_entropy_loss": round(
             _float_or_zero(
                 introspection.get("legal_ir_view_cross_entropy_loss")
-                or _mapping(guidance.get("legal_ir_view_metrics")).get(
-                    "cross_entropy_loss"
-                )
+                or _mapping(guidance.get("legal_ir_view_metrics")).get("cross_entropy_loss")
             ),
             12,
         ),
@@ -894,14 +900,11 @@ def _causal_feature_attribution(
         compact_ablations[group] = {
             "directional_effect": {
                 "direction": str(
-                    _mapping(item_map.get("directional_effect")).get("direction")
-                    or ""
+                    _mapping(item_map.get("directional_effect")).get("direction") or ""
                 ),
                 "objective_delta": round(
                     _float_or_zero(
-                        _mapping(item_map.get("directional_effect")).get(
-                            "objective_delta"
-                        )
+                        _mapping(item_map.get("directional_effect")).get("objective_delta")
                     ),
                     12,
                 ),
@@ -913,24 +916,18 @@ def _causal_feature_attribution(
                 ),
             },
             "metric_delta": _compact_metric_delta(item_map.get("metric_delta")),
-            "removed_feature_count": int(
-                _float_or_zero(item_map.get("removed_feature_count"))
-            ),
+            "removed_feature_count": int(_float_or_zero(item_map.get("removed_feature_count"))),
             "sample_memory_used": bool(item_map.get("sample_memory_used", False)),
         }
 
     compact_pairs: Dict[str, Any] = {}
-    for group, item in sorted(pair_probes.items(), key=lambda pair: str(pair[0]))[
-        :max_pair_probes
-    ]:
+    for group, item in sorted(pair_probes.items(), key=lambda pair: str(pair[0]))[:max_pair_probes]:
         item_map = _mapping(item)
         compact_pairs[str(group)] = {
             "ablated_pair_metric_delta": _compact_metric_delta(
                 item_map.get("ablated_pair_metric_delta")
             ),
-            "pair_metric_delta": _compact_metric_delta(
-                item_map.get("pair_metric_delta")
-            ),
+            "pair_metric_delta": _compact_metric_delta(item_map.get("pair_metric_delta")),
             "pair_sample_hash": str(item_map.get("pair_sample_hash") or ""),
             "sample_memory_used": bool(item_map.get("sample_memory_used", False)),
             "transformation": str(item_map.get("transformation") or ""),
@@ -973,11 +970,7 @@ def _compact_metric_delta(value: Any) -> Dict[str, float]:
         "learned_view_cross_entropy_loss",
         "learned_view_cosine_similarity",
     )
-    return {
-        key: round(float(metric_delta[key]), 12)
-        for key in keys
-        if key in metric_delta
-    }
+    return {key: round(float(metric_delta[key]), 12) for key in keys if key in metric_delta}
 
 
 def _run_context(context: Mapping[str, Any]) -> Dict[str, Any]:
@@ -1128,10 +1121,15 @@ def _priority_score(
         _float_or_zero(compiler_round_trip_gaps.get("embedding_cosine_gap")),
         _float_or_zero(compiler_round_trip_gaps.get("reconstruction_loss")),
         _float_or_zero(compiler_round_trip_gaps.get("legal_ir_view_cross_entropy_excess_loss")),
-        _float_or_zero(compiler_round_trip_gaps.get("source_decompiled_text_embedding_cosine_loss")),
+        _float_or_zero(
+            compiler_round_trip_gaps.get("source_decompiled_text_embedding_cosine_loss")
+        ),
         _float_or_zero(compiler_round_trip_gaps.get("source_decompiled_text_token_loss")),
         max(
-            (_float_or_zero(value) for value in _mapping(compiler_round_trip_gaps.get("component_gaps")).values()),
+            (
+                _float_or_zero(value)
+                for value in _mapping(compiler_round_trip_gaps.get("component_gaps")).values()
+            ),
             default=0.0,
         ),
         (
@@ -1178,15 +1176,33 @@ def _cap_packet(
         [
             lambda data: _pop_last(data.get("synthesis_hints")),
             lambda data: _pop_last(data.get("synthesis_focus")),
-            lambda data: _pop_mapping_last(_nested_get(data, "compiler_round_trip_gaps", "component_gaps")),
-            lambda data: _pop_mapping_last(_nested_get(data, "causal_feature_attribution", "legal_minimal_pair_probes")),
-            lambda data: _pop_mapping_last(_nested_get(data, "causal_feature_attribution", "feature_group_ablations")),
-            lambda data: _pop_mapping_last(_nested_get(data, "sample_hashes", "source_span_hashes")),
-            lambda data: _pop_mapping_last(_nested_get(data, "learned_view_gaps", "view_gap_distribution")),
-            lambda data: _pop_mapping_last(_nested_get(data, "legal_ir_views", "canonical", "view_distribution")),
-            lambda data: _pop_mapping_last(_nested_get(data, "legal_ir_views", "predicted", "view_distribution")),
-            lambda data: _pop_mapping_last(_nested_get(data, "legal_ir_views", "canonical", "family_distribution")),
-            lambda data: _pop_mapping_last(_nested_get(data, "legal_ir_views", "predicted", "family_distribution")),
+            lambda data: _pop_mapping_last(
+                _nested_get(data, "compiler_round_trip_gaps", "component_gaps")
+            ),
+            lambda data: _pop_mapping_last(
+                _nested_get(data, "causal_feature_attribution", "legal_minimal_pair_probes")
+            ),
+            lambda data: _pop_mapping_last(
+                _nested_get(data, "causal_feature_attribution", "feature_group_ablations")
+            ),
+            lambda data: _pop_mapping_last(
+                _nested_get(data, "sample_hashes", "source_span_hashes")
+            ),
+            lambda data: _pop_mapping_last(
+                _nested_get(data, "learned_view_gaps", "view_gap_distribution")
+            ),
+            lambda data: _pop_mapping_last(
+                _nested_get(data, "legal_ir_views", "canonical", "view_distribution")
+            ),
+            lambda data: _pop_mapping_last(
+                _nested_get(data, "legal_ir_views", "predicted", "view_distribution")
+            ),
+            lambda data: _pop_mapping_last(
+                _nested_get(data, "legal_ir_views", "canonical", "family_distribution")
+            ),
+            lambda data: _pop_mapping_last(
+                _nested_get(data, "legal_ir_views", "predicted", "family_distribution")
+            ),
             lambda data: _pop_last(data.get("per_family_gaps")),
             lambda data: _pop_last(data.get("ranked_feature_contributions")),
             lambda data: _pop_last(_nested_get(data, "proof_route_status", "details")),
@@ -1392,8 +1408,10 @@ def _is_dense_key(key: str) -> bool:
 
 
 def _is_dense_sequence(value: Any) -> bool:
-    return isinstance(value, (list, tuple)) and len(value) > 8 and all(
-        isinstance(item, (int, float)) for item in value
+    return (
+        isinstance(value, (list, tuple))
+        and len(value) > 8
+        and all(isinstance(item, (int, float)) for item in value)
     )
 
 

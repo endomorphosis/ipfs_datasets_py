@@ -226,14 +226,11 @@ class AbbyVoiceDatasetManager:
         if not source_rows:
             raise ValueError("at least one pinned voice source is required")
         source_keys = [
-            (item.snapshot.logical_source, item.snapshot.expected_sha256)
-            for item in source_rows
+            (item.snapshot.logical_source, item.snapshot.expected_sha256) for item in source_rows
         ]
         if len(source_keys) != len(set(source_keys)):
             raise ValueError("pinned voice source identities must be unique")
-        candidate_rows = tuple(
-            sorted(legacy_candidates, key=lambda item: item.candidate_id)
-        )
+        candidate_rows = tuple(sorted(legacy_candidates, key=lambda item: item.candidate_id))
         corrupt_ids = tuple(sorted(set(corrupt_subject_ids)))
         stale_ids = tuple(sorted(set(stale_policy_subject_ids)))
         revalidate_ids = tuple(sorted(set(revalidate_subject_ids)))
@@ -257,19 +254,16 @@ class AbbyVoiceDatasetManager:
         }
         source_identity_bytes = _canonical_bytes(source_identity)
         source_manifest_id = (
-            "abby-voice-source-set:sha256:"
-            + sha256(source_identity_bytes).hexdigest()
+            "abby-voice-source-set:sha256:" + sha256(source_identity_bytes).hexdigest()
         )
         normalization = self.normalizer.normalize_sources(
-
-                (
-                    item.payload,
-                    item.snapshot.logical_source,
-                    item.snapshot.expected_sha256,
-                    None,
-                )
-                for item in source_rows
-
+            (
+                item.payload,
+                item.snapshot.logical_source,
+                item.snapshot.expected_sha256,
+                None,
+            )
+            for item in source_rows
         )
         normalized_bundle = validate_bundle(
             responses=normalization.responses,
@@ -405,7 +399,9 @@ class AbbyVoiceDatasetManager:
             "normalized/templates.jsonl": _jsonl(row.to_dict() for row in bundle.templates),
             "normalized/audio.jsonl": _jsonl(row.to_dict() for row in bundle.audio),
             "normalized/provenance.jsonl": _jsonl(row.to_dict() for row in bundle.provenance),
-            "normalized/quarantine.jsonl": _jsonl(item.to_dict() for item in normalization.quarantine),
+            "normalized/quarantine.jsonl": _jsonl(
+                item.to_dict() for item in normalization.quarantine
+            ),
             "normalized/disposition.jsonl": _jsonl(item.to_dict() for item in dispositions),
             "normalized/audio-workset.jsonl": workset.canonical_bytes() + b"\n",
             "normalized/tts-work-manifest.json": workset.tts_manifest.canonical_bytes(),
@@ -465,7 +461,9 @@ class AbbyVoiceDatasetManager:
                 content_sha256=digest,
                 size=len(payload),
                 path=path,
-                media_type="application/x-ndjson" if path.endswith(".jsonl") else "application/json",
+                media_type="application/x-ndjson"
+                if path.endswith(".jsonl")
+                else "application/json",
                 schema_id="abby.voice.artifact",
                 schema_version=schema_by_path.get(path, "v1"),
                 producer_id=producer.producer_id,

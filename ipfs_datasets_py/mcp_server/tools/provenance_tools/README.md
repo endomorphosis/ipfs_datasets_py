@@ -23,16 +23,13 @@ await record_provenance(
     transformation="deduplicate + re-embed",
     actor="pipeline_user_42",
     output_cid="QmXxx...",
-    metadata={"rows_before": 50000, "rows_after": 48231}
+    metadata={"rows_before": 50000, "rows_after": 48231},
 )
 
 # Query provenance
 from ipfs_datasets_py.mcp_server.tools.provenance_tools import query_provenance
 
-history = await query_provenance(
-    dataset_id="legal_corpus_v2",
-    include_ancestors=True
-)
+history = await query_provenance(dataset_id="legal_corpus_v2", include_ancestors=True)
 ```
 
 ## Core Module

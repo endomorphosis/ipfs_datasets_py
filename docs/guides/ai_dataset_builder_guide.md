@@ -63,19 +63,11 @@ The system integrates with HuggingFace models via `ipfs_accelerate_py`:
 from ipfs_accelerate_py import HuggingFaceModel, ModelConfig
 
 # Initialize model
-config = ModelConfig(
-    model_name="meta-llama/Llama-2-7b-hf",
-    device="auto",
-    torch_dtype="auto"
-)
+config = ModelConfig(model_name="meta-llama/Llama-2-7b-hf", device="auto", torch_dtype="auto")
 model = HuggingFaceModel(config)
 
 # Generate text
-result = model.generate(
-    prompt="Analyze this medical research...",
-    max_length=500,
-    temperature=0.7
-)
+result = model.generate(prompt="Analyze this medical research...", max_length=500, temperature=0.7)
 ```
 
 ### Graceful Fallback
@@ -83,6 +75,7 @@ result = model.generate(
 ```python
 try:
     from ipfs_accelerate_py import HuggingFaceModel
+
     ACCELERATE_AVAILABLE = True
 except ImportError:
     ACCELERATE_AVAILABLE = False
@@ -99,23 +92,17 @@ from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers import (
     build_dataset_from_scraped_data,
     analyze_dataset_with_ai,
     transform_dataset_with_ai,
-    generate_synthetic_dataset
+    generate_synthetic_dataset,
 )
 
 # Step 1: Scrape COVID-19 vaccine research
-articles = scrape_pubmed_medical_research(
-    query="COVID-19 vaccine efficacy",
-    max_results=200
-)
+articles = scrape_pubmed_medical_research(query="COVID-19 vaccine efficacy", max_results=200)
 
 # Step 2: Build filtered dataset with AI
 dataset = build_dataset_from_scraped_data(
-    scraped_data=articles['articles'],
-    filter_criteria={
-        'keywords': ['efficacy', 'safety', 'phase 3'],
-        'min_quality': 0.7
-    },
-    model_name='meta-llama/Llama-2-7b-hf'
+    scraped_data=articles["articles"],
+    filter_criteria={"keywords": ["efficacy", "safety", "phase 3"], "min_quality": 0.7},
+    model_name="meta-llama/Llama-2-7b-hf",
 )
 
 print(f"Dataset quality score: {dataset['metrics']['quality_score']}")
@@ -123,37 +110,36 @@ print(f"Filtered from {dataset['original_count']} to {dataset['filtered_count']}
 
 # Step 3: Analyze patterns with AI
 analysis = analyze_dataset_with_ai(
-    dataset=dataset['dataset'],
-    model_name='meta-llama/Llama-2-7b-hf'
+    dataset=dataset["dataset"], model_name="meta-llama/Llama-2-7b-hf"
 )
 
 print("AI Insights:")
-print(analysis['insights']['ai_analysis'])
+print(analysis["insights"]["ai_analysis"])
 
 # Step 4: Generate summaries
 summaries = transform_dataset_with_ai(
-    dataset=dataset['dataset'],
-    transformation_type='summarize',
-    model_name='meta-llama/Llama-2-7b-hf'
+    dataset=dataset["dataset"],
+    transformation_type="summarize",
+    model_name="meta-llama/Llama-2-7b-hf",
 )
 
 print(f"Generated {summaries['count']} summaries")
 
 # Step 5: Extract medical entities
 entities = transform_dataset_with_ai(
-    dataset=dataset['dataset'],
-    transformation_type='extract_entities',
-    model_name='meta-llama/Llama-2-7b-hf'
+    dataset=dataset["dataset"],
+    transformation_type="extract_entities",
+    model_name="meta-llama/Llama-2-7b-hf",
 )
 
 print("Extracted conditions, treatments, and outcomes")
 
 # Step 6: Generate synthetic data for testing
 synthetic = generate_synthetic_dataset(
-    template_data=dataset['dataset'][:5],
+    template_data=dataset["dataset"][:5],
     num_samples=30,
-    model_name='meta-llama/Llama-2-7b-hf',
-    temperature=0.8  # Higher temperature = more creative
+    model_name="meta-llama/Llama-2-7b-hf",
+    temperature=0.8,  # Higher temperature = more creative
 )
 
 print(f"Generated {synthetic['count']} synthetic samples for testing")
@@ -165,24 +151,19 @@ print(f"Generated {synthetic['count']} synthetic samples for testing")
 from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers import (
     scrape_clinical_trials,
     build_dataset_from_scraped_data,
-    analyze_dataset_with_ai
+    analyze_dataset_with_ai,
 )
 
 # Scrape diabetes trials
-trials = scrape_clinical_trials(
-    condition="diabetes",
-    intervention="metformin",
-    max_results=100
-)
+trials = scrape_clinical_trials(condition="diabetes", intervention="metformin", max_results=100)
 
 # Build structured dataset
 dataset = build_dataset_from_scraped_data(
-    scraped_data=trials['trials'],
-    filter_criteria={'keywords': ['HbA1c', 'glycemic control']}
+    scraped_data=trials["trials"], filter_criteria={"keywords": ["HbA1c", "glycemic control"]}
 )
 
 # Analyze trial outcomes
-analysis = analyze_dataset_with_ai(dataset['dataset'])
+analysis = analyze_dataset_with_ai(dataset["dataset"])
 
 print(f"Total trials analyzed: {analysis['total_records']}")
 print(f"Relevance score: {analysis['metrics']['relevance_score']}")
@@ -193,15 +174,15 @@ print(f"Relevance score: {analysis['metrics']['relevance_score']}")
 ```python
 # Create synthetic variations of trial data for pipeline testing
 synthetic_trials = generate_synthetic_dataset(
-    template_data=trials['trials'][:10],
+    template_data=trials["trials"][:10],
     num_samples=50,
     temperature=0.7,
-    model_name='meta-llama/Llama-2-13b-hf'  # Use larger model
+    model_name="meta-llama/Llama-2-13b-hf",  # Use larger model
 )
 
 # Use synthetic data to test analysis pipeline
 test_results = []
-for sample in synthetic_trials['synthetic_data']:
+for sample in synthetic_trials["synthetic_data"]:
     # Run through analysis pipeline
     result = analyze_sample(sample)
     test_results.append(result)
@@ -476,8 +457,8 @@ For large datasets, process in batches:
 ```python
 batch_size = 50
 for i in range(0, len(dataset), batch_size):
-    batch = dataset[i:i+batch_size]
-    result = transform_dataset_with_ai(batch, 'summarize')
+    batch = dataset[i : i + batch_size]
+    result = transform_dataset_with_ai(batch, "summarize")
     save_batch_results(result)
 ```
 
@@ -488,11 +469,12 @@ Cache AI model outputs to avoid redundant processing:
 ```python
 cache = {}
 
+
 def cached_analyze(dataset, model_name):
     cache_key = hash(str(dataset) + model_name)
     if cache_key in cache:
         return cache[cache_key]
-    
+
     result = analyze_dataset_with_ai(dataset, model_name)
     cache[cache_key] = result
     return result

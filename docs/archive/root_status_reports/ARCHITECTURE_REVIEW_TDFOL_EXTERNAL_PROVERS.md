@@ -80,11 +80,9 @@ None - organization is excellent.
 ```python
 # All provers implement this pattern
 class ProverBridge:
-    def __init__(self, timeout, enable_cache):
-        ...
-    
-    def prove(self, formula, axioms, timeout) -> ProofResult:
-        ...
+    def __init__(self, timeout, enable_cache): ...
+
+    def prove(self, formula, axioms, timeout) -> ProofResult: ...
 ```
 
 **Type-safe core with dataclasses:**
@@ -93,9 +91,8 @@ class ProverBridge:
 class Predicate(Formula):
     name: str
     terms: Tuple[Term, ...]
-    
-    def to_string(self) -> str:
-        ...
+
+    def to_string(self) -> str: ...
 ```
 
 **Clean result types:**
@@ -129,29 +126,30 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional, List, Any
 
+
 class ProverResult(ABC):
     """Unified interface for all prover results."""
-    
+
     @abstractmethod
     def is_proved(self) -> bool:
         """True if formula was proved valid."""
         pass
-    
+
     @abstractmethod
     def get_proof_time(self) -> float:
         """Time taken to prove (seconds)."""
         pass
-    
+
     @abstractmethod
     def get_prover_name(self) -> str:
         """Name of prover that generated this result."""
         pass
-    
+
     @abstractmethod
     def get_confidence(self) -> Optional[float]:
         """Confidence score (0-1) if available."""
         pass
-    
+
     @abstractmethod
     def get_reasoning(self) -> Optional[str]:
         """Reasoning/explanation if available."""
@@ -168,27 +166,24 @@ Create `BaseProver` ABC:
 ```python
 class BaseProver(ABC):
     """Base class for all theorem provers."""
-    
+
     @abstractmethod
     def prove(
-        self,
-        formula: Any,
-        axioms: Optional[List[Any]] = None,
-        timeout: Optional[float] = None
+        self, formula: Any, axioms: Optional[List[Any]] = None, timeout: Optional[float] = None
     ) -> ProverResult:
         """Prove a formula with optional axioms."""
         pass
-    
+
     @abstractmethod
     def is_available(self) -> bool:
         """Check if prover is available."""
         pass
-    
+
     @abstractmethod
     def get_name(self) -> str:
         """Get prover name."""
         pass
-    
+
     @abstractmethod
     def get_capabilities(self) -> Dict[str, bool]:
         """Get prover capabilities."""
@@ -270,9 +265,7 @@ def warm_cache(self, formulas: List[Formula], provers: List[str]):
 **Good error messages:**
 ```python
 if not Z3_AVAILABLE:
-    raise ImportError(
-        "Z3 is not available. Install with: pip install z3-solver"
-    )
+    raise ImportError("Z3 is not available. Install with: pip install z3-solver")
 ```
 
 **Safe defaults:**
@@ -292,25 +285,22 @@ Add retry logic with exponential backoff:
 ```python
 class ProverRouter:
     def prove_with_retry(
-        self,
-        formula,
-        max_retries: int = 3,
-        backoff_factor: float = 2.0
+        self, formula, max_retries: int = 3, backoff_factor: float = 2.0
     ) -> RouterProofResult:
         """Prove with automatic retry on timeout/error."""
         for attempt in range(max_retries):
             try:
                 result = self.prove(formula)
-                if result.is_proved or result.reason != 'timeout':
+                if result.is_proved or result.reason != "timeout":
                     return result
-                
+
                 # Exponential backoff
-                timeout = self.default_timeout * (backoff_factor ** attempt)
+                timeout = self.default_timeout * (backoff_factor**attempt)
                 self.default_timeout = timeout
             except Exception as e:
                 if attempt == max_retries - 1:
                     raise
-                time.sleep(0.1 * (backoff_factor ** attempt))
+                time.sleep(0.1 * (backoff_factor**attempt))
 ```
 
 **Issue #4: No circuit breaker pattern**
@@ -327,15 +317,15 @@ class CircuitBreaker:
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.last_failure_time = None
-        self.state = 'closed'  # closed, open, half_open
-    
+        self.state = "closed"  # closed, open, half_open
+
     def call(self, func, *args, **kwargs):
-        if self.state == 'open':
+        if self.state == "open":
             if time.time() - self.last_failure_time > self.timeout:
-                self.state = 'half_open'
+                self.state = "half_open"
             else:
                 raise CircuitBreakerOpenError()
-        
+
         try:
             result = func(*args, **kwargs)
             self.on_success()
@@ -389,42 +379,38 @@ Add performance regression suite:
 ```python
 class TestPerformanceRegression:
     """Ensure performance doesn't regress."""
-    
+
     def test_cache_hit_latency_under_1ms(self):
         """Cache hits should be < 1ms (P95)."""
         prover = Z3ProverBridge(enable_cache=True)
         formula = parse_tdfol("P -> P")
-        
+
         # Prime cache
         prover.prove(formula)
-        
+
         # Measure 100 cached hits
         times = []
         for _ in range(100):
             start = time.time()
             prover.prove(formula)
             times.append((time.time() - start) * 1000)
-        
+
         p95 = sorted(times)[94]
         assert p95 < 1.0, f"P95 latency {p95}ms exceeds 1ms"
-    
+
     def test_z3_simple_formula_under_100ms(self):
         """Simple formulas should prove < 100ms (P95)."""
         prover = Z3ProverBridge(enable_cache=False)
-        
-        simple_formulas = [
-            "P -> P",
-            "P & Q -> P",
-            "P -> P | Q"
-        ]
-        
+
+        simple_formulas = ["P -> P", "P & Q -> P", "P -> P | Q"]
+
         times = []
         for formula_str in simple_formulas:
             formula = parse_tdfol(formula_str)
             start = time.time()
             prover.prove(formula)
             times.append((time.time() - start) * 1000)
-        
+
         p95 = sorted(times)[int(len(times) * 0.95)]
         assert p95 < 100, f"P95 latency {p95}ms exceeds 100ms"
 ```
@@ -439,31 +425,28 @@ Add stress tests:
 ```python
 class TestStressConditions:
     """Test system under stress."""
-    
+
     def test_concurrent_proving(self):
         """Handle 100 concurrent proofs."""
         router = ProverRouter(enable_z3=True)
         formula = parse_tdfol("P -> Q")
-        
+
         with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [
-                executor.submit(router.prove, formula)
-                for _ in range(100)
-            ]
+            futures = [executor.submit(router.prove, formula) for _ in range(100)]
             results = [f.result() for f in futures]
-        
+
         # All should succeed
         assert all(r.is_proved for r in results)
-    
+
     def test_large_formula_handling(self):
         """Handle formulas with 100+ terms."""
         # Generate large formula: (P1 & P2 & ... & P100) -> P1
         terms = [f"P{i}" for i in range(100)]
         large_formula = f"({' & '.join(terms)}) -> P1"
-        
+
         formula = parse_tdfol(large_formula)
         prover = Z3ProverBridge(timeout=30.0)
-        
+
         result = prover.prove(formula)
         assert result.is_proved()
 ```
@@ -532,19 +515,19 @@ Add health checks:
 ```python
 class ProverHealthCheck:
     """Health checking for provers."""
-    
+
     def __init__(self, prover):
         self.prover = prover
         self.last_check = None
         self.is_healthy = None
-    
+
     def check(self, timeout: float = 5.0) -> bool:
         """Check if prover is healthy."""
         try:
             # Try simple tautology
             simple_formula = parse_tdfol("P -> P")
             result = self.prover.prove(simple_formula, timeout=timeout)
-            
+
             self.is_healthy = result.is_proved()
             self.last_check = time.time()
             return self.is_healthy
@@ -552,14 +535,15 @@ class ProverHealthCheck:
             self.is_healthy = False
             self.last_check = time.time()
             return False
-    
+
     def get_status(self) -> Dict[str, Any]:
         """Get health status."""
         return {
-            'healthy': self.is_healthy,
-            'last_check': self.last_check,
-            'prover': self.prover.get_name()
+            "healthy": self.is_healthy,
+            "last_check": self.last_check,
+            "prover": self.prover.get_name(),
         }
+
 
 class ProverRouter:
     def get_health_status(self) -> Dict[str, Dict]:
@@ -581,30 +565,19 @@ Add async variants:
 ```python
 import asyncio
 
+
 class AsyncProverRouter:
     """Async version of ProverRouter."""
-    
+
     async def prove_async(
-        self,
-        formula,
-        axioms: Optional[List] = None,
-        timeout: Optional[float] = None
+        self, formula, axioms: Optional[List] = None, timeout: Optional[float] = None
     ) -> RouterProofResult:
         """Async version of prove."""
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            self.prove,
-            formula,
-            axioms,
-            timeout
-        )
-    
+        return await loop.run_in_executor(None, self.prove, formula, axioms, timeout)
+
     async def prove_parallel_async(
-        self,
-        formula,
-        axioms: Optional[List] = None,
-        timeout: float = None
+        self, formula, axioms: Optional[List] = None, timeout: float = None
     ) -> RouterProofResult:
         """Truly parallel async proving."""
         tasks = []
@@ -613,7 +586,7 @@ class AsyncProverRouter:
                 self._prove_with_prover_async(name, prover, formula, axioms, timeout)
             )
             tasks.append(task)
-        
+
         results = await asyncio.gather(*tasks, return_exceptions=True)
         return self._aggregate_results(results)
 ```
@@ -759,9 +732,11 @@ from dataclasses import dataclass
 from typing import Optional
 import json
 
+
 @dataclass
 class AuditEntry:
     """Audit log entry."""
+
     timestamp: float
     user: Optional[str]
     prover: str
@@ -770,18 +745,17 @@ class AuditEntry:
     proof_time: float
     from_cache: bool
 
+
 class AuditLogger:
     """Audit logging for theorem proving."""
-    
+
     def __init__(self, log_file: Optional[str] = None):
-        self.logger = logging.getLogger('theorem_prover.audit')
+        self.logger = logging.getLogger("theorem_prover.audit")
         if log_file:
             handler = logging.FileHandler(log_file)
-            handler.setFormatter(
-                logging.Formatter('%(asctime)s - %(message)s')
-            )
+            handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
             self.logger.addHandler(handler)
-    
+
     def log_proof(
         self,
         prover: str,
@@ -789,7 +763,7 @@ class AuditLogger:
         result: bool,
         proof_time: float,
         from_cache: bool,
-        user: Optional[str] = None
+        user: Optional[str] = None,
     ):
         """Log a proof attempt."""
         entry = AuditEntry(
@@ -797,9 +771,9 @@ class AuditLogger:
             user=user,
             prover=prover,
             formula=formula,
-            result='proved' if result else 'failed',
+            result="proved" if result else "failed",
             proof_time=proof_time,
-            from_cache=from_cache
+            from_cache=from_cache,
         )
         self.logger.info(json.dumps(entry.__dict__))
 ```

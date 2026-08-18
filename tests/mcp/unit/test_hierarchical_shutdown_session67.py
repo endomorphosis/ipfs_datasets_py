@@ -1,6 +1,7 @@
 """
 Session Q67 — hierarchical_tool_manager.py graceful_shutdown + dispatch_parallel edge cases
 """
+
 import sys
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -11,10 +12,11 @@ import anyio
 # helpers
 # ---------------------------------------------------------------------------
 
+
 def _import_manager():
     return __import__(
         "ipfs_datasets_py.mcp_server.hierarchical_tool_manager",
-        fromlist=["HierarchicalToolManager", "ToolCategory"]
+        fromlist=["HierarchicalToolManager", "ToolCategory"],
     )
 
 
@@ -37,6 +39,7 @@ def _make_manager(mod, n_categories: int = 0):
 # ---------------------------------------------------------------------------
 # TestGracefulShutdown
 # ---------------------------------------------------------------------------
+
 
 class TestGracefulShutdown:
     """Tests for HierarchicalToolManager.graceful_shutdown()."""
@@ -117,6 +120,7 @@ class TestGracefulShutdown:
 # ---------------------------------------------------------------------------
 # TestDispatchParallelEdgeCases
 # ---------------------------------------------------------------------------
+
 
 class TestDispatchParallelEdgeCases:
     """Extra edge cases for dispatch_parallel() not covered in H43."""

@@ -45,7 +45,10 @@ from ipfs_datasets_py.optimizers.common.base_optimizer import (
     OptimizationContext,
     OptimizerConfig,
 )
-from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL, DEFAULT_CODEX_PROVIDER
+from ipfs_datasets_py.optimizers.common.llm_defaults import (
+    DEFAULT_CODEX_MODEL,
+    DEFAULT_CODEX_PROVIDER,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
     current_git_head as _shared_current_git_head,
     dirty_paths_diff_summary as _shared_dirty_paths_diff_summary,
@@ -105,19 +108,40 @@ DEFAULT_PROBE_CORPUS: List[Dict[str, str]] = [
     {"id": "simple_permission", "text": "The permittee may appeal the decision."},
     {"id": "simple_prohibition", "text": "No person may discharge pollutants into the sewer."},
     {"id": "passive_duty", "text": "The notice shall be published by the Bureau."},
-    {"id": "definition", "text": 'In this section, the term "food cart" means a mobile food vending unit.'},
+    {
+        "id": "definition",
+        "text": 'In this section, the term "food cart" means a mobile food vending unit.',
+    },
     {"id": "conditional", "text": "The Director shall issue a permit if all requirements are met."},
     {"id": "exception", "text": "The applicant shall obtain a permit unless approval is denied."},
-    {"id": "override", "text": "Notwithstanding section 5.01.020, the Director may issue a variance."},
-    {"id": "temporal", "text": "The Director shall issue a permit within 10 days after application."},
-    {"id": "procedure", "text": "Upon receipt of an application, the Bureau shall inspect the premises before approval."},
-    {"id": "penalty", "text": "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation."},
+    {
+        "id": "override",
+        "text": "Notwithstanding section 5.01.020, the Director may issue a variance.",
+    },
+    {
+        "id": "temporal",
+        "text": "The Director shall issue a permit within 10 days after application.",
+    },
+    {
+        "id": "procedure",
+        "text": "Upon receipt of an application, the Bureau shall inspect the premises before approval.",
+    },
+    {
+        "id": "penalty",
+        "text": "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation.",
+    },
     {"id": "applicability", "text": "This section applies to food carts and mobile vendors."},
     {"id": "exemption", "text": "A permit is not required for emergency work."},
     {"id": "lifecycle_valid", "text": "The license is valid for 30 days."},
     {"id": "lifecycle_expiry", "text": "The permit expires one year after issuance."},
-    {"id": "enumerated", "text": "The Secretary shall (1) establish procedures; (2) submit a report; and (3) maintain records."},
-    {"id": "cross_reference", "text": "The Secretary shall publish the notice except as provided in section 552."},
+    {
+        "id": "enumerated",
+        "text": "The Secretary shall (1) establish procedures; (2) submit a report; and (3) maintain records.",
+    },
+    {
+        "id": "cross_reference",
+        "text": "The Secretary shall publish the notice except as provided in section 552.",
+    },
 ]
 
 LEGAL_PARSER_RECOVERY_TARGETS: Tuple[str, ...] = (
@@ -170,7 +194,9 @@ class LegalParserDaemonConfig:
     """Configuration for legal parser optimization cycles."""
 
     repo_root: Path = field(default_factory=lambda: Path.cwd())
-    output_dir: Path = field(default_factory=lambda: Path("artifacts/legal_parser_optimizer_daemon"))
+    output_dir: Path = field(
+        default_factory=lambda: Path("artifacts/legal_parser_optimizer_daemon")
+    )
     model_name: str = DEFAULT_CODEX_MODEL
     provider: Optional[str] = DEFAULT_CODEX_PROVIDER
     max_cycles: int = 1
@@ -385,7 +411,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "text": text,
                     "element_count": len(elements),
                     "formulas": formulas,
-                    "proof_ready": sum(1 for element in elements if element.get("promotable_to_theorem") is True),
+                    "proof_ready": sum(
+                        1 for element in elements if element.get("promotable_to_theorem") is True
+                    ),
                     "warnings": [element.get("parser_warnings", []) for element in elements],
                 }
             )
@@ -393,7 +421,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
         summary = summarize_parser_elements(all_elements)
         repair_required_details = active_repair_details_from_parser_elements(all_elements)
         repair_required = [
-            str(detail.get("source_id") or detail.get("sample_id") or "") for detail in repair_required_details
+            str(detail.get("source_id") or detail.get("sample_id") or "")
+            for detail in repair_required_details
         ]
         sample_count = len(DEFAULT_PROBE_CORPUS)
         parsed_rate = (sample_count - len(unparsed)) / max(1, sample_count)
@@ -449,9 +478,12 @@ class LegalParserParityOptimizer(BaseOptimizer):
     ) -> LegalParserCycleProposal:
         """Ask llm_router for a legal-parser improvement patch."""
 
-        prompt = self.build_patch_prompt(cycle_index=cycle_index, evaluation=evaluation, feedback=feedback)
+        prompt = self.build_patch_prompt(
+            cycle_index=cycle_index, evaluation=evaluation, feedback=feedback
+        )
         pre_llm_diff = self._working_tree_diff()
         try:
+
             def generate_response() -> str:
                 if self.llm_backend is not None:
                     return self.llm_backend.generate(
@@ -507,7 +539,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                                 "dirty_legal_parser_targets": legal_target_status,
                             }
                         )
-                )
+                    )
         return parse_cycle_proposal(raw_response)
 
     def request_worktree_edit_patch(
@@ -635,30 +667,36 @@ class LegalParserParityOptimizer(BaseOptimizer):
             raw_trace["metadata"] = metadata
 
             changed_files = _paths_from_unified_diff(unified_diff)
-            metadata_changed_files = [
-                str(path)
-                for path in metadata.get("changed_files", [])
-                if str(path).strip()
-            ] if isinstance(metadata.get("changed_files"), list) else []
+            metadata_changed_files = (
+                [str(path) for path in metadata.get("changed_files", []) if str(path).strip()]
+                if isinstance(metadata.get("changed_files"), list)
+                else []
+            )
             if not changed_files:
                 changed_files = metadata_changed_files
-            tests_to_run = [
-                str(item)
-                for item in metadata.get("tests_to_run", [])
-                if str(item).strip()
-            ] if isinstance(metadata.get("tests_to_run"), list) else []
-            requirements_addressed = [
-                str(item)
-                for item in metadata.get("requirements_addressed", [])
-                if str(item).strip()
-            ] if isinstance(metadata.get("requirements_addressed"), list) else []
-            acceptance_criteria = [
-                str(item)
-                for item in metadata.get("acceptance_criteria", [])
-                if str(item).strip()
-            ] if isinstance(metadata.get("acceptance_criteria"), list) else []
+            tests_to_run = (
+                [str(item) for item in metadata.get("tests_to_run", []) if str(item).strip()]
+                if isinstance(metadata.get("tests_to_run"), list)
+                else []
+            )
+            requirements_addressed = (
+                [
+                    str(item)
+                    for item in metadata.get("requirements_addressed", [])
+                    if str(item).strip()
+                ]
+                if isinstance(metadata.get("requirements_addressed"), list)
+                else []
+            )
+            acceptance_criteria = (
+                [str(item) for item in metadata.get("acceptance_criteria", []) if str(item).strip()]
+                if isinstance(metadata.get("acceptance_criteria"), list)
+                else []
+            )
             if not acceptance_criteria:
-                acceptance_criteria = ["Git generated a canonical diff from isolated worktree edits."]
+                acceptance_criteria = [
+                    "Git generated a canonical diff from isolated worktree edits."
+                ]
             expected_metric_gain = (
                 dict(metadata.get("expected_metric_gain") or {})
                 if isinstance(metadata.get("expected_metric_gain"), Mapping)
@@ -667,7 +705,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
             raw_response = json.dumps(raw_trace, indent=2, default=str)
             if base_unified_diff.strip() and unified_diff == base_worktree_diff:
                 return LegalParserCycleProposal(
-                    summary=str(metadata.get("summary") or "worktree repair produced no additional edits"),
+                    summary=str(
+                        metadata.get("summary") or "worktree repair produced no additional edits"
+                    ),
                     focus_area=str(metadata.get("focus_area") or ""),
                     requirements_addressed=requirements_addressed,
                     acceptance_criteria=acceptance_criteria,
@@ -681,9 +721,12 @@ class LegalParserParityOptimizer(BaseOptimizer):
             if not unified_diff.strip():
                 reason = "worktree edit produced no allowed diff"
                 if not codex_result.get("valid"):
-                    reason = "worktree edit command failed without producing an allowed diff: " + str(
-                        codex_result.get("stderr") or codex_result.get("stdout") or ""
-                    ).strip()[:1000]
+                    reason = (
+                        "worktree edit command failed without producing an allowed diff: "
+                        + str(
+                            codex_result.get("stderr") or codex_result.get("stdout") or ""
+                        ).strip()[:1000]
+                    )
                 return LegalParserCycleProposal(
                     summary=str(metadata.get("summary") or "worktree proposal produced no diff"),
                     focus_area=str(metadata.get("focus_area") or ""),
@@ -905,7 +948,10 @@ class LegalParserParityOptimizer(BaseOptimizer):
         evaluation: Dict[str, Any],
         feedback: Sequence[str],
     ) -> str:
-        docs_payload = {path: _read_text(self.daemon_config.repo_root / path, limit=24000) for path in self.daemon_config.docs}
+        docs_payload = {
+            path: _read_text(self.daemon_config.repo_root / path, limit=24000)
+            for path in self.daemon_config.docs
+        }
         roadmap_task_snapshot = self._roadmap_task_snapshot(docs_payload)
         recent_cycle_history = self._recent_cycle_history(limit=5)
         patch_stability_mode = self._patch_stability_mode(recent_cycle_history)
@@ -913,11 +959,17 @@ class LegalParserParityOptimizer(BaseOptimizer):
         recent_test_failures = self._recent_test_failures(recent_cycle_history)
         recent_test_failed_files = self._recent_test_failed_files(recent_test_failures)
         recent_metric_stall_failures = self._recent_metric_stall_failures(recent_cycle_history)
-        recent_metric_stall_failed_files = self._recent_metric_stall_failed_files(recent_metric_stall_failures)
+        recent_metric_stall_failed_files = self._recent_metric_stall_failed_files(
+            recent_metric_stall_failures
+        )
         progress_payload = self._progress_snapshot()
-        repeated_validation_recovery_feedback = self._repeated_validation_recovery_feedback(progress_payload)
+        repeated_validation_recovery_feedback = self._repeated_validation_recovery_feedback(
+            progress_payload
+        )
         repeated_validation_failed_files = self._repeated_validation_failed_files(progress_payload)
-        repeated_recovery_failure_feedback = self._repeated_recovery_failure_feedback(progress_payload)
+        repeated_recovery_failure_feedback = self._repeated_recovery_failure_feedback(
+            progress_payload
+        )
         repeated_recovery_failed_files = self._repeated_recovery_failed_files(progress_payload)
         repeated_recovery_failed_tests = self._repeated_recovery_failed_tests(progress_payload)
         expanded_snapshot_files = (
@@ -1201,7 +1253,12 @@ class LegalParserParityOptimizer(BaseOptimizer):
             stalled_cycles = int(progress_payload.get("cycles_since_meaningful_progress", 0) or 0)
         except (TypeError, ValueError):
             stalled_cycles = 0
-        expanded = metric_stall_mode or metric_no_progress_recovery_mode or score >= 0.95 or stalled_cycles >= 3
+        expanded = (
+            metric_stall_mode
+            or metric_no_progress_recovery_mode
+            or score >= 0.95
+            or stalled_cycles >= 3
+        )
 
         if test_failure_recovery_mode:
             if expanded or roadmap_pivot_mode:
@@ -1285,7 +1342,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "accepted_patch_count": progress.get("accepted_patch_count", 0),
             "rolled_back_count": progress.get("rolled_back_count", 0),
             "rolled_back_reason_counts": progress.get("rolled_back_reason_counts", {}),
-            "rolled_back_since_meaningful_progress": progress.get("rolled_back_since_meaningful_progress", 0),
+            "rolled_back_since_meaningful_progress": progress.get(
+                "rolled_back_since_meaningful_progress", 0
+            ),
             "rolled_back_reasons_since_meaningful_progress": progress.get(
                 "rolled_back_reasons_since_meaningful_progress", {}
             ),
@@ -1299,7 +1358,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "meaningful_progress_definition": progress.get("meaningful_progress_definition", ""),
             "recent_rejections": progress.get("recent_rejections", [])[-8:],
             "repeated_rejection_family": progress.get("repeated_rejection_family", {}),
-            "repeated_validation_failure_family": progress.get("repeated_validation_failure_family", {}),
+            "repeated_validation_failure_family": progress.get(
+                "repeated_validation_failure_family", {}
+            ),
             "candidate_post_apply_validation_rejection_count": progress.get(
                 "candidate_post_apply_validation_rejection_count", 0
             ),
@@ -1362,7 +1423,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
             text = str(detail.get("text") or detail.get("source_text") or "").strip()
             if "cross_reference_requires_resolution" not in warnings:
                 return []
-            if not re.search(r"\bsection\s+[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*\b", text, re.IGNORECASE):
+            if not re.search(
+                r"\bsection\s+[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*\b", text, re.IGNORECASE
+            ):
                 return []
             llm_repair = detail.get("llm_repair")
             deterministic_resolution = (
@@ -1412,7 +1475,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
             tests_stdout = str(tests.get("stdout") or "")
             test_failure_summary = _summarize_test_failure(tests_stdout)
             post_apply_validation = dict(summary.get("post_apply_validation") or {})
-            validation_failure_summary = _summarize_post_apply_validation_failure(post_apply_validation)
+            validation_failure_summary = _summarize_post_apply_validation_failure(
+                post_apply_validation
+            )
             candidate_validation_failure = _latest_candidate_validation_failure(
                 summary.get("proposal_attempts") or []
             )
@@ -1450,9 +1515,15 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "validation_failure_summary": validation_failure_summary,
                     "validation_failure_tail": validation_failure_summary.get("failure_head", ""),
                     "candidate_validation_valid": candidate_validation_failure.get("valid"),
-                    "candidate_validation_failure_summary": candidate_validation_failure.get("summary", {}),
-                    "candidate_validation_failure_reasons": candidate_validation_failure.get("reasons", []),
-                    "candidate_validation_failure_attempt": candidate_validation_failure.get("attempt"),
+                    "candidate_validation_failure_summary": candidate_validation_failure.get(
+                        "summary", {}
+                    ),
+                    "candidate_validation_failure_reasons": candidate_validation_failure.get(
+                        "reasons", []
+                    ),
+                    "candidate_validation_failure_attempt": candidate_validation_failure.get(
+                        "attempt"
+                    ),
                     "test_failure_summary": test_failure_summary if not tests.get("valid") else {},
                     "test_failure_tail": tests_stdout[-4000:] if not tests.get("valid") else "",
                 }
@@ -1478,7 +1549,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
         ]
         return len(failures) >= 3
 
-    def _recent_failed_patch_files(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> List[str]:
+    def _recent_failed_patch_files(
+        self, recent_cycle_history: Sequence[Dict[str, Any]]
+    ) -> List[str]:
         files: List[str] = []
         for item in recent_cycle_history:
             if item.get("patch_valid") is not False:
@@ -1489,7 +1562,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     files.append(text)
         return files[:8]
 
-    def _recent_test_failures(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _recent_test_failures(
+        self, recent_cycle_history: Sequence[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         failures: List[Dict[str, Any]] = []
         for item in recent_cycle_history:
             validation_failed = item.get("post_apply_validation_valid") is False
@@ -1521,12 +1596,16 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "exception_types": summary.get("exception_types", [])[:8],
                     "failure_head": summary.get("failure_head", ""),
                     "failure_command": summary.get("failure_command", []),
-                    "candidate_validation_reasons": item.get("candidate_validation_failure_reasons", []),
+                    "candidate_validation_reasons": item.get(
+                        "candidate_validation_failure_reasons", []
+                    ),
                 }
             )
         return failures[:5]
 
-    def _recent_test_failed_files(self, recent_test_failures: Sequence[Dict[str, Any]]) -> List[str]:
+    def _recent_test_failed_files(
+        self, recent_test_failures: Sequence[Dict[str, Any]]
+    ) -> List[str]:
         files: List[str] = []
         for item in recent_test_failures:
             for path in item.get("changed_files") or []:
@@ -1560,7 +1639,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     files.append(text)
         return files[:8]
 
-    def _repeated_validation_recovery_feedback(self, progress_payload: Mapping[str, Any]) -> List[str]:
+    def _repeated_validation_recovery_feedback(
+        self, progress_payload: Mapping[str, Any]
+    ) -> List[str]:
         """Convert repeated candidate focused-test failures into repair feedback."""
 
         family = progress_payload.get("repeated_validation_failure_family") or {}
@@ -1573,7 +1654,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
         if count < 2:
             return []
 
-        files = ", ".join(self._repeated_validation_failed_files(progress_payload)) or "unknown files"
+        files = (
+            ", ".join(self._repeated_validation_failed_files(progress_payload)) or "unknown files"
+        )
         cycles = ", ".join(str(index) for index in family.get("cycle_indexes") or [])
         latest = family.get("latest_candidate_validation_failure") or {}
         summary = latest.get("summary") if isinstance(latest, Mapping) else {}
@@ -1633,7 +1716,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
     def _repeated_recovery_failure_feedback(self, progress_payload: Mapping[str, Any]) -> List[str]:
         """Convert repeated supervisor recovery failures into prompt feedback."""
 
-        escalation_reason = str(progress_payload.get("recovery_failure_escalation_reason") or "").strip()
+        escalation_reason = str(
+            progress_payload.get("recovery_failure_escalation_reason") or ""
+        ).strip()
         if not escalation_reason.startswith("repeated_recovery_failure:"):
             return []
         latest = progress_payload.get("last_recovery_failure") or {}
@@ -1643,7 +1728,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
         recovery_kind = str(latest.get("recovery_kind") or "").strip() or "unknown"
         reason_family = str(latest.get("reason_family") or "").strip() or "unknown"
         reason = " ".join(str(latest.get("reason") or "").split())
-        targets = ", ".join(self._repeated_recovery_failed_files(progress_payload)) or "unknown targets"
+        targets = (
+            ", ".join(self._repeated_recovery_failed_files(progress_payload)) or "unknown targets"
+        )
         failed_tests = self._repeated_recovery_failed_tests(progress_payload)
         signature = " ".join(str(latest.get("failure_signature") or "").split())
         parts = [
@@ -1690,7 +1777,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 tests.append(node_id)
         return tests[:12]
 
-    def _recent_metric_stall_failures(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _recent_metric_stall_failures(
+        self, recent_cycle_history: Sequence[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         failures: List[Dict[str, Any]] = []
         for item in recent_cycle_history:
             if item.get("apply_reason") != "metric_stall_no_metric_progress":
@@ -1762,7 +1851,11 @@ class LegalParserParityOptimizer(BaseOptimizer):
         force_full_suite: bool = False,
     ) -> Dict[str, Any]:
         if not self.daemon_config.run_tests:
-            return {"valid": True, "skipped": True, "command": list(self.daemon_config.test_command)}
+            return {
+                "valid": True,
+                "skipped": True,
+                "command": list(self.daemon_config.test_command),
+            }
         full_suite_decision = self._full_suite_validation_decision(
             cycle_index=cycle_index,
             changed_files=changed_files,
@@ -2021,7 +2114,9 @@ class LegalParserOptimizerDaemon:
                     patch_stability_mode=patch_stability_mode,
                     slice_scale_mode=str(slice_scale_contract.get("mode") or ""),
                     test_failure_recovery_mode=test_failure_recovery_mode,
-                    material_slice_gate_active=self._material_slice_gate_active(slice_scale_contract),
+                    material_slice_gate_active=self._material_slice_gate_active(
+                        slice_scale_contract
+                    ),
                 )
                 candidate_quality = self._enforce_deletion_heavy_patch_quality(
                     proposal_quality=candidate_quality,
@@ -2145,12 +2240,16 @@ class LegalParserOptimizerDaemon:
                         " Preserve accepted deterministic parser/export work; produce an additive or "
                         "equivalent replacement repair instead of deleting established helpers or tests."
                     )
-                attempt_feedback = list(feedback) + repair_phase_feedback + [
-                    (
-                        f"previous proposal attempt {attempt_index} was rejected before apply: "
-                        f"{retry_reason}.{retry_instruction}"
-                    )
-                ]
+                attempt_feedback = (
+                    list(feedback)
+                    + repair_phase_feedback
+                    + [
+                        (
+                            f"previous proposal attempt {attempt_index} was rejected before apply: "
+                            f"{retry_reason}.{retry_instruction}"
+                        )
+                    ]
+                )
                 self._write_current_status(
                     status="running",
                     phase=self._proposal_retry_phase(proposal_transport_mode),
@@ -2204,7 +2303,9 @@ class LegalParserOptimizerDaemon:
                 worktree_patch_check = self.optimizer.check_patch(worktree_proposal.unified_diff)
                 worktree_changed_files = _paths_from_unified_diff(worktree_proposal.unified_diff)
                 if worktree_patch_check.get("valid") is False:
-                    stderr_lines = str(worktree_patch_check.get("stderr") or "").strip().splitlines()
+                    stderr_lines = (
+                        str(worktree_patch_check.get("stderr") or "").strip().splitlines()
+                    )
                     first_line = stderr_lines[0] if stderr_lines else "patch_check_failed"
                     worktree_retry_reason = f"patch_check_failed:{first_line}"
             proposal_attempts.append(
@@ -2297,7 +2398,9 @@ class LegalParserOptimizerDaemon:
                 **proposal_quality,
                 "valid": False,
                 "reasons": list(proposal_quality.get("reasons", []))
-                + [f"patch touches files with pre-existing uncommitted changes: {', '.join(dirty_touched_files)}"],
+                + [
+                    f"patch touches files with pre-existing uncommitted changes: {', '.join(dirty_touched_files)}"
+                ],
                 "dirty_touched_files": dirty_touched_files,
             }
         if patch_check.get("valid") and not proposal_quality.get("valid"):
@@ -2312,11 +2415,19 @@ class LegalParserOptimizerDaemon:
         if not self.config.apply_patches:
             apply_result: Dict[str, Any] = {"applied": False, "reason": "apply_patches_disabled"}
         elif not patch_check.get("valid"):
-            reason = "proposal_quality_failed" if proposal_quality.get("valid") is False else "patch_check_failed"
+            reason = (
+                "proposal_quality_failed"
+                if proposal_quality.get("valid") is False
+                else "patch_check_failed"
+            )
             apply_result = {"applied": False, "reason": reason, "check": patch_check}
         else:
             apply_result = {"applied": False, "reason": "not_applied_yet"}
-        tests_result: Dict[str, Any] = {"valid": True, "skipped": True, "reason": "patch_not_applied"}
+        tests_result: Dict[str, Any] = {
+            "valid": True,
+            "skipped": True,
+            "reason": "patch_not_applied",
+        }
         post_apply_validation: Dict[str, Any] = {
             "valid": True,
             "skipped": True,
@@ -2328,7 +2439,10 @@ class LegalParserOptimizerDaemon:
             "changed_files": [],
             "reason": "patch_not_applied",
         }
-        commit_result: Dict[str, Any] = {"committed": False, "reason": "commit_accepted_patches_disabled"}
+        commit_result: Dict[str, Any] = {
+            "committed": False,
+            "reason": "commit_accepted_patches_disabled",
+        }
         failed_test_repair: Dict[str, Any] = {
             "attempted": False,
             "reason": "not_needed",
@@ -2415,7 +2529,9 @@ class LegalParserOptimizerDaemon:
                             )
                             rollback = self._restore_patch_paths(pre_apply_files)
                             if not rollback.get("valid"):
-                                rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                                rollback["diff_restore"] = self._restore_working_tree_diff(
+                                    pre_apply_diff
+                                )
                             apply_result["rolled_back"] = True
                             apply_result["rollback"] = rollback
                             apply_result["reason"] = "metric_stall_no_metric_progress"
@@ -2426,7 +2542,10 @@ class LegalParserOptimizerDaemon:
                                 "reason": "metric_stall_no_metric_progress",
                                 "metric_progress": metric_progress,
                             }
-                            commit_result = {"committed": False, "reason": "metric_stall_no_metric_progress"}
+                            commit_result = {
+                                "committed": False,
+                                "reason": "metric_stall_no_metric_progress",
+                            }
                         else:
                             retained_change = self._retained_change_summary(pre_apply_files)
                             retained_patch_path = cycle_dir / "retained.patch"
@@ -2436,8 +2555,12 @@ class LegalParserOptimizerDaemon:
                             )
                             retained_change["patch_path"] = str(retained_patch_path)
                             retained_change["metric_progress"] = metric_progress
-                            if self.config.commit_accepted_patches and retained_change.get("has_retained_changes"):
-                                commit_result = self._commit_retained_change(cycle_index, proposal, retained_change)
+                            if self.config.commit_accepted_patches and retained_change.get(
+                                "has_retained_changes"
+                            ):
+                                commit_result = self._commit_retained_change(
+                                    cycle_index, proposal, retained_change
+                                )
                     else:
                         failed_test_repair = self._repair_failed_tests_before_rollback(
                             cycle_index=cycle_index,
@@ -2472,7 +2595,9 @@ class LegalParserOptimizerDaemon:
                                 failed_test_repair.get("post_apply_validation") or {}
                             )
                             tests_result = dict(failed_test_repair.get("tests_result") or {})
-                            pre_apply_files = dict(failed_test_repair.get("pre_apply_files") or pre_apply_files)
+                            pre_apply_files = dict(
+                                failed_test_repair.get("pre_apply_files") or pre_apply_files
+                            )
                             apply_result = dict(failed_test_repair.get("apply_result") or {})
                             apply_result["failed_test_repair"] = failed_test_repair
                             self._write_current_status(
@@ -2504,7 +2629,9 @@ class LegalParserOptimizerDaemon:
                                 )
                                 rollback = self._restore_patch_paths(pre_apply_files)
                                 if not rollback.get("valid"):
-                                    rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                                    rollback["diff_restore"] = self._restore_working_tree_diff(
+                                        pre_apply_diff
+                                    )
                                 apply_result["rolled_back"] = True
                                 apply_result["rollback"] = rollback
                                 apply_result["reason"] = "metric_stall_no_metric_progress"
@@ -2515,7 +2642,10 @@ class LegalParserOptimizerDaemon:
                                     "reason": "metric_stall_no_metric_progress",
                                     "metric_progress": metric_progress,
                                 }
-                                commit_result = {"committed": False, "reason": "metric_stall_no_metric_progress"}
+                                commit_result = {
+                                    "committed": False,
+                                    "reason": "metric_stall_no_metric_progress",
+                                }
                             else:
                                 retained_change = self._retained_change_summary(pre_apply_files)
                                 retained_patch_path = cycle_dir / "retained.patch"
@@ -2526,7 +2656,9 @@ class LegalParserOptimizerDaemon:
                                 retained_change["patch_path"] = str(retained_patch_path)
                                 retained_change["metric_progress"] = metric_progress
                                 retained_change["repaired_failed_tests"] = True
-                                if self.config.commit_accepted_patches and retained_change.get("has_retained_changes"):
+                                if self.config.commit_accepted_patches and retained_change.get(
+                                    "has_retained_changes"
+                                ):
                                     commit_result = self._commit_retained_change(
                                         cycle_index,
                                         proposal,
@@ -2535,7 +2667,9 @@ class LegalParserOptimizerDaemon:
                         else:
                             rollback = self._restore_patch_paths(pre_apply_files)
                             if not rollback.get("valid"):
-                                rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                                rollback["diff_restore"] = self._restore_working_tree_diff(
+                                    pre_apply_diff
+                                )
                             apply_result["rolled_back"] = True
                             apply_result["rollback"] = rollback
                             retained_change = {
@@ -2732,7 +2866,9 @@ class LegalParserOptimizerDaemon:
             if not restored_to_pre_apply:
                 restore_before_repair = self._restore_patch_paths(pre_apply_files)
                 if not restore_before_repair.get("valid"):
-                    restore_before_repair["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                    restore_before_repair["diff_restore"] = self._restore_working_tree_diff(
+                        pre_apply_diff
+                    )
                 attempt_record["restore_before_repair"] = restore_before_repair
                 restored_to_pre_apply = True
                 if not restore_before_repair.get("valid"):
@@ -2765,7 +2901,9 @@ class LegalParserOptimizerDaemon:
             if not repair_apply_result.get("applied"):
                 restore_failed_apply = self._restore_patch_paths(repair_pre_apply_files)
                 if not restore_failed_apply.get("valid"):
-                    restore_failed_apply["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                    restore_failed_apply["diff_restore"] = self._restore_working_tree_diff(
+                        pre_apply_diff
+                    )
                 attempt_record["restore_after_failed_apply"] = restore_failed_apply
                 attempt_record["retry_reason"] = "repair_apply_failed"
                 attempts.append(attempt_record)
@@ -2786,11 +2924,13 @@ class LegalParserOptimizerDaemon:
             if not repair_post_apply_validation.get("valid"):
                 restore_failed_validation = self._restore_patch_paths(repair_pre_apply_files)
                 if not restore_failed_validation.get("valid"):
-                    restore_failed_validation["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                    restore_failed_validation["diff_restore"] = self._restore_working_tree_diff(
+                        pre_apply_diff
+                    )
                 attempt_record["restore_after_failed_validation"] = restore_failed_validation
                 attempt_record["retry_reason"] = "post_apply_validation_failed"
-                attempt_record["validation_failure_summary"] = _summarize_post_apply_validation_failure(
-                    repair_post_apply_validation
+                attempt_record["validation_failure_summary"] = (
+                    _summarize_post_apply_validation_failure(repair_post_apply_validation)
                 )
                 attempts.append(attempt_record)
                 base_proposal = repair_proposal
@@ -2834,7 +2974,9 @@ class LegalParserOptimizerDaemon:
 
             restore_failed_tests = self._restore_patch_paths(repair_pre_apply_files)
             if not restore_failed_tests.get("valid"):
-                restore_failed_tests["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                restore_failed_tests["diff_restore"] = self._restore_working_tree_diff(
+                    pre_apply_diff
+                )
             attempt_record["restore_after_failed_tests"] = restore_failed_tests
             attempt_record["retry_reason"] = "tests_failed_after_repair"
             attempts.append(attempt_record)
@@ -2860,7 +3002,11 @@ class LegalParserOptimizerDaemon:
         proposal_transport_mode: str,
     ) -> str:
         if proposal_transport_mode == "worktree":
-            return "repairing_failed_worktree_edit" if repair_phase_feedback else "requesting_worktree_edit"
+            return (
+                "repairing_failed_worktree_edit"
+                if repair_phase_feedback
+                else "requesting_worktree_edit"
+            )
         return "repairing_failed_patch" if repair_phase_feedback else "requesting_llm_patch"
 
     def _proposal_retry_phase(self, proposal_transport_mode: str) -> str:
@@ -2955,7 +3101,9 @@ class LegalParserOptimizerDaemon:
         worktree_timeout = max(1, int(self.config.worktree_edit_timeout_seconds))
         effective_test_timeout = test_timeout
         if hasattr(self.optimizer, "effective_test_timeout_seconds"):
-            effective_test_timeout = max(test_timeout, int(self.optimizer.effective_test_timeout_seconds()))
+            effective_test_timeout = max(
+                test_timeout, int(self.optimizer.effective_test_timeout_seconds())
+            )
         heartbeat_interval = max(1, int(float(self.config.heartbeat_interval_seconds) or 1))
         slack = max(60, heartbeat_interval * 3)
         if phase in {"requesting_llm_patch", "retrying_llm_patch", "repairing_failed_patch"}:
@@ -3168,7 +3316,9 @@ class LegalParserOptimizerDaemon:
             reasons.append("proposal unified_diff is empty")
         if self.config.require_production_and_tests:
             if not production_files:
-                reasons.append("patch must touch at least one production deontic parser/export file")
+                reasons.append(
+                    "patch must touch at least one production deontic parser/export file"
+                )
             if not test_files:
                 reasons.append("patch must touch at least one deontic parser test file")
         reasons.extend(self._source_slot_erasure_reasons(proposal))
@@ -3249,16 +3399,25 @@ class LegalParserOptimizerDaemon:
         history = self.optimizer._recent_cycle_history(limit=5)
         failures = self.optimizer._recent_test_failures(history)
         progress = self.optimizer._progress_snapshot()
-        repeated_validation_feedback = self.optimizer._repeated_validation_recovery_feedback(progress)
+        repeated_validation_feedback = self.optimizer._repeated_validation_recovery_feedback(
+            progress
+        )
         repeated_recovery_feedback = self.optimizer._repeated_recovery_failure_feedback(progress)
         if not failures and not repeated_validation_feedback and not repeated_recovery_feedback:
             return []
-        feedback: List[str] = list(repeated_validation_feedback) + list(repeated_recovery_feedback) + [
-            "repair_phase: previous candidate failed validation/tests; repair the named failure before adding new behavior."
-        ]
+        feedback: List[str] = (
+            list(repeated_validation_feedback)
+            + list(repeated_recovery_feedback)
+            + [
+                "repair_phase: previous candidate failed validation/tests; repair the named failure before adding new behavior."
+            ]
+        )
         for failure in failures[:3]:
             phase = str(failure.get("failure_phase") or "tests")
-            files = ", ".join(str(path) for path in failure.get("changed_files") or []) or "unknown files"
+            files = (
+                ", ".join(str(path) for path in failure.get("changed_files") or [])
+                or "unknown files"
+            )
             failed_tests = ", ".join(str(item) for item in failure.get("failed_tests") or [])
             exception_types = ", ".join(str(item) for item in failure.get("exception_types") or [])
             head = " ".join(str(failure.get("failure_head") or "").split())
@@ -3491,9 +3650,7 @@ class LegalParserOptimizerDaemon:
     ) -> Dict[str, Any]:
         production_files = _production_files(changed_files)
         non_exports_production = [
-            path
-            for path in production_files
-            if path != "ipfs_datasets_py/logic/deontic/exports.py"
+            path for path in production_files if path != "ipfs_datasets_py/logic/deontic/exports.py"
         ]
         if non_exports_production:
             invariant_reasons = self._protected_reference_repair_invariant_reasons(proposal)
@@ -3688,7 +3845,9 @@ class LegalParserOptimizerDaemon:
         irreducible_residual_mode: bool = False,
     ) -> Dict[str, Any]:
         pre_metrics = dict(evaluation.get("metrics") or {})
-        post_metrics = dict((post_evaluation.get("metrics") or {}) if isinstance(post_evaluation, dict) else {})
+        post_metrics = dict(
+            (post_evaluation.get("metrics") or {}) if isinstance(post_evaluation, dict) else {}
+        )
         result = {
             "valid": True,
             "metric_stall_mode": metric_stall_mode,
@@ -3701,7 +3860,9 @@ class LegalParserOptimizerDaemon:
         if not metric_stall_mode:
             return result
 
-        moved_metrics = self._moved_expected_metrics(proposal.expected_metric_gain or {}, pre_metrics, post_metrics)
+        moved_metrics = self._moved_expected_metrics(
+            proposal.expected_metric_gain or {}, pre_metrics, post_metrics
+        )
         pre_score = _as_float(pre_metrics.get("parity_score"))
         post_score = _as_float(post_metrics.get("parity_score"))
         score_delta = None if pre_score is None or post_score is None else post_score - pre_score
@@ -3732,7 +3893,9 @@ class LegalParserOptimizerDaemon:
 
     def _claims_deterministic_coverage_gain(self, proposal: LegalParserCycleProposal) -> bool:
         gain_keys = {str(key) for key in (proposal.expected_metric_gain or {})}
-        return bool(gain_keys & {"coverage_expansion", "deterministic_coverage", "parser_capability"})
+        return bool(
+            gain_keys & {"coverage_expansion", "deterministic_coverage", "parser_capability"}
+        )
 
     def _selected_metric_snapshot(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
         keys = [
@@ -3790,7 +3953,9 @@ class LegalParserOptimizerDaemon:
                 moved[metric] = {"before": before, "after": after, "expected_gain": expected}
         return moved
 
-    def _coverage_feedback_reduced(self, pre_metrics: Dict[str, Any], post_metrics: Dict[str, Any]) -> bool:
+    def _coverage_feedback_reduced(
+        self, pre_metrics: Dict[str, Any], post_metrics: Dict[str, Any]
+    ) -> bool:
         pre_gaps = {str(item) for item in pre_metrics.get("coverage_gaps") or []}
         post_gaps = {str(item) for item in post_metrics.get("coverage_gaps") or []}
         return bool(pre_gaps) and post_gaps < pre_gaps
@@ -3861,7 +4026,11 @@ class LegalParserOptimizerDaemon:
         if exceptions:
             return f"candidate_post_apply_validation_failed:{exceptions}"
         reasons = "; ".join(str(item) for item in validation.get("reasons") or [])
-        return f"candidate_post_apply_validation_failed:{reasons}" if reasons else "candidate_post_apply_validation_failed"
+        return (
+            f"candidate_post_apply_validation_failed:{reasons}"
+            if reasons
+            else "candidate_post_apply_validation_failed"
+        )
 
     def _record_progress(self, cycle_payload: Dict[str, Any]) -> None:
         accepted = _cycle_was_kept(cycle_payload)
@@ -3878,13 +4047,14 @@ class LegalParserOptimizerDaemon:
             return
         ledger_path = self.output_dir / "accepted_changes.jsonl"
         accepted_records = [
-            self._accepted_change_record(cycle)
-            for cycle in cycles
-            if _cycle_was_kept(cycle)
+            self._accepted_change_record(cycle) for cycle in cycles if _cycle_was_kept(cycle)
         ]
         ledger_path.parent.mkdir(parents=True, exist_ok=True)
         ledger_path.write_text(
-            "".join(json.dumps(record, default=str, sort_keys=True) + "\n" for record in accepted_records),
+            "".join(
+                json.dumps(record, default=str, sort_keys=True) + "\n"
+                for record in accepted_records
+            ),
             encoding="utf-8",
         )
         progress = self._build_progress_summary(latest_cycle=cycles[-1])
@@ -3892,7 +4062,9 @@ class LegalParserOptimizerDaemon:
         self._write_progress_report(progress)
 
     def _append_accepted_change(self, cycle_payload: Dict[str, Any]) -> None:
-        _shared_append_jsonl(self.output_dir / "accepted_changes.jsonl", self._accepted_change_record(cycle_payload))
+        _shared_append_jsonl(
+            self.output_dir / "accepted_changes.jsonl", self._accepted_change_record(cycle_payload)
+        )
 
     def _accepted_change_record(self, cycle_payload: Dict[str, Any]) -> Dict[str, Any]:
         proposal = {}
@@ -3916,7 +4088,9 @@ class LegalParserOptimizerDaemon:
             "retained_change": cycle_payload.get("retained_change", {}),
             "commit_result": cycle_payload.get("commit_result", {}),
             "pre_score": cycle_payload.get("score"),
-            "post_score": (cycle_payload.get("post_evaluation") or {}).get("metrics", {}).get("parity_score"),
+            "post_score": (cycle_payload.get("post_evaluation") or {})
+            .get("metrics", {})
+            .get("parity_score"),
             "tests": cycle_payload.get("tests", {}),
         }
 
@@ -3933,7 +4107,9 @@ class LegalParserOptimizerDaemon:
     def _build_progress_summary(self, *, latest_cycle: Dict[str, Any]) -> Dict[str, Any]:
         cycles = self._read_cycle_summaries()
         latest_index = latest_cycle.get("cycle_index")
-        if latest_index is not None and all(cycle.get("cycle_index") != latest_index for cycle in cycles):
+        if latest_index is not None and all(
+            cycle.get("cycle_index") != latest_index for cycle in cycles
+        ):
             cycles.append(latest_cycle)
         epoch_started_at = self.run_started_at
         epoch_cycles = [cycle for cycle in cycles if _cycle_in_epoch(cycle, epoch_started_at)]
@@ -4002,9 +4178,15 @@ class LegalParserOptimizerDaemon:
                 "reason": _cycle_rejection_reason(cycle),
                 "changed_files": cycle.get("changed_files", []),
                 "quality_gate_summary": _cycle_quality_gate_summary(cycle),
-                "patch_stderr_tail": str((cycle.get("patch_check") or {}).get("stderr") or "")[-1000:],
-                "proposal_quality_reasons": (cycle.get("proposal_quality") or {}).get("reasons", []),
-                "dirty_touched_files": (cycle.get("proposal_quality") or {}).get("dirty_touched_files", []),
+                "patch_stderr_tail": str((cycle.get("patch_check") or {}).get("stderr") or "")[
+                    -1000:
+                ],
+                "proposal_quality_reasons": (cycle.get("proposal_quality") or {}).get(
+                    "reasons", []
+                ),
+                "dirty_touched_files": (cycle.get("proposal_quality") or {}).get(
+                    "dirty_touched_files", []
+                ),
                 "latest_candidate_validation_failure": _latest_candidate_validation_failure(
                     cycle.get("proposal_attempts") or []
                 ),
@@ -4200,14 +4382,18 @@ class LegalParserOptimizerDaemon:
             lines.append("Commits since this daemon run started:")
             lines.extend(f"- `{commit}`" for commit in commits_since_start)
         else:
-            lines.append("No deontic parser commits have been created since this daemon run started.")
+            lines.append(
+                "No deontic parser commits have been created since this daemon run started."
+            )
         lines.append("")
         if uncommitted_files:
             lines.append("Uncommitted deontic parser files:")
             lines.extend(f"- `{path}`" for path in uncommitted_files)
         else:
             lines.append("No uncommitted deontic parser files are currently visible.")
-        diff_stat = str(git_work.get("diff_since_run_start_stat") or git_work.get("diff_stat") or "").strip()
+        diff_stat = str(
+            git_work.get("diff_since_run_start_stat") or git_work.get("diff_stat") or ""
+        ).strip()
         if diff_stat:
             lines.extend(["", "Diff stat:", "", "```text", diff_stat, "```"])
         lines.extend(["", "## Recent Accepted Changes", ""])
@@ -4215,7 +4401,9 @@ class LegalParserOptimizerDaemon:
         if accepted:
             for item in accepted[-10:]:
                 files = ", ".join(item.get("changed_files") or [])
-                lines.append(f"- Cycle `{item.get('cycle_index')}`: {item.get('summary') or '(no summary)'}")
+                lines.append(
+                    f"- Cycle `{item.get('cycle_index')}`: {item.get('summary') or '(no summary)'}"
+                )
                 if files:
                     lines.append(f"  Files: `{files}`")
         else:
@@ -4239,10 +4427,14 @@ class LegalParserOptimizerDaemon:
                 lines.append(f"- attempt: `{attempt}`")
             failed_tests = summary.get("failed_tests") or []
             if failed_tests:
-                lines.append("- failed tests: " + ", ".join(f"`{name}`" for name in failed_tests[:6]))
+                lines.append(
+                    "- failed tests: " + ", ".join(f"`{name}`" for name in failed_tests[:6])
+                )
             exception_types = summary.get("exception_types") or []
             if exception_types:
-                lines.append("- exception types: " + ", ".join(f"`{name}`" for name in exception_types[:6]))
+                lines.append(
+                    "- exception types: " + ", ".join(f"`{name}`" for name in exception_types[:6])
+                )
             failure_command = summary.get("failure_command") or []
             if failure_command:
                 lines.append("- command: `" + " ".join(str(part) for part in failure_command) + "`")
@@ -4318,7 +4510,9 @@ class LegalParserOptimizerDaemon:
             lines.extend(["", "Rollback reasons since meaningful progress:"])
             lines.extend(
                 f"- `{reason}`: `{count}`"
-                for reason, count in sorted(rollback_reasons.items(), key=lambda item: (-int(item[1]), item[0]))
+                for reason, count in sorted(
+                    rollback_reasons.items(), key=lambda item: (-int(item[1]), item[0])
+                )
             )
         lines.extend(["", "## Recent Rejections", ""])
         recent_rejections = progress.get("recent_rejections") or []
@@ -4459,8 +4653,7 @@ class LegalParserOptimizerDaemon:
         if signature is not None:
             parameters = signature.parameters
             accepts_kwargs = any(
-                parameter.kind == inspect.Parameter.VAR_KEYWORD
-                for parameter in parameters.values()
+                parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in parameters.values()
             )
             candidate_kwargs = {
                 "cycle_index": cycle_index,
@@ -4573,7 +4766,9 @@ class LegalParserOptimizerDaemon:
         changed_files = [str(path) for path in retained_change.get("changed_files") or []]
         if not changed_files:
             return {"committed": False, "reason": "no_retained_changed_files"}
-        add_result = _run_command(["git", "add", "--", *changed_files], cwd=self.config.repo_root, timeout=60)
+        add_result = _run_command(
+            ["git", "add", "--", *changed_files], cwd=self.config.repo_root, timeout=60
+        )
         if not add_result.get("valid"):
             return {"committed": False, "reason": "git_add_failed", "add": add_result}
         summary = proposal.summary.strip() or "Improve deterministic legal parser"
@@ -4592,10 +4787,14 @@ class LegalParserOptimizerDaemon:
             cwd=self.config.repo_root,
             timeout=120,
         )
-        head_result = _run_command(["git", "rev-parse", "--short", "HEAD"], cwd=self.config.repo_root, timeout=30)
+        head_result = _run_command(
+            ["git", "rev-parse", "--short", "HEAD"], cwd=self.config.repo_root, timeout=30
+        )
         return {
             "committed": bool(commit_result.get("valid")),
-            "commit": str(head_result.get("stdout") or "").strip() if commit_result.get("valid") else "",
+            "commit": str(head_result.get("stdout") or "").strip()
+            if commit_result.get("valid")
+            else "",
             "changed_files": changed_files,
             "commit_command": commit_result,
         }
@@ -4643,7 +4842,9 @@ def parse_cycle_proposal(raw_response: str) -> LegalParserCycleProposal:
         return proposal
     proposal.summary = str(payload.get("summary") or "")
     proposal.focus_area = str(payload.get("focus_area") or "")
-    proposal.requirements_addressed = [str(item) for item in payload.get("requirements_addressed") or []]
+    proposal.requirements_addressed = [
+        str(item) for item in payload.get("requirements_addressed") or []
+    ]
     proposal.acceptance_criteria = [str(item) for item in payload.get("acceptance_criteria") or []]
     proposal.changed_files = [str(item) for item in payload.get("changed_files") or []]
     proposal.expected_metric_gain = dict(payload.get("expected_metric_gain") or {})
@@ -4882,7 +5083,9 @@ def _cycle_was_kept(cycle_payload: Dict[str, Any]) -> bool:
 def _cycle_in_epoch(cycle_payload: Mapping[str, Any], epoch_started_at: str) -> bool:
     if not epoch_started_at:
         return True
-    cycle_started_at = str(cycle_payload.get("started_at") or cycle_payload.get("finished_at") or "")
+    cycle_started_at = str(
+        cycle_payload.get("started_at") or cycle_payload.get("finished_at") or ""
+    )
     if not cycle_started_at:
         return True
     try:
@@ -4944,7 +5147,9 @@ def _rejection_family_reason(reason: str) -> str:
         return "dirty_touched_files"
     if text.startswith("proposal_quality_failed:"):
         first_detail = text.split(":", 1)[1].split(";", 1)[0].strip()
-        return f"proposal_quality_failed:{first_detail}" if first_detail else "proposal_quality_failed"
+        return (
+            f"proposal_quality_failed:{first_detail}" if first_detail else "proposal_quality_failed"
+        )
     if text.startswith("patch_check_failed:"):
         return "patch_check_failed"
     return text.split(":", 1)[0]
@@ -5011,19 +5216,13 @@ def _validation_failure_family_signature(
         if str(path).strip()
     ]
     failed_tests = [
-        str(name).strip()
-        for name in (summary.get("failed_tests") or [])
-        if str(name).strip()
+        str(name).strip() for name in (summary.get("failed_tests") or []) if str(name).strip()
     ]
     exception_types = [
-        str(name).strip()
-        for name in (summary.get("exception_types") or [])
-        if str(name).strip()
+        str(name).strip() for name in (summary.get("exception_types") or []) if str(name).strip()
     ]
     reasons = [
-        str(reason).strip()
-        for reason in (failure.get("reasons") or [])
-        if str(reason).strip()
+        str(reason).strip() for reason in (failure.get("reasons") or []) if str(reason).strip()
     ]
     head_lines = _normalized_failure_head_lines(summary.get("failure_head") or "", limit=4)
     return json.dumps(
@@ -5139,10 +5338,16 @@ def _process_descendant_snapshots(root_pid: int) -> List[Dict[str, Any]]:
                 if line.startswith("PPid:"):
                     ppid = int(line.split(":", 1)[1].strip() or "0")
                     break
-            cmdline = (entry / "cmdline").read_bytes().replace(b"\0", b" ").decode(
-                "utf-8",
-                errors="replace",
-            ).strip()
+            cmdline = (
+                (entry / "cmdline")
+                .read_bytes()
+                .replace(b"\0", b" ")
+                .decode(
+                    "utf-8",
+                    errors="replace",
+                )
+                .strip()
+            )
             if not cmdline:
                 comm = (entry / "comm").read_text(encoding="utf-8", errors="replace").strip()
                 cmdline = f"[{comm}]"
@@ -5179,11 +5384,18 @@ def _looks_like_worktree_worker(cmdline: str) -> bool:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run the deterministic legal parser optimizer daemon.")
+    parser = argparse.ArgumentParser(
+        description="Run the deterministic legal parser optimizer daemon."
+    )
     parser.add_argument("--repo-root", default=".", help="Repository root for ipfs_datasets_py.")
     parser.add_argument("--output-dir", default="artifacts/legal_parser_optimizer_daemon")
-    parser.add_argument("--model-name", default=os.environ.get("LEGAL_PARSER_DAEMON_MODEL", DEFAULT_CODEX_MODEL))
-    parser.add_argument("--provider", default=os.environ.get("LEGAL_PARSER_DAEMON_PROVIDER") or DEFAULT_CODEX_PROVIDER)
+    parser.add_argument(
+        "--model-name", default=os.environ.get("LEGAL_PARSER_DAEMON_MODEL", DEFAULT_CODEX_MODEL)
+    )
+    parser.add_argument(
+        "--provider",
+        default=os.environ.get("LEGAL_PARSER_DAEMON_PROVIDER") or DEFAULT_CODEX_PROVIDER,
+    )
     parser.add_argument("--max-cycles", type=int, default=1)
     parser.add_argument("--cycle-interval-seconds", type=float, default=0.0)
     parser.add_argument("--error-backoff-seconds", type=float, default=30.0)
@@ -5221,7 +5433,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--worktree-root",
-        default=os.environ.get("LEGAL_PARSER_DAEMON_WORKTREE_ROOT", ".daemon/legal-parser-worktrees"),
+        default=os.environ.get(
+            "LEGAL_PARSER_DAEMON_WORKTREE_ROOT", ".daemon/legal-parser-worktrees"
+        ),
         help="Directory for throwaway direct-edit Git worktrees.",
     )
     parser.add_argument(
@@ -5267,7 +5481,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Do not reject valid patches that lack a deontic test-file change.",
     )
     parser.add_argument("--target-score", type=float, default=0.98)
-    parser.add_argument("--apply-patches", action="store_true", help="Apply LLM-generated patches after git apply --check.")
+    parser.add_argument(
+        "--apply-patches",
+        action="store_true",
+        help="Apply LLM-generated patches after git apply --check.",
+    )
     parser.add_argument(
         "--commit-accepted-patches",
         action="store_true",
@@ -5289,7 +5507,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 
 def config_from_args(args: argparse.Namespace) -> LegalParserDaemonConfig:
-    test_command = tuple(args.test_command) if args.test_command else ("pytest", "tests/unit_tests/logic/deontic")
+    test_command = (
+        tuple(args.test_command)
+        if args.test_command
+        else ("pytest", "tests/unit_tests/logic/deontic")
+    )
     return LegalParserDaemonConfig(
         repo_root=Path(args.repo_root),
         output_dir=Path(args.output_dir),

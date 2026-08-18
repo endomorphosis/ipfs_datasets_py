@@ -39,14 +39,20 @@ def compile_temporal_deadline(text: str, *, provenance_id: str = "") -> dict[str
             "relation": relation,
             "unit": _canonical_unit(match.group("unit")),
         }
-        item["constraint_id"] = f"tdfol-deadline:{_digest({'item': item, 'provenance_ids': provenance_ids})[:24]}"
+        item["constraint_id"] = (
+            f"tdfol-deadline:{_digest({'item': item, 'provenance_ids': provenance_ids})[:24]}"
+        )
         constraints.append(item)
         occupied.append(match.span())
     for match in _ORDER_RE.finditer(str(text or "")):
         if any(start <= match.start() < end for start, end in occupied):
             continue
         raw_relation = _atom(match.group("relation"))
-        relation = "before_or_at" if raw_relation in {"not_later_than", "no_later_than", "on_or_before"} else raw_relation
+        relation = (
+            "before_or_at"
+            if raw_relation in {"not_later_than", "no_later_than", "on_or_before"}
+            else raw_relation
+        )
         item = {
             "anchor": _anchor(match.group("anchor")),
             "anchor_type": "event_or_instant",
@@ -55,7 +61,9 @@ def compile_temporal_deadline(text: str, *, provenance_id: str = "") -> dict[str
             "relation": relation,
             "unit": "instant",
         }
-        item["constraint_id"] = f"tdfol-deadline:{_digest({'item': item, 'provenance_ids': provenance_ids})[:24]}"
+        item["constraint_id"] = (
+            f"tdfol-deadline:{_digest({'item': item, 'provenance_ids': provenance_ids})[:24]}"
+        )
         constraints.append(item)
     return {
         "constraints": constraints,
@@ -67,7 +75,13 @@ def compile_temporal_deadline(text: str, *, provenance_id: str = "") -> dict[str
 
 def _canonical_unit(value: Any) -> str:
     unit = _atom(value)
-    return {"day": "days", "week": "weeks", "month": "months", "year": "years", "business_day": "business_days"}.get(unit, unit)
+    return {
+        "day": "days",
+        "week": "weeks",
+        "month": "months",
+        "year": "years",
+        "business_day": "business_days",
+    }.get(unit, unit)
 
 
 def _anchor(value: Any) -> str:
@@ -88,7 +102,9 @@ def _atom(value: Any) -> str:
 
 
 def _digest(value: Any) -> str:
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+    ).hexdigest()
 
 
 __all__ = ["TDFOL_COMPILER_REPAIR_SCHEMA_VERSION", "compile_temporal_deadline"]

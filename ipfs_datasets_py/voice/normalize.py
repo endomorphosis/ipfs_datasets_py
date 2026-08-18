@@ -285,9 +285,7 @@ normalize_spoken_text = normalize_indextts_spoken_text
 def normalized_text_identity(text: str) -> str:
     """Return the order-independent equality key used for text de-duplication."""
 
-    return _SPACE_RE.sub(
-        " ", unicodedata.normalize("NFKC", str(text or ""))
-    ).strip().casefold()
+    return _SPACE_RE.sub(" ", unicodedata.normalize("NFKC", str(text or ""))).strip().casefold()
 
 
 def deterministic_split(
@@ -310,9 +308,7 @@ def deterministic_split(
     total = sum(weights)
     if total <= 0:
         raise ValueError("at least one split weight must be positive")
-    bucket = int.from_bytes(
-        sha256(f"{salt}\0{key}".encode()).digest()[:8], "big"
-    ) % total
+    bucket = int.from_bytes(sha256(f"{salt}\0{key}".encode()).digest()[:8], "big") % total
     if bucket < train:
         return "train"
     if bucket < train + validation:
@@ -475,9 +471,7 @@ class NormalizationResult:
 
     def quality_summary(self) -> dict[str, Any]:
         reasons = Counter(
-            code
-            for item in (*self.quarantine, *self.warnings)
-            for code in item.reason_codes
+            code for item in (*self.quarantine, *self.warnings) for code in item.reason_codes
         )
         accepted = {
             "responses": len(self.responses),
@@ -529,9 +523,7 @@ class NormalizationResult:
             "quarantine": [row.to_dict() for row in self.quarantine],
             "warnings": [row.to_dict() for row in self.warnings],
             "duplicates": [row.to_dict() for row in self.duplicates],
-            "input_dispositions": [
-                row.to_dict() for row in self.input_dispositions
-            ],
+            "input_dispositions": [row.to_dict() for row in self.input_dispositions],
             "splits": dict(sorted(self.splits.items())),
             "quality_summary": self.quality_summary(),
         }
@@ -584,9 +576,7 @@ def _source_ref(source_uri: str, record: Mapping[str, Any], family: str) -> str:
     return f"{source_uri}#{family}/{key}"
 
 
-def _issue(
-    code: QuarantineReason, message: str, field_name: str | None = None
-) -> QualityIssue:
+def _issue(code: QuarantineReason, message: str, field_name: str | None = None) -> QualityIssue:
     return QualityIssue(code=code, message=message, field=field_name)
 
 
@@ -611,9 +601,7 @@ def _spoken_quality_issues(
         )
     source_types = {item.casefold() for item in _strings(record.get("sourceTypes"))}
     candidate_kind = str(record.get("candidateKind") or "").casefold()
-    bm25_only = (
-        "graphrag.bm25_term" in source_types or candidate_kind == "bm25_term"
-    ) and not any(
+    bm25_only = ("graphrag.bm25_term" in source_types or candidate_kind == "bm25_term") and not any(
         item in source_types
         for item in (
             "audio_plan.slot_value",
@@ -663,9 +651,7 @@ def _extract_slots(
 ) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...], tuple[QualityIssue, ...]]:
     names = list(_ordered_strings(_first(record, "slot_names", "slotNames")))
     values = list(_ordered_strings(_first(record, "slot_values", "slotValues")))
-    sources = list(
-        _ordered_strings(_first(record, "slot_source_cids", "slotSourceCids"))
-    )
+    sources = list(_ordered_strings(_first(record, "slot_source_cids", "slotSourceCids")))
     raw_slots = record.get("slots")
     if isinstance(raw_slots, Sequence) and not isinstance(raw_slots, str | bytes):
         names, values, sources = [], [], []
@@ -674,9 +660,7 @@ def _extract_slots(
                 continue
             name = str(_first(slot, "name", "slot", "slotName") or "").strip()
             value = str(_first(slot, "value", "slotValue") or "").strip()
-            source = str(
-                _first(slot, "source_cid", "sourceCid", "sourceCID") or ""
-            ).strip()
+            source = str(_first(slot, "source_cid", "sourceCid", "sourceCID") or "").strip()
             if name or value or source:
                 names.append(name)
                 values.append(value)
@@ -743,14 +727,10 @@ def _audio_candidate(
     raw_path = _first(record, *_AUDIO_PATH_FIELDS)
     path = _resolve_audio_path(record, audio_root)
     uri_value = _first(record, *_AUDIO_URI_FIELDS)
-    uri = (
-        str(uri_value).strip()
-        if uri_value
-        else (str(raw_path).strip() if raw_path else None)
+    uri = str(uri_value).strip() if uri_value else (str(raw_path).strip() if raw_path else None)
+    explicit_digest = (
+        str(_first(record, "audioSha256", "audio_sha256", "sha256") or "").strip().lower()
     )
-    explicit_digest = str(
-        _first(record, "audioSha256", "audio_sha256", "sha256") or ""
-    ).strip().lower()
     digest = explicit_digest if re.fullmatch(r"[0-9a-f]{64}", explicit_digest) else ""
     issues: list[QualityIssue] = []
     actual_length: int | None = None
@@ -810,9 +790,7 @@ def _audio_candidate(
         )
         or ("audio/wav" if str(uri).lower().endswith(".wav") else "audio/mpeg")
     )
-    byte_length = _first(
-        record, "preferredBytes", "mp3Bytes", "audioBytes", "byte_length"
-    )
+    byte_length = _first(record, "preferredBytes", "mp3Bytes", "audioBytes", "byte_length")
     if actual_length is not None:
         byte_length = actual_length
     try:
@@ -839,21 +817,15 @@ def _audio_candidate(
                 model=record.get("model"),
                 voice=_first(record, "voice", "voiceDescription"),
                 source_cids=_strings(_first(record, "source_cids", "sourceCids")),
-                safety_labels=_strings(
-                    _first(record, "safety_labels", "safetyLabels")
-                ),
+                safety_labels=_strings(_first(record, "safety_labels", "safetyLabels")),
                 license_id=str(record.get("license_id") or config.license_id),
-                consent_status=str(
-                    record.get("consent_status") or config.consent_status
-                ),
+                consent_status=str(record.get("consent_status") or config.consent_status),
                 created_at=_first(record, "created_at", "createdAt"),
             ),
             (),
         )
     except (AbbyVoiceSchemaError, TypeError, ValueError) as exc:
-        return None, (
-            _issue(QuarantineReason.INVALID_RECORD, str(exc), "audio"),
-        )
+        return None, (_issue(QuarantineReason.INVALID_RECORD, str(exc), "audio"),)
 
 
 def _standalone_audio_candidate(
@@ -863,9 +835,7 @@ def _standalone_audio_candidate(
 ) -> _Candidate | QuarantineRecord:
     source_ref = _source_ref(source.source_uri, record, "audio")
     source_digest = record_sha256(record)
-    raw_text = str(
-        _first(record, "spoken_text", "spokenText", "text") or ""
-    ).strip()
+    raw_text = str(_first(record, "spoken_text", "spokenText", "text") or "").strip()
     spoken = normalize_indextts_spoken_text(raw_text)
     quality_issues = list(_spoken_quality_issues(raw_text, spoken, record, config))
     audio, audio_issues = _audio_candidate(
@@ -958,16 +928,10 @@ def _response_candidate(
             source_cids=_strings(_first(record, "source_cids", "sourceCids")),
             route_labels=route_labels,
             service_tags=_strings(_first(record, "service_tags", "serviceTags")),
-            location_tags=_strings(
-                _first(record, "location_tags", "locationTags")
-            ),
-            safety_labels=_strings(
-                _first(record, "safety_labels", "safetyLabels")
-            ),
+            location_tags=_strings(_first(record, "location_tags", "locationTags")),
+            safety_labels=_strings(_first(record, "safety_labels", "safetyLabels")),
             license_id=str(record.get("license_id") or config.license_id),
-            consent_status=str(
-                record.get("consent_status") or config.consent_status
-            ),
+            consent_status=str(record.get("consent_status") or config.consent_status),
             created_at=_first(record, "created_at", "createdAt"),
         )
     except (AbbyVoiceSchemaError, TypeError, ValueError) as exc:
@@ -1037,17 +1001,11 @@ def _template_candidate(
             required_slot_names=_strings(
                 _first(record, "required_slot_names", "requiredSlotNames")
             ),
-            factual_slot_names=_strings(
-                _first(record, "factual_slot_names", "factualSlotNames")
-            ),
+            factual_slot_names=_strings(_first(record, "factual_slot_names", "factualSlotNames")),
             source_cids=_strings(_first(record, "source_cids", "sourceCids")),
-            safety_labels=_strings(
-                _first(record, "safety_labels", "safetyLabels")
-            ),
+            safety_labels=_strings(_first(record, "safety_labels", "safetyLabels")),
             license_id=str(record.get("license_id") or config.license_id),
-            consent_status=str(
-                record.get("consent_status") or config.consent_status
-            ),
+            consent_status=str(record.get("consent_status") or config.consent_status),
             created_at=_first(record, "created_at", "createdAt"),
         )
         return _Candidate(
@@ -1131,7 +1089,9 @@ def _family_for_wrapper(wrapper: str, record: Mapping[str, Any]) -> str:
     return "responses"
 
 
-def _iter_source_rows(source: _Source) -> tuple[list[tuple[str, Mapping[str, Any]]], list[QuarantineRecord]]:
+def _iter_source_rows(
+    source: _Source,
+) -> tuple[list[tuple[str, Mapping[str, Any]]], list[QuarantineRecord]]:
     payload = source.payload
     rows: list[tuple[str, Mapping[str, Any]]] = []
     rejected: list[QuarantineRecord] = []
@@ -1143,7 +1103,8 @@ def _iter_source_rows(source: _Source) -> tuple[list[tuple[str, Mapping[str, Any
         wrappers = tuple(
             (key, payload[key])
             for key in _RECOGNIZED_WRAPPERS
-            if key in payload and isinstance(payload[key], Sequence)
+            if key in payload
+            and isinstance(payload[key], Sequence)
             and not isinstance(payload[key], str | bytes | bytearray)
         )
         if not wrappers:
@@ -1212,10 +1173,18 @@ def _merge_response_rows(candidates: Sequence[_Candidate], winner: _Candidate) -
     return replace(
         row,
         source_cids=tuple(sorted({value for item in response_rows for value in item.source_cids})),
-        route_labels=tuple(sorted({value for item in response_rows for value in item.route_labels})),
-        service_tags=tuple(sorted({value for item in response_rows for value in item.service_tags})),
-        location_tags=tuple(sorted({value for item in response_rows for value in item.location_tags})),
-        safety_labels=tuple(sorted({value for item in response_rows for value in item.safety_labels})),
+        route_labels=tuple(
+            sorted({value for item in response_rows for value in item.route_labels})
+        ),
+        service_tags=tuple(
+            sorted({value for item in response_rows for value in item.service_tags})
+        ),
+        location_tags=tuple(
+            sorted({value for item in response_rows for value in item.location_tags})
+        ),
+        safety_labels=tuple(
+            sorted({value for item in response_rows for value in item.safety_labels})
+        ),
     )
 
 
@@ -1282,9 +1251,7 @@ class AbbyVoiceDatasetNormalizer:
                 elif family == "templates":
                     result = _template_candidate(record, source, self.config)
                 elif family == "audio":
-                    result = _standalone_audio_candidate(
-                        record, source, self.config
-                    )
+                    result = _standalone_audio_candidate(record, source, self.config)
                 elif family == "provenance":
                     result = _canonical_candidate(record, source)
                 else:
@@ -1316,13 +1283,17 @@ class AbbyVoiceDatasetNormalizer:
             if isinstance(item.row, AbbyVoiceResponse):
                 response_groups[normalized_text_identity(item.row.spoken_text)].append(item)
             elif isinstance(item.row, AbbyVoiceTemplate):
-                template_groups[normalized_text_identity(item.row.spoken_template or "")].append(item)
+                template_groups[normalized_text_identity(item.row.spoken_template or "")].append(
+                    item
+                )
             elif isinstance(item.row, AbbyVoiceAudio):
                 standalone_audio.append(item)
             elif isinstance(item.row, AbbyVoiceProvenance):
                 standalone_provenance.append(item)
 
-        accepted_response_candidates: list[tuple[_Candidate, AbbyVoiceResponse, list[_Candidate]]] = []
+        accepted_response_candidates: list[
+            tuple[_Candidate, AbbyVoiceResponse, list[_Candidate]]
+        ] = []
         for identity, group in sorted(response_groups.items()):
             ordered = sorted(group, key=lambda item: item.rank)
             winner = ordered[0]
@@ -1409,9 +1380,7 @@ class AbbyVoiceDatasetNormalizer:
             for item in whole_group:
                 legacy_id = _first(item.raw, "id", "response_id", "responseId")
                 if legacy_id:
-                    legacy_response_ids[(item.source_uri, str(legacy_id))] = (
-                        row.response_id
-                    )
+                    legacy_response_ids[(item.source_uri, str(legacy_id))] = row.response_id
             provenance_rows: list[AbbyVoiceProvenance] = []
             for item in whole_group:
                 provenance_id = stable_provenance_id(
@@ -1450,9 +1419,7 @@ class AbbyVoiceDatasetNormalizer:
                 replace(
                     row,
                     audio_ids=audio_ids,
-                    provenance_ids=tuple(
-                        sorted(item.provenance_id for item in provenance_rows)
-                    ),
+                    provenance_ids=tuple(sorted(item.provenance_id for item in provenance_rows)),
                 )
             )
             if selected_audio:
@@ -1613,9 +1580,7 @@ class AbbyVoiceDatasetNormalizer:
                 safety_labels=row.safety_labels,
             )
             provenance.append(prov)
-            final_audio_with_provenance.append(
-                replace(row, provenance_ids=(prov.provenance_id,))
-            )
+            final_audio_with_provenance.append(replace(row, provenance_ids=(prov.provenance_id,)))
 
         # Attach every accepted one-way audio relationship to its response and
         # remove references to non-surviving byte duplicates.
@@ -1636,16 +1601,13 @@ class AbbyVoiceDatasetNormalizer:
         subject_ids = {
             ABBY_VOICE_RESPONSE_V2: {row.response_id for row in final_responses},
             ABBY_VOICE_TEMPLATE_V2: {row.template_id for row in final_templates},
-            ABBY_VOICE_AUDIO_V2: {
-                row.audio_id for row in final_audio_with_provenance
-            },
+            ABBY_VOICE_AUDIO_V2: {row.audio_id for row in final_audio_with_provenance},
         }
         eligible_by_id = {
             item.row.provenance_id: item
             for item in standalone_provenance
             if isinstance(item.row, AbbyVoiceProvenance)
-            and item.row.subject_id
-            in subject_ids.get(item.row.subject_schema_version, set())
+            and item.row.subject_id in subject_ids.get(item.row.subject_schema_version, set())
         }
         generated_ids = {item.provenance_id for item in provenance}
         while True:
@@ -1654,10 +1616,7 @@ class AbbyVoiceDatasetNormalizer:
                 identity: item
                 for identity, item in eligible_by_id.items()
                 if isinstance(item.row, AbbyVoiceProvenance)
-                and all(
-                    parent in eligible_ids
-                    for parent in item.row.parent_provenance_ids
-                )
+                and all(parent in eligible_ids for parent in item.row.parent_provenance_ids)
             }
             if retained.keys() == eligible_by_id.keys():
                 break
@@ -1665,9 +1624,7 @@ class AbbyVoiceDatasetNormalizer:
         for item in standalone_provenance:
             assert isinstance(item.row, AbbyVoiceProvenance)
             row = item.row
-            subject_present = row.subject_id in subject_ids.get(
-                row.subject_schema_version, set()
-            )
+            subject_present = row.subject_id in subject_ids.get(row.subject_schema_version, set())
             if subject_present and row.provenance_id in eligible_by_id:
                 provenance.append(row)
             else:
@@ -1691,9 +1648,7 @@ class AbbyVoiceDatasetNormalizer:
         final_templates.sort(key=lambda row: row.template_id)
         final_audio_with_provenance.sort(key=lambda row: row.audio_id)
         provenance_by_id = {row.provenance_id: row for row in provenance}
-        final_provenance = sorted(
-            provenance_by_id.values(), key=lambda row: row.provenance_id
-        )
+        final_provenance = sorted(provenance_by_id.values(), key=lambda row: row.provenance_id)
         quarantine.sort(key=lambda row: (row.source_ref, row.reason_codes, row.source_sha256))
         warnings.sort(key=lambda row: (row.source_ref, row.reason_codes, row.source_sha256))
         duplicate_ledger.sort(
@@ -1760,17 +1715,13 @@ class AbbyVoiceDatasetNormalizer:
         ):
             existing_sha256 = source_hashes.get(source_ref)
             if existing_sha256 is not None and existing_sha256 != source_sha256:
-                raise ValueError(
-                    f"source_ref collision for distinct input rows: {source_ref!r}"
-                )
+                raise ValueError(f"source_ref collision for distinct input rows: {source_ref!r}")
             source_hashes[source_ref] = source_sha256
         quarantine_reasons: dict[str, set[str]] = defaultdict(set)
         for item in quarantine:
             quarantine_reasons[item.source_ref].update(item.reason_codes)
         duplicate_source_refs = {
-            source_ref
-            for item in duplicate_ledger
-            for source_ref in item.duplicate_source_refs
+            source_ref for item in duplicate_ledger for source_ref in item.duplicate_source_refs
         }
         input_dispositions = tuple(
             NormalizedInputDisposition(
@@ -1778,8 +1729,7 @@ class AbbyVoiceDatasetNormalizer:
                 source_sha256=source_sha256,
                 status=(
                     "quarantined"
-                    if source_ref in quarantine_reasons
-                    or source_ref in duplicate_source_refs
+                    if source_ref in quarantine_reasons or source_ref in duplicate_source_refs
                     else "accepted"
                 ),
                 reason_codes=(
@@ -1847,11 +1797,7 @@ def deduplicate_voice_response_chunks(
     response_count = 0
     source_count = 0
     for value in responses:
-        row = (
-            value
-            if isinstance(value, AbbyVoiceResponse)
-            else parse_abby_voice_record(value)
-        )
+        row = value if isinstance(value, AbbyVoiceResponse) else parse_abby_voice_record(value)
         if not isinstance(row, AbbyVoiceResponse):
             raise TypeError("deduplicate_voice_response_chunks accepts responses only")
         response_count += 1
@@ -1880,9 +1826,7 @@ def deduplicate_voice_response_chunks(
             )
             item["text"] = min(item["text"], chunk)
             item["response_ids"].add(row.response_id)
-            item["positions"].append(
-                {"response_id": row.response_id, "chunk_index": index}
-            )
+            item["positions"].append({"response_id": row.response_id, "chunk_index": index})
             source_count += 1
     chunks = [
         {
@@ -1922,11 +1866,7 @@ def build_slotted_response_dag(
     nodes: dict[str, dict[str, Any]] = {}
     edges: list[dict[str, str]] = []
     for value in responses:
-        row = (
-            value
-            if isinstance(value, AbbyVoiceResponse)
-            else parse_abby_voice_record(value)
-        )
+        row = value if isinstance(value, AbbyVoiceResponse) else parse_abby_voice_record(value)
         if not isinstance(row, AbbyVoiceResponse):
             raise TypeError("build_slotted_response_dag accepts responses only")
         intent = row.intent or "general"
@@ -1947,9 +1887,7 @@ def build_slotted_response_dag(
             }
         )
         if row.template_id:
-            nodes.setdefault(
-                row.template_id, {"id": row.template_id, "kind": "template"}
-            )
+            nodes.setdefault(row.template_id, {"id": row.template_id, "kind": "template"})
             edges.append(
                 {
                     "id": f"edge-{sha256_text(row.template_id + chr(0) + row.response_id)[:24]}",

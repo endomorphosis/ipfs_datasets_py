@@ -35,7 +35,7 @@ from ..patch_control import Patch, PatchManager
 
 class TestDrivenOptimizer(AgenticOptimizer):
     """Test-driven optimization implementation.
-    
+
     This optimizer follows the test-driven development (TDD) approach:
     1. Analyze existing code and identify optimization targets
     2. Generate comprehensive test suites if missing
@@ -43,7 +43,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
     4. Generate optimized implementations
     5. Validate that tests still pass and performance improved
     6. Create patch with changes
-    
+
     Example:
         >>> from ipfs_datasets_py.llm_router import LLMRouter
         >>> router = LLMRouter()
@@ -59,7 +59,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
         ... )
         >>> result = optimizer.optimize(task)
     """
-    
+
     def __init__(
         self,
         agent_id: str,
@@ -69,7 +69,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
         logger: Optional[_logging.Logger] = None,
     ):
         """Initialize test-driven optimizer.
-        
+
         Args:
             agent_id: Unique identifier for this agent
             llm_router: LLM router for text generation
@@ -93,100 +93,113 @@ class TestDrivenOptimizer(AgenticOptimizer):
             "sandbox error",
             "proceed without agents",
         )
-        
+
     def _get_method(self) -> OptimizationMethod:
         """Return the optimization method."""
         return OptimizationMethod.TEST_DRIVEN
-    
+
     def optimize(self, task: OptimizationTask) -> OptimizationResult:
         """Perform test-driven optimization.
-        
+
         Args:
             task: The optimization task to perform
-            
+
         Returns:
             OptimizationResult with success status and details
         """
         start_time = time.time()
-        
+
         try:
-            self._log.info("Starting test-driven optimization", extra={
-                'task_id': task.task_id,
-                'agent_id': self.agent_id,
-                'target_file_count': len(task.target_files),
-                'priority': task.priority,
-            })
-            
+            self._log.info(
+                "Starting test-driven optimization",
+                extra={
+                    "task_id": task.task_id,
+                    "agent_id": self.agent_id,
+                    "target_file_count": len(task.target_files),
+                    "priority": task.priority,
+                },
+            )
+
             # Step 1: Analyze target files
             target_analysis = self._analyze_targets(task.target_files)
-            self._log.debug("Analyzed target files", extra={
-                'task_id': task.task_id,
-                'functions_found': len(target_analysis.get('functions', [])),
-                'classes_found': len(target_analysis.get('classes', [])),
-            })
-            
+            self._log.debug(
+                "Analyzed target files",
+                extra={
+                    "task_id": task.task_id,
+                    "functions_found": len(target_analysis.get("functions", [])),
+                    "classes_found": len(target_analysis.get("classes", [])),
+                },
+            )
+
             # Step 2: Generate or enhance tests
             test_results = self._generate_tests(task, target_analysis)
-            self._log.info("Generated tests", extra={
-                'task_id': task.task_id,
-                'test_generation_success': test_results.get('success', False),
-            })
-            
+            self._log.info(
+                "Generated tests",
+                extra={
+                    "task_id": task.task_id,
+                    "test_generation_success": test_results.get("success", False),
+                },
+            )
+
             # Step 3: Run baseline tests
             baseline_metrics = self._run_baseline_tests(task.target_files)
-            self._log.info("Baseline tests completed", extra={
-                'task_id': task.task_id,
-                'baseline_time': baseline_metrics.get('execution_time', 0),
-                'tests_passed': baseline_metrics.get('tests_passed', 0),
-                'coverage': baseline_metrics.get('coverage', 0),
-            })
-            
+            self._log.info(
+                "Baseline tests completed",
+                extra={
+                    "task_id": task.task_id,
+                    "baseline_time": baseline_metrics.get("execution_time", 0),
+                    "tests_passed": baseline_metrics.get("tests_passed", 0),
+                    "coverage": baseline_metrics.get("coverage", 0),
+                },
+            )
+
             # Step 4: Generate optimized code
-            optimized_code = self._generate_optimizations(
-                task,
-                target_analysis,
-                baseline_metrics
+            optimized_code = self._generate_optimizations(task, target_analysis, baseline_metrics)
+            self._log.debug(
+                "Generated optimizations",
+                extra={
+                    "task_id": task.task_id,
+                    "optimizations_count": len(optimized_code),
+                },
             )
-            self._log.debug("Generated optimizations", extra={
-                'task_id': task.task_id,
-                'optimizations_count': len(optimized_code),
-            })
-            
+
             # Step 5: Apply optimizations using the configured patch strategy.
-            apply_results = self._apply_optimizations(
-                task.target_files,
-                optimized_code
+            apply_results = self._apply_optimizations(task.target_files, optimized_code)
+            self._log.info(
+                "Applied optimizations",
+                extra={
+                    "task_id": task.task_id,
+                    "optimized_time": apply_results.get("execution_time", 0),
+                    "tests_passed_after": apply_results.get("tests_passed", 0),
+                    "patch_mode": apply_results.get("patch_mode"),
+                },
             )
-            self._log.info("Applied optimizations", extra={
-                'task_id': task.task_id,
-                'optimized_time': apply_results.get('execution_time', 0),
-                'tests_passed_after': apply_results.get('tests_passed', 0),
-                'patch_mode': apply_results.get('patch_mode'),
-            })
-            
+
             # Step 6: Create patch
             patch = self._create_patch_from_results(
                 task=task,
                 apply_results=apply_results,
             )
-            
+
             # Save patch
             patch_path = self.patch_manager.save_patch(patch)
-            
+
             execution_time = time.time() - start_time
-            
+
             improvement = self._calculate_improvement(
-                baseline_metrics.get('execution_time', 1),
-                apply_results.get('execution_time', 1)
+                baseline_metrics.get("execution_time", 1), apply_results.get("execution_time", 1)
             )
-            
-            self._log.info("Optimization completed successfully", extra={
-                'task_id': task.task_id,
-                'total_time': execution_time,
-                'improvement_percent': improvement,
-                'patch_path': str(patch_path),
-            })
-            
+
+            self._log.info(
+                "Optimization completed successfully",
+                extra={
+                    "task_id": task.task_id,
+                    "total_time": execution_time,
+                    "improvement_percent": improvement,
+                    "patch_path": str(patch_path),
+                },
+            )
+
             return OptimizationResult(
                 task_id=task.task_id,
                 success=True,
@@ -194,11 +207,11 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 changes=f"Optimized {len(task.target_files)} files with test-driven approach",
                 patch_path=patch_path,
                 metrics={
-                    'baseline_time': baseline_metrics.get('execution_time', 0),
-                    'optimized_time': apply_results.get('execution_time', 0),
-                    'improvement_percent': improvement,
-                    'tests_passed': apply_results.get('tests_passed', 0),
-                    'test_coverage': apply_results.get('coverage', 0),
+                    "baseline_time": baseline_metrics.get("execution_time", 0),
+                    "optimized_time": apply_results.get("execution_time", 0),
+                    "improvement_percent": improvement,
+                    "tests_passed": apply_results.get("tests_passed", 0),
+                    "test_coverage": apply_results.get("coverage", 0),
                 },
                 execution_time=execution_time,
                 agent_id=self.agent_id,
@@ -207,7 +220,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     "target_files": [str(path) for path in task.target_files],
                 },
             )
-            
+
         except (
             AttributeError,
             KeyError,
@@ -218,13 +231,17 @@ class TestDrivenOptimizer(AgenticOptimizer):
             subprocess.SubprocessError,
         ) as e:
             execution_time = time.time() - start_time
-            self._log.error("Optimization failed", extra={
-                'task_id': task.task_id,
-                'error_type': type(e).__name__,
-                'error_message': str(e),
-                'total_time': execution_time,
-            }, exc_info=True)
-            
+            self._log.error(
+                "Optimization failed",
+                extra={
+                    "task_id": task.task_id,
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                    "total_time": execution_time,
+                },
+                exc_info=True,
+            )
+
             return OptimizationResult(
                 task_id=task.task_id,
                 success=False,
@@ -238,102 +255,112 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     "target_files": [str(path) for path in task.target_files],
                 },
             )
-    
+
     def validate(self, result: OptimizationResult) -> ValidationResult:
         """Validate optimization result.
-        
+
         Args:
             result: The optimization result to validate
-            
+
         Returns:
             ValidationResult with detailed validation status
         """
-        self._log.info("Starting validation", extra={
-            'task_id': result.task_id,
-            'agent_id': self.agent_id,
-            'optimization_success': result.success,
-        })
-        
+        self._log.info(
+            "Starting validation",
+            extra={
+                "task_id": result.task_id,
+                "agent_id": self.agent_id,
+                "optimization_success": result.success,
+            },
+        )
+
         errors = []
         warnings = []
-        
+
         # Syntax check
         syntax_check = self._check_syntax(result.patch_path)
-        if not syntax_check['passed']:
-            errors.extend(syntax_check['errors'])
-        
+        if not syntax_check["passed"]:
+            errors.extend(syntax_check["errors"])
+
         # Type check
         type_check = self._check_types(result.patch_path)
-        if not type_check['passed']:
-            warnings.extend(type_check['warnings'])
-        
+        if not type_check["passed"]:
+            warnings.extend(type_check["warnings"])
+
         # Unit tests
         unit_tests = self._run_unit_tests(result.patch_path)
-        if not unit_tests['passed']:
-            errors.extend(unit_tests['errors'])
-        
+        if not unit_tests["passed"]:
+            errors.extend(unit_tests["errors"])
+
         # Performance validation
         performance = self._validate_performance(result.metrics)
-        if not performance['passed']:
-            warnings.append(performance['message'])
-        
+        if not performance["passed"]:
+            warnings.append(performance["message"])
+
         passed = len(errors) == 0
-        self._log.info("Validation completed", extra={
-            'task_id': result.task_id,
-            'validation_passed': passed,
-            'error_count': len(errors),
-            'warning_count': len(warnings),
-            'syntax_check': syntax_check['passed'],
-            'type_check': type_check['passed'],
-            'unit_tests': unit_tests['passed'],
-        })
-        
+        self._log.info(
+            "Validation completed",
+            extra={
+                "task_id": result.task_id,
+                "validation_passed": passed,
+                "error_count": len(errors),
+                "warning_count": len(warnings),
+                "syntax_check": syntax_check["passed"],
+                "type_check": type_check["passed"],
+                "unit_tests": unit_tests["passed"],
+            },
+        )
+
         return ValidationResult(
             passed=passed,
-            syntax_check=syntax_check['passed'],
-            type_check=type_check['passed'],
-            unit_tests=unit_tests['passed'],
-            performance_tests=performance['passed'],
+            syntax_check=syntax_check["passed"],
+            type_check=type_check["passed"],
+            unit_tests=unit_tests["passed"],
+            performance_tests=performance["passed"],
             errors=errors,
             warnings=warnings,
         )
-    
+
     def _analyze_targets(self, target_files: List[Path]) -> Dict[str, Any]:
         """Analyze target files to identify optimization opportunities."""
         analysis = {
-            'functions': [],
-            'classes': [],
-            'complexity': {},
-            'imports': [],
+            "functions": [],
+            "classes": [],
+            "complexity": {},
+            "imports": [],
         }
-        
+
         for file_path in target_files:
             if not file_path.exists():
-                self._log.warning("Target file does not exist", extra={'file': str(file_path)})
+                self._log.warning("Target file does not exist", extra={"file": str(file_path)})
                 continue
-            
+
             try:
                 # Validate input path
                 base_dir = file_path.parent if file_path.is_absolute() else None
                 safe_path = validate_input_path(str(file_path), must_exist=True, base_dir=base_dir)
-                
-                with open(safe_path, 'r') as f:
+
+                with open(safe_path, "r") as f:
                     tree = ast.parse(f.read())
-                
+
                 # Extract functions
                 for node in ast.walk(tree):
                     if isinstance(node, ast.FunctionDef):
-                        analysis['functions'].append({
-                            'name': node.name,
-                            'file': str(file_path),
-                            'lineno': node.lineno,
-                        })
+                        analysis["functions"].append(
+                            {
+                                "name": node.name,
+                                "file": str(file_path),
+                                "lineno": node.lineno,
+                            }
+                        )
                     elif isinstance(node, ast.ClassDef):
-                        analysis['classes'].append({
-                            'name': node.name,
-                            'file': str(file_path),
-                            'lineno': node.lineno,
-                        })
+                        analysis["classes"].append(
+                            {
+                                "name": node.name,
+                                "file": str(file_path),
+                                "lineno": node.lineno,
+                            }
+                        )
             except (
                 OSError,
                 SyntaxError,
@@ -342,30 +369,29 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 UnicodeDecodeError,
                 RecursionError,
             ) as e:
-                self._log.error("Error analyzing file", extra={
-                    'file': str(file_path),
-                    'error_type': type(e).__name__,
-                    'error_message': str(e),
-                })
-        
+                self._log.error(
+                    "Error analyzing file",
+                    extra={
+                        "file": str(file_path),
+                        "error_type": type(e).__name__,
+                        "error_message": str(e),
+                    },
+                )
+
         return analysis
-    
-    def _generate_tests(
-        self,
-        task: OptimizationTask,
-        analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+
+    def _generate_tests(self, task: OptimizationTask, analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Generate or enhance test suites."""
         if self._should_skip_llm_test_generation(task):
             return {
-                'success': False,
-                'skipped': True,
-                'error': 'Skipped LLM test generation for symbol-scoped optimization; relying on targeted validation tests.',
+                "success": False,
+                "skipped": True,
+                "error": "Skipped LLM test generation for symbol-scoped optimization; relying on targeted validation tests.",
             }
 
         # Use LLM to generate tests
         prompt = self._build_test_generation_prompt(task, analysis)
-        
+
         try:
             response = self.llm_router.generate(
                 prompt=prompt,
@@ -374,55 +400,59 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 max_tokens=2000,
                 temperature=0.3,
             )
-            
+
             return {
-                'success': True,
-                'tests_generated': response,
+                "success": True,
+                "tests_generated": response,
             }
-        except (AttributeError, OSError, RuntimeError, TypeError, ValueError, subprocess.SubprocessError) as e:
+        except (
+            AttributeError,
+            OSError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+            subprocess.SubprocessError,
+        ) as e:
             return {
-                'success': False,
-                'error': str(e),
+                "success": False,
+                "error": str(e),
             }
 
     def _should_skip_llm_test_generation(self, task: OptimizationTask) -> bool:
         constraints = task.constraints or {}
         target_map = constraints.get("target_symbols")
         return isinstance(target_map, dict) and bool(target_map)
-    
+
     def _run_baseline_tests(self, target_files: List[Path]) -> Dict[str, float]:
         """Run tests to establish baseline performance."""
         # In practice, run pytest with timing
         # For now, return mock data
         return {
-            'execution_time': 1.5,
-            'tests_passed': 10,
-            'tests_failed': 0,
-            'coverage': 85.0,
+            "execution_time": 1.5,
+            "tests_passed": 10,
+            "tests_failed": 0,
+            "coverage": 85.0,
         }
-    
+
     def _generate_optimizations(
-        self,
-        task: OptimizationTask,
-        analysis: Dict[str, Any],
-        baseline: Dict[str, float]
+        self, task: OptimizationTask, analysis: Dict[str, Any], baseline: Dict[str, float]
     ) -> Dict[str, str]:
         """Generate optimized code using LLM."""
         optimizations = {}
         diagnostics: List[Dict[str, Any]] = []
         self._last_raw_responses = {}
-        
+
         for target_file in task.target_files:
             if not target_file.exists():
-                self._log.warning("Target file does not exist", extra={'file': str(target_file)})
+                self._log.warning("Target file does not exist", extra={"file": str(target_file)})
                 continue
-            
+
             # Read current code
             base_dir = target_file.parent if target_file.is_absolute() else None
             safe_path = validate_input_path(str(target_file), must_exist=True, base_dir=base_dir)
-            with open(safe_path, 'r') as f:
+            with open(safe_path, "r") as f:
                 current_code = f.read()
-            
+
             try:
                 target_symbols = self._target_symbols_for_file(task, target_file)
                 if target_symbols:
@@ -448,11 +478,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     continue
 
                 prompt = self._build_optimization_prompt(
-                    target_file,
-                    current_code,
-                    analysis,
-                    baseline,
-                    task
+                    target_file, current_code, analysis, baseline, task
                 )
 
                 response = self.llm_router.generate(
@@ -468,10 +494,13 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     current_code=current_code,
                 )
 
-                self._log.debug("Generated optimization", extra={
-                    'file': str(target_file),
-                    'response_length': len(normalized_response),
-                })
+                self._log.debug(
+                    "Generated optimization",
+                    extra={
+                        "file": str(target_file),
+                        "response_length": len(normalized_response),
+                    },
+                )
 
                 optimizations[str(target_file)] = normalized_response
                 diagnostics.append(
@@ -484,11 +513,14 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     }
                 )
             except (AttributeError, OSError, RuntimeError, SyntaxError, TypeError, ValueError) as e:
-                self._log.error("Error generating optimization", extra={
-                    'file': str(target_file),
-                    'error_type': type(e).__name__,
-                    'error_message': str(e),
-                })
+                self._log.error(
+                    "Error generating optimization",
+                    extra={
+                        "file": str(target_file),
+                        "error_type": type(e).__name__,
+                        "error_message": str(e),
+                    },
+                )
                 diagnostics.append(
                     {
                         "file": str(target_file),
@@ -528,7 +560,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
         task: OptimizationTask,
         target_symbols: List[str],
     ) -> str:
-        if self._use_select_candidates_policy_mode(target_file=target_file, target_symbols=target_symbols):
+        if self._use_select_candidates_policy_mode(
+            target_file=target_file, target_symbols=target_symbols
+        ):
             response = self.llm_router.generate(
                 prompt=self._build_select_candidates_policy_prompt(
                     file_path=target_file,
@@ -542,7 +576,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
             self._remember_raw_response(target_file, response)
             replacement_sources = {
                 "select_question_candidates": self._render_select_question_candidates_from_policy(
-                    self._normalize_select_candidates_policy_response(response=response, file_path=target_file)
+                    self._normalize_select_candidates_policy_response(
+                        response=response, file_path=target_file
+                    )
                 )
             }
             return self._replace_symbols_in_source(
@@ -550,7 +586,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 target_symbols=target_symbols,
                 replacement_sources=replacement_sources,
             )
-        if self._use_standard_intake_policy_mode(target_file=target_file, target_symbols=target_symbols):
+        if self._use_standard_intake_policy_mode(
+            target_file=target_file, target_symbols=target_symbols
+        ):
             response = self.llm_router.generate(
                 prompt=self._build_standard_intake_policy_prompt(
                     file_path=target_file,
@@ -564,7 +602,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
             self._remember_raw_response(target_file, response)
             replacement_sources = {
                 "_ensure_standard_intake_questions": self._render_standard_intake_questions_from_policy(
-                    self._normalize_standard_intake_policy_response(response=response, file_path=target_file)
+                    self._normalize_standard_intake_policy_response(
+                        response=response, file_path=target_file
+                    )
                 )
             }
             return self._replace_symbols_in_source(
@@ -572,7 +612,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 target_symbols=target_symbols,
                 replacement_sources=replacement_sources,
             )
-        if self._use_session_injection_policy_mode(target_file=target_file, target_symbols=target_symbols):
+        if self._use_session_injection_policy_mode(
+            target_file=target_file, target_symbols=target_symbols
+        ):
             response = self.llm_router.generate(
                 prompt=self._build_session_injection_policy_prompt(
                     file_path=target_file,
@@ -585,7 +627,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
             )
             self._remember_raw_response(target_file, response)
             try:
-                policy = self._normalize_session_injection_policy_response(response=response, file_path=target_file)
+                policy = self._normalize_session_injection_policy_response(
+                    response=response, file_path=target_file
+                )
             except ValueError:
                 policy = {
                     "stability_injection_budget": 3,
@@ -594,14 +638,18 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     "one_probe_per_objective_in_stability": True,
                 }
             replacement_sources = {
-                "_inject_intake_prompt_questions": self._render_session_injection_from_policy(policy)
+                "_inject_intake_prompt_questions": self._render_session_injection_from_policy(
+                    policy
+                )
             }
             return self._replace_symbols_in_source(
                 original_code=current_code,
                 target_symbols=target_symbols,
                 replacement_sources=replacement_sources,
             )
-        if self._use_document_workflow_targeting_policy_mode(target_file=target_file, target_symbols=target_symbols):
+        if self._use_document_workflow_targeting_policy_mode(
+            target_file=target_file, target_symbols=target_symbols
+        ):
             response = self.llm_router.generate(
                 prompt=self._build_document_workflow_targeting_policy_prompt(
                     file_path=target_file,
@@ -627,14 +675,18 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     "preserve_graph_priority_when_factual_pressure_high": True,
                 }
             replacement_sources = {
-                "_build_workflow_phase_targeting": self._render_document_workflow_targeting_from_policy(policy)
+                "_build_workflow_phase_targeting": self._render_document_workflow_targeting_from_policy(
+                    policy
+                )
             }
             return self._replace_symbols_in_source(
                 original_code=current_code,
                 target_symbols=target_symbols,
                 replacement_sources=replacement_sources,
             )
-        if self._use_merge_seed_with_grounding_policy_mode(target_file=target_file, target_symbols=target_symbols):
+        if self._use_merge_seed_with_grounding_policy_mode(
+            target_file=target_file, target_symbols=target_symbols
+        ):
             response = self.llm_router.generate(
                 prompt=self._build_merge_seed_with_grounding_policy_prompt(
                     file_path=target_file,
@@ -658,7 +710,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     "blocker_answer_limit": 6,
                     "unresolved_objective_limit": 3,
                 }
-            current_block = self._extract_target_symbol_blocks(current_code, target_symbols)["_merge_seed_with_grounding"]
+            current_block = self._extract_target_symbol_blocks(current_code, target_symbols)[
+                "_merge_seed_with_grounding"
+            ]
             replacement_sources = {
                 "_merge_seed_with_grounding": self._apply_merge_seed_with_grounding_policy_to_source(
                     current_block,
@@ -670,7 +724,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 target_symbols=target_symbols,
                 replacement_sources=replacement_sources,
             )
-        if self._use_formal_document_render_policy_mode(target_file=target_file, target_symbols=target_symbols):
+        if self._use_formal_document_render_policy_mode(
+            target_file=target_file, target_symbols=target_symbols
+        ):
             response = self.llm_router.generate(
                 prompt=self._build_formal_document_render_policy_prompt(
                     file_path=target_file,
@@ -694,7 +750,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     "exhibit_limit": 8,
                     "affidavit_fact_limit": 6,
                 }
-            current_block = self._extract_target_symbol_blocks(current_code, target_symbols)["render_text"]
+            current_block = self._extract_target_symbol_blocks(current_code, target_symbols)[
+                "render_text"
+            ]
             replacement_sources = {
                 "render_text": self._apply_formal_document_render_policy_to_source(
                     current_block,
@@ -706,7 +764,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 target_symbols=target_symbols,
                 replacement_sources=replacement_sources,
             )
-        if self._use_knowledge_graph_build_policy_mode(target_file=target_file, target_symbols=target_symbols):
+        if self._use_knowledge_graph_build_policy_mode(
+            target_file=target_file, target_symbols=target_symbols
+        ):
             response = self.llm_router.generate(
                 prompt=self._build_knowledge_graph_build_policy_prompt(
                     file_path=target_file,
@@ -739,7 +799,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 target_symbols=target_symbols,
                 replacement_sources=replacement_sources,
             )
-        if self._use_complainant_guidance_policy_mode(target_file=target_file, target_symbols=target_symbols):
+        if self._use_complainant_guidance_policy_mode(
+            target_file=target_file, target_symbols=target_symbols
+        ):
             response = self.llm_router.generate(
                 prompt=self._build_complainant_guidance_policy_prompt(
                     file_path=target_file,
@@ -765,7 +827,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     "include_phase_focus_line": True,
                 }
             replacement_sources = {
-                "_build_actor_critic_guidance": self._render_complainant_guidance_from_policy(policy)
+                "_build_actor_critic_guidance": self._render_complainant_guidance_from_policy(
+                    policy
+                )
             }
             return self._replace_symbols_in_source(
                 original_code=current_code,
@@ -794,7 +858,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 target_symbols=target_symbols,
                 replacement_sources=replacement_sources,
             )
-        if self._use_dependency_readiness_policy_mode(target_file=target_file, target_symbols=target_symbols):
+        if self._use_dependency_readiness_policy_mode(
+            target_file=target_file, target_symbols=target_symbols
+        ):
             response = self.llm_router.generate(
                 prompt=self._build_dependency_readiness_policy_prompt(
                     file_path=target_file,
@@ -808,7 +874,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
             self._remember_raw_response(target_file, response)
             replacement_sources = {
                 "get_claim_readiness": self._render_get_claim_readiness_from_policy(
-                    self._normalize_dependency_readiness_policy_response(response=response, file_path=target_file)
+                    self._normalize_dependency_readiness_policy_response(
+                        response=response, file_path=target_file
+                    )
                 )
             }
             return self._replace_symbols_in_source(
@@ -891,42 +959,75 @@ class TestDrivenOptimizer(AgenticOptimizer):
         return target_file.name == "phase_manager.py" and target_symbols == ["_get_intake_action"]
 
     def _use_inquiries_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
-        return target_file.name == "inquiries.py" and target_symbols == ["get_next", "merge_legal_questions"]
+        return target_file.name == "inquiries.py" and target_symbols == [
+            "get_next",
+            "merge_legal_questions",
+        ]
 
     def _use_answer_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
         return target_file.name == "denoiser.py" and target_symbols == ["process_answer"]
 
-    def _use_dependency_readiness_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
-        return target_file.name == "dependency_graph.py" and target_symbols == ["get_claim_readiness"]
+    def _use_dependency_readiness_policy_mode(
+        self, *, target_file: Path, target_symbols: List[str]
+    ) -> bool:
+        return target_file.name == "dependency_graph.py" and target_symbols == [
+            "get_claim_readiness"
+        ]
 
-    def _use_select_candidates_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
-        return target_file.name == "denoiser.py" and target_symbols == ["select_question_candidates"]
+    def _use_select_candidates_policy_mode(
+        self, *, target_file: Path, target_symbols: List[str]
+    ) -> bool:
+        return target_file.name == "denoiser.py" and target_symbols == [
+            "select_question_candidates"
+        ]
 
-    def _use_standard_intake_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
-        return target_file.name == "denoiser.py" and target_symbols == ["_ensure_standard_intake_questions"]
+    def _use_standard_intake_policy_mode(
+        self, *, target_file: Path, target_symbols: List[str]
+    ) -> bool:
+        return target_file.name == "denoiser.py" and target_symbols == [
+            "_ensure_standard_intake_questions"
+        ]
 
-    def _use_session_injection_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
-        return target_file.name == "session.py" and target_symbols == ["_inject_intake_prompt_questions"]
+    def _use_session_injection_policy_mode(
+        self, *, target_file: Path, target_symbols: List[str]
+    ) -> bool:
+        return target_file.name == "session.py" and target_symbols == [
+            "_inject_intake_prompt_questions"
+        ]
 
-    def _use_complainant_guidance_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
-        return target_file.name == "complainant.py" and target_symbols == ["_build_actor_critic_guidance"]
+    def _use_complainant_guidance_policy_mode(
+        self, *, target_file: Path, target_symbols: List[str]
+    ) -> bool:
+        return target_file.name == "complainant.py" and target_symbols == [
+            "_build_actor_critic_guidance"
+        ]
 
-    def _use_document_workflow_targeting_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
-        return target_file.name == "document_optimization.py" and target_symbols == ["_build_workflow_phase_targeting"]
+    def _use_document_workflow_targeting_policy_mode(
+        self, *, target_file: Path, target_symbols: List[str]
+    ) -> bool:
+        return target_file.name == "document_optimization.py" and target_symbols == [
+            "_build_workflow_phase_targeting"
+        ]
 
-    def _use_merge_seed_with_grounding_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
-        return target_file.name == "synthesize_hacc_complaint.py" and target_symbols == ["_merge_seed_with_grounding"]
+    def _use_merge_seed_with_grounding_policy_mode(
+        self, *, target_file: Path, target_symbols: List[str]
+    ) -> bool:
+        return target_file.name == "synthesize_hacc_complaint.py" and target_symbols == [
+            "_merge_seed_with_grounding"
+        ]
 
-    def _use_knowledge_graph_build_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+    def _use_knowledge_graph_build_policy_mode(
+        self, *, target_file: Path, target_symbols: List[str]
+    ) -> bool:
         return target_file.name == "knowledge_graph.py" and target_symbols == ["build_from_text"]
 
-    def _use_formal_document_render_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+    def _use_formal_document_render_policy_mode(
+        self, *, target_file: Path, target_symbols: List[str]
+    ) -> bool:
         return target_file.name == "formal_document.py" and target_symbols == ["render_text"]
-    
+
     def _apply_optimizations(
-        self,
-        target_files: List[Path],
-        optimizations: Dict[str, str]
+        self, target_files: List[Path], optimizations: Dict[str, str]
     ) -> Dict[str, Any]:
         """Apply optimizations using direct diffs by default.
 
@@ -939,9 +1040,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
         return self._apply_optimizations_direct(target_files, optimizations)
 
     def _apply_optimizations_direct(
-        self,
-        target_files: List[Path],
-        optimizations: Dict[str, str]
+        self, target_files: List[Path], optimizations: Dict[str, str]
     ) -> Dict[str, Any]:
         repo_root = self._resolve_repo_root(target_files)
         changes: List[Dict[str, Any]] = []
@@ -992,9 +1091,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
         }
 
     def _apply_optimizations_in_temp_worktree(
-        self,
-        target_files: List[Path],
-        optimizations: Dict[str, str]
+        self, target_files: List[Path], optimizations: Dict[str, str]
     ) -> Dict[str, Any]:
         repo_root = self._resolve_repo_root(target_files)
         temp_dir = Path(tempfile.mkdtemp(prefix="optimizer-"))
@@ -1018,7 +1115,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 continue
 
             base_dir = target_path.parent if target_path.is_absolute() else None
-            safe_path = validate_output_path(str(target_path), allow_overwrite=True, base_dir=base_dir)
+            safe_path = validate_output_path(
+                str(target_path), allow_overwrite=True, base_dir=base_dir
+            )
             Path(safe_path).write_text(optimized_content)
 
             diff_content = "".join(
@@ -1112,81 +1211,63 @@ class TestDrivenOptimizer(AgenticOptimizer):
             if repo_root:
                 return Path(repo_root).resolve()
         return Path(os.path.commonpath([str(path.parent) for path in existing_targets])).resolve()
-    
+
     def _run_tests_in_worktree(self, worktree: Path) -> Dict[str, Any]:
         """Run tests in temporary worktree."""
         # In practice, run pytest with coverage
         # For now, return mock data
         return {
-            'execution_time': 1.2,
-            'tests_passed': 10,
-            'tests_failed': 0,
-            'coverage': 88.0,
+            "execution_time": 1.2,
+            "tests_passed": 10,
+            "tests_failed": 0,
+            "coverage": 88.0,
         }
-    
-    def _calculate_improvement(
-        self,
-        baseline: float,
-        optimized: float
-    ) -> float:
+
+    def _calculate_improvement(self, baseline: float, optimized: float) -> float:
         """Calculate percentage improvement."""
         if baseline == 0:
             return 0
         return ((baseline - optimized) / baseline) * 100
-    
+
     def _check_syntax(self, patch_path: Optional[Path]) -> Dict[str, Any]:
         """Check syntax of patched code."""
         if not patch_path:
-            return {'passed': False, 'errors': ['No patch path provided']}
-        
+            return {"passed": False, "errors": ["No patch path provided"]}
+
         # In practice, parse all Python files
         # For now, assume syntax is valid
-        return {'passed': True, 'errors': []}
-    
+        return {"passed": True, "errors": []}
+
     def _check_types(self, patch_path: Optional[Path]) -> Dict[str, Any]:
         """Run type checking on patched code."""
         # In practice, run mypy
         # For now, assume types are valid
-        return {'passed': True, 'warnings': []}
-    
+        return {"passed": True, "warnings": []}
+
     def _run_unit_tests(self, patch_path: Optional[Path]) -> Dict[str, Any]:
         """Run unit tests on patched code."""
         # In practice, run pytest
         # For now, assume tests pass
-        return {'passed': True, 'errors': []}
-    
+        return {"passed": True, "errors": []}
+
     def _validate_performance(self, metrics: Dict[str, float]) -> Dict[str, Any]:
         """Validate performance improvements."""
-        improvement = metrics.get('improvement_percent', 0)
-        
+        improvement = metrics.get("improvement_percent", 0)
+
         if improvement >= 10:
-            return {
-                'passed': True,
-                'message': f'Performance improved by {improvement:.1f}%'
-            }
+            return {"passed": True, "message": f"Performance improved by {improvement:.1f}%"}
         elif improvement >= 0:
-            return {
-                'passed': True,
-                'message': f'Minor performance improvement: {improvement:.1f}%'
-            }
+            return {"passed": True, "message": f"Minor performance improvement: {improvement:.1f}%"}
         else:
-            return {
-                'passed': False,
-                'message': f'Performance degraded by {abs(improvement):.1f}%'
-            }
-    
+            return {"passed": False, "message": f"Performance degraded by {abs(improvement):.1f}%"}
+
     def _build_test_generation_prompt(
-        self,
-        task: OptimizationTask,
-        analysis: Dict[str, Any]
+        self, task: OptimizationTask, analysis: Dict[str, Any]
     ) -> str:
         """Build prompt for test generation."""
         functions_to_test = self._test_generation_targets(task, analysis)
-        functions = '\n'.join([
-            f"- {f['name']} in {f['file']}"
-            for f in functions_to_test
-        ])
-        
+        functions = "\n".join([f"- {f['name']} in {f['file']}" for f in functions_to_test])
+
         return f"""Generate comprehensive pytest tests for the following code:
 
 Task: {task.description}
@@ -1245,14 +1326,14 @@ Return only the test code, no explanations.
                 selected.append(item)
 
         return selected or functions
-    
+
     def _build_optimization_prompt(
         self,
         file_path: Path,
         current_code: str,
         analysis: Dict[str, Any],
         baseline: Dict[str, float],
-        task: OptimizationTask
+        task: OptimizationTask,
     ) -> str:
         """Build prompt for code optimization."""
         return f"""Optimize the following Python code:
@@ -1266,8 +1347,8 @@ Current code:
 ```
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Optimization goals:
 - Improve performance by at least 10%
@@ -1295,13 +1376,16 @@ Do not include markdown fences, explanations, apologies, or commentary.
         target_symbols: List[str],
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:3])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:3]
+        )
         if not recommendations:
-            recommendations = "- Improve question quality and coverage without regressing current behavior."
+            recommendations = (
+                "- Improve question quality and coverage without regressing current behavior."
+            )
 
         symbol_text = "\n\n".join(
-            f"# Symbol: {name}\n{symbol_blocks.get(name, '# missing')}"
-            for name in target_symbols
+            f"# Symbol: {name}\n{symbol_blocks.get(name, '# missing')}" for name in target_symbols
         )
 
         return f"""Optimize specific Python methods in the following file:
@@ -1313,8 +1397,8 @@ Target methods:
 {", ".join(target_symbols)}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1341,9 +1425,13 @@ Instructions:
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
-            recommendations = "- Improve question quality and coverage without regressing current behavior."
+            recommendations = (
+                "- Improve question quality and coverage without regressing current behavior."
+            )
 
         return f"""Return a compact JSON object describing how _get_intake_action should decide the next intake action.
 
@@ -1351,8 +1439,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1392,7 +1480,9 @@ Do not include explanations, markdown, comments, or extra keys.
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
             recommendations = "- Improve process_answer so answers produce more timeline and actor evidence without breaking current graph updates."
 
@@ -1402,8 +1492,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1434,7 +1524,9 @@ Do not include explanations, markdown, comments, or extra keys.
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
             recommendations = "- Improve graph readiness ranking so missing blocking requirements and deterministic gaps are surfaced earlier."
 
@@ -1444,8 +1536,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1477,7 +1569,9 @@ Do not include explanations, markdown, comments, or extra keys.
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
             recommendations = "- Improve inquiry ordering and legal-question merging without adding duplicate questions."
 
@@ -1487,8 +1581,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1519,7 +1613,9 @@ Do not include explanations, markdown, comments, or extra keys.
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
             recommendations = "- Improve default intake prompts so they capture timeline, decision-maker, and notice details without breaking current prompt coverage."
 
@@ -1529,8 +1625,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1558,7 +1654,9 @@ Do not include explanations, markdown, comments, or extra keys.
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
             recommendations = "- Improve candidate selection by preserving selector overrides, suppressing duplicate questions, and keeping fallback ordering deterministic."
 
@@ -1568,8 +1666,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1598,7 +1696,9 @@ Do not include explanations, markdown, comments, or extra keys.
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
             recommendations = "- Restore a stable intake flow by keeping synthetic intake prompts small, deterministic, and focused on missing objectives."
 
@@ -1608,8 +1708,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1639,7 +1739,9 @@ Do not include explanations, markdown, comments, or extra keys.
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
             recommendations = "- Keep document workflow targeting small, deterministic, and aligned to the strongest drafting blockers."
 
@@ -1649,8 +1751,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1681,7 +1783,9 @@ Do not include explanations, markdown, comments, or extra keys.
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
             recommendations = "- Keep complainant guidance concise, blocker-aware, and easy for the mediator to operationalize."
 
@@ -1691,8 +1795,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1722,7 +1826,9 @@ Do not include explanations, markdown, comments, or extra keys.
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
             recommendations = "- Keep grounding merge behavior deterministic, preserve stronger evidence snippets, and keep drafting handoff lines compact."
 
@@ -1732,8 +1838,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1761,7 +1867,9 @@ Do not include explanations, markdown, comments, or extra keys.
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
             recommendations = "- Keep knowledge graph building deterministic, preserve actor-critic metadata, and make graph build diagnostics easier to reason about."
 
@@ -1771,8 +1879,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1803,7 +1911,9 @@ Do not include explanations, markdown, comments, or extra keys.
         task: OptimizationTask,
     ) -> str:
         report_summary = (task.metadata or {}).get("report_summary", {})
-        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        recommendations = "\n".join(
+            f"- {item}" for item in (report_summary.get("recommendations") or [])[:4]
+        )
         if not recommendations:
             recommendations = "- Keep rendered complaint text concise, preserve section order, and avoid bloated chronology, exhibit, and affidavit expansions."
 
@@ -1813,8 +1923,8 @@ File: {file_path}
 Task: {task.description}
 
 Current performance:
-- Execution time: {baseline.get('execution_time', 'unknown')}s
-- Test coverage: {baseline.get('coverage', 'unknown')}%
+- Execution time: {baseline.get("execution_time", "unknown")}s
+- Test coverage: {baseline.get("coverage", "unknown")}%
 
 Recent adversarial findings:
 {recommendations}
@@ -1835,13 +1945,18 @@ Behavioral guardrails:
 Do not include explanations, markdown, comments, or extra keys.
 """
 
-    def _extract_target_symbol_blocks(self, current_code: str, target_symbols: List[str]) -> Dict[str, str]:
+    def _extract_target_symbol_blocks(
+        self, current_code: str, target_symbols: List[str]
+    ) -> Dict[str, str]:
         tree = ast.parse(current_code)
         lines = current_code.splitlines(keepends=True)
         blocks: Dict[str, str] = {}
 
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in target_symbols:
+            if (
+                isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and node.name in target_symbols
+            ):
                 if node.name in blocks:
                     continue
                 start = node.lineno - 1
@@ -1873,15 +1988,21 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Optimization response for {file_path} requested external context instead of code")
+            raise ValueError(
+                f"Optimization response for {file_path} requested external context instead of code"
+            )
 
         if len(text.splitlines()) < 3:
-            raise ValueError(f"Optimization response for {file_path} is too short to be a full file replacement")
+            raise ValueError(
+                f"Optimization response for {file_path} is too short to be a full file replacement"
+            )
 
         try:
             ast.parse(text)
         except SyntaxError as exc:
-            raise ValueError(f"Optimization response for {file_path} is not valid Python: {exc}") from exc
+            raise ValueError(
+                f"Optimization response for {file_path} is not valid Python: {exc}"
+            ) from exc
 
         if text.strip() == current_code.strip():
             raise ValueError(f"Optimization response for {file_path} did not modify the file")
@@ -1908,7 +2029,9 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Symbol optimization response for {file_path} requested external context instead of code")
+            raise ValueError(
+                f"Symbol optimization response for {file_path} requested external context instead of code"
+            )
 
         parsed = None
         wrapper_used = False
@@ -1933,15 +2056,25 @@ Do not include explanations, markdown, comments, or extra keys.
             return snippet + "\n"
 
         if wrapper_used:
-            class_node = next((node for node in parsed.body if isinstance(node, ast.ClassDef)), None)
+            class_node = next(
+                (node for node in parsed.body if isinstance(node, ast.ClassDef)), None
+            )
             if class_node is None:
-                raise ValueError(f"Symbol optimization response for {file_path} did not contain replacement methods")
+                raise ValueError(
+                    f"Symbol optimization response for {file_path} did not contain replacement methods"
+                )
             for node in class_node.body:
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in target_symbols:
+                if (
+                    isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and node.name in target_symbols
+                ):
                     replacements[node.name] = _normalized_snippet(node)
         else:
             for node in parsed.body:
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in target_symbols:
+                if (
+                    isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and node.name in target_symbols
+                ):
                     replacements[node.name] = _normalized_snippet(node)
 
         missing = [name for name in target_symbols if name not in replacements]
@@ -1968,7 +2101,9 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Action policy response for {file_path} requested external context instead of JSON")
+            raise ValueError(
+                f"Action policy response for {file_path} requested external context instead of JSON"
+            )
 
         try:
             data = json.loads(text)
@@ -1984,20 +2119,30 @@ Do not include explanations, markdown, comments, or extra keys.
         }
         extra_keys = sorted(set(data.keys()) - allowed_keys)
         if extra_keys:
-            raise ValueError(f"Action policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}")
+            raise ValueError(
+                f"Action policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}"
+            )
 
         try:
             threshold = int(data.get("remaining_gaps_threshold", 3))
         except Exception as exc:
-            raise ValueError(f"Action policy response for {file_path} must include integer remaining_gaps_threshold") from exc
+            raise ValueError(
+                f"Action policy response for {file_path} must include integer remaining_gaps_threshold"
+            ) from exc
         if threshold < 0 or threshold > 5:
-            raise ValueError(f"Action policy response for {file_path} used out-of-range remaining_gaps_threshold: {threshold}")
+            raise ValueError(
+                f"Action policy response for {file_path} used out-of-range remaining_gaps_threshold: {threshold}"
+            )
 
         normalized = {
             "remaining_gaps_threshold": threshold,
             "address_gaps_before_denoising": bool(data.get("address_gaps_before_denoising", True)),
-            "require_convergence_for_completion": bool(data.get("require_convergence_for_completion", True)),
-            "complete_when_iteration_cap_hit": bool(data.get("complete_when_iteration_cap_hit", False)),
+            "require_convergence_for_completion": bool(
+                data.get("require_convergence_for_completion", True)
+            ),
+            "complete_when_iteration_cap_hit": bool(
+                data.get("complete_when_iteration_cap_hit", False)
+            ),
             "prefer_current_gaps_key": bool(data.get("prefer_current_gaps_key", True)),
         }
         return normalized
@@ -2024,8 +2169,12 @@ Do not include explanations, markdown, comments, or extra keys.
             data = {}
 
         return {
-            "prioritize_dependency_gaps_first": bool(data.get("prioritize_dependency_gaps_first", True)),
-            "preserve_legal_source_on_merge": bool(data.get("preserve_legal_source_on_merge", True)),
+            "prioritize_dependency_gaps_first": bool(
+                data.get("prioritize_dependency_gaps_first", True)
+            ),
+            "preserve_legal_source_on_merge": bool(
+                data.get("preserve_legal_source_on_merge", True)
+            ),
             "dedupe_alternative_questions": bool(data.get("dedupe_alternative_questions", True)),
             "normalize_priority_labels": bool(data.get("normalize_priority_labels", True)),
         }
@@ -2047,12 +2196,16 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Answer policy response for {file_path} requested external context instead of JSON")
+            raise ValueError(
+                f"Answer policy response for {file_path} requested external context instead of JSON"
+            )
 
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Answer policy response for {file_path} is not valid JSON: {exc}") from exc
+            raise ValueError(
+                f"Answer policy response for {file_path} is not valid JSON: {exc}"
+            ) from exc
 
         allowed_keys = {
             "timeline_enrichment_types",
@@ -2061,7 +2214,9 @@ Do not include explanations, markdown, comments, or extra keys.
         }
         extra_keys = sorted(set(data.keys()) - allowed_keys)
         if extra_keys:
-            raise ValueError(f"Answer policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}")
+            raise ValueError(
+                f"Answer policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}"
+            )
 
         allowed_types = {
             "timeline",
@@ -2077,14 +2232,18 @@ Do not include explanations, markdown, comments, or extra keys.
         def _normalize_type_list(key: str, default: List[str]) -> List[str]:
             raw = data.get(key, default)
             if not isinstance(raw, list):
-                raise ValueError(f"Answer policy response for {file_path} must use a list for {key}")
+                raise ValueError(
+                    f"Answer policy response for {file_path} must use a list for {key}"
+                )
             normalized: List[str] = []
             for item in raw:
                 value = str(item or "").strip()
                 if not value:
                     continue
                 if value not in allowed_types:
-                    raise ValueError(f"Answer policy response for {file_path} used unsupported question type '{value}' for {key}")
+                    raise ValueError(
+                        f"Answer policy response for {file_path} used unsupported question type '{value}' for {key}"
+                    )
                 if value not in normalized:
                     normalized.append(value)
             return normalized
@@ -2128,7 +2287,9 @@ Do not include explanations, markdown, comments, or extra keys.
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Dependency readiness policy response for {file_path} is not valid JSON: {exc}") from exc
+            raise ValueError(
+                f"Dependency readiness policy response for {file_path} is not valid JSON: {exc}"
+            ) from exc
 
         allowed_keys = {
             "prioritize_blocking_gaps",
@@ -2158,9 +2319,13 @@ Do not include explanations, markdown, comments, or extra keys.
         return {
             "prioritize_blocking_gaps": bool(data.get("prioritize_blocking_gaps", True)),
             "prioritize_structured_gaps": bool(data.get("prioritize_structured_gaps", True)),
-            "promote_deterministic_gap_targets": bool(data.get("promote_deterministic_gap_targets", True)),
+            "promote_deterministic_gap_targets": bool(
+                data.get("promote_deterministic_gap_targets", True)
+            ),
             "boost_weak_claim_types": bool(data.get("boost_weak_claim_types", True)),
-            "boost_weak_evidence_modalities": bool(data.get("boost_weak_evidence_modalities", True)),
+            "boost_weak_evidence_modalities": bool(
+                data.get("boost_weak_evidence_modalities", True)
+            ),
             "gap_stall_action_threshold": stall_threshold,
         }
 
@@ -2181,12 +2346,16 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Standard intake policy response for {file_path} requested external context instead of JSON")
+            raise ValueError(
+                f"Standard intake policy response for {file_path} requested external context instead of JSON"
+            )
 
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Standard intake policy response for {file_path} is not valid JSON: {exc}") from exc
+            raise ValueError(
+                f"Standard intake policy response for {file_path} is not valid JSON: {exc}"
+            ) from exc
 
         allowed_keys = {
             "timeline_prompt_style",
@@ -2235,12 +2404,16 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Select-candidates policy response for {file_path} requested external context instead of JSON")
+            raise ValueError(
+                f"Select-candidates policy response for {file_path} requested external context instead of JSON"
+            )
 
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Select-candidates policy response for {file_path} is not valid JSON: {exc}") from exc
+            raise ValueError(
+                f"Select-candidates policy response for {file_path} is not valid JSON: {exc}"
+            ) from exc
 
         allowed_keys = {
             "dedupe_selected_candidates",
@@ -2282,12 +2455,16 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Session injection policy response for {file_path} requested external context instead of JSON")
+            raise ValueError(
+                f"Session injection policy response for {file_path} requested external context instead of JSON"
+            )
 
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Session injection policy response for {file_path} is not valid JSON: {exc}") from exc
+            raise ValueError(
+                f"Session injection policy response for {file_path} is not valid JSON: {exc}"
+            ) from exc
 
         allowed_keys = {
             "stability_injection_budget",
@@ -2312,8 +2489,12 @@ Do not include explanations, markdown, comments, or extra keys.
         return {
             "stability_injection_budget": _clamp_int("stability_injection_budget", 3, 1, 4),
             "empty_questions_min_budget": _clamp_int("empty_questions_min_budget", 5, 2, 5),
-            "limit_to_missing_objectives_in_stability": bool(data.get("limit_to_missing_objectives_in_stability", True)),
-            "one_probe_per_objective_in_stability": bool(data.get("one_probe_per_objective_in_stability", True)),
+            "limit_to_missing_objectives_in_stability": bool(
+                data.get("limit_to_missing_objectives_in_stability", True)
+            ),
+            "one_probe_per_objective_in_stability": bool(
+                data.get("one_probe_per_objective_in_stability", True)
+            ),
         }
 
     def _normalize_document_workflow_targeting_policy_response(
@@ -2333,12 +2514,16 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Document workflow targeting policy response for {file_path} requested external context instead of JSON")
+            raise ValueError(
+                f"Document workflow targeting policy response for {file_path} requested external context instead of JSON"
+            )
 
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Document workflow targeting policy response for {file_path} is not valid JSON: {exc}") from exc
+            raise ValueError(
+                f"Document workflow targeting policy response for {file_path} is not valid JSON: {exc}"
+            ) from exc
 
         allowed_keys = {
             "graph_blocker_weight",
@@ -2365,7 +2550,9 @@ Do not include explanations, markdown, comments, or extra keys.
             "graph_blocker_weight": _clamp_float("graph_blocker_weight", 0.08, 0.04, 0.12),
             "document_blocker_weight": _clamp_float("document_blocker_weight", 0.06, 0.03, 0.10),
             "intake_objective_weight": _clamp_float("intake_objective_weight", 0.05, 0.03, 0.08),
-            "boost_document_for_notice_chain": bool(data.get("boost_document_for_notice_chain", True)),
+            "boost_document_for_notice_chain": bool(
+                data.get("boost_document_for_notice_chain", True)
+            ),
             "preserve_graph_priority_when_factual_pressure_high": bool(
                 data.get("preserve_graph_priority_when_factual_pressure_high", True)
             ),
@@ -2388,12 +2575,16 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Complainant guidance policy response for {file_path} requested external context instead of JSON")
+            raise ValueError(
+                f"Complainant guidance policy response for {file_path} requested external context instead of JSON"
+            )
 
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Complainant guidance policy response for {file_path} is not valid JSON: {exc}") from exc
+            raise ValueError(
+                f"Complainant guidance policy response for {file_path} is not valid JSON: {exc}"
+            ) from exc
 
         allowed_keys = {
             "unresolved_objective_limit",
@@ -2415,9 +2606,13 @@ Do not include explanations, markdown, comments, or extra keys.
 
         return {
             "unresolved_objective_limit": max(1, min(4, unresolved_limit)),
-            "include_follow_up_prompt_examples": bool(data.get("include_follow_up_prompt_examples", True)),
+            "include_follow_up_prompt_examples": bool(
+                data.get("include_follow_up_prompt_examples", True)
+            ),
             "encourage_empathy_opening": bool(data.get("encourage_empathy_opening", True)),
-            "include_document_precision_guidance": bool(data.get("include_document_precision_guidance", True)),
+            "include_document_precision_guidance": bool(
+                data.get("include_document_precision_guidance", True)
+            ),
             "include_phase_focus_line": bool(data.get("include_phase_focus_line", True)),
         }
 
@@ -2438,12 +2633,16 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Merge-seed-with-grounding policy response for {file_path} requested external context instead of JSON")
+            raise ValueError(
+                f"Merge-seed-with-grounding policy response for {file_path} requested external context instead of JSON"
+            )
 
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Merge-seed-with-grounding policy response for {file_path} is not valid JSON: {exc}") from exc
+            raise ValueError(
+                f"Merge-seed-with-grounding policy response for {file_path} is not valid JSON: {exc}"
+            ) from exc
 
         allowed_keys = {
             "anchor_passage_limit",
@@ -2489,12 +2688,16 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Knowledge-graph build policy response for {file_path} requested external context instead of JSON")
+            raise ValueError(
+                f"Knowledge-graph build policy response for {file_path} requested external context instead of JSON"
+            )
 
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Knowledge-graph build policy response for {file_path} is not valid JSON: {exc}") from exc
+            raise ValueError(
+                f"Knowledge-graph build policy response for {file_path} is not valid JSON: {exc}"
+            ) from exc
 
         allowed_keys = {
             "normalize_whitespace_input",
@@ -2514,7 +2717,9 @@ Do not include explanations, markdown, comments, or extra keys.
             "record_source_text_char_count": bool(data.get("record_source_text_char_count", True)),
             "record_extraction_counts": bool(data.get("record_extraction_counts", True)),
             "mark_empty_input_graph": bool(data.get("mark_empty_input_graph", True)),
-            "preserve_actor_critic_metadata": bool(data.get("preserve_actor_critic_metadata", True)),
+            "preserve_actor_critic_metadata": bool(
+                data.get("preserve_actor_critic_metadata", True)
+            ),
         }
 
     def _normalize_formal_document_render_policy_response(
@@ -2534,12 +2739,16 @@ Do not include explanations, markdown, comments, or extra keys.
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
-            raise ValueError(f"Formal-document render policy response for {file_path} requested external context instead of JSON")
+            raise ValueError(
+                f"Formal-document render policy response for {file_path} requested external context instead of JSON"
+            )
 
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Formal-document render policy response for {file_path} is not valid JSON: {exc}") from exc
+            raise ValueError(
+                f"Formal-document render policy response for {file_path} is not valid JSON: {exc}"
+            ) from exc
 
         allowed_keys = {
             "chronology_line_limit",
@@ -2587,12 +2796,18 @@ Do not include explanations, markdown, comments, or extra keys.
                 f"    configured_gap_threshold = {threshold}\n"
                 "    gap_threshold = max(_INTAKE_GAPS_THRESHOLD, configured_gap_threshold)\n"
             )
-        remaining_gaps_assignment = "    remaining_gaps = data.get('remaining_gaps', float('inf'))\n"
+        remaining_gaps_assignment = (
+            "    remaining_gaps = data.get('remaining_gaps', float('inf'))\n"
+        )
         gap_condition = "(gaps and len(gaps) > 0) or remaining_gaps > gap_threshold"
         denoising_guard = "not data.get('denoising_converged', False)"
-        completion_guard = "data.get('denoising_converged', False) and remaining_gaps <= gap_threshold"
+        completion_guard = (
+            "data.get('denoising_converged', False) and remaining_gaps <= gap_threshold"
+        )
         if complete_when_cap:
-            completion_guard = f"({completion_guard}) or self.iteration_count >= _DENOISING_MAX_ITERATIONS"
+            completion_guard = (
+                f"({completion_guard}) or self.iteration_count >= _DENOISING_MAX_ITERATIONS"
+            )
 
         gap_block = (
             f"    if {gap_condition}:\n"
@@ -2634,7 +2849,7 @@ Do not include explanations, markdown, comments, or extra keys.
 
         return (
             "def _get_intake_action(self) -> Dict[str, Any]:\n"
-            "    \"\"\"Get next action for intake phase.\"\"\"\n"
+            '    """Get next action for intake phase."""\n'
             "    data = self.phase_data[ComplaintPhase.INTAKE]\n\n"
             "    readiness = self.get_intake_readiness()\n\n"
             "    if 'knowledge_graph' not in data:\n"
@@ -2678,9 +2893,9 @@ Do not include explanations, markdown, comments, or extra keys.
             sort_key = (
                 "        unanswered.sort(\n"
                 "            key=lambda pair: (\n"
-                "                0 if pair[0].get(\"dependency_gap_targeted\") else 1,\n"
-                "                0 if pair[0].get(\"support_gap_targeted\") else 1,\n"
-                "                self._priority_rank(pair[0].get(\"priority\")),\n"
+                '                0 if pair[0].get("dependency_gap_targeted") else 1,\n'
+                '                0 if pair[0].get("support_gap_targeted") else 1,\n'
+                '                self._priority_rank(pair[0].get("priority")),\n'
                 "                pair[1],\n"
                 "            )\n"
                 "        )\n"
@@ -2689,41 +2904,38 @@ Do not include explanations, markdown, comments, or extra keys.
             sort_key = (
                 "        unanswered.sort(\n"
                 "            key=lambda pair: (\n"
-                "                0 if pair[0].get(\"support_gap_targeted\") else 1,\n"
-                "                0 if pair[0].get(\"dependency_gap_targeted\") else 1,\n"
-                "                self._priority_rank(pair[0].get(\"priority\")),\n"
+                '                0 if pair[0].get("support_gap_targeted") else 1,\n'
+                '                0 if pair[0].get("dependency_gap_targeted") else 1,\n'
+                '                self._priority_rank(pair[0].get("priority")),\n'
                 "                pair[1],\n"
                 "            )\n"
                 "        )\n"
             )
 
         source_update = (
-            "            if not existing.get(\"source\") or str(existing.get(\"source\")).strip().lower() == \"legal_question\":\n"
-            "                existing[\"source\"] = \"legal_question\"\n"
+            '            if not existing.get("source") or str(existing.get("source")).strip().lower() == "legal_question":\n'
+            '                existing["source"] = "legal_question"\n'
             if preserve_legal_source
-            else "            existing[\"source\"] = \"legal_question\"\n"
+            else '            existing["source"] = "legal_question"\n'
         )
         alt_question_block = (
-            "            if question_text != existing.get(\"question\"):\n"
-            "                alternatives = existing.setdefault(\"alternative_questions\", [])\n"
+            '            if question_text != existing.get("question"):\n'
+            '                alternatives = existing.setdefault("alternative_questions", [])\n'
             "                if all(self._normalize_question(candidate) != normalized for candidate in alternatives):\n"
             "                    alternatives.append(question_text)\n"
             if dedupe_alternative_questions
-            else
-            "            if question_text != existing.get(\"question\"):\n"
-            "                existing.setdefault(\"alternative_questions\", []).append(question_text)\n"
+            else '            if question_text != existing.get("question"):\n'
+            '                existing.setdefault("alternative_questions", []).append(question_text)\n'
         )
         priority_value = (
-            "        priority_value = str(item.get(\"priority\", \"Medium\") or \"Medium\").strip().title()\n"
+            '        priority_value = str(item.get("priority", "Medium") or "Medium").strip().title()\n'
             if normalize_priority_labels
-            else
-            "        priority_value = item.get(\"priority\", \"Medium\")\n"
+            else '        priority_value = item.get("priority", "Medium")\n'
         )
         priority_merge = (
-            "                existing[\"priority\"] = str(item.get(\"priority\") or existing.get(\"priority\") or \"Medium\").strip().title()\n"
+            '                existing["priority"] = str(item.get("priority") or existing.get("priority") or "Medium").strip().title()\n'
             if normalize_priority_labels
-            else
-            "                existing[\"priority\"] = item.get(\"priority\")\n"
+            else '                existing["priority"] = item.get("priority")\n'
         )
 
         return {
@@ -2735,7 +2947,7 @@ Do not include explanations, markdown, comments, or extra keys.
                 "    unanswered = [\n"
                 "        (item, index)\n"
                 "        for index, item in enumerate(inquiries)\n"
-                "        if not item.get(\"answer\")\n"
+                '        if not item.get("answer")\n'
                 "    ]\n"
                 "    if not unanswered:\n"
                 "        return None\n"
@@ -2752,7 +2964,7 @@ Do not include explanations, markdown, comments, or extra keys.
                 "    gap_context = self._build_gap_context()\n"
                 "    priority_terms = [\n"
                 "        str(term).strip().lower()\n"
-                "        for term in (gap_context.get(\"priority_terms\") or [])\n"
+                '        for term in (gap_context.get("priority_terms") or [])\n'
                 "        if str(term).strip()\n"
                 "    ]\n"
                 "\n"
@@ -2760,7 +2972,7 @@ Do not include explanations, markdown, comments, or extra keys.
                 "    for item in questions or []:\n"
                 "        if not isinstance(item, dict):\n"
                 "            continue\n"
-                "        question_text = str(item.get(\"question\") or \"\").strip()\n"
+                '        question_text = str(item.get("question") or "").strip()\n'
                 "        if not question_text:\n"
                 "            continue\n"
                 "\n"
@@ -2768,39 +2980,39 @@ Do not include explanations, markdown, comments, or extra keys.
                 "        dependency_gap_targeted = any(term in question_text.lower() for term in priority_terms)\n"
                 "        existing = index.get(normalized)\n"
                 "        if existing is not None:\n"
-                "            existing_priority = self._priority_rank(existing.get(\"priority\"))\n"
-                "            incoming_priority = self._priority_rank(item.get(\"priority\"))\n"
+                '            existing_priority = self._priority_rank(existing.get("priority"))\n'
+                '            incoming_priority = self._priority_rank(item.get("priority"))\n'
                 "            if incoming_priority < existing_priority:\n"
                 f"{priority_merge}"
-                "            existing[\"support_gap_targeted\"] = bool(\n"
-                "                existing.get(\"support_gap_targeted\") or item.get(\"support_gap_targeted\")\n"
+                '            existing["support_gap_targeted"] = bool(\n'
+                '                existing.get("support_gap_targeted") or item.get("support_gap_targeted")\n'
                 "            )\n"
-                "            existing[\"dependency_gap_targeted\"] = bool(\n"
-                "                existing.get(\"dependency_gap_targeted\") or dependency_gap_targeted\n"
+                '            existing["dependency_gap_targeted"] = bool(\n'
+                '                existing.get("dependency_gap_targeted") or dependency_gap_targeted\n'
                 "            )\n"
                 f"{source_update}"
-                "            if item.get(\"claim_type\"):\n"
-                "                existing[\"claim_type\"] = item.get(\"claim_type\")\n"
-                "            if item.get(\"element\"):\n"
-                "                existing[\"element\"] = item.get(\"element\")\n"
-                "            if item.get(\"provenance\"):\n"
-                "                existing[\"provenance\"] = dict(item.get(\"provenance\") or {})\n"
+                '            if item.get("claim_type"):\n'
+                '                existing["claim_type"] = item.get("claim_type")\n'
+                '            if item.get("element"):\n'
+                '                existing["element"] = item.get("element")\n'
+                '            if item.get("provenance"):\n'
+                '                existing["provenance"] = dict(item.get("provenance") or {})\n'
                 f"{alt_question_block}"
                 "            merged += 1\n"
                 "            continue\n"
                 "\n"
                 f"{priority_value}"
                 "        inquiry = {\n"
-                "            \"question\": question_text,\n"
-                "            \"alternative_questions\": list(item.get(\"alternative_questions\") or []),\n"
-                "            \"answer\": item.get(\"answer\"),\n"
-                "            \"priority\": priority_value,\n"
-                "            \"support_gap_targeted\": bool(item.get(\"support_gap_targeted\", False)),\n"
-                "            \"dependency_gap_targeted\": dependency_gap_targeted,\n"
-                "            \"source\": \"legal_question\",\n"
-                "            \"claim_type\": item.get(\"claim_type\"),\n"
-                "            \"element\": item.get(\"element\"),\n"
-                "            \"provenance\": dict(item.get(\"provenance\") or {}),\n"
+                '            "question": question_text,\n'
+                '            "alternative_questions": list(item.get("alternative_questions") or []),\n'
+                '            "answer": item.get("answer"),\n'
+                '            "priority": priority_value,\n'
+                '            "support_gap_targeted": bool(item.get("support_gap_targeted", False)),\n'
+                '            "dependency_gap_targeted": dependency_gap_targeted,\n'
+                '            "source": "legal_question",\n'
+                '            "claim_type": item.get("claim_type"),\n'
+                '            "element": item.get("element"),\n'
+                '            "provenance": dict(item.get("provenance") or {}),\n'
                 "        }\n"
                 "        inquiries.append(inquiry)\n"
                 "        index[normalized] = inquiry\n"
@@ -2826,7 +3038,7 @@ Do not include explanations, markdown, comments, or extra keys.
             "def process_answer(self, question: Dict[str, Any], answer: str,\n"
             "                  knowledge_graph: KnowledgeGraph,\n"
             "                  dependency_graph: Optional[DependencyGraph] = None) -> Dict[str, Any]:\n"
-            "    \"\"\"\n"
+            '    """\n'
             "    Process an answer to a denoising question.\n"
             "    \n"
             "    Args:\n"
@@ -2837,7 +3049,7 @@ Do not include explanations, markdown, comments, or extra keys.
             "        \n"
             "    Returns:\n"
             "        Information about what was updated\n"
-            "    \"\"\"\n"
+            '    """\n'
             "    self.questions_asked.append({\n"
             "        'question': question,\n"
             "        'answer': answer\n"
@@ -2892,7 +3104,7 @@ Do not include explanations, markdown, comments, or extra keys.
             "            return\n"
             "        claim_id = _single_claim_id()\n"
             "        snippet = self._short_description(answer_text, 120)\n"
-            "        fact_name = f\"Timeline detail: {self._short_description(answer_text, 60)}\"\n"
+            '        fact_name = f"Timeline detail: {self._short_description(answer_text, 60)}"\n'
             "        fact_entity, created = self._add_entity_if_missing(\n"
             "            knowledge_graph,\n"
             "            'fact',\n"
@@ -2944,7 +3156,7 @@ Do not include explanations, markdown, comments, or extra keys.
             "            claim_id = _single_claim_id()\n"
             "        if claim_id and len(answer_text) > 10:\n"
             "            snippet = self._short_description(answer_text, 120)\n"
-            "            evidence_name = f\"Evidence: {self._short_description(answer_text, 80)}\"\n"
+            '            evidence_name = f"Evidence: {self._short_description(answer_text, 80)}"\n'
             "            evidence_entity, created = self._add_entity_if_missing(\n"
             "                knowledge_graph,\n"
             "                'evidence',\n"
@@ -2974,11 +3186,11 @@ Do not include explanations, markdown, comments, or extra keys.
             "            snippet = self._short_description(answer_text, 120)\n"
             "            if question_type == 'remedy':\n"
             "                fact_type = 'remedy'\n"
-            "                fact_name = f\"Requested remedy: {self._short_description(answer_text, 60)}\"\n"
+            '                fact_name = f"Requested remedy: {self._short_description(answer_text, 60)}"\n'
             "                rel_type = 'seeks_remedy'\n"
             "            else:\n"
             "                fact_type = 'impact'\n"
-            "                fact_name = f\"Impact: {self._short_description(answer_text, 60)}\"\n"
+            '                fact_name = f"Impact: {self._short_description(answer_text, 60)}"\n'
             "                rel_type = 'has_impact'\n"
             "            fact_entity, created = self._add_entity_if_missing(\n"
             "                knowledge_graph,\n"
@@ -3000,7 +3212,7 @@ Do not include explanations, markdown, comments, or extra keys.
             "                if rel_created:\n"
             "                    updates['relationships_added'] += 1\n"
             "            if question_type == 'impact' and self._contains_remedy_cue(answer_text):\n"
-            "                remedy_name = f\"Requested remedy: {self._short_description(answer_text, 60)}\"\n"
+            '                remedy_name = f"Requested remedy: {self._short_description(answer_text, 60)}"\n'
             "                remedy_entity, remedy_created = self._add_entity_if_missing(\n"
             "                    knowledge_graph,\n"
             "                    'fact',\n"
@@ -3036,7 +3248,7 @@ Do not include explanations, markdown, comments, or extra keys.
             "    if question_type in timeline_enrichment_types and answer_text:\n"
             "        _apply_timeline_enrichment()\n"
             "\n"
-            "    logger.info(f\"Processed answer: {updates}\")\n"
+            '    logger.info(f"Processed answer: {updates}")\n'
             "\n"
             "    try:\n"
             "        gain = self._compute_gain(updates)\n"
@@ -3061,14 +3273,14 @@ Do not include explanations, markdown, comments, or extra keys.
 
         return (
             "def get_claim_readiness(self) -> Dict[str, Any]:\n"
-            "    \"\"\"\n"
+            '    """\n'
             "    Assess overall readiness of all claims.\n"
             "    \n"
             "    Returns summary of which claims are ready to file and which need work.\n"
-            "    \"\"\"\n"
+            '    """\n'
             "    def _normalize_key_fragment(value: Any) -> str:\n"
-            "        normalized = re.sub(r\"[^a-z0-9]+\", \"_\", str(value or \"\").strip().lower())\n"
-            "        normalized = re.sub(r\"_+\", \"_\", normalized).strip(\"_\")\n"
+            '        normalized = re.sub(r"[^a-z0-9]+", "_", str(value or "").strip().lower())\n'
+            '        normalized = re.sub(r"_+", "_", normalized).strip("_")\n'
             "        return normalized\n"
             "\n"
             "    def _build_deterministic_update_key(\n"
@@ -3084,10 +3296,10 @@ Do not include explanations, markdown, comments, or extra keys.
             "        if requirement_key:\n"
             "            type_fragment = _normalize_key_fragment(claim_type) or 'claim'\n"
             "            req_fragment = _normalize_key_fragment(requirement_key) or 'requirement'\n"
-            "            return f\"{type_fragment}:{req_fragment}\"\n"
+            '            return f"{type_fragment}:{req_fragment}"\n'
             "        source_fragment = _normalize_key_fragment(source_node.id if source_node else '') or 'unknown_source'\n"
             "        claim_fragment = _normalize_key_fragment(claim_type) or _normalize_key_fragment(claim_id) or 'claim'\n"
-            "        return f\"{claim_fragment}:{source_fragment}\"\n"
+            '        return f"{claim_fragment}:{source_fragment}"\n'
             "\n"
             "    claims = self.get_nodes_by_type(NodeType.CLAIM)\n"
             "    nodes_by_id = self.nodes\n"
@@ -3424,30 +3636,34 @@ Do not include explanations, markdown, comments, or extra keys.
                 "What is the timeline of key events, including dates, who made each decision, "
                 "what notice or communication you received, and when you requested help or accommodation?"
             )
-            timeline_keywords = ['timeline', 'when did', 'what date', 'dates', 'notice', 'who made']
+            timeline_keywords = ["timeline", "when did", "what date", "dates", "notice", "who made"]
         else:
-            timeline_text = (
-                "What is the timeline of key events (dates, who was involved, what was said or done, and when you requested help/accommodation)?"
-            )
-            timeline_keywords = ['timeline', 'when did', 'what date', 'dates']
+            timeline_text = "What is the timeline of key events (dates, who was involved, what was said or done, and when you requested help/accommodation)?"
+            timeline_keywords = ["timeline", "when did", "what date", "dates"]
 
         if impact_style == "impact_with_documents":
             impact_text = (
                 "What harm did you experience (financial, emotional, professional), what outcome or remedy are you seeking, "
                 "and what notices, letters, or messages document that harm?"
             )
-            impact_keywords = ['harm', 'damages', 'remedy', 'seeking', 'notice', 'letter', 'message']
+            impact_keywords = [
+                "harm",
+                "damages",
+                "remedy",
+                "seeking",
+                "notice",
+                "letter",
+                "message",
+            ]
         else:
-            impact_text = (
-                "What harm did you experience (financial, emotional, professional), and what outcome or remedy are you seeking?"
-            )
-            impact_keywords = ['harm', 'damages', 'remedy', 'seeking']
+            impact_text = "What harm did you experience (financial, emotional, professional), and what outcome or remedy are you seeking?"
+            impact_keywords = ["harm", "damages", "remedy", "seeking"]
 
         notice_block = ""
         if include_notice_question:
             notice_block = (
                 "        notice_text = (\n"
-                "            \"What exact notice, letter, email, or message did you receive, on what date, and who sent it?\"\n"
+                '            "What exact notice, letter, email, or message did you receive, on what date, and who sent it?"\n'
                 "        )\n"
                 "        if len(questions) + len(added) < max_questions:\n"
                 "            if not any(q.get('type') == 'evidence' for q in questions) and not any(k in existing_text for k in ['notice', 'letter', 'email', 'message', 'sent it']):\n"
@@ -3537,7 +3753,7 @@ Do not include explanations, markdown, comments, or extra keys.
             "    max_questions: int = 10,\n"
             "    selector: Any = None,\n"
             ") -> List[Dict[str, Any]]:\n"
-            "    \"\"\"Select final question candidates, allowing a router/prover override.\"\"\"\n"
+            '    """Select final question candidates, allowing a router/prover override."""\n'
             "    normalized_candidates = [candidate for candidate in (candidates or []) if isinstance(candidate, dict)]\n"
             "    if not normalized_candidates or max_questions <= 0:\n"
             "        return []\n"
@@ -3707,7 +3923,9 @@ Do not include explanations, markdown, comments, or extra keys.
         document_blocker_weight = float(policy.get("document_blocker_weight", 0.06))
         intake_objective_weight = float(policy.get("intake_objective_weight", 0.05))
         boost_document_notice = bool(policy.get("boost_document_for_notice_chain", True))
-        preserve_graph_priority = bool(policy.get("preserve_graph_priority_when_factual_pressure_high", True))
+        preserve_graph_priority = bool(
+            policy.get("preserve_graph_priority_when_factual_pressure_high", True)
+        )
 
         notice_chain_block = ""
         if boost_document_notice:
@@ -3925,7 +4143,9 @@ Do not include explanations, markdown, comments, or extra keys.
             "    return '\\n'.join(f'- {item}' for item in guidance)\n"
         )
 
-    def _apply_merge_seed_with_grounding_policy_to_source(self, source: str, policy: Dict[str, Any]) -> str:
+    def _apply_merge_seed_with_grounding_policy_to_source(
+        self, source: str, policy: Dict[str, Any]
+    ) -> str:
         updated = str(source)
         replacements = [
             (
@@ -3934,7 +4154,7 @@ Do not include explanations, markdown, comments, or extra keys.
             ),
             (
                 r"for evidence in \[dict\(item\) for item in list\(merged\.get\(\"hacc_evidence\"\) or \[\]\) if isinstance\(item, dict\)\]\[:\d+\]:",
-                "for evidence in [dict(item) for item in list(merged.get(\"hacc_evidence\") or []) if isinstance(item, dict)]"
+                'for evidence in [dict(item) for item in list(merged.get("hacc_evidence") or []) if isinstance(item, dict)]'
                 f"[:{int(policy.get('evidence_item_limit', 8))}]:",
             ),
             (
@@ -3949,14 +4169,20 @@ Do not include explanations, markdown, comments, or extra keys.
         for pattern, replacement in replacements:
             updated, count = re.subn(pattern, replacement, updated, count=1)
             if count != 1:
-                raise ValueError(f"Could not apply merge-seed-with-grounding policy pattern: {pattern}")
+                raise ValueError(
+                    f"Could not apply merge-seed-with-grounding policy pattern: {pattern}"
+                )
         try:
             ast.parse(updated)
         except SyntaxError as exc:
-            raise ValueError(f"Merge-seed-with-grounding policy produced invalid Python: {exc}") from exc
+            raise ValueError(
+                f"Merge-seed-with-grounding policy produced invalid Python: {exc}"
+            ) from exc
         return updated
 
-    def _apply_formal_document_render_policy_to_source(self, source: str, policy: Dict[str, Any]) -> str:
+    def _apply_formal_document_render_policy_to_source(
+        self, source: str, policy: Dict[str, Any]
+    ) -> str:
         updated = str(source)
         replacements = [
             (
@@ -3973,17 +4199,21 @@ Do not include explanations, markdown, comments, or extra keys.
             ),
             (
                 r"for index, fact in enumerate\(_listify\(affidavit\.get\(\"facts\"\)\), 1\):",
-                f"for index, fact in enumerate(_listify(affidavit.get(\"facts\"))[:{int(policy.get('affidavit_fact_limit', 6))}], 1):",
+                f'for index, fact in enumerate(_listify(affidavit.get("facts"))[:{int(policy.get("affidavit_fact_limit", 6))}], 1):',
             ),
         ]
         for pattern, replacement in replacements:
             updated, count = re.subn(pattern, replacement, updated, count=1)
             if count != 1:
-                raise ValueError(f"Could not apply formal-document render policy pattern: {pattern}")
+                raise ValueError(
+                    f"Could not apply formal-document render policy pattern: {pattern}"
+                )
         try:
             ast.parse(textwrap.dedent(updated))
         except SyntaxError as exc:
-            raise ValueError(f"Formal-document render policy produced invalid Python: {exc}") from exc
+            raise ValueError(
+                f"Formal-document render policy produced invalid Python: {exc}"
+            ) from exc
         return updated
 
     def _render_knowledge_graph_build_from_text_from_policy(self, policy: Dict[str, Any]) -> str:
@@ -3997,9 +4227,7 @@ Do not include explanations, markdown, comments, or extra keys.
             "    source_text = str(text or '')\n"
             "    normalized_text = ' '.join(source_text.split())\n"
             if normalize_whitespace
-            else
-            "    source_text = str(text or '')\n"
-            "    normalized_text = source_text\n"
+            else "    source_text = str(text or '')\n    normalized_text = source_text\n"
         )
         text_size_block = (
             "    graph.metadata['source_text_char_count'] = len(normalized_text)\n"
@@ -4021,25 +4249,25 @@ Do not include explanations, markdown, comments, or extra keys.
         actor_critic_block = (
             "    if self.actor_critic_enabled:\n"
             "        entity_scores = [\n"
-            "            float((entity.attributes or {}).get(\"actor_critic_score\", 0.0) or 0.0)\n"
+            '            float((entity.attributes or {}).get("actor_critic_score", 0.0) or 0.0)\n'
             "            for entity in graph.entities.values()\n"
             "        ]\n"
             "        relationship_scores = [\n"
-            "            float((rel.attributes or {}).get(\"actor_critic_score\", 0.0) or 0.0)\n"
+            '            float((rel.attributes or {}).get("actor_critic_score", 0.0) or 0.0)\n'
             "            for rel in graph.relationships.values()\n"
             "        ]\n"
-            "        graph.metadata[\"actor_critic\"] = {\n"
-            "            \"enabled\": True,\n"
-            "            \"entity_count\": len(entity_scores),\n"
-            "            \"relationship_count\": len(relationship_scores),\n"
-            "            \"avg_entity_score\": (\n"
+            '        graph.metadata["actor_critic"] = {\n'
+            '            "enabled": True,\n'
+            '            "entity_count": len(entity_scores),\n'
+            '            "relationship_count": len(relationship_scores),\n'
+            '            "avg_entity_score": (\n'
             "                round(sum(entity_scores) / len(entity_scores), 4) if entity_scores else 0.0\n"
             "            ),\n"
-            "            \"avg_relationship_score\": (\n"
+            '            "avg_relationship_score": (\n'
             "                round(sum(relationship_scores) / len(relationship_scores), 4) if relationship_scores else 0.0\n"
             "            ),\n"
-            "            \"entity_score_floor\": float(self.min_entity_actor_critic_score),\n"
-            "            \"relationship_score_floor\": float(self.min_relationship_actor_critic_score),\n"
+            '            "entity_score_floor": float(self.min_entity_actor_critic_score),\n'
+            '            "relationship_score_floor": float(self.min_relationship_actor_critic_score),\n'
             "        }\n"
             if preserve_actor_critic_metadata
             else ""
@@ -4047,7 +4275,7 @@ Do not include explanations, markdown, comments, or extra keys.
 
         rendered = (
             "def build_from_text(self, text: str) -> KnowledgeGraph:\n"
-            "    \"\"\"\n"
+            '    """\n'
             "    Build a knowledge graph from complaint text.\n"
             "    \n"
             "    Args:\n"
@@ -4055,7 +4283,7 @@ Do not include explanations, markdown, comments, or extra keys.
             "        \n"
             "    Returns:\n"
             "        A KnowledgeGraph instance\n"
-            "    \"\"\"\n"
+            '    """\n'
             "    graph = KnowledgeGraph()\n"
             f"{input_normalization}"
             f"{text_size_block}"
@@ -4088,7 +4316,7 @@ Do not include explanations, markdown, comments, or extra keys.
             f"{extraction_count_block}"
             "\n"
             f"{actor_critic_block}"
-            "    logger.info(f\"Built knowledge graph: {graph.summary()}\")\n"
+            '    logger.info(f"Built knowledge graph: {graph.summary()}")\n'
             "    self._built_graphs.append(graph)\n"
             "    self._text_processed_count += 1\n"
             "    return graph\n"
@@ -4130,7 +4358,11 @@ Do not include explanations, markdown, comments, or extra keys.
                     f"Symbol optimization response for {file_path} returned invalid code for {name}: {exc}"
                 ) from exc
             function_node = next(
-                (node for node in parsed.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))),
+                (
+                    node
+                    for node in parsed.body
+                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                ),
                 None,
             )
             if function_node is None or function_node.name != name:
@@ -4161,7 +4393,10 @@ Do not include explanations, markdown, comments, or extra keys.
             return ""
 
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in target_symbols:
+            if (
+                isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and node.name in target_symbols
+            ):
                 snippet = replacement_sources.get(node.name)
                 if not snippet:
                     continue
@@ -4178,7 +4413,9 @@ Do not include explanations, markdown, comments, or extra keys.
                 replacements.append((node.lineno - 1, node.end_lineno, replacement))
 
         if not replacements:
-            raise ValueError(f"No matching source locations found for target symbols: {', '.join(target_symbols)}")
+            raise ValueError(
+                f"No matching source locations found for target symbols: {', '.join(target_symbols)}"
+            )
 
         for start, end, replacement in sorted(replacements, key=lambda item: item[0], reverse=True):
             lines[start:end] = [replacement]

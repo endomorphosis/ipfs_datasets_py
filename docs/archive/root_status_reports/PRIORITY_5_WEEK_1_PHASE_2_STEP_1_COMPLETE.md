@@ -13,6 +13,7 @@ Successfully eliminated the first duplicate code pattern by removing Optimizatio
 # logic_optimizer.py
 class OptimizationStrategy(Enum):
     """Strategy for optimization."""
+
     PROMPT_TUNING = "prompt_tuning"
     CONFIDENCE_ADJUSTMENT = "confidence_adjustment"
     MODE_SELECTION = "mode_selection"
@@ -44,12 +45,15 @@ from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationStrate
 All imports tested and working:
 
 ```python
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOptimizer, OptimizationStrategy
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+    LogicTheoremOptimizer,
+    OptimizationStrategy,
+)
 from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationStrategy as BaseStrategy
 
 # Verify they are the same
 assert OptimizationStrategy is BaseStrategy  # ✓ True
-assert hasattr(OptimizationStrategy, 'SGD')  # ✓ True
+assert hasattr(OptimizationStrategy, "SGD")  # ✓ True
 ```
 
 ## Impact

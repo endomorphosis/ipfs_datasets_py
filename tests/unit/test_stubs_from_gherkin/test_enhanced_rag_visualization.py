@@ -4,11 +4,13 @@ Test stubs for enhanced_rag_visualization module.
 Feature: Enhanced RAG Visualization
   Enhanced visualization for RAG systems
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def rag_retrieval_results():
@@ -83,6 +85,7 @@ def vector_embeddings():
 
 
 # Test scenarios
+
 
 def test_visualize_retrieval_results():
     """
@@ -173,6 +176,7 @@ def test_export_visualization():
 
 
 # Step definitions
+
 
 # Given steps
 @given("RAG retrieval results")
@@ -343,4 +347,3 @@ def the_visualization_is_saved_as_image_or_data():
     """Step: Then the visualization is saved as image or data"""
     # TODO: Implement step
     pass
-

@@ -26,7 +26,7 @@ except ImportError:
     NeurosymbolicGraphRAG = None
 
 __all__ = [
-    'LogicPrimitives',
-    'NeurosymbolicAPI',
-    'NeurosymbolicGraphRAG',
+    "LogicPrimitives",
+    "NeurosymbolicAPI",
+    "NeurosymbolicGraphRAG",
 ]

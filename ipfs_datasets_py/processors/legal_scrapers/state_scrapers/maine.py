@@ -15,33 +15,39 @@ from .registry import StateScraperRegistry
 class MaineScraper(BaseStateScraper):
     """Scraper for Maine state laws from http://legislature.maine.gov"""
 
-    _ME_SECTION_URL_RE = re.compile(r"/statutes/[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+sec[0-9A-Za-z\-]+\.html$", re.IGNORECASE)
-    _ME_CHAPTER_INDEX_RE = re.compile(r"/title[0-9A-Za-z\-]+ch[0-9A-Za-z\-]+sec0\.html$", re.IGNORECASE)
+    _ME_SECTION_URL_RE = re.compile(
+        r"/statutes/[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+sec[0-9A-Za-z\-]+\.html$", re.IGNORECASE
+    )
+    _ME_CHAPTER_INDEX_RE = re.compile(
+        r"/title[0-9A-Za-z\-]+ch[0-9A-Za-z\-]+sec0\.html$", re.IGNORECASE
+    )
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
         for statute in statutes:
             source = str(statute.source_url or "")
-            if self._ME_SECTION_URL_RE.search(source) and not self._ME_CHAPTER_INDEX_RE.search(source):
+            if self._ME_SECTION_URL_RE.search(source) and not self._ME_CHAPTER_INDEX_RE.search(
+                source
+            ):
                 if str(statute.section_number or "").startswith("Section-"):
-                    m = re.search(r"title[0-9A-Za-z\-]+sec([0-9A-Za-z\-]+)\.html$", source, re.IGNORECASE)
+                    m = re.search(
+                        r"title[0-9A-Za-z\-]+sec([0-9A-Za-z\-]+)\.html$", source, re.IGNORECASE
+                    )
                     if m:
                         statute.section_number = m.group(1)
                 filtered.append(statute)
         return filtered
-    
+
     def get_base_url(self) -> str:
         """Return the base URL for Maine's legislative website."""
         return "http://legislature.maine.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Maine."""
-        return [{
-            "name": "Maine Revised Statutes",
-            "url": f"{self.get_base_url()}/",
-            "type": "Code"
-        }]
-    
+        return [
+            {"name": "Maine Revised Statutes", "url": f"{self.get_base_url()}/", "type": "Code"}
+        ]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -49,11 +55,11 @@ class MaineScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Maine's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -107,7 +113,9 @@ class MaineScraper(BaseStateScraper):
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "Me. Rev. Stat.", max_sections=max(10, return_threshold))
+            statutes = await self._generic_scrape(
+                code_name, candidate, "Me. Rev. Stat.", max_sections=max(10, return_threshold)
+            )
             statutes = self._filter_section_level(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
@@ -127,13 +135,21 @@ class MaineScraper(BaseStateScraper):
             return []
 
         root_url = "https://legislature.maine.gov/statutes/"
-        root_raw = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=25)
+        root_raw = await self._fetch_page_content_with_archival_fallback(
+            root_url, timeout_seconds=25
+        )
         if not root_raw:
             return []
-        root_html = root_raw.decode("utf-8", errors="replace") if isinstance(root_raw, bytes) else str(root_raw)
+        root_html = (
+            root_raw.decode("utf-8", errors="replace")
+            if isinstance(root_raw, bytes)
+            else str(root_raw)
+        )
         root_soup = BeautifulSoup(root_html, "html.parser")
 
-        resumed = self._load_partial_checkpoint_statutes(code_name=code_name, max_statutes=max_statutes)
+        resumed = self._load_partial_checkpoint_statutes(
+            code_name=code_name, max_statutes=max_statutes
+        )
         checkpoint_progress = self._load_partial_checkpoint_progress()
         statutes: List[NormalizedStatute] = []
         seen_sections: set[str] = set()
@@ -164,16 +180,24 @@ class MaineScraper(BaseStateScraper):
         resume_titles_scanned = max(0, int(checkpoint_progress.get("titles_scanned") or 0))
         resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
         resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
-        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        resume_discovered_sections = max(
+            0, int(checkpoint_progress.get("discovered_sections") or 0)
+        )
         title_rewind = max(0, int(self._env_int("STATE_SCRAPER_ME_RESUME_TITLE_REWIND", default=1)))
-        chapter_rewind = max(0, int(self._env_int("STATE_SCRAPER_ME_RESUME_CHAPTER_REWIND", default=10)))
+        chapter_rewind = max(
+            0, int(self._env_int("STATE_SCRAPER_ME_RESUME_CHAPTER_REWIND", default=10))
+        )
         resume_title_floor = max(0, resume_titles_scanned - title_rewind)
         resume_chapter_floor = max(0, resume_chapters_scanned - chapter_rewind)
         title_urls = []
         seen_titles = set()
         for link in root_soup.find_all("a", href=True):
             href = str(link.get("href") or "").strip()
-            if not re.search(r"/?statutes/[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+ch0sec0\.html$|^[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+ch0sec0\.html$", href, re.IGNORECASE):
+            if not re.search(
+                r"/?statutes/[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+ch0sec0\.html$|^[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+ch0sec0\.html$",
+                href,
+                re.IGNORECASE,
+            ):
                 continue
             full_url = urljoin(root_url, href)
             if full_url in seen_titles:
@@ -204,7 +228,9 @@ class MaineScraper(BaseStateScraper):
         processed_chapters = 0
         sections_scanned_total = int(max(len(statutes), resume_sections_scanned))
         sections_discovered_total = int(max(len(statutes), resume_discovered_sections))
-        section_concurrency = max(1, int(self._env_int("STATE_SCRAPER_ME_SECTION_CONCURRENCY", default=8)))
+        section_concurrency = max(
+            1, int(self._env_int("STATE_SCRAPER_ME_SECTION_CONCURRENCY", default=8))
+        )
         section_sem = asyncio.Semaphore(section_concurrency)
 
         for title_index, title_url in enumerate(title_urls, start=1):
@@ -212,16 +238,24 @@ class MaineScraper(BaseStateScraper):
                 break
             if title_index < resume_title_floor:
                 continue
-            title_raw = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=25)
+            title_raw = await self._fetch_page_content_with_archival_fallback(
+                title_url, timeout_seconds=25
+            )
             if not title_raw:
                 continue
-            title_html = title_raw.decode("utf-8", errors="replace") if isinstance(title_raw, bytes) else str(title_raw)
+            title_html = (
+                title_raw.decode("utf-8", errors="replace")
+                if isinstance(title_raw, bytes)
+                else str(title_raw)
+            )
             title_soup = BeautifulSoup(title_html, "html.parser")
             chapter_urls = []
             seen_chapters = set()
             for link in title_soup.find_all("a", href=True):
                 href = str(link.get("href") or "").strip()
-                if not re.search(r"title[0-9A-Za-z\-]+ch[0-9A-Za-z\-]+sec0\.html$", href, re.IGNORECASE):
+                if not re.search(
+                    r"title[0-9A-Za-z\-]+ch[0-9A-Za-z\-]+sec0\.html$", href, re.IGNORECASE
+                ):
                     continue
                 full_url = urljoin(title_url, href)
                 if full_url in seen_chapters or full_url.endswith("ch0sec0.html"):
@@ -257,16 +291,24 @@ class MaineScraper(BaseStateScraper):
                 processed_chapters += 1
                 if processed_chapters < resume_chapter_floor:
                     continue
-                chapter_raw = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=25)
+                chapter_raw = await self._fetch_page_content_with_archival_fallback(
+                    chapter_url, timeout_seconds=25
+                )
                 if not chapter_raw:
                     continue
-                chapter_html = chapter_raw.decode("utf-8", errors="replace") if isinstance(chapter_raw, bytes) else str(chapter_raw)
+                chapter_html = (
+                    chapter_raw.decode("utf-8", errors="replace")
+                    if isinstance(chapter_raw, bytes)
+                    else str(chapter_raw)
+                )
                 chapter_soup = BeautifulSoup(chapter_html, "html.parser")
                 section_candidates: List[str] = []
                 seen_local_candidates: set[str] = set()
                 for link in chapter_soup.find_all("a", href=True):
                     href = str(link.get("href") or "").strip()
-                    if not re.search(r"title[0-9A-Za-z\-]+sec[0-9A-Za-z\-]+\.html$", href, re.IGNORECASE):
+                    if not re.search(
+                        r"title[0-9A-Za-z\-]+sec[0-9A-Za-z\-]+\.html$", href, re.IGNORECASE
+                    ):
                         continue
                     section_url = urljoin(chapter_url, href)
                     if section_url.endswith("sec0.html"):
@@ -281,7 +323,10 @@ class MaineScraper(BaseStateScraper):
                     async with section_sem:
                         return await self._build_official_section_statute(code_name, section_url)
 
-                tasks = [asyncio.create_task(_parse_section_url(section_url)) for section_url in section_candidates]
+                tasks = [
+                    asyncio.create_task(_parse_section_url(section_url))
+                    for section_url in section_candidates
+                ]
                 scanned_sections = 0
                 cancelled_early = False
                 for task in asyncio.as_completed(tasks):
@@ -319,8 +364,7 @@ class MaineScraper(BaseStateScraper):
                 if cancelled_early:
                     await asyncio.gather(*tasks, return_exceptions=True)
                 if scanned_sections and (
-                    scanned_sections == len(section_candidates)
-                    or scanned_sections % 200 == 0
+                    scanned_sections == len(section_candidates) or scanned_sections % 200 == 0
                 ):
                     self._write_partial_checkpoint(
                         statutes,
@@ -370,7 +414,9 @@ class MaineScraper(BaseStateScraper):
         html = raw.decode("utf-8", errors="replace") if isinstance(raw, bytes) else str(raw)
         soup = BeautifulSoup(html, "html.parser")
         heading = self._normalize_legal_text(
-            (soup.select_one(".heading_section") or soup.find("title") or soup).get_text(" ", strip=True)
+            (soup.select_one(".heading_section") or soup.find("title") or soup).get_text(
+                " ", strip=True
+            )
         )
         body_node = soup.select_one("div.row.section-content") or soup.select_one("div.MRSSection")
         body = self._normalize_legal_text(body_node.get_text(" ", strip=True) if body_node else "")
@@ -386,9 +432,17 @@ class MaineScraper(BaseStateScraper):
         title_match = re.search(r"/title([0-9A-Za-z\-]+)sec", url, flags=re.IGNORECASE)
         section_match = re.search(r"sec([0-9A-Za-z\-]+)\.html$", url, flags=re.IGNORECASE)
         title_number = title_match.group(1) if title_match else None
-        section_number = section_match.group(1) if section_match else (self._extract_section_number(heading) or "")
+        section_number = (
+            section_match.group(1)
+            if section_match
+            else (self._extract_section_number(heading) or "")
+        )
         section_name = re.sub(r"^§\s*[\w\-]+\.?\s*", "", heading).strip() or heading
-        official_cite = f"Me. Rev. Stat. tit. {title_number}, § {section_number}" if title_number else f"Me. Rev. Stat. § {section_number}"
+        official_cite = (
+            f"Me. Rev. Stat. tit. {title_number}, § {section_number}"
+            if title_number
+            else f"Me. Rev. Stat. § {section_number}"
+        )
         return NormalizedStatute(
             state_code=self.state_code,
             state_name=self.state_name,
@@ -435,10 +489,16 @@ class MaineScraper(BaseStateScraper):
                 continue
             soup = BeautifulSoup(html, "html.parser")
             heading = self._normalize_legal_text(
-                (soup.select_one(".heading_section") or soup.find("title") or soup).get_text(" ", strip=True)
+                (soup.select_one(".heading_section") or soup.find("title") or soup).get_text(
+                    " ", strip=True
+                )
             )
-            body_node = soup.select_one("div.row.section-content") or soup.select_one("div.MRSSection")
-            body = self._normalize_legal_text(body_node.get_text(" ", strip=True) if body_node else "")
+            body_node = soup.select_one("div.row.section-content") or soup.select_one(
+                "div.MRSSection"
+            )
+            body = self._normalize_legal_text(
+                body_node.get_text(" ", strip=True) if body_node else ""
+            )
             if len(body) < 160:
                 text_nodes = [
                     self._normalize_legal_text(node.get_text(" ", strip=True))
@@ -451,9 +511,17 @@ class MaineScraper(BaseStateScraper):
             title_match = re.search(r"/title([0-9A-Za-z\-]+)sec", url, flags=re.IGNORECASE)
             section_match = re.search(r"sec([0-9A-Za-z\-]+)\.html$", url, flags=re.IGNORECASE)
             title_number = title_match.group(1) if title_match else None
-            section_number = section_match.group(1) if section_match else (self._extract_section_number(heading) or "")
+            section_number = (
+                section_match.group(1)
+                if section_match
+                else (self._extract_section_number(heading) or "")
+            )
             section_name = re.sub(r"^§\s*[\w\-]+\.?\s*", "", heading).strip() or heading
-            official_cite = f"Me. Rev. Stat. tit. {title_number}, § {section_number}" if title_number else f"Me. Rev. Stat. § {section_number}"
+            official_cite = (
+                f"Me. Rev. Stat. tit. {title_number}, § {section_number}"
+                if title_number
+                else f"Me. Rev. Stat. § {section_number}"
+            )
             out.append(
                 NormalizedStatute(
                     state_code=self.state_code,

@@ -71,7 +71,9 @@ _CASE_NUMBER_LABEL_PATTERN = re.compile(
     r"\b(?:case|cause|civil action|docket)\s*(?:no\.?|number)?\s*[:#]?\s*([A-Za-z0-9:\-\.]+)",
     re.IGNORECASE,
 )
-_CASE_NUMBER_TOKEN_PATTERN = re.compile(r"\b\d{1,4}:\d{2,4}[- ]?[a-z]{1,6}[- ]?\d{1,8}\b", re.IGNORECASE)
+_CASE_NUMBER_TOKEN_PATTERN = re.compile(
+    r"\b\d{1,4}:\d{2,4}[- ]?[a-z]{1,6}[- ]?\d{1,8}\b", re.IGNORECASE
+)
 _PACER_DOCKET_ROW_PATTERN = re.compile(r"<tr[^>]*>(.*?)</tr>", re.IGNORECASE | re.DOTALL)
 _PACER_DOCKET_CELL_PATTERN = re.compile(r"<t[dh][^>]*>(.*?)</t[dh]>", re.IGNORECASE | re.DOTALL)
 _PACER_DATE_PATTERN = re.compile(r"\b\d{1,2}/\d{1,2}/\d{2,4}\b")
@@ -97,7 +99,12 @@ def _normalize_case_number_text(value: Any) -> str:
     text = " ".join(str(value or "").strip().split())
     if not text:
         return ""
-    text = re.sub(r"^(?:case|cause|civil action|docket)\s*(?:no\.?|number)?\s*[:#]?\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(
+        r"^(?:case|cause|civil action|docket)\s*(?:no\.?|number)?\s*[:#]?\s*",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
     return text.strip(" .:#")
 
 
@@ -122,7 +129,9 @@ def _html_to_text(value: Any, *, preserve_line_breaks: bool = False) -> str:
     text = re.sub(r"<[^>]+>", " ", text)
     text = html.unescape(text)
     if preserve_line_breaks:
-        return "\n".join(" ".join(line.split()) for line in text.splitlines() if line.strip()).strip()
+        return "\n".join(
+            " ".join(line.split()) for line in text.splitlines() if line.strip()
+        ).strip()
     return " ".join(text.split()).strip()
 
 
@@ -135,7 +144,13 @@ def _parse_pacer_html_docket(path: Path) -> Dict[str, Any]:
     )
     has_docket_markers = any(
         marker in html_lower
-        for marker in ("docket report", "docket sheet", "docket text", "case no.", "civil action no.")
+        for marker in (
+            "docket report",
+            "docket sheet",
+            "docket text",
+            "case no.",
+            "civil action no.",
+        )
     )
     if not has_court_header or not has_docket_markers:
         raise ValueError(f"HTML file does not appear to be a PACER docket: {path}")
@@ -148,7 +163,11 @@ def _parse_pacer_html_docket(path: Path) -> Dict[str, Any]:
     case_name = ""
     for line in lines[:80]:
         lowered = line.lower()
-        if not court and ("district court" in lowered or "bankruptcy court" in lowered or "court of appeals" in lowered):
+        if not court and (
+            "district court" in lowered
+            or "bankruptcy court" in lowered
+            or "court of appeals" in lowered
+        ):
             court = line
             continue
         if case_number and case_number in line:
@@ -182,7 +201,8 @@ def _parse_pacer_html_docket(path: Path) -> Dict[str, Any]:
         documents.append(
             {
                 "id": f"{path.stem}_entry_{entry_index}",
-                "title": description.split(".", 1)[0][:160].strip() or f"Docket Entry {entry_index}",
+                "title": description.split(".", 1)[0][:160].strip()
+                or f"Docket Entry {entry_index}",
                 "text": description,
                 "date_filed": date_filed,
                 "document_number": document_number,
@@ -205,7 +225,9 @@ def _parse_pacer_html_docket(path: Path) -> Dict[str, Any]:
             documents.append(
                 {
                     "id": f"{path.stem}_html",
-                    "title": case_name or path.stem.replace("_", " ").replace("-", " ").strip() or path.name,
+                    "title": case_name
+                    or path.stem.replace("_", " ").replace("-", " ").strip()
+                    or path.name,
                     "text": body_text,
                     "source_url": str(path),
                     "document_type": "pacer_html_docket",
@@ -222,7 +244,9 @@ def _parse_pacer_html_docket(path: Path) -> Dict[str, Any]:
 
     return {
         "docket_id": case_number or path.stem,
-        "case_name": case_name or path.stem.replace("_", " ").replace("-", " ").strip() or path.name,
+        "case_name": case_name
+        or path.stem.replace("_", " ").replace("-", " ").strip()
+        or path.name,
         "court": court,
         "documents": documents,
         "source_type": "pacer_html_file",
@@ -267,8 +291,14 @@ def _unwrap_nested_docket_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
                     **inherited_metadata,
                     **dict(candidate.get("metadata") or {}),
                 },
-                "source_type": str(candidate.get("source_type") or inherited_source_type or "").strip() or candidate.get("source_type"),
-                "upstream_source_type": str(candidate.get("upstream_source_type") or inherited_upstream_source_type or "").strip() or candidate.get("upstream_source_type"),
+                "source_type": str(
+                    candidate.get("source_type") or inherited_source_type or ""
+                ).strip()
+                or candidate.get("source_type"),
+                "upstream_source_type": str(
+                    candidate.get("upstream_source_type") or inherited_upstream_source_type or ""
+                ).strip()
+                or candidate.get("upstream_source_type"),
             }
             return _unwrap_nested_docket_payload(current)
 
@@ -395,7 +425,11 @@ def _rendered_row_preferred_title(rendered_row: Mapping[str, Any]) -> str:
 
 
 def _document_acquisition_candidates(document: "DocketDocument") -> List[Dict[str, Any]]:
-    return [dict(item) for item in list(document.metadata.get("acquisition_candidates") or []) if isinstance(item, dict)]
+    return [
+        dict(item)
+        for item in list(document.metadata.get("acquisition_candidates") or [])
+        if isinstance(item, dict)
+    ]
 
 
 def _document_has_substantive_text(document: "DocketDocument") -> bool:
@@ -411,7 +445,11 @@ def _document_retrieval_evidence_quality(document: "DocketDocument") -> str:
     if source == "courtlistener_public_filing_pdf":
         return "extracted_pdf"
     if source == "courtlistener_public_recap_document":
-        method = str((document.metadata.get("text_extraction") or {}).get("method") or "").strip().lower()
+        method = (
+            str((document.metadata.get("text_extraction") or {}).get("method") or "")
+            .strip()
+            .lower()
+        )
         if method in {"pdf_ocr", "pdf_text", "courtlistener_plain_text"}:
             return "plain_text"
         return "extracted_pdf"
@@ -511,7 +549,9 @@ def _document_index_priority(document: "DocketDocument") -> int:
             and not _document_acquisition_candidates(document)
         ):
             return 0
-        if not _document_has_meaningful_index_title(document) and not _document_acquisition_candidates(document):
+        if not _document_has_meaningful_index_title(
+            document
+        ) and not _document_acquisition_candidates(document):
             return 0
         return 80
     return 0
@@ -523,22 +563,50 @@ def _document_index_dedupe_key(document: "DocketDocument") -> str:
     if document_number and title:
         return f"{document_number}::{title}"
     if document_number:
-        return f"{document_number}::{_safe_identifier(_document_text_source(document) or 'document')}"
+        return (
+            f"{document_number}::{_safe_identifier(_document_text_source(document) or 'document')}"
+        )
     if title:
         return title
     return str(document.document_id or "")
 
 
-def _citation_recovery_candidate_from_link(document: "DocketDocument", link: Any) -> Optional[Dict[str, Any]]:
-    matched = bool(getattr(link, "matched", False)) if not isinstance(link, dict) else bool(link.get("matched"))
-    metadata = dict(getattr(link, "metadata", {}) or {}) if not isinstance(link, dict) else dict(link.get("metadata") or {})
+def _citation_recovery_candidate_from_link(
+    document: "DocketDocument", link: Any
+) -> Optional[Dict[str, Any]]:
+    matched = (
+        bool(getattr(link, "matched", False))
+        if not isinstance(link, dict)
+        else bool(link.get("matched"))
+    )
+    metadata = (
+        dict(getattr(link, "metadata", {}) or {})
+        if not isinstance(link, dict)
+        else dict(link.get("metadata") or {})
+    )
     if matched or not bool(metadata.get("recovery_supported")):
         return None
 
-    citation_text = str(getattr(link, "citation_text", "") or "") if not isinstance(link, dict) else str(link.get("citation_text") or "")
-    normalized_citation = str(getattr(link, "normalized_citation", "") or citation_text) if not isinstance(link, dict) else str(link.get("normalized_citation") or citation_text)
-    citation_type = str(getattr(link, "citation_type", "") or "") if not isinstance(link, dict) else str(link.get("citation_type") or "")
-    corpus_key = str(getattr(link, "corpus_key", "") or metadata.get("recovery_corpus_key") or "") if not isinstance(link, dict) else str(link.get("corpus_key") or metadata.get("recovery_corpus_key") or "")
+    citation_text = (
+        str(getattr(link, "citation_text", "") or "")
+        if not isinstance(link, dict)
+        else str(link.get("citation_text") or "")
+    )
+    normalized_citation = (
+        str(getattr(link, "normalized_citation", "") or citation_text)
+        if not isinstance(link, dict)
+        else str(link.get("normalized_citation") or citation_text)
+    )
+    citation_type = (
+        str(getattr(link, "citation_type", "") or "")
+        if not isinstance(link, dict)
+        else str(link.get("citation_type") or "")
+    )
+    corpus_key = (
+        str(getattr(link, "corpus_key", "") or metadata.get("recovery_corpus_key") or "")
+        if not isinstance(link, dict)
+        else str(link.get("corpus_key") or metadata.get("recovery_corpus_key") or "")
+    )
     state_code = str(metadata.get("state_code") or "")
 
     return {
@@ -548,16 +616,28 @@ def _citation_recovery_candidate_from_link(document: "DocketDocument", link: Any
         "corpus_key": corpus_key,
         "state_code": state_code,
         "recovery_query": str(metadata.get("recovery_query") or ""),
-        "preferred_dataset_ids": [str(item) for item in list(metadata.get("preferred_dataset_ids") or []) if str(item).strip()],
-        "preferred_parquet_files": [str(item) for item in list(metadata.get("preferred_parquet_files") or []) if str(item).strip()],
-        "candidate_corpora": [str(item) for item in list(metadata.get("candidate_corpora") or []) if str(item).strip()],
+        "preferred_dataset_ids": [
+            str(item)
+            for item in list(metadata.get("preferred_dataset_ids") or [])
+            if str(item).strip()
+        ],
+        "preferred_parquet_files": [
+            str(item)
+            for item in list(metadata.get("preferred_parquet_files") or [])
+            if str(item).strip()
+        ],
+        "candidate_corpora": [
+            str(item) for item in list(metadata.get("candidate_corpora") or []) if str(item).strip()
+        ],
         "document_id": document.document_id,
         "document_title": document.title,
         "document_source_url": document.source_url,
     }
 
 
-def _collect_document_citation_recovery_candidates(document: "DocketDocument") -> List[Dict[str, Any]]:
+def _collect_document_citation_recovery_candidates(
+    document: "DocketDocument",
+) -> List[Dict[str, Any]]:
     link_payloads = list(document.metadata.get("citation_links") or [])
     if not link_payloads and str(document.text or "").strip():
         resolver = _local_only_bluebook_resolver()
@@ -592,7 +672,9 @@ def _collect_document_citation_recovery_candidates(document: "DocketDocument") -
     return candidates
 
 
-def collect_docket_dataset_citation_recovery_candidates(dataset: "DocketDatasetObject") -> Dict[str, Any]:
+def collect_docket_dataset_citation_recovery_candidates(
+    dataset: "DocketDatasetObject",
+) -> Dict[str, Any]:
     results: List[Dict[str, Any]] = []
     seen: set[tuple[str, str, str]] = set()
     for document in list(dataset.documents or []):
@@ -616,7 +698,9 @@ def collect_docket_dataset_citation_recovery_candidates(dataset: "DocketDatasetO
     }
 
 
-def collect_packaged_docket_citation_recovery_candidates(manifest_path: str | Path) -> Dict[str, Any]:
+def collect_packaged_docket_citation_recovery_candidates(
+    manifest_path: str | Path,
+) -> Dict[str, Any]:
     dataset = DocketDatasetObject.from_package(manifest_path)
     result = collect_docket_dataset_citation_recovery_candidates(dataset)
     result["manifest_path"] = str(Path(manifest_path))
@@ -697,7 +781,9 @@ def audit_docket_dataset_eu_citation_sources(
             continue
         total_citation_count += len(extracted)
         schemes = sorted({citation.scheme for citation in extracted if citation.scheme})
-        member_states = sorted({citation.member_state for citation in extracted if citation.member_state})
+        member_states = sorted(
+            {citation.member_state for citation in extracted if citation.member_state}
+        )
         document_summaries.append(
             {
                 "document_id": document.document_id,
@@ -723,7 +809,10 @@ def audit_docket_dataset_eu_citation_sources(
         seen_citations.add(key)
         unique_citations.append(citation)
 
-    actions = [build_eu_lookup_action_for_citation(citation, language=language) for citation in unique_citations]
+    actions = [
+        build_eu_lookup_action_for_citation(citation, language=language)
+        for citation in unique_citations
+    ]
     handler_counts: Dict[str, int] = {}
     for action in actions:
         handler = str(action.handler_key or "")
@@ -737,7 +826,9 @@ def audit_docket_dataset_eu_citation_sources(
         if citation.scheme:
             schemes_count[citation.scheme] = int(schemes_count.get(citation.scheme) or 0) + 1
         if citation.member_state:
-            member_state_count[citation.member_state] = int(member_state_count.get(citation.member_state) or 0) + 1
+            member_state_count[citation.member_state] = (
+                int(member_state_count.get(citation.member_state) or 0) + 1
+            )
 
     return {
         "dataset_id": dataset.dataset_id,
@@ -772,8 +863,14 @@ def _build_missing_authority_follow_up_work_item(
         except KeyError:
             corpus = None
 
-    preferred_state_code = state_code if corpus_key in {"state_laws", "state_admin_rules", "state_court_rules"} else None
-    preferred_parquet_names = corpus.preferred_parquet_names(preferred_state_code) if corpus is not None else []
+    preferred_state_code = (
+        state_code
+        if corpus_key in {"state_laws", "state_admin_rules", "state_court_rules"}
+        else None
+    )
+    preferred_parquet_names = (
+        corpus.preferred_parquet_names(preferred_state_code) if corpus is not None else []
+    )
     target_parquet_path = None
     target_local_parquet_path = None
     if corpus is not None:
@@ -782,14 +879,22 @@ def _build_missing_authority_follow_up_work_item(
             if preferred_state_code
             else corpus.combined_parquet_filename
         )
-        target_parquet_path = f"{corpus.parquet_dir_name.strip('/')}/{target_filename}" if corpus.parquet_dir_name.strip("/") else target_filename
+        target_parquet_path = (
+            f"{corpus.parquet_dir_name.strip('/')}/{target_filename}"
+            if corpus.parquet_dir_name.strip("/")
+            else target_filename
+        )
         target_local_parquet_path = str(corpus.parquet_dir() / target_filename)
 
     publish_plan = dict(recovery.get("publish_plan") or {})
     publish_report = dict(recovery.get("publish_report") or {})
     manifest_path = str(recovery.get("manifest_path") or "")
-    normalized_citation = str(recovery.get("normalized_citation") or recovery.get("citation_text") or "")
-    work_item_id = _safe_identifier(f"recovery_{index}_{corpus_key}_{state_code}_{normalized_citation}")
+    normalized_citation = str(
+        recovery.get("normalized_citation") or recovery.get("citation_text") or ""
+    )
+    work_item_id = _safe_identifier(
+        f"recovery_{index}_{corpus_key}_{state_code}_{normalized_citation}"
+    )
     promotion_preview = {}
     if manifest_path:
         try:
@@ -798,7 +903,10 @@ def _build_missing_authority_follow_up_work_item(
                     "citation_text": str(recovery.get("citation_text") or ""),
                     "normalized_citation": normalized_citation,
                     "corpus_key": corpus_key,
-                    "hf_dataset_id": str(recovery.get("hf_dataset_id") or (corpus.hf_dataset_id if corpus is not None else "")),
+                    "hf_dataset_id": str(
+                        recovery.get("hf_dataset_id")
+                        or (corpus.hf_dataset_id if corpus is not None else "")
+                    ),
                     "state_code": state_code,
                     "search_query": str(recovery.get("search_query") or ""),
                     "generated_at": "",
@@ -818,7 +926,10 @@ def _build_missing_authority_follow_up_work_item(
                     "citation_text": str(recovery.get("citation_text") or ""),
                     "normalized_citation": normalized_citation,
                     "corpus_key": corpus_key,
-                    "hf_dataset_id": str(recovery.get("hf_dataset_id") or (corpus.hf_dataset_id if corpus is not None else "")),
+                    "hf_dataset_id": str(
+                        recovery.get("hf_dataset_id")
+                        or (corpus.hf_dataset_id if corpus is not None else "")
+                    ),
                     "state_code": state_code,
                     "search_query": str(recovery.get("search_query") or ""),
                     "generated_at": "",
@@ -841,7 +952,9 @@ def _build_missing_authority_follow_up_work_item(
         {
             "stage": "promote_canonical_rows",
             "status": "ready" if corpus is not None and manifest_path else "blocked",
-            "target_hf_dataset_id": corpus.hf_dataset_id if corpus is not None else str(recovery.get("hf_dataset_id") or ""),
+            "target_hf_dataset_id": corpus.hf_dataset_id
+            if corpus is not None
+            else str(recovery.get("hf_dataset_id") or ""),
             "target_parquet_path": target_parquet_path,
             "target_local_parquet_path": target_local_parquet_path,
             "preferred_parquet_names": preferred_parquet_names,
@@ -849,15 +962,21 @@ def _build_missing_authority_follow_up_work_item(
         },
         {
             "stage": "merge_canonical_dataset",
-            "status": "ready" if corpus is not None and manifest_path and target_local_parquet_path else "blocked",
-            "target_hf_dataset_id": corpus.hf_dataset_id if corpus is not None else str(recovery.get("hf_dataset_id") or ""),
+            "status": "ready"
+            if corpus is not None and manifest_path and target_local_parquet_path
+            else "blocked",
+            "target_hf_dataset_id": corpus.hf_dataset_id
+            if corpus is not None
+            else str(recovery.get("hf_dataset_id") or ""),
             "target_parquet_path": target_parquet_path,
             "target_local_parquet_path": target_local_parquet_path,
         },
         {
             "stage": "publish_recovery_manifest",
             "status": "completed" if publish_report else ("ready" if publish_plan else "blocked"),
-            "repo_id": str(publish_plan.get("repo_id") or (corpus.hf_dataset_id if corpus is not None else "")),
+            "repo_id": str(
+                publish_plan.get("repo_id") or (corpus.hf_dataset_id if corpus is not None else "")
+            ),
             "path_in_repo": str(publish_plan.get("path_in_repo") or ""),
             "publish_command": str(publish_plan.get("publish_command") or ""),
         },
@@ -870,7 +989,9 @@ def _build_missing_authority_follow_up_work_item(
         "normalized_citation": normalized_citation,
         "corpus_key": corpus_key,
         "state_code": state_code,
-        "hf_dataset_id": str(recovery.get("hf_dataset_id") or (corpus.hf_dataset_id if corpus is not None else "")),
+        "hf_dataset_id": str(
+            recovery.get("hf_dataset_id") or (corpus.hf_dataset_id if corpus is not None else "")
+        ),
         "manifest_path": manifest_path,
         "manifest_directory": str(recovery.get("manifest_directory") or ""),
         "search_query": str(recovery.get("search_query") or ""),
@@ -896,8 +1017,13 @@ async def _execute_missing_authority_follow_up_work_item(
 ) -> Dict[str, Any]:
     manifest_value = str(work_item.get("manifest_path") or "").strip()
     manifest_path = Path(manifest_value).expanduser().resolve() if manifest_value else None
-    promotion_output_dir = str((work_item.get("promotion_preview") or {}).get("promotion_output_dir") or "").strip() or None
-    target_local_parquet_path = str(work_item.get("target_local_parquet_path") or "").strip() or None
+    promotion_output_dir = (
+        str((work_item.get("promotion_preview") or {}).get("promotion_output_dir") or "").strip()
+        or None
+    )
+    target_local_parquet_path = (
+        str(work_item.get("target_local_parquet_path") or "").strip() or None
+    )
     publish_plan = dict(work_item.get("publish_plan") or {})
     publish_report = dict(work_item.get("publish_report") or {})
 
@@ -982,7 +1108,13 @@ async def _execute_missing_authority_follow_up_work_item(
                 "stage": "merge_canonical_dataset",
                 "status": "blocked" if not errors else "skipped",
                 "target_local_parquet_path": target_local_parquet_path or "",
-                "reason": "Target canonical parquet path is not available." if not target_local_parquet_path else ("Promotion stage did not complete successfully." if errors else "Recovery manifest is missing on disk."),
+                "reason": "Target canonical parquet path is not available."
+                if not target_local_parquet_path
+                else (
+                    "Promotion stage did not complete successfully."
+                    if errors
+                    else "Recovery manifest is missing on disk."
+                ),
             }
         )
 
@@ -1044,7 +1176,9 @@ async def _execute_missing_authority_follow_up_work_item(
             }
         )
 
-    completed_stage_count = sum(1 for stage in stage_results if str(stage.get("status") or "") == "completed")
+    completed_stage_count = sum(
+        1 for stage in stage_results if str(stage.get("status") or "") == "completed"
+    )
     return {
         **work_item,
         "execution": {
@@ -1130,7 +1264,9 @@ async def execute_docket_dataset_missing_authority_follow_up(
         archive_top_k=archive_top_k,
     )
     executed_items = [
-        await _execute_missing_authority_follow_up_work_item(dict(work_item), execute_publish=execute_publish)
+        await _execute_missing_authority_follow_up_work_item(
+            dict(work_item), execute_publish=execute_publish
+        )
         for work_item in list(plan.get("work_items") or [])
     ]
     error_count = sum(
@@ -1238,12 +1374,16 @@ def _merge_linked_authorities(
     resolver: Optional[BluebookCitationResolver] = None,
     state_code: Optional[str] = None,
 ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
-    merged: List[Dict[str, Any]] = [dict(item) for item in existing_authorities if isinstance(item, dict)]
+    merged: List[Dict[str, Any]] = [
+        dict(item) for item in existing_authorities if isinstance(item, dict)
+    ]
     seen_keys: set[tuple[str, str, str]] = set()
     for item in merged:
         key = (
             str(item.get("authority_type") or item.get("citation_type") or ""),
-            _normalize_authority_text(item.get("citation_text") or item.get("title") or item.get("label") or ""),
+            _normalize_authority_text(
+                item.get("citation_text") or item.get("title") or item.get("label") or ""
+            ),
             str(item.get("source_url") or ""),
         )
         seen_keys.add(key)
@@ -1285,16 +1425,16 @@ def _merge_linked_authorities(
             }
         if not text:
             continue
-        links = (
-            active_resolver.resolve_text(text, state_code=state_code, exhaustive=False)
-        )
+        links = active_resolver.resolve_text(text, state_code=state_code, exhaustive=False)
         if not links:
             continue
         document_count += 1
         document.metadata["citation_links"] = [citation_link_to_dict(link) for link in links]
         document_recovery_candidates = [
             candidate
-            for candidate in (_citation_recovery_candidate_from_link(document, link) for link in links)
+            for candidate in (
+                _citation_recovery_candidate_from_link(document, link) for link in links
+            )
             if candidate is not None
         ]
         document.metadata["citation_recovery_candidates"] = document_recovery_candidates
@@ -1305,7 +1445,9 @@ def _merge_linked_authorities(
                 matched_count += 1
             else:
                 unresolved_count += 1
-            authority_title = str(link.source_title or link.normalized_citation or link.citation_text).strip()
+            authority_title = str(
+                link.source_title or link.normalized_citation or link.citation_text
+            ).strip()
             authority_text = str(link.snippet or link.citation_text or authority_title).strip()
             key = (
                 str(link.citation_type or ""),
@@ -1349,7 +1491,9 @@ def _merge_linked_authorities(
         "documents_with_linked_citations": document_count,
         "citation_resolution_ratio": float(citation_audit.get("citation_resolution_ratio") or 0.0),
         "document_resolution_ratio": float(citation_audit.get("document_resolution_ratio") or 0.0),
-        "fully_resolved_document_count": int(citation_audit.get("fully_resolved_document_count") or 0),
+        "fully_resolved_document_count": int(
+            citation_audit.get("fully_resolved_document_count") or 0
+        ),
         "citation_source_audit": citation_audit,
     }
 
@@ -1363,7 +1507,22 @@ def _is_substantive_temporal_formula(formula: Any) -> bool:
     text = str(formula or "").strip()
     if not text:
         return False
-    return any(token in text for token in ("-> O(", "-> P(", "-> F(", "O_", "P_", "F_", "By(t,", "Within(t,", "After(t,", "Before(t,", "During(t,"))
+    return any(
+        token in text
+        for token in (
+            "-> O(",
+            "-> P(",
+            "-> F(",
+            "O_",
+            "P_",
+            "F_",
+            "By(t,",
+            "Within(t,",
+            "After(t,",
+            "Before(t,",
+            "During(t,",
+        )
+    )
 
 
 def _is_substantive_dcec_formula(formula: Any) -> bool:
@@ -1398,7 +1557,13 @@ def _is_substantive_kg_entity(entity: Any) -> bool:
     if not isinstance(entity, dict):
         return False
     entity_type = str(entity.get("type") or "").strip().lower()
-    return entity_type in {"legal_actor", "court_event", "deadline", "deontic_statement", "structured_deontic_norm"}
+    return entity_type in {
+        "legal_actor",
+        "court_event",
+        "deadline",
+        "deontic_statement",
+        "structured_deontic_norm",
+    }
 
 
 def _is_substantive_kg_relationship(relationship: Any) -> bool:
@@ -1489,18 +1654,26 @@ class DocketDatasetObject:
         metadata = dict(self.metadata or {})
         eu_audit = dict(metadata.get("eu_citation_audit") or {})
         if not eu_audit:
-            eu_audit = dict((metadata.get("citation_source_audit") or {}).get("eu_citation_audit") or {})
+            eu_audit = dict(
+                (metadata.get("citation_source_audit") or {}).get("eu_citation_audit") or {}
+            )
         return {
             "dataset_id": self.dataset_id,
             "docket_id": self.docket_id,
             "case_name": self.case_name,
             "court": self.court,
             "document_count": len(self.documents),
-            "knowledge_graph_entity_count": len(list((self.knowledge_graph or {}).get("entities") or [])),
-            "knowledge_graph_relationship_count": len(list((self.knowledge_graph or {}).get("relationships") or [])),
+            "knowledge_graph_entity_count": len(
+                list((self.knowledge_graph or {}).get("entities") or [])
+            ),
+            "knowledge_graph_relationship_count": len(
+                list((self.knowledge_graph or {}).get("relationships") or [])
+            ),
             "deontic_rule_count": len(list((self.deontic_graph or {}).get("rules") or [])),
             "deontic_trigger_count": len(list((self.deontic_triggers or {}).get("entries") or [])),
-            "proof_assistant_work_item_count": len(list((self.proof_assistant or {}).get("agenda") or [])),
+            "proof_assistant_work_item_count": len(
+                list((self.proof_assistant or {}).get("agenda") or [])
+            ),
             "bm25_document_count": int((self.bm25_index or {}).get("document_count") or 0),
             "vector_document_count": int((self.vector_index or {}).get("document_count") or 0),
             "eu_citation_count": int(eu_audit.get("citation_count") or 0),
@@ -1513,7 +1686,9 @@ class DocketDatasetObject:
         return collect_docket_dataset_citation_recovery_candidates(self)
 
     @classmethod
-    def collect_packaged_citation_recovery_candidates(cls, manifest_path: str | Path) -> Dict[str, Any]:
+    def collect_packaged_citation_recovery_candidates(
+        cls, manifest_path: str | Path
+    ) -> Dict[str, Any]:
         return collect_packaged_docket_citation_recovery_candidates(manifest_path)
 
     def audit_citation_sources(
@@ -1662,7 +1837,9 @@ class DocketDatasetObject:
             raise ValueError("party must be 'plaintiff' or 'defendant'")
         if not isinstance(item, dict):
             raise ValueError("docket item must be a dictionary")
-        collection = self.plaintiff_docket if normalized_party == "plaintiff" else self.defendant_docket
+        collection = (
+            self.plaintiff_docket if normalized_party == "plaintiff" else self.defendant_docket
+        )
         collection.append(dict(item))
         self._refresh_deontic_state()
 
@@ -1674,7 +1851,9 @@ class DocketDatasetObject:
 
     def write_json(self, path: str | Path) -> Path:
         output_path = Path(path)
-        output_path.write_text(json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        output_path.write_text(
+            json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
         return output_path
 
     def write_package(
@@ -1712,9 +1891,19 @@ class DocketDatasetObject:
                 for item in list(data.get("documents") or [])
                 if isinstance(item, dict)
             ],
-            plaintiff_docket=[dict(item) for item in list(data.get("plaintiff_docket") or []) if isinstance(item, dict)],
-            defendant_docket=[dict(item) for item in list(data.get("defendant_docket") or []) if isinstance(item, dict)],
-            authorities=[dict(item) for item in list(data.get("authorities") or []) if isinstance(item, dict)],
+            plaintiff_docket=[
+                dict(item)
+                for item in list(data.get("plaintiff_docket") or [])
+                if isinstance(item, dict)
+            ],
+            defendant_docket=[
+                dict(item)
+                for item in list(data.get("defendant_docket") or [])
+                if isinstance(item, dict)
+            ],
+            authorities=[
+                dict(item) for item in list(data.get("authorities") or []) if isinstance(item, dict)
+            ],
             knowledge_graph=dict(data.get("knowledge_graph") or {}),
             deontic_graph=dict(data.get("deontic_graph") or {}),
             deontic_triggers=dict(data.get("deontic_triggers") or {}),
@@ -1793,14 +1982,22 @@ class DocketDatasetBuilder:
         embeddings_chunk_overlap: int = 50,
     ) -> None:
         self.vector_dimension = max(8, int(vector_dimension))
-        self.router_max_documents = None if router_max_documents is None else max(1, int(router_max_documents))
-        self.formal_logic_max_documents = None if formal_logic_max_documents is None else max(1, int(formal_logic_max_documents))
+        self.router_max_documents = (
+            None if router_max_documents is None else max(1, int(router_max_documents))
+        )
+        self.formal_logic_max_documents = (
+            None if formal_logic_max_documents is None else max(1, int(formal_logic_max_documents))
+        )
         self.citation_resolver = citation_resolver
         self.embeddings_provider = embeddings_provider
         self.embeddings_model_name = embeddings_model_name
         self.embeddings_device = embeddings_device
         self.embeddings_batch_size = max(1, int(embeddings_batch_size or 128))
-        self.embeddings_parallel_batches = None if embeddings_parallel_batches is None else max(1, int(embeddings_parallel_batches))
+        self.embeddings_parallel_batches = (
+            None
+            if embeddings_parallel_batches is None
+            else max(1, int(embeddings_parallel_batches))
+        )
         self.embeddings_chunking_strategy = embeddings_chunking_strategy
         self.embeddings_chunk_size = max(16, int(embeddings_chunk_size or 512))
         self.embeddings_chunk_overlap = max(0, int(embeddings_chunk_overlap or 0))
@@ -1819,7 +2016,9 @@ class DocketDatasetBuilder:
         include_router_enrichment = bool(include_router_enrichment) and _router_enrichment_enabled()
         _LAST_DATASET_PROGRESS.update({"stage": "normalize_documents", "detail": ""})
         normalized_documents = self._normalize_documents(docket)
-        _LAST_DATASET_PROGRESS.update({"stage": "normalize_documents", "detail": f"documents={len(normalized_documents)}"})
+        _LAST_DATASET_PROGRESS.update(
+            {"stage": "normalize_documents", "detail": f"documents={len(normalized_documents)}"}
+        )
         docket_metadata = dict(docket.get("metadata") or {})
         detected_case_number = _normalize_case_number_text(
             docket.get("case_number")
@@ -1828,31 +2027,63 @@ class DocketDatasetBuilder:
             or docket.get("docket_number")
             or docket.get("docketNumber")
         )
-        docket_id = str(docket.get("docket_id") or docket.get("case_id") or docket.get("id") or detected_case_number or "docket")
-        case_name = str(docket.get("case_name") or docket.get("caseTitle") or docket.get("title") or docket_id)
-        court = str(docket.get("court") or docket.get("courtName") or docket.get("court_full_name") or "")
+        docket_id = str(
+            docket.get("docket_id")
+            or docket.get("case_id")
+            or docket.get("id")
+            or detected_case_number
+            or "docket"
+        )
+        case_name = str(
+            docket.get("case_name") or docket.get("caseTitle") or docket.get("title") or docket_id
+        )
+        court = str(
+            docket.get("court") or docket.get("courtName") or docket.get("court_full_name") or ""
+        )
         dataset_id = f"docket_dataset_{_safe_identifier(docket_id)}"
-        plaintiff_docket = self._normalize_auxiliary_items(docket.get("plaintiff_docket") or docket.get("plaintiffs_docket") or [])
-        defendant_docket = self._normalize_auxiliary_items(docket.get("defendant_docket") or docket.get("defendants_docket") or [])
-        authorities = self._normalize_auxiliary_items(docket.get("authorities") or docket.get("authorities_list") or [])
-        _LAST_DATASET_PROGRESS.update({"stage": "link_authorities", "detail": f"authorities={len(authorities)}"})
+        plaintiff_docket = self._normalize_auxiliary_items(
+            docket.get("plaintiff_docket") or docket.get("plaintiffs_docket") or []
+        )
+        defendant_docket = self._normalize_auxiliary_items(
+            docket.get("defendant_docket") or docket.get("defendants_docket") or []
+        )
+        authorities = self._normalize_auxiliary_items(
+            docket.get("authorities") or docket.get("authorities_list") or []
+        )
+        _LAST_DATASET_PROGRESS.update(
+            {"stage": "link_authorities", "detail": f"authorities={len(authorities)}"}
+        )
         authorities, linked_authority_summary = _merge_linked_authorities(
             authorities,
             normalized_documents,
             resolver=self.citation_resolver,
-            state_code=str(docket.get("state_code") or docket.get("jurisdiction") or "").strip().upper() or None,
+            state_code=str(docket.get("state_code") or docket.get("jurisdiction") or "")
+            .strip()
+            .upper()
+            or None,
         )
         _LAST_DATASET_PROGRESS.update(
-            {"stage": "link_authorities", "detail": f"linked={linked_authority_summary.get('linked_authority_count', 0)}"}
+            {
+                "stage": "link_authorities",
+                "detail": f"linked={linked_authority_summary.get('linked_authority_count', 0)}",
+            }
         )
-        _LAST_DATASET_PROGRESS.update({"stage": "select_index_documents", "detail": f"documents={len(normalized_documents)}"})
+        _LAST_DATASET_PROGRESS.update(
+            {"stage": "select_index_documents", "detail": f"documents={len(normalized_documents)}"}
+        )
         index_documents = self._select_index_documents(normalized_documents)
         _LAST_DATASET_PROGRESS.update(
             {"stage": "select_index_documents", "detail": f"selected={len(index_documents)}"}
         )
 
-        _LAST_DATASET_PROGRESS.update({"stage": "build_knowledge_graph", "detail": f"selected={len(index_documents)}"})
-        knowledge_graph = self._build_knowledge_graph(dataset_id, docket_id, case_name, court, index_documents) if include_knowledge_graph else {}
+        _LAST_DATASET_PROGRESS.update(
+            {"stage": "build_knowledge_graph", "detail": f"selected={len(index_documents)}"}
+        )
+        knowledge_graph = (
+            self._build_knowledge_graph(dataset_id, docket_id, case_name, court, index_documents)
+            if include_knowledge_graph
+            else {}
+        )
         _LAST_DATASET_PROGRESS.update(
             {
                 "stage": "build_knowledge_graph",
@@ -1874,13 +2105,22 @@ class DocketDatasetBuilder:
                 "detail": f"rules={len(list(deontic_graph_object.rules.values()))} triggers={len(list((deontic_triggers or {}).get('entries') or []))}",
             }
         )
-        _LAST_DATASET_PROGRESS.update({"stage": "build_bm25", "detail": f"selected={len(index_documents)}"})
+        _LAST_DATASET_PROGRESS.update(
+            {"stage": "build_bm25", "detail": f"selected={len(index_documents)}"}
+        )
         bm25_index = self._build_bm25_index(dataset_id, index_documents) if include_bm25 else {}
         _LAST_DATASET_PROGRESS.update(
-            {"stage": "build_bm25", "detail": f"documents={int(bm25_index.get('document_count') or 0)}"}
+            {
+                "stage": "build_bm25",
+                "detail": f"documents={int(bm25_index.get('document_count') or 0)}",
+            }
         )
-        _LAST_DATASET_PROGRESS.update({"stage": "build_vector_index", "detail": f"selected={len(index_documents)}"})
-        vector_index = self._build_vector_index(dataset_id, index_documents) if include_vector_index else {}
+        _LAST_DATASET_PROGRESS.update(
+            {"stage": "build_vector_index", "detail": f"selected={len(index_documents)}"}
+        )
+        vector_index = (
+            self._build_vector_index(dataset_id, index_documents) if include_vector_index else {}
+        )
         _LAST_DATASET_PROGRESS.update(
             {
                 "stage": "build_vector_index",
@@ -1911,7 +2151,9 @@ class DocketDatasetBuilder:
         )
         formal_enrichment: Dict[str, Any] = {}
         if include_formal_logic:
-            _LAST_DATASET_PROGRESS.update({"stage": "build_formal_logic", "detail": f"documents={len(normalized_documents)}"})
+            _LAST_DATASET_PROGRESS.update(
+                {"stage": "build_formal_logic", "detail": f"documents={len(normalized_documents)}"}
+            )
             formal_enrichment = enrich_docket_documents_with_formal_logic(
                 normalized_documents,
                 docket_id=docket_id,
@@ -1933,7 +2175,12 @@ class DocketDatasetBuilder:
             )
         router_enrichment: Dict[str, Any] = {}
         if include_router_enrichment:
-            _LAST_DATASET_PROGRESS.update({"stage": "build_router_enrichment", "detail": f"documents={len(normalized_documents)}"})
+            _LAST_DATASET_PROGRESS.update(
+                {
+                    "stage": "build_router_enrichment",
+                    "detail": f"documents={len(normalized_documents)}",
+                }
+            )
             router_enrichment = enrich_docket_documents_with_routers(
                 normalized_documents,
                 docket_id=docket_id,
@@ -1953,7 +2200,9 @@ class DocketDatasetBuilder:
                 proof_assistant=proof_assistant,
                 router_enrichment=router_enrichment,
             )
-        _LAST_DATASET_PROGRESS.update({"stage": "finalize", "detail": f"documents={len(normalized_documents)}"})
+        _LAST_DATASET_PROGRESS.update(
+            {"stage": "finalize", "detail": f"documents={len(normalized_documents)}"}
+        )
         artifact_provenance = {
             "knowledge_graph": {"backend": "parsed_document_structure_graph", "is_mock": False},
             "bm25_index": {"backend": "local_bm25", "is_mock": False},
@@ -1982,8 +2231,12 @@ class DocketDatasetBuilder:
             "proof_assistant": bool((proof_assistant or {}).get("agenda")),
             "bm25_index": bool(bm25_index),
             "vector_index": bool(vector_index),
-            "formal_logic": bool((formal_enrichment.get("summary") or {}).get("processed_document_count")),
-            "router_enrichment": bool((router_enrichment.get("summary") or {}).get("processed_document_count")),
+            "formal_logic": bool(
+                (formal_enrichment.get("summary") or {}).get("processed_document_count")
+            ),
+            "router_enrichment": bool(
+                (router_enrichment.get("summary") or {}).get("processed_document_count")
+            ),
             "linked_authorities": bool(linked_authority_summary.get("linked_authority_count")),
             "retrieval_index": bool(index_documents),
         }
@@ -2079,19 +2332,28 @@ class DocketDatasetBuilder:
         index_documents = self._select_index_documents(normalized_documents)
         evidence_counts: Dict[str, int] = {}
         for document in index_documents:
-            evidence_quality = str((document.metadata.get("retrieval_index") or {}).get("evidence_quality") or "metadata")
+            evidence_quality = str(
+                (document.metadata.get("retrieval_index") or {}).get("evidence_quality")
+                or "metadata"
+            )
             evidence_counts[evidence_quality] = evidence_counts.get(evidence_quality, 0) + 1
         if min_evidence_quality is not None:
             threshold = _RETRIEVAL_EVIDENCE_RANK.get(str(min_evidence_quality).strip().lower())
             if threshold is None:
-                raise ValueError("min_evidence_quality must be one of: metadata, rendered, plain_text, extracted_pdf")
+                raise ValueError(
+                    "min_evidence_quality must be one of: metadata, rendered, plain_text, extracted_pdf"
+                )
             index_documents = [
                 document
                 for document in index_documents
                 if _RETRIEVAL_EVIDENCE_RANK.get(
-                    str((document.metadata.get("retrieval_index") or {}).get("evidence_quality") or "metadata"),
+                    str(
+                        (document.metadata.get("retrieval_index") or {}).get("evidence_quality")
+                        or "metadata"
+                    ),
                     0,
-                ) >= threshold
+                )
+                >= threshold
             ]
         return {
             "docket_id": str(docket.get("docket_id") or docket.get("id") or "docket"),
@@ -2139,7 +2401,9 @@ class DocketDatasetBuilder:
         documents: List[Dict[str, Any]] = []
         supported_suffixes = {".txt", ".md", ".json", ".pdf"}
         detected_case_numbers: List[str] = []
-        for path in sorted(candidate for candidate in root.rglob(glob_pattern) if candidate.is_file()):
+        for path in sorted(
+            candidate for candidate in root.rglob(glob_pattern) if candidate.is_file()
+        ):
             if path.suffix.lower() not in supported_suffixes:
                 continue
             if path.suffix.lower() == ".json":
@@ -2167,7 +2431,12 @@ class DocketDatasetBuilder:
                 documents.append(
                     {
                         "id": path.stem,
-                        "title": (parsed.title if parsed and parsed.title else path.stem.replace("_", " ").replace("-", " ").strip()) or path.name,
+                        "title": (
+                            parsed.title
+                            if parsed and parsed.title
+                            else path.stem.replace("_", " ").replace("-", " ").strip()
+                        )
+                        or path.name,
                         "text": text,
                         "source_url": str(path),
                         "document_type": "pdf",
@@ -2235,8 +2504,16 @@ class DocketDatasetBuilder:
         )
 
     def _normalize_documents(self, docket: Dict[str, Any]) -> List[DocketDocument]:
-        documents_payload = list(docket.get("documents") or docket.get("entries") or docket.get("docketEntries") or [])
-        docket_id = str(docket.get("docket_id") or docket.get("case_id") or docket.get("id") or docket.get("caseNumber") or "docket")
+        documents_payload = list(
+            docket.get("documents") or docket.get("entries") or docket.get("docketEntries") or []
+        )
+        docket_id = str(
+            docket.get("docket_id")
+            or docket.get("case_id")
+            or docket.get("id")
+            or docket.get("caseNumber")
+            or "docket"
+        )
         normalized: List[DocketDocument] = []
         for index, item in enumerate(documents_payload, start=1):
             if not isinstance(item, dict):
@@ -2250,8 +2527,18 @@ class DocketDatasetBuilder:
                 or item.get("description")
                 or ""
             ).strip()
-            title = str(item.get("title") or item.get("documentTitle") or item.get("description") or f"Docket document {index}").strip()
-            document_id = str(item.get("document_id") or item.get("documentId") or item.get("id") or f"{docket_id}_doc_{index}")
+            title = str(
+                item.get("title")
+                or item.get("documentTitle")
+                or item.get("description")
+                or f"Docket document {index}"
+            ).strip()
+            document_id = str(
+                item.get("document_id")
+                or item.get("documentId")
+                or item.get("id")
+                or f"{docket_id}_doc_{index}"
+            )
             existing_metadata = dict(item.get("metadata") or {})
             classification = self._classify_document(title=title, text=text, item=item)
             text_extraction = dict(existing_metadata.get("text_extraction") or {})
@@ -2266,8 +2553,15 @@ class DocketDatasetBuilder:
                     docket_id=docket_id,
                     title=title,
                     text=text,
-                    date_filed=str(item.get("date_filed") or item.get("filed") or item.get("filedDate") or ""),
-                    document_number=str(item.get("document_number") or item.get("entry_number") or item.get("docNumber") or ""),
+                    date_filed=str(
+                        item.get("date_filed") or item.get("filed") or item.get("filedDate") or ""
+                    ),
+                    document_number=str(
+                        item.get("document_number")
+                        or item.get("entry_number")
+                        or item.get("docNumber")
+                        or ""
+                    ),
                     source_url=str(
                         item.get("source_url")
                         or item.get("documentUrl")
@@ -2305,11 +2599,23 @@ class DocketDatasetBuilder:
         ]
         for label, keywords in rules:
             if document_type == label or any(keyword in combined for keyword in keywords):
-                return {"label": label, "backend": "heuristic_legal_document_classifier", "confidence": 0.6}
+                return {
+                    "label": label,
+                    "backend": "heuristic_legal_document_classifier",
+                    "confidence": 0.6,
+                }
 
         if document_type:
-            return {"label": document_type, "backend": "heuristic_legal_document_classifier", "confidence": 0.5}
-        return {"label": "other", "backend": "heuristic_legal_document_classifier", "confidence": 0.2}
+            return {
+                "label": document_type,
+                "backend": "heuristic_legal_document_classifier",
+                "confidence": 0.5,
+            }
+        return {
+            "label": "other",
+            "backend": "heuristic_legal_document_classifier",
+            "confidence": 0.2,
+        }
 
     def _normalize_auxiliary_items(self, items: Sequence[Any]) -> List[Dict[str, Any]]:
         normalized: List[Dict[str, Any]] = []
@@ -2319,8 +2625,21 @@ class DocketDatasetBuilder:
             else:
                 payload = {"text": str(item)}
             payload.setdefault("id", f"aux_{index}")
-            payload.setdefault("title", str(payload.get("label") or payload.get("title") or payload.get("text") or payload.get("id")))
-            payload.setdefault("text", str(payload.get("text") or payload.get("description") or payload.get("title") or ""))
+            payload.setdefault(
+                "title",
+                str(
+                    payload.get("label")
+                    or payload.get("title")
+                    or payload.get("text")
+                    or payload.get("id")
+                ),
+            )
+            payload.setdefault(
+                "text",
+                str(
+                    payload.get("text") or payload.get("description") or payload.get("title") or ""
+                ),
+            )
             normalized.append(payload)
         return normalized
 
@@ -2361,7 +2680,10 @@ class DocketDatasetBuilder:
                     fallback_by_key[dedupe_key] = (priority, len(index_text or ""), candidate)
                 continue
             source = _document_text_source(document)
-            if source in _LOW_VALUE_TEXT_SOURCES.union(_METADATA_ONLY_TEXT_SOURCES) and not str(index_text or "").strip():
+            if (
+                source in _LOW_VALUE_TEXT_SOURCES.union(_METADATA_ONLY_TEXT_SOURCES)
+                and not str(index_text or "").strip()
+            ):
                 continue
             if not (str(index_text or "").strip() or str(index_title or "").strip()):
                 continue
@@ -2419,15 +2741,16 @@ class DocketDatasetBuilder:
                 or ""
             )
             detected_case_number = _normalize_case_number_text(
-                payload.get("case_number")
-                or _extract_case_number_from_text(text)
+                payload.get("case_number") or _extract_case_number_from_text(text)
             )
             return {
                 "id": str(payload.get("document_id") or payload.get("id") or path.stem),
                 "title": str(payload.get("title") or payload.get("description") or path.stem),
                 "text": text,
                 "date_filed": str(payload.get("date_filed") or payload.get("filed") or ""),
-                "document_number": str(payload.get("document_number") or payload.get("entry_number") or ""),
+                "document_number": str(
+                    payload.get("document_number") or payload.get("entry_number") or ""
+                ),
                 "source_url": str(payload.get("source_url") or path),
                 "document_type": str(payload.get("document_type") or "json"),
                 "source_path": str(path),
@@ -2486,7 +2809,9 @@ class DocketDatasetBuilder:
             )
 
             if document.text:
-                parsed = parse_legal_document_to_graph(document.text, graph_id=f"{dataset_id}:{_safe_identifier(document.document_id)}")
+                parsed = parse_legal_document_to_graph(
+                    document.text, graph_id=f"{dataset_id}:{_safe_identifier(document.document_id)}"
+                )
                 for node in list(parsed["knowledge_graph"].get("nodes") or []):
                     graph.add_entity(
                         Entity(
@@ -2535,8 +2860,16 @@ class DocketDatasetBuilder:
         enrichment_kg = dict(router_enrichment.get("knowledge_graph") or {})
         knowledge_graph.setdefault("entities", [])
         knowledge_graph.setdefault("relationships", [])
-        existing_entity_ids = {str(item.get("id") or "") for item in list(knowledge_graph.get("entities") or []) if isinstance(item, dict)}
-        existing_rel_ids = {str(item.get("id") or "") for item in list(knowledge_graph.get("relationships") or []) if isinstance(item, dict)}
+        existing_entity_ids = {
+            str(item.get("id") or "")
+            for item in list(knowledge_graph.get("entities") or [])
+            if isinstance(item, dict)
+        }
+        existing_rel_ids = {
+            str(item.get("id") or "")
+            for item in list(knowledge_graph.get("relationships") or [])
+            if isinstance(item, dict)
+        }
         for entity in list(enrichment_kg.get("entities") or []):
             if not isinstance(entity, dict):
                 continue
@@ -2553,26 +2886,45 @@ class DocketDatasetBuilder:
                 existing_rel_ids.add(rel_id)
 
         proof_assistant.setdefault("metadata", {})
-        proof_assistant["metadata"]["router_enrichment"] = dict(router_enrichment.get("summary") or {})
+        proof_assistant["metadata"]["router_enrichment"] = dict(
+            router_enrichment.get("summary") or {}
+        )
         if router_enrichment.get("deontic_conflicts"):
-            proof_assistant["metadata"]["deontic_conflicts"] = list(router_enrichment.get("deontic_conflicts") or [])
+            proof_assistant["metadata"]["deontic_conflicts"] = list(
+                router_enrichment.get("deontic_conflicts") or []
+            )
         proof_store = dict(router_enrichment.get("proof_store") or {})
-        if (proof_store.get("proofs") or proof_store.get("certificates")):
+        if proof_store.get("proofs") or proof_store.get("certificates"):
             proof_assistant["proof_store"] = proof_store
         temporal = proof_assistant.setdefault("temporal_fol", {})
         temporal.setdefault("formulas", [])
-        substantive_temporal = list(((router_enrichment.get("temporal_fol") or {}).get("formulas") or []))
+        substantive_temporal = list(
+            ((router_enrichment.get("temporal_fol") or {}).get("formulas") or [])
+        )
         existing_temporal = list(temporal.get("formulas") or [])
         temporal["formulas"] = _dedupe_string_sequence(substantive_temporal + existing_temporal)
         proof_assistant["deontic_temporal_first_order_logic"] = dict(temporal)
         dcec = proof_assistant.setdefault("deontic_cognitive_event_calculus", {})
         dcec.setdefault("formulas", [])
-        substantive_dcec = list(((router_enrichment.get("deontic_cognitive_event_calculus") or {}).get("formulas") or []))
+        substantive_dcec = list(
+            (
+                (router_enrichment.get("deontic_cognitive_event_calculus") or {}).get("formulas")
+                or []
+            )
+        )
         existing_dcec = list(dcec.get("formulas") or [])
-        substantive_dcec_non_generic = [formula for formula in substantive_dcec if _is_substantive_dcec_formula(formula)]
-        substantive_dcec_generic = [formula for formula in substantive_dcec if not _is_substantive_dcec_formula(formula)]
-        existing_dcec_non_generic = [formula for formula in existing_dcec if _is_substantive_dcec_formula(formula)]
-        existing_dcec_generic = [formula for formula in existing_dcec if not _is_substantive_dcec_formula(formula)]
+        substantive_dcec_non_generic = [
+            formula for formula in substantive_dcec if _is_substantive_dcec_formula(formula)
+        ]
+        substantive_dcec_generic = [
+            formula for formula in substantive_dcec if not _is_substantive_dcec_formula(formula)
+        ]
+        existing_dcec_non_generic = [
+            formula for formula in existing_dcec if _is_substantive_dcec_formula(formula)
+        ]
+        existing_dcec_generic = [
+            formula for formula in existing_dcec if not _is_substantive_dcec_formula(formula)
+        ]
         dcec["formulas"] = _dedupe_string_sequence(
             substantive_dcec_non_generic
             + existing_dcec_non_generic
@@ -2595,7 +2947,8 @@ class DocketDatasetBuilder:
             dict.fromkeys(
                 [
                     json.dumps(item, sort_keys=True)
-                    for item in list(proof_kg.get("entities") or []) + list(enrichment_kg.get("entities") or [])
+                    for item in list(proof_kg.get("entities") or [])
+                    + list(enrichment_kg.get("entities") or [])
                 ]
             )
         )
@@ -2615,27 +2968,43 @@ class DocketDatasetBuilder:
         prior_substantive_views = dict(metadata.get("substantive_views") or {})
         prior_generic_views = dict(metadata.get("generic_views") or {})
         metadata["document_frame_logic"] = dict(prior_document_frame_logic)
-        metadata["document_frame_logic"].update(dict(router_enrichment.get("document_frame_logic") or {}))
+        metadata["document_frame_logic"].update(
+            dict(router_enrichment.get("document_frame_logic") or {})
+        )
         combined_substantive_temporal = _dedupe_string_sequence(
-            list(prior_substantive_views.get("temporal_formulas") or []) + list(substantive_temporal)
+            list(prior_substantive_views.get("temporal_formulas") or [])
+            + list(substantive_temporal)
         )
         combined_substantive_dcec = _dedupe_string_sequence(
-            list(prior_substantive_views.get("dcec_formulas") or []) + list(substantive_dcec_non_generic)
+            list(prior_substantive_views.get("dcec_formulas") or [])
+            + list(substantive_dcec_non_generic)
         )
         combined_substantive_frame_ids = _dedupe_string_sequence(
             list(prior_substantive_views.get("frame_ids") or []) + list(substantive_frames.keys())
         )
         combined_substantive_entity_ids = _dedupe_string_sequence(
             list(prior_substantive_views.get("knowledge_graph_entity_ids") or [])
-            + [_entity_id(item) for item in list(enrichment_kg.get("entities") or []) if _is_substantive_kg_entity(item)]
+            + [
+                _entity_id(item)
+                for item in list(enrichment_kg.get("entities") or [])
+                if _is_substantive_kg_entity(item)
+            ]
         )
         combined_substantive_relationship_ids = _dedupe_string_sequence(
             list(prior_substantive_views.get("knowledge_graph_relationship_ids") or [])
-            + [_relationship_id(item) for item in list(enrichment_kg.get("relationships") or []) if _is_substantive_kg_relationship(item)]
+            + [
+                _relationship_id(item)
+                for item in list(enrichment_kg.get("relationships") or [])
+                if _is_substantive_kg_relationship(item)
+            ]
         )
         combined_generic_temporal = _dedupe_string_sequence(
             list(prior_generic_views.get("temporal_formulas") or [])
-            + [formula for formula in list(temporal.get("formulas") or []) if not _is_substantive_temporal_formula(formula)]
+            + [
+                formula
+                for formula in list(temporal.get("formulas") or [])
+                if not _is_substantive_temporal_formula(formula)
+            ]
         )
         combined_generic_dcec = _dedupe_string_sequence(
             list(prior_generic_views.get("dcec_formulas") or [])
@@ -2644,11 +3013,19 @@ class DocketDatasetBuilder:
         )
         combined_generic_entity_ids = _dedupe_string_sequence(
             list(prior_generic_views.get("knowledge_graph_entity_ids") or [])
-            + [_entity_id(item) for item in list(proof_kg.get("entities") or []) if not _is_substantive_kg_entity(item)]
+            + [
+                _entity_id(item)
+                for item in list(proof_kg.get("entities") or [])
+                if not _is_substantive_kg_entity(item)
+            ]
         )
         combined_generic_relationship_ids = _dedupe_string_sequence(
             list(prior_generic_views.get("knowledge_graph_relationship_ids") or [])
-            + [_relationship_id(item) for item in list(proof_kg.get("relationships") or []) if not _is_substantive_kg_relationship(item)]
+            + [
+                _relationship_id(item)
+                for item in list(proof_kg.get("relationships") or [])
+                if not _is_substantive_kg_relationship(item)
+            ]
         )
         metadata["substantive_views"] = {
             "temporal_formulas": combined_substantive_temporal,
@@ -2665,7 +3042,10 @@ class DocketDatasetBuilder:
         }
         summary = proof_assistant.setdefault("summary", {})
         summary["router_enriched_proof_count"] = int(
-            (((proof_assistant.get("proof_store") or {}).get("summary") or {}).get("proof_count") or 0)
+            (
+                ((proof_assistant.get("proof_store") or {}).get("summary") or {}).get("proof_count")
+                or 0
+            )
         )
         summary["temporal_formula_count"] = len(list((temporal.get("formulas") or [])))
         summary["substantive_temporal_formula_count"] = len(list(combined_substantive_temporal))
@@ -2674,22 +3054,48 @@ class DocketDatasetBuilder:
         summary["frame_count"] = len(frames)
         summary["substantive_frame_count"] = len(list(combined_substantive_frame_ids))
         summary["proof_knowledge_graph_entity_count"] = len(list((proof_kg.get("entities") or [])))
-        summary["proof_knowledge_graph_relationship_count"] = len(list((proof_kg.get("relationships") or [])))
-        summary["substantive_proof_knowledge_graph_entity_count"] = len(list(combined_substantive_entity_ids))
-        summary["substantive_proof_knowledge_graph_relationship_count"] = len(list(combined_substantive_relationship_ids))
+        summary["proof_knowledge_graph_relationship_count"] = len(
+            list((proof_kg.get("relationships") or []))
+        )
+        summary["substantive_proof_knowledge_graph_entity_count"] = len(
+            list(combined_substantive_entity_ids)
+        )
+        summary["substantive_proof_knowledge_graph_relationship_count"] = len(
+            list(combined_substantive_relationship_ids)
+        )
         extractors = proof_assistant.setdefault("extractors", {})
-        extractors.setdefault("deontic_temporal_first_order_logic", {})["formula_count"] = len(list((temporal.get("formulas") or [])))
-        extractors.setdefault("deontic_temporal_first_order_logic", {})["substantive_formula_count"] = len(list(combined_substantive_temporal))
-        extractors.setdefault("deontic_cognitive_event_calculus", {})["formula_count"] = len(list((dcec.get("formulas") or [])))
-        extractors.setdefault("deontic_cognitive_event_calculus", {})["substantive_formula_count"] = len(list(combined_substantive_dcec))
+        extractors.setdefault("deontic_temporal_first_order_logic", {})["formula_count"] = len(
+            list((temporal.get("formulas") or []))
+        )
+        extractors.setdefault("deontic_temporal_first_order_logic", {})[
+            "substantive_formula_count"
+        ] = len(list(combined_substantive_temporal))
+        extractors.setdefault("deontic_cognitive_event_calculus", {})["formula_count"] = len(
+            list((dcec.get("formulas") or []))
+        )
+        extractors.setdefault("deontic_cognitive_event_calculus", {})[
+            "substantive_formula_count"
+        ] = len(list(combined_substantive_dcec))
         extractors.setdefault("frame_logic", {})["frame_count"] = len(frames)
-        extractors.setdefault("frame_logic", {})["substantive_frame_count"] = len(list(combined_substantive_frame_ids))
-        extractors.setdefault("knowledge_graph", {})["entity_count"] = len(list((proof_kg.get("entities") or [])))
-        extractors.setdefault("knowledge_graph", {})["relationship_count"] = len(list((proof_kg.get("relationships") or [])))
-        extractors.setdefault("knowledge_graph", {})["substantive_entity_count"] = len(list(combined_substantive_entity_ids))
-        extractors.setdefault("knowledge_graph", {})["substantive_relationship_count"] = len(list(combined_substantive_relationship_ids))
+        extractors.setdefault("frame_logic", {})["substantive_frame_count"] = len(
+            list(combined_substantive_frame_ids)
+        )
+        extractors.setdefault("knowledge_graph", {})["entity_count"] = len(
+            list((proof_kg.get("entities") or []))
+        )
+        extractors.setdefault("knowledge_graph", {})["relationship_count"] = len(
+            list((proof_kg.get("relationships") or []))
+        )
+        extractors.setdefault("knowledge_graph", {})["substantive_entity_count"] = len(
+            list(combined_substantive_entity_ids)
+        )
+        extractors.setdefault("knowledge_graph", {})["substantive_relationship_count"] = len(
+            list(combined_substantive_relationship_ids)
+        )
 
-    def _build_bm25_index(self, dataset_id: str, documents: Sequence[DocketDocument]) -> Dict[str, Any]:
+    def _build_bm25_index(
+        self, dataset_id: str, documents: Sequence[DocketDocument]
+    ) -> Dict[str, Any]:
         index_documents = [
             {
                 "id": document.document_id,
@@ -2706,12 +3112,18 @@ class DocketDatasetBuilder:
         ]
         bm25_index = build_bm25_index(index_documents)
         bm25_index["index_id"] = f"{dataset_id}_bm25"
-        bm25_index.setdefault("stats", {})["document_count"] = int(bm25_index.get("document_count") or 0)
+        bm25_index.setdefault("stats", {})["document_count"] = int(
+            bm25_index.get("document_count") or 0
+        )
         return bm25_index
 
-    def _build_vector_index(self, dataset_id: str, documents: Sequence[DocketDocument]) -> Dict[str, Any]:
+    def _build_vector_index(
+        self, dataset_id: str, documents: Sequence[DocketDocument]
+    ) -> Dict[str, Any]:
         items: List[Dict[str, Any]] = []
-        prepared_documents = [document for document in documents if (document.text or document.title).strip()]
+        prepared_documents = [
+            document for document in documents if (document.text or document.title).strip()
+        ]
         vectors, vector_metadata = embed_texts_with_router_or_local_chunked(
             [document.text or document.title for document in prepared_documents],
             fallback_dimension=self.vector_dimension,
@@ -2774,7 +3186,9 @@ def search_docket_dataset_bm25(
 ) -> Dict[str, Any]:
     """Search the in-memory BM25-style artifact for a docket dataset."""
 
-    dataset_payload = dataset.to_dict() if isinstance(dataset, DocketDatasetObject) else dict(dataset)
+    dataset_payload = (
+        dataset.to_dict() if isinstance(dataset, DocketDatasetObject) else dict(dataset)
+    )
     bm25_index = dict(dataset_payload.get("bm25_index") or {})
     documents = list(bm25_index.get("documents") or [])
     results = bm25_search_documents(query, documents, top_k=top_k)
@@ -2796,7 +3210,9 @@ def search_docket_dataset_vector(
 ) -> Dict[str, Any]:
     """Search the lightweight in-memory vector index for a docket dataset."""
 
-    dataset_payload = dataset.to_dict() if isinstance(dataset, DocketDatasetObject) else dict(dataset)
+    dataset_payload = (
+        dataset.to_dict() if isinstance(dataset, DocketDatasetObject) else dict(dataset)
+    )
     vector_index = dict(dataset_payload.get("vector_index") or {})
     items = list(vector_index.get("items") or [])
     builder = DocketDatasetBuilder(vector_dimension=vector_dimension)
@@ -2848,8 +3264,13 @@ def build_docket_deontic_artifacts(
     authority_refs = [
         {
             "id": f"authority_{_safe_identifier(item.get('id') or item.get('title') or item.get('text') or index)}",
-            "label": str(item.get("title") or item.get("label") or item.get("text") or f"Authority {index}"),
-            "attributes": {"authority_type": item.get("authority_type"), "source_text": item.get("text")},
+            "label": str(
+                item.get("title") or item.get("label") or item.get("text") or f"Authority {index}"
+            ),
+            "attributes": {
+                "authority_type": item.get("authority_type"),
+                "source_text": item.get("text"),
+            },
         }
         for index, item in enumerate(authorities, start=1)
         if isinstance(item, dict)
@@ -2859,13 +3280,22 @@ def build_docket_deontic_artifacts(
         for index, item in enumerate(docket_items, start=1):
             if not isinstance(item, dict):
                 continue
-            text = str(item.get("text") or item.get("description") or item.get("title") or "").strip()
-            title = str(item.get("title") or item.get("label") or text or f"{party.title()} docket item {index}").strip()
+            text = str(
+                item.get("text") or item.get("description") or item.get("title") or ""
+            ).strip()
+            title = str(
+                item.get("title")
+                or item.get("label")
+                or text
+                or f"{party.title()} docket item {index}"
+            ).strip()
             matched_keywords = _deontic_trigger_keywords(text or title)
             modality = _infer_docket_modality(text or title)
             action = _infer_docket_action(text or title)
             needs_analysis = bool(matched_keywords or authority_refs)
-            trigger_id = f"{dataset_id}:trigger:{party}:{_safe_identifier(item.get('id') or title or index)}"
+            trigger_id = (
+                f"{dataset_id}:trigger:{party}:{_safe_identifier(item.get('id') or title or index)}"
+            )
             trigger_entries.append(
                 {
                     "trigger_id": trigger_id,
@@ -2905,7 +3335,12 @@ def build_docket_deontic_artifacts(
     for index, authority in enumerate(authorities, start=1):
         if not isinstance(authority, dict):
             continue
-        title = str(authority.get("title") or authority.get("label") or authority.get("text") or f"Authority {index}").strip()
+        title = str(
+            authority.get("title")
+            or authority.get("label")
+            or authority.get("text")
+            or f"Authority {index}"
+        ).strip()
         authority_text = str(authority.get("text") or title).strip()
         matched_keywords = _deontic_trigger_keywords(authority_text)
         modality = _infer_docket_modality(authority_text)
@@ -2963,10 +3398,10 @@ def build_docket_deontic_artifacts(
     trigger_summary = {
         "entry_count": len(trigger_entries),
         "pending_analysis_count": sum(1 for item in trigger_entries if item.get("needs_analysis")),
-        "parties_requiring_analysis": sorted(
-            _parties_requiring_analysis(trigger_entries)
+        "parties_requiring_analysis": sorted(_parties_requiring_analysis(trigger_entries)),
+        "authority_trigger_count": sum(
+            1 for item in trigger_entries if item.get("source_type") == "authority"
         ),
-        "authority_trigger_count": sum(1 for item in trigger_entries if item.get("source_type") == "authority"),
         "analyzed_party_count": len(party_analysis),
         "rule_count_by_party": {
             party: int(analysis.get("rule_count") or 0)
@@ -3039,7 +3474,10 @@ def _infer_authority_parties(text: str) -> List[str]:
         parties.append("defendant")
     if parties:
         return parties
-    if any(token in lowered for token in ("parties", "party", "all parties", "either party", "both parties")):
+    if any(
+        token in lowered
+        for token in ("parties", "party", "all parties", "either party", "both parties")
+    ):
         return ["plaintiff", "defendant"]
     return ["plaintiff", "defendant"]
 
@@ -3059,10 +3497,16 @@ def _parties_requiring_analysis(trigger_entries: Sequence[Dict[str, Any]]) -> Li
     return sorted(parties)
 
 
-def _build_party_deontic_analysis(graph: DeonticGraph, trigger_entries: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+def _build_party_deontic_analysis(
+    graph: DeonticGraph, trigger_entries: Sequence[Dict[str, Any]]
+) -> Dict[str, Any]:
     assessments = {item.rule_id: item for item in graph.assess_rules()}
     conflicts = graph.detect_conflicts(only_active=False)
-    trigger_map = {str(item.get("trigger_id") or ""): item for item in trigger_entries if item.get("trigger_id")}
+    trigger_map = {
+        str(item.get("trigger_id") or ""): item
+        for item in trigger_entries
+        if item.get("trigger_id")
+    }
     analysis_by_party: Dict[str, Dict[str, Any]] = {}
 
     for rule in graph.rules.values():
@@ -3123,9 +3567,7 @@ def _build_party_deontic_analysis(graph: DeonticGraph, trigger_entries: Sequence
         left_rule = graph.rules.get(conflict.rule_id)
         right_rule = graph.rules.get(conflict.conflicting_rule_id)
         parties = {
-            _infer_rule_party(graph, rule)
-            for rule in (left_rule, right_rule)
-            if rule is not None
+            _infer_rule_party(graph, rule) for rule in (left_rule, right_rule) if rule is not None
         }
         for party in sorted(value for value in parties if value):
             analysis = analysis_by_party.setdefault(
@@ -3190,17 +3632,39 @@ def summarize_docket_dataset(dataset: DocketDatasetObject | Dict[str, Any]) -> D
     """Return a compact manifest-style summary for a docket dataset."""
 
     dataset_dict = dataset.to_dict() if isinstance(dataset, DocketDatasetObject) else dict(dataset)
-    dataset_object = dataset if isinstance(dataset, DocketDatasetObject) else DocketDatasetObject.from_dict(dataset_dict)
+    dataset_object = (
+        dataset
+        if isinstance(dataset, DocketDatasetObject)
+        else DocketDatasetObject.from_dict(dataset_dict)
+    )
     metadata = dict(dataset_object.metadata or {})
     eu_audit = dict(metadata.get("eu_citation_audit") or {})
     if not eu_audit:
-        eu_audit = dict((metadata.get("citation_source_audit") or {}).get("eu_citation_audit") or {})
-    document_dates = [document.date_filed for document in dataset_object.documents if document.date_filed]
-    document_numbers = [document.document_number for document in dataset_object.documents if document.document_number]
+        eu_audit = dict(
+            (metadata.get("citation_source_audit") or {}).get("eu_citation_audit") or {}
+        )
+    document_dates = [
+        document.date_filed for document in dataset_object.documents if document.date_filed
+    ]
+    document_numbers = [
+        document.document_number
+        for document in dataset_object.documents
+        if document.document_number
+    ]
     latest_routing = dict(
         (dataset_object.metadata or {}).get("latest_proof_packet_routing_explanation")
-        or (((dataset_object.proof_assistant or {}).get("metadata") or {}).get("latest_proof_packet_routing_explanation") or {})
-        or (dict(dataset_dict.get("attached_proof_assistant_packet") or {}).get("routing_explanation") or {})
+        or (
+            ((dataset_object.proof_assistant or {}).get("metadata") or {}).get(
+                "latest_proof_packet_routing_explanation"
+            )
+            or {}
+        )
+        or (
+            dict(dataset_dict.get("attached_proof_assistant_packet") or {}).get(
+                "routing_explanation"
+            )
+            or {}
+        )
     )
     return {
         **dataset_object.summary(),
@@ -3209,20 +3673,38 @@ def summarize_docket_dataset(dataset: DocketDatasetObject | Dict[str, Any]) -> D
             "max": max(document_dates) if document_dates else "",
         },
         "document_numbers_present": len(document_numbers),
-        "documents_with_text": sum(1 for document in dataset_object.documents if document.text.strip()),
-        "documents_with_source_url": sum(1 for document in dataset_object.documents if document.source_url.strip()),
+        "documents_with_text": sum(
+            1 for document in dataset_object.documents if document.text.strip()
+        ),
+        "documents_with_source_url": sum(
+            1 for document in dataset_object.documents if document.source_url.strip()
+        ),
         "plaintiff_docket_count": len(dataset_object.plaintiff_docket),
         "defendant_docket_count": len(dataset_object.defendant_docket),
         "authority_count": len(dataset_object.authorities),
         "deontic_rule_count": len(list((dataset_object.deontic_graph or {}).get("rules") or [])),
-        "deontic_trigger_count": len(list((dataset_object.deontic_triggers or {}).get("entries") or [])),
-        "proof_assistant_work_item_count": len(list((dataset_object.proof_assistant or {}).get("agenda") or [])),
-        "proof_assistant_formula_count": len(
-            list(((dataset_object.proof_assistant or {}).get("temporal_fol") or {}).get("formulas") or [])
+        "deontic_trigger_count": len(
+            list((dataset_object.deontic_triggers or {}).get("entries") or [])
         ),
-        "proof_tactician_plan_count": len(list(((dataset_object.proof_assistant or {}).get("tactician") or {}).get("plans") or [])),
+        "proof_assistant_work_item_count": len(
+            list((dataset_object.proof_assistant or {}).get("agenda") or [])
+        ),
+        "proof_assistant_formula_count": len(
+            list(
+                ((dataset_object.proof_assistant or {}).get("temporal_fol") or {}).get("formulas")
+                or []
+            )
+        ),
+        "proof_tactician_plan_count": len(
+            list(((dataset_object.proof_assistant or {}).get("tactician") or {}).get("plans") or [])
+        ),
         "parties_requiring_deontic_analysis": list(
-            (((dataset_object.deontic_triggers or {}).get("summary") or {}).get("parties_requiring_analysis") or [])
+            (
+                ((dataset_object.deontic_triggers or {}).get("summary") or {}).get(
+                    "parties_requiring_analysis"
+                )
+                or []
+            )
         ),
         "eu_citation_count": int(eu_audit.get("citation_count") or 0),
         "eu_unique_citation_count": int(eu_audit.get("unique_citation_count") or 0),

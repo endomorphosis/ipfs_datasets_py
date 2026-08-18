@@ -10,20 +10,29 @@ import importlib
 import traceback
 from typing import Dict, Any
 
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
 
 # Tool mapping with correct function names and parameters
 TOOLS = {
     "audit_tools": [
-        ("record_audit_event", {"action": "test.operation", "resource_id": "test", "details": {"test": "data"}})
+        (
+            "record_audit_event",
+            {"action": "test.operation", "resource_id": "test", "details": {"test": "data"}},
+        )
     ],
     "dataset_tools": [
         ("save_dataset", {"dataset_id": "test", "destination": "/tmp/test.json"}),
         ("load_dataset", {"dataset_path": "/tmp/test.json"}),
-        ("convert_dataset_format", {"dataset_id": "test", "target_format": "json", "output_path": "/tmp/test.json"})
+        (
+            "convert_dataset_format",
+            {"dataset_id": "test", "target_format": "json", "output_path": "/tmp/test.json"},
+        ),
     ],
     "security_tools": [
-        ("check_access_permission", {"resource_id": "test", "user_id": "user", "permission_type": "read"})
+        (
+            "check_access_permission",
+            {"resource_id": "test", "user_id": "user", "permission_type": "read"},
+        )
     ],
     "vector_tools": [
         ("create_vector_index", {"vectors": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], "dimension": 3})
@@ -34,12 +43,13 @@ TOOLS = {
     "provenance_tools": [
         ("record_provenance", {"dataset_id": "test", "operation": "test_operation"})
     ],
-    "ipfs_tools": [
-        ("get_from_ipfs", {"cid": "QmTest123"})
-    ]
+    "ipfs_tools": [("get_from_ipfs", {"cid": "QmTest123"})],
 }
 
-async def test_tool(module_name: str, function_name: str, test_args: Dict[str, Any]) -> Dict[str, Any]:
+
+async def test_tool(
+    module_name: str, function_name: str, test_args: Dict[str, Any]
+) -> Dict[str, Any]:
     """Test a single tool function."""
     try:
         print(f"Testing {module_name}.{function_name}...")
@@ -61,6 +71,7 @@ async def test_tool(module_name: str, function_name: str, test_args: Dict[str, A
     except Exception as e:
         print(f"✗ {function_name}: {e}")
         return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+
 
 async def main():
     """Run all tool tests."""
@@ -92,10 +103,12 @@ async def main():
 
     # Save detailed results
     import json
+
     with open("tool_test_results.json", "w") as f:
         json.dump(results, f, indent=2)
 
     print(f"\nDetailed results saved to tool_test_results.json")
+
 
 if __name__ == "__main__":
     anyio.run(main())

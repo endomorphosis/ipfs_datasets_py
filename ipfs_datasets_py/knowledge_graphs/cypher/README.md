@@ -70,14 +70,11 @@ from ipfs_datasets_py.knowledge_graphs.cypher.ast import (
     MatchClause,
     WhereClause,
     ReturnClause,
-    PropertyMatch
+    PropertyMatch,
 )
 
 # Build AST programmatically
-match = MatchClause(
-    node_pattern="n:Person",
-    properties={"name": "Alice"}
-)
+match = MatchClause(node_pattern="n:Person", properties={"name": "Alice"})
 ```
 
 **Node Types:**
@@ -121,7 +118,7 @@ from ipfs_datasets_py.knowledge_graphs.cypher.functions import (
     max_value,
     contains,
     starts_with,
-    ends_with
+    ends_with,
 )
 
 # Use in queries
@@ -214,7 +211,7 @@ result = compiler.execute("""
 """)
 
 for record in result:
-    print(record['n.name'])
+    print(record["n.name"])
 ```
 
 ---

@@ -27,9 +27,7 @@ _PACKET_001115_FAMILY_PAIRS = (
 
 
 def test_packet_001115_pairs_match_registry_constant() -> None:
-    assert tuple(COMPILER_REFINED_PACKET_001115_FAMILY_PAIRS) == (
-        _PACKET_001115_FAMILY_PAIRS
-    )
+    assert tuple(COMPILER_REFINED_PACKET_001115_FAMILY_PAIRS) == (_PACKET_001115_FAMILY_PAIRS)
 
 
 def test_packet_001115_pairs_are_supported_across_compiler_policies() -> None:
@@ -58,11 +56,7 @@ def test_packet_001115_pairs_are_supported_across_compiler_policies() -> None:
 
 def test_packet_001115_temporal_profile_covers_uscode_status_history_cues() -> None:
     temporal_profile = DEFAULT_MODAL_REGISTRY.get_profile(ModalLogicFamily.TEMPORAL)
-    temporal_cues = {
-        cue
-        for operator in temporal_profile.operators
-        for cue in operator.cue_terms
-    }
+    temporal_cues = {cue for operator in temporal_profile.operators for cue in operator.cue_terms}
 
     assert {
         "effective date of repeal",

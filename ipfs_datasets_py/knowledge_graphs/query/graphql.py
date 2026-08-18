@@ -206,10 +206,15 @@ class GraphQLParser:
     def _parse_document(self) -> GraphQLDocument:
         # Skip optional operation type keyword and name
         tok = self._peek()
-        if tok and tok[0] == "NAME" and tok[1] in (
-            "query",
-            "mutation",
-            "subscription",
+        if (
+            tok
+            and tok[0] == "NAME"
+            and tok[1]
+            in (
+                "query",
+                "mutation",
+                "subscription",
+            )
         ):
             self._advance()
             # Optional operation name
@@ -290,9 +295,7 @@ class GraphQLParser:
             # argument name
             name_tok = self._advance()
             if name_tok[0] != "NAME":
-                raise GraphQLParseError(
-                    f"Expected argument name, got '{name_tok[1]}'"
-                )
+                raise GraphQLParseError(f"Expected argument name, got '{name_tok[1]}'")
             self._expect(":")
             args[name_tok[1]] = self._parse_value()
         return args
@@ -404,11 +407,7 @@ class KnowledgeGraphQLExecutor:
         entity_type = sel.name.lower()
 
         # Collect entities matching the type
-        matches = [
-            e
-            for e in self._kg.entities.values()
-            if e.entity_type.lower() == entity_type
-        ]
+        matches = [e for e in self._kg.entities.values() if e.entity_type.lower() == entity_type]
 
         # Apply argument equality filters
         for arg_name, arg_value in sel.arguments.items():
@@ -417,15 +416,9 @@ class KnowledgeGraphQLExecutor:
             elif arg_name == "name":
                 matches = [e for e in matches if e.name == str(arg_value)]
             elif arg_name in ("type", "entity_type"):
-                matches = [
-                    e for e in matches if e.entity_type == str(arg_value)
-                ]
+                matches = [e for e in matches if e.entity_type == str(arg_value)]
             else:
-                matches = [
-                    e
-                    for e in matches
-                    if e.properties.get(arg_name) == arg_value
-                ]
+                matches = [e for e in matches if e.properties.get(arg_name) == arg_value]
 
         if not sel.sub_fields:
             # No field selection — return default representation
@@ -471,10 +464,7 @@ class KnowledgeGraphQLExecutor:
         rel_type = fld.name.lower()
         targets: List[Any] = []
         for rel in self._kg.relationships.values():
-            if (
-                rel.relationship_type.lower() == rel_type
-                and rel.source_id == source.entity_id
-            ):
+            if rel.relationship_type.lower() == rel_type and rel.source_id == source.entity_id:
                 target = self._kg.entities.get(rel.target_id)
                 if target is not None:
                     targets.append(target)

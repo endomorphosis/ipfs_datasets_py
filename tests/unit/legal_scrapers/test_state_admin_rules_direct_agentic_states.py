@@ -26,7 +26,11 @@ async def test_frontier_states_skip_base_state_laws_scrape_for_admin_rules(
         return {"status": "success", "state_blocks": [], "kg_rows": [], "report": {}}
 
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(
+        scraper_module,
+        "_agentic_discover_admin_state_blocks",
+        _fake_agentic_discover_admin_state_blocks,
+    )
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scraper_module.scrape_state_admin_rules(
@@ -62,7 +66,11 @@ async def test_connecticut_skips_base_state_laws_scrape_for_admin_rules(
         return {"status": "success", "state_blocks": [], "kg_rows": [], "report": {}}
 
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(
+        scraper_module,
+        "_agentic_discover_admin_state_blocks",
+        _fake_agentic_discover_admin_state_blocks,
+    )
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scraper_module.scrape_state_admin_rules(
@@ -98,7 +106,11 @@ async def test_michigan_skips_base_state_laws_scrape_for_admin_rules(
         return {"status": "success", "state_blocks": [], "kg_rows": [], "report": {}}
 
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(
+        scraper_module,
+        "_agentic_discover_admin_state_blocks",
+        _fake_agentic_discover_admin_state_blocks,
+    )
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scraper_module.scrape_state_admin_rules(
@@ -134,7 +146,11 @@ async def test_tennessee_skips_base_state_laws_scrape_for_admin_rules(
         return {"status": "success", "state_blocks": [], "kg_rows": [], "report": {}}
 
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(
+        scraper_module,
+        "_agentic_discover_admin_state_blocks",
+        _fake_agentic_discover_admin_state_blocks,
+    )
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scraper_module.scrape_state_admin_rules(
@@ -170,7 +186,11 @@ async def test_hawaii_skips_base_state_laws_scrape_for_admin_rules(
         return {"status": "success", "state_blocks": [], "kg_rows": [], "report": {}}
 
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(
+        scraper_module,
+        "_agentic_discover_admin_state_blocks",
+        _fake_agentic_discover_admin_state_blocks,
+    )
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scraper_module.scrape_state_admin_rules(
@@ -206,7 +226,11 @@ async def test_louisiana_skips_base_state_laws_scrape_for_admin_rules(
         return {"status": "success", "state_blocks": [], "kg_rows": [], "report": {}}
 
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(
+        scraper_module,
+        "_agentic_discover_admin_state_blocks",
+        _fake_agentic_discover_admin_state_blocks,
+    )
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scraper_module.scrape_state_admin_rules(
@@ -242,7 +266,11 @@ async def test_new_york_skips_base_state_laws_scrape_for_admin_rules(
         return {"status": "success", "state_blocks": [], "kg_rows": [], "report": {}}
 
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(
+        scraper_module,
+        "_agentic_discover_admin_state_blocks",
+        _fake_agentic_discover_admin_state_blocks,
+    )
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scraper_module.scrape_state_admin_rules(
@@ -278,7 +306,11 @@ async def test_oklahoma_skips_base_state_laws_scrape_for_admin_rules(
         return {"status": "success", "state_blocks": [], "kg_rows": [], "report": {}}
 
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
-    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(
+        scraper_module,
+        "_agentic_discover_admin_state_blocks",
+        _fake_agentic_discover_admin_state_blocks,
+    )
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scraper_module.scrape_state_admin_rules(

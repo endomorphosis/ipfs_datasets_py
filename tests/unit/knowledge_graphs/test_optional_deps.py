@@ -21,6 +21,7 @@ from unittest.mock import patch, MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 class _BlockedImport:
     """Context manager that makes one module appear uninstalled."""
 
@@ -49,6 +50,7 @@ class _BlockedImport:
 # ---------------------------------------------------------------------------
 # 1. KnowledgeGraphExtractor without spaCy
 # ---------------------------------------------------------------------------
+
 
 class TestExtractorWithoutSpacy:
     """Extractor must degrade gracefully when spaCy is absent."""
@@ -83,12 +85,11 @@ class TestExtractorWithoutSpacy:
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         extractor = KnowledgeGraphExtractor(use_spacy=False, use_transformers=False)
 
         # WHEN
-        result = extractor.extract_knowledge_graph(
-            "Marie Curie was born in Warsaw in 1867."
-        )
+        result = extractor.extract_knowledge_graph("Marie Curie was born in Warsaw in 1867.")
 
         # THEN
         kg = result.get("knowledge_graph") if isinstance(result, dict) else result
@@ -98,6 +99,7 @@ class TestExtractorWithoutSpacy:
 # ---------------------------------------------------------------------------
 # 2. KnowledgeGraphExtractor without transformers
 # ---------------------------------------------------------------------------
+
 
 class TestExtractorWithoutTransformers:
     """Extractor must degrade gracefully when transformers is absent."""
@@ -126,6 +128,7 @@ class TestExtractorWithoutTransformers:
         from ipfs_datasets_py.knowledge_graphs.extraction.extractor import (
             KnowledgeGraphExtractor,
         )
+
         extractor = KnowledgeGraphExtractor(use_spacy=False, use_transformers=False)
         result = extractor.extract_knowledge_graph(
             "Albert Einstein developed the theory of relativity."
@@ -137,6 +140,7 @@ class TestExtractorWithoutTransformers:
 # ---------------------------------------------------------------------------
 # 3. CrossDocumentReasoner without numpy
 # ---------------------------------------------------------------------------
+
 
 class TestCrossDocumentReasonerWithoutNumpy:
     """CrossDocumentReasoner uses numpy but must degrade when it's unavailable."""
@@ -152,6 +156,7 @@ class TestCrossDocumentReasonerWithoutNumpy:
             CrossDocumentReasoner,
             DocumentNode,
         )
+
         reasoner = CrossDocumentReasoner()
         doc1 = DocumentNode(id="d1", content="cat sat on the mat", source="s1")
         doc2 = DocumentNode(id="d2", content="cat sat on the mat", source="s2")
@@ -174,12 +179,21 @@ class TestCrossDocumentReasonerWithoutNumpy:
         from ipfs_datasets_py.knowledge_graphs.cross_document_reasoning import (
             CrossDocumentReasoner,
         )
+
         reasoner = CrossDocumentReasoner()
         result = reasoner.reason_across_documents(
             query="What is AI?",
             input_documents=[
-                {"id": "d1", "content": "Artificial intelligence is a field of computer science.", "source": "wiki"},
-                {"id": "d2", "content": "AI involves machine learning and deep learning techniques.", "source": "book"},
+                {
+                    "id": "d1",
+                    "content": "Artificial intelligence is a field of computer science.",
+                    "source": "wiki",
+                },
+                {
+                    "id": "d2",
+                    "content": "AI involves machine learning and deep learning techniques.",
+                    "source": "book",
+                },
             ],
         )
         assert isinstance(result, dict)
@@ -188,6 +202,7 @@ class TestCrossDocumentReasonerWithoutNumpy:
 # ---------------------------------------------------------------------------
 # 4. core module imports without optional deps
 # ---------------------------------------------------------------------------
+
 
 class TestCoreModuleImports:
     """Core module must be importable regardless of optional dep availability."""
@@ -206,6 +221,7 @@ class TestCoreModuleImports:
             TransactionError,
             MigrationError,
         )
+
         # All six hierarchies are importable
         assert issubclass(ExtractionError, KnowledgeGraphError)
         assert issubclass(QueryError, KnowledgeGraphError)
@@ -239,6 +255,7 @@ class TestCoreModuleImports:
             RelationshipData,
             MigrationFormat,
         )
+
         # Verify basic usage
         node = NodeData(id="1", labels=["Test"], properties={"x": 1})
         graph = GraphData(nodes=[node])
@@ -248,6 +265,7 @@ class TestCoreModuleImports:
 # ---------------------------------------------------------------------------
 # 5. Deprecated legacy shim still works without breaking
 # ---------------------------------------------------------------------------
+
 
 class TestLegacyShim:
     """knowledge_graph_extraction.py shim must still work for backward compat."""
@@ -267,7 +285,9 @@ class TestLegacyShim:
                 import ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction  # noqa: F401
             finally:
                 if old_mod is not None:
-                    sys.modules["ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction"] = old_mod
+                    sys.modules["ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction"] = (
+                        old_mod
+                    )
 
     def test_legacy_shim_exports_entity_class(self):
         """
@@ -276,10 +296,12 @@ class TestLegacyShim:
         THEN: Entity class is available (same as from extraction/)
         """
         import warnings
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             # Re-use cached module if available
             import ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction as shim
+
             assert hasattr(shim, "Entity")
             assert hasattr(shim, "KnowledgeGraph")
             assert hasattr(shim, "KnowledgeGraphExtractor")

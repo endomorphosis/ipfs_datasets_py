@@ -109,7 +109,7 @@ from ipfs_datasets_py.processors.graphrag.phase7_complete_integration import *
 from ipfs_datasets_py.processors.specialized.graphrag import (
     UnifiedGraphRAGProcessor,
     GraphRAGIntegration,
-    WebsiteGraphRAGSystem
+    WebsiteGraphRAGSystem,
 )
 ```
 

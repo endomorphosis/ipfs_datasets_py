@@ -299,6 +299,7 @@ ZKP + IPFS Integration
 **Fix:**
 ```python
 import logging
+
 logger = logging.getLogger(__name__)
 ```
 
@@ -316,8 +317,7 @@ raise ZKPError("Theorem cannot be empty")
 
 # Enhanced
 raise ZKPError(
-    "Theorem cannot be empty. "
-    "Provide a non-empty string representing the theorem to prove."
+    "Theorem cannot be empty. Provide a non-empty string representing the theorem to prove."
 )
 ```
 
@@ -355,6 +355,7 @@ def test_proof_generation_performance():
     proof = prover.generate_proof(...)
     assert time.time() - start < 1.0
 
+
 def test_verification_performance():
     """Verify verification < 10ms"""
     ...
@@ -372,6 +373,7 @@ def test_verification_performance():
 def test_zkp_with_fol_converter():
     """Test ZKP with FOL conversion"""
     ...
+
 
 def test_zkp_with_deontic_logic():
     """Test ZKP with deontic reasoning"""

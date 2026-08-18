@@ -7,12 +7,16 @@ import os
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run ipfs_datasets_py TaskQueue libp2p RPC service")
+    parser = argparse.ArgumentParser(
+        description="Run ipfs_datasets_py TaskQueue libp2p RPC service"
+    )
     parser.add_argument(
         "--queue",
         default=os.environ.get(
             "IPFS_DATASETS_PY_TASK_QUEUE_PATH",
-            os.path.join(os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "task_queue.duckdb"),
+            os.path.join(
+                os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "task_queue.duckdb"
+            ),
         ),
     )
     parser.add_argument(
@@ -20,7 +24,9 @@ def main() -> int:
         type=int,
         default=int(os.environ.get("IPFS_DATASETS_PY_TASK_P2P_LISTEN_PORT", "9710")),
     )
-    parser.add_argument("--no-p2p-dht", dest="p2p_dht", action="store_false", help="Disable libp2p DHT discovery")
+    parser.add_argument(
+        "--no-p2p-dht", dest="p2p_dht", action="store_false", help="Disable libp2p DHT discovery"
+    )
     parser.set_defaults(p2p_dht=None)
     parser.add_argument(
         "--no-p2p-rendezvous",
@@ -35,7 +41,9 @@ def main() -> int:
         default=None,
         help="Rendezvous namespace (default: ipfs-accelerate-task-queue)",
     )
-    parser.add_argument("--no-p2p-autonat", dest="p2p_autonat", action="store_false", help="Disable AutoNAT")
+    parser.add_argument(
+        "--no-p2p-autonat", dest="p2p_autonat", action="store_false", help="Disable AutoNAT"
+    )
     parser.set_defaults(p2p_autonat=None)
 
     args = parser.parse_args()

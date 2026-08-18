@@ -228,7 +228,9 @@ class LegalIRIncrementalNodeRecord:
             if lease_data
             else None,
             metadata=dict(data.get("metadata") or {}),
-            schema_version=str(data.get("schema_version") or LEGAL_IR_INCREMENTAL_COMPILER_SCHEMA_VERSION),
+            schema_version=str(
+                data.get("schema_version") or LEGAL_IR_INCREMENTAL_COMPILER_SCHEMA_VERSION
+            ),
         )
 
 
@@ -313,7 +315,9 @@ class LegalIRIncrementalCompilationSnapshot:
                 for key, value in dict(data.get("external_digests") or {}).items()
             },
             compile_digest=str(data.get("compile_digest") or ""),
-            schema_version=str(data.get("schema_version") or LEGAL_IR_INCREMENTAL_COMPILER_SCHEMA_VERSION),
+            schema_version=str(
+                data.get("schema_version") or LEGAL_IR_INCREMENTAL_COMPILER_SCHEMA_VERSION
+            ),
         )
 
 
@@ -461,7 +465,9 @@ class LegalIRIncrementalCompiler:
         functions = {**self._functions, **dict(pass_functions or {})}
         external_nodes = _external_nodes(initial_state, sources, citations, symbols, temporal)
         external_digests = {node.node_id: node.digest for node in external_nodes}
-        previous_external_digests = dict(previous_snapshot.external_digests) if previous_snapshot else {}
+        previous_external_digests = (
+            dict(previous_snapshot.external_digests) if previous_snapshot else {}
+        )
         changed_external = tuple(
             sorted(
                 node_id
@@ -470,12 +476,16 @@ class LegalIRIncrementalCompiler:
             )
         )
         removed_external = tuple(
-            sorted(node_id for node_id in previous_external_digests if node_id not in external_digests)
+            sorted(
+                node_id for node_id in previous_external_digests if node_id not in external_digests
+            )
         )
         changed_external = tuple(sorted((*changed_external, *removed_external)))
 
         pass_spec_digests = {spec.pass_id: _stable_hash(spec.to_dict()) for spec in self._passes}
-        previous_spec_digests = dict(previous_snapshot.pass_spec_digests) if previous_snapshot else {}
+        previous_spec_digests = (
+            dict(previous_snapshot.pass_spec_digests) if previous_snapshot else {}
+        )
         changed_specs = tuple(
             sorted(
                 pass_id
@@ -577,9 +587,7 @@ class LegalIRIncrementalCompiler:
                         else ""
                     )
                     cached_outputs = (
-                        previous_snapshot.pass_outputs.get(pass_id, {})
-                        if previous_snapshot
-                        else {}
+                        previous_snapshot.pass_outputs.get(pass_id, {}) if previous_snapshot else {}
                     )
                     can_reuse = (
                         previous_snapshot is not None
@@ -603,8 +611,7 @@ class LegalIRIncrementalCompiler:
                         node_id = f"pass:{pass_id}"
                         avoided_nodes.append(node_id)
                         speedup_samples.append(
-                            _node_baseline_seconds(previous_record, spec)
-                            / 0.000001
+                            _node_baseline_seconds(previous_record, spec) / 0.000001
                         )
                         immediate.append(
                             LegalIRIncrementalNodeRecord(
@@ -633,7 +640,11 @@ class LegalIRIncrementalCompiler:
                                 output_digest=previous_output_digest,
                                 duration_seconds=0.0,
                                 resource_requirements=self._requirements_for(spec),
-                                metadata={"reuse_reason": "input_digest_match" if can_reuse_digest else "subgraph_clean"},
+                                metadata={
+                                    "reuse_reason": "input_digest_match"
+                                    if can_reuse_digest
+                                    else "subgraph_clean"
+                                },
                             )
                         )
                         continue
@@ -668,7 +679,9 @@ class LegalIRIncrementalCompiler:
                             )
                         )
 
-                for result in sorted(task_results, key=lambda item: self._pass_sort_key(item.pass_id)):
+                for result in sorted(
+                    task_results, key=lambda item: self._pass_sort_key(item.pass_id)
+                ):
                     spec = self._pass_by_id[result.pass_id]
                     previous_output_digest = (
                         previous_snapshot.pass_output_digests.get(result.pass_id, "")
@@ -741,18 +754,28 @@ class LegalIRIncrementalCompiler:
 
         wall_time = time.perf_counter() - start
         pass_node_records = [
-            record for record in node_records if record.kind == LegalIRIncrementalNodeKind.PASS.value
+            record
+            for record in node_records
+            if record.kind == LegalIRIncrementalNodeKind.PASS.value
         ]
-        total_work_units = sum(_work_units(self._pass_by_id[record.pass_id]) for record in pass_node_records)
+        total_work_units = sum(
+            _work_units(self._pass_by_id[record.pass_id]) for record in pass_node_records
+        )
         avoided_work_units = sum(
-            _work_units(self._pass_by_id[record.pass_id]) for record in pass_node_records if record.avoided
+            _work_units(self._pass_by_id[record.pass_id])
+            for record in pass_node_records
+            if record.avoided
         )
         executed_work_units = sum(
-            _work_units(self._pass_by_id[record.pass_id]) for record in pass_node_records if record.executed
+            _work_units(self._pass_by_id[record.pass_id])
+            for record in pass_node_records
+            if record.executed
         )
         estimated_full = sum(
             _node_baseline_seconds(
-                previous_snapshot.records_by_pass_id.get(record.pass_id) if previous_snapshot else None,
+                previous_snapshot.records_by_pass_id.get(record.pass_id)
+                if previous_snapshot
+                else None,
                 self._pass_by_id[record.pass_id],
             )
             for record in pass_node_records
@@ -842,7 +865,9 @@ class LegalIRIncrementalCompiler:
         previous: LegalIRIncrementalCompilationSnapshot | None,
     ) -> str:
         dependency_output_digests: dict[str, str] = {}
-        for dependency in sorted(self._dependencies.get(spec.pass_id, set()), key=self._pass_sort_key):
+        for dependency in sorted(
+            self._dependencies.get(spec.pass_id, set()), key=self._pass_sort_key
+        ):
             dependency_output_digests[dependency] = current_pass_output_digests.get(
                 dependency,
                 previous.pass_output_digests.get(dependency, "") if previous else "",
@@ -988,7 +1013,9 @@ def _items(value: Mapping[str, Any] | Sequence[Any] | None) -> tuple[tuple[str, 
     if value is None:
         return ()
     if isinstance(value, Mapping):
-        return tuple((str(key), item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0])))
+        return tuple(
+            (str(key), item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        )
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return tuple((str(index), item) for index, item in enumerate(value))
     return (("root", value),)
@@ -1076,8 +1103,7 @@ def _field_belongs_to_kind(path: str, kind: str) -> bool:
         )
     if kind == LegalIRIncrementalNodeKind.SYMBOL.value:
         return any(
-            _path_matches(path, candidate)
-            for candidate in ("symbol", "symbol_table", "symbols")
+            _path_matches(path, candidate) for candidate in ("symbol", "symbol_table", "symbols")
         )
     if kind == LegalIRIncrementalNodeKind.TEMPORAL.value:
         return any(
@@ -1305,11 +1331,14 @@ def _json_ready(value: Any) -> Any:
 
 
 def _format_diagnostics(diagnostics: Sequence[LegalIRPassDiagnostic]) -> str:
-    return "; ".join(
-        f"{diagnostic.code}:{diagnostic.pass_id or '-'}:{diagnostic.field_path or '-'}"
-        for diagnostic in diagnostics
-        if diagnostic.error
-    ) or "LegalIR incremental compiler validation failed"
+    return (
+        "; ".join(
+            f"{diagnostic.code}:{diagnostic.pass_id or '-'}:{diagnostic.field_path or '-'}"
+            for diagnostic in diagnostics
+            if diagnostic.error
+        )
+        or "LegalIR incremental compiler validation failed"
+    )
 
 
 __all__ = [

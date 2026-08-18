@@ -87,7 +87,7 @@ for attempt in range(max_retries):
         break
     except subprocess.TimeoutExpired:
         if attempt < max_retries - 1:
-            time.sleep(2 ** attempt)  # Exponential backoff
+            time.sleep(2**attempt)  # Exponential backoff
 ```
 
 ### 4. Troubleshooting Quick Fixes

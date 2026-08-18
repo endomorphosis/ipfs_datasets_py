@@ -153,13 +153,25 @@ def _coalesce_ranges(
             current_end = candidate_end
             current_records.append(idx)
         else:
-            slices.append(RangeSlice(start=current_start, end=current_end or current_start, record_indexes=current_records))
+            slices.append(
+                RangeSlice(
+                    start=current_start,
+                    end=current_end or current_start,
+                    record_indexes=current_records,
+                )
+            )
             current_start = start
             current_end = end
             current_records = [idx]
 
     if current_start is not None:
-        slices.append(RangeSlice(start=current_start, end=current_end or current_start, record_indexes=current_records))
+        slices.append(
+            RangeSlice(
+                start=current_start,
+                end=current_end or current_start,
+                record_indexes=current_records,
+            )
+        )
 
     return slices
 
@@ -186,11 +198,15 @@ def _download_ranges_for_warc(
             pass
 
     if not allow_download:
-        raise RuntimeError(f"Missing range files for {warc_filename}: {combined_path} / {index_path}")
+        raise RuntimeError(
+            f"Missing range files for {warc_filename}: {combined_path} / {index_path}"
+        )
 
     url = prefix.rstrip("/") + "/" + warc_filename.lstrip("/")
 
-    def _http_get_range(target_url: str, range_start: int, range_end: int, timeout: int) -> tuple[int, bytes]:
+    def _http_get_range(
+        target_url: str, range_start: int, range_end: int, timeout: int
+    ) -> tuple[int, bytes]:
         headers = {
             "Range": f"bytes={int(range_start)}-{int(range_end)}",
             "User-Agent": "municipal-scrape/1.0 (+https://commoncrawl.org)",
@@ -260,7 +276,9 @@ def _extract_http_payload(raw_bytes: bytes) -> bytes:
     return blob
 
 
-def _find_range_entry(entries: Sequence[Dict[str, Any]], offset: int, length: int) -> Optional[Dict[str, Any]]:
+def _find_range_entry(
+    entries: Sequence[Dict[str, Any]], offset: int, length: int
+) -> Optional[Dict[str, Any]]:
     end = offset + length - 1
     for entry in entries:
         if entry["start"] <= offset and entry["end"] >= end:
@@ -346,12 +364,16 @@ def _parse_parquet_map(entries: Optional[Sequence[str]]) -> Dict[str, Path]:
         if not entry:
             continue
         if "=" not in entry:
-            raise ValueError(f"Invalid parquet map entry: {entry!r}. Expected STATE=/path/to/pointers.parquet")
+            raise ValueError(
+                f"Invalid parquet map entry: {entry!r}. Expected STATE=/path/to/pointers.parquet"
+            )
         state_code, path_text = entry.split("=", 1)
         state_code = state_code.strip().upper()
         path_text = path_text.strip()
         if not state_code or not path_text:
-            raise ValueError(f"Invalid parquet map entry: {entry!r}. Expected STATE=/path/to/pointers.parquet")
+            raise ValueError(
+                f"Invalid parquet map entry: {entry!r}. Expected STATE=/path/to/pointers.parquet"
+            )
         mapping[state_code] = Path(path_text)
     return mapping
 
@@ -490,7 +512,9 @@ def run(argv: Optional[Sequence[str]] = None) -> List[Dict[str, Any]]:
             all_manifests.extend(manifests)
 
         run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        manifest_path = manifest_dir / f"warc_batch_manifest_{config.state_code.lower()}_{run_id}.json"
+        manifest_path = (
+            manifest_dir / f"warc_batch_manifest_{config.state_code.lower()}_{run_id}.json"
+        )
         _write_json(manifest_path, all_manifests)
 
         results.append(

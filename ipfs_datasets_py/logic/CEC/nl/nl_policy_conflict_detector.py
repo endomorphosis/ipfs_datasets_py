@@ -26,6 +26,7 @@ Usage::
     for c in conflicts:
         print(c.conflict_type, c.action, c.actors)
 """
+
 from __future__ import annotations
 
 import logging
@@ -147,12 +148,10 @@ class NLPolicyConflictDetector:
             Same as :meth:`detect`.
         """
         import warnings
+
         conflicts = self.detect(clauses)
         for conflict in conflicts:
-            msg = (
-                f"Policy conflict detected [{conflict.conflict_type}]: "
-                f"{conflict.description}"
-            )
+            msg = f"Policy conflict detected [{conflict.conflict_type}]: {conflict.description}"
             warnings.warn(msg, stacklevel=2)
             if audit_log is not None:
                 try:
@@ -211,9 +210,11 @@ class NLPolicyConflictDetector:
             wildcard = self._wildcard
             perm_actors = {self._actor(c) for c in perm_clauses}
             prohib_actors = {self._actor(c) for c in prohib_clauses}
-            has_overlap = bool(perm_actors & prohib_actors) or \
-                          wildcard in perm_actors or \
-                          wildcard in prohib_actors
+            has_overlap = (
+                bool(perm_actors & prohib_actors)
+                or wildcard in perm_actors
+                or wildcard in prohib_actors
+            )
 
             if has_overlap:
                 overlapping = actors if wildcard in actors else (perm_actors & prohib_actors)
@@ -307,223 +308,433 @@ _I18N_KEYWORD_LOADERS: Dict[str, str] = {
 # DO177: Italian deontic keywords (inline — no separate parser module needed).
 _IT_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "può", "puó", "è permesso", "è consentito", "è autorizzato",
-        "ha il diritto di", "è ammesso", "è lecito",
+        "può",
+        "puó",
+        "è permesso",
+        "è consentito",
+        "è autorizzato",
+        "ha il diritto di",
+        "è ammesso",
+        "è lecito",
     ],
     "prohibition": [
-        "non può", "non puó", "è vietato", "è proibito", "non è consentito",
-        "non è permesso", "non è autorizzato", "è illecito",
+        "non può",
+        "non puó",
+        "è vietato",
+        "è proibito",
+        "non è consentito",
+        "non è permesso",
+        "non è autorizzato",
+        "è illecito",
     ],
     "obligation": [
-        "deve", "è obbligato", "è tenuto a", "è necessario", "ha l'obbligo di",
-        "è richiesto", "ha il dovere di",
+        "deve",
+        "è obbligato",
+        "è tenuto a",
+        "è necessario",
+        "ha l'obbligo di",
+        "è richiesto",
+        "ha il dovere di",
     ],
 }
 
 # DC165: English deontic keywords (inline — no separate parser module needed).
 _EN_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "may", "can", "is permitted", "is allowed", "is authorized",
-        "has the right to", "is entitled to",
+        "may",
+        "can",
+        "is permitted",
+        "is allowed",
+        "is authorized",
+        "has the right to",
+        "is entitled to",
     ],
     "prohibition": [
-        "must not", "cannot", "shall not", "is prohibited", "is forbidden",
-        "is not allowed", "is not permitted",
+        "must not",
+        "cannot",
+        "shall not",
+        "is prohibited",
+        "is forbidden",
+        "is not allowed",
+        "is not permitted",
     ],
     "obligation": [
-        "must", "shall", "is required to", "is obligated to", "has to",
+        "must",
+        "shall",
+        "is required to",
+        "is obligated to",
+        "has to",
     ],
 }
 
 # DN176: Dutch deontic keywords (inline — no separate parser module needed).
 _NL_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "mag", "kan", "is toegestaan", "is toegelaten", "heeft het recht om",
-        "is gemachtigd", "is bevoegd",
+        "mag",
+        "kan",
+        "is toegestaan",
+        "is toegelaten",
+        "heeft het recht om",
+        "is gemachtigd",
+        "is bevoegd",
     ],
     "prohibition": [
-        "mag niet", "kan niet", "is verboden", "niet toegestaan",
-        "is niet toegestaan", "is niet toegelaten", "niet gemachtigd",
+        "mag niet",
+        "kan niet",
+        "is verboden",
+        "niet toegestaan",
+        "is niet toegestaan",
+        "is niet toegelaten",
+        "niet gemachtigd",
     ],
     "obligation": [
-        "moet", "dient", "is verplicht", "heeft de plicht om",
-        "is vereist", "heeft de verplichting",
+        "moet",
+        "dient",
+        "is verplicht",
+        "heeft de plicht om",
+        "is vereist",
+        "heeft de verplichting",
     ],
 }
 
 # ED192: Japanese deontic keywords (inline — no external parser needed).
 _JA_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "してもよい", "することができる", "許可される", "認められている",
-        "できる", "してよい", "可能である",
+        "してもよい",
+        "することができる",
+        "許可される",
+        "認められている",
+        "できる",
+        "してよい",
+        "可能である",
     ],
     "prohibition": [
-        "してはならない", "することを禁じる", "禁止されている", "禁止する",
-        "してはいけない", "禁止", "不可",
+        "してはならない",
+        "することを禁じる",
+        "禁止されている",
+        "禁止する",
+        "してはいけない",
+        "禁止",
+        "不可",
     ],
     "obligation": [
-        "しなければならない", "することが必要", "する義務がある", "する必要がある",
-        "しなければ", "義務がある", "必須である",
+        "しなければならない",
+        "することが必要",
+        "する義務がある",
+        "する必要がある",
+        "しなければ",
+        "義務がある",
+        "必須である",
     ],
 }
 
 # FK225: Korean deontic keywords (inline — always available).
 _KO_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "할 수 있다", "허용된다", "허가된다", "권한이 있다",
-        "가능하다", "인정된다", "할 권리가 있다",
+        "할 수 있다",
+        "허용된다",
+        "허가된다",
+        "권한이 있다",
+        "가능하다",
+        "인정된다",
+        "할 권리가 있다",
     ],
     "prohibition": [
-        "할 수 없다", "금지된다", "허용되지 않는다", "해서는 안 된다",
-        "금지되어 있다", "불허된다", "하면 안 된다",
+        "할 수 없다",
+        "금지된다",
+        "허용되지 않는다",
+        "해서는 안 된다",
+        "금지되어 있다",
+        "불허된다",
+        "하면 안 된다",
     ],
     "obligation": [
-        "해야 한다", "필수적이다", "의무가 있다", "해야만 한다",
-        "필요하다", "하여야 한다", "의무적이다",
+        "해야 한다",
+        "필수적이다",
+        "의무가 있다",
+        "해야만 한다",
+        "필요하다",
+        "하여야 한다",
+        "의무적이다",
     ],
 }
 
 # FL226: Arabic deontic keywords (inline — always available).
 _AR_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "يجوز", "مسموح", "مسموح به", "مخوّل", "له الحق في",
-        "يمكن", "مصرح به",
+        "يجوز",
+        "مسموح",
+        "مسموح به",
+        "مخوّل",
+        "له الحق في",
+        "يمكن",
+        "مصرح به",
     ],
     "prohibition": [
-        "لا يجوز", "محظور", "ممنوع", "غير مسموح", "لا يُسمح",
-        "محظور عليه", "غير مصرح به",
+        "لا يجوز",
+        "محظور",
+        "ممنوع",
+        "غير مسموح",
+        "لا يُسمح",
+        "محظور عليه",
+        "غير مصرح به",
     ],
     "obligation": [
-        "يجب", "ينبغي", "يتعين", "إلزامي", "واجب",
-        "ملزم بـ", "يتوجب",
+        "يجب",
+        "ينبغي",
+        "يتعين",
+        "إلزامي",
+        "واجب",
+        "ملزم بـ",
+        "يتوجب",
     ],
 }
 
 # FU235: Swedish deontic keywords (inline — always available).
 _SV_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "får", "tillåts", "har rätt att", "är tillåtet", "kan",
-        "tillåten", "har tillstånd",
+        "får",
+        "tillåts",
+        "har rätt att",
+        "är tillåtet",
+        "kan",
+        "tillåten",
+        "har tillstånd",
     ],
     "prohibition": [
-        "får inte", "är förbjudet", "inte tillåtet", "ej tillåtet",
-        "förbjuden", "inte får", "är otillåtet",
+        "får inte",
+        "är förbjudet",
+        "inte tillåtet",
+        "ej tillåtet",
+        "förbjuden",
+        "inte får",
+        "är otillåtet",
     ],
     "obligation": [
-        "måste", "ska", "är skyldig att", "är tvungen", "är pliktig",
-        "bör", "är obligatorisk",
+        "måste",
+        "ska",
+        "är skyldig att",
+        "är tvungen",
+        "är pliktig",
+        "bör",
+        "är obligatorisk",
     ],
 }
 
 # FV236: Russian deontic keywords (inline — always available).
 _RU_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "можно", "разрешено", "имеет право", "допускается", "вправе",
-        "разрешается", "позволено",
+        "можно",
+        "разрешено",
+        "имеет право",
+        "допускается",
+        "вправе",
+        "разрешается",
+        "позволено",
     ],
     "prohibition": [
-        "нельзя", "запрещено", "не разрешено", "не допускается",
-        "запрещается", "не вправе", "под запретом",
+        "нельзя",
+        "запрещено",
+        "не разрешено",
+        "не допускается",
+        "запрещается",
+        "не вправе",
+        "под запретом",
     ],
     "obligation": [
-        "должен", "обязан", "необходимо", "следует", "требуется",
-        "обязательно", "надлежит",
+        "должен",
+        "обязан",
+        "необходимо",
+        "следует",
+        "требуется",
+        "обязательно",
+        "надлежит",
     ],
 }
 
 # GA241: Greek deontic keywords (inline — always available).
 _EL_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "μπορεί", "επιτρέπεται", "έχει δικαίωμα", "δικαιούται", "δύναται",
-        "αποτελεί δικαίωμα", "έχει εξουσία",
+        "μπορεί",
+        "επιτρέπεται",
+        "έχει δικαίωμα",
+        "δικαιούται",
+        "δύναται",
+        "αποτελεί δικαίωμα",
+        "έχει εξουσία",
     ],
     "prohibition": [
-        "απαγορεύεται", "δεν επιτρέπεται", "δεν μπορεί", "δεν δικαιούται",
-        "απαγορεύεται ρητά", "εμποδίζεται", "δεν δύναται",
+        "απαγορεύεται",
+        "δεν επιτρέπεται",
+        "δεν μπορεί",
+        "δεν δικαιούται",
+        "απαγορεύεται ρητά",
+        "εμποδίζεται",
+        "δεν δύναται",
     ],
     "obligation": [
-        "πρέπει", "οφείλει", "υποχρεούται", "απαιτείται", "είναι υποχρεωμένος",
-        "χρεωστεί", "έχει υποχρέωση",
+        "πρέπει",
+        "οφείλει",
+        "υποχρεούται",
+        "απαιτείται",
+        "είναι υποχρεωμένος",
+        "χρεωστεί",
+        "έχει υποχρέωση",
     ],
 }
 
 # GB242: Turkish deontic keywords (inline — always available).
 _TR_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "yapabilir", "izinlidir", "hakkı vardır", "yetkilidir", "müsaade edilir",
-        "caizdir", "olanaklıdır",
+        "yapabilir",
+        "izinlidir",
+        "hakkı vardır",
+        "yetkilidir",
+        "müsaade edilir",
+        "caizdir",
+        "olanaklıdır",
     ],
     "prohibition": [
-        "yapamaz", "yasaktır", "yasaklanmıştır", "yasak", "izin verilmez",
-        "men edilir", "caiz değildir",
+        "yapamaz",
+        "yasaktır",
+        "yasaklanmıştır",
+        "yasak",
+        "izin verilmez",
+        "men edilir",
+        "caiz değildir",
     ],
     "obligation": [
-        "zorundadır", "gereklidir", "mecburidir", "yükümlüdür", "yapması gerekir",
-        "şarttır", "zorunludur",
+        "zorundadır",
+        "gereklidir",
+        "mecburidir",
+        "yükümlüdür",
+        "yapması gerekir",
+        "şarttır",
+        "zorunludur",
     ],
 }
 
 # GC243: Hindi deontic keywords (inline — always available).
 _HI_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "कर सकता है", "अनुमति है", "अधिकार है", "सकता है", "स्वतंत्र है",
-        "योग्य है", "जायज है",
+        "कर सकता है",
+        "अनुमति है",
+        "अधिकार है",
+        "सकता है",
+        "स्वतंत्र है",
+        "योग्य है",
+        "जायज है",
     ],
     "prohibition": [
-        "नहीं कर सकता", "प्रतिबंधित है", "निषिद्ध है", "मना है", "वर्जित है",
-        "नहीं है अधिकार", "बंधित है",
+        "नहीं कर सकता",
+        "प्रतिबंधित है",
+        "निषिद्ध है",
+        "मना है",
+        "वर्जित है",
+        "नहीं है अधिकार",
+        "बंधित है",
     ],
     "obligation": [
-        "करना होगा", "आवश्यक है", "अनिवार्य है", "करना चाहिए", "बाध्य है",
-        "जरूरी है", "करना ज़रूरी है",
+        "करना होगा",
+        "आवश्यक है",
+        "अनिवार्य है",
+        "करना चाहिए",
+        "बाध्य है",
+        "जरूरी है",
+        "करना ज़रूरी है",
     ],
 }
 
 # GL252: Polish deontic keywords (inline — always available).
 _PL_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "może", "wolno", "jest dozwolone", "ma prawo", "jest uprawniony",
-        "jest dopuszczalne", "jest możliwe",
+        "może",
+        "wolno",
+        "jest dozwolone",
+        "ma prawo",
+        "jest uprawniony",
+        "jest dopuszczalne",
+        "jest możliwe",
     ],
     "prohibition": [
-        "nie może", "jest zabronione", "jest zakazane", "nie wolno", "jest niedozwolone",
-        "jest wykluczone", "jest niedopuszczalne",
+        "nie może",
+        "jest zabronione",
+        "jest zakazane",
+        "nie wolno",
+        "jest niedozwolone",
+        "jest wykluczone",
+        "jest niedopuszczalne",
     ],
     "obligation": [
-        "musi", "jest zobowiązany", "jest wymagane", "należy", "powinien",
-        "jest obowiązkowe", "trzeba",
+        "musi",
+        "jest zobowiązany",
+        "jest wymagane",
+        "należy",
+        "powinien",
+        "jest obowiązkowe",
+        "trzeba",
     ],
 }
 
 # GM253: Vietnamese deontic keywords (inline — always available).
 _VI_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "có thể", "được phép", "có quyền", "được", "có thể làm",
-        "được phép làm", "có đặc quyền",
+        "có thể",
+        "được phép",
+        "có quyền",
+        "được",
+        "có thể làm",
+        "được phép làm",
+        "có đặc quyền",
     ],
     "prohibition": [
-        "không được", "bị cấm", "không được phép", "cấm", "không được làm",
-        "bị nghiêm cấm", "không cho phép",
+        "không được",
+        "bị cấm",
+        "không được phép",
+        "cấm",
+        "không được làm",
+        "bị nghiêm cấm",
+        "không cho phép",
     ],
     "obligation": [
-        "phải", "cần phải", "có nghĩa vụ", "bắt buộc", "cần",
-        "có trách nhiệm", "phải làm",
+        "phải",
+        "cần phải",
+        "có nghĩa vụ",
+        "bắt buộc",
+        "cần",
+        "có trách nhiệm",
+        "phải làm",
     ],
 }
 
 # EM201: Chinese (Simplified) deontic keywords (inline — always available).
 _ZH_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "可以", "允许", "有权", "可", "有资格",
-        "被允许", "被授权",
+        "可以",
+        "允许",
+        "有权",
+        "可",
+        "有资格",
+        "被允许",
+        "被授权",
     ],
     "prohibition": [
-        "不得", "禁止", "不允许", "不可以", "不可",
-        "被禁止", "严禁",
+        "不得",
+        "禁止",
+        "不允许",
+        "不可以",
+        "不可",
+        "被禁止",
+        "严禁",
     ],
     "obligation": [
-        "必须", "应当", "需要", "有义务", "应该",
-        "须", "有责任",
+        "必须",
+        "应当",
+        "需要",
+        "有义务",
+        "应该",
+        "须",
+        "有责任",
     ],
 }
 
@@ -531,32 +742,62 @@ _ZH_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
 # GV262: Thai deontic keywords (inline — always available).
 _TH_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "สามารถ", "ได้รับอนุญาต", "มีสิทธิ์", "อนุญาต", "ได้รับอนุมัติ",
-        "ได้รับสิทธิ์", "มีสิทธิ",
+        "สามารถ",
+        "ได้รับอนุญาต",
+        "มีสิทธิ์",
+        "อนุญาต",
+        "ได้รับอนุมัติ",
+        "ได้รับสิทธิ์",
+        "มีสิทธิ",
     ],
     "prohibition": [
-        "ห้าม", "ไม่อนุญาต", "ไม่ได้รับอนุญาต", "ต้องห้าม", "ไม่สามารถ",
-        "ห้ามกระทำ", "ไม่ได้รับอนุมัติ",
+        "ห้าม",
+        "ไม่อนุญาต",
+        "ไม่ได้รับอนุญาต",
+        "ต้องห้าม",
+        "ไม่สามารถ",
+        "ห้ามกระทำ",
+        "ไม่ได้รับอนุมัติ",
     ],
     "obligation": [
-        "ต้อง", "จำเป็นต้อง", "มีหน้าที่", "มีภาระผูกพัน", "บังคับ",
-        "ต้องปฏิบัติ", "มีพันธะ",
+        "ต้อง",
+        "จำเป็นต้อง",
+        "มีหน้าที่",
+        "มีภาระผูกพัน",
+        "บังคับ",
+        "ต้องปฏิบัติ",
+        "มีพันธะ",
     ],
 }
 
 # GW263: Indonesian deontic keywords (inline — always available).
 _ID_DEONTIC_KEYWORDS: Dict[str, List[str]] = {
     "permission": [
-        "boleh", "diizinkan", "diperbolehkan", "berhak", "dapat",
-        "diperkenankan", "mendapat izin",
+        "boleh",
+        "diizinkan",
+        "diperbolehkan",
+        "berhak",
+        "dapat",
+        "diperkenankan",
+        "mendapat izin",
     ],
     "prohibition": [
-        "dilarang", "tidak boleh", "tidak diizinkan", "tidak diperbolehkan", "terlarang",
-        "tidak diperkenankan", "tidak dapat",
+        "dilarang",
+        "tidak boleh",
+        "tidak diizinkan",
+        "tidak diperbolehkan",
+        "terlarang",
+        "tidak diperkenankan",
+        "tidak dapat",
     ],
     "obligation": [
-        "harus", "wajib", "diwajibkan", "berkewajiban", "perlu",
-        "harus melakukan", "diwajibkan untuk",
+        "harus",
+        "wajib",
+        "diwajibkan",
+        "berkewajiban",
+        "perlu",
+        "harus melakukan",
+        "diwajibkan untuk",
     ],
 }
 
@@ -607,6 +848,7 @@ def _load_i18n_keywords(language: str) -> Dict[str, List[str]]:
     module_path, func_name = loader_path.split(":")
     try:
         import importlib
+
         mod = importlib.import_module(module_path)
         fn = getattr(mod, func_name)
         return fn()
@@ -677,13 +919,9 @@ def detect_i18n_conflicts(
     keywords = _load_i18n_keywords(language)
     text_lower = text.lower()
 
-    perm_hits: List[str] = [
-        kw for kw in keywords.get("permission", [])
-        if kw.lower() in text_lower
-    ]
+    perm_hits: List[str] = [kw for kw in keywords.get("permission", []) if kw.lower() in text_lower]
     prohib_hits: List[str] = [
-        kw for kw in keywords.get("prohibition", [])
-        if kw.lower() in text_lower
+        kw for kw in keywords.get("prohibition", []) if kw.lower() in text_lower
     ]
 
     return I18NConflictResult(
@@ -699,6 +937,7 @@ def detect_i18n_conflicts(
 # ---------------------------------------------------------------------------
 # CJ146: detect_i18n_clauses — full FR/ES/DE clause compilation + conflict detection
 # ---------------------------------------------------------------------------
+
 
 def detect_i18n_clauses(
     text: str,
@@ -744,6 +983,7 @@ def detect_i18n_clauses(
 
     try:
         import importlib
+
         parser_mod = importlib.import_module(module_path)
         parser_cls = getattr(parser_mod, class_name)
         parser = parser_cls()
@@ -753,7 +993,9 @@ def detect_i18n_clauses(
 
     # Parse text into DeonticFormulas, then convert to PolicyClauses
     try:
-        sentences = [s.strip() for s in text.replace(";", ".").replace("!", ".").split(".") if s.strip()]
+        sentences = [
+            s.strip() for s in text.replace(";", ".").replace("!", ".").split(".") if s.strip()
+        ]
         clauses: List[Any] = []
         for sentence in sentences:
             try:

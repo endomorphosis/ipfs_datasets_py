@@ -1,4 +1,5 @@
 """WS12-07: Tests for the Release Evidence Pack v2 manifest builder."""
+
 from __future__ import annotations
 
 import copy
@@ -48,9 +49,7 @@ class TestBuildEvidenceManifest:
 
     def test_all_required_artifacts_present(self):
         m = self._manifest()
-        assert m["all_present"] is True, (
-            f"Missing artifacts: {m['missing_artifacts']}"
-        )
+        assert m["all_present"] is True, f"Missing artifacts: {m['missing_artifacts']}"
 
     def test_missing_artifacts_empty_when_all_present(self):
         m = self._manifest()

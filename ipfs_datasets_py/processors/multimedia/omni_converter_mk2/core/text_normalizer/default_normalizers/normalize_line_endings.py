@@ -1,9 +1,9 @@
 def normalize_line_endings(text: str) -> str:
     """Normalize line endings in text.
-    
+
     Args:
         text: The text to normalize.
-        
+
     Returns:
         The normalized text.
     """

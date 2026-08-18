@@ -8,7 +8,15 @@ import time
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Optional
 
-from .engine import CommandResult, Proposal, Task, append_jsonl, atomic_write_json, read_text, utc_now
+from .engine import (
+    CommandResult,
+    Proposal,
+    Task,
+    append_jsonl,
+    atomic_write_json,
+    read_text,
+    utc_now,
+)
 from .status import (
     ActiveStatusSnapshot,
     advance_active_status_snapshot,
@@ -96,7 +104,9 @@ class TodoDaemonRunner:
         self.write_status("selecting_task", target_task="")
         selected = self.hooks.select_task(tasks, self.config)
         if selected is None:
-            proposal = Proposal(summary=self.hooks.no_eligible_summary, failure_kind="no_eligible_tasks")
+            proposal = Proposal(
+                summary=self.hooks.no_eligible_summary, failure_kind="no_eligible_tasks"
+            )
             proposal.dry_run = not self.config.apply
             self.write_status("no_eligible_tasks", target_task="")
             self.write_progress([proposal])
@@ -159,9 +169,17 @@ class TodoDaemonRunner:
         if self.config.apply:
             if proposal.valid:
                 board = self.hooks.replace_task_mark(board, selected, "x")
-            elif selected.status in {"needed", "in-progress"} and not self.hooks.is_retryable_failure(proposal):
+            elif selected.status in {
+                "needed",
+                "in-progress",
+            } and not self.hooks.is_retryable_failure(proposal):
                 prior_failures = self.hooks.failure_count_for_block(self.config, selected.label)
-                mark = "!" if prior_failures + 1 >= self.hooks.failure_block_threshold(proposal, self.config) else " "
+                mark = (
+                    "!"
+                    if prior_failures + 1
+                    >= self.hooks.failure_block_threshold(proposal, self.config)
+                    else " "
+                )
                 board = self.hooks.replace_task_mark(board, selected, mark)
             elif selected.status in {"needed", "in-progress"}:
                 board = self.hooks.replace_task_mark(board, selected, " ")
@@ -177,7 +195,10 @@ class TodoDaemonRunner:
         )
         board_path.write_text(board, encoding="utf-8")
         self.write_progress([proposal])
-        append_jsonl(self.config.resolve(self.config.result_log), {"created_at": utc_now(), "proposal": proposal.to_dict()})
+        append_jsonl(
+            self.config.resolve(self.config.result_log),
+            {"created_at": utc_now(), "proposal": proposal.to_dict()},
+        )
         self.write_status("cycle_completed", valid=proposal.valid, artifact=proposal.to_dict())
         return proposal
 
@@ -191,7 +212,9 @@ class TodoDaemonRunner:
             },
         )
 
-    def record_cycle_exception(self, exc: BaseException, *, consecutive_exceptions: int) -> Proposal:
+    def record_cycle_exception(
+        self, exc: BaseException, *, consecutive_exceptions: int
+    ) -> Proposal:
         proposal = Proposal(
             summary=self.hooks.exception_summary,
             impact=self.hooks.exception_impact,

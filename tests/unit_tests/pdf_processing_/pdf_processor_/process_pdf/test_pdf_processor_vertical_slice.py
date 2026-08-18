@@ -1,4 +1,3 @@
-
 import logging
 import inspect
 import os
@@ -13,33 +12,28 @@ pytest.importorskip("reportlab")
 
 from ipfs_datasets_py.pdf_processing import (
     PDFProcessor,
-    
     # OCR engines
     MultiEngineOCR,
-    SuryaOCR, 
+    SuryaOCR,
     TesseractOCR,
     EasyOCR,
-    
     # LLM optimization
     LLMOptimizer,
     LLMDocument,
     LLMChunk,
-    
     # GraphRAG integration
     GraphRAGIntegrator,
     KnowledgeGraph,
     Entity,
     Relationship,
-    
     # Query engine
     QueryEngine,
     QueryResult,
     QueryResponse,
-    
     # Batch processing
     BatchProcessor,
     ProcessingJob,
-    BatchStatus
+    BatchStatus,
 )
 
 from ipfs_datasets_py.audit import AuditLogger
@@ -47,10 +41,7 @@ from ipfs_datasets_py.monitoring import MonitoringSystem
 from ipfs_datasets_py.ipld import IPLDStorage
 
 
-from .conftest import (
-    get_valid_metadata_keys, 
-    get_valid_metadata_keys_values
-)
+from .conftest import get_valid_metadata_keys, get_valid_metadata_keys_values
 
 
 import reportlab
@@ -58,19 +49,18 @@ import PIL
 from reportlab.pdfgen import canvas
 
 
-
 import pytest
 from pathlib import Path
 from reportlab.pdfgen import canvas
-
-
 
 
 class TestPdfProcessorVerticalSlice:
     """Test an end-to-end PDF conversion."""
 
     @pytest.mark.asyncio
-    async def test_when_process_pdf_called_then_output_is_dict(self, default_pdf_processor, valid_pdf_document):
+    async def test_when_process_pdf_called_then_output_is_dict(
+        self, default_pdf_processor, valid_pdf_document
+    ):
         """
         GIVEN a default PDFProcessor instance
         WHEN the process_pdf method is called with a valid PDF document
@@ -79,31 +69,33 @@ class TestPdfProcessorVerticalSlice:
         """
         results = await default_pdf_processor.process_pdf(valid_pdf_document)
 
-        assert isinstance(results, dict), \
+        assert isinstance(results, dict), (
             "Expected the result to be a dictionary, got {type(results).__name__} instead."
+        )
 
     @pytest.mark.parametrize(
         "key",
         [
             "status",
-            "document_id", 
+            "document_id",
             "ipld_cid",
             "entities_count",
-            "relationships_count", 
+            "relationships_count",
             "cross_doc_relations",
-            "processing_metadata"
-        ]
+            "processing_metadata",
+        ],
     )
     @pytest.mark.asyncio
     async def test_when_process_pdf_called_then_expected_keys_are_present(
-        self, default_pdf_processor, valid_pdf_document, key):
+        self, default_pdf_processor, valid_pdf_document, key
+    ):
         """
         GIVEN a default PDFProcessor instance
         WHEN the process_pdf method is called with a valid PDF document
         EXPECT all expected keys to be present in the results dictionary
         """
         results = await default_pdf_processor.process_pdf(valid_pdf_document)
-        
+
         assert key in results, f"Expected key '{key}' not present in output dictionary."
 
     @pytest.mark.parametrize(
@@ -115,12 +107,13 @@ class TestPdfProcessorVerticalSlice:
             ("entities_count", int),
             ("relationships_count", int),
             ("cross_doc_relations", int),
-            ("processing_metadata", dict)
-        ]
+            ("processing_metadata", dict),
+        ],
     )
     @pytest.mark.asyncio
     async def test_when_process_pdf_called_then_all_values_are_expected_type(
-            self, default_pdf_processor: PDFProcessor, valid_pdf_document, key, expected_type):
+        self, default_pdf_processor: PDFProcessor, valid_pdf_document, key, expected_type
+    ):
         """
         GIVEN a default PDFProcessor instance
         WHEN the process_pdf method is called with a valid PDF document
@@ -131,17 +124,15 @@ class TestPdfProcessorVerticalSlice:
 
         value = results[key]
 
-        assert isinstance(value, expected_type), \
-            f"Expected value for key '{key}' to be type {expected_type.__name__}, " \
+        assert isinstance(value, expected_type), (
+            f"Expected value for key '{key}' to be type {expected_type.__name__}, "
             f"got {type(value).__name__} instead."
+        )
 
-
-    @pytest.mark.parametrize(
-        "key_to_string_value", ["status", "document_id", "ipld_cid"]
-    )
+    @pytest.mark.parametrize("key_to_string_value", ["status", "document_id", "ipld_cid"])
     @pytest.mark.asyncio
     async def test_when_process_pdf_called_then_all_string_values_are_not_empty(
-            self, default_pdf_processor, valid_pdf_document, key_to_string_value
+        self, default_pdf_processor, valid_pdf_document, key_to_string_value
     ):
         """
         GIVEN a default PDFProcessor instance
@@ -152,8 +143,7 @@ class TestPdfProcessorVerticalSlice:
 
         string = results[key_to_string_value].strip()
 
-        assert string != "", \
-        f"Expected '{key_to_string_value}' to be a non-empty string."
+        assert string != "", f"Expected '{key_to_string_value}' to be a non-empty string."
 
     @pytest.mark.asyncio
     async def test_when_process_pdf_called_with_valid_pdf_then_status_is_success(
@@ -168,20 +158,17 @@ class TestPdfProcessorVerticalSlice:
         results = await default_pdf_processor.process_pdf(valid_pdf_document)
 
         status = results["status"]
-        assert status == expected_status_success, \
+        assert status == expected_status_success, (
             f"Expected status to be 'success', got {status} instead."
-
+        )
 
     @pytest.mark.parametrize(
         "key_to_int_value", ["entities_count", "relationships_count", "cross_doc_relations"]
     )
     @pytest.mark.asyncio
     async def test_when_process_pdf_called_then_all_int_values_are_non_negative(
-            self, 
-            default_pdf_processor: PDFProcessor, 
-            valid_pdf_document, 
-            key_to_int_value
-        ):
+        self, default_pdf_processor: PDFProcessor, valid_pdf_document, key_to_int_value
+    ):
         """
         GIVEN a default PDFProcessor instance
         WHEN the process_pdf method is called with a valid PDF document
@@ -199,14 +186,17 @@ class TestPdfProcessorVerticalSliceProcessingMetadata:
     """Test to see if the processing_metadata dictionary possess the following attributes:
     - Correct keys
     - Correct value types
-    - Sensible values 
+    - Sensible values
     """
+
     @pytest.mark.parametrize(
-        "metadata_key", ["pipeline_version", "processing_time", "quality_scores", "stages_completed"]
+        "metadata_key",
+        ["pipeline_version", "processing_time", "quality_scores", "stages_completed"],
     )
     @pytest.mark.asyncio
     async def test_when_process_pdf_called_then_processing_metadata_has_expected_keys(
-            self, default_pdf_processor, valid_pdf_document, metadata_key):
+        self, default_pdf_processor, valid_pdf_document, metadata_key
+    ):
         """
         GIVEN a default PDFProcessor instance
         WHEN the process_pdf method is called with a valid PDF document
@@ -214,12 +204,12 @@ class TestPdfProcessorVerticalSliceProcessingMetadata:
         """
         results = await default_pdf_processor.process_pdf(valid_pdf_document)
         print(results)
-        
-        processing_metadata = results["processing_metadata"]
-        
-        assert metadata_key in processing_metadata, \
-            f"Expected key '{metadata_key}' not present in processing_metadata dictionary."
 
+        processing_metadata = results["processing_metadata"]
+
+        assert metadata_key in processing_metadata, (
+            f"Expected key '{metadata_key}' not present in processing_metadata dictionary."
+        )
 
     @pytest.mark.parametrize(
         "metadata_key,expected_type",
@@ -227,12 +217,13 @@ class TestPdfProcessorVerticalSliceProcessingMetadata:
             ("pipeline_version", str),
             ("processing_time", float),
             ("quality_scores", dict),
-            ("stages_completed", list)
-        ]
+            ("stages_completed", list),
+        ],
     )
     @pytest.mark.asyncio
     async def test_when_process_pdf_called_then_processing_metadata_values_have_expected_types(
-            self, default_pdf_processor, valid_pdf_document, metadata_key, expected_type):
+        self, default_pdf_processor, valid_pdf_document, metadata_key, expected_type
+    ):
         """
         GIVEN a default PDFProcessor instance
         WHEN the process_pdf method is called with a valid PDF document
@@ -242,14 +233,15 @@ class TestPdfProcessorVerticalSliceProcessingMetadata:
 
         value = results["processing_metadata"][metadata_key]
 
-        assert isinstance(value, expected_type), \
-            f"Expected value for key '{metadata_key}' to be type {expected_type.__name__}, " \
+        assert isinstance(value, expected_type), (
+            f"Expected value for key '{metadata_key}' to be type {expected_type.__name__}, "
             f"got {type(value).__name__} instead."
-
+        )
 
     @pytest.mark.asyncio
     async def test_when_process_pdf_called_then_processing_metadata_key_pipeline_version_is_not_empty(
-            self, default_pdf_processor, valid_pdf_document):
+        self, default_pdf_processor, valid_pdf_document
+    ):
         """
         GIVEN a default PDFProcessor instance
         WHEN the process_pdf method is called with a valid PDF document
@@ -262,14 +254,11 @@ class TestPdfProcessorVerticalSliceProcessingMetadata:
 
         assert value != "", "Expected 'pipeline_version' to be a non-empty string."
 
-
-    @pytest.mark.parametrize(
-        "key_to_numeric_value",
-        ["processing_time"]
-    )
+    @pytest.mark.parametrize("key_to_numeric_value", ["processing_time"])
     @pytest.mark.asyncio
     async def test_when_process_pdf_called_then_processing_metadata_numeric_values_are_positive(
-            self, default_pdf_processor, valid_pdf_document, key_to_numeric_value):
+        self, default_pdf_processor, valid_pdf_document, key_to_numeric_value
+    ):
         """
         GIVEN a default PDFProcessor instance
         WHEN the process_pdf method is called with a valid PDF document
@@ -282,10 +271,7 @@ class TestPdfProcessorVerticalSliceProcessingMetadata:
         assert value > 0, f"Expected 'processing_time' to be positive, got {value} instead."
 
 
-
-
 class TestPdfProcessorInit:
-
     @pytest.mark.parametrize(
         "kwargs",
         [
@@ -293,55 +279,57 @@ class TestPdfProcessorInit:
             {"enable_monitoring": True},
             {"enable_audit": True},
             {"enable_audit": False},
-        ]
+        ],
     )
-    def test_when_init_called_with_simple_parameters_then_return_is_pdf_processor_instance(self, kwargs):
+    def test_when_init_called_with_simple_parameters_then_return_is_pdf_processor_instance(
+        self, kwargs
+    ):
         """Test PDFProcessor initialization with simple parameter combinations."""
         processor = PDFProcessor(**kwargs)
-        assert isinstance(processor, PDFProcessor), \
+        assert isinstance(processor, PDFProcessor), (
             f"Expected instance of PDFProcessor, got {type(processor).__name__} instead."
+        )
 
-    def test_when_init_called_with_default_parameters_then_return_is_pdf_processor_instance(
-        self
-    ):
+    def test_when_init_called_with_default_parameters_then_return_is_pdf_processor_instance(self):
         """Test PDFProcessor initialization with default parameters."""
         processor = PDFProcessor()
-        assert isinstance(processor, PDFProcessor), \
+        assert isinstance(processor, PDFProcessor), (
             f"Expected instance of PDFProcessor, got {type(processor).__name__} instead."
+        )
 
     def test_when_init_called_with_ipld_storage_then_return_is_pdf_processor_instance(
         self, mock_ipld_storage
     ):
         """Test PDFProcessor initialization with IPLD storage."""
         processor = PDFProcessor(storage=mock_ipld_storage)
-        assert isinstance(processor, PDFProcessor), \
+        assert isinstance(processor, PDFProcessor), (
             f"Expected instance of PDFProcessor when called with IPLD storage argument, got {type(processor).__name__} instead."
+        )
 
     def test_when_init_called_with_custom_logger_then_return_is_pdf_processor_instance(
         self, mock_logger
     ):
         """Test PDFProcessor initialization with custom logger."""
         processor = PDFProcessor(logger=mock_logger)
-        assert isinstance(processor, PDFProcessor), \
+        assert isinstance(processor, PDFProcessor), (
             f"Expected instance of PDFProcessor when called with custom logger, got {type(processor).__name__} instead."
-
+        )
 
 
 class TestPdfProcessorHasRightPublicAttributes:
-
     @pytest.mark.parametrize(
         "attribute",
         [
             "storage",
-            "audit_logger", 
+            "audit_logger",
             "monitoring",
             "query_engine",
             "pipeline_version",
             "logger",
             "integrator",
             "ocr_engine",
-            "optimizer"
-        ]
+            "optimizer",
+        ],
     )
     def test_pdf_processor_attribute_existence(self, default_pdf_processor, attribute):
         """
@@ -349,20 +337,21 @@ class TestPdfProcessorHasRightPublicAttributes:
         WHEN the instance is checked for the existence of a public attribute
         THEN expect the instance to possess that attribute.
         """
-        assert hasattr(default_pdf_processor, attribute), \
+        assert hasattr(default_pdf_processor, attribute), (
             f"PDFProcessor instance did not have expected attribute '{attribute}'."
+        )
 
     @pytest.mark.parametrize(
         "attribute,expected_type",
         [
             ("storage", IPLDStorage),
-            ("audit_logger", AuditLogger), 
+            ("audit_logger", AuditLogger),
             ("pipeline_version", str),
             ("logger", logging.Logger),
             ("integrator", GraphRAGIntegrator),
             ("ocr_engine", MultiEngineOCR),
-            ("optimizer", LLMOptimizer)
-        ]
+            ("optimizer", LLMOptimizer),
+        ],
     )
     def test_pdf_processor_attribute_type(self, default_pdf_processor, attribute, expected_type):
         """
@@ -371,10 +360,10 @@ class TestPdfProcessorHasRightPublicAttributes:
         THEN expect the attribute to be of the correct type.
         """
         attr = getattr(default_pdf_processor, attribute)
-        assert isinstance(attr, expected_type), \
-            f"Expected attribute '{attribute}' to be of type {expected_type.__name__}, " \
+        assert isinstance(attr, expected_type), (
+            f"Expected attribute '{attribute}' to be of type {expected_type.__name__}, "
             f"got {type(attr).__name__} instead."
-
+        )
 
     # def test_pdf_processor_monitor_monitor_attribute_type_is_monitoring_system_when_monitoring_is_enable(
     #     self, pdf_processor_enable_monitoring_is_true):
@@ -388,37 +377,42 @@ class TestPdfProcessorHasRightPublicAttributes:
     #         f"Expected attribute 'monitoring' to be of type MonitoringSystem, " \
     #         f"got {type(attr).__name__} instead."
 
-
     @pytest.mark.parametrize(
         "attribute",
-        ["monitoring","query_engine",]
+        [
+            "monitoring",
+            "query_engine",
+        ],
     )
-    def test_pdf_processor_attribute_type_is_none(
-        self, default_pdf_processor, attribute):
+    def test_pdf_processor_attribute_type_is_none(self, default_pdf_processor, attribute):
         """
         GIVEN a PDFProcessor instance
         WHEN the instance is checked for the type of attributes that should be NoneType
         THEN expect the attribute to be NoneType.
         """
         attr = getattr(default_pdf_processor, attribute)
-        assert attr is None, \
-            f"Expected attribute 'monitoring' to be of type MonitoringSystem, " \
+        assert attr is None, (
+            f"Expected attribute 'monitoring' to be of type MonitoringSystem, "
             f"got {type(attr).__name__} instead."
+        )
 
 
 @pytest.mark.parametrize(
-    "method", ["process_pdf",]
+    "method",
+    [
+        "process_pdf",
+    ],
 )
 class TestPdfProcessorHasRightPublicMethods:
-
     def test_pdf_processor_method_existence(self, default_pdf_processor, method):
         """
         GIVEN a PDFProcessor instance
         WHEN the instance is checked for the existence of a public method
         THEN expect the instance to possess that method.
         """
-        assert hasattr(default_pdf_processor, method), \
+        assert hasattr(default_pdf_processor, method), (
             f"PDFProcessor instance did not have expected method '{method}'."
+        )
 
     def test_pdf_processor_method_is_instance_method(self, default_pdf_processor, method):
         """
@@ -428,8 +422,9 @@ class TestPdfProcessorHasRightPublicMethods:
         """
         method_obj = getattr(default_pdf_processor, method)
 
-        assert inspect.ismethod(method_obj), \
+        assert inspect.ismethod(method_obj), (
             f"Expected inspect.ismethod to be True for method '{method}', got False instead."
+        )
 
     def test_pdf_processor_method_is_coroutine(self, default_pdf_processor, method):
         """
@@ -439,21 +434,25 @@ class TestPdfProcessorHasRightPublicMethods:
         """
         method_obj = getattr(default_pdf_processor, method)
 
-        assert inspect.iscoroutinefunction(method_obj) == True, \
+        assert inspect.iscoroutinefunction(method_obj) == True, (
             f"Expected inspect.iscoroutinefunction to return True for method '{method}', got False instead."
+        )
 
 
 @pytest.fixture
 def expected_valid_metadata_keys(valid_metadata):
     return list(valid_metadata["processing_metadata"].keys())
 
+
 @pytest.fixture
 def expected_valid_metadata_values(valid_metadata):
     return list(valid_metadata["processing_metadata"].values())
 
+
 @pytest.fixture
 def expected_status_success():
     return "success"
+
 
 @pytest.fixture
 def expected_status_error():
@@ -461,13 +460,9 @@ def expected_status_error():
 
 
 class TestPdfProcessorHappyPathValidMetadata:
-
     @pytest.mark.asyncio
     async def test_when_empty_dict_metadata_provided_then_status_is_success(
-        self, 
-        default_pdf_processor: PDFProcessor, 
-        valid_pdf_document,
-        expected_status_success
+        self, default_pdf_processor: PDFProcessor, valid_pdf_document, expected_status_success
     ):
         """
         GIVEN empty dict as metadata
@@ -478,17 +473,13 @@ class TestPdfProcessorHappyPathValidMetadata:
 
         result = await default_pdf_processor.process_pdf(valid_pdf_document, empty_metadata)
 
-        assert result['status'] == expected_status_success, \
+        assert result["status"] == expected_status_success, (
             f"Expected status to be 'success', got {result['status']} instead."
-
+        )
 
     @pytest.mark.asyncio
     async def test_when_valid_metadata_provided_then_status_is_success(
-        self, 
-        default_pdf_processor, 
-        valid_pdf_document,
-        valid_metadata,
-        expected_status_success
+        self, default_pdf_processor, valid_pdf_document, valid_metadata, expected_status_success
     ):
         """
         GIVEN metadata dict with valid metadata
@@ -497,15 +488,15 @@ class TestPdfProcessorHappyPathValidMetadata:
         """
         result = await default_pdf_processor.process_pdf(valid_pdf_document, valid_metadata)
 
-        assert result['status'] == expected_status_success, \
+        assert result["status"] == expected_status_success, (
             f"Expected status to be 'success', got {result['status']} instead."
-
+        )
 
     @pytest.mark.parametrize("valid_key", [key for key in get_valid_metadata_keys()])
     @pytest.mark.asyncio
     async def test_when_valid_metadata_provided_then_metadata_keys_in_result(
-        self, 
-        default_pdf_processor, 
+        self,
+        default_pdf_processor,
         valid_pdf_document,
         valid_metadata,
         valid_key,
@@ -517,7 +508,7 @@ class TestPdfProcessorHappyPathValidMetadata:
         """
         result = await default_pdf_processor.process_pdf(valid_pdf_document, valid_metadata)
 
-        result_metadata = result['processing_metadata']
+        result_metadata = result["processing_metadata"]
 
         assert valid_key in result_metadata, f"'{valid_key}' key not in {result_metadata}"
 
@@ -526,12 +517,7 @@ class TestPdfProcessorHappyPathValidMetadata:
     )
     @pytest.mark.asyncio
     async def test_when_valid_metadata_provided_then_metadata_values_in_result(
-        self, 
-        default_pdf_processor, 
-        valid_pdf_document,
-        valid_metadata,
-        valid_key,
-        valid_value
+        self, default_pdf_processor, valid_pdf_document, valid_metadata, valid_key, valid_value
     ):
         """
         GIVEN metadata dict with valid metadata
@@ -540,7 +526,8 @@ class TestPdfProcessorHappyPathValidMetadata:
         """
         result = await default_pdf_processor.process_pdf(valid_pdf_document, valid_metadata)
 
-        result_value = result['processing_metadata'][valid_key]
+        result_value = result["processing_metadata"][valid_key]
 
-        assert valid_value == result_value, \
+        assert valid_value == result_value, (
             f"'{valid_key}' value for key {valid_key} does not match processing_metadata value {result_value}"
+        )

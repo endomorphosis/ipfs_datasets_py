@@ -4,11 +4,13 @@ Test stubs for cross_document_reasoning module.
 Feature: Cross-Document Reasoning
   Reasoning across multiple documents
 """
+
 import pytest
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
+
 
 @pytest.fixture
 def a_query_and_multiple_documents():
@@ -56,6 +58,7 @@ def overlapping_information_in_documents():
 
 
 # Test scenarios
+
 
 def test_link_related_documents():
     """
@@ -146,6 +149,7 @@ def test_merge_information_from_multiple_sources():
 
 
 # Step definitions
+
 
 # Given steps
 @given("a query and multiple documents")
@@ -295,4 +299,3 @@ def unified_information_is_created():
     """Step: Then unified information is created"""
     # TODO: Implement step
     pass
-

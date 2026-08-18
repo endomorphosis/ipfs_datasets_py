@@ -11,6 +11,7 @@ from .common_types import LogicOperator, Quantifier, ComplexityMetrics, Confiden
 
 class FOLOutputFormat(Enum):
     """Output formats for FOL conversion."""
+
     PROLOG = "prolog"
     TPTP = "tptp"
     JSON = "json"
@@ -21,6 +22,7 @@ class FOLOutputFormat(Enum):
 
 class PredicateCategory(Enum):
     """Categories of predicates in FOL."""
+
     ENTITY = "entity"
     ACTION = "action"
     RELATION = "relation"
@@ -33,14 +35,15 @@ class PredicateCategory(Enum):
 @dataclass(slots=True)
 class Predicate:
     """Represents a predicate in first-order logic.
-    
+
     PHASE 7 OPTIMIZATION: Using __slots__ for 30-40% memory reduction.
     """
+
     name: str
     arity: int
     category: PredicateCategory = PredicateCategory.UNKNOWN
     definition: Optional[str] = None
-    
+
     def to_string(self) -> str:
         """Convert predicate to string representation."""
         if self.arity == 0:
@@ -52,9 +55,10 @@ class Predicate:
 @dataclass(slots=True)
 class FOLFormula:
     """Represents a first-order logic formula.
-    
+
     PHASE 7 OPTIMIZATION: Using __slots__ for 30-40% memory reduction.
     """
+
     formula_string: str
     predicates: List[Predicate] = field(default_factory=list)
     quantifiers: List[Quantifier] = field(default_factory=list)
@@ -63,11 +67,11 @@ class FOLFormula:
     complexity: Optional[ComplexityMetrics] = None
     confidence: ConfidenceScore = 1.0
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def get_predicate_names(self) -> List[str]:
         """Get list of predicate names."""
         return [p.name for p in self.predicates]
-    
+
     def has_quantifiers(self) -> bool:
         """Check if formula has quantifiers."""
         return len(self.quantifiers) > 0
@@ -76,9 +80,10 @@ class FOLFormula:
 @dataclass(slots=True)
 class FOLConversionResult:
     """Result of converting natural language to FOL.
-    
+
     PHASE 7 OPTIMIZATION: Using __slots__ for 30-40% memory reduction.
     """
+
     source_text: str
     fol_formula: FOLFormula
     output_format: FOLOutputFormat
@@ -86,7 +91,7 @@ class FOLConversionResult:
     confidence: ConfidenceScore
     warnings: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def is_high_confidence(self, threshold: float = 0.7) -> bool:
         """Check if conversion has high confidence."""
         return self.confidence >= threshold
@@ -95,14 +100,15 @@ class FOLConversionResult:
 @dataclass(slots=True)
 class PredicateExtraction:
     """Result of predicate extraction from text.
-    
+
     PHASE 7 OPTIMIZATION: Using __slots__ for 30-40% memory reduction.
     """
+
     text: str
     predicates_by_category: Dict[PredicateCategory, List[Predicate]]
     total_predicates: int
     confidence: ConfidenceScore
-    
+
     def get_all_predicates(self) -> List[Predicate]:
         """Get all extracted predicates."""
         all_preds = []

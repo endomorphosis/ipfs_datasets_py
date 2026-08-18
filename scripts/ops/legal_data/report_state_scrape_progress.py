@@ -126,11 +126,20 @@ def _infer_shard_states_from_outputs(run_dir: Path) -> Dict[str, List[str]]:
             shard_dir / "output" / "state_laws_refresh" / "state_refresh_progress.json",
         ]
         progress_candidates.extend(
-            sorted(shard_dir.glob("output/cycles/cycle_*/state_laws_refresh/state_refresh_progress.json"), reverse=True)
+            sorted(
+                shard_dir.glob(
+                    "output/cycles/cycle_*/state_laws_refresh/state_refresh_progress.json"
+                ),
+                reverse=True,
+            )
         )
         for progress_path in progress_candidates:
             payload = _read_json(progress_path)
-            results = payload.get("state_results") if isinstance(payload.get("state_results"), dict) else {}
+            results = (
+                payload.get("state_results")
+                if isinstance(payload.get("state_results"), dict)
+                else {}
+            )
             for code in results.keys():
                 state = str(code or "").strip().upper()
                 if len(state) != 2 or state in seen:
@@ -203,13 +212,19 @@ def _collect_log_progress(log_path: Path) -> Dict[str, Dict[str, Any]]:
             if scraped:
                 row["scraped_event"] = True
                 row["scraped_event_count"] = int(row["scraped_event_count"]) + 1
-                row["latest_scraped_statutes"] = max(int(row["latest_scraped_statutes"]), _safe_int(scraped.group(1), 0))
+                row["latest_scraped_statutes"] = max(
+                    int(row["latest_scraped_statutes"]), _safe_int(scraped.group(1), 0)
+                )
             so_far = _STATUTES_SO_FAR_RE.search(line)
             if so_far:
-                row["latest_statutes_so_far"] = max(int(row["latest_statutes_so_far"]), _safe_int(so_far.group(1), 0))
+                row["latest_statutes_so_far"] = max(
+                    int(row["latest_statutes_so_far"]), _safe_int(so_far.group(1), 0)
+                )
             eq_statutes = _STATUTES_EQ_RE.search(line)
             if eq_statutes:
-                row["latest_statutes_so_far"] = max(int(row["latest_statutes_so_far"]), _safe_int(eq_statutes.group(1), 0))
+                row["latest_statutes_so_far"] = max(
+                    int(row["latest_statutes_so_far"]), _safe_int(eq_statutes.group(1), 0)
+                )
             tsm = _TS_RE.search(line)
             if tsm:
                 row["last_log_at"] = tsm.group(1)
@@ -252,10 +267,18 @@ def _discover_state_statute_baselines(
         if seen_runs > max(1, int(max_runs)):
             break
 
-        progress_paths = sorted(candidate_run.glob("shard*/output/cycles/cycle_*/state_laws_refresh/state_refresh_progress.json"))
+        progress_paths = sorted(
+            candidate_run.glob(
+                "shard*/output/cycles/cycle_*/state_laws_refresh/state_refresh_progress.json"
+            )
+        )
         for progress_path in progress_paths:
             payload = _read_json(progress_path)
-            state_results = payload.get("state_results") if isinstance(payload.get("state_results"), dict) else {}
+            state_results = (
+                payload.get("state_results")
+                if isinstance(payload.get("state_results"), dict)
+                else {}
+            )
             for code, raw_row in state_results.items():
                 state = str(code or "").strip().upper()
                 row = raw_row if isinstance(raw_row, dict) else {}
@@ -274,7 +297,9 @@ def _discover_state_statute_baselines(
                     },
                 )
                 baseline["sample_count"] = _safe_int(baseline.get("sample_count"), 0) + 1
-                baseline["max_statutes_count"] = max(_safe_int(baseline.get("max_statutes_count"), 0), statutes_count)
+                baseline["max_statutes_count"] = max(
+                    _safe_int(baseline.get("max_statutes_count"), 0), statutes_count
+                )
                 samples = list(baseline.get("samples") or [])
                 samples.append(statutes_count)
                 if len(samples) > 400:
@@ -303,7 +328,9 @@ def _discover_state_statute_baselines(
                         },
                     )
                     baseline["sample_count"] = _safe_int(baseline.get("sample_count"), 0) + 1
-                    baseline["max_statutes_count"] = max(_safe_int(baseline.get("max_statutes_count"), 0), statutes_count)
+                    baseline["max_statutes_count"] = max(
+                        _safe_int(baseline.get("max_statutes_count"), 0), statutes_count
+                    )
                     samples = list(baseline.get("samples") or [])
                     samples.append(statutes_count)
                     if len(samples) > 400:
@@ -345,7 +372,9 @@ def _annotate_rows_with_baselines(
         current_estimate = _row_current_statutes_estimate(row)
         progress_pct: Optional[float] = None
         if baseline_max > 0:
-            progress_pct = round(min(100.0, (100.0 * float(current_estimate)) / float(baseline_max)), 2)
+            progress_pct = round(
+                min(100.0, (100.0 * float(current_estimate)) / float(baseline_max)), 2
+            )
 
         confidence = "none"
         if baseline_max > 0:
@@ -360,7 +389,9 @@ def _annotate_rows_with_baselines(
         row["baseline_sample_count"] = baseline_samples
         row["baseline_progress_pct"] = progress_pct
         row["baseline_progress_confidence"] = confidence
-        row["baseline_p95_statutes_count"] = _safe_int((baseline or {}).get("p95_statutes_count"), 0)
+        row["baseline_p95_statutes_count"] = _safe_int(
+            (baseline or {}).get("p95_statutes_count"), 0
+        )
         out.append(row)
     return out
 
@@ -376,12 +407,22 @@ def _build_final_state_rows(
     build = phase_payload.get("build")
     scrape_meta = scrape.get("metadata") if isinstance(scrape, dict) else {}
     coverage = scrape_meta.get("coverage_summary") if isinstance(scrape_meta, dict) else {}
-    coverage_gaps = set(_normalize_states(coverage.get("coverage_gap_states") if isinstance(coverage, dict) else []))
-    zero_states = set(_normalize_states(coverage.get("zero_statute_states") if isinstance(coverage, dict) else []))
-    error_states = set(_normalize_states(coverage.get("error_states") if isinstance(coverage, dict) else []))
-    missing_states = set(_normalize_states(coverage.get("missing_states") if isinstance(coverage, dict) else []))
+    coverage_gaps = set(
+        _normalize_states(coverage.get("coverage_gap_states") if isinstance(coverage, dict) else [])
+    )
+    zero_states = set(
+        _normalize_states(coverage.get("zero_statute_states") if isinstance(coverage, dict) else [])
+    )
+    error_states = set(
+        _normalize_states(coverage.get("error_states") if isinstance(coverage, dict) else [])
+    )
+    missing_states = set(
+        _normalize_states(coverage.get("missing_states") if isinstance(coverage, dict) else [])
+    )
 
-    missing_jsonld = set(_normalize_states(build.get("missing_jsonld_states") if isinstance(build, dict) else []))
+    missing_jsonld = set(
+        _normalize_states(build.get("missing_jsonld_states") if isinstance(build, dict) else [])
+    )
     state_reports: Dict[str, Dict[str, Any]] = {}
     if isinstance(build, dict):
         for row in list(build.get("state_reports") or []):
@@ -528,14 +569,20 @@ def _collect_rows_for_shard(
             phase_path=output_dir / "state_refresh_phase.json",
             log_progress=log_progress,
         )
-        return rows, {"shard": shard, "phase_status": "missing_phase", "signal_mode": "log_fallback"}
+        return rows, {
+            "shard": shard,
+            "phase_status": "missing_phase",
+            "signal_mode": "log_fallback",
+        }
 
     phase_payload = _read_json(phase_path)
     states = _states_from_phase_or_default(phase_payload, default_states)
     phase_status = str(phase_payload.get("status") or "")
 
     # Finished phase payloads include scrape/build result blocks.
-    if isinstance(phase_payload.get("build"), dict) or isinstance(phase_payload.get("scrape"), dict):
+    if isinstance(phase_payload.get("build"), dict) or isinstance(
+        phase_payload.get("scrape"), dict
+    ):
         rows = _build_final_state_rows(
             states=states,
             shard=shard,
@@ -644,7 +691,9 @@ def _summarize(rows: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
         "strict_unknown_count": strict_unknown_count,
         "strict_evaluable_count": strict_evaluable,
         "strict_complete_pct": (
-            round((100.0 * strict_complete_count / strict_evaluable), 1) if strict_evaluable else None
+            round((100.0 * strict_complete_count / strict_evaluable), 1)
+            if strict_evaluable
+            else None
         ),
         "provisional_complete_count": provisional_complete_count,
         "baseline_evaluable_count": baseline_evaluable_count,
@@ -659,7 +708,9 @@ def _summarize(rows: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Report per-state legal scraper progress and completeness.")
+    p = argparse.ArgumentParser(
+        description="Report per-state legal scraper progress and completeness."
+    )
     p.add_argument(
         "--parallel-run-dir",
         default="",
@@ -740,7 +791,10 @@ def main() -> int:
     baseline_meta["auto_fallback_include_current_run"] = baseline_auto_fallback_used
 
     rows_with_baseline = _annotate_rows_with_baselines(rows, baselines)
-    rows_sorted = sorted(rows_with_baseline, key=lambda row: (str(row.get("shard") or ""), str(row.get("state") or "")))
+    rows_sorted = sorted(
+        rows_with_baseline,
+        key=lambda row: (str(row.get("shard") or ""), str(row.get("state") or "")),
+    )
     payload = {
         "run_dir": str(run_dir),
         "summary": _summarize(rows_sorted),
@@ -764,7 +818,9 @@ def main() -> int:
         print(f"run_dir: {run_dir}")
         print(
             "states_total={states_total} started={started_count} ({started_pct}%) strict_complete={strict_complete_count} "
-            "strict_incomplete={strict_incomplete_count} strict_unknown={strict_unknown_count}".format(**summary)
+            "strict_incomplete={strict_incomplete_count} strict_unknown={strict_unknown_count}".format(
+                **summary
+            )
         )
         baseline_avg = summary.get("baseline_avg_progress_pct")
         if baseline_avg is not None:

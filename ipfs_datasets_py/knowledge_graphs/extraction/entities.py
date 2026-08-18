@@ -34,19 +34,20 @@ class Entity:
             Convert the entity to a dictionary representation.
         from_dict(data: Dict[str, Any]) -> 'Entity':
             Create an entity from a dictionary representation.
-    
+
     Examples:
         >>> entity = Entity(entity_type="person", name="John Doe")
         >>> entity.entity_id
         '...'  # UUID
         >>> entity.to_dict()
         {'entity_id': '...', 'entity_type': 'person', 'name': 'John Doe', ...}
-        
+
         >>> data = {'entity_type': 'organization', 'name': 'ACME Corp'}
         >>> entity2 = Entity.from_dict(data)
         >>> entity2.name
         'ACME Corp'
     """
+
     entity_id: EntityID = field(default_factory=lambda: str(uuid.uuid4()))
     entity_type: EntityType = "entity"
     name: str = ""
@@ -72,7 +73,7 @@ class Entity:
             "entity_type": self.entity_type,
             "name": self.name,
             "properties": self.properties,
-            "confidence": self.confidence
+            "confidence": self.confidence,
         }
 
         if self.source_text:
@@ -81,14 +82,14 @@ class Entity:
         return entity_dict
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Entity':
+    def from_dict(cls, data: Dict[str, Any]) -> "Entity":
         """Create an entity from a dictionary representation.
 
         Args:
             data (Dict): Dictionary representation of the entity with fields:
                 - entity_id (optional): Unique identifier
                 - entity_type: Type classification
-                - name: Entity name  
+                - name: Entity name
                 - properties (optional): Additional properties
                 - confidence (optional): Confidence score
                 - source_text (optional): Original text
@@ -102,5 +103,5 @@ class Entity:
             name=data.get("name", ""),
             properties=data.get("properties", {}),
             confidence=data.get("confidence", DEFAULT_CONFIDENCE),
-            source_text=data.get("source_text")
+            source_text=data.get("source_text"),
         )

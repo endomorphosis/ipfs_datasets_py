@@ -127,9 +127,7 @@ def test_persistent_role_reuse_reports_avoided_work_and_saved_time(tmp_path) -> 
     assert summary["avoided_recompilations"] == 2
     assert summary["memory_hits"] == 1
     assert summary["disk_hits"] == 1
-    assert summary["saved_wall_time_seconds"] == pytest.approx(
-        2 * baseline.computation_seconds
-    )
+    assert summary["saved_wall_time_seconds"] == pytest.approx(2 * baseline.computation_seconds)
     assert summary["role_hits"] == {"guided": 1, "validation": 1}
 
     fresh_process_cache = LegalIREvaluationCache(tmp_path)
@@ -293,6 +291,4 @@ def test_runner_metric_roles_reuse_the_typed_sample_artifact(tmp_path, monkeypat
     assert codec.calls == 1
     assert train["cross_entropy_loss"] == validation["cross_entropy_loss"]
     assert validation["evaluation_artifact_cache"]["avoided_recompilations"] >= 1
-    assert validation["evaluation_artifact_cache"]["role_hits"] == {
-        "baseline_validation": 1
-    }
+    assert validation["evaluation_artifact_cache"]["role_hits"] == {"baseline_validation": 1}

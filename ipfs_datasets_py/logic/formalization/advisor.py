@@ -108,9 +108,7 @@ _AUTHORITY_KEYS: Final = frozenset(
         "verification_status",
     }
 )
-_AUTHORITY_VALUES: Final = frozenset(
-    {"authorized", "executed", "proved", "verified"}
-)
+_AUTHORITY_VALUES: Final = frozenset({"authorized", "executed", "proved", "verified"})
 
 
 class AdviceKind(str, Enum):
@@ -128,17 +126,13 @@ def _positive_int(value: Any, field_name: str, *, maximum: int) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 1:
         raise AdvisorValidationError(f"{field_name} must be a positive integer")
     if value > maximum:
-        raise AdvisorValidationError(
-            f"{field_name} must not exceed the hard limit {maximum}"
-        )
+        raise AdvisorValidationError(f"{field_name} must not exceed the hard limit {maximum}")
     return value
 
 
 def _digest(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not _DIGEST_RE.fullmatch(value):
-        raise AdvisorValidationError(
-            f"{field_name} must be a lowercase sha256:<hex> digest"
-        )
+        raise AdvisorValidationError(f"{field_name} must be a lowercase sha256:<hex> digest")
     return value
 
 
@@ -155,10 +149,7 @@ def _pointer(value: Any, field_name: str = "path") -> str:
 
 
 def _pointer_tokens(path: str) -> tuple[str, ...]:
-    return tuple(
-        token.replace("~1", "/").replace("~0", "~")
-        for token in path[1:].split("/")
-    )
+    return tuple(token.replace("~1", "/").replace("~0", "~") for token in path[1:].split("/"))
 
 
 def _json_size(value: Any) -> int:
@@ -173,9 +164,7 @@ def _json_size(value: Any) -> int:
             ).encode("utf-8")
         )
     except (TypeError, ValueError) as exc:
-        raise AdvisorValidationError(
-            "advisor output must be finite JSON data"
-        ) from exc
+        raise AdvisorValidationError("advisor output must be finite JSON data") from exc
 
 
 def _json_shape(value: Any) -> tuple[int, int]:
@@ -185,9 +174,7 @@ def _json_shape(value: Any) -> tuple[int, int]:
         if not all(isinstance(key, str) for key in value):
             raise AdvisorValidationError("expression keys must be strings")
         child_shapes = [_json_shape(item) for item in value.values()]
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         child_shapes = [_json_shape(item) for item in value]
     else:
         child_shapes = []
@@ -220,16 +207,10 @@ def _protected_projection(
             child_path = f"{path}/{escaped}"
             if _is_protected_key(key, protected):
                 result[child_path] = child
-            result.update(
-                _protected_projection(child, protected, path=child_path)
-            )
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+            result.update(_protected_projection(child, protected, path=child_path))
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, child in enumerate(value):
-            result.update(
-                _protected_projection(child, protected, path=f"{path}/{index}")
-            )
+            result.update(_protected_projection(child, protected, path=f"{path}/{index}"))
     return result
 
 
@@ -245,13 +226,10 @@ def _reject_authority_claims(value: Any, *, path: str = "") -> None:
             if key == "status" and isinstance(child, str):
                 if _normalized_key(child) in _AUTHORITY_VALUES:
                     raise AdvisorValidationError(
-                        "candidate cannot claim proof or execution authority "
-                        f"at {child_path}"
+                        f"candidate cannot claim proof or execution authority at {child_path}"
                     )
             _reject_authority_claims(child, path=child_path)
-    elif isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for index, child in enumerate(value):
             _reject_authority_claims(child, path=f"{path}/{index}")
 
@@ -276,9 +254,7 @@ def _changed_paths(before: Any, after: Any, *, path: str = "") -> set[str]:
                 )
             )
         return result
-    if isinstance(before, Sequence) and not isinstance(
-        before, (str, bytes, bytearray)
-    ):
+    if isinstance(before, Sequence) and not isinstance(before, (str, bytes, bytearray)):
         if len(before) != len(after):
             return {path or "/"}
         result: set[str] = set()
@@ -318,9 +294,7 @@ class RepairScope:
             "max_operations",
             _positive_int(self.max_operations, "max_operations", maximum=256),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != REPAIR_SCOPE_SCHEMA_VERSION:
             raise AdvisorValidationError(
                 f"unsupported repair scope schema: {self.schema_version!r}"
@@ -328,8 +302,7 @@ class RepairScope:
 
     def allows(self, formula_id: str, path: str) -> bool:
         return formula_id in self.formula_ids and any(
-            path == allowed or path.startswith(f"{allowed}/")
-            for allowed in self.allowed_paths
+            path == allowed or path.startswith(f"{allowed}/") for allowed in self.allowed_paths
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -365,28 +338,18 @@ class RepairScope:
             "repair scope",
         )
         return cls(
-            formula_ids=tuple(
-                _sequence(value.get("formula_ids", ()), "formula_ids")
-            ),
-            allowed_paths=tuple(
-                _sequence(value.get("allowed_paths", ()), "allowed_paths")
-            ),
+            formula_ids=tuple(_sequence(value.get("formula_ids", ()), "formula_ids")),
+            allowed_paths=tuple(_sequence(value.get("allowed_paths", ()), "allowed_paths")),
             max_operations=value.get("max_operations", 1),
-            schema_version=value.get(
-                "schema_version", REPAIR_SCOPE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", REPAIR_SCOPE_SCHEMA_VERSION),
         )
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> "RepairScope":
+    def from_json(cls, value: str | bytes | bytearray) -> "RepairScope":
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise AdvisorValidationError(
-                "repair scope must be valid JSON"
-            ) from exc
+            raise AdvisorValidationError("repair scope must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "repair scope"))
 
 
@@ -406,9 +369,7 @@ class AdvisorConfig:
     schema_version: str = ADVISOR_CONFIG_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "advisor_id", _identifier(self.advisor_id, "advisor_id")
-        )
+        object.__setattr__(self, "advisor_id", _identifier(self.advisor_id, "advisor_id"))
         object.__setattr__(
             self,
             "advisor_version",
@@ -436,9 +397,7 @@ class AdvisorConfig:
             "protected_field_names",
             tuple(sorted(PROTECTED_SEMANTIC_FIELDS | set(extras))),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != ADVISOR_CONFIG_SCHEMA_VERSION:
             raise AdvisorValidationError(
                 f"unsupported advisor config schema: {self.schema_version!r}"
@@ -503,9 +462,7 @@ class AdvisorConfig:
             advisor_version=value.get("advisor_version", ""),
             config_id=value.get("config_id", "default"),
             max_candidates=value.get("max_candidates", 4),
-            max_formulas_per_candidate=value.get(
-                "max_formulas_per_candidate", 8
-            ),
+            max_formulas_per_candidate=value.get("max_formulas_per_candidate", 8),
             max_expression_nodes=value.get("max_expression_nodes", 512),
             max_expression_depth=value.get("max_expression_depth", 32),
             max_expression_bytes=value.get("max_expression_bytes", 16_384),
@@ -515,21 +472,15 @@ class AdvisorConfig:
                     "protected_field_names",
                 )
             ),
-            schema_version=value.get(
-                "schema_version", ADVISOR_CONFIG_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", ADVISOR_CONFIG_SCHEMA_VERSION),
         )
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> "AdvisorConfig":
+    def from_json(cls, value: str | bytes | bytearray) -> "AdvisorConfig":
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise AdvisorValidationError(
-                "advisor config must be valid JSON"
-            ) from exc
+            raise AdvisorValidationError("advisor config must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "advisor config"))
 
 
@@ -542,16 +493,12 @@ class FormulaSuggestion:
     schema_version: str = FORMULA_SUGGESTION_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "formula_id", _identifier(self.formula_id, "formula_id")
-        )
+        object.__setattr__(self, "formula_id", _identifier(self.formula_id, "formula_id"))
         try:
             object.__setattr__(self, "expression", freeze_json(self.expression))
         except (TypeError, ValueError) as exc:
             raise AdvisorValidationError("suggestion expression must be JSON") from exc
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != FORMULA_SUGGESTION_SCHEMA_VERSION:
             raise AdvisorValidationError(
                 f"unsupported formula suggestion schema: {self.schema_version!r}"
@@ -575,9 +522,7 @@ class FormulaSuggestion:
         return cls(
             formula_id=value.get("formula_id", ""),
             expression=value.get("expression"),
-            schema_version=value.get(
-                "schema_version", FORMULA_SUGGESTION_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", FORMULA_SUGGESTION_SCHEMA_VERSION),
         )
 
 
@@ -591,17 +536,13 @@ class FormulaRepair:
     schema_version: str = FORMULA_REPAIR_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "formula_id", _identifier(self.formula_id, "formula_id")
-        )
+        object.__setattr__(self, "formula_id", _identifier(self.formula_id, "formula_id"))
         object.__setattr__(self, "path", _pointer(self.path))
         try:
             object.__setattr__(self, "replacement", freeze_json(self.replacement))
         except (TypeError, ValueError) as exc:
             raise AdvisorValidationError("repair replacement must be JSON") from exc
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != FORMULA_REPAIR_SCHEMA_VERSION:
             raise AdvisorValidationError(
                 f"unsupported formula repair schema: {self.schema_version!r}"
@@ -620,18 +561,14 @@ class FormulaRepair:
         value = _mapping(value, "formula repair")
         _reject_unknown(
             value,
-            frozenset(
-                {"formula_id", "path", "replacement", "schema_version"}
-            ),
+            frozenset({"formula_id", "path", "replacement", "schema_version"}),
             "formula repair",
         )
         return cls(
             formula_id=value.get("formula_id", ""),
             path=value.get("path", ""),
             replacement=value.get("replacement"),
-            schema_version=value.get(
-                "schema_version", FORMULA_REPAIR_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", FORMULA_REPAIR_SCHEMA_VERSION),
         )
 
 
@@ -646,9 +583,7 @@ class AdvisorCandidate:
     schema_version: str = ADVISOR_CANDIDATE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "candidate_id", _identifier(self.candidate_id, "candidate_id")
-        )
+        object.__setattr__(self, "candidate_id", _identifier(self.candidate_id, "candidate_id"))
         try:
             kind = self.kind if isinstance(self.kind, AdviceKind) else AdviceKind(self.kind)
         except (TypeError, ValueError) as exc:
@@ -672,16 +607,10 @@ class AdvisorCandidate:
                     "formula candidates require suggestions and no repairs"
                 )
         elif not repairs or suggestions:
-            raise AdvisorValidationError(
-                "repair candidates require repairs and no suggestions"
-            )
-        ids = [
-            item.formula_id for item in (suggestions if suggestions else repairs)
-        ]
+            raise AdvisorValidationError("repair candidates require repairs and no suggestions")
+        ids = [item.formula_id for item in (suggestions if suggestions else repairs)]
         if len(ids) != len(set(ids)) and suggestions:
-            raise AdvisorValidationError(
-                "a formula candidate may suggest each formula only once"
-            )
+            raise AdvisorValidationError("a formula candidate may suggest each formula only once")
         repair_targets = [(item.formula_id, item.path) for item in repairs]
         if len(repair_targets) != len(set(repair_targets)):
             raise AdvisorValidationError(
@@ -689,9 +618,7 @@ class AdvisorCandidate:
             )
         object.__setattr__(self, "suggestions", suggestions)
         object.__setattr__(self, "repairs", repairs)
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != ADVISOR_CANDIDATE_SCHEMA_VERSION:
             raise AdvisorValidationError(
                 f"unsupported advisor candidate schema: {self.schema_version!r}"
@@ -733,9 +660,7 @@ class AdvisorCandidate:
                 FormulaRepair.from_dict(_mapping(item, "formula repair"))
                 for item in _sequence(value.get("repairs", ()), "repairs")
             ),
-            schema_version=value.get(
-                "schema_version", ADVISOR_CANDIDATE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", ADVISOR_CANDIDATE_SCHEMA_VERSION),
         )
 
 
@@ -766,22 +691,17 @@ class AdvisorModelRequest:
             "feature_names",
             tuple(_text(item, "feature_names") for item in self.feature_names),
         )
-        if (
-            not isinstance(self.feature_values, tuple)
-            or len(self.feature_names) != len(self.feature_values)
+        if not isinstance(self.feature_values, tuple) or len(self.feature_names) != len(
+            self.feature_values
         ):
-            raise AdvisorValidationError(
-                "feature names and values must be equal immutable tuples"
-            )
+            raise AdvisorValidationError("feature names and values must be equal immutable tuples")
         if not isinstance(self.repair_scope, RepairScope):
             raise AdvisorValidationError("repair_scope must be a RepairScope")
         object.__setattr__(
             self,
             "formulas",
             tuple(
-                item
-                if isinstance(item, FrozenMap)
-                else FrozenMap(_mapping(item, "model formula"))
+                item if isinstance(item, FrozenMap) else FrozenMap(_mapping(item, "model formula"))
                 for item in self.formulas
             ),
         )
@@ -790,9 +710,7 @@ class AdvisorModelRequest:
             "checkpoint_identity",
             _digest(self.checkpoint_identity, "checkpoint_identity"),
         )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != ADVISOR_MODEL_REQUEST_SCHEMA_VERSION:
             raise AdvisorValidationError(
                 f"unsupported advisor request schema: {self.schema_version!r}"
@@ -850,16 +768,10 @@ class FormalizationAdvisorRequest:
 
     def __post_init__(self) -> None:
         if not isinstance(self.artifact, FormalizationArtifact):
-            raise AdvisorValidationError(
-                "artifact must be a FormalizationArtifact"
-            )
+            raise AdvisorValidationError("artifact must be a FormalizationArtifact")
         self.artifact.validate()
-        object.__setattr__(
-            self, "features", validate_source_free_features(self.features)
-        )
-        object.__setattr__(
-            self, "checkpoint", validate_checkpoint_manifest(self.checkpoint)
-        )
+        object.__setattr__(self, "features", validate_source_free_features(self.features))
+        object.__setattr__(self, "checkpoint", validate_checkpoint_manifest(self.checkpoint))
         object.__setattr__(
             self,
             "ontology_identity",
@@ -870,18 +782,14 @@ class FormalizationAdvisorRequest:
         if (
             self.features.sample_id != self.artifact.sample_id
             or self.features.domain != self.artifact.domain
-            or self.features.declaration_digest
-            != self.artifact.declaration_digest
+            or self.features.declaration_digest != self.artifact.declaration_digest
         ):
-            raise AdvisorValidationError(
-                "features do not identify the input artifact declaration"
-            )
+            raise AdvisorValidationError("features do not identify the input artifact declaration")
         known_formula_ids = {item.formula_id for item in self.artifact.formulas}
         unknown = set(self.repair_scope.formula_ids) - known_formula_ids
         if unknown:
             raise AdvisorValidationError(
-                "repair scope references unknown formulas: "
-                + ", ".join(sorted(unknown))
+                "repair scope references unknown formulas: " + ", ".join(sorted(unknown))
             )
         self.checkpoint.require_compatible(
             domain=self.artifact.domain,
@@ -926,19 +834,11 @@ class AdvisedCandidate:
     schema_version: str = ADVISED_CANDIDATE_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "candidate_id", _identifier(self.candidate_id, "candidate_id")
-        )
+        object.__setattr__(self, "candidate_id", _identifier(self.candidate_id, "candidate_id"))
         try:
-            kind = (
-                self.kind
-                if isinstance(self.kind, AdviceKind)
-                else AdviceKind(self.kind)
-            )
+            kind = self.kind if isinstance(self.kind, AdviceKind) else AdviceKind(self.kind)
         except (TypeError, ValueError) as exc:
-            raise AdvisorValidationError(
-                f"unknown advice kind: {self.kind!r}"
-            ) from exc
+            raise AdvisorValidationError(f"unknown advice kind: {self.kind!r}") from exc
         object.__setattr__(self, "kind", kind)
         formulas = tuple(
             item
@@ -956,17 +856,11 @@ class AdvisedCandidate:
             "formulas",
             tuple(sorted(formulas, key=lambda item: item.formula_id)),
         )
-        changed = _unique_identifiers(
-            self.changed_formula_ids, "changed_formula_ids"
-        )
+        changed = _unique_identifiers(self.changed_formula_ids, "changed_formula_ids")
         if not changed or not set(changed).issubset(formula_ids):
-            raise AdvisorValidationError(
-                "changed_formula_ids must identify candidate formulas"
-            )
+            raise AdvisorValidationError("changed_formula_ids must identify candidate formulas")
         object.__setattr__(self, "changed_formula_ids", changed)
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != ADVISED_CANDIDATE_SCHEMA_VERSION:
             raise AdvisorValidationError(
                 f"unsupported advised candidate schema: {self.schema_version!r}"
@@ -1016,9 +910,7 @@ class AdvisedCandidate:
                     "changed_formula_ids",
                 )
             ),
-            schema_version=value.get(
-                "schema_version", ADVISED_CANDIDATE_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", ADVISED_CANDIDATE_SCHEMA_VERSION),
         )
 
 
@@ -1066,9 +958,7 @@ class AdvisorResult:
             raise AdvisorValidationError(
                 "advisor results cannot claim proof or execution authority"
             )
-        object.__setattr__(
-            self, "schema_version", _text(self.schema_version, "schema_version")
-        )
+        object.__setattr__(self, "schema_version", _text(self.schema_version, "schema_version"))
         if self.schema_version != ADVISOR_RESULT_SCHEMA_VERSION:
             raise AdvisorValidationError(
                 f"unsupported advisor result schema: {self.schema_version!r}"
@@ -1149,22 +1039,16 @@ class AdvisorResult:
             input_artifact_identity=value.get("input_artifact_identity", ""),
             input_features_identity=value.get("input_features_identity", ""),
             ontology_identity=value.get("ontology_identity", ""),
-            schema_version=value.get(
-                "schema_version", ADVISOR_RESULT_SCHEMA_VERSION
-            ),
+            schema_version=value.get("schema_version", ADVISOR_RESULT_SCHEMA_VERSION),
             authority=value.get("authority", ""),
         )
 
     @classmethod
-    def from_json(
-        cls, value: str | bytes | bytearray
-    ) -> "AdvisorResult":
+    def from_json(cls, value: str | bytes | bytearray) -> "AdvisorResult":
         try:
             decoded = json.loads(value)
         except (TypeError, ValueError, UnicodeDecodeError) as exc:
-            raise AdvisorValidationError(
-                "advisor result must be valid JSON"
-            ) from exc
+            raise AdvisorValidationError("advisor result must be valid JSON") from exc
         return cls.from_dict(_mapping(decoded, "advisor result"))
 
 
@@ -1183,21 +1067,15 @@ def _replace_at_pointer(expression: Any, path: str, replacement: Any) -> Any:
     for token in tokens[:-1]:
         if isinstance(current, dict):
             if token not in current:
-                raise AdvisorValidationError(
-                    f"repair path does not exist: {path}"
-                )
+                raise AdvisorValidationError(f"repair path does not exist: {path}")
             current = current[token]
         elif isinstance(current, list):
             try:
                 index = int(token)
             except ValueError as exc:
-                raise AdvisorValidationError(
-                    f"repair path does not exist: {path}"
-                ) from exc
+                raise AdvisorValidationError(f"repair path does not exist: {path}") from exc
             if index < 0 or index >= len(current):
-                raise AdvisorValidationError(
-                    f"repair path does not exist: {path}"
-                )
+                raise AdvisorValidationError(f"repair path does not exist: {path}")
             current = current[index]
         else:
             raise AdvisorValidationError(f"repair path does not exist: {path}")
@@ -1210,9 +1088,7 @@ def _replace_at_pointer(expression: Any, path: str, replacement: Any) -> Any:
         try:
             index = int(final)
         except ValueError as exc:
-            raise AdvisorValidationError(
-                f"repair path does not exist: {path}"
-            ) from exc
+            raise AdvisorValidationError(f"repair path does not exist: {path}") from exc
         if index < 0 or index >= len(current):
             raise AdvisorValidationError(f"repair path does not exist: {path}")
         current[index] = thaw_json(freeze_json(replacement))
@@ -1235,19 +1111,13 @@ class BoundedFormalizationAdvisor:
 
     def advise(self, request: FormalizationAdvisorRequest) -> AdvisorResult:
         if not isinstance(request, FormalizationAdvisorRequest):
-            raise AdvisorValidationError(
-                "request must be a FormalizationAdvisorRequest"
-            )
+            raise AdvisorValidationError("request must be a FormalizationAdvisorRequest")
         model_request = request.model_request()
         model_output = self._model.generate_candidates(model_request)
         if isinstance(model_output, (str, bytes, bytearray, Mapping)):
-            raise AdvisorValidationError(
-                "model must return a sequence of candidate records"
-            )
+            raise AdvisorValidationError("model must return a sequence of candidate records")
         if not isinstance(model_output, Sequence):
-            raise AdvisorValidationError(
-                "model must return a sequence of candidate records"
-            )
+            raise AdvisorValidationError("model must return a sequence of candidate records")
         if len(model_output) > self.config.max_candidates:
             raise AdvisorValidationError(
                 f"model returned more than {self.config.max_candidates} candidates"
@@ -1261,9 +1131,7 @@ class BoundedFormalizationAdvisor:
         candidate_ids = [item.candidate_id for item in decoded]
         if len(candidate_ids) != len(set(candidate_ids)):
             raise AdvisorValidationError("candidate IDs must be unique")
-        validated = tuple(
-            self._validate_candidate(item, request) for item in decoded
-        )
+        validated = tuple(self._validate_candidate(item, request) for item in decoded)
         return AdvisorResult(
             candidates=validated,
             model_identity=request.checkpoint.model_identity,
@@ -1282,20 +1150,14 @@ class BoundedFormalizationAdvisor:
     ) -> AdvisedCandidate:
         count = len(candidate.suggestions) or len(candidate.repairs)
         if count > self.config.max_formulas_per_candidate:
-            raise AdvisorValidationError(
-                "candidate exceeds max_formulas_per_candidate"
-            )
+            raise AdvisorValidationError("candidate exceeds max_formulas_per_candidate")
         if candidate.kind is AdviceKind.REPAIR and (
             len(candidate.repairs) > request.repair_scope.max_operations
         ):
             raise AdvisorValidationError("candidate exceeds repair scope operation bound")
 
-        baseline = {
-            item.formula_id: item for item in request.artifact.formulas
-        }
-        expressions = {
-            key: thaw_json(value.expression) for key, value in baseline.items()
-        }
+        baseline = {item.formula_id: item for item in request.artifact.formulas}
+        expressions = {key: thaw_json(value.expression) for key, value in baseline.items()}
         changed_ids: set[str] = set()
 
         if candidate.kind is AdviceKind.FORMULA_CANDIDATE:
@@ -1306,9 +1168,7 @@ class BoundedFormalizationAdvisor:
                         f"candidate references unknown formula {suggestion.formula_id!r}"
                     )
                 new_expression = thaw_json(suggestion.expression)
-                changed = _changed_paths(
-                    thaw_json(old.expression), new_expression
-                )
+                changed = _changed_paths(thaw_json(old.expression), new_expression)
                 if not changed:
                     raise AdvisorValidationError(
                         "formula suggestion must change at least one value"
@@ -1320,16 +1180,13 @@ class BoundedFormalizationAdvisor:
                 }
                 if disallowed:
                     raise AdvisorValidationError(
-                        "formula suggestion exceeds repair scope: "
-                        + ", ".join(sorted(disallowed))
+                        "formula suggestion exceeds repair scope: " + ", ".join(sorted(disallowed))
                     )
                 expressions[old.formula_id] = new_expression
                 changed_ids.add(old.formula_id)
         else:
             for repair in candidate.repairs:
-                if not request.repair_scope.allows(
-                    repair.formula_id, repair.path
-                ):
+                if not request.repair_scope.allows(repair.formula_id, repair.path):
                     raise AdvisorValidationError(
                         f"repair exceeds scope: {repair.formula_id}{repair.path}"
                     )
@@ -1349,9 +1206,7 @@ class BoundedFormalizationAdvisor:
         for formula_id, old in baseline.items():
             expression = expressions[formula_id]
             if formula_id in changed_ids:
-                old_projection = _protected_projection(
-                    thaw_json(old.expression), protected
-                )
+                old_projection = _protected_projection(thaw_json(old.expression), protected)
                 new_projection = _protected_projection(expression, protected)
                 if old_projection != new_projection:
                     raise AdvisorValidationError(
@@ -1361,17 +1216,11 @@ class BoundedFormalizationAdvisor:
                 _reject_authority_claims(expression)
                 nodes, depth = _json_shape(expression)
                 if nodes > self.config.max_expression_nodes:
-                    raise AdvisorValidationError(
-                        "candidate expression exceeds node bound"
-                    )
+                    raise AdvisorValidationError("candidate expression exceeds node bound")
                 if depth > self.config.max_expression_depth:
-                    raise AdvisorValidationError(
-                        "candidate expression exceeds depth bound"
-                    )
+                    raise AdvisorValidationError("candidate expression exceeds depth bound")
                 if _json_size(expression) > self.config.max_expression_bytes:
-                    raise AdvisorValidationError(
-                        "candidate expression exceeds byte bound"
-                    )
+                    raise AdvisorValidationError("candidate expression exceeds byte bound")
             try:
                 formulas.append(replace(old, expression=expression))
             except (TypeError, ValueError) as exc:
@@ -1386,15 +1235,9 @@ class BoundedFormalizationAdvisor:
             symbol_table=request.artifact.symbol_table,
             formulas=tuple(formulas),
             links=request.artifact.cross_view_links,
-            source_ref_ids=tuple(
-                item.ref_id for item in request.artifact.source_map.sources
-            ),
-            span_ids=tuple(
-                item.span_id for item in request.artifact.source_map.spans
-            ),
-            assumption_ids=tuple(
-                item.assumption_id for item in request.artifact.assumptions
-            ),
+            source_ref_ids=tuple(item.ref_id for item in request.artifact.source_map.sources),
+            span_ids=tuple(item.span_id for item in request.artifact.source_map.spans),
+            assumption_ids=tuple(item.assumption_id for item in request.artifact.assumptions),
         )
         return AdvisedCandidate(
             candidate_id=candidate.candidate_id,

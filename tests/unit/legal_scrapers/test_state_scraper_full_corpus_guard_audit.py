@@ -5,8 +5,12 @@ from pathlib import Path
 
 def _load_audit_module():
     repo_root = Path(__file__).resolve().parents[3]
-    script_path = repo_root / "scripts" / "ops" / "legal_data" / "audit_state_scraper_full_corpus_guards.py"
-    spec = importlib.util.spec_from_file_location("audit_state_scraper_full_corpus_guards", script_path)
+    script_path = (
+        repo_root / "scripts" / "ops" / "legal_data" / "audit_state_scraper_full_corpus_guards.py"
+    )
+    spec = importlib.util.spec_from_file_location(
+        "audit_state_scraper_full_corpus_guards", script_path
+    )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module

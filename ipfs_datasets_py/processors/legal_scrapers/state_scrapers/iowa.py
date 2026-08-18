@@ -39,15 +39,11 @@ class IowaScraper(BaseStateScraper):
     def get_base_url(self) -> str:
         """Return the base URL for Iowa's legislative website."""
         return "https://www.legis.iowa.gov"
-    
+
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Iowa."""
-        return [{
-            "name": "Iowa Code",
-            "url": f"{self.get_base_url()}/",
-            "type": "Code"
-        }]
-    
+        return [{"name": "Iowa Code", "url": f"{self.get_base_url()}/", "type": "Code"}]
+
     async def scrape_code(
         self,
         code_name: str,
@@ -55,11 +51,11 @@ class IowaScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape a specific code from Iowa's legislative website.
-        
+
         Args:
             code_name: Name of the code to scrape
             code_url: URL of the code
-            
+
         Returns:
             List of NormalizedStatute objects
         """
@@ -86,7 +82,9 @@ class IowaScraper(BaseStateScraper):
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
 
-        live_stubs = await self._scrape_live_code_stubs(code_name, max_statutes=max(10, return_threshold))
+        live_stubs = await self._scrape_live_code_stubs(
+            code_name, max_statutes=max(10, return_threshold)
+        )
 
         archival_limit = max(10, return_threshold)
         if self._full_corpus_enabled() and max_statutes is None:
@@ -94,7 +92,9 @@ class IowaScraper(BaseStateScraper):
                 archival_limit,
                 int(os.getenv("IOWA_ARCHIVAL_STUB_LIMIT", "5000") or "5000"),
             )
-        archival_stubs = await self._scrape_archived_code_stubs(code_name, max_statutes=archival_limit)
+        archival_stubs = await self._scrape_archived_code_stubs(
+            code_name, max_statutes=archival_limit
+        )
 
         merged: List[NormalizedStatute] = []
         merged_keys = set()
@@ -121,7 +121,9 @@ class IowaScraper(BaseStateScraper):
             return merged
 
         if not self._full_corpus_enabled():
-            direct_sections = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            direct_sections = await self._scrape_direct_seed_sections(
+                code_name, max_statutes=return_threshold
+            )
             if direct_sections:
                 return direct_sections[:return_threshold]
 
@@ -140,7 +142,9 @@ class IowaScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            statutes = await self._generic_scrape(code_name, candidate, "Iowa Code", max_sections=max(10, return_threshold))
+            statutes = await self._generic_scrape(
+                code_name, candidate, "Iowa Code", max_sections=max(10, return_threshold)
+            )
             _merge(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
@@ -167,7 +171,9 @@ class IowaScraper(BaseStateScraper):
         checkpoint_progress = self._load_partial_checkpoint_progress()
         resume_chapters_scanned = max(0, int(checkpoint_progress.get("chapters_scanned") or 0))
         resume_sections_scanned = max(0, int(checkpoint_progress.get("sections_scanned") or 0))
-        resume_discovered_sections = max(0, int(checkpoint_progress.get("discovered_sections") or 0))
+        resume_discovered_sections = max(
+            0, int(checkpoint_progress.get("discovered_sections") or 0)
+        )
         chapter_rewind = max(
             0,
             int(os.getenv("STATE_SCRAPER_IA_RESUME_CHAPTER_REWIND", "8") or "8"),
@@ -202,8 +208,7 @@ class IowaScraper(BaseStateScraper):
 
         for title_token in self._IOWA_TITLE_TOKENS:
             title_url = (
-                f"{self.get_base_url()}/law/iowaCode/chapters"
-                f"?title={title_token}&year={year}"
+                f"{self.get_base_url()}/law/iowaCode/chapters?title={title_token}&year={year}"
             )
             payload = await self._request_bytes_direct(title_url, timeout=chapter_page_timeout)
             if not payload and official_archival_fallback:
@@ -296,7 +301,9 @@ class IowaScraper(BaseStateScraper):
                         extra=_progress_payload(chapters_scanned=chapter_index, codes_completed=0),
                     )
                 continue
-            chapter_payload = await self._request_bytes_direct(chapter_url, timeout=chapter_page_timeout)
+            chapter_payload = await self._request_bytes_direct(
+                chapter_url, timeout=chapter_page_timeout
+            )
             if not chapter_payload and official_archival_fallback:
                 chapter_payload = await self._fetch_page_content_with_archival_fallback(
                     chapter_url,
@@ -345,7 +352,9 @@ class IowaScraper(BaseStateScraper):
                 if not section_label:
                     continue
 
-                links = [str(link.get("href") or "").strip() for link in row.find_all("a", href=True)]
+                links = [
+                    str(link.get("href") or "").strip() for link in row.find_all("a", href=True)
+                ]
                 rtf_href = next((href for href in links if href.lower().endswith(".rtf")), "")
                 pdf_href = next((href for href in links if href.lower().endswith(".pdf")), "")
                 if not rtf_href and not pdf_href:
@@ -419,7 +428,9 @@ class IowaScraper(BaseStateScraper):
                     except Exception:
                         document_extract = {}
                     if isinstance(document_extract, dict):
-                        candidate_text = self._normalize_legal_text(str(document_extract.get("text") or ""))
+                        candidate_text = self._normalize_legal_text(
+                            str(document_extract.get("text") or "")
+                        )
                     else:
                         try:
                             candidate_text = self._normalize_legal_text(
@@ -490,7 +501,9 @@ class IowaScraper(BaseStateScraper):
         )
         return official_rows
 
-    async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 2) -> List[NormalizedStatute]:
+    async def _scrape_direct_seed_sections(
+        self, code_name: str, max_statutes: int = 2
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -510,7 +523,11 @@ class IowaScraper(BaseStateScraper):
             if len(text) < 80:
                 continue
             first_sentence = text.split(".", 2)
-            section_name = first_sentence[1].strip() if len(first_sentence) > 1 else f"Iowa Code {section_number}"
+            section_name = (
+                first_sentence[1].strip()
+                if len(first_sentence) > 1
+                else f"Iowa Code {section_number}"
+            )
             out.append(
                 NormalizedStatute(
                     state_code=self.state_code,
@@ -557,11 +574,15 @@ class IowaScraper(BaseStateScraper):
                 return b""
 
         try:
-            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=max(4, int(timeout or 25) + 2))
+            return await asyncio.wait_for(
+                asyncio.to_thread(_request), timeout=max(4, int(timeout or 25) + 2)
+            )
         except Exception:
             return b""
 
-    async def _scrape_live_code_stubs(self, code_name: str, max_statutes: int = 160) -> List[NormalizedStatute]:
+    async def _scrape_live_code_stubs(
+        self, code_name: str, max_statutes: int = 160
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
@@ -592,7 +613,9 @@ class IowaScraper(BaseStateScraper):
             if not any(ch.isdigit() for ch in text + href):
                 continue
 
-            section_number = self._extract_section_number(text) or re.sub(r"[^0-9A-Za-z.-]+", "-", href).strip("-/")
+            section_number = self._extract_section_number(text) or re.sub(
+                r"[^0-9A-Za-z.-]+", "-", href
+            ).strip("-/")
             if not section_number:
                 continue
             key = section_number.lower()
@@ -619,7 +642,9 @@ class IowaScraper(BaseStateScraper):
 
         return out
 
-    async def _scrape_archived_code_stubs(self, code_name: str, max_statutes: int = 120) -> List[NormalizedStatute]:
+    async def _scrape_archived_code_stubs(
+        self, code_name: str, max_statutes: int = 120
+    ) -> List[NormalizedStatute]:
         cdx_url = (
             "https://web.archive.org/cdx/search/cdx?url=www.legis.iowa.gov/docs/code/*"
             "&output=json&filter=statuscode:200&collapse=digest"
@@ -660,7 +685,7 @@ class IowaScraper(BaseStateScraper):
                 continue
             seen.add(key)
 
-            encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
+            encoded = urllib.parse.quote(original, safe=":/?=&%.-_")
             source_url = f"https://web.archive.org/web/{ts}/{encoded}"
             out.append(
                 NormalizedStatute(

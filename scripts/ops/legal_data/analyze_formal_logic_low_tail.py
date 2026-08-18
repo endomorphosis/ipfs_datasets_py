@@ -98,7 +98,10 @@ def main() -> None:
 
     summary = report.get("summary", {})
     print("artifact_orphan_total:", summary.get("final_decoded_orphan_terminal_count_total"))
-    print("artifact_relative_total:", summary.get("final_decoded_relative_clause_artifact_count_total"))
+    print(
+        "artifact_relative_total:",
+        summary.get("final_decoded_relative_clause_artifact_count_total"),
+    )
     if "hybrid_ir_enabled" in summary:
         print("hybrid_ir_enabled:", summary.get("hybrid_ir_enabled"))
     if "hybrid_ir_success_count" in summary:

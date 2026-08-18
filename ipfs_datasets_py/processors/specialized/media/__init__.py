@@ -12,7 +12,7 @@ from .advanced_processing import (
 )
 
 __all__ = [
-    'AdvancedMediaProcessor',
-    'MediaContent',
-    'TranscriptionResult',
+    "AdvancedMediaProcessor",
+    "MediaContent",
+    "TranscriptionResult",
 ]

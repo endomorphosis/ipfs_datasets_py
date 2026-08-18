@@ -36,10 +36,7 @@ from ipfs_datasets_py.logic.admissibility.reasons import (
 # ---------------------------------------------------------------------------
 
 FIXTURE_DIR: Final = (
-    Path(__file__).resolve().parents[3]
-    / "fixtures"
-    / "logic"
-    / "attested_authorization"
+    Path(__file__).resolve().parents[3] / "fixtures" / "logic" / "attested_authorization"
 )
 MANIFEST_PATH: Final = FIXTURE_DIR / "manifest.json"
 CASES_PATH: Final = FIXTURE_DIR / "cases.json"
@@ -163,9 +160,7 @@ REQUIRED_COVERAGE: Final[dict[str, tuple[str, ...]]] = {
 }
 
 # Reasons that must never be the sole justification for allow.
-NON_ALLOWING_REASONS: Final = frozenset(reason_code_set()) - frozenset(
-    {"obligations_supported"}
-)
+NON_ALLOWING_REASONS: Final = frozenset(reason_code_set()) - frozenset({"obligations_supported"})
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -384,9 +379,7 @@ def test_every_case_has_required_structure(cases: list[dict[str, Any]]) -> None:
             assert auth["family"] in {"legal", "security", "intent"}
             assert "attestation_kind" in auth
             assert "result_status" in auth
-            assert "authority_lifecycle" in auth or case["case_id"].startswith(
-                "poisoned_"
-            )
+            assert "authority_lifecycle" in auth or case["case_id"].startswith("poisoned_")
 
         expected = case["expected"]
         for key in REQUIRED_EXPECTED_KEYS:
@@ -394,9 +387,7 @@ def test_every_case_has_required_structure(cases: list[dict[str, Any]]) -> None:
         status = parse_status(expected["status"])
         assert status.value in WIRE_STATUSES
         assert expected["cannot_allow"] is (status is not AdmissibilityStatus.ALLOW)
-        assert expected["grants_dispatch_capability"] is (
-            status is AdmissibilityStatus.ALLOW
-        )
+        assert expected["grants_dispatch_capability"] is (status is AdmissibilityStatus.ALLOW)
         assert expected["reason_codes"], f"{case['case_id']}: empty reason_codes"
         for code in expected["reason_codes"]:
             assert code in closed_reasons
@@ -443,9 +434,7 @@ def test_non_allow_cases_never_grant_dispatch(
         assert case["expected"]["cannot_allow"] is True
         assert case["expected"]["grants_dispatch_capability"] is False
         # At least one reason must be a non-allowing code.
-        assert any(
-            code in NON_ALLOWING_REASONS for code in case["expected"]["reason_codes"]
-        )
+        assert any(code in NON_ALLOWING_REASONS for code in case["expected"]["reason_codes"])
 
 
 def test_reason_codes_are_status_compatible(cases: list[dict[str, Any]]) -> None:
@@ -453,9 +442,7 @@ def test_reason_codes_are_status_compatible(cases: list[dict[str, Any]]) -> None
 
     for case in cases:
         status = parse_status(case["expected"]["status"])
-        defaults = [
-            default_status_for_reason(code) for code in case["expected"]["reason_codes"]
-        ]
+        defaults = [default_status_for_reason(code) for code in case["expected"]["reason_codes"]]
         if status is AdmissibilityStatus.ALLOW:
             assert AdmissibilityStatus.ALLOW in defaults
             assert AdmissibilityStatus.REJECT not in defaults
@@ -496,10 +483,7 @@ def test_coverage_skill_prompt_mcp_equivalence(
         member_kinds = {m["invocation"]["kind"] for m in members}
         assert INVOCATION_KINDS <= member_kinds
         # Shared obligation digests across representations.
-        obl_sets = [
-            tuple(sorted(o["statement_digest"] for o in m["obligations"]))
-            for m in members
-        ]
+        obl_sets = [tuple(sorted(o["statement_digest"] for o in m["obligations"])) for m in members]
         assert len(set(obl_sets)) == 1, f"{group_id}: obligation digests diverge"
         statuses = {m["expected"]["status"] for m in members}
         assert statuses == {"allow"}
@@ -527,8 +511,10 @@ def test_coverage_adversarial_integrity(cases: list[dict[str, Any]]) -> None:
         for case in matching:
             assert case["expected"]["status"] != "allow"
             assert case["expected"]["cannot_allow"] is True
-            assert "adversarial" in case or case.get("adversarial") is not None or (
-                "adversarial" in case["tags"]
+            assert (
+                "adversarial" in case
+                or case.get("adversarial") is not None
+                or ("adversarial" in case["tags"])
             )
 
 
@@ -570,9 +556,7 @@ def test_manifest_coverage_index_matches_cases(
     assert index["case_count"] == len(cases)
     assert set(index["strata"]) == {c["stratum"] for c in cases}
     assert set(index["wire_statuses"]) == {c["expected"]["status"] for c in cases}
-    assert set(index["invocation_kinds_present"]) == {
-        c["invocation"]["kind"] for c in cases
-    }
+    assert set(index["invocation_kinds_present"]) == {c["invocation"]["kind"] for c in cases}
     assert set(index["tags"]) == _tags(cases)
     assert set(index["categories"]) == _categories(cases)
 
@@ -593,9 +577,7 @@ def test_expected_filters_and_obligations_are_bound(
             )
         obl_ids = {o["obligation_id"] for o in case["obligations"]}
         for obl_id in expected["obligations_required"]:
-            assert obl_id in obl_ids, (
-                f"{case['case_id']}: required obligation {obl_id!r} missing"
-            )
+            assert obl_id in obl_ids, f"{case['case_id']}: required obligation {obl_id!r} missing"
 
 
 def test_metamorphic_mutations_declare_relevant_and_irrelevant(
@@ -640,9 +622,7 @@ def test_cache_substitution_is_non_authoritative(
     assert case["expected"]["status"] != "allow"
     assert case["adversarial"]["attack"] == "cache_substitution"
     assert case["adversarial"]["substituted_kind"] == "artifact-membership"
-    assert any(
-        a.get("attestation_kind") == "artifact-membership" for a in case["authorities"]
-    )
+    assert any(a.get("attestation_kind") == "artifact-membership" for a in case["authorities"])
 
 
 def test_zkp_mismatch_cases_bind_expected_vs_observed(
@@ -704,9 +684,9 @@ def test_corpus_is_sorted_and_deterministic(
     assert ids == sorted(ids)
     # Re-serialize cases with the same canonical policy and compare digest.
     cases_doc = _load_json(CASES_PATH)
-    reserialized = json.dumps(
-        cases_doc, indent=2, sort_keys=True, ensure_ascii=False
-    ).encode("utf-8")
+    reserialized = json.dumps(cases_doc, indent=2, sort_keys=True, ensure_ascii=False).encode(
+        "utf-8"
+    )
     if not reserialized.endswith(b"\n"):
         reserialized += b"\n"
     assert _sha256_hex(reserialized) == manifest["cases_sha256"]
@@ -749,10 +729,8 @@ def test_simulated_zkp_cases_never_allow_or_grant_capability(
         authorities = case.get("authorities") or []
         simulated = any(
             bool(a.get("is_simulated"))
-            or str(a.get("attestation_kind", "")).lower()
-            in {"simulation", "simulated"}
-            or str(a.get("result_authority", "")).lower()
-            in {"simulation", "simulated"}
+            or str(a.get("attestation_kind", "")).lower() in {"simulation", "simulated"}
+            or str(a.get("result_authority", "")).lower() in {"simulation", "simulated"}
             for a in authorities
         )
         tags = set(case.get("tags") or [])

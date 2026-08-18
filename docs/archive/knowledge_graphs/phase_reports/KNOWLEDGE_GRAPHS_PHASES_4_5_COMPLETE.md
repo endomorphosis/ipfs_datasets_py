@@ -74,10 +74,7 @@ jsonld = {
     "@context": "https://schema.org/",
     "@type": "Person",
     "name": "Alice Smith",
-    "knows": {
-        "@type": "Person",
-        "name": "Bob Jones"
-    }
+    "knows": {"@type": "Person", "name": "Bob Jones"},
 }
 
 graph = translator.jsonld_to_ipld(jsonld)
@@ -211,16 +208,14 @@ entity = {
     "properties": {
         "name": "Alice",
         "description": "Software engineer",
-        "location": (40.7128, -74.0060)  # NYC coordinates
-    }
+        "location": (40.7128, -74.0060),  # NYC coordinates
+    },
 }
 idx_mgr.insert_entity(entity)
 
 # Query indexes
 name_results = idx_mgr.get_index("idx_name").search("Alice")
-nearby = idx_mgr.get_index("idx_spatial_location").search_radius(
-    (40.7128, -74.0060), radius=5.0
-)
+nearby = idx_mgr.get_index("idx_spatial_location").search_radius((40.7128, -74.0060), radius=5.0)
 
 # Add constraints
 const_mgr = ConstraintManager()
@@ -421,10 +416,12 @@ No breaking changes. All new functionality is additive.
 ```python
 # Old way (still works)
 from ipfs_datasets_py.knowledge_graphs import GraphDatabase
+
 db = GraphDatabase()
 
 # New way (with JSON-LD)
 from ipfs_datasets_py.knowledge_graphs.jsonld import JSONLDTranslator
+
 translator = JSONLDTranslator()
 graph = translator.jsonld_to_ipld(jsonld_doc)
 # Use graph with existing GraphDatabase

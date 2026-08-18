@@ -3,6 +3,7 @@
 Covers issues #1166 (Temporal), #1167 (DCEC), #1168 (TDFOL),
 and #1174 (compiler side).
 """
+
 from __future__ import annotations
 
 import json
@@ -12,8 +13,12 @@ import pytest
 
 # Path is set up by the layered conftest.py files (root, tests/, and this directory)
 from reasoner.hybrid_v2_blueprint import (
-    parse_cnl_to_ir, compile_ir_to_dcec, compile_ir_to_temporal_deontic_fol,
-    build_v2_compiler_parity_report, DeonticOpV2, TemporalRelationV2,
+    parse_cnl_to_ir,
+    compile_ir_to_dcec,
+    compile_ir_to_temporal_deontic_fol,
+    build_v2_compiler_parity_report,
+    DeonticOpV2,
+    TemporalRelationV2,
 )
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -22,6 +27,7 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def ir_simple():
@@ -41,6 +47,7 @@ def ir_by_date():
 # ---------------------------------------------------------------------------
 # TestTemporalConstraintsV3 (#1166)
 # ---------------------------------------------------------------------------
+
 
 class TestTemporalConstraintsV3:
     def test_temporal_is_external_object(self, ir_within):
@@ -106,14 +113,15 @@ class TestTemporalConstraintsV3:
             )
             if case["expected_temporal_in_tdfol"]:
                 combined = " ".join(tdfol)
-                assert any(
-                    token in combined for token in ("Within", "By", "During")
-                ), f"Case {case['id']}: expected temporal guard in TDFOL"
+                assert any(token in combined for token in ("Within", "By", "During")), (
+                    f"Case {case['id']}: expected temporal guard in TDFOL"
+                )
 
 
 # ---------------------------------------------------------------------------
 # TestDCECCompilerPass (#1167)
 # ---------------------------------------------------------------------------
+
 
 class TestDCECCompilerPass:
     def test_dcec_deontic_wraps_frame_ref(self, ir_simple):
@@ -162,6 +170,7 @@ class TestDCECCompilerPass:
 # ---------------------------------------------------------------------------
 # TestTDFOLCompilerPass (#1168)
 # ---------------------------------------------------------------------------
+
 
 class TestTDFOLCompilerPass:
     def test_tdfol_time_quantifier_present(self, ir_simple):
@@ -217,6 +226,7 @@ class TestTDFOLCompilerPass:
 # TestV3TransformationCompilerPack (#1174 compiler side)
 # ---------------------------------------------------------------------------
 
+
 class TestV3TransformationCompilerPack:
     def test_v3_transformation_all_ten_pass(self):
         # GIVEN all 10 V3 transformation fixture cases
@@ -236,8 +246,7 @@ class TestV3TransformationCompilerPack:
         # GIVEN the first 5 norm cases from the fixture
         fixture_path = FIXTURES_DIR / "cnl_v3_transformation_cases.json"
         cases = [
-            c for c in json.loads(fixture_path.read_text())
-            if c["expected_parse_mode"] == "norm"
+            c for c in json.loads(fixture_path.read_text()) if c["expected_parse_mode"] == "norm"
         ][:5]
         for case in cases:
             ir = parse_cnl_to_ir(case["sentence"])
@@ -254,8 +263,7 @@ class TestV3TransformationCompilerPack:
         # GIVEN the first 5 norm cases
         fixture_path = FIXTURES_DIR / "cnl_v3_transformation_cases.json"
         cases = [
-            c for c in json.loads(fixture_path.read_text())
-            if c["expected_parse_mode"] == "norm"
+            c for c in json.loads(fixture_path.read_text()) if c["expected_parse_mode"] == "norm"
         ][:5]
         for case in cases:
             ir = parse_cnl_to_ir(case["sentence"])
@@ -270,8 +278,7 @@ class TestV3TransformationCompilerPack:
         # GIVEN the first 5 norm cases with expected_dcec_contains
         fixture_path = FIXTURES_DIR / "cnl_v3_transformation_cases.json"
         cases = [
-            c for c in json.loads(fixture_path.read_text())
-            if c["expected_parse_mode"] == "norm"
+            c for c in json.loads(fixture_path.read_text()) if c["expected_parse_mode"] == "norm"
         ][:5]
         for case in cases:
             ir = parse_cnl_to_ir(case["sentence"])
@@ -286,8 +293,7 @@ class TestV3TransformationCompilerPack:
         # GIVEN the first 5 norm cases with expected_tdfol_contains
         fixture_path = FIXTURES_DIR / "cnl_v3_transformation_cases.json"
         cases = [
-            c for c in json.loads(fixture_path.read_text())
-            if c["expected_parse_mode"] == "norm"
+            c for c in json.loads(fixture_path.read_text()) if c["expected_parse_mode"] == "norm"
         ][:5]
         for case in cases:
             ir = parse_cnl_to_ir(case["sentence"])

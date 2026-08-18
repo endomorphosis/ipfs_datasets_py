@@ -136,9 +136,7 @@ def _load_strict_json(path: Path) -> object:
             parse_constant=reject_constant,
         )
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
-        raise LeanstralRuleGapReauditError(
-            f"cannot parse fresh evidence: {path}"
-        ) from exc
+        raise LeanstralRuleGapReauditError(f"cannot parse fresh evidence: {path}") from exc
 
 
 def _historical_paths(args: argparse.Namespace) -> list[Path]:
@@ -146,9 +144,7 @@ def _historical_paths(args: argparse.Namespace) -> list[Path]:
     if explicit:
         paths = explicit
     else:
-        paths = list(
-            canonical_historical_rule_gap_report_paths(args.reports_root)
-        )
+        paths = list(canonical_historical_rule_gap_report_paths(args.reports_root))
     resolved = [path.resolve() for path in paths]
     if not resolved:
         raise LeanstralRuleGapReauditError("no historical rule-gap reports found")

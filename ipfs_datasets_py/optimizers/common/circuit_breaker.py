@@ -5,7 +5,7 @@ by temporarily disabling calls to failing services.
 
 The circuit-breaker has three states:
 - CLOSED: Normal operation, calls pass through
-- OPEN: Too many failures, calls are rejected immediately  
+- OPEN: Too many failures, calls are rejected immediately
 - HALF_OPEN: Testing if service recovered, limited calls allowed
 
 Examples:
@@ -16,11 +16,11 @@ Examples:
             recovery_timeout=60,
             name="llm_backend"
         )
-        
+
         @breaker.call
         def my_llm_call(prompt: str) -> str:
             return llm_backend.generate(prompt)
-        
+
         try:
             result = my_llm_call("Some prompt")
         except CircuitBreakerOpen:
@@ -37,7 +37,7 @@ from .log_redaction import redact_sensitive
 
 _logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def _safe_error_text(error: BaseException) -> str:
@@ -47,8 +47,9 @@ def _safe_error_text(error: BaseException) -> str:
 
 class CircuitState(str, Enum):
     """States of the circuit-breaker."""
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Failing, reject calls
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing, reject calls
     HALF_OPEN = "half_open"  # Testing recovery
 
 
@@ -57,7 +58,7 @@ class CircuitBreakerOpen(Exception):
 
     def __init__(self, service_name: str, recovery_time: float):
         """Initialize exception.
-        
+
         Args:
             service_name: Name of the blocked service
             recovery_time: Time until next recovery attempt (seconds)
@@ -73,6 +74,7 @@ class CircuitBreakerOpen(Exception):
 @dataclass
 class CircuitBreakerMetrics:
     """Metrics tracking circuit breaker behavior."""
+
     total_calls: int = 0
     successful_calls: int = 0
     failed_calls: int = 0
@@ -80,14 +82,14 @@ class CircuitBreakerMetrics:
     state_changes: int = 0
     last_failure_time: Optional[float] = None
     last_success_time: Optional[float] = None
-    
+
     @property
     def success_rate(self) -> float:
         """Calculate success rate as percentage."""
         if self.total_calls == 0:
             return 0.0
         return 100.0 * self.successful_calls / self.total_calls
-    
+
     @property
     def failure_rate(self) -> float:
         """Calculate failure rate as percentage."""
@@ -98,20 +100,20 @@ class CircuitBreakerMetrics:
 
 class CircuitBreaker(Generic[T]):
     """Circuit-breaker pattern for resilient function calls.
-    
+
     Helps handle transient failures in external services by:
     - Tracking failure rates
     - Temporarily rejecting calls when failure threshold exceeded
     - Allowing recovery testing in HALF_OPEN state
     - Providing metrics about circuit behavior
-    
+
     Attributes:
         name: Identifier for this circuit breaker
         failure_threshold: Number of failures before opening circuit
         recovery_timeout: Seconds to wait before testing recovery
         expected_exception: Exception type(s) that count as failures
     """
-    
+
     def __init__(
         self,
         name: str = "circuit_breaker",
@@ -120,7 +122,7 @@ class CircuitBreaker(Generic[T]):
         expected_exception: type[BaseException] | tuple[type[BaseException], ...] = Exception,
     ):
         """Initialize circuit-breaker.
-        
+
         Args:
             name: Name for logging and identification
             failure_threshold: Number of failures before OPEN
@@ -131,13 +133,13 @@ class CircuitBreaker(Generic[T]):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.expected_exception = expected_exception
-        
+
         self._state = CircuitState.CLOSED
         self._failure_count = 0
         self._last_failure_time: Optional[float] = None
         self._opened_at: Optional[float] = None
         self._metrics = CircuitBreakerMetrics()
-    
+
     @property
     def state(self) -> CircuitState:
         """Get current circuit state, updating if needed."""
@@ -151,14 +153,14 @@ class CircuitBreaker(Generic[T]):
                     )
                     self._state = CircuitState.HALF_OPEN
                     self._metrics.state_changes += 1
-        
+
         return self._state
-    
+
     @property
     def is_active(self) -> bool:
         """Check if circuit is accepting calls."""
         return self.state != CircuitState.OPEN
-    
+
     def metrics(self) -> CircuitBreakerMetrics:
         """Get current metrics snapshot."""
         return CircuitBreakerMetrics(
@@ -170,23 +172,24 @@ class CircuitBreaker(Generic[T]):
             last_failure_time=self._metrics.last_failure_time,
             last_success_time=self._metrics.last_success_time,
         )
-    
+
     def call(self, func: Callable[..., T]) -> Callable[..., T]:
         """Decorator to wrap a function with circuit-breaker logic.
-        
+
         Args:
             func: Function to wrap
-            
+
         Returns:
             Wrapped function that respects circuit state
         """
+
         def wrapper(*args: Any, **kwargs: Any) -> T:
             return self._execute(func, args, kwargs)
-        
+
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
         return wrapper
-    
+
     def _execute(
         self,
         func: Callable[..., T],
@@ -194,20 +197,20 @@ class CircuitBreaker(Generic[T]):
         kwargs: dict[str, Any],
     ) -> T:
         """Execute function with circuit-breaker protection.
-        
+
         Args:
             func: Function to execute
             args: Positional arguments
             kwargs: Keyword arguments
-            
+
         Returns:
             Function result
-            
+
         Raises:
             CircuitBreakerOpen: If circuit is OPEN
         """
         current_state = self.state
-        
+
         if current_state == CircuitState.OPEN:
             # Reject all calls while OPEN
             self._metrics.rejected_calls += 1
@@ -217,28 +220,27 @@ class CircuitBreaker(Generic[T]):
                 elapsed = time.time() - self._opened_at
                 recovery_time = max(0, self.recovery_timeout - elapsed)
             raise CircuitBreakerOpen(self.name, recovery_time)
-        
+
         try:
             # Execute the function
             result = func(*args, **kwargs)
-            
+
             # Success - record metrics and potentially close circuit
             self._metrics.total_calls += 1
             self._metrics.successful_calls += 1
             self._metrics.last_success_time = time.time()
             self._failure_count = 0
-            
+
             if current_state == CircuitState.HALF_OPEN:
                 # Success in HALF_OPEN state means we can close circuit
                 _logger.info(
-                    f"Circuit '{self.name}' recovery successful, "
-                    f"transitioning HALF_OPEN → CLOSED"
+                    f"Circuit '{self.name}' recovery successful, transitioning HALF_OPEN → CLOSED"
                 )
                 self._state = CircuitState.CLOSED
                 self._metrics.state_changes += 1
-            
+
             return result
-            
+
         except self.expected_exception as e:
             # Failure - track and potentially open circuit
             self._metrics.total_calls += 1
@@ -246,12 +248,12 @@ class CircuitBreaker(Generic[T]):
             self._metrics.last_failure_time = time.time()
             self._failure_count += 1
             self._last_failure_time = time.time()
-            
+
             _logger.warning(
                 f"Circuit '{self.name}' call failed "
                 f"({self._failure_count}/{self.failure_threshold}): {_safe_error_text(e)}"
             )
-            
+
             if self._failure_count >= self.failure_threshold:
                 if self._state != CircuitState.OPEN:
                     _logger.error(
@@ -261,7 +263,7 @@ class CircuitBreaker(Generic[T]):
                     self._state = CircuitState.OPEN
                     self._opened_at = time.time()
                     self._metrics.state_changes += 1
-            
+
             raise
 
 
@@ -272,16 +274,16 @@ def circuit_breaker(
     expected_exception: type[BaseException] | tuple[type[BaseException], ...] = Exception,
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """Decorator factory for circuit-breaker pattern.
-    
+
     Args:
         name: Circuit breaker identifier
         failure_threshold: Failures before opening
         recovery_timeout: Recovery test delay
         expected_exception: Exception type(s) to catch
-        
+
     Returns:
         Decorator function
-        
+
     Example:
         @circuit_breaker(
             name="llm_api",
@@ -298,8 +300,8 @@ def circuit_breaker(
         recovery_timeout=recovery_timeout,
         expected_exception=expected_exception,
     )
-    
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         return breaker.call(func)
-    
+
     return decorator

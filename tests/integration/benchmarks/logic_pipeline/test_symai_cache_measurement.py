@@ -30,13 +30,8 @@ TEXT = "Every licensed agency must file an annual report."
 def _plain(value: object) -> object:
     def thaw(item: object) -> object:
         if isinstance(item, Mapping):
-            return {
-                str(key): thaw(member)
-                for key, member in item.items()
-            }
-        if isinstance(item, Sequence) and not isinstance(
-            item, (str, bytes, bytearray)
-        ):
+            return {str(key): thaw(member) for key, member in item.items()}
+        if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
             return [thaw(member) for member in item]
         return item
 
@@ -44,20 +39,13 @@ def _plain(value: object) -> object:
 
 
 def _sha_json(value: object) -> str:
-    return hashlib.sha256(
-        contracts.canonical_json(value).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(contracts.canonical_json(value).encode("utf-8")).hexdigest()
 
 
 def _contains_key(value: object, sought: str) -> bool:
     if isinstance(value, Mapping):
-        return sought in value or any(
-            _contains_key(member, sought)
-            for member in value.values()
-        )
-    if isinstance(value, Sequence) and not isinstance(
-        value, (str, bytes, bytearray)
-    ):
+        return sought in value or any(_contains_key(member, sought) for member in value.values())
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return any(_contains_key(member, sought) for member in value)
     return False
 
@@ -164,11 +152,7 @@ def _request(
         environment_sha256=ENVIRONMENT_SHA256,
         source=("benchmark_input",),
         deadline_unix_ms=deadline_unix_ms,
-        semantic_protocol_cid=(
-            contracts.SEMANTIC_PROTOCOL_V2_CID
-            if semantic_v2
-            else None
-        ),
+        semantic_protocol_cid=(contracts.SEMANTIC_PROTOCOL_V2_CID if semantic_v2 else None),
     )
 
 
@@ -185,11 +169,7 @@ def _configured(
             model="Leanstral-119B",
             max_retries=0,
             cache_enabled=cache_enabled,
-            semantic_protocol_cid=(
-                contracts.SEMANTIC_PROTOCOL_V2_CID
-                if semantic_v2
-                else None
-            ),
+            semantic_protocol_cid=(contracts.SEMANTIC_PROTOCOL_V2_CID if semantic_v2 else None),
         ),
         engine_factory=lambda _config, _namespace: engine,
         trace_getter=lambda: {},
@@ -202,12 +182,7 @@ def _rehash_receipt(value: dict[str, object]) -> dict[str, object]:
     without_digest = {
         key: item
         for key, item in value.items()
-        if key
-        not in (
-            {"receipt_sha256", "receipt_cid"}
-            if semantic_v2
-            else {"receipt_sha256"}
-        )
+        if key not in ({"receipt_sha256", "receipt_cid"} if semantic_v2 else {"receipt_sha256"})
     }
     value["receipt_sha256"] = hashlib.sha256(
         contracts.canonical_json(without_digest).encode("utf-8")
@@ -226,13 +201,9 @@ def _replace_embedded_receipt(
     data = dict(invocation.output.data)
     data[cache_measurement.SYMAI_CACHE_PRIME_FIELD] = receipt
     identity = dict(invocation.output.effective_identity)
-    identity[cache_measurement.SYMAI_CACHE_PRIME_DIGEST_FIELD] = (
-        receipt["receipt_sha256"]
-    )
+    identity[cache_measurement.SYMAI_CACHE_PRIME_DIGEST_FIELD] = receipt["receipt_sha256"]
     if "receipt_cid" in receipt:
-        identity[cache_measurement.SYMAI_CACHE_PRIME_CID_FIELD] = (
-            receipt["receipt_cid"]
-        )
+        identity[cache_measurement.SYMAI_CACHE_PRIME_CID_FIELD] = receipt["receipt_cid"]
     return adapters.StageInvocation(
         replace(
             invocation.output,
@@ -248,19 +219,11 @@ def _record_with_copied_receipt(
     receipt: cache_measurement.SymaiCachePrimeReceipt,
 ) -> contracts.StageRecord:
     data = dict(target.to_dict()["data"])
-    data[cache_measurement.SYMAI_CACHE_PRIME_FIELD] = (
-        receipt.to_dict()
-    )
-    effective_identity = dict(
-        target.provenance.effective_identity
-    )
-    effective_identity[
-        cache_measurement.SYMAI_CACHE_PRIME_DIGEST_FIELD
-    ] = receipt.receipt_sha256
+    data[cache_measurement.SYMAI_CACHE_PRIME_FIELD] = receipt.to_dict()
+    effective_identity = dict(target.provenance.effective_identity)
+    effective_identity[cache_measurement.SYMAI_CACHE_PRIME_DIGEST_FIELD] = receipt.receipt_sha256
     if receipt.receipt_cid is not None:
-        effective_identity[
-            cache_measurement.SYMAI_CACHE_PRIME_CID_FIELD
-        ] = receipt.receipt_cid
+        effective_identity[cache_measurement.SYMAI_CACHE_PRIME_CID_FIELD] = receipt.receipt_cid
     provenance = replace(
         target.provenance,
         effective_identity=effective_identity,
@@ -323,10 +286,7 @@ def _assert_metrics_backend_invocation_count(
     expected: int,
 ) -> None:
     aggregate = metrics.aggregate_case_results((result,))
-    assert (
-        aggregate.resource_lane_measurements["model"]["stage_count"]
-        == expected
-    )
+    assert aggregate.resource_lane_measurements["model"]["stage_count"] == expected
     symai = result.stages[0]
     setup = cache_measurement.extract_symai_cache_setup_telemetry(symai)
     assert setup is not None
@@ -363,9 +323,7 @@ def _assert_metrics_backend_invocation_count(
         measurement_sha256=hashlib.sha256(
             f"{result.run_id}:{expected}:forged".encode("utf-8")
         ).hexdigest(),
-        component_costs=(
-            replace(cost, component_calls=3 - expected),
-        ),
+        component_costs=(replace(cost, component_calls=3 - expected),),
     )
     with pytest.raises(
         metrics.MetricsContractError,
@@ -402,10 +360,7 @@ def test_public_api_is_explicit_and_importable() -> None:
     }
 
     assert set(cache_measurement.__all__) == expected
-    assert all(
-        getattr(cache_measurement, name) is not None
-        for name in cache_measurement.__all__
-    )
+    assert all(getattr(cache_measurement, name) is not None for name in cache_measurement.__all__)
 
 
 def test_warm_setup_miss_then_measured_hit_has_source_bound_receipt() -> None:
@@ -429,9 +384,7 @@ def test_warm_setup_miss_then_measured_hit_has_source_bound_receipt() -> None:
         invocation,
         request=request,
     )
-    assert receipt.schema == (
-        cache_measurement.SYMAI_CACHE_PRIME_RECEIPT_SCHEMA
-    )
+    assert receipt.schema == (cache_measurement.SYMAI_CACHE_PRIME_RECEIPT_SCHEMA)
     assert receipt.protocol_sha256 == request.protocol_sha256
     assert receipt.run_id == request.run_id
     assert receipt.case_id == request.case_id
@@ -454,19 +407,14 @@ def test_warm_setup_miss_then_measured_hit_has_source_bound_receipt() -> None:
     assert receipt.setup_telemetry.cache_misses == 1
     assert receipt.setup_telemetry.retries == 0
     assert (
-        invocation.output.effective_identity[
-            cache_measurement.SYMAI_CACHE_PRIME_DIGEST_FIELD
-        ]
+        invocation.output.effective_identity[cache_measurement.SYMAI_CACHE_PRIME_DIGEST_FIELD]
         == receipt.receipt_sha256
     )
-    assert (
-        receipt.prime_semantic_output_sha256
-        == cache_measurement.symai_semantic_payload_sha256(invocation)
+    assert receipt.prime_semantic_output_sha256 == cache_measurement.symai_semantic_payload_sha256(
+        invocation
     )
 
-    serialized_receipt = json.dumps(
-        receipt.to_dict(), sort_keys=True
-    )
+    serialized_receipt = json.dumps(receipt.to_dict(), sort_keys=True)
     assert "raw_output" not in serialized_receipt
     assert raw not in serialized_receipt
 
@@ -498,22 +446,13 @@ def test_semantic_v2_warm_receipt_uses_cid_namespace_and_materializes() -> None:
         request=request,
     )
 
-    assert receipt.schema == (
-        cache_measurement.SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2
-    )
-    assert (
-        receipt.semantic_protocol_cid
-        == contracts.SEMANTIC_PROTOCOL_V2_CID
-    )
-    assert receipt.source_cid == cid_for_bytes(
-        TEXT.encode("utf-8"), codec="raw"
-    )
+    assert receipt.schema == (cache_measurement.SYMAI_CACHE_PRIME_RECEIPT_SCHEMA_SEMANTIC_V2)
+    assert receipt.semantic_protocol_cid == contracts.SEMANTIC_PROTOCOL_V2_CID
+    assert receipt.source_cid == cid_for_bytes(TEXT.encode("utf-8"), codec="raw")
     assert receipt.cache_namespace.endswith(
         f"/semantic-protocol/{contracts.SEMANTIC_PROTOCOL_V2_CID}"
     )
-    assert receipt.cache_key.startswith(
-        f"{receipt.cache_namespace}/stage/symai/b"
-    )
+    assert receipt.cache_key.startswith(f"{receipt.cache_namespace}/stage/symai/b")
     for field, codec in (
         ("semantic_protocol_cid", "dag-json"),
         ("source_cid", "raw"),
@@ -555,23 +494,18 @@ def test_semantic_v2_warm_receipt_uses_cid_namespace_and_materializes() -> None:
         exact = _plain(getattr(receipt, value_field))
         assert _sha_json(exact) == getattr(receipt, sha_field)
         assert cid_for_dag_json(exact) == getattr(receipt, cid_field)
-    assert _sha_json(receipt.setup_telemetry.to_dict()) == (
-        receipt.setup_telemetry_sha256
+    assert _sha_json(receipt.setup_telemetry.to_dict()) == (receipt.setup_telemetry_sha256)
+    assert (
+        cid_for_dag_json(_plain(receipt.setup_telemetry.to_dict())) == receipt.setup_telemetry_cid
     )
-    assert cid_for_dag_json(
-        _plain(receipt.setup_telemetry.to_dict())
-    ) == receipt.setup_telemetry_cid
     assert receipt.measured_telemetry is not None
-    assert _sha_json(receipt.measured_telemetry.to_dict()) == (
-        receipt.measured_telemetry_sha256
+    assert _sha_json(receipt.measured_telemetry.to_dict()) == (receipt.measured_telemetry_sha256)
+    assert (
+        cid_for_dag_json(_plain(receipt.measured_telemetry.to_dict()))
+        == receipt.measured_telemetry_cid
     )
-    assert cid_for_dag_json(
-        _plain(receipt.measured_telemetry.to_dict())
-    ) == receipt.measured_telemetry_cid
     expected_request = {
-        "schema": (
-            cache_measurement.SYMAI_CACHE_PRIME_REQUEST_SCHEMA_SEMANTIC_V2
-        ),
+        "schema": (cache_measurement.SYMAI_CACHE_PRIME_REQUEST_SCHEMA_SEMANTIC_V2),
         "protocol_sha256": request.protocol_sha256,
         "run_id": request.run_id,
         "case_id": request.case_id,
@@ -583,19 +517,13 @@ def test_semantic_v2_warm_receipt_uses_cid_namespace_and_materializes() -> None:
         "environment_sha256": request.environment_sha256,
         "requested_identity_sha256": receipt.requested_identity_sha256,
         "source": list(receipt.source),
-        "upstream_stage_digests": list(
-            receipt.upstream_stage_digests
-        ),
-        "upstream_artifact_sha256": list(
-            receipt.upstream_artifact_sha256
-        ),
+        "upstream_stage_digests": list(receipt.upstream_stage_digests),
+        "upstream_artifact_sha256": list(receipt.upstream_artifact_sha256),
         "semantic_protocol_cid": receipt.semantic_protocol_cid,
         "source_cid": receipt.source_cid,
         "requested_identity": _plain(receipt.requested_identity),
         "requested_identity_cid": receipt.requested_identity_cid,
-        "upstream_artifact_cids": list(
-            receipt.upstream_artifact_cids
-        ),
+        "upstream_artifact_cids": list(receipt.upstream_artifact_cids),
     }
     assert _sha_json(expected_request) == receipt.request_sha256
     assert cid_for_dag_json(expected_request) == receipt.request_cid
@@ -607,9 +535,10 @@ def test_semantic_v2_warm_receipt_uses_cid_namespace_and_materializes() -> None:
     }
     assert _sha_json(receipt_body) == receipt.receipt_sha256
     assert cid_for_dag_json(_plain(receipt_body)) == receipt.receipt_cid
-    assert invocation.output.effective_identity[
-        cache_measurement.SYMAI_CACHE_PRIME_CID_FIELD
-    ] == receipt.receipt_cid
+    assert (
+        invocation.output.effective_identity[cache_measurement.SYMAI_CACHE_PRIME_CID_FIELD]
+        == receipt.receipt_cid
+    )
     assert not _contains_key(receipt.to_dict(), "raw_output")
     assert raw not in contracts.canonical_json(receipt.to_dict())
     record = adapter.record(request, invocation)
@@ -620,32 +549,21 @@ def test_semantic_v2_warm_receipt_uses_cid_namespace_and_materializes() -> None:
         ).receipt_sha256
         == receipt.receipt_sha256
     )
-    assert (
-        cache_measurement.extract_symai_cache_setup_telemetry(record)
-        == receipt.setup_telemetry
-    )
+    assert cache_measurement.extract_symai_cache_setup_telemetry(record) == receipt.setup_telemetry
 
 
 def test_stage_record_binding_accepts_warm_and_rejects_warm_receipt_on_cold() -> None:
     warm_request = _request(run_id="symai-cache-record-mode")
     warm_adapter = _configured(_Engine([_structured_response()]))
-    warm_invocation = (
-        cache_measurement.invoke_with_symai_cache_measurement(
-            warm_adapter, warm_request
-        )
+    warm_invocation = cache_measurement.invoke_with_symai_cache_measurement(
+        warm_adapter, warm_request
     )
-    warm_record = warm_adapter.record(
-        warm_request, warm_invocation
-    )
-    warm_receipt = (
-        cache_measurement.validate_symai_warm_cache_measurement(
-            warm_record, request=warm_request
-        )
+    warm_record = warm_adapter.record(warm_request, warm_invocation)
+    warm_receipt = cache_measurement.validate_symai_warm_cache_measurement(
+        warm_record, request=warm_request
     )
     assert (
-        cache_measurement.extract_symai_cache_setup_telemetry(
-            warm_record, request=warm_request
-        )
+        cache_measurement.extract_symai_cache_setup_telemetry(warm_record, request=warm_request)
         == warm_receipt.setup_telemetry
     )
 
@@ -654,71 +572,47 @@ def test_stage_record_binding_accepts_warm_and_rejects_warm_receipt_on_cold() ->
         run_id=warm_request.run_id,
     )
     cold_adapter = _configured(_Engine([_structured_response()]))
-    cold_invocation = (
-        cache_measurement.invoke_with_symai_cache_measurement(
-            cold_adapter, cold_request
-        )
+    cold_invocation = cache_measurement.invoke_with_symai_cache_measurement(
+        cold_adapter, cold_request
     )
-    cold_record = cold_adapter.record(
-        cold_request, cold_invocation
-    )
+    cold_record = cold_adapter.record(cold_request, cold_invocation)
     assert (
-        cache_measurement.extract_symai_cache_prime_receipt(
-            cold_record, request=cold_request
-        )
+        cache_measurement.extract_symai_cache_prime_receipt(cold_record, request=cold_request)
         is None
     )
 
-    forged_cold = _record_with_copied_receipt(
-        cold_record, warm_receipt
-    )
+    forged_cold = _record_with_copied_receipt(cold_record, warm_receipt)
     with pytest.raises(
         contracts.ProtocolContractError,
         match="does not bind enclosing StageRecord",
     ):
-        cache_measurement.extract_symai_cache_prime_receipt(
-            forged_cold
-        )
+        cache_measurement.extract_symai_cache_prime_receipt(forged_cold)
     with pytest.raises(
         contracts.ProtocolContractError,
         match="does not bind enclosing StageRecord",
     ):
-        cache_measurement.extract_symai_cache_setup_telemetry(
-            forged_cold
-        )
+        cache_measurement.extract_symai_cache_setup_telemetry(forged_cold)
 
 
 def test_stage_record_rejects_receipt_copied_across_coordinates() -> None:
     source_request = _request(run_id="symai-cache-record-source")
     source_adapter = _configured(_Engine([_structured_response()]))
-    source_invocation = (
-        cache_measurement.invoke_with_symai_cache_measurement(
-            source_adapter, source_request
-        )
+    source_invocation = cache_measurement.invoke_with_symai_cache_measurement(
+        source_adapter, source_request
     )
-    source_record = source_adapter.record(
-        source_request, source_invocation
-    )
-    source_receipt = (
-        cache_measurement.extract_symai_cache_prime_receipt(
-            source_record, request=source_request
-        )
+    source_record = source_adapter.record(source_request, source_invocation)
+    source_receipt = cache_measurement.extract_symai_cache_prime_receipt(
+        source_record, request=source_request
     )
     assert source_receipt is not None
 
     target_request = _request(run_id="symai-cache-record-target")
     target_adapter = _configured(_Engine([_structured_response()]))
-    target_invocation = (
-        cache_measurement.invoke_with_symai_cache_measurement(
-            target_adapter, target_request
-        )
+    target_invocation = cache_measurement.invoke_with_symai_cache_measurement(
+        target_adapter, target_request
     )
-    target_record = target_adapter.record(
-        target_request, target_invocation
-    )
-    copied = _record_with_copied_receipt(
-        target_record, source_receipt
-    )
+    target_record = target_adapter.record(target_request, target_invocation)
+    copied = _record_with_copied_receipt(target_record, source_receipt)
 
     with pytest.raises(
         contracts.ProtocolContractError,
@@ -729,17 +623,13 @@ def test_stage_record_rejects_receipt_copied_across_coordinates() -> None:
         contracts.ProtocolContractError,
         match="does not bind enclosing StageRecord",
     ):
-        cache_measurement.validate_symai_warm_cache_measurement(
-            copied
-        )
+        cache_measurement.validate_symai_warm_cache_measurement(copied)
 
 
 def test_ablation_augmented_stage_record_preserves_cache_validation() -> None:
     request = _request(run_id="symai-cache-graph-augmented")
     adapter = _configured(_Engine([_structured_response()]))
-    invocation = cache_measurement.invoke_with_symai_cache_measurement(
-        adapter, request
-    )
+    invocation = cache_measurement.invoke_with_symai_cache_measurement(adapter, request)
     routing_policy = {
         "schema": "routing-policy.v1",
         "decision": "invoke",
@@ -769,9 +659,7 @@ def test_ablation_augmented_stage_record_preserves_cache_validation() -> None:
         invocation.telemetry,
     )
     record = adapter.record(request, augmented)
-    receipt = cache_measurement.validate_symai_warm_cache_measurement(
-        record, request=request
-    )
+    receipt = cache_measurement.validate_symai_warm_cache_measurement(record, request=request)
     assert (
         cache_measurement.symai_semantic_payload_sha256(record)
         == receipt.prime_semantic_output_sha256
@@ -797,9 +685,7 @@ def test_ablation_augmented_stage_record_preserves_cache_validation() -> None:
         contracts.ProtocolContractError,
         match="backend identity differs",
     ):
-        cache_measurement.validate_symai_warm_cache_measurement(
-            drifted_record, request=request
-        )
+        cache_measurement.validate_symai_warm_cache_measurement(drifted_record, request=request)
 
 
 @pytest.mark.parametrize(
@@ -842,9 +728,7 @@ def test_measured_backend_identity_drift_fails_but_cache_metadata_is_operational
             request=request,
         )
 
-    operational_identity = dict(
-        invocation.output.effective_identity
-    )
+    operational_identity = dict(invocation.output.effective_identity)
     operational_identity.update(
         {
             "cache_hit": False,
@@ -872,9 +756,7 @@ def test_measured_backend_identity_drift_fails_but_cache_metadata_is_operational
         == receipt.receipt_sha256
     )
     assert (
-        cache_measurement.symai_backend_identity_sha256(
-            operational_invocation
-        )
+        cache_measurement.symai_backend_identity_sha256(operational_invocation)
         == receipt.prime_backend_identity_sha256
     )
 
@@ -925,31 +807,23 @@ def test_forged_failed_setup_receipt_cannot_validate_as_a_warm_hit() -> None:
         _configured(_Engine([_structured_response()])),
         request,
     )
-    receipt = cache_measurement.extract_symai_cache_prime_receipt(
-        invocation, request=request
-    )
+    receipt = cache_measurement.extract_symai_cache_prime_receipt(invocation, request=request)
     assert receipt is not None
     forged = receipt.to_dict()
     forged.update(
         {
             "prime_status": contracts.StageStatus.FAILED.value,
-            "prime_failure_code": (
-                contracts.FailureCode.CACHE_CONTAMINATION.value
-            ),
+            "prime_failure_code": (contracts.FailureCode.CACHE_CONTAMINATION.value),
             "prime_failure_detail_sha256": "c" * 64,
         }
     )
-    tampered = _replace_embedded_receipt(
-        invocation, _rehash_receipt(forged)
-    )
+    tampered = _replace_embedded_receipt(invocation, _rehash_receipt(forged))
 
     with pytest.raises(
         contracts.ProtocolContractError,
         match="did not bind a successful setup",
     ):
-        cache_measurement.validate_symai_warm_cache_measurement(
-            tampered, request=request
-        )
+        cache_measurement.validate_symai_warm_cache_measurement(tampered, request=request)
 
 
 @pytest.mark.parametrize(
@@ -969,9 +843,7 @@ def test_forged_non_miss_setup_telemetry_cannot_validate(
         _configured(_Engine([_structured_response()])),
         request,
     )
-    receipt = cache_measurement.extract_symai_cache_prime_receipt(
-        invocation, request=request
-    )
+    receipt = cache_measurement.extract_symai_cache_prime_receipt(invocation, request=request)
     assert receipt is not None
     forged = receipt.to_dict()
     setup = dict(forged["setup_telemetry"])
@@ -979,17 +851,13 @@ def test_forged_non_miss_setup_telemetry_cannot_validate(
     setup_record = contracts.TelemetryRecord.from_dict(setup)
     forged["setup_telemetry"] = setup_record.to_dict()
     forged["setup_telemetry_sha256"] = setup_record.digest
-    tampered = _replace_embedded_receipt(
-        invocation, _rehash_receipt(forged)
-    )
+    tampered = _replace_embedded_receipt(invocation, _rehash_receipt(forged))
 
     with pytest.raises(
         contracts.ProtocolContractError,
         match="setup telemetry is not an exact miss",
     ):
-        cache_measurement.validate_symai_warm_cache_measurement(
-            tampered, request=request
-        )
+        cache_measurement.validate_symai_warm_cache_measurement(tampered, request=request)
 
 
 def test_nested_cache_and_telemetry_candidate_fields_remain_semantic() -> None:
@@ -998,16 +866,12 @@ def test_nested_cache_and_telemetry_candidate_fields_remain_semantic() -> None:
         _configured(_Engine([_structured_response()])),
         request,
     )
-    receipt = cache_measurement.validate_symai_warm_cache_measurement(
-        invocation, request=request
-    )
+    receipt = cache_measurement.validate_symai_warm_cache_measurement(invocation, request=request)
 
     data = dict(invocation.output.data)
     candidate_ir = dict(data["candidate_ir"])
     candidate_ir["cache"] = {"policy": "changed-semantic-policy"}
-    candidate_ir["telemetry"] = {
-        "meaning": "changed-semantic-measure"
-    }
+    candidate_ir["telemetry"] = {"meaning": "changed-semantic-measure"}
     data["candidate_ir"] = candidate_ir
     assert (
         cache_measurement.symai_semantic_payload_sha256(data)
@@ -1021,22 +885,16 @@ def test_nested_cache_and_telemetry_candidate_fields_remain_semantic() -> None:
         contracts.ProtocolContractError,
         match="semantic output differs",
     ):
-        cache_measurement.validate_symai_warm_cache_measurement(
-            tampered, request=request
-        )
+        cache_measurement.validate_symai_warm_cache_measurement(tampered, request=request)
 
     top_level_operational = dict(invocation.output.data)
     top_level_operational["telemetry"] = {
         "cache_hits": 100,
         "cache_misses": 100,
     }
-    top_level_operational["cache_prime_future"] = {
-        "setup_only": True
-    }
+    top_level_operational["cache_prime_future"] = {"setup_only": True}
     assert (
-        cache_measurement.symai_semantic_payload_sha256(
-            top_level_operational
-        )
+        cache_measurement.symai_semantic_payload_sha256(top_level_operational)
         == receipt.prime_semantic_output_sha256
     )
 
@@ -1051,26 +909,17 @@ def test_cold_unconfigured_disabled_and_non_symai_paths_are_single_call_na() -> 
         ),
     )
     assert len(cold_engine.calls) == 1
-    assert (
-        cache_measurement.extract_symai_cache_prime_receipt(cold)
-        is None
-    )
+    assert cache_measurement.extract_symai_cache_prime_receipt(cold) is None
 
     injected_calls: list[str] = []
     injected = cache_measurement.invoke_with_symai_cache_measurement(
         adapters.SymaiAdapter(
-            lambda request: (
-                injected_calls.append(request.case_id)
-                or {"candidate": "injected"}
-            )
+            lambda request: injected_calls.append(request.case_id) or {"candidate": "injected"}
         ),
         _request(run_id="symai-cache-injected"),
     )
     assert injected_calls == ["case-cache-001"]
-    assert (
-        cache_measurement.extract_symai_cache_prime_receipt(injected)
-        is None
-    )
+    assert cache_measurement.extract_symai_cache_prime_receipt(injected) is None
 
     disabled_engine = _Engine([_structured_response()])
     disabled = cache_measurement.invoke_with_symai_cache_measurement(
@@ -1078,10 +927,7 @@ def test_cold_unconfigured_disabled_and_non_symai_paths_are_single_call_na() -> 
         _request(run_id="symai-cache-disabled"),
     )
     assert len(disabled_engine.calls) == 1
-    assert (
-        cache_measurement.extract_symai_cache_prime_receipt(disabled)
-        is None
-    )
+    assert cache_measurement.extract_symai_cache_prime_receipt(disabled) is None
 
     dry_run = cache_measurement.invoke_with_symai_cache_measurement(
         adapters.SymaiAdapter(
@@ -1089,50 +935,33 @@ def test_cold_unconfigured_disabled_and_non_symai_paths_are_single_call_na() -> 
                 model="Leanstral-119B",
                 dry_run=True,
             ),
-            engine_factory=lambda *_args: pytest.fail(
-                "dry run must not load an engine"
-            ),
+            engine_factory=lambda *_args: pytest.fail("dry run must not load an engine"),
         ),
         _request(run_id="symai-cache-dry-run"),
     )
     assert dry_run.output.status is contracts.StageStatus.SUCCESS
-    assert (
-        cache_measurement.extract_symai_cache_prime_receipt(dry_run)
-        is None
-    )
+    assert cache_measurement.extract_symai_cache_prime_receipt(dry_run) is None
 
     non_symai_calls: list[str] = []
     non_symai = cache_measurement.invoke_with_symai_cache_measurement(
         adapters.StageAdapter(
             contracts.StageName.COMPILER,
-            lambda request: (
-                non_symai_calls.append(request.case_id)
-                or {"candidate": "compiler"}
-            ),
+            lambda request: non_symai_calls.append(request.case_id) or {"candidate": "compiler"},
         ),
         _request(run_id="symai-cache-compiler"),
     )
     assert non_symai_calls == ["case-cache-001"]
-    assert (
-        cache_measurement.extract_symai_cache_prime_receipt(non_symai)
-        is None
-    )
+    assert cache_measurement.extract_symai_cache_prime_receipt(non_symai) is None
 
     leanstral_calls: list[str] = []
     leanstral = cache_measurement.invoke_with_symai_cache_measurement(
         adapters.LeanstralAdapter(
-            lambda request: (
-                leanstral_calls.append(request.case_id)
-                or {"candidate": "leanstral"}
-            )
+            lambda request: leanstral_calls.append(request.case_id) or {"candidate": "leanstral"}
         ),
         _request(run_id="symai-cache-leanstral"),
     )
     assert leanstral_calls == ["case-cache-001"]
-    assert (
-        cache_measurement.extract_symai_cache_prime_receipt(leanstral)
-        is None
-    )
+    assert cache_measurement.extract_symai_cache_prime_receipt(leanstral) is None
 
 
 def test_prime_failure_is_retained_and_never_invoked_twice() -> None:
@@ -1146,18 +975,13 @@ def test_prime_failure_is_retained_and_never_invoked_twice() -> None:
 
     assert len(engine.calls) == 1
     assert invocation.output.status is contracts.StageStatus.FAILED
-    assert (
-        invocation.output.failure_code
-        is contracts.FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
-    )
+    assert invocation.output.failure_code is contracts.FailureCode.SYMAI_CONTRACT_OR_JSON_FAILURE
     # No measured invocation occurred; actual setup resources live solely in
     # the receipt so downstream totals cannot double-count them.
     assert invocation.telemetry.model_calls == 0
     assert invocation.telemetry.cache_hits == 0
     assert invocation.telemetry.cache_misses == 0
-    receipt = cache_measurement.extract_symai_cache_prime_receipt(
-        invocation, request=request
-    )
+    receipt = cache_measurement.extract_symai_cache_prime_receipt(invocation, request=request)
     assert receipt is not None
     assert receipt.prime_status == contracts.StageStatus.FAILED.value
     assert receipt.prime_failure_code == (
@@ -1180,12 +1004,7 @@ def test_prime_failure_is_retained_and_never_invoked_twice() -> None:
     direct_aggregate = metrics.aggregate_case_results(
         (contracts.CaseResultRecord.from_stages((record,)),)
     )
-    assert (
-        direct_aggregate.resource_lane_measurements["model"][
-            "stage_count"
-        ]
-        == 1
-    )
+    assert direct_aggregate.resource_lane_measurements["model"]["stage_count"] == 1
     _assert_metrics_backend_invocation_count(
         _graph_bound_result(record),
         expected=1,
@@ -1193,32 +1012,22 @@ def test_prime_failure_is_retained_and_never_invoked_twice() -> None:
 
 
 def test_expired_deadline_after_prime_prevents_measured_call() -> None:
-    engine = _Engine(
-        [_structured_response(), _structured_response()]
-    )
+    engine = _Engine([_structured_response(), _structured_response()])
     request = _request(
         run_id="symai-cache-expired-after-prime",
         deadline_unix_ms=1,
     )
     adapter = _configured(engine)
-    invocation = cache_measurement.invoke_with_symai_cache_measurement(
-        adapter, request
-    )
+    invocation = cache_measurement.invoke_with_symai_cache_measurement(adapter, request)
 
     assert len(engine.calls) == 1
     assert invocation.output.status is contracts.StageStatus.FAILED
-    assert invocation.output.failure_code is (
-        contracts.FailureCode.RESOURCE_LEASE_CANCELLATION
-    )
-    assert "deadline expired after setup" in (
-        invocation.output.failure_detail or ""
-    )
+    assert invocation.output.failure_code is (contracts.FailureCode.RESOURCE_LEASE_CANCELLATION)
+    assert "deadline expired after setup" in (invocation.output.failure_detail or "")
     assert invocation.telemetry.model_calls == 0
     assert invocation.telemetry.cache_hits == 0
     assert invocation.telemetry.cache_misses == 0
-    receipt = cache_measurement.extract_symai_cache_prime_receipt(
-        invocation, request=request
-    )
+    receipt = cache_measurement.extract_symai_cache_prime_receipt(invocation, request=request)
     assert receipt is not None
     assert receipt.prime_status == contracts.StageStatus.SUCCESS.value
     assert receipt.measured_invoked is False
@@ -1231,17 +1040,13 @@ def test_expired_deadline_after_prime_prevents_measured_call() -> None:
     record = adapter.record(request, invocation)
     assert cache_measurement.symai_backend_invocation_count(record) == 1
     assert (
-        cache_measurement.extract_symai_cache_setup_telemetry(
-            record, request=request
-        )
+        cache_measurement.extract_symai_cache_setup_telemetry(record, request=request)
         == receipt.setup_telemetry
     )
 
 
 def test_second_miss_fails_closed_as_cache_contamination() -> None:
-    engine = _Engine(
-        [_structured_response(), _structured_response()]
-    )
+    engine = _Engine([_structured_response(), _structured_response()])
     request = _request(run_id="symai-cache-second-miss")
     invocation = cache_measurement.invoke_with_symai_cache_measurement(
         _configured(engine, cache=_DiscardingCache()),
@@ -1250,16 +1055,11 @@ def test_second_miss_fails_closed_as_cache_contamination() -> None:
 
     assert len(engine.calls) == 2
     assert invocation.output.status is contracts.StageStatus.FAILED
-    assert (
-        invocation.output.failure_code
-        is contracts.FailureCode.CACHE_CONTAMINATION
-    )
+    assert invocation.output.failure_code is contracts.FailureCode.CACHE_CONTAMINATION
     assert invocation.telemetry.model_calls == 1
     assert invocation.telemetry.cache_hits == 0
     assert invocation.telemetry.cache_misses == 1
-    receipt = cache_measurement.extract_symai_cache_prime_receipt(
-        invocation, request=request
-    )
+    receipt = cache_measurement.extract_symai_cache_prime_receipt(invocation, request=request)
     assert receipt is not None
     assert receipt.prime_status == contracts.StageStatus.SUCCESS.value
     assert receipt.measured_invoked is True
@@ -1298,9 +1098,7 @@ def test_attempted_measured_failure_with_zero_cache_counters_counts_twice() -> N
     assert handler_calls == 2
     assert len(engine.calls) == 1
     assert invocation.output.status is contracts.StageStatus.FAILED
-    assert invocation.output.failure_code is (
-        contracts.FailureCode.CACHE_CONTAMINATION
-    )
+    assert invocation.output.failure_code is (contracts.FailureCode.CACHE_CONTAMINATION)
     assert invocation.telemetry.cache_hits == 0
     assert invocation.telemetry.cache_misses == 0
     receipt = cache_measurement.extract_symai_cache_prime_receipt(
@@ -1320,12 +1118,7 @@ def test_attempted_measured_failure_with_zero_cache_counters_counts_twice() -> N
     direct_aggregate = metrics.aggregate_case_results(
         (contracts.CaseResultRecord.from_stages((record,)),)
     )
-    assert (
-        direct_aggregate.resource_lane_measurements["model"][
-            "stage_count"
-        ]
-        == 2
-    )
+    assert direct_aggregate.resource_lane_measurements["model"]["stage_count"] == 2
     _assert_metrics_backend_invocation_count(
         _graph_bound_result(record),
         expected=2,
@@ -1373,9 +1166,7 @@ def test_receipt_tampering_is_rejected() -> None:
         _configured(_Engine([_structured_response()])),
         _request(run_id="symai-cache-tamper"),
     )
-    receipt = cache_measurement.extract_symai_cache_prime_receipt(
-        invocation
-    )
+    receipt = cache_measurement.extract_symai_cache_prime_receipt(invocation)
     assert receipt is not None
 
     changed_telemetry = receipt.to_dict()
@@ -1386,9 +1177,7 @@ def test_receipt_tampering_is_rejected() -> None:
         contracts.ProtocolContractError,
         match="telemetry digest mismatch",
     ):
-        cache_measurement.validate_symai_cache_prime_receipt(
-            changed_telemetry
-        )
+        cache_measurement.validate_symai_cache_prime_receipt(changed_telemetry)
 
     changed_digest = receipt.to_dict()
     changed_digest["receipt_sha256"] = "0" * 64
@@ -1396,9 +1185,7 @@ def test_receipt_tampering_is_rejected() -> None:
         contracts.ProtocolContractError,
         match="receipt digest mismatch",
     ):
-        cache_measurement.validate_symai_cache_prime_receipt(
-            changed_digest
-        )
+        cache_measurement.validate_symai_cache_prime_receipt(changed_digest)
 
     with pytest.raises(
         contracts.ProtocolContractError,
@@ -1417,38 +1204,28 @@ def test_setup_resource_extraction_is_exact_and_semantic_projection_is_stable() 
         _configured(_Engine([raw])),
         request,
     )
-    receipt = cache_measurement.extract_symai_cache_prime_receipt(
-        invocation, request=request
-    )
-    setup = cache_measurement.extract_symai_cache_setup_telemetry(
-        invocation, request=request
-    )
+    receipt = cache_measurement.extract_symai_cache_prime_receipt(invocation, request=request)
+    setup = cache_measurement.extract_symai_cache_setup_telemetry(invocation, request=request)
 
     assert receipt is not None
     assert setup is not None
     assert setup.to_dict() == receipt.setup_telemetry.to_dict()
     assert setup.digest == receipt.setup_telemetry_sha256
     assert setup.wall_time_ms == receipt.setup_telemetry.wall_time_ms
-    assert setup.peak_memory_bytes == (
-        receipt.setup_telemetry.peak_memory_bytes
-    )
+    assert setup.peak_memory_bytes == (receipt.setup_telemetry.peak_memory_bytes)
     assert setup.model_calls == 1
     assert setup.retries == 0
     assert setup.cache_hits == 0
     assert setup.cache_misses == 1
 
     data = dict(invocation.output.data)
-    data["cache_prime_future_operational_field"] = {
-        "secret": "must-not-affect-semantic-digest"
-    }
+    data["cache_prime_future_operational_field"] = {"secret": "must-not-affect-semantic-digest"}
     assert (
         cache_measurement.symai_semantic_payload_sha256(data)
         == receipt.prime_semantic_output_sha256
     )
     nested = dict(data["semantic_context"])
-    nested["cache_prime"] = {
-        "future": "nested-fields-remain-semantic"
-    }
+    nested["cache_prime"] = {"future": "nested-fields-remain-semantic"}
     data["semantic_context"] = nested
     assert (
         cache_measurement.symai_semantic_payload_sha256(data)

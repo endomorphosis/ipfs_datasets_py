@@ -1,4 +1,3 @@
-
 import ast
 import os
 import psutil
@@ -38,12 +37,12 @@ class FunctionAnalysis:
 
 
 class ResourceProfiler:
-
     def __init__(self, max_execution_time: float = 5.0):
         self.max_execution_time = max_execution_time
         self.has_torch: bool = None
         try:
             import torch
+
             self.has_torch = True
         except Exception as e:
             print("Could not load torch. Skipping VRAM profiling...")
@@ -56,16 +55,16 @@ class ResourceProfiler:
             process = psutil.Process()
             start_cpu = process.cpu_percent()
             tracemalloc.start()
-            
+
             # Track VRAM if CUDA is available
             if self.has_torch:
                 vram_start = None
                 if torch.cuda.is_available():
                     torch.cuda.reset_peak_memory_stats()
                     vram_start = torch.cuda.memory_allocated()
-                
+
             start_time = time.time()
-            
+
             # Execute with timeout
             result = None
             try:
@@ -75,14 +74,14 @@ class ResourceProfiler:
                 return None
             finally:
                 execution_time = time.time() - start_time
-                
+
                 # Get CPU usage
                 cpu_percent = process.cpu_percent()
-                
+
                 # Get RAM usage
                 current, peak = tracemalloc.get_traced_memory()
                 tracemalloc.stop()
-                
+
                 # Get VRAM usage if applicable
                 if self.has_torch:
                     vram_used = None
@@ -95,11 +94,12 @@ class ResourceProfiler:
                     ram_mb=peak / 1024 / 1024,  # Convert to MB
                     vram_mb=vram_used,
                     execution_time=execution_time,
-                    peak_memory=peak / 1024 / 1024  # Convert to MB
+                    peak_memory=peak / 1024 / 1024,  # Convert to MB
                 )
 
                 if execution_time > self.max_execution_time:
                     print(f"Warning: {func.__name__} exceeded maximum execution time")
-                
+
             return result
+
         return wrapper

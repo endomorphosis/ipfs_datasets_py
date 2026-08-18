@@ -123,13 +123,19 @@ def package_courtlistener_fetch_cache(
         "summary": {
             "cache_index_count": len(index_rows),
             "cache_payload_count": len(payload_rows),
-            "binary_payload_count": sum(1 for row in payload_rows if bool(row.get("has_content_base64"))),
-            "mirrored_ipfs_entry_count": sum(1 for row in index_rows if str(row.get("ipfs_cid") or "").strip()),
+            "binary_payload_count": sum(
+                1 for row in payload_rows if bool(row.get("has_content_base64"))
+            ),
+            "mirrored_ipfs_entry_count": sum(
+                1 for row in index_rows if str(row.get("ipfs_cid") or "").strip()
+            ),
         },
     }
 
     manifest_json_path = bundle_dir / "bundle_manifest.json"
-    manifest_json_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    manifest_json_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     manifest_parquet_path = parquet_dir / "bundle_manifest.parquet"
     _write_rows_to_parquet(
         [
@@ -147,11 +153,15 @@ def package_courtlistener_fetch_cache(
     if include_car:
         manifest_car = car_dir / "bundle_manifest.car"
         try:
-            manifest_root_cid = str(car_utils.parquet_to_car(str(manifest_parquet_path), str(manifest_car)))
+            manifest_root_cid = str(
+                car_utils.parquet_to_car(str(manifest_parquet_path), str(manifest_car))
+            )
             manifest_car_path = str(manifest_car.relative_to(bundle_dir))
             manifest["manifest_root_cid"] = manifest_root_cid
             manifest["manifest_car_path"] = manifest_car_path
-            manifest_json_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            manifest_json_path.write_text(
+                json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
         except Exception:
             manifest_root_cid = ""
             manifest_car_path = ""
@@ -218,23 +228,37 @@ class CourtListenerCachePackager:
         if path.is_dir():
             bundle_dir = path
             manifest_file = bundle_dir / "bundle_manifest.json"
-            resolved_manifest = dict(manifest) if manifest is not None else json.loads(manifest_file.read_text(encoding="utf-8"))
+            resolved_manifest = (
+                dict(manifest)
+                if manifest is not None
+                else json.loads(manifest_file.read_text(encoding="utf-8"))
+            )
             return bundle_dir, resolved_manifest
         suffix = path.suffix.lower()
         if suffix == ".zip":
             return self._resolve_zipped_manifest(path, manifest=manifest)
         if suffix == ".parquet":
             bundle_dir = self._bundle_dir_from_manifest_sidecar(path)
-            resolved_manifest = dict(manifest) if manifest is not None else self._load_manifest_from_parquet(path)
+            resolved_manifest = (
+                dict(manifest) if manifest is not None else self._load_manifest_from_parquet(path)
+            )
             return bundle_dir, resolved_manifest
         if suffix == ".car":
             bundle_dir = self._bundle_dir_from_manifest_sidecar(path)
             manifest_parquet = self._materialize_manifest_parquet_from_car(path)
-            resolved_manifest = dict(manifest) if manifest is not None else self._load_manifest_from_parquet(manifest_parquet)
+            resolved_manifest = (
+                dict(manifest)
+                if manifest is not None
+                else self._load_manifest_from_parquet(manifest_parquet)
+            )
             return bundle_dir, resolved_manifest
         manifest_file = path
         bundle_dir = manifest_file.parent
-        resolved_manifest = dict(manifest) if manifest is not None else json.loads(manifest_file.read_text(encoding="utf-8"))
+        resolved_manifest = (
+            dict(manifest)
+            if manifest is not None
+            else json.loads(manifest_file.read_text(encoding="utf-8"))
+        )
         return bundle_dir, resolved_manifest
 
     def _load_manifest_from_parquet(self, manifest_parquet_path: Path) -> Dict[str, Any]:
@@ -263,7 +287,9 @@ class CourtListenerCachePackager:
         temp_dir_obj = self._temp_bundle_dirs.get(cache_key)
         if temp_dir_obj is None:
             safe_temp_root = os.environ.get("IPFS_DATASETS_SAFE_ROOT") or str(Path.cwd())
-            temp_dir_obj = tempfile.TemporaryDirectory(prefix="courtlistener_cache_zip_", dir=safe_temp_root)
+            temp_dir_obj = tempfile.TemporaryDirectory(
+                prefix="courtlistener_cache_zip_", dir=safe_temp_root
+            )
             with zipfile.ZipFile(archive_path, "r") as archive:
                 archive.extractall(temp_dir_obj.name)
             self._temp_bundle_dirs[cache_key] = temp_dir_obj
@@ -273,7 +299,11 @@ class CourtListenerCachePackager:
             raise FileNotFoundError(f"No bundle manifest found in zip archive: {archive_path}")
         manifest_file = manifest_candidates[0]
         bundle_dir = manifest_file.parent
-        resolved_manifest = dict(manifest) if manifest is not None else json.loads(manifest_file.read_text(encoding="utf-8"))
+        resolved_manifest = (
+            dict(manifest)
+            if manifest is not None
+            else json.loads(manifest_file.read_text(encoding="utf-8"))
+        )
         return bundle_dir, resolved_manifest
 
     def _materialize_manifest_parquet_from_car(self, manifest_car_path: Path) -> Path:
@@ -281,7 +311,9 @@ class CourtListenerCachePackager:
         temp_dir_obj = self._temp_piece_dirs.get(cache_key)
         if temp_dir_obj is None:
             safe_temp_root = os.environ.get("IPFS_DATASETS_SAFE_ROOT") or str(Path.cwd())
-            temp_dir_obj = tempfile.TemporaryDirectory(prefix="courtlistener_cache_manifest_car_", dir=safe_temp_root)
+            temp_dir_obj = tempfile.TemporaryDirectory(
+                prefix="courtlistener_cache_manifest_car_", dir=safe_temp_root
+            )
             self._temp_piece_dirs[cache_key] = temp_dir_obj
         temp_dir = Path(temp_dir_obj.name)
         parquet_path = temp_dir / "bundle_manifest.parquet"
@@ -289,7 +321,9 @@ class CourtListenerCachePackager:
             self._car_utils.car_to_parquet(str(manifest_car_path), str(parquet_path))
         return parquet_path
 
-    def _resolve_piece_parquet_path(self, bundle_dir: Path, piece: Mapping[str, Any]) -> Path | None:
+    def _resolve_piece_parquet_path(
+        self, bundle_dir: Path, piece: Mapping[str, Any]
+    ) -> Path | None:
         parquet_path = bundle_dir / str(piece.get("parquet_path") or "")
         if parquet_path.exists():
             return parquet_path
@@ -303,7 +337,9 @@ class CourtListenerCachePackager:
         temp_dir_obj = self._temp_piece_dirs.get(cache_key)
         if temp_dir_obj is None:
             safe_temp_root = os.environ.get("IPFS_DATASETS_SAFE_ROOT") or str(Path.cwd())
-            temp_dir_obj = tempfile.TemporaryDirectory(prefix="courtlistener_cache_piece_car_", dir=safe_temp_root)
+            temp_dir_obj = tempfile.TemporaryDirectory(
+                prefix="courtlistener_cache_piece_car_", dir=safe_temp_root
+            )
             self._temp_piece_dirs[cache_key] = temp_dir_obj
         temp_dir = Path(temp_dir_obj.name)
         piece_parquet_path = temp_dir / f"{str(piece.get('piece_id') or 'piece')}.parquet"
