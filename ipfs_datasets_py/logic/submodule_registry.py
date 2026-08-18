@@ -216,6 +216,31 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         ),
     ),
     LogicSubmoduleSpec(
+        name="semantic",
+        module="ipfs_datasets_py.logic.semantic",
+        description=(
+            "Stable O1 semantic public API: corpus, split, example, compile, "
+            "decompile, translate, pair, evaluate, verify, and publish."
+        ),
+        roles=("semantic_api", "compatibility", "discovery", "formalization"),
+        optimizer_components=("semantic.api",),
+        target_files=(
+            "ipfs_datasets_py/logic/semantic/__init__.py",
+            "ipfs_datasets_py/logic/semantic/catalog.py",
+            "ipfs_datasets_py/logic/semantic/operations.py",
+        ),
+        ast_scope="semantic",
+        public_symbols=(
+            "SemanticAPI",
+            "discover_semantic_operations",
+            "semantic_api_manifest",
+            "compile",
+            "decompile",
+            "evaluate",
+        ),
+        notes="Lazy package root; operations delegate to one canonical owner each.",
+    ),
+    LogicSubmoduleSpec(
         name="intent_ir.invocation",
         module="ipfs_datasets_py.logic.intent_ir.invocation",
         description="Canonical invocation envelopes and non-executing SkillCenter/prompt/MCP adapters (InvocationIntentEnvelope@1).",

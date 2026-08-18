@@ -793,3 +793,27 @@ def source_lineage_schema_ids() -> tuple[str, ...]:
         LINEAGE_GRAPH_SCHEMA,
         CORPUS_MANIFEST_SCHEMA,
     )
+
+
+__all__ = [
+    "CORPUS_MANIFEST_SCHEMA",
+    "DERIVED_ARTIFACT_SCHEMA",
+    "LINEAGE_GRAPH_SCHEMA",
+    "SOURCE_RECORD_SCHEMA",
+    "SOURCE_RECORD_SCHEMA_V1_1",
+    "SOURCE_RELEASE_SCHEMA",
+    "CorpusManifest",
+    "DerivedArtifactRecord",
+    "LineageEdge",
+    "LineageGraph",
+    "LineageRelation",
+    "RecordKind",
+    "RightsDisposition",
+    "RightsRecord",
+    "SourceLineageError",
+    "SourceRecord",
+    "SourceRelease",
+    "TemporalCoverage",
+    "source_lineage_schema_ids",
+    "source_lineage_schema_registry",
+]
