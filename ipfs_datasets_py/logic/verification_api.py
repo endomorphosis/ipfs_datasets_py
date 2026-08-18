@@ -169,6 +169,20 @@ PROVIDER_ROLE_CLOSURE_OPERATIONS: Final[tuple[str, ...]] = (
     "secpal_compatibility_lookup",
 )
 
+# Additive datasets-owned compositional-verification surface.  These methods
+# deliberately return the underlying typed artifacts instead of translating
+# them into the legacy response envelope: callers need exact contract, state,
+# solver-session, and receipt identities.  Imports stay inside each method so
+# importing the public facade never probes optional solvers.
+COMPOSITIONAL_VERIFICATION_OPERATIONS: Final[tuple[str, ...]] = (
+    "analyze_abstract_state",
+    "compile_component_contract",
+    "discharge_assume_guarantee",
+    "plan_incremental_verification",
+    "open_incremental_smt_session",
+    "compute_and_validate_interpolant",
+)
+
 # FVT-G231 / ProductionAuthorizationReplacement@1 public identity.
 PRODUCTION_AUTHORIZATION_REPLACEMENT_INTERFACE: Final = (
     "ProductionAuthorizationReplacement@1"
@@ -1895,6 +1909,66 @@ class LogicVerificationAPI:
             authority=VerificationAuthority.DECLARATIVE,
             result={"features": features, "operations": list(STABLE_OPERATIONS)},
         )
+
+    # -- Additive typed compositional-verification adapters -----------------
+
+    def analyze_abstract_state(self, source: str, **kwargs: Any) -> Any:
+        """Conservatively analyze Python through the datasets-owned engine."""
+
+        from ipfs_datasets_py.logic.software_verification.abstract_interpretation import (
+            analyze_abstract_state,
+        )
+
+        return analyze_abstract_state(source, **kwargs)
+
+    def compile_component_contract(self, contract: Any, **bindings: Any) -> Any:
+        """Adapt an existing contract without creating a second authority."""
+
+        from ipfs_datasets_py.logic.software_contracts.compositional import (
+            compile_component_contract,
+        )
+
+        return compile_component_contract(contract, **bindings)
+
+    def discharge_assume_guarantee(self, graph: Any, **kwargs: Any) -> Any:
+        """Discharge a canonical component graph on exact semantic roots."""
+
+        from ipfs_datasets_py.logic.software_verification.assume_guarantee import (
+            discharge_assume_guarantee,
+        )
+
+        return discharge_assume_guarantee(graph, **kwargs)
+
+    def plan_incremental_verification(
+        self, previous_state: Any, current_state: Any, **kwargs: Any
+    ) -> Any:
+        """Compute the exact semantic, contract, and evidence frontier."""
+
+        from ipfs_datasets_py.logic.software_verification.incremental_verification import (
+            plan_incremental_verification,
+        )
+
+        return plan_incremental_verification(previous_state, current_state, **kwargs)
+
+    def open_incremental_smt_session(self, **kwargs: Any) -> Any:
+        """Open a fingerprint-bound local solver session without installation."""
+
+        from ipfs_datasets_py.logic.backends.smt.incremental import (
+            open_incremental_smt_session,
+        )
+
+        return open_incremental_smt_session(**kwargs)
+
+    def compute_and_validate_interpolant(
+        self, partition_a: Any, partition_b: Any, **kwargs: Any
+    ) -> Any:
+        """Compute an interpolant only when independently validated."""
+
+        from ipfs_datasets_py.logic.backends.smt.interpolation import (
+            compute_and_validate_interpolant,
+        )
+
+        return compute_and_validate_interpolant(partition_a, partition_b, **kwargs)
 
     # ── LFP-044 Canonical discovery / dual-read one-write migration ───────
 
@@ -6348,6 +6422,9 @@ class LogicVerificationAPI:
             "verification_api_v2": VERIFICATION_API_V2_INTERFACE,
             "canonical_discovery_interface": CANONICAL_LOGIC_DISCOVERY_INTERFACE,
             "migration_operations": list(MIGRATION_OPERATIONS),
+            "compositional_verification_operations": list(
+                COMPOSITIONAL_VERIFICATION_OPERATIONS
+            ),
             "version": self.version,
         }
 
@@ -6371,6 +6448,37 @@ def get_verification_api(
 
 
 # Module-level convenience wrappers (thin, for stable import paths).
+
+def analyze_abstract_state(source: str, **kwargs: Any) -> Any:
+    return get_verification_api().analyze_abstract_state(source, **kwargs)
+
+
+def compile_component_contract(contract: Any, **bindings: Any) -> Any:
+    return get_verification_api().compile_component_contract(contract, **bindings)
+
+
+def discharge_assume_guarantee(graph: Any, **kwargs: Any) -> Any:
+    return get_verification_api().discharge_assume_guarantee(graph, **kwargs)
+
+
+def plan_incremental_verification(
+    previous_state: Any, current_state: Any, **kwargs: Any
+) -> Any:
+    return get_verification_api().plan_incremental_verification(
+        previous_state, current_state, **kwargs
+    )
+
+
+def open_incremental_smt_session(**kwargs: Any) -> Any:
+    return get_verification_api().open_incremental_smt_session(**kwargs)
+
+
+def compute_and_validate_interpolant(
+    partition_a: Any, partition_b: Any, **kwargs: Any
+) -> Any:
+    return get_verification_api().compute_and_validate_interpolant(
+        partition_a, partition_b, **kwargs
+    )
 
 def list_logic_families() -> VerificationResponse:
     return get_verification_api().list_logic_families()
@@ -6704,6 +6812,7 @@ __all__ = [
     "CANONICAL_LOGIC_DISCOVERY_SCHEMA",
     "CANONICAL_LOGIC_DISCOVERY_VERSION",
     "CanonicalLogicDiscovery",
+    "COMPOSITIONAL_VERIFICATION_OPERATIONS",
     "LOGIC_MIGRATION_ARTIFACT_SCHEMA",
     "LOGIC_VERIFICATION_API_INTERFACE",
     "LOGIC_VERIFICATION_API_VERSION",
@@ -6724,6 +6833,7 @@ __all__ = [
     "VerificationAuthority",
     "VerificationResponse",
     "VerificationStatus",
+    "analyze_abstract_state",
     "advise",
     "attest_receipt",
     "build_provider_role_descriptor",
@@ -6731,8 +6841,11 @@ __all__ = [
     "check",
     "compare_interpretations",
     "compile_verification_artifact",
+    "compile_component_contract",
+    "compute_and_validate_interpolant",
     "discover_missing_proofs",
     "dual_read_label",
+    "discharge_assume_guarantee",
     "execute_proof_plan",
     "explain_counterexample",
     "explain_counterexample_causal",
@@ -6758,6 +6871,8 @@ __all__ = [
     "migrate_artifact",
     "minimize_counterexample",
     "monitor",
+    "open_incremental_smt_session",
+    "plan_incremental_verification",
     "plan_proof",
     "probe_provider",
     "production_authorization_check",
