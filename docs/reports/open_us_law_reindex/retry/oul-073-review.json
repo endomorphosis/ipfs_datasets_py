@@ -1,0 +1,35 @@
+{
+  "acceptance": "Preflight-conflicting worktrees belonged to already-completed tasks. Worktrees were removed; rescue branches retained.",
+  "authorizing_for_publication": false,
+  "board_namespace": "open-us-law-reindex-v1",
+  "canonical_board_task": false,
+  "checks": {
+    "authorizing_for_publication": false,
+    "claims_live_corpus": false,
+    "no_authorized_edit_targets": true,
+    "planner_gap_is_not_new_implementation": true,
+    "producing_tasks_completed": true,
+    "review_only": true
+  },
+  "code_version": "1",
+  "content_digest": "ab4260da36ebee03d45e0d7c33479de57c09bcd9bacbfa6a10ed398cc0f28e58",
+  "digest": "ab4260da36ebee03d45e0d7c33479de57c09bcd9bacbfa6a10ed398cc0f28e58",
+  "discovery": "workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-15-oul-073-reconciliation-e3f78158c190.md",
+  "finding": "Preflight-conflicting worktrees belonged to already-completed tasks. Worktrees were removed; rescue branches retained.",
+  "goal_id": "OUL-G000",
+  "kind": "reconciliation",
+  "operator_resolution": "workspace/agent-supervisor/open-us-law-reindex/state/discovery/2026-08-15-oul-073-operator-resolved.md",
+  "producer": "operator_close_uscir_oul_boards.py",
+  "producing_task_status": {
+    "OUL-011": "completed",
+    "OUL-012": "completed",
+    "OUL-015": "completed"
+  },
+  "program_id": "open-us-law-reindex-v1",
+  "report_digest_sha256": "ab4260da36ebee03d45e0d7c33479de57c09bcd9bacbfa6a10ed398cc0f28e58",
+  "review_only": true,
+  "reviewed_at": "2026-08-19T03:36:28Z",
+  "schema": "ipfs_datasets_py/open-us-law-review-receipt@1",
+  "status": "passed",
+  "task_id": "OUL-073"
+}
