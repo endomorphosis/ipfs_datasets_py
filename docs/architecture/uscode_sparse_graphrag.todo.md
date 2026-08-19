@@ -1000,8 +1000,8 @@ This board is parsed by `ipfs_accelerate_py`. Metadata stays on one physical lin
 
 ## USCIR-041 Resolve 6 preflight-conflicting backlogged worktree merges
 
-- Status: blocked
-- Operator resolution: discarded_superseded_preflight_conflict_worktrees (018/019 then 020)
+- Status: completed
+- Operator resolution: discarded_superseded_preflight_conflict_worktrees (018/019 then 020); closed 2026-08-19 after confirming operator discard receipts exist and no live USCIR supervisor remains
 - Operator receipt (020): workspace/agent-supervisor/uscode-sparse-graphrag/state/discovery/2026-08-09-uscir-041-operator-discard-020-receipt.md
 - Resolution note: USCIR-020 merged via operator rescue; four rescue worktrees archived and removed
 - Operator receipt: workspace/agent-supervisor/uscode-sparse-graphrag/state/discovery/2026-08-09-uscir-041-operator-discard-receipt.md
